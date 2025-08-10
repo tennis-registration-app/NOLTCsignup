@@ -414,12 +414,28 @@ const TennisDataService = {
     });
     
     await dataStore.set(this.STORAGE_KEY, data, { immediate: true });
+    
+    // Belt-and-suspenders: poke other tabs to ensure storage event fires
+    try {
+      localStorage.setItem('tennisDataUpdateTick', String(Date.now()));
+    } catch (e) {
+      console.warn('Failed to write tennisDataUpdateTick', e);
+    }
+    
     return { success: true };
   } catch (error) {
     if (data.recentlyCleared?.length > 50) {
       data.recentlyCleared = data.recentlyCleared.slice(-25);
       try {
         await dataStore.set(this.STORAGE_KEY, data, { immediate: true });
+        
+        // Belt-and-suspenders: poke other tabs to ensure storage event fires
+        try {
+          localStorage.setItem('tennisDataUpdateTick', String(Date.now()));
+        } catch (e) {
+          console.warn('Failed to write tennisDataUpdateTick', e);
+        }
+        
         return { success: true, pruned: true };
       } catch {}
     }
