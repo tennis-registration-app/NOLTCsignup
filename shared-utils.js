@@ -1,5 +1,8 @@
 // ===== Shared utils (no UI changes) =====
 (function () {
+  // --- Core config
+  const COURT_COUNT = 12;
+
   // --- Storage/Event keys
   const STORAGE = {
     DATA: 'tennisClubData',
@@ -33,7 +36,7 @@
   // --- Default data shape
   const getEmptyData = () => ({
     __schema: SCHEMA_VERSION,
-    courts: Array(12).fill(null),
+    courts: Array(COURT_COUNT).fill(null),
     waitingGroups: [],
     recentlyCleared: [],
     calculatedAvailability: null,
@@ -44,11 +47,11 @@
     if (!data || typeof data !== 'object') return getEmptyData();
     const out = Object.assign(getEmptyData(), data);
 
-    // Ensure courts is an array of correct length
-    if (!Array.isArray(out.courts)) out.courts = Array(12).fill(null);
-    if (out.courts.length !== 12) {
-      const resized = Array(12).fill(null);
-      for (let i = 0; i < Math.min(12, out.courts.length); i++) resized[i] = out.courts[i];
+    // Ensure courts is correct length
+    if (!Array.isArray(out.courts)) out.courts = Array(COURT_COUNT).fill(null);
+    if (out.courts.length !== COURT_COUNT) {
+      const resized = Array(COURT_COUNT).fill(null);
+      for (let i = 0; i < Math.min(COURT_COUNT, out.courts.length); i++) resized[i] = out.courts[i];
       out.courts = resized;
     }
 
@@ -74,6 +77,7 @@
 
   // Expose on window
   window.APP_UTILS = {
+    COURT_COUNT,
     STORAGE,
     EVENTS,
     SCHEMA_VERSION,
