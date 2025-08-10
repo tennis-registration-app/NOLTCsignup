@@ -1259,7 +1259,26 @@
         const [customMessage, setCustomMessage] = useState("");
         const [data, setData] = useState(null);
 
-        // Add live sync refresh function
+        // Refresh function: read latest from localStorage and update state
+        const refreshFromStorage = React.useCallback(() => {
+          try {
+            const raw = localStorage.getItem('tennisClubData');
+            if (!raw) return;
+            const fresh = JSON.parse(raw);
+            // Update the state that stores the court data
+            setData(prev => ({ ...(prev || {}), ...fresh }));
+            
+            // Also update individual state pieces for backward compatibility
+            const validatedData = DataValidation.sanitizeCourtData(fresh);
+            setCourts(validatedData.courts);
+            setWaitingGroups(validatedData.waitingGroups);
+            setLastUpdate(new Date());
+          } catch (e) {
+            console.warn('Failed to refresh from storage', e);
+          }
+        }, []);
+
+        // Add live sync refresh function (keeping existing for DataStore compatibility)
         const refreshFromStore = useCallback(async () => {
           const fresh = await dataStore.get('tennisClubData');
           if (fresh) {
@@ -1280,6 +1299,31 @@
           window.addEventListener('tennisDataUpdate', onUpdate);
           return () => window.removeEventListener('tennisDataUpdate', onUpdate);
         }, [refreshFromStore]);
+
+        React.useEffect(() => {
+          const onStorage = (e) => {
+            if (e.key === 'tennisClubData') {
+              refreshFromStorage();
+            }
+          };
+          window.addEventListener('storage', onStorage);
+
+          // Poll every 3 seconds as a fallback
+          const pollId = setInterval(refreshFromStorage, 3000);
+
+          // Refresh when tab becomes visible
+          const onVis = () => { if (!document.hidden) refreshFromStorage(); };
+          document.addEventListener('visibilitychange', onVis);
+
+          // Initial sync on mount
+          refreshFromStorage();
+
+          return () => {
+            window.removeEventListener('storage', onStorage);
+            clearInterval(pollId);
+            document.removeEventListener('visibilitychange', onVis);
+          };
+        }, [refreshFromStorage]);
 
         // STEP 10: Enhanced data loading with DataStore
         const loadData = useCallback(async () => {
