@@ -48,6 +48,9 @@
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
   
   <script type="text/babel">
+    // Access shared utils (optional convenience)
+    const U = window.APP_UTILS || {};
+    
     // ---- Storage & Event keys (constants; no behavior change) ----
     const STORAGE = {
       DATA: 'tennisClubData',
@@ -204,7 +207,7 @@ class TennisCourtDataStore {
 const dataStore = new TennisCourtDataStore();
 
 // Boot data assertion
-const _bootData = (typeof readJSON === 'function' ? readJSON(STORAGE.DATA) : (() => { try { return JSON.parse(localStorage.getItem(STORAGE.DATA)); } catch { return null; }})());
+const _bootData = (U.readDataSafe ? U.readDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData()));
 assert(!_bootData || Array.isArray(_bootData.courts), 'Expected data.courts array on boot', _bootData);
 
 // Emoji Icons (matching AdminPanelV2 pattern)
