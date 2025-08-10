@@ -65,6 +65,17 @@
       catch { return false; }
     };
     
+    // ---- Safe defaults for app data (no behavior change) ----
+    const getEmptyData = () => ({
+      courts: Array(12).fill(null),
+      waitingGroups: [],
+      recentlyCleared: [],
+      calculatedAvailability: null
+    });
+    
+    // One-time safe read (used wherever you bootstrap data)
+    const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
+    
     // ---- Dev flag & assert (no UI change) ----
     const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
     const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };

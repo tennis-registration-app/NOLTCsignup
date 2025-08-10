@@ -388,6 +388,16 @@
       catch { return false; }
     };
     
+    // ---- Safe defaults for app data (no behavior change) ----
+    const getEmptyData = () => ({
+      courts: Array(12).fill(null),
+      waitingGroups: [],
+      recentlyCleared: [],
+      calculatedAvailability: null
+    });
+    
+    const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
+    
     // ---- Read-only guard (prevent accidental writes in this view) ----
     const readOnlyWrite = (...args) => {
       console.warn('Read-only view: write ignored', args);
