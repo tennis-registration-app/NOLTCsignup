@@ -554,8 +554,8 @@ const TennisDataService = {
     }
     
     const data = await this.loadData();
-    let court = data.courts[courtNumber - 1];
-    let courtNormalized = this.convertToNewFormat(court) || { current: null, history: [] };
+    const originalCourt = data.courts[courtNumber - 1];
+    let courtNormalized = this.convertToNewFormat(originalCourt) || { current: null, history: [] };
     courtNormalized.history = Array.isArray(courtNormalized.history) ? courtNormalized.history : [];
     
     if (!courtNormalized.current || courtNormalized.wasCleared) {
@@ -604,16 +604,20 @@ if (players && players.length > 0 &&
 const existingHistory = courtNormalized.history || [];
 
 // DEBUG: Let's see what the court structure looks like
-console.log("DEBUG - Court structure before clearing:", {
-  courtNumber: courtNumber,
-  hasHistory: !!courtNormalized.history,
-  historyLength: courtNormalized.history ? courtNormalized.history.length : 0,
-  history: courtNormalized.history,
-  hasCurrent: !!courtNormalized.current,
-  current: courtNormalized.current,
-  hasPlayers: !!courtNormalized.players,
-  players: courtNormalized.players
-});
+try {
+  console.log("DEBUG - Court structure before clearing:", {
+    courtNumber: courtNumber,
+    hasHistory: !!courtNormalized.history,
+    historyLength: courtNormalized.history ? courtNormalized.history.length : 0,
+    history: courtNormalized.history,
+    hasCurrent: !!courtNormalized.current,
+    current: courtNormalized.current,
+    hasPlayers: !!courtNormalized.players,
+    players: courtNormalized.players
+  });
+} catch (error) {
+  console.error("Error logging court structure:", error);
+}
 
 
 // Simplified clearing - only handle player data, blocks are managed separately
