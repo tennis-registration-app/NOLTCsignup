@@ -34,9 +34,6 @@
       }
     }
 
-    /* Screen reader only helper if not available via Tailwind */
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
-
   </style>
 </head>
 <body>
@@ -47,15 +44,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <script type="text/babel">
-    // --- Global time helpers ---
-    const toIso = (d) => (d instanceof Date ? d.toISOString() : new Date(d).toISOString());
-    const isAfterNow = (iso) => new Date(iso).getTime() > Date.now();
-
-    // --- Safe block API stubs (no-ops if missing) ---
-    window.getCourtBlockStatus = window.getCourtBlockStatus || (async (courtNumber) => ({ isCurrent:false, nextBlock:null }));
-    window.listCurrentBlocks = window.listCurrentBlocks || (async () => []);
-
-    const { useState, useEffect, useRef, useCallback } = React;
+    const { useState, useEffect, useRef } = React;
 
 // Initialize DataStore immediately
 class TennisCourtDataStore {
@@ -120,21 +109,18 @@ class TennisCourtDataStore {
   async set(key, data, options = {}) {
     const startTime = performance.now();
     this.metrics.totalOperations++;
+    
     this.cache.set(key, data);
-
-    const mustWriteNow = options.immediate || key === 'tennisClubData' || key === 'courtBlocks';
-    if (mustWriteNow) {
-      try {
-        localStorage.setItem(key, JSON.stringify(data));
-      } catch (e) {
-        console.warn('Storage write failed:', e);
-      }
+    
+    if (options.immediate || key === 'tennisClubData' || key === 'courtBlocks') {
+      localStorage.setItem(key, JSON.stringify(data));
     }
-
-    try {
-      window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { key, data } }));
-    } catch {}
-    this.metrics.totalResponseTime += (performance.now() - startTime);
+    
+    const responseTime = performance.now() - startTime;
+    this.metrics.totalResponseTime += responseTime;
+    
+    // Dispatch update event for real-time sync
+    window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { key, data } }));
   }
 
   getMetrics() {
@@ -380,14 +366,6 @@ const TennisDataService = {
       if (!sanitized.recentlyCleared) {
         sanitized.recentlyCleared = [];
       }
-
-      const now = new Date();
-      const dayAgo = new Date(now.getTime() - 24*60*60*1000);
-      sanitized.recentlyCleared = (sanitized.recentlyCleared || []).filter(s =>
-        s?.originalEndTime &&
-        new Date(s.originalEndTime) > now &&
-        new Date(s.clearedAt || s.timestamp || now) > dayAgo
-      );
       
       return sanitized;
     } catch (error) {
@@ -414,30 +392,10 @@ const TennisDataService = {
     });
     
     await dataStore.set(this.STORAGE_KEY, data, { immediate: true });
-    
-    // Belt-and-suspenders: poke other tabs to ensure storage event fires
-    try {
-      localStorage.setItem('tennisDataUpdateTick', String(Date.now()));
-    } catch (e) {
-      console.warn('Failed to write tennisDataUpdateTick', e);
-    }
-    
     return { success: true };
   } catch (error) {
-    if (data.recentlyCleared?.length > 50) {
-      data.recentlyCleared = data.recentlyCleared.slice(-25);
-      try {
-        await dataStore.set(this.STORAGE_KEY, data, { immediate: true });
-        
-        // Belt-and-suspenders: poke other tabs to ensure storage event fires
-        try {
-          localStorage.setItem('tennisDataUpdateTick', String(Date.now()));
-        } catch (e) {
-          console.warn('Failed to write tennisDataUpdateTick', e);
-        }
-        
-        return { success: true, pruned: true };
-      } catch {}
+    if (error.name === 'QuotaExceededError') {
+      return { success: false, error: 'Storage is full. Please clear some browser data.' };
     }
     return { success: false, error: 'Failed to save data. Please try again.' };
   }
@@ -521,11 +479,11 @@ const TennisDataService = {
     console.log('Saving court data:', courtData);
     data.courts[courtNumber - 1] = courtData;
     
-    const groupMemberIds = new Set(group.map(p => p.id));
-    data.waitingGroups = (data.waitingGroups || []).filter(wg => {
-      const ids = new Set((wg.players || []).map(p => p.id));
-      for (const id of groupMemberIds) if (ids.has(id)) return false;
-      return true;
+    // Remove this group from waitlist if they were waiting
+    const groupMemberIds = group.map(p => p.id);
+    data.waitingGroups = data.waitingGroups.filter(waitingGroup => {
+      const waitingIds = waitingGroup.players.map(p => p.id);
+      return !groupMemberIds.some(id => waitingIds.includes(id));
     });
     
     const result = await this.saveData(data);
@@ -543,25 +501,27 @@ const TennisDataService = {
   // Add this helper method to TennisDataService
   convertToNewFormat(court) {
     if (!court) return null;
+    
+    // If it already has the new format, return as-is
     if (court.current || court.history) {
-      return {
-        current: court.current || null,
-        history: Array.isArray(court.history) ? court.history : []
-      };
+      return court;
     }
-    if (Array.isArray(court.players)) {
+    
+    // Convert old format to new format
+    if (court.players) {
       return {
         current: {
           players: court.players,
-          startTime: court.startTime || toIso(new Date()),
-          endTime: court.endTime || toIso(new Date(Date.now() + 60*60000)),
-          assignedAt: court.assignedAt || toIso(new Date()),
-          duration: court.duration || 60
+          startTime: court.startTime,
+          endTime: court.endTime,
+          assignedAt: court.assignedAt,
+          duration: court.duration
         },
         history: []
       };
     }
-    return { current: null, history: [] };
+    
+    return null;
   },
 
   async clearCourt(courtNumber, skipRecentlyCleared = false) {
@@ -570,11 +530,9 @@ const TennisDataService = {
     }
     
     const data = await this.loadData();
-    const originalCourt = data.courts[courtNumber - 1];
-    let courtNormalized = this.convertToNewFormat(originalCourt) || { current: null, history: [] };
-    courtNormalized.history = Array.isArray(courtNormalized.history) ? courtNormalized.history : [];
+    const courtData = data.courts[courtNumber - 1];
     
-    if (!courtNormalized.current || courtNormalized.wasCleared) {
+    if (!courtData || courtData.wasCleared) {
       return { success: false, error: `Court ${courtNumber} is already empty.` };
     }
     
@@ -587,19 +545,19 @@ const TennisDataService = {
     // Check if this was cleared before the end time (not for blocked courts)
     const now = new Date();
     console.log("Checking if cleared early:", {
-      hasPlayers: courtNormalized.current?.players && courtNormalized.current.players.length > 0,
-      hasEndTime: !!courtNormalized.current?.endTime,
-      endTimeInFuture: courtNormalized.current?.endTime ? new Date(courtNormalized.current.endTime) > now : false,
-      isBlocked: !!courtNormalized.blocked
+      hasPlayers: courtData.players && courtData.players.length > 0,
+      hasEndTime: !!courtData.endTime,
+      endTimeInFuture: courtData.endTime ? new Date(courtData.endTime) > now : false,
+      isBlocked: !!courtData.blocked
     });
     
    // Get players and endTime from either structure
-const players = courtNormalized.current?.players || courtNormalized.players;
-const endTime = courtNormalized.current?.endTime || courtNormalized.endTime;
+const players = courtData.current?.players || courtData.players;
+const endTime = courtData.current?.endTime || courtData.endTime;
 
 if (players && players.length > 0 && 
     endTime && new Date(endTime) > now &&
-    !courtNormalized.blocked &&
+    !courtData.blocked &&
     !skipRecentlyCleared) {
   // Save to recentlyCleared array
   if (!data.recentlyCleared) {
@@ -617,48 +575,51 @@ if (players && players.length > 0 &&
     }
     
 // Update the court data to preserve history
-const existingHistory = courtNormalized.history || [];
+const court = data.courts[courtNumber - 1];
+const existingHistory = court.history || [];
 
 // DEBUG: Let's see what the court structure looks like
-try {
-  console.log("DEBUG - Court structure before clearing:", {
-    courtNumber: courtNumber,
-    hasHistory: !!courtNormalized.history,
-    historyLength: courtNormalized.history ? courtNormalized.history.length : 0,
-    history: courtNormalized.history,
-    hasCurrent: !!courtNormalized.current,
-    current: courtNormalized.current,
-    hasPlayers: !!courtNormalized.players,
-    players: courtNormalized.players
-  });
-} catch (error) {
-  console.error("Error logging court structure:", error);
-}
+console.log("DEBUG - Court structure before clearing:", {
+  courtNumber: courtNumber,
+  hasHistory: !!court.history,
+  historyLength: court.history ? court.history.length : 0,
+  history: court.history,
+  hasCurrent: !!court.current,
+  current: court.current,
+  hasPlayers: !!court.players,
+  players: court.players
+});
 
 
 // Simplified clearing - only handle player data, blocks are managed separately
-if (courtNormalized.current && courtNormalized.current.players && courtNormalized.current.players.length > 0) {
+if (court.current && court.current.players && court.current.players.length > 0) {
   // New structure - add to history
-  courtNormalized.history.push({
-    ...courtNormalized.current,
+  existingHistory.push({
+    ...court.current,
     actualEndTime: now.toISOString(),
-    scheduledEndTime: courtNormalized.current.endTime,
+    scheduledEndTime: court.current.endTime,
     endReason: 'cleared'
   });
   
-  data.courts[courtNumber - 1] = { current: null, history: courtNormalized.history };
-} else if (courtNormalized.players) {
+  data.courts[courtNumber - 1] = {
+    current: null,
+    history: existingHistory  // Preserve ALL history
+  };
+} else if (court.players) {
   // Old structure - convert and add to history
-  courtNormalized.history.push({
-    players: courtNormalized.players,
-    startTime: courtNormalized.startTime,
-    scheduledEndTime: courtNormalized.endTime,
+  existingHistory.push({
+    players: court.players,
+    startTime: court.startTime,
+    scheduledEndTime: court.endTime,
     actualEndTime: now.toISOString(),
     endReason: 'cleared',
-    duration: courtNormalized.duration
+    duration: court.duration
   });
   
-  data.courts[courtNumber - 1] = { current: null, history: courtNormalized.history };
+  data.courts[courtNumber - 1] = {
+    current: null,
+    history: existingHistory  // Preserve ALL history
+  };
 } else {
   data.courts[courtNumber - 1] = null;
 }
@@ -1944,25 +1905,6 @@ const TennisRegistration = () => {
     waitingGroups: [],
     recentlyCleared: []
   }));
-
-  // Add this near component top
-  const refreshFromStore = useCallback(async () => {
-    const fresh = await dataStore.get('tennisClubData');
-    if (fresh) {
-      // update whatever state holds courts/waitingGroups/etc.
-      setData(prev => ({ ...prev, ...fresh })); // rename setAppData to your actual setter
-    }
-  }, []);
-
-  useEffect(() => {
-    const onUpdate = (e) => {
-      if (e?.detail?.key === 'tennisClubData') {
-        refreshFromStore();
-      }
-    };
-    window.addEventListener('tennisDataUpdate', onUpdate);
-    return () => window.removeEventListener('tennisDataUpdate', onUpdate);
-  }, [refreshFromStore]);
 
   // Load initial data
   useEffect(() => {
