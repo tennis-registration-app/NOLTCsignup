@@ -1302,7 +1302,7 @@
 
         React.useEffect(() => {
           const onStorage = (e) => {
-            if (e.key === 'tennisClubData') {
+            if (e.key === 'tennisClubData' || e.key === 'tennisDataUpdateTick') {
               refreshFromStorage();
             }
           };
