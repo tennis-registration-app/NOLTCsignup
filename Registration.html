@@ -141,7 +141,7 @@ class TennisCourtDataStore {
     this.metrics.totalResponseTime += responseTime;
     
     // Dispatch update event for real-time sync
-    window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { key, data } }));
+    window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
   }
 
   getMetrics() {
@@ -1957,7 +1957,7 @@ const TennisRegistration = () => {
     };
 
     // Listen for custom events from DataStore
-    window.addEventListener('tennisDataUpdate', handleStorageUpdate);
+    window.addEventListener(EVENTS.UPDATE, handleStorageUpdate);
     
     // Listen for storage events from other windows/tabs
     window.addEventListener('storage', handleStorageEvent);

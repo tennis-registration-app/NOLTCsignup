@@ -132,7 +132,7 @@
           this.metrics.totalResponseTime += responseTime;
           
           // Dispatch update event
-          window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { key, data } }));
+          window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
         }
 
         getMetrics() {
@@ -6702,7 +6702,7 @@ const AnalyticsDashboard = ({ onClose }) => {
     };
     
     window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
-    window.addEventListener('tennisDataUpdate', handleDataUpdate);
+    window.addEventListener(EVENTS.UPDATE, handleDataUpdate);
     
     // Set up auto-refresh every 30 seconds as backup (reduced frequency since we have event listeners)
     const refreshInterval = setInterval(loadAnalyticsData, 30000);
