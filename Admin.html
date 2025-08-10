@@ -3948,7 +3948,9 @@ const CompleteBlockManagerEnhanced = ({
   // Create wet court blocks immediately with explicit court list
   try {
     const now = new Date().toISOString();
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     
     // Create wet court blocks for all courts (1-12)
     const wetCourtBlocks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(courtNum => ({
@@ -3991,7 +3993,9 @@ const removeWetCourtBlock = (courtNumber) => {
   if (!ENABLE_WET_COURTS) return;
   
   try {
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     
     // Remove wet court blocks for this court
     const updatedBlocks = existingBlocks.filter(block => 
@@ -4013,7 +4017,9 @@ const removeAllWetCourtBlocks = () => {
   if (!ENABLE_WET_COURTS) return;
   
   try {
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     
     // Remove all wet court blocks
     const updatedBlocks = existingBlocks.filter(block => !block.isWetCourt);
@@ -4210,7 +4216,9 @@ const deactivateWetCourts = () => {
         const handleRemoveBlock = (blockId) => {
     console.log('🗑️ Trying to delete block with ID:', blockId);
         try {
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     console.log('📋 All blocks before deletion:', existingBlocks);
     console.log('🔍 Looking for block with ID:', blockId);
     
@@ -4922,7 +4930,9 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
         endDateTime.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
         
         // Add blocks to localStorage
-        const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+        let existingBlocks = [];
+        try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+        catch { /* transient partial write; use empty array */ }
         const newBlocks = action.courts.map(courtNum => ({
           id: `block-${Date.now()}-${courtNum}`,
           courtNumber: courtNum,
@@ -4998,7 +5008,9 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
           ).join('\n');
           
       case 'showBallSales':
-        const sales = JSON.parse(localStorage.getItem('tennisBallPurchases') || '[]');
+        let sales = [];
+        try { sales = JSON.parse(localStorage.getItem('tennisBallPurchases') || '[]'); }
+        catch { /* transient partial write; use empty array */ }
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
@@ -5195,7 +5207,9 @@ const AdminPanelV2 = ({ onExit }) => {
   
   try {
     const now = new Date().toISOString();
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     
     // Create wet court blocks for all courts (1-12)
     const wetCourtBlocks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(courtNum => ({
@@ -5244,7 +5258,9 @@ const removeAllWetCourtBlocks = () => {
   if (!ENABLE_WET_COURTS) return;
   
   try {
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     
     // Remove all wet court blocks
     const updatedBlocks = existingBlocks.filter(block => !block.isWetCourt);
@@ -5268,7 +5284,9 @@ const clearWetCourt = (courtNumber) => {
 
   // Remove wet court block for this court
   try {
-    const existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+    let existingBlocks = [];
+    try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+    catch { /* transient partial write; use empty array */ }
     const updatedBlocks = existingBlocks.filter(block => 
       !(block.isWetCourt && block.courtNumber === courtNumber)
     );
@@ -6764,7 +6782,11 @@ const AnalyticsDashboard = ({ onClose }) => {
       // Load guest charges - use localStorage as source of truth for real-time updates
       console.log('📊 Loading guest charges...');
       const localStorageCharges = localStorage.getItem(TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY);
-      const guestChargesData = localStorageCharges ? JSON.parse(localStorageCharges) : [];
+      let guestChargesData = [];
+      if (localStorageCharges) {
+        try { guestChargesData = JSON.parse(localStorageCharges); }
+        catch { /* transient partial write; use empty array */ }
+      }
       
       console.log('📊 Guest charges found:', guestChargesData.length);
       setGuestCharges(guestChargesData);
