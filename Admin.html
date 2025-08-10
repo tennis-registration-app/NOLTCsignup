@@ -20,6 +20,17 @@
 
   <!-- All code in one file -->
   <script type="text/babel">
+   // ---- Storage & Event keys (constants; no behavior change) ----
+   const STORAGE = {
+     DATA: 'tennisClubData',
+     SETTINGS: 'tennisClubSettings',
+     BLOCKS: 'courtBlocks',
+     UPDATE_TICK: 'tennisDataUpdateTick'
+   };
+   const EVENTS = {
+     UPDATE: 'tennisDataUpdate'
+   };
+   
    // Wait for everything to load
    window.addEventListener('load', () => {
       console.log('Window loaded, checking dependencies...');
