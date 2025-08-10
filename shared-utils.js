@@ -88,3 +88,83 @@
     readDataSafe,
   };
 })();
+
+// ===== Shared classes & constants (no UI changes) =====
+(function () {
+  const U = window.APP_UTILS;
+  if (!U) return;
+
+  // COURTS array (1..COURT_COUNT)
+  const COURTS = Array.from({ length: U.COURT_COUNT }, (_, i) => i + 1);
+
+  // TIME_SLOTS (keep minimal; adjust later if needed)
+  const TIME_SLOTS = [
+    '06:00','06:30','07:00','07:30','08:00','08:30','09:00','09:30',
+    '10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30',
+    '14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30',
+    '18:00','18:30','19:00','19:30','20:00','20:30','21:00'
+  ];
+
+  // Centralized DataStore (moved out of page files)
+  class TennisCourtDataStore {
+    constructor() {
+      this.cache = new Map();
+      this.metrics = { cacheHits: 0, cacheMisses: 0, totalOperations: 0, totalResponseTime: 0, storageOperationsSaved: 0 };
+      this.warmCache();
+    }
+    warmCache() {
+      const keys = [U.STORAGE.DATA, U.STORAGE.SETTINGS, U.STORAGE.BLOCKS, U.STORAGE.UPDATE_TICK];
+      keys.forEach(key => {
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try { this.cache.set(key, JSON.parse(raw)); } catch {}
+      });
+    }
+    async get(key) {
+      const t0 = performance.now();
+      this.metrics.totalOperations++;
+      if (this.cache.has(key)) {
+        this.metrics.cacheHits++;
+        this.metrics.totalResponseTime += (performance.now() - t0);
+        return this.cache.get(key);
+      }
+      this.metrics.cacheMisses++;
+      const raw = localStorage.getItem(key);
+      let parsed = null;
+      if (raw) { try { parsed = JSON.parse(raw); this.cache.set(key, parsed); } catch {} }
+      this.metrics.totalResponseTime += (performance.now() - t0);
+      return parsed;
+    }
+    async set(key, data, options = {}) {
+      const t0 = performance.now();
+      this.metrics.totalOperations++;
+      this.cache.set(key, data);
+      if (options.immediate || key === U.STORAGE.DATA || key === U.STORAGE.BLOCKS) {
+        try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
+      }
+      this.metrics.totalResponseTime += (performance.now() - t0);
+      // same-tab update signal
+      try { window.dispatchEvent(new CustomEvent(U.EVENTS.UPDATE, { detail: { key, data } })); } catch {}
+    }
+    getMetrics() {
+      const total = this.metrics.totalOperations || 1;
+      const avg = this.metrics.totalResponseTime / total;
+      const hit = (this.metrics.cacheHits / total) * 100;
+      return { ...this.metrics, avgResponseTime: +avg.toFixed(3), cacheHitRate: +hit.toFixed(1) };
+    }
+  }
+
+  // Tiny event bus helpers
+  const broadcastEvent = (name, detail) => { try { window.dispatchEvent(new CustomEvent(name, { detail })); } catch {} };
+  const listenForEvent  = (name, handler, opts) => {
+    try { window.addEventListener(name, handler, opts); } catch {}
+    return () => { try { window.removeEventListener(name, handler, opts); } catch {} };
+  };
+
+  // Expose
+  U.COURTS = COURTS;
+  U.TIME_SLOTS = TIME_SLOTS;
+  U.TennisCourtDataStore = TennisCourtDataStore;
+  U.broadcastEvent = broadcastEvent;
+  U.listenForEvent = listenForEvent;
+})();

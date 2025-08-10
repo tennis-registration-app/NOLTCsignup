@@ -204,7 +204,7 @@ class TennisCourtDataStore {
 }
 
 // Initialize global DataStore instance
-const dataStore = new TennisCourtDataStore();
+const dataStore = new (window.APP_UTILS?.TennisCourtDataStore || class {})();
 
 // Boot data assertion
 const _bootData = (U.readDataSafe ? U.readDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData()));
