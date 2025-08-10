@@ -48,11 +48,20 @@
    // ---- Debounce helper (no UI change) ----
    const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
    
+   // ---- Logger (no UI change) ----
+   const LOG_LEVEL = (DEV ? 'debug' : 'warn');
+   const _PREFIX = '[Admin]';
+   const log = {
+     debug: (...a)=> { if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a); },
+     info:  (...a)=> { if (['debug','info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a); },
+     warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
+   };
+   
    // Wait for everything to load
    window.addEventListener('load', () => {
       console.log('Window loaded, checking dependencies...');
-      console.log('React:', typeof React);
-      console.log('ReactDOM:', typeof ReactDOM);
+      log.debug('React:', typeof React);
+      log.debug('ReactDOM:', typeof ReactDOM);
       
       // Add a small delay to ensure Lucide is fully loaded
       setTimeout(() => {

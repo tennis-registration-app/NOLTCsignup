@@ -69,6 +69,15 @@
     const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
     const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
     
+    // ---- Logger (no UI change) ----
+    const LOG_LEVEL = (DEV ? 'debug' : 'warn'); // 'debug'|'info'|'warn'|'silent'
+    const _PREFIX = '[Registration]';
+    const log = {
+      debug: (...a)=> { if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a); },
+      info:  (...a)=> { if (['debug','info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a); },
+      warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
+    };
+    
     const { useState, useEffect, useRef } = React;
 
 // Initialize DataStore immediately
@@ -352,7 +361,7 @@ const DataValidation = {
                new Date(session.originalEndTime) > now; // Only keep future end times
         
      if (!isValid && session) {
-          console.log("Filtered out session:", {
+          log.debug("Filtered out session:", {
             session,
             hasValidGroup: session.players ? this.isValidGroup(session.players) : false,
             hasOriginalEndTime: !!session.originalEndTime,
@@ -413,7 +422,7 @@ const TennisDataService = {
       timestamp: new Date().toISOString()
     };
     
-    console.log("TennisDataService.saveData - data to save:", {
+    log.debug("TennisDataService.saveData - data to save:", {
       courtsCount: data.courts ? data.courts.length : 0,
       waitingGroupsCount: data.waitingGroups ? data.waitingGroups.length : 0,
       recentlyClearedCount: data.recentlyCleared ? data.recentlyCleared.length : 0,

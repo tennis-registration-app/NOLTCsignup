@@ -401,6 +401,15 @@
     // ---- Debounce helper (no UI change) ----
     const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
     
+    // ---- Logger (no UI change) ----
+    const LOG_LEVEL = (DEV ? 'debug' : 'warn');
+    const _PREFIX = '[CourtBoard]';
+    const log = {
+      debug: (...a)=> { if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a); },
+      info:  (...a)=> { if (['debug','info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a); },
+      warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
+    };
+    
     // Wait for everything to load
     window.addEventListener('load', () => {
       console.log('🚀 Loading DataStore Integrated Tennis Display...');
@@ -744,7 +753,7 @@
       // STEP 6: Waiting List Component (from original)
       const WaitingList = ({ waitingGroups, courts, currentTime }) => {
         const calculateEstimatedWaitTimeV2 = (position) => {
-          console.log(`Calculating wait time for position ${position}`);
+          log.debug(`Calculating wait time for position ${position}`);
           
           const availabilitySlots = [];
           
@@ -791,7 +800,7 @@
           // Sort slots by availability time
           availabilitySlots.sort((a, b) => a - b);
           
-          console.log(`Court availability slots:`, availabilitySlots.map(slot => 
+          log.debug(`Court availability slots:`, availabilitySlots.map(slot => 
             new Date(slot).toLocaleTimeString()
           ));
           
