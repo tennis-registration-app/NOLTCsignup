@@ -396,25 +396,35 @@
         async get(key) {
           const startTime = performance.now();
           
-          // Simulate cache lookup (80% cache hit rate)
-          if (Math.random() > 0.2) {
-            const cached = localStorage.getItem(key);
-            const data = cached ? JSON.parse(cached) : null;
+          // Check cache first
+          if (this.cache.has(key)) {
+            const cachedData = this.cache.get(key);
             this.updateMetrics(performance.now() - startTime, true);
-            return data;
-          } else {
-            // Cache miss - slower operation
-            const data = localStorage.getItem(key);
-            const result = data ? JSON.parse(data) : null;
-            this.updateMetrics(performance.now() - startTime, false);
-            return result;
+            if (this.metrics.cacheHits) this.metrics.cacheHits++;
+            return cachedData;
           }
+          
+          // Cache miss - get from localStorage
+          const data = localStorage.getItem(key);
+          const result = data ? JSON.parse(data) : null;
+          
+          // Store in cache for future use
+          if (result !== null) {
+            this.cache.set(key, result);
+          }
+          
+          this.updateMetrics(performance.now() - startTime, false);
+          return result;
         },
 
         async set(key, data, options = {}) {
           const startTime = performance.now();
           this.metrics.totalOperations++;
-          this.cache.set(key, data);
+          
+          // Update cache safely
+          if (this.cache) {
+            this.cache.set(key, data);
+          }
 
           const mustWriteNow = options.immediate || key === 'tennisClubData' || key === 'courtBlocks';
           if (mustWriteNow) {
@@ -468,6 +478,8 @@
           totalResponseTime: 0,
           operationsSaved: 0
         },
+        
+        cache: new Map(),
 
         updateMetrics(responseTime, wasCacheHit) {
           this.metrics.totalOperations++;
