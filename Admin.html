@@ -86,6 +86,10 @@
       }, 100);
     });
     
+    // ============================================================
+    // Section: Admin actions (assign, clear, block scheduling)
+    // ============================================================
+    
     function initializeApp() {
       // Boot data assertion
       const _bootData = (typeof readJSON === 'function' ? readJSON(STORAGE.DATA) : (() => { try { return JSON.parse(localStorage.getItem(STORAGE.DATA)); } catch { return null; }})());
