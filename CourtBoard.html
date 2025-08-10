@@ -388,6 +388,12 @@
       catch { return false; }
     };
     
+    // ---- Read-only guard (prevent accidental writes in this view) ----
+    const readOnlyWrite = (...args) => {
+      console.warn('Read-only view: write ignored', args);
+      return false;
+    };
+    
     // Wait for everything to load
     window.addEventListener('load', () => {
       console.log('🚀 Loading DataStore Integrated Tennis Display...');
@@ -423,7 +429,8 @@
 
         async set(key, data) {
           const startTime = performance.now();
-          localStorage.setItem(key, JSON.stringify(data));
+          // Read-only view: prevent writes
+          readOnlyWrite(key, data);
           this.updateMetrics(performance.now() - startTime, false);
           
           // Emit change event
@@ -1277,8 +1284,9 @@
               });
               
               if (blocksToKeep.length !== blocks.length) {
-                localStorage.setItem('courtBlocks', JSON.stringify(blocksToKeep));
-                console.log(`Cleaned up ${blocks.length - blocksToKeep.length} blocks from previous days`);
+                // Read-only view: prevent cleanup writes
+                readOnlyWrite('courtBlocks', blocksToKeep);
+                console.log(`Read-only view: would have cleaned up ${blocks.length - blocksToKeep.length} blocks from previous days`);
               }
             } catch (error) {
               console.error('Error cleaning up blocks:', error);
