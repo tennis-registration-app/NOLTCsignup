@@ -327,9 +327,6 @@
       color: #22c55e;
       font-weight: bold;
     }
-
-    /* Screen reader only helper if not available via Tailwind */
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
   </style>
 </head>
 
@@ -370,14 +367,6 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <script type="text/babel">
-    // --- Global time helpers ---
-    const toIso = (d) => (d instanceof Date ? d.toISOString() : new Date(d).toISOString());
-    const isAfterNow = (iso) => new Date(iso).getTime() > Date.now();
-
-    // --- Safe block API stubs (no-ops if missing) ---
-    window.getCourtBlockStatus = window.getCourtBlockStatus || (async (courtNumber) => ({ isCurrent:false, nextBlock:null }));
-    window.listCurrentBlocks = window.listCurrentBlocks || (async () => []);
-
     // Wait for everything to load
     window.addEventListener('load', () => {
       console.log('🚀 Loading DataStore Integrated Tennis Display...');
@@ -411,24 +400,13 @@
           }
         },
 
-        async set(key, data, options = {}) {
+        async set(key, data) {
           const startTime = performance.now();
-          this.metrics.totalOperations++;
-          this.cache.set(key, data);
-
-          const mustWriteNow = options.immediate || key === 'tennisClubData' || key === 'courtBlocks';
-          if (mustWriteNow) {
-            try {
-              localStorage.setItem(key, JSON.stringify(data));
-            } catch (e) {
-              console.warn('Storage write failed:', e);
-            }
-          }
-
-          try {
-            window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { key, data } }));
-          } catch {}
-          this.metrics.totalResponseTime += (performance.now() - startTime);
+          localStorage.setItem(key, JSON.stringify(data));
+          this.updateMetrics(performance.now() - startTime, false);
+          
+          // Emit change event
+          this.emit('data:changed', { key, data });
         },
 
         // Event system simulation
@@ -548,15 +526,6 @@
         const now = new Date();
         
         try {
-          // Wet court alignment - use consistent field via global API
-          const getWetCourts = async () => {
-            const blocks = await (window.listCurrentBlocks?.() || []);
-            const wetCourtNumbers = new Set(
-              blocks.filter(b => b.isWetCourt && isAfterNow(b.endTime)).map(b => b.courtNumber)
-            );
-            return wetCourtNumbers;
-          };
-          
           const blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
           
           // PRIORITY 1: Check for active wet court blocks first
@@ -888,11 +857,7 @@
       };
 
       // STEP 7: Next Available Panel Component (from original)
-      const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [], data }) => {
-
-        // Prefer precomputed availability if fresh
-        const availability = data?.calculatedAvailability;
-        const isFresh = availability && (Date.now() - new Date(availability.timestamp).getTime() < 5000);
+      const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [] }) => {
 
         const getCourtAvailabilityTimeline = () => {
           console.log('🔍 getCourtAvailabilityTimeline called');
@@ -1010,10 +975,7 @@
           });
         };
 
-        const nextAvailable = isFresh ? availability.nextAvailable : getCourtAvailabilityTimeline();
-        const waitTimes = isFresh ? availability.waitTimes : null; // wait times not computed locally in this component
-        
-        const timeline = nextAvailable || [];
+        const timeline = getCourtAvailabilityTimeline();
         console.log('🎯 Timeline length:', timeline.length);
         console.log('🎯 hasEmptyCourts():', hasEmptyCourts());
 
@@ -1245,29 +1207,6 @@
         const [currentTime, setCurrentTime] = useState(new Date());
         const [lastUpdate, setLastUpdate] = useState(new Date());
         const [customMessage, setCustomMessage] = useState("");
-        const [data, setData] = useState(null);
-
-        // Add live sync refresh function
-        const refreshFromStore = useCallback(async () => {
-          const fresh = await dataStore.get('tennisClubData');
-          if (fresh) {
-            const validatedData = DataValidation.sanitizeCourtData(fresh);
-            setCourts(validatedData.courts);
-            setWaitingGroups(validatedData.waitingGroups);
-            setData(fresh);
-            setLastUpdate(new Date());
-          }
-        }, []);
-
-        useEffect(() => {
-          const onUpdate = (e) => {
-            if (e?.detail?.key === 'tennisClubData') {
-              refreshFromStore();
-            }
-          };
-          window.addEventListener('tennisDataUpdate', onUpdate);
-          return () => window.removeEventListener('tennisDataUpdate', onUpdate);
-        }, [refreshFromStore]);
 
         // STEP 10: Enhanced data loading with DataStore
         const loadData = useCallback(async () => {
@@ -1326,7 +1265,6 @@
               
               setCourts(validatedData.courts);
               setWaitingGroups(validatedData.waitingGroups);
-              setData(data);
               setLastUpdate(new Date());
             } else {
               setCourts(Array(CONSTANTS.COURT_COUNT).fill(null));
@@ -1505,7 +1443,7 @@
                 </div>
               </div>
 
-              <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} data={data} />
+              <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} />
               </div>
           </div>
         );
