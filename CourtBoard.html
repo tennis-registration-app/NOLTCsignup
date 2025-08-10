@@ -398,6 +398,9 @@
     const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
     const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
     
+    // ---- Debounce helper (no UI change) ----
+    const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+    
     // Wait for everything to load
     window.addEventListener('load', () => {
       console.log('🚀 Loading DataStore Integrated Tennis Display...');
@@ -1321,10 +1324,10 @@
           // Initial load
           loadData();
 
-          const handleUpdate = () => {
+          const handleUpdate = debounce(() => {
             console.log('📡 Received tennisDataUpdate event, reloading data...');
             loadData();
-          };
+          }, 150);
 
           window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate);
           

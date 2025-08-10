@@ -45,6 +45,9 @@
    const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
    const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
    
+   // ---- Debounce helper (no UI change) ----
+   const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+   
    // Wait for everything to load
    window.addEventListener('load', () => {
       console.log('Window loaded, checking dependencies...');
@@ -5301,10 +5304,10 @@ const deactivateWetCourts = () => {
       loadData();
     }, 2000);
     
-    const handleStorageUpdate = () => {
+    const handleStorageUpdate = debounce(() => {
       console.log('Storage update event received');
       loadData();
-    };
+    }, 150);
 
     // Listen for storage events from other apps/tabs
     const handleStorageEvent = (e) => {
@@ -5340,7 +5343,7 @@ useEffect(() => {
   loadBlocks();
   
   // Listen for block updates
-  const handleBlockUpdate = () => loadBlocks();
+  const handleBlockUpdate = debounce(() => loadBlocks(), 150);
   
   // Listen for storage events from other apps/tabs
   const handleBlockStorageEvent = (e) => {
@@ -6704,10 +6707,10 @@ const AnalyticsDashboard = ({ onClose }) => {
     loadAnalyticsData();
     
     // Set up event listener for real-time updates
-    const handleDataUpdate = () => {
+    const handleDataUpdate = debounce(() => {
       console.log('📡 Analytics received data update event, reloading...');
       loadAnalyticsData();
-    };
+    }, 150);
     
     window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
     window.addEventListener(EVENTS.UPDATE, handleDataUpdate);
