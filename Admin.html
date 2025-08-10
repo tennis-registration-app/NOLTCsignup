@@ -14,17 +14,78 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Shared utils (schema + helpers; no UI changes) -->
+  <script src="./shared-utils.js"></script>
+  <!-- Preflight self-heal (normalize storage shape before app code runs) -->
+  <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
   
   <!-- Lucide React Icons -->
 
 
   <!-- All code in one file -->
   <script type="text/babel">
+   // Access shared utils (optional convenience)
+   const U = window.APP_UTILS || {};
+   
+   // ---- Storage & Event keys (constants; no behavior change) ----
+   const STORAGE = {
+     DATA: 'tennisClubData',
+     SETTINGS: 'tennisClubSettings',
+     BLOCKS: 'courtBlocks',
+     UPDATE_TICK: 'tennisDataUpdateTick'
+   };
+   const EVENTS = {
+     UPDATE: 'tennisDataUpdate'
+   };
+   
+   // ---- JSON storage helpers (pure wrappers; no behavior change) ----
+   const readJSON = (key) => {
+     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+     catch { return null; }
+   };
+   const writeJSON = (key, val) => {
+     try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+     catch { return false; }
+   };
+   
+   // ---- Safe defaults for app data (no behavior change) ----
+   const getEmptyData = () => ({
+     courts: Array(12).fill(null),
+     waitingGroups: [],
+     recentlyCleared: [],
+     calculatedAvailability: null
+   });
+   
+   const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
+   
+   // ---- Core constants (declared only; not replacing existing usages) ----
+   const APP = {
+     COURT_COUNT: 12,
+     PLAYERS: { MIN: 1, MAX: 4 },
+     DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 }
+   };
+   
+   // ---- Dev flag & assert (no UI change) ----
+   const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
+   const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
+   
+   // ---- Debounce helper (no UI change) ----
+   const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+   
+   // ---- Logger (no UI change) ----
+   const LOG_LEVEL = (DEV ? 'debug' : 'warn');
+   const _PREFIX = '[Admin]';
+   const log = {
+     debug: (...a)=> { if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a); },
+     info:  (...a)=> { if (['debug','info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a); },
+     warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
+   };
+   
    // Wait for everything to load
    window.addEventListener('load', () => {
       console.log('Window loaded, checking dependencies...');
-      console.log('React:', typeof React);
-      console.log('ReactDOM:', typeof ReactDOM);
+      log.debug('React:', typeof React);
+      log.debug('ReactDOM:', typeof ReactDOM);
       
       // Add a small delay to ensure Lucide is fully loaded
       setTimeout(() => {
@@ -32,7 +93,15 @@
       }, 100);
     });
     
+    // ============================================================
+    // Section: Admin actions (assign, clear, block scheduling)
+    // ============================================================
+    
     function initializeApp() {
+      // Boot data assertion
+      const _bootData = (U.readDataSafe ? U.readDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData()));
+      assert(!_bootData || Array.isArray(_bootData.courts), 'Expected data.courts array on boot', _bootData);
+      
       const React = window.React;
       const ReactDOM = window.ReactDOM;
       const { useState, useEffect, useCallback, useMemo, memo, useRef } = React;
@@ -111,7 +180,7 @@
           this.metrics.totalResponseTime += responseTime;
           
           // Dispatch update event
-          window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { key, data } }));
+          window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
         }
 
         getMetrics() {
@@ -5272,10 +5341,10 @@ const deactivateWetCourts = () => {
       loadData();
     }, 2000);
     
-    const handleStorageUpdate = () => {
+    const handleStorageUpdate = debounce(() => {
       console.log('Storage update event received');
       loadData();
-    };
+    }, 150);
 
     // Listen for storage events from other apps/tabs
     const handleStorageEvent = (e) => {
@@ -5311,7 +5380,7 @@ useEffect(() => {
   loadBlocks();
   
   // Listen for block updates
-  const handleBlockUpdate = () => loadBlocks();
+  const handleBlockUpdate = debounce(() => loadBlocks(), 150);
   
   // Listen for storage events from other apps/tabs
   const handleBlockStorageEvent = (e) => {
@@ -6675,13 +6744,13 @@ const AnalyticsDashboard = ({ onClose }) => {
     loadAnalyticsData();
     
     // Set up event listener for real-time updates
-    const handleDataUpdate = () => {
+    const handleDataUpdate = debounce(() => {
       console.log('📡 Analytics received data update event, reloading...');
       loadAnalyticsData();
-    };
+    }, 150);
     
     window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
-    window.addEventListener('tennisDataUpdate', handleDataUpdate);
+    window.addEventListener(EVENTS.UPDATE, handleDataUpdate);
     
     // Set up auto-refresh every 30 seconds as backup (reduced frequency since we have event listeners)
     const refreshInterval = setInterval(loadAnalyticsData, 30000);
