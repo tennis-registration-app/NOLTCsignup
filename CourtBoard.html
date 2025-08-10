@@ -398,6 +398,13 @@
     
     const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
     
+    // ---- Core constants (declared only; not replacing existing usages) ----
+    const APP = {
+      COURT_COUNT: 12,
+      PLAYERS: { MIN: 1, MAX: 4 },
+      DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 }
+    };
+    
     // ---- Read-only guard (prevent accidental writes in this view) ----
     const readOnlyWrite = (...args) => {
       console.warn('Read-only view: write ignored', args);

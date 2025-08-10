@@ -51,6 +51,13 @@
    
    const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
    
+   // ---- Core constants (declared only; not replacing existing usages) ----
+   const APP = {
+     COURT_COUNT: 12,
+     PLAYERS: { MIN: 1, MAX: 4 },
+     DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 }
+   };
+   
    // ---- Dev flag & assert (no UI change) ----
    const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
    const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
