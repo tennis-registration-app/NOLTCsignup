@@ -483,13 +483,21 @@
           // Simulate cache lookup (80% cache hit rate)
           if (Math.random() > 0.2) {
             const cached = localStorage.getItem(key);
-            const data = cached ? JSON.parse(cached) : null;
+            let data = null;
+            if (cached) {
+              try { data = JSON.parse(cached); }
+              catch { /* transient partial write; skip this tick */ return null; }
+            }
             this.updateMetrics(performance.now() - startTime, true);
             return data;
           } else {
             // Cache miss - slower operation
             const data = localStorage.getItem(key);
-            const result = data ? JSON.parse(data) : null;
+            let result = null;
+            if (data) {
+              try { result = JSON.parse(data); }
+              catch { /* transient partial write; skip this tick */ return null; }
+            }
             this.updateMetrics(performance.now() - startTime, false);
             return result;
           }
@@ -622,7 +630,9 @@
         const now = new Date();
         
         try {
-          const blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+          let blocks = [];
+          try { blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+          catch { /* transient partial write; use empty array */ }
           
           // PRIORITY 1: Check for active wet court blocks first
           const wetBlock = blocks.find(block => 
@@ -820,7 +830,9 @@
             
             // Check for court blocks
             try {
-              const courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+              let courtBlocks = [];
+              try { courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+              catch { /* transient partial write; use empty array */ }
               const activeBlocks = courtBlocks
                 .filter(block => 
                   block.courtNumber === courtNumber && 
@@ -1338,7 +1350,9 @@
               
              // NEW: Clean up blocks at midnight to preserve historical data for current day
             try {
-              const blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+              let blocks = [];
+              try { blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+              catch { /* transient partial write; use empty array */ }
               const now = new Date();
               
               // Get start of today (midnight)
