@@ -26,6 +26,8 @@
   <script type="text/babel">
    // Access shared utils (optional convenience)
    const U = window.APP_UTILS || {};
+   // --- One-time guard helper (no UI change)
+   const _one = (key) => (window[key] ? true : (window[key] = true, false));
    
    // ---- Storage & Event keys (constants; no behavior change) ----
    const STORAGE = {
@@ -5335,6 +5337,9 @@ const deactivateWetCourts = () => {
  useEffect(() => {
     loadData();
     
+    // prevent duplicate attachment if this component re-mounts
+    if (_one('__ADMIN_LISTENERS_INSTALLED')) return;
+    
     // Poll for data changes every 2 seconds
     const pollInterval = setInterval(() => {
       console.log('Polling for updates...');
@@ -5356,13 +5361,20 @@ const deactivateWetCourts = () => {
       }
     };
     
-    window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleStorageUpdate);
-    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleStorageUpdate, { passive: true });
+    window.addEventListener('storage', handleStorageEvent, { passive: true });
+    
+    // defensive cleanup on unload as well
+    window.addEventListener('beforeunload', () => {
+      try { clearInterval(pollInterval); } catch {}
+      try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleStorageUpdate); } catch {}
+      try { window.removeEventListener('storage', handleStorageEvent); } catch {}
+    }, { once: true });
     
     return () => {
-      clearInterval(pollInterval);
-      window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleStorageUpdate);
-      window.removeEventListener('storage', handleStorageEvent);
+      try { clearInterval(pollInterval); } catch {}
+      try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleStorageUpdate); } catch {}
+      try { window.removeEventListener('storage', handleStorageEvent); } catch {}
     };
   }, [loadData]);
 
@@ -5379,6 +5391,9 @@ useEffect(() => {
 
   loadBlocks();
   
+  // prevent duplicate block listeners
+  if (_one('__ADMIN_BLOCK_LISTENERS_INSTALLED')) return;
+  
   // Listen for block updates
   const handleBlockUpdate = debounce(() => loadBlocks(), 150);
   
@@ -5392,12 +5407,18 @@ useEffect(() => {
     }
   };
   
-  window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate);
-  window.addEventListener('storage', handleBlockStorageEvent);
+  window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate, { passive: true });
+  window.addEventListener('storage', handleBlockStorageEvent, { passive: true });
+  
+  // defensive cleanup on unload
+  window.addEventListener('beforeunload', () => {
+    try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate); } catch {}
+    try { window.removeEventListener('storage', handleBlockStorageEvent); } catch {}
+  }, { once: true });
   
   return () => {
-    window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate);
-    window.removeEventListener('storage', handleBlockStorageEvent);
+    try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate); } catch {}
+    try { window.removeEventListener('storage', handleBlockStorageEvent); } catch {}
   };
 }, []);
 

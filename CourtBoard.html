@@ -373,6 +373,8 @@
   <script type="text/babel">
     // Access shared utils (optional convenience)
     const U = window.APP_UTILS || {};
+    // --- One-time guard helper (no UI change)
+    const _one = (key) => (window[key] ? true : (window[key] = true, false));
     
     // ---- Storage & Event keys (constants; no behavior change) ----
     const STORAGE = {
@@ -1358,6 +1360,9 @@
         useEffect(() => {
           console.log('🎯 Setting up enhanced data loading...');
           
+          // prevent duplicate attachment if this component re-mounts
+          if (_one('__CB_LISTENERS_INSTALLED')) return;
+          
           // Initial load
           loadData();
 
@@ -1366,14 +1371,20 @@
             loadData();
           }, 150);
 
-          window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate);
+          window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate, { passive: true });
           
           // Increased polling frequency for immediate updates
           const interval = setInterval(loadData, CONSTANTS.POLL_INTERVAL_MS);
 
+          // defensive cleanup on unload as well
+          window.addEventListener('beforeunload', () => {
+            try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate); } catch {}
+            try { if (typeof interval !== 'undefined') clearInterval(interval); } catch {}
+          }, { once: true });
+
           return () => {
-            window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate);
-            clearInterval(interval);
+            try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate); } catch {}
+            try { if (typeof interval !== 'undefined') clearInterval(interval); } catch {}
           };
         }, [loadData]);
 
