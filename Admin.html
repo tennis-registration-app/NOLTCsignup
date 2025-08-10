@@ -83,6 +83,24 @@
      warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
    };
    
+   // central registry for timers in this view  
+   const _timers = [];
+   const addTimer = (id, type = 'interval') => { _timers.push({ id, type }); return id; };
+   const clearAllTimers = () => {
+     _timers.forEach(({id, type}) => {
+       try { 
+         if (type === 'interval') clearInterval(id);
+         else clearTimeout(id);
+       } catch {} 
+     });
+     _timers.length = 0;
+   };
+   
+   // Global cleanup on page unload
+   window.addEventListener('beforeunload', () => {
+     try { clearAllTimers(); } catch {}
+   });
+   
    // Wait for everything to load
    window.addEventListener('load', () => {
       console.log('Window loaded, checking dependencies...');
@@ -90,9 +108,9 @@
       log.debug('ReactDOM:', typeof ReactDOM);
       
       // Add a small delay to ensure Lucide is fully loaded
-      setTimeout(() => {
+      addTimer(setTimeout(() => {
         initializeApp();
-      }, 100);
+      }, 100), 'timeout');
     });
     
     // ============================================================
@@ -852,8 +870,8 @@ const CourtStatusGrid = ({ courts, courtBlocks, selectedDate, onClearCourt, onMo
     // Only use local polling if wetCourts prop is not provided
     if (!wetCourts) {
       checkWetCourts();
-      const interval = setInterval(checkWetCourts, 1000); // Check every second
-      return () => clearInterval(interval);
+      const interval = addTimer(setInterval(checkWetCourts, 1000)); // Check every second
+      return () => { try { clearInterval(interval); } catch {} };
     }
   }, [currentTime, refreshKey, wetCourts]);
 
@@ -5330,7 +5348,7 @@ const deactivateWetCourts = () => {
   // Show notification
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000);
+    addTimer(setTimeout(() => setNotification(null), 3000), 'timeout');
   };
 
  // Load data on mount and poll for updates
@@ -5341,10 +5359,10 @@ const deactivateWetCourts = () => {
     if (_one('__ADMIN_LISTENERS_INSTALLED')) return;
     
     // Poll for data changes every 2 seconds
-    const pollInterval = setInterval(() => {
+    const pollInterval = addTimer(setInterval(() => {
       console.log('Polling for updates...');
       loadData();
-    }, 2000);
+    }, 2000));
     
     const handleStorageUpdate = debounce(() => {
       console.log('Storage update event received');
@@ -5366,7 +5384,7 @@ const deactivateWetCourts = () => {
     
     // defensive cleanup on unload as well
     window.addEventListener('beforeunload', () => {
-      try { clearInterval(pollInterval); } catch {}
+      try { clearAllTimers(); } catch {}
       try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleStorageUpdate); } catch {}
       try { window.removeEventListener('storage', handleStorageEvent); } catch {}
     }, { once: true });
@@ -5424,11 +5442,11 @@ useEffect(() => {
 
 // Update current time every second
 useEffect(() => {
-    const timer = setInterval(() => {
+    const timer = addTimer(setInterval(() => {
       setCurrentTime(new Date());
-    }, 1000);
+    }, 1000));
     
-    return () => clearInterval(timer);
+    return () => { try { clearInterval(timer); } catch {} };
   }, []);
 
   // Court operations
@@ -6774,10 +6792,10 @@ const AnalyticsDashboard = ({ onClose }) => {
     window.addEventListener(EVENTS.UPDATE, handleDataUpdate);
     
     // Set up auto-refresh every 30 seconds as backup (reduced frequency since we have event listeners)
-    const refreshInterval = setInterval(loadAnalyticsData, 30000);
+    const refreshInterval = addTimer(setInterval(loadAnalyticsData, 30000));
     
     return () => {
-      clearInterval(refreshInterval);
+      try { clearInterval(refreshInterval); } catch {};
       window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
       window.removeEventListener('tennisDataUpdate', handleDataUpdate);
     };

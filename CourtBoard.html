@@ -436,12 +436,30 @@
       warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
     };
     
+    // central registry for timers in this view
+    const _timers = [];
+    const addTimer = (id, type = 'interval') => { _timers.push({ id, type }); return id; };
+    const clearAllTimers = () => {
+      _timers.forEach(({id, type}) => {
+        try { 
+          if (type === 'interval') clearInterval(id);
+          else clearTimeout(id);
+        } catch {} 
+      });
+      _timers.length = 0;
+    };
+    
+    // Global cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      try { clearAllTimers(); } catch {}
+    });
+    
     // Wait for everything to load
     window.addEventListener('load', () => {
       console.log('🚀 Loading DataStore Integrated Tennis Display...');
-      setTimeout(() => {
+      addTimer(setTimeout(() => {
         initializeApp();
-      }, 100);
+      }, 100), 'timeout');
     });
     
     // ============================================================
@@ -1374,17 +1392,17 @@
           window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate, { passive: true });
           
           // Increased polling frequency for immediate updates
-          const interval = setInterval(loadData, CONSTANTS.POLL_INTERVAL_MS);
+          const interval = addTimer(setInterval(loadData, CONSTANTS.POLL_INTERVAL_MS));
 
           // defensive cleanup on unload as well
           window.addEventListener('beforeunload', () => {
             try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate); } catch {}
-            try { if (typeof interval !== 'undefined') clearInterval(interval); } catch {}
+            try { clearAllTimers(); } catch {}
           }, { once: true });
 
           return () => {
             try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate); } catch {}
-            try { if (typeof interval !== 'undefined') clearInterval(interval); } catch {}
+            try { clearAllTimers(); } catch {}
           };
         }, [loadData]);
 
@@ -1401,16 +1419,16 @@
             document.getElementById('operations-count').textContent = metrics.operationsPerformed;
           };
 
-          const metricsInterval = setInterval(updateMetrics, 2000);
-          return () => clearInterval(metricsInterval);
+          const metricsInterval = addTimer(setInterval(updateMetrics, 2000));
+          return () => { try { clearInterval(metricsInterval); } catch {} };
         }, []);
 
         useEffect(() => {
-          const timer = setInterval(() => {
+          const timer = addTimer(setInterval(() => {
             setCurrentTime(new Date());
-          }, CONSTANTS.UPDATE_INTERVAL_MS);
+          }, CONSTANTS.UPDATE_INTERVAL_MS));
 
-          return () => clearInterval(timer);
+          return () => { try { clearInterval(timer); } catch {} };
         }, []);
 
         const hasEmptyCourts = () => {
@@ -1543,12 +1561,12 @@
       root.render(<TennisCourtDisplay />);
       
       // Hide performance overlay after 30 seconds for production use
-      setTimeout(() => {
+      addTimer(setTimeout(() => {
         const overlay = document.getElementById('performance-overlay');
         if (overlay) {
           overlay.classList.add('hidden');
         }
-      }, 30000);
+      }, 30000), 'timeout');
       
       console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
