@@ -394,6 +394,10 @@
       return false;
     };
     
+    // ---- Dev flag & assert (no UI change) ----
+    const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
+    const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
+    
     // Wait for everything to load
     window.addEventListener('load', () => {
       console.log('🚀 Loading DataStore Integrated Tennis Display...');
@@ -403,6 +407,10 @@
     });
     
     async function initializeApp() {
+      // Boot data assertion
+      const _bootData = (typeof readJSON === 'function' ? readJSON(STORAGE.DATA) : (() => { try { return JSON.parse(localStorage.getItem(STORAGE.DATA)); } catch { return null; }})());
+      assert(!_bootData || Array.isArray(_bootData.courts), 'Expected data.courts array on boot', _bootData);
+      
       const React = window.React;
       const ReactDOM = window.ReactDOM;
       const { useState, useEffect, useCallback, useMemo, useRef } = React;

@@ -65,6 +65,10 @@
       catch { return false; }
     };
     
+    // ---- Dev flag & assert (no UI change) ----
+    const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
+    const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
+    
     const { useState, useEffect, useRef } = React;
 
 // Initialize DataStore immediately
@@ -163,6 +167,11 @@ class TennisCourtDataStore {
 
 // Initialize global DataStore instance
 const dataStore = new TennisCourtDataStore();
+
+// Boot data assertion
+const _bootData = (typeof readJSON === 'function' ? readJSON(STORAGE.DATA) : (() => { try { return JSON.parse(localStorage.getItem(STORAGE.DATA)); } catch { return null; }})());
+assert(!_bootData || Array.isArray(_bootData.courts), 'Expected data.courts array on boot', _bootData);
+
 // Emoji Icons (matching AdminPanelV2 pattern)
 const Users = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>👥</span>;
 const Bell = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>🔔</span>;
