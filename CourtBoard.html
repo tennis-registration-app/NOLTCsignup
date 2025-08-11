@@ -1640,11 +1640,23 @@
         const blocks = rawList.map(normalizeBlock).filter(Boolean);
         const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
         const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
-        return blocks
+        const result = blocks
           .filter(b => b.start > now) // future only
           .filter(b => b.start >= startOfToday && b.start <= endOfToday) // today only
           .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
           .sort((a,b) => a.start - b.start);
+        try {
+          console.log('[ReservedCourts] fetchTodayFutureBlocks', {
+            nowLocal: now.toString(),
+            rawCount: rawList.length,
+            normalizedCount: blocks.length,
+            futureTodayCount: result.length,
+            sample: result.slice(0,3).map(x => ({
+              courts: x.courts, start: x.start.toString(), end: x.end.toString(), reason: x.reason
+            }))
+          });
+        } catch {}
+        return result;
       }
 
       // Grouping:
@@ -1694,9 +1706,9 @@
         const [now, setNow] = useState(new Date());
         const data = useMemo(() => {
           const future = fetchTodayFutureBlocks(now);
-          // Uncomment for one-time debugging:
-          // console.log('[ReservedCourts] future blocks count:', future.length, future);
-          return buildGroups(future);
+          const grouped = buildGroups(future);
+          try { console.log('[ReservedCourts] grouped', { multi: grouped.multi.length, perCourt: grouped.perCourt.length }); } catch {}
+          return grouped;
         }, [tick, now]);
 
         useEffect(() => {
@@ -1776,6 +1788,7 @@
           host.className = 'mt-4';
           container.appendChild(host);
         }
+        try { console.log('[ReservedCourts] mounting desktop'); } catch {}
         ReactDOM.createRoot(host).render(<ReservedCourtsPanel />);
       }
 
@@ -1791,6 +1804,7 @@
             mhost.className = 'm-2';
             mobileParent.appendChild(mhost);
           }
+          try { console.log('[ReservedCourts] mounting mobile'); } catch {}
           ReactDOM.createRoot(mhost).render(<ReservedCourtsPanel />);
         }
       }
@@ -1808,15 +1822,20 @@
       // Mount mobile immediately, wait for desktop container
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
+          try { console.log('[ReservedCourts] DOMContentLoaded -> mount'); } catch {}
           mountReservedCourts();
           waitForReservedCourtsContainer();
         }, { once: true });
       } else {
+        try { console.log('[ReservedCourts] ready -> mount'); } catch {}
         setTimeout(() => {
           mountReservedCourts();
           waitForReservedCourtsContainer();
         }, 0);
       }
+      
+      // Expose debug helpers
+      try { window.__RC = { fetchTodayFutureBlocks, buildGroups }; } catch {}
     })();
   </script>
 </body>
