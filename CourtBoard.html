@@ -1585,5 +1585,195 @@
       console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
   </script>
+  <!-- Reserved Courts (today, future only). Renders under Next Available; also visible on mobile. -->
+  <script type="text/babel">
+    (() => {
+      const React = window.React;
+      const ReactDOM = window.ReactDOM;
+      if (!React || !ReactDOM) return;
+      const { useEffect, useMemo, useState } = React;
+      const U = window.APP_UTILS || {};
+
+      const STORAGE_BLOCKS_KEY = (U.STORAGE && U.STORAGE.BLOCKS) || 'courtBlocks';
+      const UPDATE_EVENT = (U.EVENTS && U.EVENTS.UPDATE) || 'tennisDataUpdate';
+      const fmtTime = (d) => (U.formatTime ? U.formatTime(d) : new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+      const safeJSON = (s) => { try { return JSON.parse(s); } catch { return null; } };
+
+      function endOfDay(d = new Date()) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
+      function sameYMD(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+      // Normalize varying shapes into a consistent {courts[], start, end, reason}
+      function normalizeBlock(raw) {
+        let start = null, end = null;
+        const reason = (raw.reason || '').toUpperCase();
+        if (raw.startTime) start = new Date(raw.startTime);
+        else if (raw.date && raw.time) start = new Date(`${raw.date}T${raw.time}`);
+        if (raw.endTime) end = new Date(raw.endTime);
+        else if (start && (raw.duration || raw.duration === 0)) {
+          end = new Date(start); end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
+        }
+        const courts = Array.isArray(raw.courts)
+          ? [...raw.courts].filter(Number.isFinite).sort((a,b)=>a-b)
+          : (raw.courtNumber ? [raw.courtNumber] : []);
+        return (start && end && courts.length) ? { courts, start, end, reason } : null;
+      }
+
+      // Today's future blocks only
+      function fetchTodayFutureBlocks(now = new Date()) {
+        const list = safeJSON(localStorage.getItem(STORAGE_BLOCKS_KEY)) || [];
+        const blocks = list.map(normalizeBlock).filter(Boolean);
+        return blocks
+          .filter(b => sameYMD(b.start, now) && b.start > now)
+          .map(b => ({ ...b, end: b.end > endOfDay(now) ? endOfDay(now) : b.end }))
+          .sort((a,b) => a.start - b.start);
+      }
+
+      // Grouping:
+      // 1) Multi-court with identical [start,end,reason] => one line
+      // 2) Remaining singles aggregated per court
+      function buildGroups(blocks) {
+        const key = (b) => `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
+        const slotMap = new Map(); // key -> [blocks]
+        for (const b of blocks) {
+          const k = key(b);
+          if (!slotMap.has(k)) slotMap.set(k, []);
+          slotMap.get(k).push(b);
+        }
+        const multi = [];
+        const usedCourtsBySlot = new Map(); // key -> Set(courts)
+        const singles = [];
+        for (const [k, blist] of slotMap.entries()) {
+          const courts = new Set();
+          blist.forEach(b => b.courts.forEach(c => courts.add(c)));
+          if (courts.size > 1) {
+            multi.push({ courts: Array.from(courts).sort((a,b)=>a-b), start: blist[0].start, end: blist[0].end, reason: blist[0].reason });
+            usedCourtsBySlot.set(k, courts);
+          } else {
+            blist.forEach(b => singles.push(b));
+          }
+        }
+        const perCourtMap = new Map(); // court -> [{start,end,reason}]
+        for (const b of singles) {
+          const k = key(b);
+          for (const c of b.courts) {
+            if (usedCourtsBySlot.has(k) && usedCourtsBySlot.get(k).has(c)) continue;
+            if (!perCourtMap.has(c)) perCourtMap.set(c, []);
+            perCourtMap.get(c).push({ start: b.start, end: b.end, reason: b.reason });
+          }
+        }
+        for (const arr of perCourtMap.values()) arr.sort((a,b)=>a.start - b.start);
+        return {
+          multi: multi.sort((a,b)=>a.start - b.start),
+          perCourt: Array.from(perCourtMap.entries()).sort((a,b)=>a[0]-b[0]),
+        };
+      }
+
+      const startsSoon = (start, now=new Date()) => (start - now) <= 60*60*1000;
+
+      function ReservedCourtsPanel() {
+        const [tick, setTick] = useState(0);
+        const [now, setNow] = useState(new Date());
+        const data = useMemo(() => buildGroups(fetchTodayFutureBlocks(now)), [tick, now]);
+
+        useEffect(() => {
+          const onStorage = (e) => {
+            if (!e || !e.key) return;
+            if (e.key === STORAGE_BLOCKS_KEY || e.key === (U.STORAGE && U.STORAGE.UPDATE_TICK)) setTick(t=>t+1);
+          };
+          const onUpdate = () => setTick(t=>t+1);
+          const onVis = () => { if (!document.hidden) { setNow(new Date()); setTick(t=>t+1); } };
+          window.addEventListener('storage', onStorage, { passive: true });
+          window.addEventListener(UPDATE_EVENT, onUpdate, { passive: true });
+          document.addEventListener('visibilitychange', onVis, { passive: true });
+          const id = setInterval(() => setNow(new Date()), 30000);
+          return () => {
+            try { window.removeEventListener('storage', onStorage); } catch {}
+            try { window.removeEventListener(UPDATE_EVENT, onUpdate); } catch {}
+            try { document.removeEventListener('visibilitychange', onVis); } catch {}
+            try { clearInterval(id); } catch {}
+          };
+        }, []);
+
+        const hasContent = (data.multi.length + data.perCourt.length) > 0;
+        if (!hasContent) {
+          return (
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Reserved Courts</h3>
+              <div className="text-sm text-gray-500">No upcoming blocks today.</div>
+            </div>
+          );
+        }
+        return (
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">Reserved Courts</h3>
+            {data.multi.length > 0 && (
+              <div className="mb-3">
+                <ul className="space-y-2">
+                  {data.multi.map((m, i) => (
+                    <li key={`m-${i}`} className="text-sm text-gray-800">
+                      <span className="font-medium">Courts {m.courts.join(', ')}</span>{' '}—{' '}
+                      <span>{fmtTime(m.start)} – {fmtTime(m.end)} ({m.reason})</span>{' '}
+                      {startsSoon(m.start) ? <span aria-label="starts soon" title="Starts within 60 min">⚠️</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {data.perCourt.length > 0 && (
+              <div>
+                <ul className="space-y-2">
+                  {data.perCourt.map(([court, entries]) => (
+                    <li key={`c-${court}`} className="text-sm text-gray-800">
+                      <span className="font-medium">Court {court}</span>{' '}—{' '}
+                      <span>
+                        {entries.map((e, idx) => (
+                          <span key={idx}>
+                            {fmtTime(e.start)} – {fmtTime(e.end)} ({e.reason})
+                            {startsSoon(e.start) ? ' ⚠️' : ''}
+                            {idx < entries.length - 1 ? '; ' : ''}
+                          </span>
+                        ))}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Mount under right-column Next Available, and also into mobile layout
+      function mountReservedCourts() {
+        const container = document.querySelector('.next-available-section');
+        if (container) {
+          let host = container.querySelector('#reserved-courts-root');
+          if (!host) {
+            host = document.createElement('div');
+            host.id = 'reserved-courts-root';
+            host.className = 'mt-4';
+            container.appendChild(host);
+          }
+          ReactDOM.createRoot(host).render(<ReservedCourtsPanel />);
+        }
+        const mobileParent = document.querySelector('.mobile-waiting-section') || document.querySelector('.mobile-layout');
+        if (mobileParent) {
+          let mhost = document.getElementById('reserved-courts-root-mobile');
+          if (!mhost) {
+            mhost = document.createElement('div');
+            mhost.id = 'reserved-courts-root-mobile';
+            mhost.className = 'm-2';
+            mobileParent.appendChild(mhost);
+          }
+          ReactDOM.createRoot(mhost).render(<ReservedCourtsPanel />);
+        }
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mountReservedCourts, { once: true });
+      } else {
+        setTimeout(mountReservedCourts, 0);
+      }
+    })();
+  </script>
 </body>
 </html>
