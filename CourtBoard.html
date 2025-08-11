@@ -1602,29 +1602,48 @@
       function endOfDay(d = new Date()) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
       function sameYMD(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
 
-      // Normalize varying shapes into a consistent {courts[], start, end, reason}
+      // Normalize to { courts:number[], start:Date, end:Date, reason:string }
       function normalizeBlock(raw) {
+        // Resolve reason/title consistently
+        const reasonRaw =
+          raw.reason ||
+          raw.title ||
+          (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) ||
+          '';
+        const reason = String(reasonRaw).trim().toUpperCase();
+
+        // Resolve times (ISO strings like "...Z" are fine; Date will use local when we compare parts)
         let start = null, end = null;
-        const reason = (raw.reason || '').toUpperCase();
         if (raw.startTime) start = new Date(raw.startTime);
         else if (raw.date && raw.time) start = new Date(`${raw.date}T${raw.time}`);
         if (raw.endTime) end = new Date(raw.endTime);
         else if (start && (raw.duration || raw.duration === 0)) {
-          end = new Date(start); end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
+          end = new Date(start);
+          end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
         }
-        const courts = Array.isArray(raw.courts)
-          ? [...raw.courts].filter(Number.isFinite).sort((a,b)=>a-b)
-          : (raw.courtNumber ? [raw.courtNumber] : []);
+
+        // Collect courts from any of the known fields, dedupe + sort
+        let courts = [];
+        if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
+        if (raw.eventDetails && Array.isArray(raw.eventDetails.courts)) {
+          courts = courts.concat(raw.eventDetails.courts);
+        }
+        if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
+        courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a,b)=>a-b);
+
         return (start && end && courts.length) ? { courts, start, end, reason } : null;
       }
 
-      // Today's future blocks only
+      // Today's FUTURE blocks only (local day boundaries; exclude active/past)
       function fetchTodayFutureBlocks(now = new Date()) {
-        const list = safeJSON(localStorage.getItem(STORAGE_BLOCKS_KEY)) || [];
-        const blocks = list.map(normalizeBlock).filter(Boolean);
+        const rawList = safeJSON(localStorage.getItem(STORAGE_BLOCKS_KEY)) || [];
+        const blocks = rawList.map(normalizeBlock).filter(Boolean);
+        const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
+        const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
         return blocks
-          .filter(b => sameYMD(b.start, now) && b.start > now)
-          .map(b => ({ ...b, end: b.end > endOfDay(now) ? endOfDay(now) : b.end }))
+          .filter(b => b.start > now) // future only
+          .filter(b => b.start >= startOfToday && b.start <= endOfToday) // today only
+          .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
           .sort((a,b) => a.start - b.start);
       }
 
@@ -1673,7 +1692,12 @@
       function ReservedCourtsPanel() {
         const [tick, setTick] = useState(0);
         const [now, setNow] = useState(new Date());
-        const data = useMemo(() => buildGroups(fetchTodayFutureBlocks(now)), [tick, now]);
+        const data = useMemo(() => {
+          const future = fetchTodayFutureBlocks(now);
+          // Uncomment for one-time debugging:
+          // console.log('[ReservedCourts] future blocks count:', future.length, future);
+          return buildGroups(future);
+        }, [tick, now]);
 
         useEffect(() => {
           const onStorage = (e) => {
