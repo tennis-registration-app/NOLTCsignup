@@ -1743,19 +1743,21 @@
         );
       }
 
+      // Helper function to inject the Reserved Courts panel
+      function injectReservedCourtsPanel(container) {
+        let host = container.querySelector('#reserved-courts-root');
+        if (!host) {
+          host = document.createElement('div');
+          host.id = 'reserved-courts-root';
+          host.className = 'mt-4';
+          container.appendChild(host);
+        }
+        ReactDOM.createRoot(host).render(<ReservedCourtsPanel />);
+      }
+
       // Mount under right-column Next Available, and also into mobile layout
       function mountReservedCourts() {
-        const container = document.querySelector('.next-available-section');
-        if (container) {
-          let host = container.querySelector('#reserved-courts-root');
-          if (!host) {
-            host = document.createElement('div');
-            host.id = 'reserved-courts-root';
-            host.className = 'mt-4';
-            container.appendChild(host);
-          }
-          ReactDOM.createRoot(host).render(<ReservedCourtsPanel />);
-        }
+        // Handle mobile layout immediately (usually available)
         const mobileParent = document.querySelector('.mobile-waiting-section') || document.querySelector('.mobile-layout');
         if (mobileParent) {
           let mhost = document.getElementById('reserved-courts-root-mobile');
@@ -1768,10 +1770,28 @@
           ReactDOM.createRoot(mhost).render(<ReservedCourtsPanel />);
         }
       }
+
+      // Wait for container to exist before mounting desktop version
+      function waitForReservedCourtsContainer() {
+        const container = document.querySelector('.next-available-section');
+        if (container) {
+          injectReservedCourtsPanel(container);
+        } else {
+          setTimeout(waitForReservedCourtsContainer, 200);
+        }
+      }
+
+      // Mount mobile immediately, wait for desktop container
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', mountReservedCourts, { once: true });
+        document.addEventListener('DOMContentLoaded', () => {
+          mountReservedCourts();
+          waitForReservedCourtsContainer();
+        }, { once: true });
       } else {
-        setTimeout(mountReservedCourts, 0);
+        setTimeout(() => {
+          mountReservedCourts();
+          waitForReservedCourtsContainer();
+        }, 0);
       }
     })();
   </script>
