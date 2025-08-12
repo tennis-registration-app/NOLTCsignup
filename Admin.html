@@ -221,7 +221,7 @@
       }
 
       // Initialize DataStore
-      const dataStore = new TennisCourtDataStore();
+      const dataStore = new (window.APP_UTILS?.TennisCourtDataStore || class {})();
       
     // For the regular Lucide library, we'll create simple icon components
 
