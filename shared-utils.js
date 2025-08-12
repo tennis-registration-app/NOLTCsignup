@@ -8,6 +8,7 @@
     DATA: 'tennisClubData',
     SETTINGS: 'tennisClubSettings',
     BLOCKS: 'courtBlocks',
+    HISTORICAL_GAMES: 'tennisHistoricalGames',
     UPDATE_TICK: 'tennisDataUpdateTick',
   };
   const EVENTS = { UPDATE: 'tennisDataUpdate' };
@@ -75,6 +76,54 @@
     return normalized;
   };
 
+  // --- Historical games helpers
+  const getHistoricalGames = () => readJSON(STORAGE.HISTORICAL_GAMES) || [];
+  
+  const addHistoricalGame = (game) => {
+    const games = getHistoricalGames();
+    const gameRecord = {
+      ...game,
+      id: `${game.courtNumber}-${Date.now()}`,
+      dateAdded: new Date().toISOString(),
+      date: new Date(game.startTime).toISOString().split('T')[0] // YYYY-MM-DD format
+    };
+    games.push(gameRecord);
+    writeJSON(STORAGE.HISTORICAL_GAMES, games);
+    return gameRecord;
+  };
+
+  
+  const searchHistoricalGames = (filters = {}) => {
+    const games = getHistoricalGames();
+    return games.filter(game => {
+      // Court number filter
+      if (filters.courtNumber && game.courtNumber !== filters.courtNumber) return false;
+      
+      // Date range filter
+      if (filters.startDate) {
+        const gameDate = new Date(game.date);
+        const startDate = new Date(filters.startDate);
+        if (gameDate < startDate) return false;
+      }
+      if (filters.endDate) {
+        const gameDate = new Date(game.date);
+        const endDate = new Date(filters.endDate);
+        if (gameDate > endDate) return false;
+      }
+      
+      // Player name filter (partial match, case insensitive)
+      if (filters.playerName) {
+        const searchName = filters.playerName.toLowerCase();
+        const hasPlayer = game.players.some(player => 
+          player.name.toLowerCase().includes(searchName)
+        );
+        if (!hasPlayer) return false;
+      }
+      
+      return true;
+    }).sort((a, b) => new Date(b.startTime) - new Date(a.startTime)); // Most recent first
+  };
+
   // Expose on window
   window.APP_UTILS = {
     COURT_COUNT,
@@ -86,6 +135,9 @@
     getEmptyData,
     normalizeData,
     readDataSafe,
+    getHistoricalGames,
+    addHistoricalGame,
+    searchHistoricalGames,
   };
 })();
 

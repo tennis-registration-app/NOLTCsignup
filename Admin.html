@@ -563,285 +563,8 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
   );
 };
 
-// Advanced Block Scheduler
-const BlockScheduler = ({ onApplyBlocks, existingBlocks }) => {
-  const [blockType, setBlockType] = useState('single'); // single, recurring, range
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [duration, setDuration] = useState(60);
-  const [selectedCourts, setSelectedCourts] = useState([]);
-  const [reason, setReason] = useState('');
-  const [recurringDays, setRecurringDays] = useState([]);
-  const [recurringWeeks, setRecurringWeeks] = useState(4);
-
-  const handleApply = () => {
-  
-  if (!reason || selectedCourts.length === 0 || !selectedTime) {
-    alert('Please fill in all required fields');
-    return;
-  }
-
-    const blocks = [];
-    
-    if (blockType === 'single') {
-      blocks.push({
-        date: selectedDate,
-        time: selectedTime,
-        duration,
-        courts: selectedCourts,
-        reason
-      });
-    } else if (blockType === 'range') {
-      const start = new Date(selectedDate);
-      const end = new Date(endDate || selectedDate);
-      
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        blocks.push({
-          date: d.toISOString().split('T')[0],
-          time: selectedTime,
-          duration,
-          courts: selectedCourts,
-          reason
-        });
-      }
-    } else if (blockType === 'recurring') {
-      const start = new Date(selectedDate);
-      const weeksToGenerate = recurringWeeks;
-      
-      for (let w = 0; w < weeksToGenerate; w++) {
-        for (let d = 0; d < 7; d++) {
-          if (recurringDays.includes(d)) {
-            const date = new Date(start);
-            date.setDate(date.getDate() + (w * 7) + d - start.getDay());
-            
-            if (date >= start) {
-              blocks.push({
-                date: date.toISOString().split('T')[0],
-                time: selectedTime,
-                duration,
-                courts: selectedCourts,
-                reason
-              });
-            }
-          }
-        }
-      }
-    }
-
-    onApplyBlocks(blocks);
-    
-    // Reset form
-    setSelectedCourts([]);
-    setReason('');
-    setRecurringDays([]);
-  };
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-4">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Schedule Blocks</h3>
-      
-      {/* Block Type Selector */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setBlockType('single')}
-          className={`px-4 py-2 rounded ${
-            blockType === 'single' 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          Single Day
-        </button>
-        <button
-          onClick={() => setBlockType('range')}
-          className={`px-4 py-2 rounded ${
-            blockType === 'range' 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          Date Range
-        </button>
-        <button
-          onClick={() => setBlockType('recurring')}
-          className={`px-4 py-2 rounded ${
-            blockType === 'recurring' 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-gray-200 text-gray-700'
-          }`}
-        >
-          Recurring
-        </button>
-      </div>
-
-      {/* Date Selection */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {blockType === 'range' ? 'Start Date' : 'Date'}
-        </label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-      </div>
-
-      {blockType === 'range' && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            min={selectedDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-      )}
-
-      {blockType === 'recurring' && (
-        <>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Days of Week</label>
-            <div className="flex gap-1">
-              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, i) => (
-                <button
-                  key={day}
-                  onClick={() => {
-                    setRecurringDays(
-                      recurringDays.includes(i)
-                        ? recurringDays.filter(d => d !== i)
-                        : [...recurringDays, i]
-                    );
-                  }}
-                  className={`px-3 py-1 rounded text-sm ${
-                    recurringDays.includes(i)
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Repeat for (weeks)
-            </label>
-            <input
-              type="number"
-              value={recurringWeeks}
-              onChange={(e) => setRecurringWeeks(parseInt(e.target.value) || 1)}
-              min="1"
-              max="52"
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        </>
-      )}
-
-      {/* Time and Duration */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-          <input
-            type="time"
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label>
-          <input
-            type="number"
-            value={duration}
-            onChange={(e) => setDuration(parseInt(e.target.value) || 60)}
-            min="30"
-            step="30"
-            className="w-full p-2 border rounded"
-          />
-        </div>
-      </div>
-
-      {/* Reason */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-        <div className="flex gap-2 mb-2">
-          {['MAINTENANCE', 'WET COURT', 'LESSON', 'TOURNAMENT'].map(r => (
-            <button
-              key={r}
-              onClick={() => setReason(r)}
-              className={`px-3 py-1 rounded text-sm ${
-                reason === r
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-        <input
-          type="text"
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Or enter custom reason..."
-          className="w-full p-2 border rounded"
-        />
-      </div>
-
-      {/* Court Selection */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Courts</label>
-        <div className="grid grid-cols-6 gap-2">
-          {[...Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT)].map((_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                setSelectedCourts(
-                  selectedCourts.includes(i + 1)
-                    ? selectedCourts.filter(c => c !== i + 1)
-                    : [...selectedCourts, i + 1]
-                );
-              }}
-              className={`p-2 rounded font-medium ${
-                selectedCourts.includes(i + 1)
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => {
-            setSelectedCourts(
-              selectedCourts.length === TENNIS_CONFIG.COURTS.TOTAL_COUNT
-                ? []
-                : [...Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT)].map((_, i) => i + 1)
-            );
-          }}
-          className="mt-2 text-sm text-blue-600 hover:text-blue-700"
-        >
-          {selectedCourts.length === TENNIS_CONFIG.COURTS.TOTAL_COUNT ? 'Clear All' : 'Select All'}
-        </button>
-      </div>
-
-      {/* Apply Button */}
-      <button
-        onClick={handleApply}
-        className="w-full py-2 bg-green-500 text-white rounded font-medium hover:bg-green-600"
-      >
-        Apply Blocks
-      </button>
-    </div>
-  );
-};
+// BlockScheduler component removed - was unused legacy code
+// All block scheduling now handled by CompleteBlockManagerEnhanced
 
 
 // Court Status Grid - WITH WET COURT FUNCTIONALITY
@@ -5175,9 +4898,207 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
   );
 };
 
+// Game History Search Component
+const GameHistorySearch = () => {
+  const [searchFilters, setSearchFilters] = useState({
+    courtNumber: '',
+    playerName: '',
+    startDate: '',
+    endDate: ''
+  });
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const handleSearch = () => {
+    setIsSearching(true);
+    setHasSearched(true);
+    
+    // Build filters object
+    const filters = {};
+    if (searchFilters.courtNumber) filters.courtNumber = parseInt(searchFilters.courtNumber);
+    if (searchFilters.playerName) filters.playerName = searchFilters.playerName;
+    if (searchFilters.startDate) filters.startDate = searchFilters.startDate;
+    if (searchFilters.endDate) filters.endDate = searchFilters.endDate;
+
+    // Use shared utils to search historical games
+    const results = U.searchHistoricalGames ? U.searchHistoricalGames(filters) : [];
+    setSearchResults(results);
+    setIsSearching(false);
+  };
+
+  const handleClearFilters = () => {
+    setSearchFilters({
+      courtNumber: '',
+      playerName: '',
+      startDate: '',
+      endDate: ''
+    });
+    setSearchResults([]);
+    setHasSearched(false);
+  };
+
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString([], { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString([], { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-6">Game History Search</h3>
+      
+      {/* Search Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Court Number</label>
+          <select
+            value={searchFilters.courtNumber}
+            onChange={(e) => setSearchFilters(prev => ({ ...prev, courtNumber: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Courts</option>
+            {[...Array(12)].map((_, i) => (
+              <option key={i + 1} value={i + 1}>Court {i + 1}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Player Name</label>
+          <input
+            type="text"
+            placeholder="Search by player name..."
+            value={searchFilters.playerName}
+            onChange={(e) => setSearchFilters(prev => ({ ...prev, playerName: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+          <input
+            type="date"
+            value={searchFilters.startDate}
+            onChange={(e) => setSearchFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+          <input
+            type="date"
+            value={searchFilters.endDate}
+            onChange={(e) => setSearchFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {/* Search Actions */}
+      <div className="flex gap-3 mb-6">
+        <button
+          onClick={handleSearch}
+          disabled={isSearching}
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {isSearching ? 'Searching...' : 'Search Games'}
+        </button>
+        <button
+          onClick={handleClearFilters}
+          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+        >
+          Clear Filters
+        </button>
+      </div>
+
+      {/* Search Results */}
+      {hasSearched && (
+        <div className="border-t pt-6">
+          <h4 className="text-md font-semibold text-gray-800 mb-4">
+            Search Results ({searchResults.length} games found)
+          </h4>
+          
+          {searchResults.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <FileText size={48} className="mx-auto mb-2 opacity-50" />
+              <p>No games found matching your criteria.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Court
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Players
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duration
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {searchResults.map((game, idx) => (
+                    <tr key={game.id || idx} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        Court {game.courtNumber}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(game.startTime)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatTime(game.startTime)} - {formatTime(game.endTime)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        <div className="space-y-1">
+                          {game.players.map((player, pidx) => (
+                            <div key={pidx} className="text-sm">
+                              {player.name || player}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {(() => {
+                          const duration = Math.round((new Date(game.endTime) - new Date(game.startTime)) / (1000 * 60));
+                          return `${duration} min`;
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main Admin Panel Component
 const AdminPanelV2 = ({ onExit }) => {
-    console.log('AdminPanelV2 rendering...');
+    // AdminPanelV2 component initializing
 
   const [activeTab, setActiveTab] = useState('status');
   const [courts, setCourts] = useState([]);
@@ -5652,7 +5573,7 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
     await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, newSettings, { immediate: true });
     onNotification('Ball price updated', 'success');
   };
-console.log('AdminPanelV2 about to return JSX');
+// AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
 
@@ -5723,6 +5644,21 @@ console.log('AdminPanelV2 about to return JSX');
             {React.createElement(BarChart, { size: 24 })}
           </span>
           <span>Analytics</span>
+        </button>
+        
+        {/* Game History Tab */}
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex items-center gap-2 px-4 py-3 font-medium transition-all duration-200 ${
+            activeTab === 'history'
+              ? 'bg-white text-gray-900 rounded-lg shadow-lg shadow-blue-200 border border-blue-200 transform -translate-y-px'
+              : 'bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300'
+          }`}
+        >
+          <span style={activeTab !== 'history' ? greyFilter : {}}>
+            <FileText size={24} />
+          </span>
+          <span>Game History</span>
         </button>
 
         {/* System Tab */}
@@ -6069,7 +6005,18 @@ console.log('AdminPanelV2 about to return JSX');
         )}
 
         {activeTab === 'analytics' && (
-  <AnalyticsDashboard onClose={null} />
+          typeof AnalyticsDashboard !== 'undefined' ? (
+            <AnalyticsDashboard onClose={null} />
+          ) : (
+            <div className="p-8 text-center">
+              <h3 className="text-lg font-semibold text-gray-600">Analytics Dashboard</h3>
+              <p className="text-gray-500 mt-2">Analytics component not available</p>
+            </div>
+          )
+        )}
+
+        {activeTab === 'history' && (
+  <GameHistorySearch />
 )}
 
         {activeTab === 'system' && (
@@ -7075,18 +7022,18 @@ const AnalyticsDashboard = ({ onClose }) => {
       }
       
       if (view === 'admin') {
-  console.log('Attempting to render AdminPanelV2...');
-  console.log('AdminPanelV2 type:', typeof AdminPanelV2);
+  // Check AdminPanelV2 availability
   
   try {
     if (typeof AdminPanelV2 !== 'undefined') {
       return <AdminPanelV2 onExit={() => setView('menu')} />;
     } else {
-      console.error('AdminPanelV2 is undefined');
+      // AdminPanelV2 component not available
       return <div className="p-8">AdminPanelV2 component not found</div>;
     }
   } catch (error) {
-    console.error('Error rendering AdminPanelV2:', error);
+    // Error occurred while rendering AdminPanelV2
+    console.error('AdminPanelV2 render error:', error);
     return (
       <div className="p-8">
         <h1 className="text-xl font-bold text-red-600">Error loading Admin Panel</h1>

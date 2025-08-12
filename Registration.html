@@ -669,6 +669,25 @@ if (court.current && court.current.players && court.current.players.length > 0) 
     endReason: 'cleared'
   });
   
+  // Archive game to historical storage before clearing
+  try {
+    const historicalGame = {
+      courtNumber: courtNumber,
+      players: court.current.players,
+      startTime: court.current.startTime,
+      endTime: now.toISOString() // Use actual clear time
+    };
+    
+    // Use shared utils to add historical game
+    if (window.APP_UTILS && window.APP_UTILS.addHistoricalGame) {
+      window.APP_UTILS.addHistoricalGame(historicalGame);
+      console.log('Added game to historical records:', historicalGame);
+    }
+  } catch (error) {
+    console.error('Failed to archive historical game:', error);
+    // Continue with clearing even if archiving fails
+  }
+
   data.courts[courtNumber - 1] = {
     current: null,
     history: existingHistory  // Preserve ALL history
@@ -683,6 +702,25 @@ if (court.current && court.current.players && court.current.players.length > 0) 
     endReason: 'cleared',
     duration: court.duration
   });
+
+  // Archive game to historical storage before clearing (old structure)
+  try {
+    const historicalGame = {
+      courtNumber: courtNumber,
+      players: court.players,
+      startTime: court.startTime,
+      endTime: now.toISOString() // Use actual clear time
+    };
+    
+    // Use shared utils to add historical game
+    if (window.APP_UTILS && window.APP_UTILS.addHistoricalGame) {
+      window.APP_UTILS.addHistoricalGame(historicalGame);
+      console.log('Added game to historical records:', historicalGame);
+    }
+  } catch (error) {
+    console.error('Failed to archive historical game:', error);
+    // Continue with clearing even if archiving fails
+  }
   
   data.courts[courtNumber - 1] = {
     current: null,
@@ -1871,7 +1909,11 @@ const CourtSelectionScreen = ({
                 <button
                   key={courtNum}
                   onClick={() => onCourtSelect(courtNum)}
-                  className="p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold bg-gradient-to-r from-green-400 to-green-500 text-white hover:from-green-500 hover:to-green-600 transition-all transform hover:scale-105 shadow-lg"
+                  className={`p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform hover:scale-105 shadow-lg ${
+                    showingOvertimeCourts 
+                      ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800" 
+                      : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600"
+                  }`}
                 >
                   Court {courtNum}
                 </button>
@@ -2089,13 +2131,28 @@ const TennisRegistration = () => {
       try {
         console.log("useEffect: Updating available courts...");
         
-        // Use the fixed synchronous getAvailableCourts function
-        const courts = getAvailableCourts(false);
+        // Check if we should bypass waitlist priority for overtime courts
+        const data = getCourtData();
+        const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
+        const hasUnoccupiedCourts = data.courts.some(court => !court);
+        
+        // If there are available courts but no unoccupied courts, these must be overtime courts
+        const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
+        
+        console.log("🔍 useEffect DEBUG:");
+        console.log("  - tempAvailableCourts:", tempAvailableCourts);
+        console.log("  - hasUnoccupiedCourts:", hasUnoccupiedCourts);
+        console.log("  - shouldBypassWaitlistPriority:", shouldBypassWaitlistPriority);
+        console.log("  - waitlist length:", data.waitingGroups.length);
+        
+        // Use the fixed synchronous getAvailableCourts function with appropriate priority setting
+        const courts = getAvailableCourts(!shouldBypassWaitlistPriority);
         console.log("useEffect: Available courts from getAvailableCourts:", courts);
+        console.log("useEffect: Bypassing waitlist priority?", shouldBypassWaitlistPriority);
         setAvailableCourts(courts);
         
         // Check if there's a waiting group that can now play  
-        const data = getCourtData();
+        // Note: data is already loaded above
         const firstWaitingGroupData = data.waitingGroups.length > 0 ? data.waitingGroups[0] : null;
         const canPlay = firstWaitingGroupData && courts.length > 0;
         setCanFirstGroupPlay(canPlay);
@@ -2561,9 +2618,25 @@ const checkLocationAndProceed = async (onSuccess) => {
 
   // Update available courts when current group changes
   useEffect(() => {
-    const updateAvailableCourts = async () => {
+    const updateAvailableCourts = () => {
       try {
-        const courts = await TennisDataService.getAvailableCourts();
+        // Check if we should bypass waitlist priority for overtime courts
+        const data = getCourtData();
+        const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
+        const hasUnoccupiedCourts = data.courts.some(court => !court);
+        
+        // If there are available courts but no unoccupied courts, these must be overtime courts
+        const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
+        
+        console.log("🔍 useEffect (currentGroup) DEBUG:");
+        console.log("  - tempAvailableCourts:", tempAvailableCourts);
+        console.log("  - hasUnoccupiedCourts:", hasUnoccupiedCourts);
+        console.log("  - shouldBypassWaitlistPriority:", shouldBypassWaitlistPriority);
+        console.log("  - waitlist length:", data.waitingGroups.length);
+        
+        // Use the synchronous getAvailableCourts function with appropriate priority setting
+        const courts = getAvailableCourts(!shouldBypassWaitlistPriority);
+        console.log("useEffect (currentGroup): Available courts:", courts);
         setAvailableCourts(courts);
       } catch (error) {
         console.error('Error updating available courts:', error);
@@ -2849,6 +2922,7 @@ const getAvailableCourts = (checkWaitlistPriority = true, includeOvertimeIfChang
   }
   
   // Priority: show unoccupied courts first, overtime courts only if no unoccupied
+  // This ensures overtime courts are available when all courts are occupied (by games or blocks)
   const available = unoccupiedCourts.length > 0 ? unoccupiedCourts : overtimeCourts;
   
   // If checking waitlist priority and there are available courts
@@ -2865,7 +2939,12 @@ const getAvailableCourts = (checkWaitlistPriority = true, includeOvertimeIfChang
       );
       
       if (!isInTopN) {
-        return []; // Not in top N groups, no courts available
+        // Not in top N groups, but if these are overtime courts and there are no unoccupied courts,
+        // we should still allow access (better UX when all courts are full)
+        if (overtimeCourts.length > 0 && unoccupiedCourts.length === 0) {
+          return available; // Return overtime courts even without priority
+        }
+        return []; // Otherwise, no courts available
       }
     }
   }
@@ -4817,7 +4896,12 @@ onFocus={() => {
   
   {currentGroup.length >= 1 && (
     <>
-      {availableCourts.length > 0 ? (
+      {(() => {
+        console.log("🎯 GROUP SCREEN BUTTON DEBUG:");
+        console.log("  - availableCourts state:", availableCourts);
+        console.log("  - availableCourts.length:", availableCourts.length);
+        return availableCourts.length > 0;
+      })() ? (
         <button
           onClick={() => setCurrentScreen("court")}
           className="bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors"
@@ -4860,12 +4944,25 @@ onFocus={() => {
    // When a group has already been assigned a court, treat it like changing courts
    const isSelectingDifferentCourt = isChangingCourt || hasAssignedCourt;
    
+   const data = getCourtData();
+   
+   // Check if we should bypass waitlist priority (when only overtime courts are available)
+   const shouldBypassWaitlistPriority = (() => {
+     if (isSelectingDifferentCourt) return true; // Always bypass when changing courts
+     
+     // For new registrations, check if only overtime courts are available
+     const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
+     const hasUnoccupiedCourts = data.courts.some(court => !court);
+     
+     // If there are available courts but no unoccupied courts, these must be overtime courts
+     return tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
+   })();
+   
    const availableCourts = getAvailableCourts(
-     !isSelectingDifferentCourt, 
+     !shouldBypassWaitlistPriority, 
      isSelectingDifferentCourt && wasOvertimeCourt,
      isSelectingDifferentCourt ? justAssignedCourt : null  // Pass the court to exclude
    );
-   const data = getCourtData();
    
    
    const hasWaitingGroups = data.waitingGroups.length > 0;
