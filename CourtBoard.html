@@ -964,8 +964,86 @@
         );
       };
 
+      // Normalize block data from various formats
+      function normalizeBlock(raw) {
+        const reasonRaw = raw.reason || raw.title || (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) || "";
+        const reason = String(reasonRaw).trim().toUpperCase();
+
+        const start = raw.startTime ? new Date(raw.startTime) : null;
+        let end = raw.endTime ? new Date(raw.endTime) : null;
+        if (!end && start && (raw.duration || raw.duration === 0)) {
+          end = new Date(start);
+          end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
+        }
+
+        let courts = [];
+        if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
+        if (raw.eventDetails && Array.isArray(raw.eventDetails.courts)) courts = courts.concat(raw.eventDetails.courts);
+        if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
+
+        courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a,b)=>a-b);
+        if (!start || !end || courts.length === 0) return null;
+        return { courts, start, end, reason };
+      }
+
+      // Select reserved items from blocks (active now or later today)
+      function selectReservedItemsFromBlocks(blocks, now = new Date()) {
+        const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
+        const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
+
+        const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
+        const todayFuture = normalized
+          .filter(b => b.end > now && b.start <= endOfToday)
+          .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
+          .sort((a,b) => a.start - b.start);
+
+        const byKey = new Map();
+        for (const b of todayFuture) {
+          const k = `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
+          if (!byKey.has(k)) byKey.set(k, { ...b, courts: new Set(b.courts) });
+          else b.courts.forEach(c => byKey.get(k).courts.add(c));
+        }
+
+        return Array.from(byKey.values()).map(v => ({
+          key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
+          courts: Array.from(v.courts).sort((a,b)=>a-b),
+          start: v.start,
+          end: v.end,
+          label: v.reason || "RESERVED",
+          warning: true
+        }));
+      }
+
+      // Reserved Courts Panel Component
+      function ReservedCourtsPanel({ items, className, title = "Reserved Courts" }) {
+        if (!items || items.length === 0) return null;
+
+        const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+        return (
+          <section id="reserved-courts-root" className={className}>
+            <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
+            <ul className="mt-2 space-y-2 text-sm text-gray-300">
+              {items.slice(0, 8).map((it, i) => (
+                <li key={`${it.key || i}`} className="flex justify-between">
+                  <span className="font-medium text-gray-200">
+                    {it.courts.length > 1 ? `Courts ${it.courts.join(", ")}` : `Court ${it.courts[0]}`}
+                  </span>
+                  <span className="ml-2 whitespace-nowrap text-gray-400">
+                    {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? " ⚠️" : ""}
+                  </span>
+                </li>
+              ))}
+              {items.length > 8 && (
+                <li className="text-xs text-gray-500 mt-1">+{items.length - 8} more…</li>
+              )}
+            </ul>
+          </section>
+        );
+      }
+
       // STEP 7: Next Available Panel Component (from original)
-      const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [] }) => {
+      const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [], courtBlocks = [] }) => {
 
         const getCourtAvailabilityTimeline = () => {
           console.log('🔍 getCourtAvailabilityTimeline called');
@@ -1097,8 +1175,8 @@
 
         return (
           
-          <div className="next-available-section">
-            <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 h-full backdrop-blur">
+          <div className="next-available-section h-full min-h-0 flex flex-col">
+            <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur flex-1">
             
              
               {hasAvailableNow ? (
@@ -1160,6 +1238,12 @@
                     </div>
                 </>
               )}
+            </div>
+            <div className="mt-auto pt-4">
+              <ReservedCourtsPanel
+                className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur"
+                items={selectReservedItemsFromBlocks(courtBlocks, currentTime)}
+              />
             </div>
           </div>
         );
@@ -1315,10 +1399,19 @@
         const [currentTime, setCurrentTime] = useState(new Date());
         const [lastUpdate, setLastUpdate] = useState(new Date());
         const [customMessage, setCustomMessage] = useState("");
+        const [courtBlocks, setCourtBlocks] = useState([]);
 
         // STEP 10: Enhanced data loading with DataStore
         const loadData = useCallback(async () => {
           try {
+            // Load court blocks
+            try {
+              const blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+              setCourtBlocks(blocks);
+            } catch {
+              setCourtBlocks([]);
+            }
+            
             const storedData = await dataStore.get(TENNIS_CONFIG.STORAGE.KEY);
             if (storedData) {
               const data = storedData;
@@ -1462,7 +1555,7 @@
         };
 
         return (
-          <div className="h-screen bg-gradient-to-br from-slate-700 to-slate-600 p-4 text-white flex flex-col">
+          <div className="h-screen min-h-screen bg-gradient-to-br from-slate-700 to-slate-600 p-4 text-white flex flex-col">
             <div className="mb-4">
               <div className="w-full flex justify-center">
                 <div className="flex items-center relative">
@@ -1494,9 +1587,10 @@
               </div>
             </div>
 
-            <div className="flex-1 main-layout">
-              <div className="courts-section">
-                <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 h-full backdrop-blur flex flex-col">
+            <div className="flex-1 main-layout h-full min-h-0 items-stretch">
+              {/* LEFT column wrapper */}
+              <div className="left-column courts-section h-full flex flex-col min-h-0" data-left-col>
+                <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 h-full backdrop-blur flex flex-col min-h-0">
                   {/* Desktop layout */}
                   <div className="courts-grid mb-4">
                     {CONSTANTS.COURTS_TOP_ROW.map((num) => (
@@ -1513,7 +1607,7 @@
                     ))}
                   </div>
                   <div className="h-4 bg-gradient-to-r from-green-600 to-blue-600 mb-4 rounded-full flex-shrink-0 divider-line" />
-                  <div className="bottom-section">
+                  <div className="bottom-section min-h-0 overflow-auto">
                     <WaitingList 
                       waitingGroups={waitingGroups} 
                       courts={courts} 
@@ -1563,7 +1657,10 @@
                 </div>
               </div>
 
-              <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} />
+              {/* RIGHT column wrapper */}
+              <div className="right-column flex flex-col h-full min-h-0" data-right-col>
+                <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} courtBlocks={courtBlocks} />
+              </div>
               </div>
           </div>
         );
@@ -1584,259 +1681,6 @@
       
       console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
-  </script>
-  <!-- Reserved Courts (today, future only). Renders under Next Available; also visible on mobile. -->
-  <script type="text/babel">
-    (() => {
-      const React = window.React;
-      const ReactDOM = window.ReactDOM;
-      if (!React || !ReactDOM) return;
-      const { useEffect, useMemo, useState } = React;
-      const U = window.APP_UTILS || {};
-
-      const STORAGE_BLOCKS_KEY = (U.STORAGE && U.STORAGE.BLOCKS) || 'courtBlocks';
-      const UPDATE_EVENT = (U.EVENTS && U.EVENTS.UPDATE) || 'tennisDataUpdate';
-      const fmtTime = (d) => (U.formatTime ? U.formatTime(d) : new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
-      const safeJSON = (s) => { try { return JSON.parse(s); } catch { return null; } };
-
-      function endOfDay(d = new Date()) { const x = new Date(d); x.setHours(23,59,59,999); return x; }
-      function sameYMD(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-
-      // Normalize to { courts:number[], start:Date, end:Date, reason:string }
-      function normalizeBlock(raw) {
-        // Resolve reason/title consistently
-        const reasonRaw =
-          raw.reason ||
-          raw.title ||
-          (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) ||
-          '';
-        const reason = String(reasonRaw).trim().toUpperCase();
-
-        // Resolve times (ISO strings like "...Z" are fine; Date will use local when we compare parts)
-        let start = null, end = null;
-        if (raw.startTime) start = new Date(raw.startTime);
-        else if (raw.date && raw.time) start = new Date(`${raw.date}T${raw.time}`);
-        if (raw.endTime) end = new Date(raw.endTime);
-        else if (start && (raw.duration || raw.duration === 0)) {
-          end = new Date(start);
-          end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
-        }
-
-        // Collect courts from any of the known fields, dedupe + sort
-        let courts = [];
-        if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
-        if (raw.eventDetails && Array.isArray(raw.eventDetails.courts)) {
-          courts = courts.concat(raw.eventDetails.courts);
-        }
-        if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
-        courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a,b)=>a-b);
-
-        return (start && end && courts.length) ? { courts, start, end, reason } : null;
-      }
-
-      // Today's FUTURE blocks only (local day boundaries; exclude active/past)
-      function fetchTodayFutureBlocks(now = new Date()) {
-        const rawList = safeJSON(localStorage.getItem(STORAGE_BLOCKS_KEY)) || [];
-        const blocks = rawList.map(normalizeBlock).filter(Boolean);
-        const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
-        const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
-        const result = blocks
-          .filter(b => b.start > now) // future only
-          .filter(b => b.start >= startOfToday && b.start <= endOfToday) // today only
-          .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
-          .sort((a,b) => a.start - b.start);
-        try {
-          console.log('[ReservedCourts] fetchTodayFutureBlocks', {
-            nowLocal: now.toString(),
-            rawCount: rawList.length,
-            normalizedCount: blocks.length,
-            futureTodayCount: result.length,
-            sample: result.slice(0,3).map(x => ({
-              courts: x.courts, start: x.start.toString(), end: x.end.toString(), reason: x.reason
-            }))
-          });
-        } catch {}
-        return result;
-      }
-
-      // Grouping:
-      // 1) Multi-court with identical [start,end,reason] => one line
-      // 2) Remaining singles aggregated per court
-      function buildGroups(blocks) {
-        const key = (b) => `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
-        const slotMap = new Map(); // key -> [blocks]
-        for (const b of blocks) {
-          const k = key(b);
-          if (!slotMap.has(k)) slotMap.set(k, []);
-          slotMap.get(k).push(b);
-        }
-        const multi = [];
-        const usedCourtsBySlot = new Map(); // key -> Set(courts)
-        const singles = [];
-        for (const [k, blist] of slotMap.entries()) {
-          const courts = new Set();
-          blist.forEach(b => b.courts.forEach(c => courts.add(c)));
-          if (courts.size > 1) {
-            multi.push({ courts: Array.from(courts).sort((a,b)=>a-b), start: blist[0].start, end: blist[0].end, reason: blist[0].reason });
-            usedCourtsBySlot.set(k, courts);
-          } else {
-            blist.forEach(b => singles.push(b));
-          }
-        }
-        const perCourtMap = new Map(); // court -> [{start,end,reason}]
-        for (const b of singles) {
-          const k = key(b);
-          for (const c of b.courts) {
-            if (usedCourtsBySlot.has(k) && usedCourtsBySlot.get(k).has(c)) continue;
-            if (!perCourtMap.has(c)) perCourtMap.set(c, []);
-            perCourtMap.get(c).push({ start: b.start, end: b.end, reason: b.reason });
-          }
-        }
-        for (const arr of perCourtMap.values()) arr.sort((a,b)=>a.start - b.start);
-        return {
-          multi: multi.sort((a,b)=>a.start - b.start),
-          perCourt: Array.from(perCourtMap.entries()).sort((a,b)=>a[0]-b[0]),
-        };
-      }
-
-      const startsSoon = (start, now=new Date()) => (start - now) <= 60*60*1000;
-
-      function ReservedCourtsPanel() {
-        const [tick, setTick] = useState(0);
-        const [now, setNow] = useState(new Date());
-        const data = useMemo(() => {
-          const future = fetchTodayFutureBlocks(now);
-          const grouped = buildGroups(future);
-          try { console.log('[ReservedCourts] grouped', { multi: grouped.multi.length, perCourt: grouped.perCourt.length }); } catch {}
-          return grouped;
-        }, [tick, now]);
-
-        useEffect(() => {
-          const onStorage = (e) => {
-            if (!e || !e.key) return;
-            if (e.key === STORAGE_BLOCKS_KEY || e.key === (U.STORAGE && U.STORAGE.UPDATE_TICK)) setTick(t=>t+1);
-          };
-          const onUpdate = () => setTick(t=>t+1);
-          const onVis = () => { if (!document.hidden) { setNow(new Date()); setTick(t=>t+1); } };
-          window.addEventListener('storage', onStorage, { passive: true });
-          window.addEventListener(UPDATE_EVENT, onUpdate, { passive: true });
-          document.addEventListener('visibilitychange', onVis, { passive: true });
-          const id = setInterval(() => setNow(new Date()), 30000);
-          return () => {
-            try { window.removeEventListener('storage', onStorage); } catch {}
-            try { window.removeEventListener(UPDATE_EVENT, onUpdate); } catch {}
-            try { document.removeEventListener('visibilitychange', onVis); } catch {}
-            try { clearInterval(id); } catch {}
-          };
-        }, []);
-
-        const hasContent = (data.multi.length + data.perCourt.length) > 0;
-        if (!hasContent) {
-          return (
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Reserved Courts</h3>
-              <div className="text-sm text-gray-500">No upcoming blocks today.</div>
-            </div>
-          );
-        }
-        return (
-          <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Reserved Courts</h3>
-            {data.multi.length > 0 && (
-              <div className="mb-3">
-                <ul className="space-y-2">
-                  {data.multi.map((m, i) => (
-                    <li key={`m-${i}`} className="text-sm text-gray-800">
-                      <span className="font-medium">Courts {m.courts.join(', ')}</span>{' '}—{' '}
-                      <span>{fmtTime(m.start)} – {fmtTime(m.end)} ({m.reason})</span>{' '}
-                      {startsSoon(m.start) ? <span aria-label="starts soon" title="Starts within 60 min">⚠️</span> : null}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {data.perCourt.length > 0 && (
-              <div>
-                <ul className="space-y-2">
-                  {data.perCourt.map(([court, entries]) => (
-                    <li key={`c-${court}`} className="text-sm text-gray-800">
-                      <span className="font-medium">Court {court}</span>{' '}—{' '}
-                      <span>
-                        {entries.map((e, idx) => (
-                          <span key={idx}>
-                            {fmtTime(e.start)} – {fmtTime(e.end)} ({e.reason})
-                            {startsSoon(e.start) ? ' ⚠️' : ''}
-                            {idx < entries.length - 1 ? '; ' : ''}
-                          </span>
-                        ))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        );
-      }
-
-      // Helper function to inject the Reserved Courts panel
-      function injectReservedCourtsPanel(container) {
-        let host = container.querySelector('#reserved-courts-root');
-        if (!host) {
-          host = document.createElement('div');
-          host.id = 'reserved-courts-root';
-          host.className = 'mt-4';
-          container.appendChild(host);
-        }
-        try { console.log('[ReservedCourts] mounting desktop'); } catch {}
-        ReactDOM.createRoot(host).render(<ReservedCourtsPanel />);
-      }
-
-      // Mount under right-column Next Available, and also into mobile layout
-      function mountReservedCourts() {
-        // Handle mobile layout immediately (usually available)
-        const mobileParent = document.querySelector('.mobile-waiting-section') || document.querySelector('.mobile-layout');
-        if (mobileParent) {
-          let mhost = document.getElementById('reserved-courts-root-mobile');
-          if (!mhost) {
-            mhost = document.createElement('div');
-            mhost.id = 'reserved-courts-root-mobile';
-            mhost.className = 'm-2';
-            mobileParent.appendChild(mhost);
-          }
-          try { console.log('[ReservedCourts] mounting mobile'); } catch {}
-          ReactDOM.createRoot(mhost).render(<ReservedCourtsPanel />);
-        }
-      }
-
-      // Wait for container to exist before mounting desktop version
-      function waitForReservedCourtsContainer() {
-        const container = document.querySelector('.next-available-section');
-        if (container) {
-          injectReservedCourtsPanel(container);
-        } else {
-          setTimeout(waitForReservedCourtsContainer, 200);
-        }
-      }
-
-      // Mount mobile immediately, wait for desktop container
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-          try { console.log('[ReservedCourts] DOMContentLoaded -> mount'); } catch {}
-          mountReservedCourts();
-          waitForReservedCourtsContainer();
-        }, { once: true });
-      } else {
-        try { console.log('[ReservedCourts] ready -> mount'); } catch {}
-        setTimeout(() => {
-          mountReservedCourts();
-          waitForReservedCourtsContainer();
-        }, 0);
-      }
-      
-      // Expose debug helpers
-      try { window.__RC = { fetchTodayFutureBlocks, buildGroups }; } catch {}
-    })();
   </script>
 </body>
 </html>
