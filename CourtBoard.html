@@ -216,6 +216,10 @@
         display: none;
       }
       
+      .right-column {
+        display: none !important;
+      }
+      
       .mobile-layout {
         display: flex;
         flex-direction: column;
@@ -246,6 +250,44 @@
         display: block;
         margin-top: 1rem;
         min-height: 200px;
+      }
+      
+      .mobile-next-available {
+        display: block;
+        margin-top: 1rem;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        backdrop-filter: blur(4px);
+      }
+      
+      .mobile-next-available.compact {
+        padding: 0.5rem 1rem;
+      }
+      
+      .mobile-next-available-empty {
+        text-align: center;
+      }
+      
+      .mobile-next-available-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .mobile-next-available-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(71, 85, 105, 0.5);
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+      }
+      
+      /* Ensure Reserved Courts looks good on mobile */
+      .mobile-next-available .reserved-courts-text,
+      .mobile-next-available .reserved-courts-empty {
+        font-size: 0.875rem !important;
       }
       
       .time-header {
@@ -284,6 +326,9 @@
         display: none;
       }
       .mobile-waiting-section {
+        display: none;
+      }
+      .mobile-next-available {
         display: none;
       }
     }
@@ -326,6 +371,29 @@
     .improvement {
       color: #22c55e;
       font-weight: bold;
+    }
+    
+    .icon-grey {
+      filter: grayscale(100%) opacity(0.5);
+    }
+    
+    /* Prevent Reserved Courts text from scaling too large */
+    .reserved-courts-text {
+      font-size: 0.875rem !important; /* text-sm equivalent */
+    }
+    
+    .reserved-courts-empty {
+      font-size: 1rem !important; /* text-base equivalent */
+    }
+    
+    @media (min-width: 1401px) {
+      .reserved-courts-text {
+        font-size: 0.875rem !important; /* Keep original size */
+      }
+      
+      .reserved-courts-empty {
+        font-size: 1rem !important; /* Keep original size */
+      }
     }
   </style>
 </head>
@@ -621,7 +689,8 @@
       // STEP 3: Icon components (from original)
       const Clock = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '⏱️');
       const Users = ({ size = 34, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '👥');
-      const Calendar = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🎾');
+      const TennisBall = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🎾');
+      const Calendar = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🏛️');
       const AlertCircle = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🔔');
       const Check = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '✅');
 
@@ -890,7 +959,7 @@
             }`}>
 
             <div className="flex items-center text-xl">
-              <Users className="mr-5" size={24} />
+              <Users className={`mr-5 ${waitingGroups.length === 0 ? 'icon-grey' : ''}`} size={24} />
               Waiting
             </div>
 
@@ -1010,34 +1079,44 @@
           start: v.start,
           end: v.end,
           label: v.reason || "RESERVED",
-          warning: true
+          warning: (v.start.getTime() - now.getTime()) <= (60 * 60 * 1000) && (v.start.getTime() - now.getTime()) > 0
         }));
       }
 
       // Reserved Courts Panel Component
       function ReservedCourtsPanel({ items, className, title = "Reserved Courts" }) {
-        if (!items || items.length === 0) return null;
-
         const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
         return (
           <section id="reserved-courts-root" className={className}>
-            <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
-            <ul className="mt-2 space-y-2 text-sm text-gray-300">
-              {items.slice(0, 8).map((it, i) => (
-                <li key={`${it.key || i}`} className="flex justify-between">
-                  <span className="font-medium text-gray-200">
-                    {it.courts.length > 1 ? `Courts ${it.courts.join(", ")}` : `Court ${it.courts[0]}`}
-                  </span>
-                  <span className="ml-2 whitespace-nowrap text-gray-400">
-                    {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? " ⚠️" : ""}
-                  </span>
-                </li>
-              ))}
-              {items.length > 8 && (
-                <li className="text-xs text-gray-500 mt-1">+{items.length - 8} more…</li>
-              )}
-            </ul>
+            <h3 className={`text-xl font-bold mb-3 flex items-center ${
+              (!items || items.length === 0) ? "text-gray-400" : "text-sky-500"
+            }`}>
+              <Calendar className={`mr-3 ${(!items || items.length === 0) ? 'icon-grey' : ''}`} size={24} />
+              {title}
+            </h3>
+            
+            {(!items || items.length === 0) ? (
+              <div className="text-center mt-8">
+                <p className="text-gray-400 reserved-courts-empty">No scheduled blocks today</p>
+              </div>
+            ) : (
+              <ul className="mt-2 space-y-2 reserved-courts-text text-gray-300">
+                {items.slice(0, 8).map((it, i) => (
+                  <li key={`${it.key || i}`} className="flex justify-between">
+                    <span className="font-medium text-gray-200">
+                      {it.courts.length > 1 ? `Courts ${it.courts.join(", ")}` : `Court ${it.courts[0]}`}
+                    </span>
+                    <span className="ml-2 whitespace-nowrap text-gray-400">
+                      {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? " ⚠️" : ""}
+                    </span>
+                  </li>
+                ))}
+                {items.length > 8 && (
+                  <li className="text-xs text-gray-500 mt-1">+{items.length - 8} more…</li>
+                )}
+              </ul>
+            )}
           </section>
         );
       }
@@ -1184,7 +1263,7 @@
                 <h2 className={`text-xl font-bold mb-3 flex items-center ${
                   waitingGroups.length === 0 ? "text-gray-400" : "text-gray-400"
                 }`}>
-                  <Calendar size={24} />
+                  <TennisBall className={`mr-3 ${hasAvailableNow ? 'icon-grey' : ''}`} size={24} />
                   Next Available
                 </h2>
                  
@@ -1200,7 +1279,7 @@
                   waitingGroups.length === 0 ? "text-gray-400" : "text-sky-500"
                 }`}>
                   
-                <Calendar className="mr-3" size={24} />
+                <TennisBall className={`mr-3 ${hasAvailableNow ? 'icon-grey' : ''}`} size={24} />
                 Next Available
                 </h2>
                 <div className="border-b border-gray-600 mb-2"></div>
@@ -1645,12 +1724,112 @@
                       ))}
                     </div>
                     
-                    {/* Mobile waiting list section */}
-                    <div className="mobile-waiting-section">
-                      <WaitingList 
-                        waitingGroups={waitingGroups} 
-                        courts={courts} 
-                        currentTime={currentTime} 
+                    {/* Mobile next available section - only show if active */}
+                    {(() => {
+                      const getCourtAvailabilityTimelineMobile = () => {
+                        if (!courts || !Array.isArray(courts)) return [];
+                        
+                        const courtAvailability = [];
+                        let courtBlocks = [];
+                        try {
+                          courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+                        } catch (error) {
+                          console.error('Error loading court blocks:', error);
+                        }
+                        
+                        courts.forEach((court, index) => {
+                          const courtNumber = index + 1;
+                          let endTime = null;
+                          
+                          const activeBlock = courtBlocks.find(block => 
+                            block.courtNumber === courtNumber && 
+                            new Date(block.startTime) <= currentTime &&
+                            new Date(block.endTime) > currentTime
+                          );
+                          
+                          if (activeBlock) {
+                            endTime = activeBlock.endTime;
+                          } else if (court) {
+                            if (court.current && court.current.endTime) {
+                              endTime = court.current.endTime;
+                            } else if (court.endTime) {
+                              endTime = court.endTime;
+                            }
+                          }
+                          
+                          if (endTime) {
+                            try {
+                              const parsedEndTime = new Date(endTime);
+                              if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
+                                courtAvailability.push({
+                                  courtNumber,
+                                  endTime: parsedEndTime
+                                });
+                              }
+                            } catch (error) {
+                              console.error(`Error parsing end time for court ${courtNumber}:`, error);
+                            }
+                          }
+                        });
+                        
+                        return courtAvailability.sort((a, b) => a.endTime.getTime() - b.endTime.getTime());
+                      };
+                      
+                      const timeline = getCourtAvailabilityTimelineMobile();
+                      const hasAvailableNow = waitingGroups.length === 0 && (hasEmptyCourts() || timeline.some(availability => {
+                        try {
+                          return availability.endTime && availability.endTime <= currentTime;
+                        } catch (error) {
+                          return false;
+                        }
+                      }));
+                      
+                      // Only show if there are courts with future availability times
+                      if (hasAvailableNow || timeline.length === 0) {
+                        return null;
+                      }
+                      
+                      return (
+                        <div className="mobile-next-available">
+                          <h3 className="text-base font-semibold text-sky-500 mb-2">Next Available</h3>
+                          <div className="mobile-next-available-list">
+                            {timeline.slice(0, 3).map((availability, idx) => (
+                              <div key={idx} className="mobile-next-available-item">
+                                <span className="text-green-400 font-medium">
+                                  Court {availability.courtNumber}
+                                </span>
+                                <span className="text-white font-semibold">
+                                  {availability.endTime ? (
+                                    availability.endTime.toLocaleTimeString([], {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })
+                                  ) : (
+                                    "Time TBD"
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    
+                    {/* Mobile waiting list section - only show if groups waiting */}
+                    {waitingGroups.length > 0 && (
+                      <div className="mobile-waiting-section">
+                        <WaitingList 
+                          waitingGroups={waitingGroups} 
+                          courts={courts} 
+                          currentTime={currentTime} 
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Mobile reserved courts section */}
+                    <div className="mobile-next-available mt-4">
+                      <ReservedCourtsPanel
+                        items={selectReservedItemsFromBlocks(courtBlocks, currentTime)}
                       />
                     </div>
                   </div>
