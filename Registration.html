@@ -47,6 +47,215 @@
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
   
+  <!-- Mobile Bridge Script -->
+  <script>
+    (function registrationMobileBridge(){
+      const MOBILE = (window.top !== window.self);
+
+      // Do nothing if not embedded; desktop/iPad remains unchanged
+      if (!MOBILE) return;
+
+      window.__mobileFlow = false;
+      window.__mobileCourt = null;
+
+      // Public helpers if not already present
+      window.RegistrationUI = window.RegistrationUI || {};
+      window.RegistrationUI.setSelectedCourt = function(n) {
+        // This will be implemented when we find the UI object
+        console.log('Mobile: Setting selected court to', n);
+      };
+      window.RegistrationUI.startRegistration = function(n) {
+        // open "Enter name…" and focus input
+        console.log('Mobile: Starting registration for court', n);
+      };
+
+      // 1) Start flow on message from Mobile shell
+      window.addEventListener('message', e => {
+        const d = e?.data; if (!d || d.type !== 'register') return;
+        const n = Number(d.courtNumber);
+        window.__mobileFlow = true;
+        window.__mobileCourt = Number.isFinite(n) ? n : null;
+
+        console.log('Mobile: Received register message for court', n);
+
+        // Preselect tapped court if still free (safe check)
+        try {
+          const data = readJSON('tennisClubData') || getEmptyData();
+          const now = new Date();
+          const c = data?.courts?.[n-1];
+          const occ = !!c?.current;
+          const blocks = readJSON('courtBlocks') || [];
+          const blk = blocks.some(b => b.courtNumber===n && new Date(b.startTime)<now && now<new Date(b.endTime));
+          if (Number.isFinite(n) && !occ && !blk) {
+            window.RegistrationUI.setSelectedCourt(n);
+          }
+        } catch(e) {
+          console.log('Mobile: Error checking court availability:', e);
+        }
+
+        window.RegistrationUI.startRegistration(n);
+      });
+
+      // 2) Success handler - will be attached when UI is ready
+      window.__mobileSuccessHandler = function(courtNumber) {
+        if (!window.__mobileFlow) return;
+        const n = Number(courtNumber) || Number(window.__mobileCourt) || null;
+        try { 
+          window.parent.postMessage({ type:'registration:success', courtNumber: n }, '*'); 
+        } catch(e) {
+          console.log('Mobile: Error sending success message:', e);
+        }
+        window.__mobileFlow = false; 
+        window.__mobileCourt = null;
+      };
+    })();
+  </script>
+  
+  <!-- Mobile Guards Script -->
+  <script>
+    (function mobileGuards(){
+      // --- tiny state accessors (adapt if your state shape differs)
+      function hasPrimaryPlayer(){
+        try {
+          const s = window.UI?.state || {};
+          // common patterns: single "playerName" OR players[0]
+          if (s.playerName && String(s.playerName).trim().length) return true;
+          if (Array.isArray(s.players) && s.players[0] && String(s.players[0].name||s.players[0]).trim().length) return true;
+          
+          // Check React state for currentGroup
+          if (window.__reactState && Array.isArray(window.__reactState.currentGroup) && window.__reactState.currentGroup.length > 0) {
+            const firstPlayer = window.__reactState.currentGroup[0];
+            if (firstPlayer && firstPlayer.name && String(firstPlayer.name).trim().length) {
+              return true;
+            }
+          }
+          
+          // Check search input as well
+          const searchInput = document.querySelector('#main-search-input');
+          if (searchInput && searchInput.value && String(searchInput.value).trim().length > 0) {
+            return true;
+          }
+        } catch {}
+        return false;
+      }
+
+      // Ensure the "Enter name" UI opens and focuses
+      function ensureNameEntryOpen(){
+        try { window.UI?.openRegistrationPanel?.(); } catch {}
+        requestAnimationFrame(() => {
+          const input = document.querySelector('#mobile-group-search-input')
+                   || document.querySelector('#main-search-input')
+                   || document.querySelector('[data-role="player-input"]')
+                   || document.querySelector('#playerNameInput')
+                   || document.querySelector('input[type="text"]');
+          input?.focus?.({ preventScroll:true });
+          try { const v=input.value||''; input.setSelectionRange(v.length, v.length); } catch {}
+        });
+      }
+
+      // 1A) Patch the stepper so "group" is blocked until a player exists (mobile only)
+      (function patchStepperGuard(){
+        const api = window.UI || window;
+        const go  = api.goToStep || api.setStep || api.navigate || null;
+        if (!go) return;
+
+        const wrapped = function(next){
+          // map/skip welcome + court picker as before
+          if (window.__mobileFlow) {
+            const s = String(next||'').toLowerCase();
+            if (s.includes('welcome') || s.includes('home')) next = 'group';
+            if (s.includes('select') && s.includes('court')) next = 'group';
+            // NEW GUARD: don't allow group if no primary player yet
+            if (s.includes('group') && !hasPrimaryPlayer()) {
+              next = 'group'; // Stay on group but ensure name input is focused
+              // open the name panel if it's not visible
+              setTimeout(ensureNameEntryOpen, 0);
+            }
+          }
+          return go.call(this, next);
+        };
+
+        if (api.goToStep) api.goToStep = wrapped;
+        else if (api.setStep) api.setStep = wrapped;
+        else if (api.navigate) api.navigate = wrapped;
+      })();
+
+      // 1B) When the user submits their name, jump to Group (mobile only)
+      (function patchNameSubmit(){
+        const api = window.UI || window;
+        if (typeof api.onNameSubmitted === 'function' && !api.__nameToGroupPatched){
+          const orig = api.onNameSubmitted;
+          api.onNameSubmitted = function(...args){
+            const res = orig.apply(this, args);
+            if (window.__mobileFlow) {
+              // only proceed if a player really exists now
+              if (hasPrimaryPlayer()) {
+                (api.goToStep || api.setStep || api.navigate)?.call(api, 'group');
+              } else {
+                // keep user on name entry until valid
+                setTimeout(ensureNameEntryOpen, 0);
+              }
+            }
+            return res;
+          };
+          api.__nameToGroupPatched = true;
+        }
+      })();
+    })();
+  </script>
+  
+  <!-- Mobile Success Signal Script -->
+  <script>
+    (function mobileSuccessSignal(){
+      const MOBILE = (window.top !== window.self);
+      if (!MOBILE) return;
+
+      function sendSuccess(){
+        const api = window.UI || window;
+        const n   = Number(window.__mobileCourt) || Number(api?.state?.selectedCourt) || window.__preselectedCourt || null;
+
+        console.log('Registration: Sending success signal for court', n, 'mobile flow:', window.__mobileFlow);
+        try {
+          window.parent.postMessage({ type: 'registration:success', courtNumber: n }, '*');
+          console.log('Registration: Success message sent successfully');
+        } catch(e) {
+          console.log('Registration: Error sending success message:', e);
+        }
+
+        // clear mobile flags (so standalone flows remain clean)
+        window.__mobileFlow  = false;
+        window.__mobileCourt = null;
+      }
+
+      const api = window.UI || window;
+      if (typeof api.onRegistrationSuccess === 'function' && !api.__mobileSuccessBridge){
+        const orig = api.onRegistrationSuccess;
+        api.onRegistrationSuccess = function(...args){
+          const res = orig.apply(this, args);
+          // IMPORTANT: call after internal success state is set
+          setTimeout(sendSuccess, 0);
+          return res;
+        };
+        api.__mobileSuccessBridge = true;
+      } else {
+        // If there isn't a centralized success hook, attach to global
+        window.UI = window.UI || {};
+        window.UI.__mobileSendSuccess__ = () => setTimeout(sendSuccess, 0);
+      }
+
+      // OPTIONAL: disable or delay any auto-reset-to-home when in mobile flow
+      // If you have a success auto-reset timer, gate it:
+      if (api.setAutoResetMs && !api.__mobileResetGuard){
+        const origSet = api.setAutoResetMs;
+        api.setAutoResetMs = function(ms){
+          if (window.__mobileFlow) return; // ignore resets in mobile overlay
+          return origSet.call(this, ms);
+        };
+        api.__mobileResetGuard = true;
+      }
+    })();
+  </script>
+  
   <script type="text/babel">
     // Access shared utils (optional convenience)
     const U = window.APP_UTILS || {};
@@ -1529,7 +1738,8 @@ const SuccessScreen = ({
   onChangeCourt,
   onNewRegistration,
   onHome,
-  currentGroup // Added to support ball purchase
+  currentGroup, // Added to support ball purchase
+  mobileCountdown // Added for mobile auto-close countdown
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
@@ -1649,6 +1859,9 @@ setShowBallPurchaseModal(false);
           <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
             Confirmed!
           </h1>
+          {mobileCountdown !== null && mobileCountdown > 0 && (
+            <p className="text-sm text-gray-500 mt-2">Closing in {mobileCountdown}...</p>
+          )}
         </div>
         <div className="bg-green-50 rounded-2xl p-4 sm:p-6 text-center">
           <p className="text-lg sm:text-xl text-gray-700 mb-2">You're all set on</p>
@@ -1838,6 +2051,9 @@ setShowBallPurchaseModal(false);
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent text-center">
           You're on the list!
         </h1>
+        {mobileCountdown !== null && mobileCountdown > 0 && (
+          <p className="text-sm text-gray-500 mt-2">Closing in {mobileCountdown}...</p>
+        )}
       </div>
       
       <div className="bg-blue-50 rounded-2xl p-4 sm:p-6 text-center mb-4 sm:mb-6">
@@ -2449,6 +2665,7 @@ useEffect(() => {
   const [firstWaitingGroup, setFirstWaitingGroup] = useState(null);
   const [waitingGroupDisplay, setWaitingGroupDisplay] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
   const [replacedGroup, setReplacedGroup] = useState(null);
   const [originalCourtData, setOriginalCourtData] = useState(null);
@@ -2615,6 +2832,77 @@ const checkLocationAndProceed = async (onSuccess) => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Mobile Bridge Integration
+  useEffect(() => {
+    // Hook up mobile UI helpers
+    if (window.RegistrationUI) {
+      window.RegistrationUI.setSelectedCourt = (courtNumber) => {
+        console.log('Mobile: Setting selected court to', courtNumber);
+        // Store the court for assignment but don't navigate yet
+        window.__preselectedCourt = courtNumber;
+      };
+      
+      window.RegistrationUI.startRegistration = (courtNumber) => {
+        console.log('Mobile: Starting registration for court', courtNumber);
+        // Navigate to group step and focus input
+        setCurrentScreen('group');
+        requestAnimationFrame(() => {
+          const input = 
+            document.querySelector('#mobile-group-search-input') ||
+            document.querySelector('#main-search-input') ||
+            document.querySelector('[data-role="player-input"]') ||
+            document.querySelector('#playerNameInput') ||
+            document.querySelector('input[type="text"]');
+          if (input) {
+            input.focus({ preventScroll: true });
+            try { 
+              const v = input.value || ''; 
+              input.setSelectionRange(v.length, v.length); 
+            } catch {}
+          }
+        });
+      };
+    }
+  }, []);
+
+  // Expose React state for mobile guards
+  useEffect(() => {
+    window.__reactState = {
+      currentGroup,
+      currentScreen,
+      showSuccess
+    };
+  }, [currentGroup, currentScreen, showSuccess]);
+
+  // Mobile: Watch for success state changes and send signal
+  useEffect(() => {
+    if (showSuccess && window.__mobileFlow && window.top !== window.self) {
+      console.log('Registration: Success state changed to true, sending mobile signal');
+      const courtNumber = window.__preselectedCourt || justAssignedCourt || null;
+      console.log('Registration: Court number for success:', courtNumber);
+      try {
+        window.parent.postMessage({ type: 'registration:success', courtNumber: courtNumber }, '*');
+        console.log('Registration: Direct success message sent');
+      } catch(e) {
+        console.log('Registration: Error in direct success message:', e);
+      }
+      
+      // Start countdown for mobile
+      setMobileCountdown(5);
+      const countdownInterval = setInterval(() => {
+        setMobileCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      return () => clearInterval(countdownInterval);
+    }
+  }, [showSuccess, justAssignedCourt]);
 
   // Update available courts when current group changes
   useEffect(() => {
@@ -2984,6 +3272,11 @@ const tryAssignCourtToGroup = () => {
 
 
 const assignCourtToGroup = async (courtNumber) => {
+  // Mobile: Use preselected court if in mobile flow
+  if (window.__mobileFlow && window.__preselectedCourt && !courtNumber) {
+    courtNumber = window.__preselectedCourt;
+    console.log('Mobile: Using preselected court', courtNumber);
+  }
 
 // Check if club is open
 const now = new Date();
@@ -3076,6 +3369,16 @@ console.log('✅ Court assigned result:', result);
   setCanChangeCourt(allowCourtChange);  // Only true if alternatives exist
   setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
   setShowSuccess(true);
+  // Mobile: notify parent on success
+  if (window.__mobileSuccessHandler) {
+    window.__mobileSuccessHandler(justAssignedCourt || courtNumber);
+  }
+  // Mobile: trigger success signal
+  console.log('Registration: Checking mobile success signal...', !!window.UI?.__mobileSendSuccess__);
+  if (window.UI?.__mobileSendSuccess__) {
+    console.log('Registration: Calling mobile success signal');
+    window.UI.__mobileSendSuccess__();
+  }
 
   if (allowCourtChange) {
     const timer = setInterval(() => {
@@ -3540,6 +3843,7 @@ console.log('✅ Court assigned result:', result);
           position={position}
           estimatedWait={estimatedWait}
           currentGroup={currentGroup}
+          mobileCountdown={window.__mobileFlow ? mobileCountdown : null}
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
@@ -4371,6 +4675,7 @@ onFocus={() => {
                
                placeholder="Start typing..."
                className="w-full p-4 sm:p-5 text-xl sm:text-2xl border-2 rounded-xl focus:border-green-500 focus:outline-none"
+               id="main-search-input"
                autoFocus
                autoComplete="off"
                autoCorrect="off"
@@ -4465,27 +4770,42 @@ onFocus={() => {
          </div>
        )}
        <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl h-full max-h-[95vh] flex flex-col relative overflow-hidden">
-         <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-blue-50 rounded-xl text-center">
-           <p className="text-lg sm:text-2xl text-blue-800">
-             Welcome, <strong>{currentGroup[0]?.name}</strong>!
-           </p>
-           <p className="text-base sm:text-lg text-gray-600 mt-1 sm:mt-2">
-             {currentGroup.length === 1 
-               ? "Add more players to your group or select a court"
-               : `${currentGroup.length} players in your group`}
-           </p>
-           {hasWaitlistPriority && (
-             <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-yellow-100 rounded-lg animate-pulse">
-               <p className="text-base sm:text-lg font-bold text-yellow-800">
-                 Courts are now available for your group!
-               </p>
-             </div>
-           )}
-         </div>
+         {/* Mobile-specific UI when no player added yet */}
+         {window.__mobileFlow && currentGroup.length === 0 ? (
+           <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-green-50 rounded-xl text-center">
+             <p className="text-lg sm:text-2xl text-green-800 font-semibold">
+               Court {window.__preselectedCourt} Selected
+             </p>
+           </div>
+         ) : (
+           /* Normal UI for desktop or when player exists */
+           <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-blue-50 rounded-xl text-center">
+             <p className="text-lg sm:text-2xl text-blue-800">
+               Welcome{currentGroup[0]?.name ? <>, <strong>{currentGroup[0]?.name}</strong></> : ''}!
+             </p>
+             <p className="text-base sm:text-lg text-gray-600 mt-1 sm:mt-2">
+               {currentGroup.length === 0
+                 ? "Search for players to add to your group"
+                 : currentGroup.length === 1 
+                 ? "Add more players to your group or select a court"
+                 : `${currentGroup.length} players in your group`}
+             </p>
+             {hasWaitlistPriority && (
+               <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-yellow-100 rounded-lg animate-pulse">
+                 <p className="text-base sm:text-lg font-bold text-yellow-800">
+                   Courts are now available for your group!
+                 </p>
+               </div>
+             )}
+           </div>
+         )}
          <div className="flex-1 overflow-y-auto pb-24 sm:pb-32" style={{maxHeight: 'calc(100vh - 280px)'}}>
-           <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
-           <div className="space-y-2 mb-3 sm:mb-4">
-             {currentGroup.map((player, idx) => (
+           {/* Only show Current Group section if there are players or not in mobile flow */}
+           {(currentGroup.length > 0 || !window.__mobileFlow) && (
+             <>
+               <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
+               <div className="space-y-2 mb-3 sm:mb-4">
+                 {currentGroup.map((player, idx) => (
                <div
                  key={idx}
                  className="flex items-center justify-between bg-gray-50 p-2.5 sm:p-3 rounded-xl"
@@ -4511,9 +4831,89 @@ onFocus={() => {
                  </button>
                </div>
              ))}
-           </div>
+               </div>
+             </>
+           )}
 
-           {currentGroup.length < CONSTANTS.MAX_PLAYERS && (
+
+           {/* Mobile flow: Show search input when no players, otherwise show Add Another Player button */}
+           {window.__mobileFlow && currentGroup.length === 0 ? (
+             <div className="mb-4">
+               <div className="relative">
+                 <input
+                   type="text"
+                   value={searchInput}
+                   onChange={(e) => {
+                     markUserTyping();
+                     const value = e.target.value || "";
+                     setSearchInput(value);
+                     
+                     // Check for admin code (immediate, no debounce)
+                     if (value === CONSTANTS.ADMIN_CODE) {
+                       setCurrentScreen("admin");
+                       setSearchInput("");
+                       return;
+                     }
+                     
+                     setShowSuggestions(value.length > 0);
+                   }}
+                   onFocus={() => {
+                     markUserTyping();
+                     setShowSuggestions(searchInput.length > 0);
+                   }}
+                   placeholder="Enter your name or Member #"
+                   className="w-full p-4 sm:p-5 text-xl sm:text-2xl border-2 rounded-xl focus:border-green-500 focus:outline-none"
+                   id="mobile-group-search-input"
+                   autoFocus
+                   autoComplete="off"
+                   autoCorrect="off"
+                   autoCapitalize="words"
+                   spellCheck="false"
+                 />
+               </div>
+               
+               {/* Search suggestions dropdown */}
+               {showSuggestions && (
+                 <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-hidden" style={{maxHeight: '400px', overflowY: 'auto'}}>
+                   {getAutocompleteSuggestions(effectiveSearchInput).length > 0 ? (
+                     getAutocompleteSuggestions(effectiveSearchInput).map((suggestion, idx) => (
+                       <button
+                         key={idx}
+                         onClick={async () => {
+                           await handleSuggestionClick(suggestion);
+                           // For mobile flow, clear search after adding first player
+                           if (window.__mobileFlow) {
+                             setSearchInput("");
+                             setShowSuggestions(false);
+                           }
+                         }}
+                         className="w-full p-4 text-left hover:bg-blue-50 flex items-center border-b border-gray-100"
+                       >
+                         <div className="flex-1">
+                           <div className="font-medium text-lg">
+                             {suggestion.member.name}
+                             {suggestion.member.isGuest && (
+                               <span className="text-sm text-blue-600 ml-2">(Guest)</span>
+                             )}
+                           </div>
+                           {suggestion.type === 'member' && (
+                             <div className="text-sm text-gray-600">Member #{suggestion.member.id}</div>
+                           )}
+                         </div>
+                         {suggestion.type === 'member' && suggestion.member.ranking && (
+                           <div className="text-sm text-blue-600 font-medium">Rank #{suggestion.member.ranking}</div>
+                         )}
+                       </button>
+                     ))
+                   ) : (
+                     <div className="p-4 text-center text-gray-500">
+                       {searchInput.length < 2 ? "Keep typing..." : "No members found"}
+                     </div>
+                   )}
+                 </div>
+               )}
+             </div>
+           ) : currentGroup.length < CONSTANTS.MAX_PLAYERS && (
   <div className="flex gap-2 sm:gap-3 mb-3">
     <button
       onClick={() => {
@@ -4903,20 +5303,38 @@ onFocus={() => {
         return availableCourts.length > 0;
       })() ? (
         <button
-          onClick={() => setCurrentScreen("court")}
+          onClick={() => {
+            // Mobile: Skip court selection if we have a preselected court
+            if (window.__mobileFlow && window.__preselectedCourt) {
+              assignCourtToGroup(window.__preselectedCourt);
+            } else {
+              setCurrentScreen("court");
+            }
+          }}
           className="bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors"
         >
-          Select a Court
+          {window.__mobileFlow && window.__preselectedCourt ? `Register for Court ${window.__preselectedCourt}` : 'Select a Court'}
         </button>
       ) : (
         <button
           onClick={() => {
             sendGroupToWaitlist(currentGroup);
             setShowSuccess(true);
+            // Mobile: notify parent on success
+            if (window.__mobileSuccessHandler) {
+              window.__mobileSuccessHandler(null); // waitlist doesn't have court
+            }
+            // Mobile: trigger success signal
+            if (window.UI?.__mobileSendSuccess__) {
+              window.UI.__mobileSendSuccess__();
+            }
             
-            setTimeout(() => {
-              resetForm();
-            }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+            // Don't auto-reset in mobile flow - let the overlay handle timing
+            if (!window.__mobileFlow) {
+              setTimeout(() => {
+                resetForm();
+              }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+            }
           }}
           className="bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors"
         >
@@ -4993,9 +5411,20 @@ onFocus={() => {
          onJoinWaitlist={async () => {
            await sendGroupToWaitlist(currentGroup);
            setShowSuccess(true);
-           setTimeout(() => {
-             resetForm();
-           }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+           // Mobile: notify parent on success
+           if (window.__mobileSuccessHandler) {
+             window.__mobileSuccessHandler(null); // waitlist doesn't have court
+           }
+           // Mobile: trigger success signal
+           if (window.UI?.__mobileSendSuccess__) {
+             window.UI.__mobileSendSuccess__();
+           }
+           // Don't auto-reset in mobile flow - let the overlay handle timing
+           if (!window.__mobileFlow) {
+             setTimeout(() => {
+               resetForm();
+             }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+           }
          }}
          onGoBack={() => {
            setCurrentScreen("group");

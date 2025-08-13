@@ -317,6 +317,17 @@
       }
     }
 
+    /* Mobile tap highlight animation */
+    @keyframes courtPulse { 
+      0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)} 
+      100%{box-shadow:0 0 0 24px rgba(16,185,129,0)} 
+    }
+    .court-highlight { 
+      outline:3px solid #10b981; 
+      animation:courtPulse 900ms ease-out 3; 
+      border-radius:12px; 
+    }
+
     /* Hide mobile-specific elements on larger screens */
     @media (min-width: 769px) {
       .mobile-courts-grid {
@@ -437,6 +448,47 @@
   <script src="./shared-utils.js"></script>
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
+  
+  <!-- Mobile Bridge Script -->
+  <script>
+    (function boardMobileBridge(){
+      // Mobile-only: only active when embedded
+      const MOBILE = (window.top !== window.self);
+
+      // call this when an available court is tapped
+      window.mobileTapToRegister = function(courtNumber){
+        if (!MOBILE) return false; // do nothing on desktop/iPad standalone
+        try { window.parent.postMessage({ type:'register', courtNumber:Number(courtNumber) }, '*'); } catch {}
+        return true;
+      };
+
+      // Optional: highlight after success
+      window.addEventListener('message', e => {
+        const d = e?.data; if (d?.type !== 'highlight') return;
+        const n = Number(d.courtNumber);
+        const el = document.querySelector(`[data-court="${n}"]`);
+        if (!el) return;
+        el.classList.add('court-highlight');
+        setTimeout(()=> el.classList.remove('court-highlight'), 3000);
+      });
+
+      // Tap debouncing to prevent double opens
+      let _tapLock = 0;
+      document.addEventListener('click', (ev) => {
+        if (window.top === window.self) return; // only when embedded
+        const card = ev.target.closest('[data-court][data-available="true"]');
+        if (!card) return;
+        const now = Date.now();
+        if (now - _tapLock < 300) return; // debounce
+        _tapLock = now;
+
+        const n = Number(card.getAttribute('data-court'));
+        if (!Number.isFinite(n)) return;
+        try { window.parent.postMessage({ type:'register', courtNumber: n }, '*'); } catch {}
+        ev.preventDefault();
+      });
+    })();
+  </script>
   
   <script type="text/babel">
     // Access shared utils (optional convenience)
@@ -803,6 +855,12 @@
                     : "bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-500")
                   : "bg-gradient-to-b from-blue-400 to-blue-500 border-blue-400"
             }`}
+            data-court={courtNumber}
+            data-available={isAvailable}
+            role={isAvailable ? "button" : undefined}
+            tabIndex={isAvailable ? 0 : undefined}
+            onClick={isAvailable ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
+            style={{ cursor: isAvailable ? 'pointer' : 'default' }}
           >
             <h3 className={`court-text-lg font-bold ${isBlocked ? 'text-gray-800' : 'text-white'} mb-1`}>
               Court {courtNumber}
