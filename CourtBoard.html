@@ -36,8 +36,42 @@
       min-width: 80px;
     }
 
-    /* Large display scaling - consolidated */
-    @media (min-width: 1401px) {
+    /* Intermediate display scaling - for 1400-1800px */
+    @media (min-width: 1401px) and (max-width: 1800px) {
+      .courts-grid {
+        grid-template-columns: repeat(8, minmax(130px, 180px));
+        gap: 0.75rem;
+      }
+
+      .courts-grid-bottom {
+        grid-template-columns: repeat(4, minmax(130px, 180px));
+        gap: 0.75rem;
+      }
+
+      .court-card {
+        max-width: 180px !important;
+        height: clamp(200px, 14vw, 280px) !important;
+      }
+      
+      /* Moderate text scaling */
+      .courtboard-text-xl { font-size: 1.5rem; }
+      .courtboard-text-lg { font-size: 1.75rem; }
+      .courtboard-text-base { font-size: 1.5rem; }
+      .courtboard-text-sm { font-size: 1.25rem; }
+      .courtboard-text-xs { font-size: 1.125rem; }
+
+      .courtboard-waiting-number { font-size: 1.125rem; }
+      .space-y-2 > * + * { margin-top: 0.75rem !important; }
+
+      /* Court card text - smaller for this range */
+      .court-text-lg { font-size: clamp(0.875rem, 1.2vw, 1.25rem) !important; }
+      .court-text-base { font-size: clamp(0.75rem, 1vw, 1.125rem) !important; }
+      .court-text-sm { font-size: clamp(0.625rem, 0.9vw, 1rem) !important; }
+      .court-text-xs { font-size: clamp(0.5rem, 0.8vw, 0.875rem) !important; }
+    }
+
+    /* Large display scaling - for 1800px+ */
+    @media (min-width: 1801px) {
       .courts-grid {
         grid-template-columns: repeat(8, minmax(130px, 250px));
         gap: 1rem;
@@ -576,7 +610,7 @@
     
     // Wait for everything to load
     window.addEventListener('load', () => {
-      console.log('🚀 Loading DataStore Integrated Tennis Display...');
+      // console.log('🚀 Loading DataStore Integrated Tennis Display...');
       addTimer(setTimeout(() => {
         initializeApp();
       }, 100), 'timeout');
@@ -994,7 +1028,7 @@
           // Calculate wait time based on position
           if (position <= availabilitySlots.length) {
             const waitMinutes = Math.ceil((availabilitySlots[position - 1] - currentTime.getTime()) / 60000);
-            console.log(`Position ${position} wait time: ${waitMinutes} minutes`);
+            // console.log(`Position ${position} wait time: ${waitMinutes} minutes`);
             return Math.max(0, waitMinutes);
           }
           
@@ -1038,14 +1072,17 @@
                 {waitingGroups.slice(0, TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY).map((group, idx) => {
 
                   const availableCourts = courts.filter(court => !court || (court && new Date(court.endTime) <= currentTime));
-                  const showYoureUp = idx === 0 && availableCourts.length > 0;
+                  
+                  // Only first 2 groups can get "You're Up!" (matches registration system limit)
+                  const canRegisterNow = idx < 2 && (idx + 1) <= availableCourts.length;
                   
                   let estimatedWait = 0;
-                  if (!showYoureUp) {
+                  if (!canRegisterNow) {
                     estimatedWait = calculateEstimatedWaitTimeV2(idx + 1);
                   }
 
-                  const showAlert = estimatedWait === 0;
+                  // Show "You're Up!" if they can register now, OR if wait time is 0 (but limit to first 2 groups)
+                  const showAlert = canRegisterNow || (estimatedWait === 0 && idx < 2);
 
                   return (
                     <div
@@ -1076,7 +1113,7 @@
                             <span className="courtboard-text-xs font-bold">You're Up!</span>
                           </div>
                         )}
-                        {!showAlert && estimatedWait > 0 && (
+                        {!showAlert && (
                           <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
                             {estimatedWait} min
                           </div>
@@ -1183,10 +1220,10 @@
       const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [], courtBlocks = [] }) => {
 
         const getCourtAvailabilityTimeline = () => {
-          console.log('🔍 getCourtAvailabilityTimeline called');
+          // console.log('🔍 getCourtAvailabilityTimeline called');
           
           if (!courts || !Array.isArray(courts)) {
-            console.log('❌ Courts array invalid');
+            // console.log('❌ Courts array invalid');
             return [];
           }
           
@@ -1197,19 +1234,19 @@
           let courtBlocks = [];
           try {
             courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-            console.log('📦 Loaded court blocks:', courtBlocks.length);
+            // console.log('📦 Loaded court blocks:', courtBlocks.length);
           } catch (error) {
             console.error('Error loading court blocks:', error);
           }
           
-          console.log('⏰ Current time:', currentTime);
+          // console.log('⏰ Current time:', currentTime);
           
           // Check each court for availability
           courts.forEach((court, index) => {
             const courtNumber = index + 1;
             let endTime = null;
             
-            console.log(`🏟️ Checking court ${courtNumber}`);
+            // console.log(`🏟️ Checking court ${courtNumber}`);
             
             // Check for active blocks on this court
             const activeBlock = courtBlocks.find(block => 
@@ -1219,15 +1256,15 @@
             );
             
             if (activeBlock) {
-              console.log(`🚫 Court ${courtNumber} blocked until:`, activeBlock.endTime);
+              // console.log(`🚫 Court ${courtNumber} blocked until:`, activeBlock.endTime);
               endTime = activeBlock.endTime;
             } else if (court) {
               // Court has players - check for overtime or regular game
               if (court.current && court.current.endTime) {
-                console.log(`🎾 Court ${courtNumber} game until:`, court.current.endTime);
+                // console.log(`🎾 Court ${courtNumber} game until:`, court.current.endTime);
                 endTime = court.current.endTime;
               } else if (court.endTime) {
-                console.log(`🎾 Court ${courtNumber} old game until:`, court.endTime);
+                // console.log(`🎾 Court ${courtNumber} old game until:`, court.endTime);
                 endTime = court.endTime;
               }
               
@@ -1238,7 +1275,7 @@
                                  (court.players && court.players.length > 0);
                 
                 if (hasPlayers && parsedEndTime <= currentTime) {
-                  console.log(`⚡ Court ${courtNumber} is overtime (available now)`);
+                  // console.log(`⚡ Court ${courtNumber} is overtime (available now)`);
                   overtimeCourts.push({
                     courtNumber,
                     endTime: null, // Special marker for "Now"
@@ -1248,7 +1285,7 @@
                 }
               }
             } else {
-              console.log(`✅ Court ${courtNumber} empty`);
+              // console.log(`✅ Court ${courtNumber} empty`);
             }
             
             // Parse and validate the end time for future availability
@@ -1256,13 +1293,13 @@
               try {
                 const parsedEndTime = new Date(endTime);
                 if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
-                  console.log(`✅ Court ${courtNumber} available at:`, parsedEndTime);
+                  // console.log(`✅ Court ${courtNumber} available at:`, parsedEndTime);
                   courtAvailability.push({
                     courtNumber,
                     endTime: parsedEndTime
                   });
                 } else {
-                  console.log(`⏰ Court ${courtNumber} time is past:`, parsedEndTime);
+                  // console.log(`⏰ Court ${courtNumber} time is past:`, parsedEndTime);
                 }
               } catch (error) {
                 console.error(`Error parsing end time for court ${courtNumber}:`, error);
@@ -1276,9 +1313,9 @@
           // Combine overtime courts (first) with future availability
           const combinedAvailability = [...overtimeCourts, ...courtAvailability];
           
-          console.log('📋 Overtime courts:', overtimeCourts);
-          console.log('📋 Future availability:', courtAvailability);
-          console.log('📋 Combined timeline:', combinedAvailability);
+          // console.log('📋 Overtime courts:', overtimeCourts);
+          // console.log('📋 Future availability:', courtAvailability);
+          // console.log('📋 Combined timeline:', combinedAvailability);
           
           return combinedAvailability;
         };
@@ -1306,12 +1343,12 @@
             );
             
             if (isBlocked) {
-              console.log(`🚫 Court ${courtNumber} is blocked, not empty`);
+              // console.log(`🚫 Court ${courtNumber} is blocked, not empty`);
               return false; // Blocked courts are not empty
             }
             
             if (!court) {
-              console.log(`✅ Court ${courtNumber} is truly empty`);
+              // console.log(`✅ Court ${courtNumber} is truly empty`);
               return true; // No court data = empty
             }
             
@@ -1320,14 +1357,14 @@
             const hasOldPlayers = court.players && court.players.length > 0;
             
             const isEmpty = !hasCurrentPlayers && !hasOldPlayers;
-            console.log(`🏟️ Court ${courtNumber} empty check:`, isEmpty);
+            // console.log(`🏟️ Court ${courtNumber} empty check:`, isEmpty);
             return isEmpty;
           });
         };
 
         const timeline = getCourtAvailabilityTimeline();
-        console.log('🎯 Timeline length:', timeline.length);
-        console.log('🎯 hasEmptyCourts():', hasEmptyCourts());
+        // console.log('🎯 Timeline length:', timeline.length);
+        // console.log('🎯 hasEmptyCourts():', hasEmptyCourts());
 
         const hasAvailableNow = waitingGroups.length === 0 && (hasEmptyCourts() || timeline.some(availability => {
           try {
@@ -1346,7 +1383,7 @@
               {hasAvailableNow ? (
                 <>
                 <h2 className={`courtboard-text-xl font-bold mb-3 flex items-center ${
-                  waitingGroups.length === 0 ? "text-gray-400" : "text-gray-400"
+                  hasAvailableNow ? "text-gray-400" : "text-sky-500"
                 }`}>
                   <TennisBall className={`mr-3 ${hasAvailableNow ? 'icon-grey' : ''}`} size={24} />
                   Next Available
@@ -1361,7 +1398,7 @@
                 <>
 
                 <h2 className={`courtboard-text-xl font-bold mb-3 flex items-center ${
-                  waitingGroups.length === 0 ? "text-gray-400" : "text-sky-500"
+                  hasAvailableNow ? "text-gray-400" : "text-sky-500"
                 }`}>
                   
                 <TennisBall className={`mr-3 ${hasAvailableNow ? 'icon-grey' : ''}`} size={24} />
@@ -1591,7 +1628,7 @@
               
               const blockedCourts = data.courts ? data.courts.filter(c => c && c.blocked && c.blocked.isBlocked) : [];
               if (blockedCourts.length > 0) {
-                console.log('Display monitor - blocked courts found:', blockedCourts.length, blockedCourts);
+                // console.log('Display monitor - blocked courts found:', blockedCourts.length, blockedCourts);
               }
               
               const validatedData = DataValidation.sanitizeCourtData(data);
@@ -1627,7 +1664,7 @@
               if (blocksToKeep.length !== blocks.length) {
                 // Read-only view: prevent cleanup writes
                 readOnlyWrite('courtBlocks', blocksToKeep);
-                console.log(`Read-only view: would have cleaned up ${blocks.length - blocksToKeep.length} blocks from previous days`);
+                // console.log(`Read-only view: would have cleaned up ${blocks.length - blocksToKeep.length} blocks from previous days`);
               }
             } catch (error) {
               console.error('Error cleaning up blocks:', error);
@@ -1649,7 +1686,7 @@
 
         // STEP 11: Event-driven updates with increased frequency
         useEffect(() => {
-          console.log('🎯 Setting up enhanced data loading...');
+          // console.log('🎯 Setting up enhanced data loading...');
           
           // prevent duplicate attachment if this component re-mounts
           if (_one('__CB_LISTENERS_INSTALLED')) return;
@@ -1658,7 +1695,7 @@
           loadData();
 
           const handleUpdate = debounce(() => {
-            console.log('📡 Received tennisDataUpdate event, reloading data...');
+            // console.log('📡 Received tennisDataUpdate event, reloading data...');
             loadData();
           }, 150);
 
@@ -1935,7 +1972,7 @@
       };
 
       // STEP 13: Render the application
-      console.log('🎯 Rendering fully integrated application...');
+      // console.log('🎯 Rendering fully integrated application...');
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<TennisCourtDisplay />);
       
@@ -1947,7 +1984,7 @@
         }
       }, 30000), 'timeout');
       
-      console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
+      // console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
   </script>
 </body>

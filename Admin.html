@@ -5482,48 +5482,52 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
 
 
   // Block operations
-  const applyBlocks = (blocks) => {
+  const applyBlocks = async (blocks) => {
     if (!blocks || !Array.isArray(blocks)) {
       return;
     }
 
     let successCount = 0;
-    blocks.forEach(block => {
-  
-  // Extract date from ISO timestamp
-  const startTime = new Date(block.startTime);
-  const endTime = new Date(block.endTime);
-  
-  // Add blocks to each court (handle single courtNumber)
-  const courts = Array.isArray(block.courts) ? block.courts : [block.courtNumber];
-  
-  courts.forEach(async (courtNum) => {
-    // Get existing blocks
-    const existingBlocks = await dataStore.get('courtBlocks') || [];
     
-    // Add new block
-    existingBlocks.push({
-      id: block.id || Date.now() + Math.random(),
-      courtNumber: courtNum,
-      reason: block.reason,
-      title: block.title, // Preserve the custom title
-      startTime: block.startTime,
-      endTime: block.endTime,
-      isEvent: block.isEvent,
-      eventDetails: block.eventDetails,
-      createdAt: new Date().toISOString()
-    });
-    
-    // Save back
-    await dataStore.set('courtBlocks', existingBlocks, { immediate: true });
-    successCount++;
-  });
-});
-  
+    // Process all blocks and courts
+    for (const block of blocks) {
+      // Extract date from ISO timestamp
+      const startTime = new Date(block.startTime);
+      const endTime = new Date(block.endTime);
+      
+      // Add blocks to each court (handle single courtNumber)
+      const courts = Array.isArray(block.courts) ? block.courts : [block.courtNumber];
+      
+      for (const courtNum of courts) {
+        try {
+          // Get existing blocks
+          const existingBlocks = await dataStore.get('courtBlocks') || [];
+          
+          // Add new block
+          existingBlocks.push({
+            id: block.id || Date.now() + Math.random(),
+            courtNumber: courtNum,
+            reason: block.reason,
+            title: block.title, // Preserve the custom title
+            startTime: block.startTime,
+            endTime: block.endTime,
+            isEvent: block.isEvent,
+            eventDetails: block.eventDetails,
+            createdAt: new Date().toISOString()
+          });
+          
+          // Save back
+          await dataStore.set('courtBlocks', existingBlocks, { immediate: true });
+          successCount++;
+        } catch (error) {
+          console.error('Error applying block to court', courtNum, error);
+        }
+      }
+    }
 
-  window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-  showNotification(`Applied ${successCount} block(s) successfully`, 'success');
-};
+    window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+    showNotification(`Applied ${successCount} block(s) successfully`, 'success');
+  };
 
   // Template operations
   const saveTemplate = async (template) => {

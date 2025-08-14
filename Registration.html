@@ -2243,21 +2243,43 @@ const TennisRegistration = () => {
 
   // Real-time synchronization with other apps
   useEffect(() => {
+    // Debounced handlers to prevent rapid bouncing
+    let updateTimeout = null;
+    
     const handleStorageUpdate = async (event) => {
       if (event.detail && event.detail.key === TENNIS_CONFIG.STORAGE.KEY) {
-        // Data updated from another app instance
-        const updatedData = await TennisDataService.loadData();
-        setData(updatedData);
-        console.log('Data synchronized from external update');
+        // Don't trigger updates if we're in the middle of a screen transition
+        if (currentScreen === "search" || currentScreen === "group") {
+          console.log('Skipping storage update during screen transition');
+          return;
+        }
+        
+        // Clear any pending update and debounce
+        clearTimeout(updateTimeout);
+        updateTimeout = setTimeout(async () => {
+          const updatedData = await TennisDataService.loadData();
+          setData(updatedData);
+          console.log('Data synchronized from external update');
+        }, 500); // Increased debounce delay
       }
     };
 
     const handleStorageEvent = async (event) => {
       // Handle storage events from localStorage changes
       if (event.key === TENNIS_CONFIG.STORAGE.KEY && event.newValue) {
-        const updatedData = await TennisDataService.loadData();
-        setData(updatedData);
-        console.log('Data synchronized from localStorage change');
+        // Don't trigger updates if we're in the middle of a screen transition
+        if (currentScreen === "search" || currentScreen === "group") {
+          console.log('Skipping localStorage update during screen transition');
+          return;
+        }
+        
+        // Clear any pending update and debounce
+        clearTimeout(updateTimeout);
+        updateTimeout = setTimeout(async () => {
+          const updatedData = await TennisDataService.loadData();
+          setData(updatedData);
+          console.log('Data synchronized from localStorage change');
+        }, 500); // Increased debounce delay
       }
     };
 
@@ -2268,7 +2290,8 @@ const TennisRegistration = () => {
     window.addEventListener('storage', handleStorageEvent);
 
     return () => {
-      window.removeEventListener('tennisDataUpdate', handleStorageUpdate);
+      clearTimeout(updateTimeout);
+      window.removeEventListener(EVENTS.UPDATE, handleStorageUpdate);
       window.removeEventListener('storage', handleStorageEvent);
     };
   }, []);
@@ -2350,7 +2373,15 @@ const TennisRegistration = () => {
         // Check if we should bypass waitlist priority for overtime courts
         const data = getCourtData();
         const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
-        const hasUnoccupiedCourts = data.courts.some(court => !court);
+        const hasUnoccupiedCourts = data.courts.some((court, index) => {
+          const courtNumber = index + 1;
+          const blockStatus = getCourtBlockStatus(courtNumber);
+          if (blockStatus && blockStatus.isCurrent) return false;
+          
+          return !court || court.wasCleared || (court.current === null && court.history) ||
+                 ((!court.players || court.players.length === 0) && 
+                  (!court.current || !court.current.players || court.current.players.length === 0));
+        });
         
         // If there are available courts but no unoccupied courts, these must be overtime courts
         const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
@@ -2370,7 +2401,8 @@ const TennisRegistration = () => {
         // Check if there's a waiting group that can now play  
         // Note: data is already loaded above
         const firstWaitingGroupData = data.waitingGroups.length > 0 ? data.waitingGroups[0] : null;
-        const canPlay = firstWaitingGroupData && courts.length > 0;
+        // Use tempAvailableCourts (without waitlist check) to determine if first group can play
+        const canPlay = firstWaitingGroupData && tempAvailableCourts.length > 0;
         setCanFirstGroupPlay(canPlay);
         setFirstWaitingGroup(firstWaitingGroupData);
         
@@ -2494,6 +2526,8 @@ useEffect(() => {
 
 
 // Historical Data Protection System
+// This backs up court game data for analytics and reporting purposes in Admin.html
+// It does NOT restore data automatically - it only saves historical records
 useEffect(() => {
   const protectCourtHistory = async () => {
     const data = await TennisDataService.loadData();
@@ -2546,69 +2580,10 @@ useEffect(() => {
   return () => clearInterval(backupInterval);
 }, []);
 
-// Historical Data Restoration System
-useEffect(() => {
-  const restoreWipedHistory = async () => {
-    const data = await TennisDataService.loadData();
-    const now = new Date();
-    let restoredAny = false;
-    
-    // Check each court for missing history
-    for (let index = 0; index < data.courts.length; index++) {
-      const court = data.courts[index];
-      const courtNumber = index + 1;
-      const backupKey = `courtHistory_${courtNumber}`;
-      
-      // Get backup data
-      const courtBackup = await dataStore.get(backupKey) || [];
-      
-      // If court is empty/wiped but we have backup data
-      if ((!court || (!court.current && !court.players && (!court.history || court.history.length === 0))) && courtBackup.length > 0) {
-        console.log(`Detected wiped history on court ${courtNumber}, restoring from backup`);
-        
-        // Restore games that should still be visible
-        const restoredHistory = [];
-        courtBackup.forEach(backup => {
-          const backupEndTime = new Date(backup.endTime);
-          
-          // Only restore if the game should still be historically visible (ended recently)
-          if (backupEndTime > new Date(now.getTime() - (4 * 60 * 60 * 1000))) { // 4 hours ago
-            restoredHistory.push({
-              players: backup.players,
-              startTime: backup.startTime,
-              scheduledEndTime: backup.endTime,
-              actualEndTime: backup.endTime,
-              endReason: 'admin_wiped_restored',
-              duration: backup.duration
-            });
-          }
-        });
-        
-        // Restore the court with historical data
-        if (restoredHistory.length > 0) {
-          data.courts[index] = {
-            current: null,
-            history: restoredHistory
-          };
-          restoredAny = true;
-          console.log(`Restored ${restoredHistory.length} historical games to court ${courtNumber}`);
-        }
-      }
-    }
-    
-    // Save restored data
-    if (restoredAny) {
-      await TennisDataService.saveData(data);
-      console.log('Historical data restoration completed');
-    }
-  };
-  
-  // Run restoration check every 15 seconds
-  restoreWipedHistory();
-  const restoreInterval = setInterval(restoreWipedHistory, 15000);
-  
-  return () => clearInterval(restoreInterval);
-}, []);
+// REMOVED: Historical Data Restoration System
+// This was causing issues where cleared data would be automatically restored every 15 seconds.
+// We keep the Historical Data Protection System above for analytics purposes,
+// but we don't want to automatically restore cleared courts.
 
 // Auto-cleanup expired blocks weekly
 useEffect(() => {
@@ -2911,7 +2886,15 @@ const checkLocationAndProceed = async (onSuccess) => {
         // Check if we should bypass waitlist priority for overtime courts
         const data = getCourtData();
         const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
-        const hasUnoccupiedCourts = data.courts.some(court => !court);
+        const hasUnoccupiedCourts = data.courts.some((court, index) => {
+          const courtNumber = index + 1;
+          const blockStatus = getCourtBlockStatus(courtNumber);
+          if (blockStatus && blockStatus.isCurrent) return false;
+          
+          return !court || court.wasCleared || (court.current === null && court.history) ||
+                 ((!court.players || court.players.length === 0) && 
+                  (!court.current || !court.current.players || court.current.players.length === 0));
+        });
         
         // If there are available courts but no unoccupied courts, these must be overtime courts
         const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
@@ -5387,7 +5370,22 @@ onFocus={() => {
    const isFirstInWaitlist = currentGroup.some(player => isPlayerNextInWaitlist(player.id));
    
    // Check if showing overtime courts
-   const hasUnoccupiedCourts = data.courts.some(court => !court);
+   const hasUnoccupiedCourts = data.courts.some((court, index) => {
+     const courtNumber = index + 1;
+     
+     // Check if court is blocked
+     const blockStatus = getCourtBlockStatus(courtNumber);
+     if (blockStatus && blockStatus.isCurrent) {
+       return false; // Blocked courts are not unoccupied
+     }
+     
+     // Check various conditions for an unoccupied court
+     return !court || // No court data
+            court.wasCleared || // Court was cleared
+            (court.current === null && court.history) || // New structure with cleared court
+            ((!court.players || court.players.length === 0) && 
+             (!court.current || !court.current.players || court.current.players.length === 0)); // No players in either structure
+   });
    const showingOvertimeCourts = availableCourts.length > 0 && !hasUnoccupiedCourts && !isSelectingDifferentCourt;
    
    
