@@ -2626,7 +2626,7 @@ const WeekView = memo(({
 
 
 // Enhanced Event Calendar Component with interactive features
-const EventCalendarEnhanced = ({ courts, currentTime, refreshTrigger, onRefresh, onEditEvent, onDuplicateEvent, defaultView = 'week' }) => {
+const EventCalendarEnhanced = ({ courts, currentTime, refreshTrigger, onRefresh, onEditEvent, onDuplicateEvent, defaultView = 'week', disableEventClick = false }) => {
         const [viewMode, setViewMode] = useState(defaultView);
         const [selectedDate, setSelectedDate] = useState(new Date());
         const [selectedEvent, setSelectedEvent] = useState(null);
@@ -2734,9 +2734,11 @@ const EventCalendarEnhanced = ({ courts, currentTime, refreshTrigger, onRefresh,
         
         // Event handlers
         const handleEventClick = useCallback((event) => {
-          setSelectedEvent(event);
+          if (!disableEventClick) {
+            setSelectedEvent(event);
+          }
           setHoveredEvent(null);
-        }, []);
+        }, [disableEventClick]);
         
         
         const handleEventHover = useCallback((event, element) => {
@@ -3021,7 +3023,7 @@ const EventCalendarEnhanced = ({ courts, currentTime, refreshTrigger, onRefresh,
             )}
             
             {/* Event Details Modal */}
-            {selectedEvent && (
+            {selectedEvent && !disableEventClick && (
               <EventDetailsModal
                 event={selectedEvent}
                 onClose={() => setSelectedEvent(null)}
@@ -5627,15 +5629,22 @@ useEffect(() => {
   window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate, { passive: true });
   window.addEventListener('storage', handleBlockStorageEvent, { passive: true });
   
+  // Add periodic refresh to catch when scheduled blocks become active
+  const refreshInterval = setInterval(() => {
+    loadBlocks();
+  }, 5000); // Check every 5 seconds
+  
   // defensive cleanup on unload
   window.addEventListener('beforeunload', () => {
     try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate); } catch {}
     try { window.removeEventListener('storage', handleBlockStorageEvent); } catch {}
+    try { clearInterval(refreshInterval); } catch {}
   }, { once: true });
   
   return () => {
     try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate); } catch {}
     try { window.removeEventListener('storage', handleBlockStorageEvent); } catch {}
+    try { clearInterval(refreshInterval); } catch {}
   };
 }, []);
 
@@ -6140,6 +6149,7 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
     currentTime={currentTime}
     refreshTrigger={refreshTrigger}
     defaultView={calendarView}
+    disableEventClick={true}
   />
 )}
 
