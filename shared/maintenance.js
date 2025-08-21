@@ -3,12 +3,14 @@
   const S = T.Storage, E = T.Events, C = T.Config;
   
   function listOverdueCourts(data, now = new Date(), min = C?.Timing?.AUTO_CLEAR_MIN || 180) {
-    const cutoff = new Date(now.getTime() - min * 60000);
     const courts = data?.courts || [];
     const overdue = [];
     courts.forEach((c, idx) => {
-      const end = c?.current?.endTime ? new Date(c.current.endTime) : null;
-      if (end && !isNaN(end) && end <= cutoff) overdue.push(idx + 1);
+      const start = c?.current?.startTime ? new Date(c.current.startTime) : null;
+      if (start && !isNaN(start)) {
+        const playingMinutes = (now.getTime() - start.getTime()) / 60000;
+        if (playingMinutes >= min) overdue.push(idx + 1);
+      }
     });
     return overdue;
   }
