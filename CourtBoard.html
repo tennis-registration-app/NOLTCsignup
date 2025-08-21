@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tennis Court Display - DataStore Integrated</title>
+  <link rel="icon" href="data:,">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Ensure full height layout */
@@ -524,9 +525,119 @@
     })();
   </script>
   
+  <!-- Load shared modules -->
+  <script src="./shared/config.js"></script>
+  <script src="./shared/storage.js"></script>
+  <script src="./shared/events.js"></script>
+  <script src="./shared/datastore.js"></script>
+  <script src="./shared/dataservice.js"></script>
+  <script src="./shared/blocks.js"></script>
+  <script src="./shared/maintenance.js"></script>
+
+  <script>
+(function () {
+  if (location.protocol !== 'file:') return;
+
+  console.warn('[dev] Loaded via file:// — this uses a different storage and won\'t receive app events.');
+
+  function addBanner() {
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;padding:8px 12px;' +
+                      'background:#f59e0b;color:#111;font:600 14px/1.2 system-ui;' +
+                      'z-index:99999;text-align:center';
+    b.textContent = '⚠️ Running from file:// — use http://127.0.0.1:5500 for correct behavior';
+    document.body.appendChild(b);
+  }
+
+  if (document.body) addBanner();
+  else window.addEventListener('DOMContentLoaded', addBanner, { once: true });
+})();
+</script>
+
+  <script src="./domain/time.js"></script>
+  <script src="./domain/availability.js"></script>
+  <script src="./domain/waitlist.js"></script>
+  <script src="./shared/domain/roster.js"></script>
+  <script src="shared/selftest.js"></script>
+  
+  <script>
+  (function(){
+    // Delegate to shared maintenance functions  
+    window.__autoClearOverdueSessions = async (when) => {
+      const cleared = await window.Tennis?.Maintenance?.autoClearOverdueSessions?.(when) || 0;
+      const bumped = await window.Tennis?.Maintenance?.autoClearBlockConflicts?.(when) || 0;
+      return cleared + bumped;
+    };
+
+    // Run once on boot, then every 5 minutes
+    document.addEventListener('DOMContentLoaded', () => {
+      window.__autoClearOverdueSessions();
+      if (!window.__autoClearInterval) {
+        window.__autoClearInterval = setInterval(() => window.__autoClearOverdueSessions(), 5 * 60 * 1000);
+      }
+    });
+  })();
+  </script>
+  
+  <script>
+  (() => {
+    if (window.__installedAutoClear) return;
+    window.__installedAutoClear = true;
+
+    const run = async (reason) => {
+      try {
+        const fn = window.__autoClearOverdueSessions;
+        if (typeof fn !== 'function') return;
+        const n = await fn();
+        if (n > 0 || (window.Tennis?.Config?.Debug?.VERBOSE_AUTO_CLEAR === true)) {
+          console.log(`[AutoClear] ${reason}: cleared ${n} overdue sessions`);
+        }
+      } catch (e) {
+        console.warn('[AutoClear] error', e);
+      }
+    };
+
+    // run once on load
+    run('onload');
+    // run every 5 minutes
+    window.__autoClearInterval = setInterval(() => run('interval'), 5 * 60 * 1000);
+  })();
+  </script>
+  
   <script type="text/babel">
     // Access shared utils (optional convenience)
     const U = window.APP_UTILS || {};
+    
+    // === Shared Core Integration Flags ===
+    const USE_SHARED_CORE   = true;
+    const USE_SHARED_DOMAIN = true;
+    const Config    = window.Tennis.Config;
+    const Storage = window.Tennis.Storage;
+    const Events  = window.Tennis.Events;
+    const A = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+    const W = window.Tennis.Domain.waitlist     || window.Tennis.Domain.Waitlist;
+    const T = window.Tennis.Domain.time         || window.Tennis.Domain.Time;
+    const DataStore = window.Tennis.DataStore;
+    const USE_SHARED_DOMAIN_WAITLIST = true;
+    
+    // Coalesce multiple data events into a single refresh
+    let __boardRefreshPending = false;
+    function scheduleBoardRefresh() {
+      if (__boardRefreshPending) return;
+      __boardRefreshPending = true;
+      setTimeout(() => {
+        __boardRefreshPending = false;
+        const fn =
+          (typeof window.refreshBoard === 'function' && window.refreshBoard) ||
+          (typeof refreshBoard === 'function' && refreshBoard) ||
+          null;
+        if (fn) fn();
+      }, 0);
+    }
+    const Av        = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+    const Tm        = window.Tennis.Domain.time         || window.Tennis.Domain.Time;
+    const TimeFmt   = (window.Tennis.Domain.time || window.Tennis.Domain.Time);
+    
     // --- One-time guard helper (no UI change)
     const _one = (key) => (window[key] ? true : (window[key] = true, false));
     
@@ -568,11 +679,62 @@
       DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 }
     };
     
+    // --- Waiting selectors (CourtBoard) ---
+    function selectWaitingGroups(data) {
+      return Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+    }
+    function selectWaitingCount(data) {
+      return selectWaitingGroups(data).length;
+    }
+
     // ---- Read-only guard (prevent accidental writes in this view) ----
     const readOnlyWrite = (...args) => {
       console.warn('Read-only view: write ignored', args);
       return false;
     };
+    
+    // Status → Tailwind classes (no color classes outside this map)
+    function classForStatus(statusObj) {
+      const s = typeof statusObj === 'string' ? statusObj : statusObj?.status;
+      const selectable = statusObj?.selectable;
+      const selectableReason = statusObj?.selectableReason;
+      
+      switch (s) {
+        case 'occupied':           // blue (in use)
+          return 'bg-gradient-to-b from-blue-400 to-blue-500 border-blue-400';
+        case 'overtime':
+          // dark green if selectable (fallback), grey if not
+          return selectable 
+            ? 'bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-600'
+            : 'bg-gradient-to-b from-gray-300 to-gray-400 border-gray-300';
+        case 'overtime-available': // legacy support
+          return 'bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-600';
+        case 'overtimeAvailable':  // legacy support
+          return 'bg-gradient-to-b from-green-600 to-green-700 border-green-600';
+        case 'wet':                // grey (or your wet palette)
+        case 'blocked':
+          return 'bg-gradient-to-b from-gray-300 to-gray-400 border-gray-300';
+        case 'free':               // emerald (empty/available)
+        default:
+          return 'bg-gradient-to-b from-emerald-400 to-emerald-500 border-emerald-400';
+      }
+    }
+
+    // Unified status source for the board UI
+    function computeBoardStatuses() {
+      const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+      const S = window.Tennis?.Storage;
+      const now = new Date();
+      const data = S.readDataSafe();
+      const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+      const wetSet = new Set(
+        (blocks || [])
+          .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
+          .map(b => b.courtNumber)
+      );
+      const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
+      return { data, map: Object.fromEntries(statuses.map(s => [s.courtNumber, s])) };
+    }
     
     // ---- Dev flag & assert (no UI change) ----
     const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
@@ -592,6 +754,116 @@
     
     // central registry for timers in this view
     const _timers = [];
+    
+    // ---- Helpers for domain-based tile text ----
+    function namesFor(courtObj) {
+      if (Array.isArray(courtObj?.current?.players)) {
+        return courtObj.current.players.map(p => p?.name).filter(Boolean).join(', ');
+      }
+      // fallback: last history entry if current is missing (e.g., older overtime)
+      const last = Array.isArray(courtObj?.history) && courtObj.history.length
+        ? courtObj.history[courtObj.history.length - 1] : null;
+      if (Array.isArray(last?.players)) {
+        return last.players.map(p => p?.name).filter(Boolean).join(', ');
+      }
+      return '';
+    }
+
+    // Formats an ISO string or Date to "12:34 PM"
+    function formatUntilTime(dt) {
+      if (!dt) return null;
+      const d = (dt instanceof Date) ? dt : new Date(dt);
+      if (isNaN(+d)) return null;
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatTime(dt) {
+      if (!dt) return null;
+      const d = dt instanceof Date ? dt : new Date(dt);
+      if (isNaN(+d)) return null;
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function labelFor(status, courtObj) {
+      if (status === 'occupied') {
+        const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
+        const until = end ? `Until ${end.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}` : '';
+        const nm = namesFor(courtObj);
+        // Your board already renders mins elsewhere; keep it as-is. Just ensure not "Available".
+        return nm ? `${nm}${until ? '\n' + until : ''}` : until || '';
+      }
+      if (status === 'overtime') {
+        const nm = namesFor(courtObj);
+        // Explicitly "Overtime" + names; never "Available".
+        return nm ? `Overtime\n${nm}` : 'Overtime';
+      }
+      // free, wet, blocked etc.
+      if (status === 'free') return 'Available';
+      if (status === 'wet') return '🌧️\nWET COURT';
+      if (status === 'blocked') {
+        const label = courtObj?.blockedLabel || 'Blocked';
+        const until = courtObj?.blockedEnd ? courtObj.blockedEnd : null;
+        if (until) {
+          try {
+            const endTime = new Date(until);
+            if (!isNaN(endTime)) {
+              const timeStr = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+              return `${label}\nUntil ${timeStr}`;
+            }
+          } catch (e) {
+            // ignore invalid date
+          }
+        }
+        return label;
+      }
+      return '';
+    }
+
+    function computeClock(status, courtObj, now) {
+      if (status === 'occupied') {
+        const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
+        if (end && end > now) {
+          const mins = Math.max(0, Math.ceil((end - now) / 60000));
+          return {
+            primary: `${mins} min`,
+            secondary: `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`,
+          };
+        }
+        return { primary: 'Overtime', secondary: '' };
+      }
+      if (status === 'overtime') {
+        // Check if game has been running for over 150 minutes
+        const start = courtObj?.current?.startTime ? new Date(courtObj.current.startTime) : null;
+        if (start) {
+          const minutesPlaying = Math.floor((now - start) / 60000);
+          if (minutesPlaying >= 150) {
+            return { primary: 'Overtime', secondary: 'check status', secondaryColor: 'yellow' };
+          }
+        }
+        return { primary: 'Overtime', secondary: '' };
+      }
+      if (status === 'free')     return { primary: 'Available', secondary: '' };
+      if (status === 'wet')      return { primary: '🌧️\nWET COURT', secondary: '' };
+      if (status === 'blocked') {
+        const s = courtObj || {};
+        const label = s.blockedLabel || 'Blocked';
+        const until = s.blockedEnd ? s.blockedEnd : null;
+        let secondary = '';
+        if (until) {
+          try {
+            const endTime = new Date(until);
+            if (!isNaN(endTime)) {
+              secondary = `Until ${endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            }
+          } catch (e) {
+            // ignore invalid date
+          }
+        }
+        return { primary: label, secondary };
+      }
+      return { primary: '', secondary: '' };
+    }
+
     const addTimer = (id, type = 'interval') => { _timers.push({ id, type }); return id; };
     const clearAllTimers = () => {
       _timers.forEach(({id, type}) => {
@@ -814,7 +1086,8 @@
             .filter(block => 
               block.courtNumber === courtNumber && 
               !block.isWetCourt && // Exclude wet court blocks
-              new Date(block.endTime) >= now
+              new Date(block.startTime) <= now && // Block has started
+              new Date(block.endTime) > now       // Block hasn't ended
             )
             .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
           
@@ -848,122 +1121,223 @@
         };
       };
 
+      // Check for upcoming blocks that would limit playing time
+      const getUpcomingBlockWarning = (courtNumber, duration = 60) => {
+        const now = new Date();
+        const sessionEndTime = new Date(now.getTime() + duration * 60 * 1000);
+        
+        try {
+          // Get all blocks from storage and filter for this court
+          const allBlocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
+          const blocks = allBlocks.filter(b => b.courtNumber === courtNumber);
+          
+          // Find the earliest block that would interfere with the session
+          const upcomingBlock = blocks
+            .filter(block => {
+              const blockStart = new Date(block.startTime);
+              const blockEnd = new Date(block.endTime);
+              
+              // Skip blocks that are currently active or already past
+              if (blockStart <= now || blockEnd <= now) return false;
+              
+              // Skip wet court blocks (they're handled separately)
+              if (block.isWetCourt) return false;
+              
+              // Block interferes if it starts before our session would naturally end
+              return blockStart < sessionEndTime;
+            })
+            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+          
+          if (!upcomingBlock) return null;
+          
+          const blockStart = new Date(upcomingBlock.startTime);
+          const minutesUntilBlock = Math.floor((blockStart.getTime() - now.getTime()) / (60 * 1000));
+          
+          // Don't allow registration if block starts within 5 minutes
+          if (minutesUntilBlock <= 5) {
+            return {
+              type: 'blocked',
+              reason: upcomingBlock.reason,
+              startTime: upcomingBlock.startTime,
+              minutesUntilBlock
+            };
+          }
+          
+          // Warn if playing time will be limited
+          if (minutesUntilBlock < duration) {
+            return {
+              type: 'limited',
+              reason: upcomingBlock.reason,
+              startTime: upcomingBlock.startTime,
+              limitedDuration: minutesUntilBlock,
+              originalDuration: duration,
+              minutesUntilBlock
+            };
+          }
+          
+          return null;
+        } catch (error) {
+          console.warn('Error checking upcoming blocks:', error);
+          return null;
+        }
+      };
+
       // STEP 5: Court Display Component (from original with DataStore integration)
       const CourtDisplay = ({ 
         courtNumber, 
-        court, 
         currentTime, 
-        hasEmptyCourts,
         timeoutWarningMinutes = 180,
-        formatPlayerName = (name) => name 
+        formatPlayerName = (name) => name,
+        statusByCourt,
+        selectableByCourt,
+        statusObjectByCourt,
+        data
       }) => {
 
+        const status = statusByCourt[courtNumber] || 'free';
+        const selectable = selectableByCourt[courtNumber] || false;
+        const statusObj = statusObjectByCourt?.[courtNumber] || {};
+        const s = statusObj;
+        const cObj    = data?.courts?.[courtNumber - 1] || {};
+        const content = labelFor(status, cObj);
         const blockStatus = getCourtBlockStatus(courtNumber);
-        const isBlocked = blockStatus && blockStatus.isCurrent;
+        const endTime = cObj?.current?.endTime || cObj?.endTime;
         
-        const endTime = court?.current?.endTime || court?.endTime;
-        const timeRemaining = court && endTime && !isBlocked
+        // Compute end times once
+        const endIso =
+          s?.endTime ||
+          s?.originalEndTime ||
+          cObj?.current?.endTime ||
+          null;
+
+        const showUntilForOccupied = status === 'occupied' && !s?.isOverdue && endIso;
+        const blockedUntil = status === 'blocked' ? s?.blockedEnd : null;
+        const timeRemaining = cObj && endTime && status !== 'blocked'
           ? Math.max(0, Math.floor((new Date(endTime).getTime() - currentTime.getTime()) / 60000))
           : 0;
-
-        const isOverdue = court && endTime && new Date(endTime) <= currentTime && !isBlocked;
-
-        const isAvailable = !court || (court && court.current === null);
         let approachingTimeout = false;
-        const startTime = court?.current?.startTime || court?.startTime;
-        if (court && startTime && !isBlocked) {
+        const startTime = cObj?.current?.startTime || cObj?.startTime;
+        if (cObj && startTime && status !== 'blocked') {
           const timePlayed = Math.floor((currentTime.getTime() - new Date(startTime).getTime()) / 60000);
           approachingTimeout = timePlayed >= timeoutWarningMinutes;
         }
 
+        // inside the render/map for each court:
+        const base = 'court-card border-4 rounded-xl flex flex-col items-center justify-start p-2 court-transition';
+        const courtClass = base + ' ' + classForStatus(s);
+
         return (
           <div
-            className={`court-card border-4 rounded-xl flex flex-col items-center justify-start p-2 court-transition ${
-              isBlocked
-                ? "bg-gradient-to-b from-stone-200 to-stone-300 border-stone-400"
-                : isAvailable 
-                ? "bg-gradient-to-b from-green-500 to-green-600 border-green-400 shadow-xl" 
-                : isOverdue 
-                  ? (hasEmptyCourts 
-                    ? "bg-gradient-to-b from-slate-400 to-slate-500 border-slate-300" 
-                    : "bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-500")
-                  : "bg-gradient-to-b from-blue-400 to-blue-500 border-blue-400"
-            }`}
+            className={courtClass}
             data-court={courtNumber}
-            data-available={isAvailable}
-            role={isAvailable ? "button" : undefined}
-            tabIndex={isAvailable ? 0 : undefined}
-            onClick={isAvailable ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
-            style={{ cursor: isAvailable ? 'pointer' : 'default' }}
+            data-available={status === 'free'}
+            role={status === 'free' ? "button" : undefined}
+            tabIndex={status === 'free' ? 0 : undefined}
+            onClick={status === 'free' ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
+            style={{ cursor: status === 'free' ? 'pointer' : 'default' }}
           >
-            <h3 className={`court-text-lg font-bold ${isBlocked ? 'text-gray-800' : 'text-white'} mb-1`}>
+            <h3 className={`court-text-lg font-bold ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} mb-1`}>
               Court {courtNumber}
             </h3>
-            <div className={`court-text-sm w-full ${isBlocked ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}>
+            <div className={`court-text-sm w-full ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}>
               
-              {isBlocked ? (
-                <div className="flex flex-col items-center justify-center h-full">
-                  <div className="font-bold court-text-base text-center mb-1 leading-tight">
-                    {(() => {
-                      const title = blockStatus.isWetCourt ? "💧 WET COURT" : 
-                             blockStatus.reason === "MAINTENANCE" ? (blockStatus.eventDetails?.title || blockStatus.title || "COURT WORK") : 
-                             blockStatus.reason === "COURT REPAIR" ? (blockStatus.eventDetails?.title || blockStatus.title || "COURT WORK") :
-                             (blockStatus.eventDetails?.title || blockStatus.title || blockStatus.reason);
-                      return title;
-                    })()}
-                  </div>
-                  <div className="court-text-xs text-center">
-                    {blockStatus.isWetCourt ? (
-                      <span className="text-gray-500">Drying in progress</span>
-                    ) : (
-                      `Until ${new Date(blockStatus.endTime).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}`
-                    )}
-                  </div>
-                </div>
-              ) : court && (court.players || (court.current && court.current.players)) ? (
-               
-              <>
-                <div className="font-semibold flex items-center gap-1 justify-center mb-1 court-text-lg">
-                  {timeRemaining > 0 ? `${timeRemaining}min` : "Overtime"}
-                </div>
+              {(() => {
+                const now     = new Date();
+                const { primary, secondary } = computeClock(status, status === 'blocked' ? statusObj : cObj, now);
+                const nm = namesFor(cObj);
 
-                <div className="space-y-0.5 flex-1">
-                  {(court.current?.players || court.players)?.map((player, idx) => { 
-                    const displayName = formatPlayerName(player.name);
-                    
-                    return (
-                      <div key={idx} className="text-center">
-                        <div className="font-medium court-text-sm player-name px-1">
-                          {displayName}
+                // match legacy court text sizing
+                const primaryClass   = 'mt-1 court-text-base font-bold leading-tight';
+                const secondaryClass = 'mt-1 court-text-xs opacity-90';
+                const namesClass     = 'mt-1 court-text-sm font-medium';
+
+                return (
+                  <div className="flex flex-col h-full w-full">
+                    {status === 'free' || status === 'wet' ? (
+                      <>
+                        <div className={`${primaryClass} text-center flex-1 flex items-center justify-center`}>
+                          {status === 'wet' ? (
+                            <div className="flex flex-col items-center">
+                              <div style={{ fontSize: '2.5em', lineHeight: '1' }}>🌧️</div>
+                              <div className="mt-1">WET COURT</div>
+                            </div>
+                          ) : (
+                            primary
+                          )}
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {approachingTimeout ? (
-                  <div className="mt-1 court-text-xs text-center text-yellow-300">
-                    Check status
+                        
+                        {/* Show amber block warning for free courts only */}
+                        {(() => {
+                          if (status !== 'free') return null;
+                          
+                          const blockWarning = getUpcomingBlockWarning(courtNumber, 60);
+                          if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                          
+                          return (
+                            <div className="mt-auto text-xs text-center" style={{ color: '#F59E0B', fontWeight: 'normal' }}>
+                              {blockWarning.reason} begins in {blockWarning.minutesUntilBlock}m
+                            </div>
+                          );
+                        })()}
+                      </>
+                    ) : status === 'blocked' ? (
+                      <>
+                        <div className={`${primaryClass} text-center`}>
+                          {s.blockedLabel || 'Blocked'}
+                        </div>
+                        <div className="flex-1"></div>
+                        {blockedUntil && (
+                          <div className="mt-auto text-sm opacity-90 text-center">
+                            Until {formatTime(blockedUntil)}
+                          </div>
+                        )}
+                      </>
+                    ) : status === 'occupied' ? (
+                      <>
+                        {/* Time remaining right under Court N */}
+                        <div className={`${primaryClass} text-center`}>{primary}</div>
+                        
+                        {/* Player names in the flexible middle space */}
+                        {nm ? (
+                          <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
+                            {nm}
+                          </div>
+                        ) : (
+                          <div className="flex-1"></div>
+                        )}
+                        
+                        {/* "Until..." at the bottom */}
+                        {showUntilForOccupied && (
+                          <div className="mt-auto text-sm opacity-90 text-center">
+                            Until {formatTime(endIso)}
+                          </div>
+                        )}
+                      </>
+                    ) : status === 'overtime' ? (
+                      <>
+                        {/* Overtime - no "Until..." */}
+                        <div className={`${primaryClass} text-center`}>{primary}</div>
+                        
+                        {/* Player names in the flexible middle space */}
+                        {nm ? (
+                          <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
+                            {nm}
+                          </div>
+                        ) : (
+                          <div className="flex-1"></div>
+                        )}
+                        
+                        {/* "check status" at the bottom if playing over 150 minutes */}
+                        {secondary && (
+                          <div className="mt-auto text-sm text-center" style={{ color: 'yellow' }}>
+                            {secondary}
+                          </div>
+                        )}
+                      </>
+                    ) : null}
                   </div>
-                ) : !isOverdue && (
-                  
-                <div className="mt-1 court-text-xs text-center text-white/80">
-                  Until {new Date(endTime).toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </div>
-                )}
-              </>
-              ) : (
-                <>
-                  <div className="text-white/90 court-text-base tracking-wider text-center flex items-center justify-center h-full">
-                    Available
-                  </div>
-                </>
-              )}
+                );
+              })()}
             </div>
           </div>
         );
@@ -972,75 +1346,44 @@
       // STEP 6: Waiting List Component (from original)
       const WaitingList = ({ waitingGroups, courts, currentTime }) => {
         const calculateEstimatedWaitTimeV2 = (position) => {
-          log.debug(`Calculating wait time for position ${position}`);
+          const DEBUG = false;
+          if (DEBUG) log.debug(`Calculating wait time for position ${position}`);
           
-          const availabilitySlots = [];
-          
-          courts.forEach((court, index) => {
-            const courtNumber = index + 1;
-            let nextAvailableTime = currentTime.getTime();
-            
-            // Check if court has players (new or old structure)
-            if (court?.current?.endTime) {
-              const sessionEndTime = new Date(court.current.endTime).getTime();
-              nextAvailableTime = Math.max(nextAvailableTime, sessionEndTime);
-            } else if (court?.endTime) {
-              const sessionEndTime = new Date(court.endTime).getTime();
-              nextAvailableTime = Math.max(nextAvailableTime, sessionEndTime);
-            }
-            
-            // Check for court blocks
-            try {
-              let courtBlocks = [];
-              try { courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
-              catch { /* transient partial write; use empty array */ }
-              const activeBlocks = courtBlocks
-                .filter(block => 
-                  block.courtNumber === courtNumber && 
-                  new Date(block.endTime) > currentTime
-                )
-                .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-              
-              for (const block of activeBlocks) {
-                const blockStart = new Date(block.startTime).getTime();
-                const blockEnd = new Date(block.endTime).getTime();
-                
-                if (blockStart <= nextAvailableTime) {
-                  nextAvailableTime = Math.max(nextAvailableTime, blockEnd);
-                } else {
-                  break;
-                }
-              }
-            } catch (error) {
-              console.error('Error checking blocks for court', courtNumber, error);
-            }
-            
-            availabilitySlots.push(nextAvailableTime);
+          // inputs
+          const now    = new Date();
+          const data   = Storage.readDataSafe();
+          const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+
+          // derive wetSet for current moment (used by free courts; not needed for nextTimes)
+          const wetSet = new Set(
+            blocks
+              .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+              .map(b => b.courtNumber)
+          );
+
+          // domain availability snapshots
+          const info      = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+          const nextTimes = A.getNextFreeTimes({ data, now, blocks });
+
+          // how many positions your UI renders (keep current value, e.g. 4)
+          const positions = [position];
+
+          // domain ETA (minutes, rounded up)
+          const etas = W.estimateWaitForPositions({
+            positions,
+            currentFreeCount: info.free.length,
+            nextFreeTimes: nextTimes,
+            avgGameMinutes: window.Tennis.Config.Timing.AVG_GAME
           });
+
+          // If your UI expects absolute times, you can derive them from `now + minutes`
+          // const etaTimes  = etas.map(m => new Date(now.getTime() + m * 60000));
+          // const etaLabels = etaTimes.map(d => T?.formatTime ? T.formatTime(d) : d.toLocaleTimeString());
+
+          // Use `etas` (or `etaLabels`, depending on what the existing UI expects)
+          // Replace the previous variables that fed the DOM update with these values.
           
-          // Sort slots by availability time
-          availabilitySlots.sort((a, b) => a - b);
-          
-          log.debug(`Court availability slots:`, availabilitySlots.map(slot => 
-            new Date(slot).toLocaleTimeString()
-          ));
-          
-          // Calculate wait time based on position
-          if (position <= availabilitySlots.length) {
-            const waitMinutes = Math.ceil((availabilitySlots[position - 1] - currentTime.getTime()) / 60000);
-            // console.log(`Position ${position} wait time: ${waitMinutes} minutes`);
-            return Math.max(0, waitMinutes);
-          }
-          
-          // Fallback for positions beyond available slots
-          const rounds = Math.ceil(position / courts.length);
-          if (availabilitySlots.length > 0) {
-            let waitTime = Math.ceil((availabilitySlots[0] - currentTime.getTime()) / 60000);
-            waitTime += (rounds - 1) * TENNIS_CONFIG.TIMING.AVG_GAME_TIME_MIN;
-            return Math.max(0, waitTime);
-          }
-          
-          return Math.max(0, (position - 1) * 15); // 15 min fallback
+          return etas[0] || 0;
         };
 
         return (
@@ -1071,18 +1414,45 @@
               <div className="space-y-2 overflow-y-auto mt-4">
                 {waitingGroups.slice(0, TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY).map((group, idx) => {
 
-                  const availableCourts = courts.filter(court => !court || (court && new Date(court.endTime) <= currentTime));
-                  
-                  // Only first 2 groups can get "You're Up!" (matches registration system limit)
-                  const canRegisterNow = idx < 2 && (idx + 1) <= availableCourts.length;
+                  // Use the same selectable courts logic as the registration system
+                  let canRegisterNow = false;
+                  // Position 1 can register if any courts available
+                  // Position 2 can register if 2+ courts available
+                  if (idx === 0 || idx === 1) {
+                    try {
+                      const data = Storage.readDataSafe();
+                      const now = new Date();
+                      const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+                      const wetSet = new Set();
+                      // Use correct overtime logic: free courts OR overtime courts (not both)
+                      let availableCount = 0;
+                      if (A.getFreeCourtsInfo) {
+                        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+                        const freeCount = info.free?.length || 0;
+                        const overtimeCount = info.overtime?.length || 0;
+                        availableCount = freeCount > 0 ? freeCount : overtimeCount;
+                      }
+                      
+                      if (idx === 0) {
+                        // First group can register if any courts available
+                        canRegisterNow = availableCount > 0;
+                      } else if (idx === 1) {
+                        // Second group can register if 2+ courts available
+                        canRegisterNow = availableCount >= 2;
+                      }
+                    } catch (error) {
+                      console.warn('Error checking selectable courts for You\'re Up:', error);
+                      canRegisterNow = false;
+                    }
+                  }
                   
                   let estimatedWait = 0;
                   if (!canRegisterNow) {
                     estimatedWait = calculateEstimatedWaitTimeV2(idx + 1);
                   }
 
-                  // Show "You're Up!" if they can register now, OR if wait time is 0 (but limit to first 2 groups)
-                  const showAlert = canRegisterNow || (estimatedWait === 0 && idx < 2);
+                  // Show "You're Up!" only if they can actually register now
+                  const showAlert = canRegisterNow;
 
                   return (
                     <div
@@ -1097,9 +1467,9 @@
                         <span className="courtboard-waiting-number font-bold mr-2 text-green-400">{idx + 1}.</span>
                         <div className="flex-1">
                           <span className="courtboard-text-sm font-medium player-name">
-                            {group.players
-                              .map((player) => {
-                                const names = player.name.split(" ");
+                            {(group.names || [])
+                              .map((name) => {
+                                const names = name.split(" ");
                                 return names[names.length - 1];
                               })
                               .join(" / ")}
@@ -1219,7 +1589,7 @@
       // STEP 7: Next Available Panel Component (from original)
       const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [], courtBlocks = [] }) => {
 
-        const getCourtAvailabilityTimeline = () => {
+        const getCourtAvailabilityTimeline = (waitingGroups = []) => {
           // console.log('🔍 getCourtAvailabilityTimeline called');
           
           if (!courts || !Array.isArray(courts)) {
@@ -1248,7 +1618,7 @@
             
             // console.log(`🏟️ Checking court ${courtNumber}`);
             
-            // Check for active blocks on this court
+            // Check for active blocks on this court (only currently active, not future)
             const activeBlock = courtBlocks.find(block => 
               block.courtNumber === courtNumber && 
               new Date(block.startTime) <= currentTime &&
@@ -1310,8 +1680,34 @@
           // Sort future availability by time
           courtAvailability.sort((a, b) => a.endTime.getTime() - b.endTime.getTime());
           
-          // Combine overtime courts (first) with future availability
-          const combinedAvailability = [...overtimeCourts, ...courtAvailability];
+          // Check if we should show overtime courts as "Now"
+          // Only show overtime as available if there aren't surplus empty courts
+          let filteredOvertimeCourts = overtimeCourts;
+          
+          try {
+            if (USE_SHARED_DOMAIN && A && A.getFreeCourtsInfo) {
+              const now = new Date();
+              const data = Storage.readDataSafe();
+              const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+              const wetSet = new Set(
+                blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                      .map(b => b.courtNumber)
+              );
+              const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+              const emptyCount = info.free ? info.free.length : 0;
+              const waitingCount = waitingGroups.length;
+              
+              // If there are surplus empty courts, overtime courts aren't truly "available now"
+              if (emptyCount > waitingCount) {
+                filteredOvertimeCourts = [];
+              }
+            }
+          } catch (error) {
+            console.error('Error filtering overtime courts:', error);
+          }
+          
+          // Combine filtered overtime courts (first) with future availability
+          const combinedAvailability = [...filteredOvertimeCourts, ...courtAvailability];
           
           // console.log('📋 Overtime courts:', overtimeCourts);
           // console.log('📋 Future availability:', courtAvailability);
@@ -1322,6 +1718,39 @@
           
 
         const hasEmptyCourts = () => {
+          if (USE_SHARED_DOMAIN && A && A.getFreeCourts) {
+            try {
+              // Build a set of wet courts from active wet-court blocks
+              const now = new Date();
+              const data = Storage.readDataSafe();
+              const blocks = Storage.readJSON(
+                (Storage.STORAGE && Storage.STORAGE.BLOCKS) ||
+                (APP_UTILS && APP_UTILS.STORAGE && APP_UTILS.STORAGE.BLOCKS) ||
+                'courtBlocks'
+              ) || [];
+
+              const wetSet = new Set(
+                blocks
+                  .filter(b =>
+                    b && b.isWetCourt === true &&
+                    new Date(b.startTime) <= now &&
+                    new Date(b.endTime) >  now
+                  )
+                  .map(b => b.courtNumber)
+              );
+
+              // Compute free courts honoring wet courts + blocks
+              const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+              const free = info.free;            // use for "Available Now"
+              // (occupied available if needed later): const occupied = info.occupied;
+              
+              return free.length > 0;
+            } catch (error) {
+              console.error('Error calling A.getFreeCourts:', error);
+            }
+          }
+          
+          // Legacy logic (kept for fallback)
           if (!courts || !Array.isArray(courts)) return false;
           
           // Get current blocks from localStorage
@@ -1335,7 +1764,7 @@
           return courts.some((court, index) => {
             const courtNumber = index + 1;
             
-            // Check if court is blocked
+            // Check if court is blocked (only currently active blocks)
             const isBlocked = courtBlocks.some(block => 
               block.courtNumber === courtNumber && 
               new Date(block.startTime) <= currentTime &&
@@ -1362,17 +1791,32 @@
           });
         };
 
-        const timeline = getCourtAvailabilityTimeline();
+        const timeline = getCourtAvailabilityTimeline(waitingGroups);
         // console.log('🎯 Timeline length:', timeline.length);
         // console.log('🎯 hasEmptyCourts():', hasEmptyCourts());
 
-        const hasAvailableNow = waitingGroups.length === 0 && (hasEmptyCourts() || timeline.some(availability => {
+        // Calculate if courts are available after serving the waitlist
+        let emptyCourtCount = 0;
+        if (USE_SHARED_DOMAIN && A && A.getFreeCourtsInfo) {
           try {
-            return availability.endTime && availability.endTime <= currentTime;
+            const now = new Date();
+            const data = Storage.readDataSafe();
+            const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+            const wetSet = new Set(
+              blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                    .map(b => b.courtNumber)
+            );
+            const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+            emptyCourtCount = info.free ? info.free.length : 0;
           } catch (error) {
-            return false;
+            console.error('Error getting free court count:', error);
           }
-        }));
+        }
+        
+        // Modified logic: Show "available now" if more empty courts than waiting groups
+        // This accounts for surplus courts after the waitlist is served
+        const surplusCourts = emptyCourtCount - waitingGroups.length;
+        const hasAvailableNow = surplusCourts > 0;
 
         return (
           
@@ -1441,6 +1885,7 @@
                     </div>
                 </>
               )}
+
             </div>
             <div className="mt-auto pt-4">
               <ReservedCourtsPanel
@@ -1603,6 +2048,39 @@
         const [lastUpdate, setLastUpdate] = useState(new Date());
         const [customMessage, setCustomMessage] = useState("");
         const [courtBlocks, setCourtBlocks] = useState([]);
+        const [refreshTick, setRefreshTick] = useState(0);
+
+        React.useEffect(() => {
+          const onUpdate = (event) => {
+            console.log('[BOARD DEBUG] onUpdate event received:', event?.type, event?.detail);
+            setRefreshTick(t => t + 1);
+            scheduleBoardRefresh(); // Use coalescer for data reload
+          };
+          const it = setInterval(onUpdate, 30000); // re-render every 30s
+          document.addEventListener('DATA_UPDATED', onUpdate);
+          document.addEventListener('tennisDataUpdate', onUpdate);
+          return () => {
+            clearInterval(it);
+            document.removeEventListener('DATA_UPDATED', onUpdate);
+            document.removeEventListener('tennisDataUpdate', onUpdate);
+          };
+        }, [loadData]);
+
+        // Waitlist normalizer
+        function normalizeWaitingGroups(data) {
+          const raw = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+          return raw
+            .map((g, idx) => {
+              const players = Array.isArray(g?.players) ? g.players : [];
+              // Note: guests are already included in the players array with isGuest flag
+              // Don't create fake guest entries - just use the actual player names
+              const names = players
+                .map(p => p?.name || p?.id)
+                .filter(Boolean);
+              return names.length ? { id: g.id || `wg_${idx}`, names } : null;
+            })
+            .filter(Boolean);
+        }
 
         // STEP 10: Enhanced data loading with DataStore
         const loadData = useCallback(async () => {
@@ -1619,6 +2097,69 @@
             if (storedData) {
               const data = storedData;
               
+              // --- WAITLIST DEBUG (no UI change) ---
+              (function debugWaitlist() {
+                try {
+                  const U = window.APP_UTILS;
+                  const data = U.readDataSafe(); // fresh, normalized
+                  const raw = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+
+                  // sort by request time (supports requestedAt | timestamp)
+                  const waiters = raw
+                    .map((g, i) => ({
+                      ...g,
+                      _idx: i,
+                      _ts: new Date(g.requestedAt || g.timestamp || 0).getTime()
+                    }))
+                    .sort((a, b) => a._ts - b._ts);
+
+                  const pre = data?.calculatedAvailability?.waitTimes; // preferred ETA source if present
+                  const AVG = (window.TENNIS_CONFIG?.TIMING?.AVG_GAME_TIME_MIN) || 75;
+                  const etaForIndex = (idx) =>
+                    Array.isArray(pre) && typeof pre[idx] === 'number' ? pre[idx] : idx * AVG;
+
+                  // concise console snapshot (first up to 5)
+                  console.groupCollapsed(
+                    '[CourtBoard][Waitlist] len=%d, hasPre=%s',
+                    waiters.length,
+                    Array.isArray(pre)
+                  );
+                  console.table(
+                    waiters.slice(0, 5).map((g, i) => ({
+                      pos: i + 1,
+                      players: (g.players || []).map(p => p.name).join(', '),
+                      guests: g.guests || 0,
+                      requestedAt: g.requestedAt || g.timestamp || '(missing)',
+                      ts: g._ts || '(no ts)',
+                      ETA_min: Math.max(0, Math.round(etaForIndex(i)))
+                    }))
+                  );
+                  console.groupEnd();
+                } catch (e) {
+                  console.warn('[CourtBoard][Waitlist] debug failed', e);
+                }
+              })();
+              
+              // --- WAITLIST READ DEBUG (no UI change) ---
+              try {
+                const U = window.APP_UTILS;
+                const data = U.readDataSafe(); // fresh, normalized snapshot
+                const raw = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+                const waiters = raw
+                  .map((g, i) => ({
+                    pos: i + 1,
+                    players: (g.players || []).map(p => p.name).join(', '),
+                    guests: g.guests || 0,
+                    requestedAt: g.requestedAt || g.timestamp || '(missing)'
+                  }));
+
+                console.groupCollapsed('[CourtBoard] waitlist read: len=%d', waiters.length);
+                console.table(waiters.slice(0, 5));
+                console.groupEnd();
+              } catch (e) {
+                console.warn('[CourtBoard] waitlist read debug failed', e);
+              }
+              
               if (!data || typeof data !== 'object') {
                 console.warn('Invalid data format in display monitor');
                 setCourts(Array(CONSTANTS.COURT_COUNT).fill(null));
@@ -1632,6 +2173,8 @@
               }
               
               const validatedData = DataValidation.sanitizeCourtData(data);
+              console.log('[BOARD DEBUG] loadData - original waitingGroups:', data.waitingGroups?.length || 0);
+              console.log('[BOARD DEBUG] loadData - validated waitingGroups:', validatedData.waitingGroups?.length || 0);
               
               const maxDuration = CONSTANTS.MAX_PLAY_DURATION_MS;
               let hasChanges = false;
@@ -1671,7 +2214,11 @@
             }
               
               setCourts(validatedData.courts);
-              setWaitingGroups(validatedData.waitingGroups);
+              const normalizedWaitlist = normalizeWaitingGroups(data);
+              console.log('[BOARD DEBUG] normalizeWaitingGroups result:', normalizedWaitlist);
+              // Ensure renderer consumes the normalized, sorted waitlist
+              data.waitingGroups = normalizedWaitlist;
+              setWaitingGroups(normalizedWaitlist);
               setLastUpdate(new Date());
             } else {
               setCourts(Array(CONSTANTS.COURT_COUNT).fill(null));
@@ -1683,6 +2230,8 @@
             setWaitingGroups([]);
           }
         }, []);
+
+        window.refreshBoard = loadData;
 
         // STEP 11: Event-driven updates with increased frequency
         useEffect(() => {
@@ -1700,6 +2249,20 @@
           }, 150);
 
           window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate, { passive: true });
+          
+          // Shared Events subscription for availability updates
+          if (USE_SHARED_CORE && Events) {
+            Events.onDom('tennisDataUpdate', scheduleBoardRefresh);
+            Events.onDom('DATA_UPDATED', scheduleBoardRefresh);
+          }
+          
+          // Direct document event listeners for re-rendering (using coalescer)
+          document.removeEventListener?.('tennisDataUpdate', scheduleBoardRefresh);
+          document.removeEventListener?.('DATA_UPDATED', scheduleBoardRefresh);
+          document.addEventListener('tennisDataUpdate', scheduleBoardRefresh);
+          document.addEventListener('DATA_UPDATED', scheduleBoardRefresh);
+          window.addEventListener('BLOCKS_UPDATED', scheduleBoardRefresh, { passive: true });
+          document.addEventListener('BLOCKS_UPDATED', scheduleBoardRefresh, { passive: true });
           
           // Increased polling frequency for immediate updates
           const interval = addTimer(setInterval(loadData, CONSTANTS.POLL_INTERVAL_MS));
@@ -1757,18 +2320,35 @@
           });
         };
 
+        // Build status map once
+        const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+        const S = window.Tennis?.Storage;
+        const now    = new Date();
+        const data   = S.readDataSafe();
+        const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+        const wetSet = new Set((blocks||[])
+          .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
+          .map(b => b.courtNumber)
+        );
+        const _statuses = A.getCourtStatuses({ data, now, blocks, wetSet }) || [];
+        const statusByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s.status]));
+        const selectableByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s.selectable]));
+        const statusObjectByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s]));
+
+        // Use state for waiting groups (independent of court availability)
+        const hasWaiting = waitingGroups.length > 0;
+
         return (
           <div className="h-screen min-h-screen bg-gradient-to-br from-slate-700 to-slate-600 p-4 text-white flex flex-col">
             <div className="mb-4">
               <div className="w-full flex justify-center">
                 <div className="flex items-center relative">
                   
-                  {waitingGroups.length > 0 && (
+                  {hasWaiting && (
                     <div className="absolute left-[-140px] lg:left-[-100px] xl:left-[-140px]">
                       <svg width="40" height="40" className="lg:w-20 lg:h-20 xl:w-32 xl:h-32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                         
-                        <path d="M5 22V2" stroke="white" strokeWidth="1.5" strokeLinecap="round"></path>
-                        <path d="M5 4C5 4 8 3.5 11 4.5C14 5.5 17 6 17 6L17 8C17 8 14 8.5 11 9.5C8 10.5 5 10 5 10V4Z" fill="#FB923C" stroke="#EA580C" strokeWidth="1"></path>
+                        <path d="M5 20V4" stroke="#D4D4D8" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M5 4L17 7L5 10V4Z" fill="#FB923C" stroke="#EA580C" strokeWidth="1"/>
                       </svg>
                     </div>
                   )}
@@ -1800,16 +2380,18 @@
                       <div key={num} className="flex justify-center">
                         <CourtDisplay
                           courtNumber={num}
-                          court={courts[num - 1]}
                           currentTime={currentTime}
-                          hasEmptyCourts={hasEmptyCourts()}
                           timeoutWarningMinutes={CONSTANTS.TIMEOUT_WARNING_MIN}
                           formatPlayerName={formatPlayerDisplayName}
+                          statusByCourt={statusByCourt}
+                          selectableByCourt={selectableByCourt}
+                          statusObjectByCourt={statusObjectByCourt}
+                          data={data}
                         />
                       </div>
                     ))}
                   </div>
-                  <div className="h-4 bg-gradient-to-r from-green-600 to-blue-600 mb-4 rounded-full flex-shrink-0 divider-line" />
+                  <div className="h-3 bg-gray-400 mb-4 rounded-full flex-shrink-0 divider-line" />
                   <div className="bottom-section min-h-0 overflow-auto">
                     <WaitingList 
                       waitingGroups={waitingGroups} 
@@ -1821,11 +2403,13 @@
                         <div key={num} className="flex justify-center">
                           <CourtDisplay
                             courtNumber={num}
-                            court={courts[num - 1]}
                             currentTime={currentTime}
-                            hasEmptyCourts={hasEmptyCourts()}
                             timeoutWarningMinutes={CONSTANTS.TIMEOUT_WARNING_MIN}
                             formatPlayerName={formatPlayerDisplayName}
+                            statusByCourt={statusByCourt}
+                            selectableByCourt={selectableByCourt}
+                            statusObjectByCourt={statusObjectByCourt}
+                            data={data}
                           />
                         </div>
                       ))}
@@ -1839,11 +2423,12 @@
                         <CourtDisplay
                           key={num}
                           courtNumber={num}
-                          court={courts[num - 1]}
                           currentTime={currentTime}
-                          hasEmptyCourts={hasEmptyCourts()}
                           timeoutWarningMinutes={CONSTANTS.TIMEOUT_WARNING_MIN}
                           formatPlayerName={formatPlayerDisplayName}
+                          statusByCourt={statusByCourt}
+                          selectableByCourt={selectableByCourt}
+                          data={data}
                         />
                       ))}
                     </div>
@@ -1900,13 +2485,27 @@
                       };
                       
                       const timeline = getCourtAvailabilityTimelineMobile();
-                      const hasAvailableNow = waitingGroups.length === 0 && (hasEmptyCourts() || timeline.some(availability => {
+                      
+                      // Mobile version - calculate if courts are available after serving waitlist
+                      let mobileEmptyCourtCount = 0;
+                      if (USE_SHARED_DOMAIN && A && A.getFreeCourtsInfo) {
                         try {
-                          return availability.endTime && availability.endTime <= currentTime;
+                          const now = new Date();
+                          const data = Storage.readDataSafe();
+                          const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+                          const wetSet = new Set(
+                            blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                                  .map(b => b.courtNumber)
+                          );
+                          const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+                          mobileEmptyCourtCount = info.free ? info.free.length : 0;
                         } catch (error) {
-                          return false;
+                          console.error('Error getting mobile free court count:', error);
                         }
-                      }));
+                      }
+                      
+                      const mobileSurplusCourts = mobileEmptyCourtCount - waitingGroups.length;
+                      const hasAvailableNow = mobileSurplusCourts > 0;
                       
                       // Only show if there are courts with future availability times
                       if (hasAvailableNow || timeline.length === 0) {
@@ -1942,7 +2541,7 @@
                     })()}
                     
                     {/* Mobile waiting list section - only show if groups waiting */}
-                    {waitingGroups.length > 0 && (
+                    {hasWaiting && (
                       <div className="mobile-waiting-section">
                         <WaitingList 
                           waitingGroups={waitingGroups} 
@@ -1987,5 +2586,148 @@
       // console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
   </script>
+
+  <!-- Debug Panel - Only visible when ?debug=1 -->
+  <script>
+  (function() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('debug') !== '1') return;
+
+    const debugPanel = document.createElement('div');
+    debugPanel.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 350px;
+      max-height: 500px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-y: auto;
+      z-index: 99999;
+      pointer-events: auto;
+      border: 1px solid #0f0;
+    `;
+    debugPanel.innerHTML = `
+      <div style="color: #ff0; margin-bottom: 5px;">DEBUG MODE - Events Log</div>
+      <div style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+        <button id="runSelfTests" style="background: #333; color: #0f0; border: 1px solid #0f0; padding: 4px 8px; border-radius: 3px; font-family: inherit; font-size: 10px; cursor: pointer;">Run self-tests</button>
+        <span style="color: #666; font-size: 10px; margin-left: 8px;">Press 't' to run</span>
+        <div id="selfTestResults" style="margin-top: 5px; font-size: 10px;"></div>
+      </div>
+      <div id="debugContent"></div>
+    `;
+    document.body.appendChild(debugPanel);
+
+    const updateDebugPanel = () => {
+      if (!window.Tennis || !window.Tennis.Events || !window.Tennis.Events.debug) return;
+      
+      const events = window.Tennis.Events.debug.getLog();
+      const content = document.getElementById('debugContent');
+      if (!content) return;
+
+      content.innerHTML = events.map((event, i) => {
+        const time = new Date(event.timestamp).toLocaleTimeString();
+        return `<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
+          <div style="color: #ff0;">[${time}] ${event.type}</div>
+          <div style="color: #0ff;">${event.eventName}</div>
+          ${event.data ? `<div style="color: #fff; font-size: 10px;">${JSON.stringify(event.data, null, 2)}</div>` : ''}
+        </div>`;
+      }).join('');
+    };
+
+    // Safe wrapper for self-tests
+    function runSelfTestsSafe() {
+      const fn = window.Tennis?.selfTest?.runAll;
+      if (typeof fn !== 'function') {
+        return {
+          passed: 0, failed: 1,
+          results: [{ name: 'SelfTest not available', ok: false, notes: 'Tennis.selfTest.runAll missing' }]
+        };
+      }
+      try { return fn(); }
+      catch (e) {
+        return {
+          passed: 0, failed: 1,
+          results: [{ name: 'Run failed', ok: false, notes: String(e?.message || e) }]
+        };
+      }
+    }
+
+    function renderSelfTestResults(result) {
+      const resultsDiv = document.getElementById('selfTestResults');
+      if (!resultsDiv) return;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const passed = result.passed || 0;
+      const failed = result.failed || 0;
+      
+      // Summary with color coding
+      const summaryColor = failed > 0 ? '#f00' : '#0f0';
+      let html = `<div style="color: ${summaryColor}; font-weight: bold;">${passed} passed / ${failed} failed</div>`;
+      html += `<div style="color: #666; font-size: 9px;">Last run: ${timestamp}</div>`;
+      
+      // Compact table
+      if (result.results && result.results.length > 0) {
+        html += '<div style="margin-top: 5px; max-height: 150px; overflow-y: auto;">';
+        html += '<table style="width: 100%; font-size: 9px; border-collapse: collapse;">';
+        html += '<tr style="color: #ff0;"><th style="text-align: left; padding: 2px;">Test</th><th style="text-align: center; padding: 2px;">OK</th><th style="text-align: left; padding: 2px;">Notes</th></tr>';
+        
+        result.results.forEach(test => {
+          const okColor = test.ok ? '#0f0' : '#f00';
+          const okText = test.ok ? '✓' : '✗';
+          html += `<tr style="border-top: 1px solid #333;">`;
+          html += `<td style="padding: 2px; color: #fff;">${test.name || test.Test || ''}</td>`;
+          html += `<td style="padding: 2px; text-align: center; color: ${okColor};">${okText}</td>`;
+          html += `<td style="padding: 2px; color: #aaa;">${(test.notes || test.Notes || '').slice(0, 30)}${(test.notes || test.Notes || '').length > 30 ? '...' : ''}</td>`;
+          html += `</tr>`;
+        });
+        html += '</table></div>';
+      }
+      
+      resultsDiv.innerHTML = html;
+    }
+
+    let running = false;
+    async function handleRunSelfTests() {
+      if (running) return;
+      running = true;
+      try {
+        const resultsDiv = document.getElementById('selfTestResults');
+        if (resultsDiv) {
+          resultsDiv.innerHTML = '<div style="color: #ff0;">Running tests...</div>';
+        }
+        const result = await runSelfTestsSafe();
+        renderSelfTestResults(result);
+      } finally {
+        running = false;
+      }
+    }
+    
+    // Button click handler
+    const runButton = document.getElementById('runSelfTests');
+    if (runButton) {
+      runButton.addEventListener('click', handleRunSelfTests);
+    }
+    
+    // Keyboard shortcut (t key)
+    window.addEventListener('keydown', (e) => {
+      if ((e.key || '').toLowerCase() === 't') {
+        e.preventDefault();
+        handleRunSelfTests();
+      }
+    }, { passive: false });
+
+    // Update every 500ms
+    setInterval(updateDebugPanel, 500);
+    
+    // Initial update
+    setTimeout(updateDebugPanel, 100);
+  })();
+  </script>
+
 </body>
 </html>

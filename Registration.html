@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tennis Registration - DataStore Integrated</title>
+  <link rel="icon" href="data:,">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .scrollbar-hide {
@@ -46,6 +47,12 @@
   <script src="./shared-utils.js"></script>
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
+  
+  <!-- Add aliases for waitlist debugging -->
+  <script>
+    window.WaitlistUtils = window.APP_UTILS;      // shared storage helpers alias
+    window.WaitlistDataService = window.TennisDataService || window.Tennis?.DataService;
+  </script>
   
   <!-- Mobile Bridge Script -->
   <script>
@@ -214,12 +221,12 @@
         const api = window.UI || window;
         const n   = Number(window.__mobileCourt) || Number(api?.state?.selectedCourt) || window.__preselectedCourt || null;
 
-        console.log('Registration: Sending success signal for court', n, 'mobile flow:', window.__mobileFlow);
+        dbg('Registration: Sending success signal for court', n, 'mobile flow:', window.__mobileFlow);
         try {
           window.parent.postMessage({ type: 'registration:success', courtNumber: n }, '*');
-          console.log('Registration: Success message sent successfully');
+          dbg('Registration: Success message sent successfully');
         } catch(e) {
-          console.log('Registration: Error sending success message:', e);
+          if (DEBUG) console.log('Registration: Error sending success message:', e);
         }
 
         // clear mobile flags (so standalone flows remain clean)
@@ -256,41 +263,277 @@
     })();
   </script>
   
+  <!-- Load shared modules before app script -->
+  <script src="./shared/config.js"></script>
+  <script src="./shared/storage.js"></script>
+  <script src="./shared/events.js"></script>
+  <script src="./shared/datastore.js"></script>
+  <script src="./shared/maintenance.js"></script>
+  <script src="./shared/dataservice.js"></script>
+  <script src="./shared/blocks.js"></script>
+
+  <script>
+(function () {
+  if (location.protocol !== 'file:') return;
+
+  console.warn('[dev] Loaded via file:// — this uses a different storage and won\'t receive app events.');
+
+  function addBanner() {
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;padding:8px 12px;' +
+                      'background:#f59e0b;color:#111;font:600 14px/1.2 system-ui;' +
+                      'z-index:99999;text-align:center';
+    b.textContent = '⚠️ Running from file:// — use http://127.0.0.1:5500 for correct behavior';
+    document.body.appendChild(b);
+  }
+
+  if (document.body) addBanner();
+  else window.addEventListener('DOMContentLoaded', addBanner, { once: true });
+})();
+</script>
+  
+  <!-- Load domain modules -->
+  <script src="./domain/time.js"></script>
+  <script src="./domain/availability.js"></script>
+  <script src="./domain/waitlist.js"></script>
+  <script src="./domain/blocks.js"></script>
+  <script src="./domain/wetCourts.js"></script>
+  <script src="./domain/selfTest.js"></script>
+  <script src="./shared/domain/roster.js"></script>
+  <script src="shared/selftest.js"></script>
+  
+  <script>
+// ---- Toast bridge (global) ----
+window.Tennis = window.Tennis || {};
+Tennis.UI = Tennis.UI || {};
+Tennis.UI.toast = (msg, opts={}) =>
+  window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg, ...opts }}));
+</script>
+  
+  <script>
+(function(){
+  // Define global helper
+  window.computeEtaPreview = function computeEtaPreview() {
+    try {
+      const Storage = window.Tennis.Storage;
+      const Avail   = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+      const Wait    = window.Tennis.Domain.waitlist     || window.Tennis.Domain.Waitlist;
+      const Time    = window.Tennis.Domain.time         || window.Tennis.Domain.Time;
+
+      // ensure placeholder exists (self-healing)
+      let el = document.getElementById('etaPreview');
+      if (!el) {
+        const make = () => {
+          const d = document.createElement('div');
+          d.id = 'etaPreview';
+          d.setAttribute('aria-live', 'polite');
+          d.style.marginTop = '8px';
+          d.style.fontSize = '0.95rem';
+          d.style.opacity = '0.9';
+          return d;
+        };
+        // Try common containers, then fall back to <body>
+        const container =
+          document.querySelector('form') ||
+          document.querySelector('#main, #app, #root, main') ||
+          document.body;
+        el = make();
+        container.appendChild(el);
+      }
+
+      const now    = new Date();
+      const data   = Storage.readDataSafe();
+      const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+      const wetSet = new Set(
+        blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+              .map(b => b.courtNumber)
+      );
+      const nextTimes = Avail.getNextFreeTimes({ data, now, blocks });
+      const info      = Avail.getFreeCourtsInfo({ data, now, blocks, wetSet });
+      const freeCount = Array.isArray(info?.free) ? info.free.length : 0;
+
+      // robust queue length detection
+      const qLen =
+        (Array.isArray(data?.waitlist) && data.waitlist.length) ||
+        (Array.isArray(data?.queue) && data.queue.length) ||
+        (Array.isArray(data?.registration?.waitlist) && data.registration.waitlist.length) ||
+        0;
+      const position = qLen + 1;
+
+      const etas = Wait.estimateWaitForPositions({
+        positions: [position],
+        currentFreeCount: freeCount,
+        nextFreeTimes: nextTimes,
+        avgGameMinutes: window.Tennis.Config.Timing.AVG_GAME
+      });
+      const minutes = Array.isArray(etas) ? etas[0] : null;
+      const label   = (minutes == null) ? '—'
+                     : (minutes <= 0)   ? 'Now'
+                     : `${minutes} min`;
+
+      if (el) {
+        // Hide the ETA preview text completely
+        el.textContent = '';
+        el.setAttribute('data-eta-minutes', minutes ?? '');
+      } else {
+        dbg('[Registration ETA preview]', { position, minutes, label, freeCount, qLen });
+      }
+    } catch (e) {
+      console.warn('ETA preview error:', e);
+    }
+  };
+
+  // Call once on load, and wire event when available
+  function initEta() {
+    if (typeof window.computeEtaPreview === 'function') {
+      window.computeEtaPreview();
+    }
+    const E = window.Tennis && window.Tennis.Events;
+    if (E && typeof E.onDom === 'function') {
+      E.onDom('tennisDataUpdate', () => window.computeEtaPreview());
+    } else {
+      // Retry a few times in case Events isn't ready yet
+      let tries = 0;
+      const id = setInterval(() => {
+        const Ev = window.Tennis && window.Tennis.Events;
+        if (Ev && typeof Ev.onDom === 'function') {
+          clearInterval(id);
+          Ev.onDom('tennisDataUpdate', () => window.computeEtaPreview());
+        }
+        if (++tries > 20) clearInterval(id);
+      }, 150);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEta);
+  } else {
+    initEta();
+  }
+})();
+</script>
+
+  <script>
+(function registerAutoClear() {
+  const DEBUG = false;
+  const dbg = (...a) => DEBUG && console.log(...a);
+  const run = async () => {
+    try {
+      const fn = window.__autoClearOverdueSessions;
+      if (typeof fn === 'function') {
+        const n = await fn(); // may clear 0+ (now handles both overdue and block conflicts)
+        dbg('[AutoClear@Registration] cleared/bumped', n, 'sessions');
+      }
+    } catch (e) { /* swallow in prod */ }
+  };
+  // run once on boot
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(run, 0);
+  } else {
+    window.addEventListener('DOMContentLoaded', run, { once: true });
+  }
+  // run every 5 minutes (cooperative with Board/Admin; safe to double-run)
+  const FIVE_MIN = 5 * 60 * 1000;
+  window.__autoClearRegTimer && clearInterval(window.__autoClearRegTimer);
+  window.__autoClearRegTimer = setInterval(run, FIVE_MIN);
+})();
+</script>
+  
   <script type="text/babel">
     // Access shared utils (optional convenience)
     const U = window.APP_UTILS || {};
     
-    // ---- Storage & Event keys (constants; no behavior change) ----
-    const STORAGE = {
+    // === Shared Core Integration Flag ===
+    const USE_SHARED_CORE = true;
+    const USE_SHARED_DOMAIN = true;
+    const USE_DOMAIN_ETA_PREVIEW = true;
+    const DEBUG = false; // Gate noisy logs
+    const dbg = (...args) => { if (DEBUG) console.log(...args); };
+    
+    // Coalesce multiple update events into a single refresh
+    let __refreshPending = false;
+    function scheduleAvailabilityRefresh() {
+      if (__refreshPending) return;
+      __refreshPending = true;
+      setTimeout(() => {
+        __refreshPending = false;
+        // Resolve the refresh function safely
+        const fn =
+          (typeof window.loadData === 'function' && window.loadData) ||
+          (typeof loadData === 'function' && loadData) ||
+          null;
+        if (fn) fn();
+      }, 0);
+    }
+    
+    const Config  = USE_SHARED_CORE ? window.Tennis.Config  : null;
+    const Storage = window.Tennis.Storage;
+    const Events  = window.Tennis.Events;
+    const A       = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+    const USE_DOMAIN_SELECTABLE = true; // feature flag
+    // DataStore will be initialized later with the original class if USE_SHARED_CORE is false
+    let dataStore = USE_SHARED_CORE ? window.Tennis.DataStore : null;
+    
+    // Domain module handles
+    const Time    = window.Tennis.Domain.time         || window.Tennis.Domain.Time;
+    const Avail   = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+    const Wait    = window.Tennis.Domain.waitlist     || window.Tennis.Domain.Waitlist;
+    const W       = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
+    
+    // Individual function/constant redirects for backward compatibility
+    const readJSON = USE_SHARED_CORE ? Storage.readJSON : ((key) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } });
+    const writeJSON = USE_SHARED_CORE ? Storage.writeJSON : ((key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; } });
+    const readDataSafe = USE_SHARED_CORE ? Storage.readDataSafe : (() => readJSON(STORAGE_ORIGINAL.DATA) || getEmptyData());
+    const getEmptyData = USE_SHARED_CORE ? Storage.getEmptyData : (() => ({ __schema: 1, courts: Array(12).fill(null), waitingGroups: [], recentlyCleared: [], calculatedAvailability: null }));
+    const STORAGE = USE_SHARED_CORE ? Storage.KEYS : STORAGE_ORIGINAL;
+    const EVENTS = { UPDATE: 'tennisDataUpdate' };
+
+    function validateGroupCompat(players, guests) {
+      const W = (window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist);
+      const norm = (ok, errs) => ({ ok: !!ok, errors: Array.isArray(errs) ? errs : (errs ? [errs] : []) });
+      if (!W || typeof W.validateGroup !== 'function') return norm(true, []);
+
+      // Try new API (object)
+      try {
+        const out = W.validateGroup({ players, guests });
+        if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
+          return norm(out.ok, out.errors);
+        }
+      } catch(_) {}
+
+      // Candidate arrays for legacy API
+      const cands = [
+        players,                                                  // [{id,name}, ...] or similar
+        Array.isArray(players) ? players.map(p => p?.name).filter(Boolean) : [], // ['Name', ...]
+        Array.isArray(players) ? players.map(p => p?.id).filter(Boolean)   : [], // ['ID', ...]
+      ].filter(arr => Array.isArray(arr) && arr.length > 0);
+
+      for (const cand of cands) {
+        try {
+          const out = W.validateGroup(cand);
+          if (out && typeof out.valid === 'boolean') {
+            return norm(out.valid, out.error || []);
+          }
+          if (Array.isArray(out)) {
+            return norm(out.length === 0, out);
+          }
+          if (typeof out === 'string') {
+            return norm(false, out);
+          }
+        } catch(_) {}
+      }
+      // Conservative default if all attempts are ambiguous
+      return norm(true, []);
+    }
+    
+    // ---- Original Storage & Event keys (kept intact but unused when USE_SHARED_CORE=true) ----
+    const STORAGE_ORIGINAL = {
       DATA: 'tennisClubData',
       SETTINGS: 'tennisClubSettings',
       BLOCKS: 'courtBlocks',
       UPDATE_TICK: 'tennisDataUpdateTick'
     };
-    const EVENTS = {
-      UPDATE: 'tennisDataUpdate'
-    };
     
-    // ---- JSON storage helpers (pure wrappers; no behavior change) ----
-    const readJSON = (key) => {
-      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-      catch { return null; }
-    };
-    const writeJSON = (key, val) => {
-      try { localStorage.setItem(key, JSON.stringify(val)); return true; }
-      catch { return false; }
-    };
-    
-    // ---- Safe defaults for app data (no behavior change) ----
-    const getEmptyData = () => ({
-      courts: Array(12).fill(null),
-      waitingGroups: [],
-      recentlyCleared: [],
-      calculatedAvailability: null
-    });
-    
-    // One-time safe read (used wherever you bootstrap data)
-    const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
+    // ---- Original JSON storage helpers removed (now using shadowed versions above) ----
     
     // ---- Core constants (declared only; not replacing existing usages) ----
     const APP = {
@@ -392,7 +635,11 @@ class TennisCourtDataStore {
     this.metrics.totalResponseTime += responseTime;
     
     // Dispatch update event for real-time sync
-    window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
+    if (USE_SHARED_CORE && Events) {
+      Events.emitDom(EVENTS.UPDATE, { key, data });
+    } else {
+      window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
+    }
   }
 
   getMetrics() {
@@ -412,8 +659,12 @@ class TennisCourtDataStore {
   }
 }
 
-// Initialize global DataStore instance
-const dataStore = new (window.APP_UTILS?.TennisCourtDataStore || class {})();
+// Initialize original DataStore instance (will be unused if USE_SHARED_CORE is true)
+const dataStoreOriginal = new (window.APP_UTILS?.TennisCourtDataStore || class {})();
+// Use shadowed dataStore or fallback to original
+if (!USE_SHARED_CORE) {
+  dataStore = dataStoreOriginal;
+}
 
 // Boot data assertion
 const _bootData = (U.readDataSafe ? U.readDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData()));
@@ -427,8 +678,8 @@ const UserPlus = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>👤
 const ChevronRight = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>▶️</span>;
 const Check = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>✅</span>;
 
-// Shared Configuration (in real app, import from './config')
-const TENNIS_CONFIG = {
+// Original Configuration (kept intact but unused when USE_SHARED_CORE=true)
+const TENNIS_CONFIG_ORIGINAL = {
   COURTS: {
     TOTAL_COUNT: 12,
     TOP_ROW: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -487,6 +738,69 @@ const TENNIS_CONFIG = {
     TIMEOUT_MS: 10000
   }
 };
+
+// Shadowed TENNIS_CONFIG (routes to shared core or original based on USE_SHARED_CORE flag)
+const TENNIS_CONFIG = USE_SHARED_CORE ? {
+  COURTS: {
+    TOTAL_COUNT: Config.Courts.TOTAL_COUNT,
+    TOP_ROW: Config.Courts.TOP_ROW,
+    BOTTOM_ROW: Config.Courts.BOTTOM_ROW
+  },
+  TIMING: {
+    MAX_PLAY_DURATION_MS: Config.Timing.MAX_PLAY * 60 * 1000,
+    MAX_PLAY_DURATION_MIN: Config.Timing.MAX_PLAY,
+    TIMEOUT_WARNING_MIN: 180,
+    SINGLES_DURATION_MIN: Config.Timing.SINGLES,
+    DOUBLES_DURATION_MIN: Config.Timing.DOUBLES,
+    AVG_GAME_TIME_MIN: Config.Timing.AVG_GAME,
+    POLL_INTERVAL_MS: 5000,
+    UPDATE_INTERVAL_MS: 1000,
+    SESSION_TIMEOUT_MS: 120000,
+    SESSION_WARNING_MS: 90000,
+    CHANGE_COURT_TIMEOUT_SEC: 30,
+    AUTO_RESET_SUCCESS_MS: 30000,
+    ALERT_DISPLAY_MS: 3000,
+    AUTO_RESET_CLEAR_MS: 5000
+  },
+  DISPLAY: {
+    MAX_WAITING_DISPLAY: Config.Display.MAX_WAITING_DISPLAY,
+    MAX_AUTOCOMPLETE_RESULTS: 8,
+    MAX_FREQUENT_PARTNERS: 6,
+    HEADER_MARGIN_LEFT: '300px'
+  },
+  PLAYERS: {
+    MAX_PER_GROUP: 4,
+    MIN_PER_GROUP: 1
+  },
+  STORAGE: {
+    KEY: Storage.KEYS.DATA,
+    UPDATE_EVENT: EVENTS.UPDATE,
+    SETTINGS_KEY: Storage.KEYS.SETTINGS,
+    BLOCK_TEMPLATES_KEY: 'tennisBlockTemplates',
+    RECURRING_BLOCKS_KEY: 'tennisRecurringBlocks',
+    BALL_SALES_KEY: 'tennisBallPurchases',
+    ANALYTICS_KEY: 'tennisAnalytics',
+    GUEST_CHARGES_KEY: 'tennisGuestCharges'
+  },
+  ADMIN: {
+    ACCESS_CODE: '9999'
+  },
+  PRICING: {
+    TENNIS_BALLS: 5.50
+  },
+  GEOLOCATION: {
+    ENABLED: false,
+    CLUB_CENTER: {
+      latitude: 29.9511,
+      longitude: -90.0715
+    },
+    ALLOWED_RADIUS_METERS: 200,
+    CHECKING_MESSAGE: "Checking your location...",
+    DENIAL_MESSAGE: "You must be at the club to register for courts. Please register on the tablet at the sign in desk.",
+    ERROR_MESSAGE: "Location services required. Please register on the tablet at the sign in desk",
+    TIMEOUT_MS: 10000
+  }
+} : TENNIS_CONFIG_ORIGINAL;
 
 // Data Validation Utilities (in real app, import from './utils/validation')
 const DataValidation = {
@@ -599,13 +913,15 @@ const DataValidation = {
                new Date(session.originalEndTime) > now; // Only keep future end times
         
      if (!isValid && session) {
-          log.debug("Filtered out session:", {
-            session,
-            hasValidGroup: session.players ? this.isValidGroup(session.players) : false,
-            hasOriginalEndTime: !!session.originalEndTime,
-            isValidDate: session.originalEndTime ? this.isValidDate(new Date(session.originalEndTime)) : false,
-            isFutureEndTime: session.originalEndTime ? new Date(session.originalEndTime) > now : false
-          });
+          if (DEBUG) {
+            log.debug("Filtered out session:", {
+              session,
+              hasValidGroup: session.players ? this.isValidGroup(session.players) : false,
+              hasOriginalEndTime: !!session.originalEndTime,
+              isValidDate: session.originalEndTime ? this.isValidDate(new Date(session.originalEndTime)) : false,
+              isFutureEndTime: session.originalEndTime ? new Date(session.originalEndTime) > now : false
+            });
+          }
         }
         
         return isValid;
@@ -617,7 +933,7 @@ const DataValidation = {
 };
 
 // Tennis Data Service (in real app, import from './TennisDataService')
-const TennisDataService = {
+const TennisDataService = window.TennisDataService || {
   STORAGE_KEY: TENNIS_CONFIG.STORAGE.KEY,
   COURT_COUNT: TENNIS_CONFIG.COURTS.TOTAL_COUNT,
   
@@ -668,7 +984,34 @@ const TennisDataService = {
       calculatedNextAvailable: data.calculatedAvailability.nextAvailable.length
     });
     
+    // --- Guard: do not clobber active courts with an empty snapshot ---
+    try {
+      const now = new Date();
+      const current = Tennis.Storage.readDataSafe();
+      const currAssigned = (current?.courts || []).filter(c => !!c?.current).length;
+      const nextAssigned = (data?.courts || []).filter(c => !!c?.current).length;
+
+      // if we currently have active courts, and the candidate write has none,
+      // AND at least one current court's endTime is still in the future, skip this write
+      const hasFutureCurrent = (current?.courts || []).some(c => {
+        const end = c?.current?.endTime ? new Date(c.current.endTime) : null;
+          return end && !isNaN(end) && end > now;
+      });
+
+      if (currAssigned > 0 && nextAssigned === 0 && hasFutureCurrent) {
+        console.warn('[saveData] Skip write: candidate snapshot has assigned=0 but live data has active courts with future end times');
+        // still emit events so listeners can recompute without losing state
+        Tennis.Events.emitDom('DATA_UPDATED', { key: Tennis.Storage.STORAGE.DATA, data: current });
+        Tennis.Events.emitDom('tennisDataUpdate', { key: Tennis.Storage.STORAGE.DATA, data: current });
+        return { success: true, skipped: true };
+      }
+    } catch (e) {
+      console.warn('[saveData] Guard check failed:', e?.message);
+    }
+    // --- End guard ---
+    
     await dataStore.set(this.STORAGE_KEY, data, { immediate: true });
+    Tennis.Events.emitDom('tennisDataUpdate', { key: Tennis.Storage.STORAGE.DATA, data });
     return { success: true };
   } catch (error) {
     if (error.name === 'QuotaExceededError') {
@@ -678,101 +1021,183 @@ const TennisDataService = {
   }
 },
 
+  // Service-local validation that tolerates legacy and new APIs
+  serviceValidateGroupCompat(group) {
+    const W = (window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist);
+    const norm = (ok, errs) => ({ ok: !!ok, errors: Array.isArray(errs) ? errs : (errs ? [errs] : []) });
+    if (!W || typeof W.validateGroup !== 'function') return norm(true, []);
+
+    const playersArr = Array.isArray(group?.players) ? group.players
+                     : Array.isArray(group)          ? group
+                     : [];
+    // 1) Legacy: array of player objects (this branch is known-good from your trace)
+    try {
+      const out = W.validateGroup(playersArr);
+      if (out && typeof out.valid === 'boolean') return norm(out.valid, out.error || []);
+      if (Array.isArray(out))                    return norm(out.length === 0, out);
+      if (typeof out === 'string')               return norm(false, out);
+    } catch (_) {}
+
+    // 2) New API: object shape
+    try {
+      const out = W.validateGroup({ players: playersArr, guests: group?.guests ?? 0 });
+      if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
+        return norm(out.ok, out.errors);
+      }
+    } catch (_) {}
+
+    // 3) Names fallback (some older builds)
+    try {
+      const names = playersArr.map(p => p?.name).filter(Boolean);
+      const out = W.validateGroup(names);
+      if (out && typeof out.valid === 'boolean') return norm(out.valid, out.error || []);
+      if (Array.isArray(out))                    return norm(out.length === 0, out);
+      if (typeof out === 'string')               return norm(false, out);
+    } catch (_) {}
+
+    return norm(true, []); // conservative default
+  },
+
   async assignCourt(courtNumber, group, duration) {
+    // at the very top of assignCourt(courtNumber, group, duration)
+    const groupObj = Array.isArray(group) ? { players: group, guests: 0 } : (group || {});
+    let playersArray = Array.isArray(groupObj.players) ? groupObj.players : [];
+    const guests = Number.isFinite(groupObj.guests) ? groupObj.guests : 0;
+    
+    // Resolve/attach memberId where possible (no-op if roster not available)
+    try {
+      const R = window.Tennis?.Domain?.roster;
+      const S = window.Tennis?.Storage;
+      // Try to read roster from any of these common places:
+      const roster = (window.__memberRoster) || S.readJSON('tennisMembers') || S.readJSON('members') || [];
+      if (R?.enrichPlayersWithIds) {
+        playersArray = R.enrichPlayersWithIds(playersArray, roster);
+      }
+    } catch (_) {}
+    
     // Validate inputs
     if (!DataValidation.isValidCourtNumber(courtNumber)) {
       return { success: false, error: `Invalid court number. Please select 1-${this.COURT_COUNT}.` };
     }
     
-    if (!DataValidation.isValidGroup(group)) {
-      return { success: false, error: 'Invalid group. Please ensure all players have valid data.' };
+    // Group validation handled by serviceValidateGroupCompat
+
+    const { ok, errors } = this.serviceValidateGroupCompat(groupObj);
+    if (!ok) {
+      return { success: false, error: (errors && errors.join(', ')) || 'Validation error' };
     }
     
     if (!DataValidation.isValidDuration(duration)) {
       return { success: false, error: 'Invalid duration. Please select a valid time period.' };
     }
     
-    const data = await this.loadData();
+    // Read the fresh snapshot
+    const S = window.Tennis?.Storage;
+    const DataStore = window.DataStore || window.Tennis?.DataStore;
+    // Use the blessed clone API for mutations
+    const next = S?.readDataClone ? S.readDataClone() : S.readDataSafe() || {};
+
+    // Ensure shape
+    const courtCount = (window.Tennis?.Config?.Courts?.TOTAL_COUNT) || (next.courts?.length) || 12;
+    next.courts = Array.isArray(next.courts) ? next.courts.slice() : Array.from({length: courtCount}, () => null);
+    next.waitingGroups = Array.isArray(next.waitingGroups) ? next.waitingGroups.slice() : [];
+    next.recentlyCleared = Array.isArray(next.recentlyCleared) ? next.recentlyCleared.slice() : [];
+
+    // Defensive duplicate-prevention (service)
+    try {
+      const R = window.Tennis?.Domain?.roster || window.Tennis?.Domain?.Roster;
+      if (R && typeof R.checkGroupConflicts === 'function') {
+        const conflicts = R.checkGroupConflicts({ data: next, groupPlayers: playersArray });
+        if (conflicts.playing.length || conflicts.waiting.length) {
+          const messages = [];
+          conflicts.playing.forEach(p => {
+            messages.push(`${p.name} is already playing on Court ${p.court}`);
+          });
+          conflicts.waiting.forEach(p => {
+            messages.push(`${p.name} is already on the waitlist (position ${p.position})`);
+          });
+          return { success: false, error: messages.join('\n') };
+        }
+      }
+    } catch (e) {
+      // optional: dbg('[assignCourt] roster check failed', e);
+    }
+
+    // Compute assignment payload (keep existing duration logic)
+    const idx = courtNumber - 1;
     const now = new Date();
     
     // Check if any player in this group recently cleared a court
-    const originalEndTime = TennisBusinessLogic.getOriginalEndTimeForGroup(group, data.recentlyCleared);
+    const originalEndTime = TennisBusinessLogic.getOriginalEndTimeForGroup(playersArray, next.recentlyCleared);
     
-    let endTime;
+    let end;
     if (originalEndTime && new Date(originalEndTime) > now) {
       // Use the original end time to prevent time extension abuse
-      endTime = new Date(originalEndTime);
-      console.log(`Group contains players who recently cleared early. Using original end time: ${endTime.toLocaleTimeString()}`);
+      end = new Date(originalEndTime);
+      console.log(`Group contains players who recently cleared early. Using original end time: ${end.toLocaleTimeString()}`);
     } else {
       // Normal case - calculate end time based on duration
-      endTime = new Date();
-      endTime.setMinutes(endTime.getMinutes() + duration);
+      end = new Date(now.getTime() + (duration * 60000));
     }
     
-    // Get info about any court being replaced
-    const existingCourt = data.courts[courtNumber - 1];
+    const assignment = {
+      players: playersArray,
+      guests,
+      startTime: now.toISOString(),
+      endTime: end.toISOString(),
+      assignedAt: now.toISOString(),
+      duration
+    };
+
+    // Preserve other courts; only touch the target index
+    const existingCourt = next.courts[idx];
     let replacedGroup = null;
     
-    // Convert old format to new format if needed
-    let courtData = this.convertToNewFormat(existingCourt);
-    console.log('After conversion:', courtData, 'from:', existingCourt);
-    
-    // If there's a current session (overtime or not), move it to history
-    if (courtData && courtData.current) {
+    // If target court had a current session, capture it for return value
+    if (existingCourt?.current) {
       replacedGroup = {
-        players: courtData.current.players,
-        endTime: courtData.current.endTime
+        players: existingCourt.current.players,
+        endTime: existingCourt.current.endTime
       };
       
-      // Move current session to history with actual end time
-      if (!courtData.history) {
-        courtData.history = [];
+      // Add to historical games for search functionality (bumped game)
+      if (window.APP_UTILS && window.APP_UTILS.addHistoricalGame) {
+        console.log('[Registration assignCourt] Adding bumped game to historical storage');
+        window.APP_UTILS.addHistoricalGame({
+          courtNumber: courtNumber,
+          players: existingCourt.current.players,
+          startTime: existingCourt.current.startTime,
+          endTime: now.toISOString(), // Use bump time as end time
+          duration: existingCourt.current.duration,
+          clearReason: 'Bumped'
+        });
+      } else {
+        console.warn('[Registration assignCourt] APP_UTILS.addHistoricalGame not available');
       }
-      
-      courtData.history.push({
-        players: courtData.current.players,
-        startTime: courtData.current.startTime,
-        scheduledEndTime: courtData.current.endTime,
-        actualEndTime: now.toISOString(), // They were replaced NOW
-        endReason: 'replaced'
-      });
     }
     
-    // Create new court structure if it doesn't exist
-    if (!courtData) {
-      courtData = { history: [] };
-    }
+    // Set the assignment on target court only
+    next.courts[idx] = { ...(existingCourt || {}), current: assignment };
     
-    // Assign the new current session
-    courtData.current = {
-      players: group,
-      startTime: now.toISOString(),
-      endTime: endTime.toISOString(),
-      assignedAt: now.toISOString(),
-      duration: duration
-    };
-    
-    // Save the updated court data - THIS WAS IN THE WRONG PLACE!
-    console.log('Saving court data:', courtData);
-    data.courts[courtNumber - 1] = courtData;
-    
-    // Remove this group from waitlist if they were waiting
-    const groupMemberIds = group.map(p => p.id);
-    data.waitingGroups = data.waitingGroups.filter(waitingGroup => {
+    // Remove the assigned group from waitlist if they were waiting
+    const groupMemberIds = playersArray.map(p => p.id);
+    next.waitingGroups = next.waitingGroups.filter(waitingGroup => {
       const waitingIds = waitingGroup.players.map(p => p.id);
       return !groupMemberIds.some(id => waitingIds.includes(id));
     });
-    
-    const result = await this.saveData(data);
-    
-    if (result.success) {
-      return { 
-        success: true, 
-        replacedGroup: replacedGroup 
-      };
+
+    // Write via the unified path (uses StorageGuard + UPDATE_TICK + dual events)
+    if (typeof DataStore?.set === 'function') {
+      await DataStore.set(S.STORAGE.DATA, next);
+    } else {
+      // extremely unlikely fallback; prefer DataStore.set
+      S.writeJSON(S.STORAGE.UPDATE_TICK, Date.now());
+      S.writeJSON(S.STORAGE.DATA, next);
+      window.Tennis?.Events?.emitDom?.('DATA_UPDATED', { key: S.STORAGE.DATA, data: next });
+      window.Tennis?.Events?.emitDom?.('tennisDataUpdate', { key: S.STORAGE.DATA, data: next });
     }
     
-    return result;
+    return { success: true, replacedGroup: replacedGroup };
   },
 
   // Add this helper method to TennisDataService
@@ -801,161 +1226,53 @@ const TennisDataService = {
     return null;
   },
 
-  async clearCourt(courtNumber, skipRecentlyCleared = false) {
-    if (!DataValidation.isValidCourtNumber(courtNumber)) {
-      return { success: false, error: `Invalid court number. Please select 1-${this.COURT_COUNT}.` };
+  async clearCourt(courtNumber, opts = {}) {
+    // Fresh read & deep clone
+    const raw = Tennis.Storage.readDataSafe() || {};
+    const data = (typeof structuredClone === 'function')
+      ? structuredClone(raw)
+      : JSON.parse(JSON.stringify(raw));
+
+    // Normalize arrays and index
+    const idx = Math.max(0, (parseInt(courtNumber, 10) || 0) - 1);
+    data.courts = Array.isArray(data.courts) ? data.courts : [];
+    // Ensure court slot exists
+    data.courts[idx] = data.courts[idx] || { history: [] };
+    const court = data.courts[idx];
+    court.history = Array.isArray(court.history) ? court.history : [];
+
+    // If no current, return a helpful error (but do NOT lie about success)
+    if (!court.current) {
+      return { success: false, error: `Court ${idx+1} is already empty.` };
     }
-    
-    const data = await this.loadData();
-    const courtData = data.courts[courtNumber - 1];
-    
-    if (!courtData || courtData.wasCleared) {
-      return { success: false, error: `Court ${courtNumber} is already empty.` };
-    }
-    
-    // Check if court is currently blocked - if so, don't allow clearing
-    const blockStatus = await getCourtBlockStatus(courtNumber);
-    if (blockStatus && blockStatus.isCurrent) {
-      return { success: false, error: `Court ${courtNumber} is currently blocked. Only admin can modify scheduled blocks.` };
-    }
-    
-    // Check if this was cleared before the end time (not for blocked courts)
+
+    // Move current to history and end it "now" if needed
     const now = new Date();
-    console.log("Checking if cleared early:", {
-      hasPlayers: courtData.players && courtData.players.length > 0,
-      hasEndTime: !!courtData.endTime,
-      endTimeInFuture: courtData.endTime ? new Date(courtData.endTime) > now : false,
-      isBlocked: !!courtData.blocked
-    });
-    
-   // Get players and endTime from either structure
-const players = courtData.current?.players || courtData.players;
-const endTime = courtData.current?.endTime || courtData.endTime;
-
-if (players && players.length > 0 && 
-    endTime && new Date(endTime) > now &&
-    !courtData.blocked &&
-    !skipRecentlyCleared) {
-  // Save to recentlyCleared array
-  if (!data.recentlyCleared) {
-    data.recentlyCleared = [];
-  }
-  
-  const sessionToSave = {
-    players: players,
-    originalEndTime: endTime,
-    clearedAt: now,
-    courtNumber: courtNumber
-  };
-  
-  data.recentlyCleared.push(sessionToSave);
+    const cur = court.current;
+    // Ensure endTime is not in the future after a manual clear
+    const end = cur?.endTime ? new Date(cur.endTime) : null;
+    if (!end || isNaN(end) || end > now) {
+      cur.endTime = now.toISOString();
     }
-    
-// Update the court data to preserve history
-const court = data.courts[courtNumber - 1];
-const existingHistory = court.history || [];
+    court.history.push(cur);
+    court.current = null;
 
-// DEBUG: Let's see what the court structure looks like
-console.log("DEBUG - Court structure before clearing:", {
-  courtNumber: courtNumber,
-  hasHistory: !!court.history,
-  historyLength: court.history ? court.history.length : 0,
-  history: court.history,
-  hasCurrent: !!court.current,
-  current: court.current,
-  hasPlayers: !!court.players,
-  players: court.players
-});
-
-
-// Simplified clearing - only handle player data, blocks are managed separately
-if (court.current && court.current.players && court.current.players.length > 0) {
-  // New structure - add to history
-  existingHistory.push({
-    ...court.current,
-    actualEndTime: now.toISOString(),
-    scheduledEndTime: court.current.endTime,
-    endReason: 'cleared'
-  });
-  
-  // Archive game to historical storage before clearing
-  try {
-    const historicalGame = {
-      courtNumber: courtNumber,
-      players: court.current.players,
-      startTime: court.current.startTime,
-      endTime: now.toISOString() // Use actual clear time
-    };
-    
-    // Use shared utils to add historical game
+    // Add to historical games for search functionality
     if (window.APP_UTILS && window.APP_UTILS.addHistoricalGame) {
-      window.APP_UTILS.addHistoricalGame(historicalGame);
-      console.log('Added game to historical records:', historicalGame);
+      window.APP_UTILS.addHistoricalGame({
+        courtNumber: courtNumber,
+        players: cur.players,
+        startTime: cur.startTime,
+        endTime: now.toISOString(), // Use actual clear time for accuracy
+        duration: cur.duration,
+        clearReason: opts.clearReason || 'Cleared'
+      });
     }
-  } catch (error) {
-    console.error('Failed to archive historical game:', error);
-    // Continue with clearing even if archiving fails
-  }
 
-  data.courts[courtNumber - 1] = {
-    current: null,
-    history: existingHistory  // Preserve ALL history
-  };
-} else if (court.players) {
-  // Old structure - convert and add to history
-  existingHistory.push({
-    players: court.players,
-    startTime: court.startTime,
-    scheduledEndTime: court.endTime,
-    actualEndTime: now.toISOString(),
-    endReason: 'cleared',
-    duration: court.duration
-  });
-
-  // Archive game to historical storage before clearing (old structure)
-  try {
-    const historicalGame = {
-      courtNumber: courtNumber,
-      players: court.players,
-      startTime: court.startTime,
-      endTime: now.toISOString() // Use actual clear time
-    };
-    
-    // Use shared utils to add historical game
-    if (window.APP_UTILS && window.APP_UTILS.addHistoricalGame) {
-      window.APP_UTILS.addHistoricalGame(historicalGame);
-      console.log('Added game to historical records:', historicalGame);
-    }
-  } catch (error) {
-    console.error('Failed to archive historical game:', error);
-    // Continue with clearing even if archiving fails
-  }
-  
-  data.courts[courtNumber - 1] = {
-    current: null,
-    history: existingHistory  // Preserve ALL history
-  };
-} else {
-  data.courts[courtNumber - 1] = null;
-}
-
-
-    console.log("Data before saving:", {
-      courtsLength: data.courts.length,
-      recentlyClearedLength: data.recentlyCleared ? data.recentlyCleared.length : 0,
-      recentlyCleared: data.recentlyCleared
-    });
-    
-    const result = await this.saveData(data);
-    
-    // Debug: Check what was actually saved
-    const savedData = await this.loadData();
-    console.log("After clearing court, data in storage:", {
-      recentlyCleared: savedData.recentlyCleared,
-      recentlyClearedCount: savedData.recentlyCleared ? savedData.recentlyCleared.length : 0
-    });
-    
-    return result;
+    // Persist via unified path (no direct localStorage.setItem)
+    const key = Tennis.Storage.STORAGE.DATA;
+    Tennis.DataStore.set(key, data); // this writes via guarded writeJSON, updates UPDATE_TICK, and emits both events
+    return { success: true };
   },
 
   // Change court assignment (move group from one court to another)
@@ -1028,13 +1345,47 @@ if (court.current && court.current.players && court.current.players.length > 0) 
   },
 
   async addToWaitlist(group) {
-    if (!DataValidation.isValidGroup(group)) {
-      return { success: false, error: 'Invalid group. Please ensure all players have valid data.' };
+    // Legacy shadow guard - prefer shared service if available
+    if (window.TennisDataService?.addToWaitlist && window.TennisDataService !== TennisDataService) {
+      return window.TennisDataService.addToWaitlist(group);
+    }
+    
+    // Build the group object from existing form fields / variables
+    let players = group.map(p => ({
+      id: String(p.id || '').trim(),
+      name: String(p.name || '').trim(),
+      memberId: p.memberId
+    })).filter(p => p && p.id && p.name);
+
+    // Resolve/attach memberId where possible (no-op if roster not available)
+    try {
+      const R = window.Tennis?.Domain?.roster;
+      const S = window.Tennis?.Storage;
+      // Try to read roster from any of these common places:
+      const roster = (window.__memberRoster) || S.readJSON('tennisMembers') || S.readJSON('members') || [];
+      if (R?.enrichPlayersWithIds) {
+        players = R.enrichPlayersWithIds(players, roster);
+      }
+    } catch (_) {}
+
+    const guests = group.filter(p => p.isGuest).length;
+
+    const validation = W.validateGroup({ players, guests });
+    const { ok, errors } = validation || { ok: false, errors: ['Validation failed'] };
+    if (!ok) {
+      return { success: false, error: (errors || ['Unknown validation error']).join('\n') };
     }
     
     const data = await this.loadData();
+    
+    // Create enriched group with memberIds
+    const enrichedGroup = group.map((p, idx) => ({
+      ...p,
+      memberId: players[idx]?.memberId || p.memberId
+    }));
+    
     data.waitingGroups.push({ 
-      players: group, 
+      players: enrichedGroup, 
       timestamp: new Date() 
     });
     
@@ -1108,7 +1459,11 @@ if (court.current && court.current.players && court.current.players.length > 0) 
   async saveCourtBlocks(blocks) {
     try {
       await dataStore.set('courtBlocks', blocks, { immediate: true });
-      window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+      if (USE_SHARED_CORE && Events) {
+        Events.emitDom(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, {});
+      } else {
+        window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+      }
       return { success: true };
     } catch (error) {
       return { success: false, error: 'Failed to save blocks' };
@@ -1426,7 +1781,67 @@ async calculateNextAvailable(data) {
   return availableCourts.sort((a, b) => new Date(a.availableAt) - new Date(b.availableAt));
 },
 
-};  
+async addToWaitlist(players, guests = 0) {
+  try {
+    // Basic validation (reuse your existing validators if present)
+    if (!Array.isArray(players) || players.length === 0) {
+      return { success: false, error: 'No players provided' };
+    }
+
+    // Load fresh data (same path as assignCourt)
+    const data = await this.loadData();
+
+    // Normalize players to { id, name }
+    const normalized = players.map((p, idx) => ({
+      id: typeof p.id === 'number' ? p.id : Date.now() + idx,
+      name: (p.name || '').trim()
+    })).filter(p => p.name);
+
+    if (normalized.length === 0) {
+      return { success: false, error: 'Invalid player names' };
+    }
+
+    // Prevent duplicate join if already waiting (by id OR name)
+    const alreadyWaiting = (wg) => {
+      const waitingIds = (wg.players || []).map(x => x.id).filter(x => typeof x === 'number');
+      const waitingNames = (wg.players || []).map(x => (x.name || '').toLowerCase());
+      return normalized.some(x =>
+        (typeof x.id === 'number' && waitingIds.includes(x.id)) ||
+        waitingNames.includes((x.name || '').toLowerCase())
+      );
+    };
+    if ((data.waitingGroups || []).some(alreadyWaiting)) {
+      return { success: true, info: 'Already on waitlist' };
+    }
+
+    // Ensure array exists
+    if (!Array.isArray(data.waitingGroups)) data.waitingGroups = [];
+
+    // Push new waiting group (use a single timestamp key)
+    data.waitingGroups.push({
+      players: normalized,
+      guests: Number.isFinite(guests) ? guests : 0,
+      requestedAt: new Date().toISOString()
+    });
+
+    // Persist via service save (pre-computes availability + emits event)
+    const res = await this.saveData(data);
+    if (!res?.success) return res;
+
+    return { success: true, count: data.waitingGroups.length };
+  } catch (err) {
+    console.error('[addToWaitlist] error', err);
+    return { success: false, error: 'Failed to join waitlist' };
+  }
+},
+
+};
+
+// ----- GLOBAL SERVICE ALIAS (must run right after the service is defined) -----
+window.Tennis = window.Tennis || {};
+window.Tennis.DataService = window.Tennis.DataService || TennisDataService;
+window.TennisDataService  = window.TennisDataService  || window.Tennis.DataService;
+window.WaitlistDataService = window.WaitlistDataService || window.TennisDataService;
 
 // Tennis Business Logic (in real app, import from './TennisBusinessLogic')
 const TennisBusinessLogic = {
@@ -1588,27 +2003,27 @@ for (let i = 0; i < data.courts.length; i++) {
    * Check if any player in a group recently cleared a court and return their original end time
    * Used to enforce consistent session end times when players re-register early
    */
-  getOriginalEndTimeForGroup(group, recentlyCleared) {
-    if (!group || !Array.isArray(group) || group.length === 0) {
-      return null;
-    }
+  getOriginalEndTimeForGroup(players, recentlyCleared) {
+    const ps = Array.isArray(players) ? players : [];
+    const rc = Array.isArray(recentlyCleared) ? recentlyCleared : [];
+    if (ps.length === 0) return null;  // nothing to derive
     
-    if (!recentlyCleared || !Array.isArray(recentlyCleared) || recentlyCleared.length === 0) {
+    if (rc.length === 0) {
       return null;
     }
     
     const now = new Date();
-    const groupMemberIds = group.map(p => p.id);
+    const groupMemberIds = ps.map(p => p.id);
     
     // Check each recently cleared session
-    for (const session of recentlyCleared) {
+    for (const session of rc) {
       // Skip if session has expired
       if (new Date(session.originalEndTime) <= now) {
         continue;
       }
       
       // Check if any player from this group was in the recently cleared session
-      const sessionMemberIds = session.players.map(p => p.id);
+      const sessionMemberIds = Array.isArray(session.players) ? session.players.map(p => p.id) : [];
       const hasOverlap = groupMemberIds.some(id => sessionMemberIds.includes(id));
       
       if (hasOverlap) {
@@ -1773,42 +2188,58 @@ const SuccessScreen = ({
   }, []);
   
   const handleBallPurchase = React.useCallback(async () => {
-    // Process the purchase
-    if (ballPurchaseOption === 'charge') {
-      setPurchaseDetails({
-        type: 'single',
-        amount: ballPrice,
-        accounts: [getLastFourDigits(currentGroup[0]?.memberNumber)]
-      });
-    } else {
-      setPurchaseDetails({
-        type: 'split',
-        amount: splitPrice,
-        accounts: currentGroup.filter(p => !p.isGuest).map(p => getLastFourDigits(p.memberNumber))
-      });
+    try {
+      console.log('[handleBallPurchase] Starting purchase process:', { ballPurchaseOption, ballPrice, currentGroup });
+      
+      // Process the purchase
+      if (ballPurchaseOption === 'charge') {
+        setPurchaseDetails({
+          type: 'single',
+          amount: ballPrice,
+          accounts: [getLastFourDigits(currentGroup[0]?.memberNumber)]
+        });
+      } else {
+        setPurchaseDetails({
+          type: 'split',
+          amount: splitPrice,
+          accounts: currentGroup.filter(p => !p.isGuest).map(p => getLastFourDigits(p.memberNumber))
+        });
+      }
+      
+      // Calculate nonGuestPlayers fresh in the callback
+      const currentNonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
+      
+      // Save purchase to localStorage
+      const purchase = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        type: ballPurchaseOption,
+        amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice,
+        totalAmount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice * currentNonGuestPlayers,
+        players: ballPurchaseOption === 'charge' 
+          ? [currentGroup[0]] 
+          : currentGroup.filter(p => !p.isGuest),
+        courtNumber: justAssignedCourt
+      };
+      
+      console.log('[handleBallPurchase] Purchase object:', purchase);
+
+      // Get existing purchases and save them directly to the dedicated key
+      const existingPurchases = await dataStore.get('tennisBallPurchases') || [];
+      existingPurchases.push(purchase);
+      
+      // Save purchases to the dedicated key (not embedded in main data)
+      await dataStore.set('tennisBallPurchases', existingPurchases, { immediate: true });
+      
+      console.log('[handleBallPurchase] Purchase saved successfully');
+
+      setBallsPurchased(true);
+      setShowBallPurchaseModal(false);
+    } catch (error) {
+      console.error('[handleBallPurchase] Error processing purchase:', error);
+      // You might want to show an error message to the user here
     }
-    
-// Save purchase to localStorage
-const purchase = {
-  id: Date.now(),
-  timestamp: new Date().toISOString(),
-  type: ballPurchaseOption,
-  amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice,
-  totalAmount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice * nonGuestPlayers,
-  players: ballPurchaseOption === 'charge' 
-    ? [currentGroup[0]] 
-    : currentGroup.filter(p => !p.isGuest),
-  courtNumber: justAssignedCourt
-};
-
-// Get existing purchases
-const existingPurchases = await dataStore.get('tennisBallPurchases') || [];
-existingPurchases.push(purchase);
-await dataStore.set('tennisBallPurchases', existingPurchases, { immediate: true });
-
-setBallsPurchased(true);
-setShowBallPurchaseModal(false);
-}, [ballPurchaseOption, ballPrice, splitPrice, currentGroup, getLastFourDigits, justAssignedCourt]);
+  }, [ballPurchaseOption, ballPrice, splitPrice, currentGroup, getLastFourDigits, justAssignedCourt]);
  
 // Fixed layout card component
   const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
@@ -2102,14 +2533,66 @@ const CourtSelectionScreen = ({
   waitingGroupsCount,
   onCourtSelect,
   onJoinWaitlist,
+  onAssignNext,
   onGoBack,
-  onStartOver
+  onStartOver,
+  currentGroup = [] // Add currentGroup prop to determine duration
 }) => {
+  const [blockWarning, setBlockWarning] = useState(null);
+  const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
+  
+  // Determine session duration based on group size
+  const getSessionDuration = (group) => {
+    const playerCount = group?.length || 0;
+    return playerCount >= 4 ? 90 : 60; // 90 minutes for doubles (4+ players), 60 for singles
+  };
+  
+  // Handle court selection with block checking
+  const handleCourtClick = (courtNumber) => {
+    const duration = getSessionDuration(currentGroup);
+    const warning = getUpcomingBlockWarning(courtNumber, duration);
+    
+    if (warning) {
+      if (warning.type === 'blocked') {
+        // Court is blocked - show warning but don't allow proceed
+        setBlockWarning(warning);
+        setPendingCourtNumber(null);
+      } else {
+        // Court has limited time - show confirmation
+        setBlockWarning(warning);
+        setPendingCourtNumber(courtNumber);
+      }
+    } else {
+      // No block issues - proceed normally
+      onCourtSelect(courtNumber);
+    }
+  };
+  
+  // Confirm selection despite limited time
+  const handleConfirmSelection = () => {
+    if (pendingCourtNumber) {
+      onCourtSelect(pendingCourtNumber);
+    }
+    setBlockWarning(null);
+    setPendingCourtNumber(null);
+  };
+  
+  // Cancel selection
+  const handleCancelSelection = () => {
+    setBlockWarning(null);
+    setPendingCourtNumber(null);
+  };
+  
+  // Get warning info for a court to show visual indicators
+  const getCourtWarningInfo = (courtNumber) => {
+    const duration = getSessionDuration(currentGroup);
+    return getUpcomingBlockWarning(courtNumber, duration);
+  };
   return (
     <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
       <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-4xl relative">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">
-          {availableCourts.length > 0 ? "Select Your Court" : "Join Waitlist"}
+          Select Your Court
         </h2>
         
         {showingOvertimeCourts && (
@@ -2117,43 +2600,45 @@ const CourtSelectionScreen = ({
             All courts are occupied. You may claim an overtime court.
           </p>
         )}
+        
 
-        {availableCourts.length > 0 ? (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-16 sm:mb-20">
-              {availableCourts.map(courtNum => (
-                <button
-                  key={courtNum}
-                  onClick={() => onCourtSelect(courtNum)}
-                  className={`p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform hover:scale-105 shadow-lg ${
-                    showingOvertimeCourts 
-                      ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800" 
-                      : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600"
-                  }`}
-                >
-                  Court {courtNum}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="text-center mb-16 sm:mb-20">
-            {hasWaitingGroups ? (
-              <>
-                <p className="text-lg sm:text-xl text-gray-600 mb-4">Courts will be available when it's your turn</p>
-                <p className="text-base sm:text-lg text-gray-500 mb-6">There are {waitingGroupsCount} groups ahead of you</p>
-              </>
-            ) : (
-              <p className="text-lg sm:text-xl text-gray-600 mb-6">No courts are currently available</p>
-            )}
-            <button
-              onClick={onJoinWaitlist}
-              className="bg-blue-500 text-white py-4 sm:py-6 px-8 sm:px-12 rounded-xl text-xl sm:text-2xl font-bold hover:bg-blue-600 transition-colors"
-            >
-              Join Waitlist
-            </button>
-          </div>
-        )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-16 sm:mb-20">
+          {availableCourts.map(courtNum => {
+            const warningInfo = getCourtWarningInfo(courtNum);
+            const hasUpcomingBlock = warningInfo && warningInfo.type === 'limited' && warningInfo.minutesUntilBlock < 60;
+            const isBlocked = warningInfo && warningInfo.type === 'blocked';
+            
+            return (
+              <button
+                key={courtNum}
+                onClick={() => handleCourtClick(courtNum)}
+                disabled={isBlocked}
+                className={`relative p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform shadow-lg ${
+                  showingOvertimeCourts 
+                    ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800" 
+                    : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600"
+                } ${isBlocked ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105'}`}
+              >
+                <div className="flex flex-col items-center justify-center h-full">
+                  <span>Court {courtNum}</span>
+                  
+                  {/* Only show notice on regular available courts (not overtime courts) and when block is within 60 minutes */}
+                  {hasUpcomingBlock && !showingOvertimeCourts && (
+                    <div className="absolute bottom-2 left-2 right-2 bg-amber-500 bg-opacity-90 text-white text-xs px-2 py-1 rounded text-center font-normal">
+                      {warningInfo.reason} begins in {warningInfo.minutesUntilBlock}m
+                    </div>
+                  )}
+                  
+                  {isBlocked && (
+                    <div className="absolute bottom-2 left-2 right-2 bg-red-500 bg-opacity-90 text-white text-xs px-2 py-1 rounded text-center font-normal">
+                      Unavailable - starts in {warningInfo.minutesUntilBlock}m
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
 
 
 
@@ -2172,6 +2657,13 @@ const CourtSelectionScreen = ({
             Start Over
           </button>
         </div>
+        
+        {/* Block Warning Modal */}
+        <BlockWarningModal 
+          warning={blockWarning}
+          onConfirm={handleConfirmSelection}
+          onCancel={handleCancelSelection}
+        />
       </div>
     </div>
   );
@@ -2224,6 +2716,168 @@ const activeBlocks = TennisDataService.getActiveBlocksForCourt(courtNumber, now)
   };
 };
 
+// Check for upcoming blocks that would limit playing time
+const getUpcomingBlockWarning = (courtNumber, duration = 60) => {
+  const now = new Date();
+  const sessionEndTime = new Date(now.getTime() + duration * 60 * 1000);
+  
+  try {
+    // Get all blocks from storage and filter for this court
+    const allBlocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
+    const blocks = allBlocks.filter(b => b.courtNumber === courtNumber);
+    
+    // Find the earliest block that would interfere with the session
+    const upcomingBlock = blocks
+      .filter(block => {
+        const blockStart = new Date(block.startTime);
+        const blockEnd = new Date(block.endTime);
+        
+        // Skip blocks that are currently active or already past
+        if (blockStart <= now || blockEnd <= now) return false;
+        
+        // Skip wet court blocks (they're handled separately)
+        if (block.isWetCourt) return false;
+        
+        // Block interferes if it starts before our session would naturally end
+        return blockStart < sessionEndTime;
+      })
+      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+    
+    if (!upcomingBlock) return null;
+    
+    const blockStart = new Date(upcomingBlock.startTime);
+    const minutesUntilBlock = Math.floor((blockStart.getTime() - now.getTime()) / (60 * 1000));
+    
+    // Don't allow registration if block starts within 5 minutes
+    if (minutesUntilBlock <= 5) {
+      return {
+        type: 'blocked',
+        reason: upcomingBlock.reason,
+        startTime: upcomingBlock.startTime,
+        minutesUntilBlock
+      };
+    }
+    
+    // Warn if playing time will be limited
+    if (minutesUntilBlock < duration) {
+      return {
+        type: 'limited',
+        reason: upcomingBlock.reason,
+        startTime: upcomingBlock.startTime,
+        limitedDuration: minutesUntilBlock,
+        originalDuration: duration,
+        minutesUntilBlock
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Error checking upcoming blocks:', error);
+    return null;
+  }
+};
+
+// Block Warning Confirmation Modal
+const BlockWarningModal = ({ warning, onConfirm, onCancel }) => {
+  if (!warning) return null;
+  
+  const formatTime = (isoString) => {
+    return new Date(isoString).toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+  
+  const isBlocked = warning.type === 'blocked';
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-2xl">⚠️</span>
+          <h3 className="text-lg font-bold text-gray-900">
+            {isBlocked ? 'Court Unavailable' : 'Limited Playing Time'}
+          </h3>
+        </div>
+        
+        <div className="mb-6">
+          <p className="text-gray-700 mb-2">
+            This court has a <strong>{warning.reason}</strong> starting at{' '}
+            <strong>{formatTime(warning.startTime)}</strong>.
+          </p>
+          
+          {isBlocked ? (
+            <p className="text-red-600 font-medium">
+              Registration is not available as the block starts in {warning.minutesUntilBlock} minutes.
+            </p>
+          ) : (
+            <p className="text-amber-600 font-medium">
+              Your playing time will be limited to <strong>{warning.limitedDuration} minutes</strong> instead 
+              of the usual {warning.originalDuration} minutes.
+            </p>
+          )}
+        </div>
+        
+        <div className="flex gap-3">
+          {isBlocked ? (
+            <button
+              onClick={onCancel}
+              className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Select Different Court
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onCancel}
+                className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                Select Different Court
+              </button>
+              <button
+                onClick={onConfirm}
+                className="flex-1 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+              >
+                Proceed with {warning.limitedDuration} Minutes
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function ToastHost() {
+  const [toasts, setToasts] = React.useState([]);
+  React.useEffect(() => {
+    const onToast = (e) => {
+      const t = { id: Date.now() + Math.random(), duration: 3000, type: 'warning', ...e.detail };
+      setToasts((xs) => [...xs, t]);
+      setTimeout(() => setToasts((xs) => xs.filter(x => x.id !== t.id)), t.duration);
+    };
+    window.addEventListener('UI_TOAST', onToast);
+    return () => window.removeEventListener('UI_TOAST', onToast);
+  }, []);
+
+  return (
+    <div className="fixed top-4 inset-x-0 z-[1000] flex justify-center pointer-events-none">
+      <div className="w-full max-w-lg px-4 space-y-2">
+        {toasts.map(t => (
+          <div key={t.id}
+               className={`pointer-events-auto rounded-xl px-4 py-3 shadow-lg ring-1
+                 ${t.type==='error'   ? 'bg-red-50   ring-red-200   text-red-800' :
+                   t.type==='warning' ? 'bg-amber-50 ring-amber-200 text-amber-900' :
+                                         'bg-slate-50 ring-slate-200 text-slate-900'}`}>
+            <div className="text-sm">{t.msg}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const TennisRegistration = () => {
   // Initialize data state
   const [data, setData] = useState(() => ({
@@ -2231,14 +2885,38 @@ const TennisRegistration = () => {
     waitingGroups: [],
     recentlyCleared: []
   }));
+  
+  // Define loadData function to refresh data
+  const loadData = async () => {
+    const updatedData = await TennisDataService.loadData();
+    setData(updatedData);
+    
+    // Compute strict selectable courts after data update
+    const Av = Tennis.Domain.availability;
+    const S = Tennis.Storage;
+    const data = S.readDataSafe();
+    const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+    const wetSet = new Set();
+    const now = new Date();
+    
+    const selectable = [...Av.getSelectableCourtsStrict({ data, now, blocks, wetSet })];
+    
+    // Update available courts to use strict selection
+    setAvailableCourts(selectable);
+  };
+  window.loadData = loadData; // expose for coalescer/tests
+  
+  // Expose setData globally for scheduleAvailabilityRefresh
+  useEffect(() => {
+    window.__setRegistrationData = setData;
+    return () => {
+      window.__setRegistrationData = null;
+    };
+  }, []);
 
   // Load initial data
   useEffect(() => {
-    const loadInitialData = async () => {
-      const loadedData = await TennisDataService.loadData();
-      setData(loadedData);
-    };
-    loadInitialData();
+    loadData();
   }, []);
 
   // Real-time synchronization with other apps
@@ -2259,7 +2937,7 @@ const TennisRegistration = () => {
         updateTimeout = setTimeout(async () => {
           const updatedData = await TennisDataService.loadData();
           setData(updatedData);
-          console.log('Data synchronized from external update');
+          dbg('Data synchronized from external update');
         }, 500); // Increased debounce delay
       }
     };
@@ -2269,7 +2947,7 @@ const TennisRegistration = () => {
       if (event.key === TENNIS_CONFIG.STORAGE.KEY && event.newValue) {
         // Don't trigger updates if we're in the middle of a screen transition
         if (currentScreen === "search" || currentScreen === "group") {
-          console.log('Skipping localStorage update during screen transition');
+          dbg('Skipping localStorage update during screen transition');
           return;
         }
         
@@ -2284,15 +2962,29 @@ const TennisRegistration = () => {
     };
 
     // Listen for custom events from DataStore
-    window.addEventListener(EVENTS.UPDATE, handleStorageUpdate);
+    window.addEventListener(EVENTS.UPDATE, scheduleAvailabilityRefresh);
+    window.addEventListener('DATA_UPDATED', scheduleAvailabilityRefresh);
     
     // Listen for storage events from other windows/tabs
     window.addEventListener('storage', handleStorageEvent);
 
+    // Refresh clear screen on updates
+    const refreshClearScreen = () => {
+      if (currentScreen === "clearCourt") {
+        // Force re-render by updating state
+        setCurrentScreen("clearCourt");
+      }
+    };
+    document.addEventListener('tennisDataUpdate', refreshClearScreen);
+    document.addEventListener('DATA_UPDATED', refreshClearScreen);
+
     return () => {
       clearTimeout(updateTimeout);
-      window.removeEventListener(EVENTS.UPDATE, handleStorageUpdate);
+      window.removeEventListener(EVENTS.UPDATE, scheduleAvailabilityRefresh);
+      window.removeEventListener('DATA_UPDATED', scheduleAvailabilityRefresh);
       window.removeEventListener('storage', handleStorageEvent);
+      document.removeEventListener('tennisDataUpdate', refreshClearScreen);
+      document.removeEventListener('DATA_UPDATED', refreshClearScreen);
     };
   }, []);
 
@@ -2368,9 +3060,10 @@ const TennisRegistration = () => {
   useEffect(() => {
     const updateAvailableCourts = () => {
       try {
-        console.log("useEffect: Updating available courts...");
+        if (DEBUG) {
+          console.log("useEffect: Updating available courts...");
+        }
         
-        // Check if we should bypass waitlist priority for overtime courts
         const data = getCourtData();
         const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
         const hasUnoccupiedCourts = data.courts.some((court, index) => {
@@ -2383,19 +3076,11 @@ const TennisRegistration = () => {
                   (!court.current || !court.current.players || court.current.players.length === 0));
         });
         
-        // If there are available courts but no unoccupied courts, these must be overtime courts
-        const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
-        
-        console.log("🔍 useEffect DEBUG:");
-        console.log("  - tempAvailableCourts:", tempAvailableCourts);
-        console.log("  - hasUnoccupiedCourts:", hasUnoccupiedCourts);
-        console.log("  - shouldBypassWaitlistPriority:", shouldBypassWaitlistPriority);
-        console.log("  - waitlist length:", data.waitingGroups.length);
-        
-        // Use the fixed synchronous getAvailableCourts function with appropriate priority setting
-        const courts = getAvailableCourts(!shouldBypassWaitlistPriority);
-        console.log("useEffect: Available courts from getAvailableCourts:", courts);
-        console.log("useEffect: Bypassing waitlist priority?", shouldBypassWaitlistPriority);
+        // Use the new gating logic - this useEffect is now mainly for debug/legacy compat
+        const courts = getAvailableCourts(false);
+        if (DEBUG) {
+          console.log("useEffect: Available courts from getAvailableCourts:", courts);
+        }
         setAvailableCourts(courts);
         
         // Check if there's a waiting group that can now play  
@@ -2417,12 +3102,33 @@ const TennisRegistration = () => {
         } else {
           setWaitingGroupDisplay("");
         }
+        
+        // Check if second waiting group can play (when 2+ courts available)
+        const secondWaitingGroupData = data.waitingGroups.length > 1 ? data.waitingGroups[1] : null;
+        const canSecondPlay = secondWaitingGroupData && tempAvailableCourts.length >= 2;
+        setCanSecondGroupPlay(canSecondPlay);
+        setSecondWaitingGroup(secondWaitingGroupData);
+        
+        // Create display names for the second waiting group
+        if (canSecondPlay) {
+          const names = secondWaitingGroupData.players.map(p => p.name.split(' ').pop());
+          if (names.length <= 3) {
+            setSecondWaitingGroupDisplay(names.join(", "));
+          } else {
+            setSecondWaitingGroupDisplay(`${names.slice(0, 3).join(", ")}, etc`);
+          }
+        } else {
+          setSecondWaitingGroupDisplay("");
+        }
       } catch (error) {
         console.error('Error updating available courts:', error);
         setAvailableCourts([]);
         setCanFirstGroupPlay(false);
         setFirstWaitingGroup(null);
         setWaitingGroupDisplay("");
+        setCanSecondGroupPlay(false);
+        setSecondWaitingGroup(null);
+        setSecondWaitingGroupDisplay("");
       }
     };
     
@@ -2431,97 +3137,18 @@ const TennisRegistration = () => {
 
 // Auto-clear expired courts function
 useEffect(() => {
+  // function autoClearExpiredCourts() { /* disabled per policy */ }
   const autoClearExpiredCourts = async () => {
-    const data = await TennisDataService.loadData();
-    const now = new Date();
-    let clearedAny = false;
-    
-    for (let index = 0; index < data.courts.length; index++) {
-      const court = data.courts[index];
-      // Skip if no court data or already cleared
-      if (!court || (!court.current && !court.players)) continue;
-      
-      // Get players and start time from either structure
-      const players = court.current?.players || court.players;
-      const startTime = court.current?.startTime || court.startTime;
-      
-      // Check if court has active players and has exceeded 3 hours
-      if (players && players.length > 0 && startTime) {
-        const startTimeDate = new Date(startTime);
-        const hoursPlayed = (now - startTimeDate) / (1000 * 60 * 60);
-        
-        if (hoursPlayed >= 3) {
-          console.log(`Auto-clearing court ${index + 1} after 3 hours of play`);
-          
-          // Use the same clearCourt method as manual clearing
-          const result = await TennisDataService.clearCourt(index + 1);
-          
-          if (result.success) {
-            clearedAny = true;
-            console.log(`Court ${index + 1} auto-cleared successfully`);
-          }
-        }
-      }
-
-      // Check for scheduled blocks starting now
-      try {
-        const blocks = await dataStore.get('courtBlocks') || [];
-        const courtBlocks = blocks.filter(block => 
-          block.courtNumber === index + 1 &&
-          new Date(block.startTime) <= now &&
-          new Date(block.endTime) > now
-        );
-        
-        // If there's a block starting and court has players, protect and clear
-        if (courtBlocks.length > 0 && players && players.length > 0) {
-          console.log(`Auto-clearing court ${index + 1} for scheduled block: ${courtBlocks[0].reason}`);
-          
-          // PROTECTION: Save current game data before clearing
-          const gameBackup = {
-            players: players,
-            startTime: startTime,
-            endTime: court.current?.endTime || court.endTime,
-            clearedAt: now.toISOString(),
-            courtNumber: index + 1,
-            protectedForBlock: true
-          };
-          
-          // Clear the court normally
-          const result = await TennisDataService.clearCourt(index + 1);
-          if (result.success) {
-            // Ensure the cleared game gets into recentlyCleared for protection
-            const updatedData = await TennisDataService.loadData();
-            if (!updatedData.recentlyCleared) {
-              updatedData.recentlyCleared = [];
-            }
-            
-            // Add our protected game backup
-            updatedData.recentlyCleared.push(gameBackup);
-            await TennisDataService.saveData(updatedData);
-            
-            clearedAny = true;
-            console.log(`Court ${index + 1} auto-cleared and game protected for block`);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking blocks for auto-clear:', error);
-      }
-    }
-    
-    // If any courts were cleared, trigger a re-render
-    if (clearedAny) {
-      setCurrentTime(new Date());
-      window.dispatchEvent(new Event('tennisDataUpdate'));
-    }
+    /* disabled per policy - players remain on-court until manual clear or bump */
   };
   
   // Run immediately on mount
-  autoClearExpiredCourts();
+  // autoClearExpiredCourts(); /* disabled per policy */
   
   // Then run every 30 seconds
-  const interval = setInterval(autoClearExpiredCourts, 30000);
+  // const interval = setInterval(autoClearExpiredCourts, 30000); /* disabled per policy */
   
-  return () => clearInterval(interval);
+  // return () => clearInterval(interval); /* disabled per policy */
 }, []); // Empty dependency array so it only sets up once
 
 
@@ -2574,10 +3201,11 @@ useEffect(() => {
   };
   
   // Run backup every 10 seconds
-  protectCourtHistory();
-  const backupInterval = setInterval(protectCourtHistory, 10000);
+  // DISABLED: protectCourtHistory is redundant now that StorageGuard prevents clobbering
+  // protectCourtHistory();
+  // const backupInterval = setInterval(protectCourtHistory, 10000);
   
-  return () => clearInterval(backupInterval);
+  // return () => clearInterval(backupInterval);
 }, []);
 
 // REMOVED: Historical Data Restoration System
@@ -2639,6 +3267,9 @@ useEffect(() => {
   const [canFirstGroupPlay, setCanFirstGroupPlay] = useState(false);
   const [firstWaitingGroup, setFirstWaitingGroup] = useState(null);
   const [waitingGroupDisplay, setWaitingGroupDisplay] = useState("");
+  const [canSecondGroupPlay, setCanSecondGroupPlay] = useState(false);
+  const [secondWaitingGroup, setSecondWaitingGroup] = useState(null);
+  const [secondWaitingGroupDisplay, setSecondWaitingGroupDisplay] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
@@ -2659,7 +3290,6 @@ useEffect(() => {
   const [wasOvertimeCourt, setWasOvertimeCourt] = useState(false);
   const [lastActivity, setLastActivity] = useState(Date.now());
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
   const timeoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
   const frequentPartnersCacheRef = useRef({});
@@ -2667,6 +3297,7 @@ useEffect(() => {
   const [courtToMove, setCourtToMove] = useState(null);
   const [moveToCourtNum, setMoveToCourtNum] = useState(null);
   const [hasAssignedCourt, setHasAssignedCourt] = useState(false);
+  const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
 
   const [waitlistMoveFrom, setWaitlistMoveFrom] = useState(null);
   const [showGuestForm, setShowGuestForm] = useState(false);
@@ -2702,6 +3333,45 @@ useEffect(() => {
   const shouldDebounceAddPlayer = !/^\d+$/.test(addPlayerSearch);
   const effectiveAddPlayerSearch = shouldDebounceAddPlayer ? debouncedAddPlayerSearch : addPlayerSearch;
 
+// Helper function to get occupied courts from domain status
+function computeOccupiedCourts() {
+  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+  const S = window.Tennis?.Storage;
+  const now = new Date();
+  const data = S.readDataSafe();
+  const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+  const wetSet = new Set(
+    (blocks||[])
+      .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
+      .map(b => b.courtNumber)
+  );
+  const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
+  // Only true in-use courts
+  const occupied = statuses.filter(s => s.status === 'occupied').map(s => s.courtNumber);
+  return { occupied, data };
+}
+
+// Helper function to get courts that can be cleared (occupied or overtime)
+function getCourtsOccupiedForClearing() {
+  const Av  = Tennis.Domain.availability || Tennis.Domain.Availability;
+  const now = new Date();
+  const S   = Tennis.Storage;
+  const data   = S.readDataSafe();
+  const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+  const wetSet = new Set(
+    blocks
+      .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
+      .map(b => b.courtNumber)
+  );
+
+  const statuses = Av.getCourtStatuses({ data, now, blocks, wetSet });
+  const clearableCourts = statuses
+    .filter(s => (s.isOccupied || s.isOvertime) && !s.isBlocked)   // include occupied + overtime, but NOT blocked courts
+    .map(s => s.courtNumber)
+    .sort((a, b) => a - b);
+  return clearableCourts;
+}
+
 // Helper function to mark user as typing
 const markUserTyping = () => {
   setIsUserTyping(true);
@@ -2710,6 +3380,109 @@ const markUserTyping = () => {
     setIsUserTyping(false);
   }, 3000);
 };
+
+// --- duplicate guard helpers (early-check on selection) ---
+function __normalizeName(n) {
+  return (n?.name ?? n?.fullName ?? n?.playerName ?? n ?? '')
+    .toString()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function __findEngagementFor(name, data) {
+  const norm = __normalizeName(name);
+  // 1) playing: scan courts
+  const courts = Array.isArray(data?.courts) ? data.courts : [];
+  for (let i = 0; i < courts.length; i++) {
+    const cur = courts[i]?.current;
+    if (!cur) continue;
+    const players = Array.isArray(cur.players) ? cur.players : [];
+    for (const p of players) {
+      if (__normalizeName(p) === norm || __normalizeName(p?.name) === norm) {
+        return { type: 'playing', court: i + 1 };
+      }
+    }
+  }
+  // 2) waitlist: scan waitingGroups
+  const wg = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+  for (let i = 0; i < wg.length; i++) {
+    const players = Array.isArray(wg[i]?.players) ? wg[i].players : [];
+    for (const p of players) {
+      if (__normalizeName(p) === norm || __normalizeName(p?.name) === norm) {
+        return { type: 'waitlist', position: i + 1 };
+      }
+    }
+  }
+  return null;
+}
+
+function guardAddPlayerEarly(player) {
+  const S = window.Tennis?.Storage;
+  const R = window.Tennis?.Domain?.roster;
+  const data = S?.readDataSafe?.() || {};
+  
+  // Enrich the player with memberId if possible
+  const enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], window.__memberRoster)[0] : player;
+  
+  // Use hybrid detection
+  const engagement = R?.findEngagementFor ? R.findEngagementFor(enriched, data) : __findEngagementFor(player, data);
+  
+  if (DEBUG) {
+    console.log('[guardAddPlayerEarly] Checking player:', player);
+    console.log('[guardAddPlayerEarly] Enriched player:', enriched);
+    console.log('[guardAddPlayerEarly] Engagement found:', engagement);
+  }
+  
+  if (!engagement) return true;
+
+  const display = (enriched?.name || player?.name || player || '').toString().trim();
+  if (engagement.type === 'playing') {
+    Tennis.UI.toast(`${display} is already playing on Court ${engagement.court}`);
+    return false;
+  } else if (engagement.type === 'waitlist') {
+    // Check if waitlist member can register based on available courts
+    const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+    if (A?.getFreeCourtsInfo) {
+      try {
+        const now = new Date();
+        const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+        const wetSet = new Set();
+        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+        const freeCount = info.free?.length || 0;
+        const overtimeCount = info.overtime?.length || 0;
+        const totalAvailable = freeCount > 0 ? freeCount : overtimeCount;
+        const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
+        
+        if (engagement.position <= maxAllowedPosition) {
+          return true; // Allow this waitlist member to register
+        }
+      } catch (error) {
+        console.warn('Error checking waitlist eligibility:', error);
+      }
+    }
+    
+    Tennis.UI.toast(`${display} is already on the waitlist (position ${engagement.position})`);
+    return false;
+  }
+  return false;
+}
+
+function guardAgainstGroupDuplicate(player, playersArray) {
+  const R = window.Tennis?.Domain?.roster;
+  const nm = R?.normalizeName ? R.normalizeName(player?.name || player || '') : __normalizeName(player);
+  const pid = player?.memberId || null;
+  
+  return !playersArray.some(p => {
+    // Check by ID first if both have IDs
+    if (pid && p?.memberId) {
+      return p.memberId === pid;
+    }
+    // Fallback to name comparison
+    const pName = R?.normalizeName ? R.normalizeName(p?.name || p || '') : __normalizeName(p);
+    return pName === nm;
+  });
+}
 
   // Wrapper function to check location before proceeding
 const checkLocationAndProceed = async (onSuccess) => {
@@ -2800,6 +3573,35 @@ const checkLocationAndProceed = async (onSuccess) => {
     };
   }
 
+  // Create roster from memberDatabase and ensure member IDs
+  const memberRoster = React.useMemo(() => {
+    const roster = [];
+    Object.entries(memberDatabase).forEach(([memberNum, data]) => {
+      data.familyMembers.forEach(member => {
+        roster.push({
+          id: member.id,
+          name: member.name,
+          memberNumber: memberNum,
+          phone: member.phone,
+          ranking: member.ranking,
+          winRate: member.winRate
+        });
+      });
+    });
+    
+    // Ensure all roster entries have memberIds
+    const R = window.Tennis?.Domain?.roster;
+    if (R?.ensureMemberIds) {
+      const result = R.ensureMemberIds(roster);
+      console.log('Member IDs ensured:', result.assigned, 'new IDs assigned');
+      return result.roster;
+    }
+    return roster;
+  }, [memberDatabase]);
+  
+  // Make roster available for other functions
+  window.__memberRoster = memberRoster;
+
   // Update current time every second for responsive overtime detection
   useEffect(() => {
     const timer = setInterval(() => {
@@ -2853,14 +3655,14 @@ const checkLocationAndProceed = async (onSuccess) => {
   // Mobile: Watch for success state changes and send signal
   useEffect(() => {
     if (showSuccess && window.__mobileFlow && window.top !== window.self) {
-      console.log('Registration: Success state changed to true, sending mobile signal');
+      dbg('Registration: Success state changed to true, sending mobile signal');
       const courtNumber = window.__preselectedCourt || justAssignedCourt || null;
-      console.log('Registration: Court number for success:', courtNumber);
+      dbg('Registration: Court number for success:', courtNumber);
       try {
         window.parent.postMessage({ type: 'registration:success', courtNumber: courtNumber }, '*');
-        console.log('Registration: Direct success message sent');
+        dbg('Registration: Direct success message sent');
       } catch(e) {
-        console.log('Registration: Error in direct success message:', e);
+        if (DEBUG) console.log('Registration: Error in direct success message:', e);
       }
       
       // Start countdown for mobile
@@ -2883,7 +3685,6 @@ const checkLocationAndProceed = async (onSuccess) => {
   useEffect(() => {
     const updateAvailableCourts = () => {
       try {
-        // Check if we should bypass waitlist priority for overtime courts
         const data = getCourtData();
         const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
         const hasUnoccupiedCourts = data.courts.some((court, index) => {
@@ -2920,44 +3721,49 @@ const checkLocationAndProceed = async (onSuccess) => {
     }
   }, [currentGroup]);
 
-  // ADD THE AUTO-REFRESH USEEFFECT HERE:
-useEffect(() => {
-  // Auto-refresh calculated availability every 3 minutes
-  const refreshInterval = setInterval(async () => {
-  if (isUserTyping) {
-    console.log('⏸️ Skipping auto-refresh - user is typing');
-    return;
-  }
-
-  console.log('🔄 Auto-refreshing calculated availability data');
-    try {
-      const data = await TennisDataService.loadData();
-      
-      // Regenerate calculations
-      data.calculatedAvailability = {
-        waitTimes: await TennisDataService.calculateWaitTimes(data),
-        nextAvailable: await TennisDataService.calculateNextAvailable(data),
-        timestamp: new Date().toISOString()
+  // Wire up event listeners for availability updates (once only)
+  useEffect(() => {
+    if (!window.__wiredAvailabilityEvents) {
+      const refreshAvailability = () => {
+        // This is called by both events, reusing the existing updateAvailableCourts logic
+        if (currentGroup.length > 0) {
+          const updateAvailableCourts = () => {
+            try {
+              const data = getCourtData();
+              const tempAvailableCourts = getAvailableCourts(false);
+              const hasUnoccupiedCourts = data.courts.some((court, index) => {
+                const courtNumber = index + 1;
+                const blockStatus = getCourtBlockStatus(courtNumber);
+                if (blockStatus && blockStatus.isCurrent) return false;
+                
+                return !court || court.wasCleared || (court.current === null && court.history) ||
+                  (court.history && court.history.length > 0 && (!court.players || court.players.length === 0));
+              });
+              
+              if (hasUnoccupiedCourts) {
+                setAvailableCourts(tempAvailableCourts);
+              } else {
+                setAvailableCourts([]);
+              }
+            } catch (error) {
+              console.error('Error updating available courts:', error);
+              setAvailableCourts([]);
+            }
+          };
+          updateAvailableCourts();
+        }
       };
       
-      // Save updated data
-      await dataStore.set(TENNIS_CONFIG.STORAGE.KEY, data, { immediate: true });
-      window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-      
-      console.log('✅ Calculated availability refreshed at', new Date().toLocaleTimeString());
-      
-    } catch (error) {
-      console.error('❌ Error during auto-refresh:', error);
+      window.addEventListener('tennisDataUpdate', refreshAvailability);
+      window.addEventListener('DATA_UPDATED', refreshAvailability);
+      window.addEventListener('BLOCKS_UPDATED', refreshAvailability, { passive: true });
+      window.__wiredAvailabilityEvents = true;
     }
-  }, 3 * 60 * 1000); // Every 3 minutes
-  
-  return () => {
-  clearInterval(refreshInterval);
-  clearTimeout(typingTimeoutRef.current);
-  console.log('🛑 Auto-refresh timer stopped');
-};
-
-}, []); // Empty dependency array - runs once on mount
+    
+    return () => {
+      clearTimeout(typingTimeoutRef.current);
+    };
+  }, [currentGroup, getCourtData, getAvailableCourts, getCourtBlockStatus]);
 
   // Activity tracking for timeout
   const updateActivity = () => {
@@ -3129,99 +3935,43 @@ if (startTime && !isCurrentlyBlocked) {
     return false;
   };
 
-// Get available courts (modified to check waitlist priority)
+// Get available courts (strict selectable API - single source of truth)
 const getAvailableCourts = (checkWaitlistPriority = true, includeOvertimeIfChanging = false, excludeCourtNumber = null) => {
-  const data = getCourtData();
-  const unoccupiedCourts = [];
-  const overtimeCourts = [];
-  const currentTime = new Date(); // Fix: Define currentTime locally
+  const Av = Tennis.Domain.availability || Tennis.Domain.Availability;
+  if (!Av?.getSelectableCourtsStrict || !Av?.getFreeCourtsInfo) {
+    console.warn('Availability functions not available');
+    return [];
+  }
 
-  console.log("getAvailableCourts called with:", { checkWaitlistPriority, includeOvertimeIfChanging, excludeCourtNumber });
-  console.log("Court data:", data.courts.length, "courts");
-  
-  data.courts.forEach((court, index) => {
-    const courtNumber = index + 1;
+  try {
+    const data = Tennis.Storage.readDataSafe();
+    const now = new Date();
+    const blocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
+    const wetSet = new Set();
 
-    console.log(`Checking court ${courtNumber}:`, court);
+    let selectable = [];
 
-    // Check if this court is currently blocked using new system
-    const blockStatus = getCourtBlockStatus(courtNumber);
-    if (blockStatus && blockStatus.isCurrent) {
-      console.log(`Court ${courtNumber} is blocked:`, blockStatus);
-      return; // Skip this court - it's blocked
-    }
-    
-    // Skip the court we're potentially moving from
-    if (excludeCourtNumber && courtNumber === excludeCourtNumber) {
-      // Treat this court as empty for availability calculation
-      unoccupiedCourts.push(courtNumber);
-      return;
-    }
-    
-    // Now check normal availability
-    if (!court) {
-      // No court data at all - it's available
-      unoccupiedCourts.push(courtNumber);
-    } else if (court.wasCleared) {
-      // Court was cleared - it's available
-      unoccupiedCourts.push(courtNumber);
-    } else if ((!court.players || court.players.length === 0) && (!court.current || !court.current.players || court.current.players.length === 0)) {
-      // Both old and new structure have no players - it's available
-      unoccupiedCourts.push(courtNumber);
+    if (checkWaitlistPriority) {
+      // Waitlist priority mode: ONLY show truly free courts (no overtime fallback)
+      const info = Av.getFreeCourtsInfo({ data, now, blocks, wetSet });
+      selectable = info.free || [];
+      dbg("Waitlist priority mode - free courts only:", selectable);
     } else {
-      // Check if court is occupied (either structure)
-      const isOccupied = (court.players && court.players.length > 0) || (court.current && court.current.players && court.current.players.length > 0);
-      
-      if (isOccupied) {
-        // Check for overtime
-        const endTime = court.endTime || court.current?.endTime;
-        if (endTime && new Date(endTime) <= currentTime) {
-          overtimeCourts.push(courtNumber);
-        }
-      } else {
-        // This shouldn't happen, but just in case
-        unoccupiedCourts.push(courtNumber);
-      }
+      // Non-waitlist mode: use standard selectable logic (free first, then overtime fallback)
+      selectable = Av.getSelectableCourtsStrict({ data, now, blocks, wetSet });
+      dbg("Standard selectable courts:", selectable);
     }
-  });
-  
-  console.log("Available courts result:", { unoccupiedCourts, overtimeCourts });
-  
-  // When changing courts and originally selected an overtime court, show all available options
-  if (includeOvertimeIfChanging) {
-    return [...unoccupiedCourts, ...overtimeCourts];
-  }
-  
-  // Priority: show unoccupied courts first, overtime courts only if no unoccupied
-  // This ensures overtime courts are available when all courts are occupied (by games or blocks)
-  const available = unoccupiedCourts.length > 0 ? unoccupiedCourts : overtimeCourts;
-  
-  // If checking waitlist priority and there are available courts
-  if (checkWaitlistPriority && available.length > 0 && data.waitingGroups.length > 0) {
-    // Check if current group has waitlist priority
-    if (!hasWaitlistPriority) {
-      // Check if any player in current group is in the top N waiting groups
-      // where N is the number of available courts
-      const topNGroups = data.waitingGroups.slice(0, Math.min(available.length, 2)); // Cap at 2 groups max
-      const isInTopN = currentGroup.some(player => 
-        topNGroups.some(waitingGroup => 
-          waitingGroup.players.some(waitingPlayer => waitingPlayer.id === player.id)
-        )
-      );
+    
+    // Apply excludeCourtNumber filter if specified
+    const filtered = excludeCourtNumber 
+      ? selectable.filter(n => n !== excludeCourtNumber)
+      : selectable;
       
-      if (!isInTopN) {
-        // Not in top N groups, but if these are overtime courts and there are no unoccupied courts,
-        // we should still allow access (better UX when all courts are full)
-        if (overtimeCourts.length > 0 && unoccupiedCourts.length === 0) {
-          return available; // Return overtime courts even without priority
-        }
-        return []; // Otherwise, no courts available
-      }
-    }
+    return filtered;
+  } catch (error) {
+    console.error('Error in getAvailableCourts:', error);
+    return [];
   }
-  
-  console.log("Final available courts:", available);
-  return available;
 };
   
 
@@ -3270,8 +4020,8 @@ const now = new Date();
   
   // Determine opening time
   const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-  const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
-  const openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
+  const openingTime = isWeekend ? 4 : 4; // 4:00 AM both weekend and weekday (for testing)
+  const openingTimeString = isWeekend ? "4:00 AM" : "4:00 AM";
   
   // If too early, show alert and return
   if (currentTime < openingTime) {
@@ -3291,10 +4041,27 @@ const now = new Date();
     return;
   }
   
-  // Calculate duration based on group size
-const duration = currentGroup.length >= CONSTANTS.MAX_PLAYERS
-  ? CONSTANTS.DURATIONS.DOUBLES_MIN
-  : CONSTANTS.DURATIONS.SINGLES_MIN;
+  // Reuse the same extraction as the form submit path:
+const players = currentGroup.map(p => ({
+  id: String(p.id || '').trim(),
+  name: String(p.name || '').trim()
+})).filter(p => p && p.id && p.name);
+
+const guests = currentGroup.filter(p => p.isGuest).length;
+
+// Domain validation (reuse the same error UI as submit)
+const { ok, errors } = validateGroupCompat(players, guests);
+if (!ok) {
+  showAlertMessage(errors.join('\n'));
+  return;
+}
+
+// Duration determined from group size
+const Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
+const duration = Tm.durationForGroupSize(players.length); // typically 60/90
+
+// Canonical group object
+const group = { players, guests };
 
 // Check for upcoming block on selected court using new system
 const blockStatus = await getCourtBlockStatus(courtNumber);
@@ -3318,17 +4085,42 @@ if (blockStatus && !blockStatus.isCurrent && blockStatus.startTime) {
 
 console.log('🔵 UI preparing to assignCourt with:', {
   courtNumber,
-  currentGroup,
+  group,
   duration
 });
 
-// Proceed to assign
-const result = await TennisDataService.assignCourt(courtNumber, currentGroup, duration);
+console.log('🔵 TennisDataService available?', !!TennisDataService);
+console.log('🔵 window.TennisDataService available?', !!window.TennisDataService);
+console.log('🔵 Tennis.DataService available?', !!window.Tennis?.DataService);
+console.log('🔵 TennisDataService.assignCourt available?', !!TennisDataService?.assignCourt);
+console.log('🔵 window.TennisDataService.assignCourt available?', !!window.TennisDataService?.assignCourt);
+console.log('🔵 Tennis.DataService.assignCourt available?', !!window.Tennis?.DataService?.assignCourt);
+
+// Get the correct service reference - prioritize shared service
+const dataService = window.Tennis?.DataService || window.TennisDataService || TennisDataService;
+console.log('🔵 Using service:', !!dataService, 'has assignCourt:', !!dataService?.assignCourt);
+
+// Check if we're using the local or shared service
+if (dataService === TennisDataService) {
+  console.log('🔵 WARNING: Using LOCAL TennisDataService, not the shared one!');
+} else if (dataService === window.Tennis?.DataService) {
+  console.log('🔵 Using shared Tennis.DataService from dataservice.js');
+} else if (dataService === window.TennisDataService) {
+  console.log('🔵 Using window.TennisDataService');
+}
+
+if (!dataService?.assignCourt) {
+  showAlertMessage('Tennis registration service unavailable. Please refresh the page.');
+  return;
+}
+
+// Call service with canonical object (NOT an array and NOT a single player object)
+const result = await dataService.assignCourt(courtNumber, group, duration);
 console.log('✅ Court assigned result:', result);
 
 
   if (!result.success) {
-    showAlertMessage(result.error || 'Failed to assign court');
+    Tennis.UI.toast(result.error || 'Failed to assign court');
     return;
   }
   
@@ -3357,9 +4149,9 @@ console.log('✅ Court assigned result:', result);
     window.__mobileSuccessHandler(justAssignedCourt || courtNumber);
   }
   // Mobile: trigger success signal
-  console.log('Registration: Checking mobile success signal...', !!window.UI?.__mobileSendSuccess__);
+  dbg('Registration: Checking mobile success signal...', !!window.UI?.__mobileSendSuccess__);
   if (window.UI?.__mobileSendSuccess__) {
-    console.log('Registration: Calling mobile success signal');
+    dbg('Registration: Calling mobile success signal');
     window.UI.__mobileSendSuccess__();
   }
 
@@ -3409,46 +4201,90 @@ console.log('✅ Court assigned result:', result);
     setCurrentScreen("court");
   };
 
-  // Clear a court
-  const clearCourt = async (courtNumber) => {
-    console.log(`clearCourt called for court ${courtNumber}`);
-    
-    const data = getCourtData();
-    const courtBeforeClearing = data.courts[courtNumber - 1];
-    console.log("Court data before clearing:", courtBeforeClearing);
-    
-    
-    // Use TennisDataService which now handles recentlyCleared
-    const result = await TennisDataService.clearCourt(courtNumber);
-    
-    if (!result.success) {
-      showAlertMessage(result.error || 'Failed to clear court');
-    } else {
-      console.log(`Court ${courtNumber} cleared successfully`);
+  // Clear a court via service
+  const TD = window.TennisDataService || window.Tennis?.DataService;
+  async function clearViaService(courtNumber, clearReason) {
+    if (!TD) return { success:false, error:'Service unavailable' };
+    if (typeof TD.clearCourt === 'function') {
+      return await TD.clearCourt(courtNumber, { clearReason });
     }
+    if (typeof TD.unassignCourt === 'function') {
+      return await TD.unassignCourt(courtNumber, { clearReason });
+    }
+    return { success:false, error:'No clearCourt/unassignCourt service available' };
+  }
+
+  const clearCourt = async (courtNumber, clearReason = 'Cleared') => {
+    console.log(`clearCourt called for court ${courtNumber} with reason: ${clearReason}`);
+    
+    const res = await clearViaService(courtNumber, clearReason);
+    if (!res?.success) {
+      Tennis.UI.toast(res?.error || 'Failed to clear court');
+      return;
+    }
+    console.log(`Court ${courtNumber} cleared successfully`);
+    // success UI stays the same (thanks/close), no manual writes needed—
+    // DataStore.set inside the service will emit both events.
   };
 
   // Send group to waitlist
   const sendGroupToWaitlist = async (group) => {
-    // Validate the entire group
-    if (!DataValidation.isValidGroup(group)) {
-      showAlertMessage('Invalid group data. Please ensure all players are properly registered.');
-      return;
-    }
-    
-    // Check if any player is already playing
-    for (const player of group) {
-      const playerStatus = isPlayerAlreadyPlaying(player.id);
-      if (playerStatus.isPlaying && playerStatus.location !== 'current') {
-        showAlertMessage(`${player.name} is already registered elsewhere.`);
+    try {
+      console.log('[waitlist] sendGroupToWaitlist called with group:', group);
+      
+      if (!group || !group.length) {
+        console.warn('[waitlist] no players selected'); 
         return;
       }
-    }
-    
-    const result = await TennisDataService.addToWaitlist(group);
-    
-    if (!result.success) {
-      showAlertMessage(result.error || 'Failed to add to waitlist');
+
+      // Build the players array
+      const players = group.map(p => ({
+        id: String(p.id || '').trim(),
+        name: String(p.name || '').trim()
+      })).filter(p => p && p.id && p.name);
+
+      const guests = group.filter(p => p.isGuest).length;
+
+      console.log('[waitlist] calling addToWaitlist with', players.map(p=>p.name), 'guests:', guests);
+      
+      // Validation check
+      const validation = W.validateGroup(players);
+      const ok = validation?.valid !== false;
+      const errors = validation?.error ? [validation.error] : (validation?.errors || []);
+      if (!ok) {
+        showAlertMessage((errors || ['Unknown validation error']).join('\n'));
+        return;
+      }
+      
+      // Check if any player is already playing
+      for (const player of group) {
+        const playerStatus = isPlayerAlreadyPlaying(player.id);
+        if (playerStatus.isPlaying && playerStatus.location !== 'current') {
+          showAlertMessage(`${player.name} is already registered elsewhere.`);
+          return;
+        }
+      }
+
+      // Call service
+      const res = await window.TennisDataService.addToWaitlist(players, { guests });
+      console.log('[waitlist] service result:', res);
+
+      // Read back fresh storage to confirm persistence
+      const after = window.WaitlistUtils.readDataSafe();  // fresh, normalized snapshot
+      const len = (after?.waitingGroups?.length || 0);
+      console.log('[waitlist] persisted length now:', len);
+
+      if (res && res.success) {
+        // (Optional) simple toast, rely on events for UI refresh
+        Tennis?.UI?.toast?.(`Added to waiting list (position ${res.position})`, { type: 'success' });
+        console.debug('[waitlist] joined ok');
+      } else {
+        console.error('[waitlist] service failed:', res?.error);
+        Tennis?.UI?.toast?.('Could not join waitlist', { type: 'error' });
+      }
+    } catch (e) {
+      console.error('[waitlist] failed:', e);
+      Tennis?.UI?.toast?.('Could not join waitlist', { type: 'error' });
     }
   };
 
@@ -3572,6 +4408,21 @@ console.log('✅ Court assigned result:', result);
       return;
     }
     
+    // Enrich player with memberId if possible (non-fatal)
+    const R = window.Tennis?.Domain?.roster;
+    const enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], memberRoster)[0] : player;
+    
+    // Ensure player has at least a name
+    if (!enriched?.name && !player?.name) {
+      showAlertMessage("Player must have a name");
+      return;
+    }
+    
+    // Check if player is already playing or on waitlist
+    if (!guardAddPlayerEarly(enriched)) {
+      return; // Toast message already shown by guardAddPlayerEarly
+    }
+    
     // Validate group size
     if (currentGroup.length >= CONSTANTS.MAX_PLAYERS) {
       setAlertMessage(`Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`);
@@ -3581,37 +4432,21 @@ console.log('✅ Court assigned result:', result);
     }
     
     // Check for duplicate in current group
-    if (currentGroup.some(p => p.id === player.id)) {
-      setAlertMessage(`${player.name} is already in your group`);
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
-      return;
-    }
-    
-    const playerStatus = isPlayerAlreadyPlaying(player.id);
-    if (playerStatus.isPlaying) {
-      let message = "";
-      if (playerStatus.location === 'court') {
-        message = `${playerStatus.playerName} is already playing on Court ${playerStatus.courtNumber}`;
-      } else if (playerStatus.location === 'waiting') {
-        message = `${playerStatus.playerName} is already in a group waiting for a court`;
-      } else if (playerStatus.location === 'current') {
-        message = `${playerStatus.playerName} is already in your group`;
-      }
-      setAlertMessage(message);
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
+    if (!guardAgainstGroupDuplicate(enriched, currentGroup)) {
+      Tennis.UI.toast(`${enriched.name} is already in this group`);
       return;
     }
 
     setCurrentGroup([...currentGroup, {
-      name: player.name,
-      memberNumber: findMemberNumber(player.id),
-      id: player.id,
-      phone: player.phone || '',
-      ranking: player.ranking || null,
-      winRate: player.winRate || 0.5
+      name: enriched.name,
+      memberNumber: findMemberNumber(enriched.id),
+      id: enriched.id,
+      memberId: enriched.memberId,
+      phone: enriched.phone || '',
+      ranking: enriched.ranking || null,
+      winRate: enriched.winRate || 0.5
     }]);
+    window.computeEtaPreview();
   };
 
   // Find member number
@@ -3622,6 +4457,15 @@ console.log('✅ Court assigned result:', result);
       }
     }
     return "";
+  };
+  
+  // Helper to compare groups (ID-first, name fallback)
+  const sameGroup = (a = [], b = []) => {
+    const norm = (p) => (p?.memberId || '').toLowerCase() || (p?.id || '').toLowerCase() || (p?.name || '').trim().toLowerCase();
+    if (a.length !== b.length) return false;
+    const A = a.map(norm).sort(); 
+    const B = b.map(norm).sort();
+    return A.every((x,i)=>x===B[i]);
   };
 
   // Get autocomplete suggestions
@@ -3684,15 +4528,29 @@ console.log('✅ Court assigned result:', result);
       return;
     }
     
+    // Enrich member with memberId
+    const R = window.Tennis?.Domain?.roster;
+    const enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
+    
+    // Early duplicate guard - if player is already playing/waiting, stop here
+    if (!guardAddPlayerEarly(enrichedMember)) {
+      setSearchInput("");
+      setShowSuggestions(false);
+      return; // Don't navigate to group screen
+    }
+    
     const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
     
-    // Set member number first
+    // Don't set member number if player is engaged elsewhere
+    // This prevents navigation to group screen
+    
+    // Set member number now that we know player can proceed
     setMemberNumber(suggestion.memberNumber);
     
     // Check if this player is in the first waiting group and courts are available
     if (playerStatus.isPlaying && playerStatus.location === 'waiting' && playerStatus.position === 1) {
       const data = getCourtData();
-      const availableCourts = getAvailableCourts(false); // Don't check waitlist priority yet
+      const availableCourts = getAvailableCourts(false);
       
       if (availableCourts.length > 0) {
         // Player is in first waiting group and courts are available
@@ -3704,17 +4562,19 @@ console.log('✅ Court assigned result:', result);
           memberNumber: findMemberNumber(player.id)
         })));
         
-        // Set waitlist priority flag
-        setHasWaitlistPriority(true);
         
         // Remove the group from waitlist
         data.waitingGroups.shift();
         await dataStore.set('tennisClubData', data, { immediate: true });
-        window.dispatchEvent(new Event('tennisDataUpdate'));
+        if (USE_SHARED_CORE && Events) {
+          Events.emitDom('tennisDataUpdate', {});
+        } else {
+          window.dispatchEvent(new Event('tennisDataUpdate'));
+        }
         
         setSearchInput("");
         setShowSuggestions(false);
-        setCurrentScreen("group");
+        setCurrentScreen("court"); // Go directly to court selection since group is already complete
         return;
       }
     }
@@ -3734,49 +4594,39 @@ console.log('✅ Court assigned result:', result);
           memberNumber: findMemberNumber(player.id)
         })));
         
-        // Set waitlist priority flag
-        setHasWaitlistPriority(true);
         
         // Remove the group from waitlist
         data.waitingGroups.splice(1, 1); // Remove second group
         await dataStore.set('tennisClubData', data, { immediate: true });
-        window.dispatchEvent(new Event('tennisDataUpdate'));
+        if (USE_SHARED_CORE && Events) {
+          Events.emitDom('tennisDataUpdate', {});
+        } else {
+          window.dispatchEvent(new Event('tennisDataUpdate'));
+        }
         
         setSearchInput("");
         setShowSuggestions(false);
-        setCurrentScreen("group");
+        setCurrentScreen("court"); // Go directly to court selection since group is already complete
         return;
       }
     }
 
-    // Normal flow for new players
+    // Normal flow for new players - we already checked conflicts above
     setSearchInput("");
     setShowSuggestions(false);
     
-    if (!playerStatus.isPlaying) {
-      setCurrentGroup([...currentGroup, {
-        name: suggestion.member.name,
-        memberNumber: suggestion.memberNumber,
-        id: suggestion.member.id,
-        phone: suggestion.member.phone,
-        ranking: suggestion.member.ranking,
-        winRate: suggestion.member.winRate
-      }]);
-      
-      setCurrentScreen("group");
-    } else {
-      let message = "";
-      if (playerStatus.location === 'court') {
-        message = `${playerStatus.playerName} is already playing on Court ${playerStatus.courtNumber}`;
-      } else if (playerStatus.location === 'waiting') {
-        message = `${playerStatus.playerName} is already in a group waiting for a court`;
-      } else if (playerStatus.location === 'current') {
-        message = `${playerStatus.playerName} is already in your group`;
-      }
-      setAlertMessage(message);
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
-    }
+    // Add player to current group
+    setCurrentGroup([...currentGroup, {
+      name: enrichedMember.name,
+      memberNumber: suggestion.memberNumber,
+      id: enrichedMember.id,
+      memberId: enrichedMember.memberId,
+      phone: enrichedMember.phone,
+      ranking: enrichedMember.ranking,
+      winRate: enrichedMember.winRate
+    }]);
+    
+    setCurrentScreen("group");
   };
 
   // Success screen
@@ -3791,30 +4641,58 @@ console.log('✅ Court assigned result:', result);
       // Position in queue - they were just added so they're last
       position = data.waitingGroups.length;
       
-      // Get all court end times for occupied courts
-      const courtEndTimes = data.courts
-      .filter(court => court && court.current && new Date(court.current.endTime) >= currentTime) // Changed from > to >=
-      .map(court => new Date(court.current.endTime).getTime())
-      .sort((a, b) => a - b);
-      
-      if (courtEndTimes.length === 0 && position === 1) return 0;
-      
-      if (position <= courtEndTimes.length) {
-        // They'll get one of the currently occupied courts
-        estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
-      } else {
-        // Use business logic for complex calculation
-        estimatedWait = TennisBusinessLogic.calculateEstimatedWaitTime(
-          position, 
-          data.courts, 
-          currentTime, 
-          CONSTANTS.AVG_GAME_TIME_MIN
+      // Use the same domain-based calculation as CourtBoard
+      try {
+        const Avail = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+        const Wait = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
+        const Storage = window.Tennis.Storage;
+        
+        const now = new Date();
+        const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+        const wetSet = new Set(
+          blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                .map(b => b.courtNumber)
         );
+        
+        // Get availability info same as CourtBoard
+        const nextTimes = Avail.getNextFreeTimes({ data, now, blocks });
+        const info = Avail.getFreeCourtsInfo({ data, now, blocks, wetSet });
+        
+        // Calculate wait time using proper domain logic
+        const etas = Wait.estimateWaitForPositions({
+          positions: [position],
+          currentFreeCount: info.free.length,
+          nextFreeTimes: nextTimes,
+          avgGameMinutes: CONSTANTS.AVG_GAME_TIME_MIN
+        });
+        
+        estimatedWait = etas[0] || 0;
+      } catch (e) {
+        console.error('Error calculating wait time:', e);
+        // Fallback to simple calculation if domain logic fails
+        const courtEndTimes = data.courts
+          .filter(court => court && court.current && new Date(court.current.endTime) >= currentTime)
+          .map(court => new Date(court.current.endTime).getTime())
+          .sort((a, b) => a - b);
+        
+        if (courtEndTimes.length === 0 && position === 1) {
+          estimatedWait = 0;
+        } else if (position <= courtEndTimes.length) {
+          estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
+        } else {
+          estimatedWait = TennisBusinessLogic.calculateEstimatedWaitTime(
+            position, 
+            data.courts, 
+            currentTime, 
+            CONSTANTS.AVG_GAME_TIME_MIN
+          );
+        }
       }
     }
 
     return (
       <>
+        <ToastHost />
         <AlertDisplay show={showAlert} message={alertMessage} />
         <SuccessScreen
           isCourtAssignment={isCourtAssignment}
@@ -3842,6 +4720,7 @@ console.log('✅ Court assigned result:', result);
 if (currentScreen === "welcome") {
   return (
     <>
+      <ToastHost />
       <AlertDisplay show={showAlert} message={alertMessage} />
       {checkingLocation && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -3916,6 +4795,7 @@ if (currentScreen === "welcome") {
     
     return (
       <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800 p-4 sm:p-8 flex items-center justify-center">
+        <ToastHost />
         <AlertDisplay show={showAlert} message={alertMessage} />
         <div className="bg-gray-900 rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-6xl h-full max-h-[95vh] overflow-y-auto scrollbar-hide">
           <div className="mb-4 sm:mb-6">
@@ -4192,7 +5072,7 @@ if (currentScreen === "welcome") {
                        setBlockingInProgress(true);
                        
                        const data = getCourtData();
-                       const now = new Date();
+                       const currentTime = new Date(); // Use different name to avoid scope conflict
                        
                        // Calculate start time
                        let startTime;
@@ -4219,7 +5099,7 @@ if (currentScreen === "welcome") {
                        
                        console.log('Block times calculated:', {
                          blockStartTimeInput: blockStartTime,
-                         now: now.toLocaleString(),
+                         currentTime: currentTime.toLocaleString(),
                          startTime: startTime.toLocaleString(),
                          endTime: endTime.toLocaleString()
                        });
@@ -4629,6 +5509,7 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
    
    return (
      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+       <ToastHost />
        <AlertDisplay show={showAlert} message={alertMessage} />
        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-12 w-full max-w-2xl">
          <div className="mb-6 sm:mb-8 relative">
@@ -4703,14 +5584,13 @@ onFocus={() => {
                const firstPlayerMemberNum = findMemberNumber(firstWaitingGroup.players[0].id);
                setMemberNumber(firstPlayerMemberNum);
                
-               // Set waitlist priority flag
+               // Set waitlist priority flag (but don't remove from waitlist yet)
+               console.log('[COURT AVAILABLE BUTTON] Setting waitlist priority - NOT removing from waitlist yet');
+               console.log('[COURT AVAILABLE BUTTON] Waitlist length remains:', data.waitingGroups?.length || 0);
                setHasWaitlistPriority(true);
                
-               // Remove the group from waitlist
-               data.waitingGroups.shift();
-               saveCourtData(data);
-               
-               // Navigate to court selection
+               // Navigate to court selection (removal from waitlist happens after court assignment)
+               console.log('[COURT AVAILABLE BUTTON] Navigating to court selection');
                setCurrentScreen("court");
              }}
              className="w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
@@ -4718,6 +5598,37 @@ onFocus={() => {
              <div className="flex items-center justify-center">
                <span className="mr-2">Court Available:</span>
                <span>{waitingGroupDisplay}</span>
+             </div>
+           </button>
+         )}
+         
+         {canSecondGroupPlay && (
+           <button
+             onClick={() => {
+               // Load the second waiting group
+               setCurrentGroup(secondWaitingGroup.players.map(player => ({
+                 ...player,
+                 memberNumber: findMemberNumber(player.id)
+               })));
+               
+               // Set member number to first player in second group
+               const firstPlayerMemberNum = findMemberNumber(secondWaitingGroup.players[0].id);
+               setMemberNumber(firstPlayerMemberNum);
+               
+               // Set waitlist priority flag (but don't remove from waitlist yet)
+               console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Setting waitlist priority - NOT removing from waitlist yet');
+               console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Waitlist length remains:', data.waitingGroups?.length || 0);
+               setHasWaitlistPriority(true);
+               
+               // Navigate to court selection (removal from waitlist happens after court assignment)
+               console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Navigating to court selection');
+               setCurrentScreen("court");
+             }}
+             className="w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
+           >
+             <div className="flex items-center justify-center">
+               <span className="mr-2">Court Available:</span>
+               <span>{secondWaitingGroupDisplay}</span>
              </div>
            </button>
          )}
@@ -4746,6 +5657,7 @@ onFocus={() => {
 
    return (
      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+       <ToastHost />
        <AlertDisplay show={showAlert} message={alertMessage} />
        {showTimeoutWarning && (
          <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white p-3 sm:p-4 rounded-xl shadow-lg z-50 text-base sm:text-lg animate-pulse">
@@ -4773,13 +5685,6 @@ onFocus={() => {
                  ? "Add more players to your group or select a court"
                  : `${currentGroup.length} players in your group`}
              </p>
-             {hasWaitlistPriority && (
-               <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-yellow-100 rounded-lg animate-pulse">
-                 <p className="text-base sm:text-lg font-bold text-yellow-800">
-                   Courts are now available for your group!
-                 </p>
-               </div>
-             )}
            </div>
          )}
          <div className="flex-1 overflow-y-auto pb-24 sm:pb-32" style={{maxHeight: 'calc(100vh - 280px)'}}>
@@ -4805,9 +5710,10 @@ onFocus={() => {
                    )}
                  </div>
                  <button
-                   onClick={() =>
-                     setCurrentGroup(currentGroup.filter((_, i) => i !== idx))
-                   }
+                   onClick={() => {
+                     setCurrentGroup(currentGroup.filter((_, i) => i !== idx));
+                     window.computeEtaPreview();
+                   }}
                    className="text-red-500 hover:bg-red-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-sm sm:text-base"
                  >
                    Remove
@@ -4987,13 +5893,33 @@ onFocus={() => {
                              return;
                            }
                            
-                           // Check for duplicate in current group
-                           if (currentGroup.some(p => p.id === suggestion.member.id)) {
-                             showAlertMessage(`${suggestion.member.name} is already in your group`);
+                           // Enrich member with memberId
+                           const R = window.Tennis?.Domain?.roster;
+                           const enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
+                           
+                           // Early duplicate guard
+                           if (!guardAddPlayerEarly(enrichedMember)) {
                              setAddPlayerSearch("");
                              setShowAddPlayer(false);
                              setShowAddPlayerSuggestions(false);
                              return;
+                           }
+                           
+                           // Check for duplicate in current group
+                           if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
+                             Tennis.UI.toast(`${enrichedMember.name} is already in this group`);
+                             setAddPlayerSearch("");
+                             setShowAddPlayer(false);
+                             setShowAddPlayerSuggestions(false);
+                             return;
+                           }
+                           
+                           // Check if player is already playing or on waitlist
+                           if (!guardAddPlayerEarly(enrichedMember)) {
+                             setAddPlayerSearch("");
+                             setShowAddPlayer(false);
+                             setShowAddPlayerSuggestions(false);
+                             return; // Toast message already shown by guardAddPlayerEarly
                            }
                            
                            const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
@@ -5032,12 +5958,13 @@ onFocus={() => {
                              }
                              
                              setCurrentGroup([...currentGroup, {
-                               name: suggestion.member.name,
+                               name: enrichedMember.name,
                                memberNumber: suggestion.memberNumber,
-                               id: suggestion.member.id,
-                               phone: suggestion.member.phone,
-                               ranking: suggestion.member.ranking,
-                               winRate: suggestion.member.winRate
+                               id: enrichedMember.id,
+                               memberId: enrichedMember.memberId,
+                               phone: enrichedMember.phone,
+                               ranking: enrichedMember.ranking,
+                               winRate: enrichedMember.winRate
                              }]);
                              setAddPlayerSearch("");
                              setShowAddPlayer(false);
@@ -5156,6 +6083,25 @@ onFocus={() => {
                        return;
                      }
 
+                     // Early duplicate guard for guest
+                     if (!guardAddPlayerEarly(guestName.trim())) {
+                       setShowGuestForm(false);
+                       setShowAddPlayer(false);
+                       setGuestName("");
+                       setGuestSponsor("");
+                       return;
+                     }
+                     
+                     // Check for duplicate in current group
+                     if (!guardAgainstGroupDuplicate(guestName.trim(), currentGroup)) {
+                       Tennis.UI.toast(`${guestName.trim()} is already in this group`);
+                       setShowGuestForm(false);
+                       setShowAddPlayer(false);
+                       setGuestName("");
+                       setGuestSponsor("");
+                       return;
+                     }
+
                      // Add guest to group
                      const guestId = -guestCounter;
                      setGuestCounter(guestCounter + 1);
@@ -5205,7 +6151,11 @@ onFocus={() => {
                        console.log('💾 Guest charge saved to localStorage');
                        
                        // Dispatch event for real-time updates
-                       window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+                       if (USE_SHARED_CORE && Events) {
+                         Events.emitDom(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, {});
+                       } else {
+                         window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+                       }
                        console.log('📡 Dispatched update event');
                        
                      } catch (error) {
@@ -5280,10 +6230,50 @@ onFocus={() => {
   {currentGroup.length >= 1 && (
     <>
       {(() => {
+        // Check if there's a waitlist and if this group is not the first waiting group
+        const data = Tennis.Storage.readDataSafe();
+        const waitingGroups = data?.waitingGroups || [];
+        const hasWaitlist = waitingGroups.length > 0;
+        
+        // Check if current group is in the allowed positions (1st or 2nd when 2+ courts)
+        let groupWaitlistPosition = 0;
+        for (let i = 0; i < waitingGroups.length; i++) {
+          if (sameGroup(waitingGroups[i]?.players || [], currentGroup)) {
+            groupWaitlistPosition = i + 1; // 1-based position
+            break;
+          }
+        }
+        
+        // Calculate available courts for this group
+        // For new groups not on waitlist: use standard selectable (includes overtime)
+        // For waitlist groups: use appropriate logic based on position
+        const availableCourts = groupWaitlistPosition === 0 
+          ? getAvailableCourts(false)  // New group - includes overtime courts
+          : getAvailableCourts(true);  // Waitlist group - free courts only
+        
+        // Check if there are actually any courts available to select
+        const hasAvailableCourts = availableCourts && availableCourts.length > 0;
+        const availableCourtCount = availableCourts?.length || 0;
+        
+        // Show "Select a Court" if:
+        // 1. No waitlist and courts available OR
+        // 2. Group is position 1 and courts available OR
+        // 3. Group is position 2 and 2+ courts available
+        const showSelectCourt = hasAvailableCourts && (
+          !hasWaitlist || 
+          groupWaitlistPosition === 1 ||
+          (groupWaitlistPosition === 2 && availableCourtCount >= 2)
+        );
+        
         console.log("🎯 GROUP SCREEN BUTTON DEBUG:");
-        console.log("  - availableCourts state:", availableCourts);
-        console.log("  - availableCourts.length:", availableCourts.length);
-        return availableCourts.length > 0;
+        console.log("  - waitingGroups.length:", waitingGroups.length);
+        console.log("  - hasWaitlist:", hasWaitlist);
+        console.log("  - groupWaitlistPosition:", groupWaitlistPosition);
+        console.log("  - hasAvailableCourts:", hasAvailableCourts);
+        console.log("  - availableCourts.length:", availableCourts?.length || 0);
+        console.log("  - showSelectCourt:", showSelectCourt);
+        
+        return showSelectCourt;
       })() ? (
         <button
           onClick={() => {
@@ -5300,8 +6290,9 @@ onFocus={() => {
         </button>
       ) : (
         <button
-          onClick={() => {
-            sendGroupToWaitlist(currentGroup);
+          onClick={async () => {
+            console.log('[REG DEBUG] Join Waitlist clicked');
+            await sendGroupToWaitlist(currentGroup);
             setShowSuccess(true);
             // Mobile: notify parent on success
             if (window.__mobileSuccessHandler) {
@@ -5335,6 +6326,14 @@ onFocus={() => {
   </button>
 </div>
 
+{!showSuccess && (
+  <div id="etaPreview"
+       aria-live="polite"
+       style={{marginTop: '8px', fontSize: '0.95rem', opacity: '0.9'}}>
+  </div>
+)}
+
+
        </div>
      </div>
    );
@@ -5345,62 +6344,103 @@ onFocus={() => {
    // When a group has already been assigned a court, treat it like changing courts
    const isSelectingDifferentCourt = isChangingCourt || hasAssignedCourt;
    
+   // Use fresh data from storage, not cached React state, to avoid data inconsistency
+   const Av = Tennis.Domain.availability;
+   const S = Tennis.Storage;
+   const freshData = S.readDataSafe(); // Read fresh data from storage
+   const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+   const wetSet = new Set();
+   const now = new Date();
+
+   const selectable = [...Av.getSelectableCourtsStrict({ data: freshData, now, blocks, wetSet })];
+   
+   // Use cached React state for other operations that don't need real-time accuracy
    const data = getCourtData();
    
-   // Check if we should bypass waitlist priority (when only overtime courts are available)
-   const shouldBypassWaitlistPriority = (() => {
-     if (isSelectingDifferentCourt) return true; // Always bypass when changing courts
-     
-     // For new registrations, check if only overtime courts are available
-     const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
-     const hasUnoccupiedCourts = data.courts.some(court => !court);
-     
-     // If there are available courts but no unoccupied courts, these must be overtime courts
-     return tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
-   })();
+   const hasWaiters = (data.waitingGroups?.length || 0) > 0;
    
-   const availableCourts = getAvailableCourts(
-     !shouldBypassWaitlistPriority, 
-     isSelectingDifferentCourt && wasOvertimeCourt,
-     isSelectingDifferentCourt ? justAssignedCourt : null  // Pass the court to exclude
-   );
+   // If user has waitlist priority, they should ONLY see FREE courts (not overtime)
+   // Otherwise, only show courts when no one is waiting
+   let availableCourts = [];
+   if (hasWaitlistPriority) {
+     // Waitlist priority users follow the same rules as everyone else:
+     // - Free courts first
+     // - Overtime courts when no free courts available
+     const info = Av?.getFreeCourtsInfo ? Av.getFreeCourtsInfo({ data: freshData, now: new Date(), blocks, wetSet: new Set() }) : { free: [], overtime: [] };
+     if (info.free && info.free.length > 0) {
+       // If free courts exist, show only free courts
+       availableCourts = info.free;
+       console.log('[COURT SCREEN] Waitlist priority - FREE courts available:', availableCourts);
+     } else if (info.overtime && info.overtime.length > 0) {
+       // If no free courts, show overtime courts
+       availableCourts = info.overtime;
+       console.log('[COURT SCREEN] Waitlist priority - Only OVERTIME courts available:', availableCourts);
+     }
+   } else if (!hasWaiters && selectable.length > 0) {
+     // Normal users get all selectable courts when no waitlist
+     availableCourts = selectable;
+   }
+   
+   const showCourtTiles = availableCourts.length > 0;
+   
+   console.log('[COURT SCREEN] Debug:', {
+     hasWaiters,
+     hasWaitlistPriority,
+     selectableLength: selectable.length,
+     showCourtTiles,
+     availableCourtsLength: availableCourts.length
+   });
    
    
    const hasWaitingGroups = data.waitingGroups.length > 0;
    const isFirstInWaitlist = currentGroup.some(player => isPlayerNextInWaitlist(player.id));
    
    // Check if showing overtime courts
+   // Only count truly free courts as unoccupied (not blocked or wet courts)
    const hasUnoccupiedCourts = data.courts.some((court, index) => {
      const courtNumber = index + 1;
      
-     // Check if court is blocked
+     // Check if court is blocked or wet
      const blockStatus = getCourtBlockStatus(courtNumber);
      if (blockStatus && blockStatus.isCurrent) {
        return false; // Blocked courts are not unoccupied
      }
      
-     // Check various conditions for an unoccupied court
-     return !court || // No court data
-            court.wasCleared || // Court was cleared
-            (court.current === null && court.history) || // New structure with cleared court
+     // Check if court is wet (you might have wet court logic here)
+     // Add wet court check if needed
+     
+     // Only count as unoccupied if it's truly free AND selectable
+     const isTrulyFree = !court || 
+            court.wasCleared || 
+            (court.current === null && court.history) || 
             ((!court.players || court.players.length === 0) && 
-             (!court.current || !court.current.players || court.current.players.length === 0)); // No players in either structure
+             (!court.current || !court.current.players || court.current.players.length === 0));
+             
+     // Additional check: must also be in the selectable courts list
+     const isSelectable = availableCourts.includes(courtNumber);
+     
+     return isTrulyFree && isSelectable;
    });
    const showingOvertimeCourts = availableCourts.length > 0 && !hasUnoccupiedCourts && !isSelectingDifferentCourt;
    
    
    return (
      <>
+       <ToastHost />
        <AlertDisplay show={showAlert} message={alertMessage} />
        <CourtSelectionScreen
          availableCourts={availableCourts}
          showingOvertimeCourts={showingOvertimeCourts}
          hasWaitingGroups={hasWaitingGroups}
          waitingGroupsCount={data.waitingGroups.length}
+         currentGroup={currentGroup}
          onCourtSelect={async (courtNum) => {
+           const DEBUG_SELECT = false;
+           if (DEBUG_SELECT) console.log('[SelectCourt] clicked', { courtNumber: courtNum });
+           
            // If changing courts, clear the original court first but skip adding to recentlyCleared
            if (isChangingCourt && justAssignedCourt) {
-             await TennisDataService.clearCourt(justAssignedCourt, true);
+             await TennisDataService.clearCourt(justAssignedCourt, { clearReason: 'Bumped' });
            }
            await assignCourtToGroup(courtNum);
            setIsChangingCourt(false);
@@ -5422,6 +6462,25 @@ onFocus={() => {
              setTimeout(() => {
                resetForm();
              }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+           }
+         }}
+         onAssignNext={async () => {
+           console.log('[ASSIGN NEXT] Button clicked');
+           const TD = window.TennisDataService || Tennis?.DataService;
+           console.log('[ASSIGN NEXT] TD service:', !!TD);
+           console.log('[ASSIGN NEXT] assignNextFromWaitlist method:', !!TD?.assignNextFromWaitlist);
+           if (!TD?.assignNextFromWaitlist) {
+             console.error('[ASSIGN NEXT] assignNextFromWaitlist method not found');
+             return;
+           }
+           const res = await TD.assignNextFromWaitlist();
+           console.log('[ASSIGN NEXT] Result:', res);
+           if (!res?.success) {
+             Tennis?.UI?.toast?.(res?.error || 'Failed assigning next', { type: 'error' });
+             showAlertMessage(res?.error || 'Failed assigning next');
+           } else {
+             Tennis?.UI?.toast?.(`Assigned next to Court ${res.court}`, { type: 'success' });
+             showAlertMessage(`Assigned next to Court ${res.court}`);
            }
          }}
          onGoBack={() => {
@@ -5448,45 +6507,24 @@ onFocus={() => {
 
  // Clear court screen
  if (currentScreen === "clearCourt") {
-   const data = getCourtData();
-   const occupiedCourts = [];
-   const now = new Date();
-   
-   data.courts.forEach((court, index) => {
-     if (court && !court.wasCleared) {
-
-
-       // Check if it's a blocked court using unified system
-const blockStatus = getCourtBlockStatus(index + 1);
-if (blockStatus && blockStatus.isCurrent) {
-  occupiedCourts.push({
-    courtNumber: index + 1,
-    players: [],
-    isBlocked: true
-  });
-}
-       
-       
-       else if ((court.players && court.players.length > 0) || (court.current && court.current.players && court.current.players.length > 0)) {
- // Regular occupied court - get players from either structure
- const players = court.current?.players || court.players || [];
- occupiedCourts.push({
-   courtNumber: index + 1,
-   players: players,
-   isBlocked: false
- });
-}
-     }
-   });
+   const clearableCourts = getCourtsOccupiedForClearing();
+   const hasAny = clearableCourts.length > 0;
+   const data = window.Tennis.Storage.readDataSafe();
+   const occupiedCourts = clearableCourts.map(courtNumber => ({
+     courtNumber,
+     players: data?.courts?.[courtNumber - 1]?.current?.players || data?.courts?.[courtNumber - 1]?.players || [],
+     isBlocked: false
+   }));
 
    if (clearCourtStep === 1) {
      return (
        <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+         <ToastHost />
          <AlertDisplay show={showAlert} message={alertMessage} />
          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-4xl">
            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">Choose a court to clear</h2>
            
-           {occupiedCourts.length > 0 ? (
+           {hasAny ? (
              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
                {occupiedCourts.map(({ courtNumber }) => (
                  <button
@@ -5502,7 +6540,7 @@ if (blockStatus && blockStatus.isCurrent) {
                ))}
              </div>
            ) : (
-             <p className="text-center text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">No courts are currently occupied</p>
+             <p className="text-center text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">No courts are currently in use.</p>
            )}
            
            <div className="flex justify-center">
@@ -5525,6 +6563,7 @@ if (blockStatus && blockStatus.isCurrent) {
      
      return (
        <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+         <ToastHost />
          <AlertDisplay show={showAlert} message={alertMessage} />
          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-3xl">
            <div className="mb-6 sm:mb-8 text-center">
@@ -5536,7 +6575,7 @@ if (blockStatus && blockStatus.isCurrent) {
              <button
 
              onClick={async () => {
-                 await clearCourt(selectedCourtToClear);
+                 await clearCourt(selectedCourtToClear, 'Cleared');
                  console.log(`Clearing court ${selectedCourtToClear} - players leaving`);
                  setClearCourtStep(3); // Success screen for players leaving
             }} 
@@ -5548,7 +6587,7 @@ if (blockStatus && blockStatus.isCurrent) {
              
              <button
                onClick={async () => {
-                 await clearCourt(selectedCourtToClear);
+                 await clearCourt(selectedCourtToClear, 'Observed-Cleared');
                  console.log(`Clearing court ${selectedCourtToClear} - observed empty`);
                  setClearCourtStep(4); // Success screen for observed empty
                }}
@@ -5588,6 +6627,7 @@ if (blockStatus && blockStatus.isCurrent) {
      
      return (
        <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+         <ToastHost />
          <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
              <Check size={48} className="text-white sm:w-16 sm:h-16" />
@@ -5606,6 +6646,7 @@ if (blockStatus && blockStatus.isCurrent) {
      
      return (
        <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+         <ToastHost />
          <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
            <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
              <Check size={48} className="text-white sm:w-16 sm:h-16" />
@@ -5625,5 +6666,147 @@ if (blockStatus && blockStatus.isCurrent) {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<TennisRegistration />);
  </script>
+
+  <!-- Debug Panel - Only visible when ?debug=1 -->
+  <script>
+  (function() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('debug') !== '1') return;
+
+    const debugPanel = document.createElement('div');
+    debugPanel.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 350px;
+      max-height: 500px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-y: auto;
+      z-index: 99999;
+      pointer-events: auto;
+      border: 1px solid #0f0;
+    `;
+    debugPanel.innerHTML = `
+      <div style="color: #ff0; margin-bottom: 5px;">DEBUG MODE - Events Log</div>
+      <div style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+        <button id="runSelfTests" style="background: #333; color: #0f0; border: 1px solid #0f0; padding: 4px 8px; border-radius: 3px; font-family: inherit; font-size: 10px; cursor: pointer;">Run self-tests</button>
+        <span style="color: #666; font-size: 10px; margin-left: 8px;">Press 't' to run</span>
+        <div id="selfTestResults" style="margin-top: 5px; font-size: 10px;"></div>
+      </div>
+      <div id="debugContent"></div>
+    `;
+    document.body.appendChild(debugPanel);
+
+    const updateDebugPanel = () => {
+      if (!window.Tennis || !window.Tennis.Events || !window.Tennis.Events.debug) return;
+      
+      const events = window.Tennis.Events.debug.getLog();
+      const content = document.getElementById('debugContent');
+      if (!content) return;
+
+      content.innerHTML = events.map((event, i) => {
+        const time = new Date(event.timestamp).toLocaleTimeString();
+        return `<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
+          <div style="color: #ff0;">[${time}] ${event.type}</div>
+          <div style="color: #0ff;">${event.eventName}</div>
+          ${event.data ? `<div style="color: #fff; font-size: 10px;">${JSON.stringify(event.data, null, 2)}</div>` : ''}
+        </div>`;
+      }).join('');
+    };
+
+    // Safe wrapper for self-tests
+    function runSelfTestsSafe() {
+      const fn = window.Tennis?.selfTest?.runAll;
+      if (typeof fn !== 'function') {
+        return {
+          passed: 0, failed: 1,
+          results: [{ name: 'SelfTest not available', ok: false, notes: 'Tennis.selfTest.runAll missing' }]
+        };
+      }
+      try { return fn(); }
+      catch (e) {
+        return {
+          passed: 0, failed: 1,
+          results: [{ name: 'Run failed', ok: false, notes: String(e?.message || e) }]
+        };
+      }
+    }
+
+    function renderSelfTestResults(result) {
+      const resultsDiv = document.getElementById('selfTestResults');
+      if (!resultsDiv) return;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const passed = result.passed || 0;
+      const failed = result.failed || 0;
+      
+      // Summary with color coding
+      const summaryColor = failed > 0 ? '#f00' : '#0f0';
+      let html = `<div style="color: ${summaryColor}; font-weight: bold;">${passed} passed / ${failed} failed</div>`;
+      html += `<div style="color: #666; font-size: 9px;">Last run: ${timestamp}</div>`;
+      
+      // Compact table
+      if (result.results && result.results.length > 0) {
+        html += '<div style="margin-top: 5px; max-height: 150px; overflow-y: auto;">';
+        html += '<table style="width: 100%; font-size: 9px; border-collapse: collapse;">';
+        html += '<tr style="color: #ff0;"><th style="text-align: left; padding: 2px;">Test</th><th style="text-align: center; padding: 2px;">OK</th><th style="text-align: left; padding: 2px;">Notes</th></tr>';
+        
+        result.results.forEach(test => {
+          const okColor = test.ok ? '#0f0' : '#f00';
+          const okText = test.ok ? '✓' : '✗';
+          html += `<tr style="border-top: 1px solid #333;">`;
+          html += `<td style="padding: 2px; color: #fff;">${test.name || test.Test || ''}</td>`;
+          html += `<td style="padding: 2px; text-align: center; color: ${okColor};">${okText}</td>`;
+          html += `<td style="padding: 2px; color: #aaa;">${(test.notes || test.Notes || '').slice(0, 30)}${(test.notes || test.Notes || '').length > 30 ? '...' : ''}</td>`;
+          html += `</tr>`;
+        });
+        html += '</table></div>';
+      }
+      
+      resultsDiv.innerHTML = html;
+    }
+
+    let running = false;
+    async function handleRunSelfTests() {
+      if (running) return;
+      running = true;
+      try {
+        const resultsDiv = document.getElementById('selfTestResults');
+        if (resultsDiv) {
+          resultsDiv.innerHTML = '<div style="color: #ff0;">Running tests...</div>';
+        }
+        const result = await runSelfTestsSafe();
+        renderSelfTestResults(result);
+      } finally {
+        running = false;
+      }
+    }
+    
+    // Button click handler
+    const runButton = document.getElementById('runSelfTests');
+    if (runButton) {
+      runButton.addEventListener('click', handleRunSelfTests);
+    }
+    
+    // Keyboard shortcut (t key)
+    window.addEventListener('keydown', (e) => {
+      if ((e.key || '').toLowerCase() === 't') {
+        e.preventDefault();
+        handleRunSelfTests();
+      }
+    }, { passive: false });
+
+    // Update every 500ms
+    setInterval(updateDebugPanel, 500);
+    
+    // Initial update
+    setTimeout(updateDebugPanel, 100);
+  })();
+  </script>
 </body>
 </html>
