@@ -4020,12 +4020,12 @@ const now = new Date();
   
   // Determine opening time
   const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-  const openingTime = isWeekend ? 4 : 4; // 4:00 AM both weekend and weekday (for testing)
-  const openingTimeString = isWeekend ? "4:00 AM" : "4:00 AM";
+  const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
+  const openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
   
   // If too early, show alert and return
   if (currentTime < openingTime) {
-    showAlertMessage(`The club is not open yet. Court registration will be available at ${openingTimeString}.`);
+    Tennis.UI.toast(`The club is not open yet. Court registration will be available at ${openingTimeString}.`);
     return;
   }
   
