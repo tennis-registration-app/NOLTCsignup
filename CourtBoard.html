@@ -1617,7 +1617,7 @@
           );
           const wetCourtNumbers = new Set(activeWetBlocks.map(block => block.courtNumber));
           
-          // If all 12 courts are wet, return special marker
+          // If all courts are wet, return special marker
           const totalCourts = courts.length;
           if (wetCourtNumbers.size === totalCourts && totalCourts > 0) {
             return [{ allCourtsWet: true }];
@@ -1768,9 +1768,9 @@
           if (!courts || !Array.isArray(courts)) return false;
           
           // Get current blocks from localStorage
-          let courtBlocks = [];
+          let emptyCheckBlocks = [];
           try {
-            courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+            emptyCheckBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
           } catch (error) {
             console.error('Error loading court blocks:', error);
           }
@@ -1779,7 +1779,7 @@
             const courtNumber = index + 1;
             
             // Check if court is blocked (only currently active blocks)
-            const isBlocked = courtBlocks.some(block => 
+            const isBlocked = emptyCheckBlocks.some(block => 
               block.courtNumber === courtNumber && 
               new Date(block.startTime) <= currentTime &&
               new Date(block.endTime) > currentTime
@@ -2459,15 +2459,15 @@
                         if (!courts || !Array.isArray(courts)) return [];
                         
                         const courtAvailability = [];
-                        let courtBlocks = [];
+                        let mobileBlocks = [];
                         try {
-                          courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+                          mobileBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
                         } catch (error) {
                           console.error('Error loading court blocks:', error);
                         }
                         
                         // Check if ALL courts are currently wet (mobile version)
-                        const activeWetBlocks = courtBlocks.filter(block => 
+                        const activeWetBlocks = mobileBlocks.filter(block => 
                           block.isWetCourt === true &&
                           new Date(block.startTime) <= currentTime &&
                           new Date(block.endTime) > currentTime
@@ -2483,7 +2483,7 @@
                           const courtNumber = index + 1;
                           let endTime = null;
                           
-                          const activeBlock = courtBlocks.find(block => 
+                          const activeBlock = mobileBlocks.find(block => 
                             block.courtNumber === courtNumber && 
                             new Date(block.startTime) <= currentTime &&
                             new Date(block.endTime) > currentTime
