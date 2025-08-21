@@ -1597,6 +1597,27 @@
             return [];
           }
           
+          // Check if ALL courts are currently wet
+          let courtBlocks = [];
+          try {
+            courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+          } catch (error) {
+            console.error('Error loading court blocks:', error);
+          }
+          
+          const activeWetBlocks = courtBlocks.filter(block => 
+            block.isWetCourt === true &&
+            new Date(block.startTime) <= currentTime &&
+            new Date(block.endTime) > currentTime
+          );
+          const wetCourtNumbers = new Set(activeWetBlocks.map(block => block.courtNumber));
+          
+          // If all 12 courts are wet, return special marker
+          const totalCourts = courts.length;
+          if (wetCourtNumbers.size === totalCourts && totalCourts > 0) {
+            return [{ allCourtsWet: true }];
+          }
+          
           const courtAvailability = [];
           const overtimeCourts = [];
           
@@ -1852,37 +1873,43 @@
 
                   <div className="space-y-2 mt-4">
                     {timeline.length > 0 ? (
-                      timeline.slice(0, TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY).map((availability, idx) => (
-                        <div key={idx} className="bg-slate-700/50 p-2 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span className="courtboard-text-base font-medium text-green-400">
-                                  Court {availability.courtNumber}
-                                </span>
-                              </div>
-                              <div className="courtboard-text-base font-semibold text-white">
-                              
-                                {availability.isOvertime ? (
-                                  <span className="text-white font-bold">Now</span>
-                                ) : availability.endTime ? (
-                                  availability.endTime.toLocaleTimeString([], {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                  })
-                                ) : (
-                                  "Time TBD"
-                                )}
-                               
+                      timeline[0]?.allCourtsWet ? (
+                        <div className="text-center mt-8">
+                          <p className="text-yellow-400 courtboard-text-lg">Courts will become available as they dry</p>
+                        </div>
+                      ) : (
+                        timeline.slice(0, TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY).map((availability, idx) => (
+                          <div key={idx} className="bg-slate-700/50 p-2 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="courtboard-text-base font-medium text-green-400">
+                                    Court {availability.courtNumber}
+                                  </span>
+                                </div>
+                                <div className="courtboard-text-base font-semibold text-white">
+                                
+                                  {availability.isOvertime ? (
+                                    <span className="text-white font-bold">Now</span>
+                                  ) : availability.endTime ? (
+                                    availability.endTime.toLocaleTimeString([], {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })
+                                  ) : (
+                                    "Time TBD"
+                                  )}
+                                 
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center mt-8">
-                          <p className="text-gray-400 courtboard-text-lg">No availability data</p>
-                        </div>
-                      )}
-                    </div>
+                          ))
+                      )
+                    ) : (
+                      <div className="text-center mt-8">
+                        <p className="text-gray-400 courtboard-text-lg">No availability data</p>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
@@ -2446,6 +2473,20 @@
                           console.error('Error loading court blocks:', error);
                         }
                         
+                        // Check if ALL courts are currently wet
+                        const activeWetBlocks = courtBlocks.filter(block => 
+                          block.isWetCourt === true &&
+                          new Date(block.startTime) <= currentTime &&
+                          new Date(block.endTime) > currentTime
+                        );
+                        const wetCourtNumbers = new Set(activeWetBlocks.map(block => block.courtNumber));
+                        
+                        // If all courts are wet, return special marker
+                        const totalCourts = courts.length;
+                        if (wetCourtNumbers.size === totalCourts && totalCourts > 0) {
+                          return [{ allCourtsWet: true }];
+                        }
+                        
                         courts.forEach((court, index) => {
                           const courtNumber = index + 1;
                           let endTime = null;
@@ -2516,25 +2557,31 @@
                         <div className="mobile-next-available">
                           <h3 className="courtboard-text-base font-semibold text-sky-500 mb-2">Next Available</h3>
                           <div className="mobile-next-available-list">
-                            {timeline.slice(0, 3).map((availability, idx) => (
-                              <div key={idx} className="mobile-next-available-item">
-                                <span className="text-green-400 font-medium">
-                                  Court {availability.courtNumber}
-                                </span>
-                                <span className="text-white font-semibold">
-                                  {availability.isOvertime ? (
-                                    <span className="text-white font-bold">Now</span>
-                                  ) : availability.endTime ? (
-                                    availability.endTime.toLocaleTimeString([], {
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                    })
-                                  ) : (
-                                    "Time TBD"
-                                  )}
-                                </span>
+                            {timeline.length > 0 && timeline[0]?.allCourtsWet ? (
+                              <div className="mobile-next-available-empty">
+                                <p className="text-yellow-400 text-center">Courts will become available as they dry</p>
                               </div>
-                            ))}
+                            ) : (
+                              timeline.slice(0, 3).map((availability, idx) => (
+                                <div key={idx} className="mobile-next-available-item">
+                                  <span className="text-green-400 font-medium">
+                                    Court {availability.courtNumber}
+                                  </span>
+                                  <span className="text-white font-semibold">
+                                    {availability.isOvertime ? (
+                                      <span className="text-white font-bold">Now</span>
+                                    ) : availability.endTime ? (
+                                      availability.endTime.toLocaleTimeString([], {
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                      })
+                                    ) : (
+                                      "Time TBD"
+                                    )}
+                                  </span>
+                                </div>
+                              ))
+                            )}
                           </div>
                         </div>
                       );
