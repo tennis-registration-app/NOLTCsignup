@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis Court Display - DataStore Integrated</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Ensure full height layout */
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+    
+    .courts-grid {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 130px));
+      gap: 0.5rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .courts-grid-bottom {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 130px));
+      gap: 0.5rem;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .court-card {
+      width: 100%;
+      height: 180px;
+      max-width: 130px;
+      min-width: 80px;
+    }
+
+    /* Intermediate display scaling - for 1400-1800px */
+    @media (min-width: 1401px) and (max-width: 1800px) {
+      .courts-grid {
+        grid-template-columns: repeat(8, minmax(130px, 180px));
+        gap: 0.75rem;
+      }
+
+      .courts-grid-bottom {
+        grid-template-columns: repeat(4, minmax(130px, 180px));
+        gap: 0.75rem;
+      }
+
+      .court-card {
+        max-width: 180px !important;
+        height: clamp(200px, 14vw, 280px) !important;
+      }
+      
+      /* Moderate text scaling */
+      .courtboard-text-xl { font-size: 1.5rem; }
+      .courtboard-text-lg { font-size: 1.75rem; }
+      .courtboard-text-base { font-size: 1.5rem; }
+      .courtboard-text-sm { font-size: 1.25rem; }
+      .courtboard-text-xs { font-size: 1.125rem; }
+
+      .courtboard-waiting-number { font-size: 1.125rem; }
+      .space-y-2 > * + * { margin-top: 0.75rem !important; }
+
+      /* Court card text - smaller for this range */
+      .court-text-lg { font-size: clamp(0.875rem, 1.2vw, 1.25rem) !important; }
+      .court-text-base { font-size: clamp(0.75rem, 1vw, 1.125rem) !important; }
+      .court-text-sm { font-size: clamp(0.625rem, 0.9vw, 1rem) !important; }
+      .court-text-xs { font-size: clamp(0.5rem, 0.8vw, 0.875rem) !important; }
+    }
+
+    /* Large display scaling - for 1800px+ */
+    @media (min-width: 1801px) {
+      .courts-grid {
+        grid-template-columns: repeat(8, minmax(130px, 250px));
+        gap: 1rem;
+      }
+
+      .courts-grid-bottom {
+        grid-template-columns: repeat(4, minmax(130px, 250px));
+        gap: 1rem;
+      }
+
+      .court-card {
+        max-width: 250px !important;
+        height: clamp(220px, 16vw, 380px) !important;
+      }
+      
+      /* CourtBoard-specific text scaling for large displays */
+      .courtboard-text-xl { font-size: 2.25rem; }
+      .courtboard-text-lg { font-size: 2.8rem; }
+      .courtboard-text-base { font-size: 2.25rem; }
+      .courtboard-text-sm { font-size: 2rem; }
+      .courtboard-text-xs { font-size: 1.875rem; }
+
+      /* Reduce waiting list numbers specifically */
+      .courtboard-waiting-number { font-size: 1.4rem; }
+
+      /* Increase spacing in waiting and next available lists */
+      .space-y-2 > * + * { margin-top: 1.4rem !important; }
+
+      /* Scale up court card text */
+      .court-text-lg { font-size: clamp(0.75rem, 1.5vw, 2.25rem) !important; }
+      .court-text-base { font-size: clamp(0.625rem, 1.2vw, 2.4rem) !important; }
+      .court-text-sm { font-size: clamp(0.5rem, 1vw, 2rem) !important; }
+      .court-text-xs { font-size: clamp(0.4rem, 0.8vw, 2.55rem) !important; }
+      /* Scale up header time and date */
+    }
+    .time-header { font-size: clamp(1.5rem, 4vw, 5.625rem) !important; }
+    .date-header { font-size: clamp(0.75rem, 2vw, 2.8rem) !important; }
+
+    /* Medium display scaling */
+    @media (min-width: 1025px) and (max-width: 1400px) {
+      .courts-grid {
+        grid-template-columns: repeat(8, minmax(110px, 180px));
+        gap: 0.75rem;
+      }
+
+      .courts-grid-bottom {
+        grid-template-columns: repeat(4, minmax(110px, 180px));
+        gap: 0.75rem;
+      }
+
+      .court-card {
+        height: 220px;
+      }
+    }
+
+    /* Responsive text that scales with container */
+    .court-text-lg {
+      font-size: clamp(0.75rem, 1.5vw, 1.5rem);
+    }
+
+    .court-text-base {
+      font-size: clamp(0.625rem, 1.2vw, 1.2rem);
+    }
+
+    .court-text-sm {
+      font-size: clamp(0.5rem, 1vw, 1rem);
+    }
+
+    .court-text-xs {
+      font-size: clamp(0.4rem, 0.8vw, 0.85rem);
+    }
+    
+    /* Main layout grid */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      height: 100%;
+      width: 100%;
+    }
+    
+    .courts-section {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .next-available-section {
+      width: clamp(250px, 25vw, 400px);
+      flex-shrink: 0;
+    }
+    
+    /* Ensure waiting list and bottom courts share space properly */
+    .bottom-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      flex: 1;
+      min-height: 0;
+    }
+    
+    /* Header responsive sizing */
+    .time-header {
+      font-size: clamp(1.5rem, 4vw, 3.75rem);
+    }
+    
+    .date-header {
+      font-size: clamp(0.875rem, 1.5vw, 1.25rem);
+    }
+    
+    /* Prevent text overflow */
+    .player-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    /* Media query for tablets and small screens */
+    @media (max-width: 1200px) {
+      .court-card {
+        height: 150px;
+        max-width: 100px;
+      }
+      
+      .courts-grid {
+        grid-template-columns: repeat(8, minmax(0, 100px));
+      }
+      
+      .courts-grid-bottom {
+        grid-template-columns: repeat(4, minmax(0, 100px));
+      }
+    }
+    
+    @media (max-width: 1024px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+      
+      .next-available-section {
+        display: none;
+      }
+      
+      .courts-grid {
+        grid-template-columns: repeat(4, minmax(0, 100px));
+      }
+      
+      .bottom-section {
+        grid-template-columns: 1fr;
+      }
+      
+      .court-card {
+        height: 140px;
+        max-width: 90px;
+      }
+    }
+    
+    /* Add spacing for tennis ball icon on large displays */
+    @media (min-width: 1401px) {
+      .next-available-section .mr-3 {
+        margin-right: 1.5rem !important;
+      }
+    }
+
+    /* Mobile phone layout */
+    @media (max-width: 768px) {
+      .courts-section {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .courts-grid {
+        display: none;
+      }
+      
+      .courts-grid-bottom {
+        display: none;
+      }
+      
+      .right-column {
+        display: none !important;
+      }
+      
+      .mobile-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        height: 100%;
+        overflow-y: auto;
+      }
+      
+      .mobile-courts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        padding: 0.5rem;
+        justify-items: center;
+      }
+      
+      .court-card {
+        height: 140px;
+        width: 100%;
+        max-width: 140px;
+      }
+      
+      .bottom-section {
+        display: none;
+      }
+      
+      .mobile-waiting-section {
+        display: block;
+        margin-top: 1rem;
+        min-height: 200px;
+      }
+      
+      .mobile-next-available {
+        display: block;
+        margin-top: 1rem;
+        background: rgba(51, 65, 85, 0.5);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        backdrop-filter: blur(4px);
+      }
+      
+      .mobile-next-available.compact {
+        padding: 0.5rem 1rem;
+      }
+      
+      .mobile-next-available-empty {
+        text-align: center;
+      }
+      
+      .mobile-next-available-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .mobile-next-available-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(71, 85, 105, 0.5);
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+      }
+      
+      /* Ensure Reserved Courts looks good on mobile */
+      .mobile-next-available .reserved-courts-text,
+      .mobile-next-available .reserved-courts-empty {
+        font-size: 0.75rem; /* Smaller for mobile layout */
+      }
+      
+      .time-header {
+        font-size: 2rem;
+      }
+      
+      .date-header {
+        font-size: 1rem;
+      }
+      
+      /* Hide the green divider line on mobile */
+      .divider-line {
+        display: none;
+      }
+      
+      /* Make the main container scrollable on mobile */
+      .main-layout {
+        height: calc(100vh - 100px);
+        overflow-y: auto;
+      }
+    }
+
+    /* Scale up People emoji only for very large displays */
+    @media (min-width: 1800px) {
+      h3 .mr-5 {
+        font-size: 3rem !important;
+      }
+    }
+
+    /* Mobile tap highlight animation */
+    @keyframes courtPulse { 
+      0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)} 
+      100%{box-shadow:0 0 0 24px rgba(16,185,129,0)} 
+    }
+    .court-highlight { 
+      outline:3px solid #10b981; 
+      animation:courtPulse 900ms ease-out 3; 
+      border-radius:12px; 
+    }
+
+    /* Hide mobile-specific elements on larger screens */
+    @media (min-width: 769px) {
+      .mobile-courts-grid {
+        display: none;
+      }
+      .mobile-layout {
+        display: none;
+      }
+      .mobile-waiting-section {
+        display: none;
+      }
+      .mobile-next-available {
+        display: none;
+      }
+    }
+
+    /* Performance Metrics Overlay */
+    .performance-overlay {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      z-index: 1000;
+      min-width: 200px;
+      backdrop-filter: blur(4px);
+    }
+
+    .performance-overlay.hidden {
+      display: none;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 2px 0;
+    }
+
+    .metric-label {
+      opacity: 0.8;
+    }
+
+    .metric-value {
+      font-weight: bold;
+      color: #4ade80;
+    }
+
+    .improvement {
+      color: #22c55e;
+      font-weight: bold;
+    }
+    
+    .icon-grey {
+      filter: grayscale(100%) opacity(0.5);
+    }
+    
+    /* Reserved Courts responsive text sizing */
+    .reserved-courts-text {
+      font-size: 0.75rem; /* text-xs on mobile */
+    }
+    
+    .reserved-courts-empty {
+      font-size: 0.875rem; /* text-sm on mobile */
+    }
+    
+    @media (min-width: 768px) {
+      .reserved-courts-text {
+        font-size: 0.875rem; /* text-sm on tablet+ */
+      }
+      
+      .reserved-courts-empty {
+        font-size: 1rem; /* text-base on tablet+ */
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Performance Metrics Overlay -->
+  <div id="performance-overlay" class="performance-overlay">
+    <div style="margin-bottom: 8px; font-weight: bold; color: #60a5fa;">📊 DataStore Performance</div>
+    <div class="metric-row">
+      <span class="metric-label">Cache Hit Rate:</span>
+      <span id="cache-hit-rate" class="metric-value">0%</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-label">Avg Response:</span>
+      <span id="avg-response" class="metric-value">0ms</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-label">Batch Efficiency:</span>
+      <span id="batch-efficiency" class="metric-value">0%</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-label">Polling Level:</span>
+      <span id="polling-level" class="metric-value">NORMAL</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-label">Operations:</span>
+      <span id="operations-count" class="metric-value">0</span>
+    </div>
+    <div class="metric-row">
+      <span class="metric-label">Storage Ops Saved:</span>
+      <span id="storage-saved" class="improvement">85%+</span>
+    </div>
+  </div>
+
+  <div id="root"></div>
+  
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Shared utils (schema + helpers; no UI changes) -->
+  <script src="./shared-utils.js"></script>
+  <!-- Preflight self-heal (normalize storage shape before app code runs) -->
+  <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
+  
+  <!-- Mobile Bridge Script -->
+  <script>
+    (function boardMobileBridge(){
+      // Mobile-only: only active when embedded
+      const MOBILE = (window.top !== window.self);
+
+      // call this when an available court is tapped
+      window.mobileTapToRegister = function(courtNumber){
+        if (!MOBILE) return false; // do nothing on desktop/iPad standalone
+        try { window.parent.postMessage({ type:'register', courtNumber:Number(courtNumber) }, '*'); } catch {}
+        return true;
+      };
+
+      // Optional: highlight after success
+      window.addEventListener('message', e => {
+        const d = e?.data; if (d?.type !== 'highlight') return;
+        const n = Number(d.courtNumber);
+        const el = document.querySelector(`[data-court="${n}"]`);
+        if (!el) return;
+        el.classList.add('court-highlight');
+        setTimeout(()=> el.classList.remove('court-highlight'), 3000);
+      });
+
+      // Tap debouncing to prevent double opens
+      let _tapLock = 0;
+      document.addEventListener('click', (ev) => {
+        if (window.top === window.self) return; // only when embedded
+        const card = ev.target.closest('[data-court][data-available="true"]');
+        if (!card) return;
+        const now = Date.now();
+        if (now - _tapLock < 300) return; // debounce
+        _tapLock = now;
+
+        const n = Number(card.getAttribute('data-court'));
+        if (!Number.isFinite(n)) return;
+        try { window.parent.postMessage({ type:'register', courtNumber: n }, '*'); } catch {}
+        ev.preventDefault();
+      });
+    })();
+  </script>
+  
+  <!-- Load shared modules -->
+  <script src="./shared/config.js"></script>
+  <script src="./shared/storage.js"></script>
+  <script src="./shared/events.js"></script>
+  <script src="./shared/datastore.js"></script>
+  <script src="./shared/dataservice.js"></script>
+  <script src="./shared/blocks.js"></script>
+  <script src="./shared/maintenance.js"></script>
+
+  <script>
+(function () {
+  if (location.protocol !== 'file:') return;
+
+  console.warn('[dev] Loaded via file:// — this uses a different storage and won\'t receive app events.');
+
+  function addBanner() {
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;padding:8px 12px;' +
+                      'background:#f59e0b;color:#111;font:600 14px/1.2 system-ui;' +
+                      'z-index:99999;text-align:center';
+    b.textContent = '⚠️ Running from file:// — use http://127.0.0.1:5500 for correct behavior';
+    document.body.appendChild(b);
+  }
+
+  if (document.body) addBanner();
+  else window.addEventListener('DOMContentLoaded', addBanner, { once: true });
+})();
+</script>
+
+  <script src="./domain/time.js"></script>
+  <script src="./domain/availability.js"></script>
+  <script src="./domain/waitlist.js"></script>
+  <script src="./shared/domain/roster.js"></script>
+  <script src="shared/selftest.js"></script>
+  
+  <script>
+  (function(){
+    // Delegate to shared maintenance functions  
+    window.__autoClearOverdueSessions = async (when) => {
+      const cleared = await window.Tennis?.Maintenance?.autoClearOverdueSessions?.(when) || 0;
+      const bumped = await window.Tennis?.Maintenance?.autoClearBlockConflicts?.(when) || 0;
+      return cleared + bumped;
+    };
+
+    // Run once on boot, then every 5 minutes
+    document.addEventListener('DOMContentLoaded', () => {
+      window.__autoClearOverdueSessions();
+      if (!window.__autoClearInterval) {
+        window.__autoClearInterval = setInterval(() => window.__autoClearOverdueSessions(), 5 * 60 * 1000);
+      }
+    });
+  })();
+  </script>
+  
+  <script>
+  (() => {
+    if (window.__installedAutoClear) return;
+    window.__installedAutoClear = true;
+
+    const run = async (reason) => {
+      try {
+        const fn = window.__autoClearOverdueSessions;
+        if (typeof fn !== 'function') return;
+        const n = await fn();
+        if (n > 0 || (window.Tennis?.Config?.Debug?.VERBOSE_AUTO_CLEAR === true)) {
+          console.log(`[AutoClear] ${reason}: cleared ${n} overdue sessions`);
+        }
+      } catch (e) {
+        console.warn('[AutoClear] error', e);
+      }
+    };
+
+    // run once on load
+    run('onload');
+    // run every 5 minutes
+    window.__autoClearInterval = setInterval(() => run('interval'), 5 * 60 * 1000);
+  })();
+  </script>
+  
+  <script type="text/babel">
+    // Access shared utils (optional convenience)
+    const U = window.APP_UTILS || {};
+    
+    // === Shared Core Integration Flags ===
+    const USE_SHARED_CORE   = true;
+    const USE_SHARED_DOMAIN = true;
+    const Config    = window.Tennis.Config;
+    const Storage = window.Tennis.Storage;
+    const Events  = window.Tennis.Events;
+    const A = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+    const W = window.Tennis.Domain.waitlist     || window.Tennis.Domain.Waitlist;
+    const T = window.Tennis.Domain.time         || window.Tennis.Domain.Time;
+    const DataStore = window.Tennis.DataStore;
+    const USE_SHARED_DOMAIN_WAITLIST = true;
+    
+    // Coalesce multiple data events into a single refresh
+    let __boardRefreshPending = false;
+    function scheduleBoardRefresh() {
+      if (__boardRefreshPending) return;
+      __boardRefreshPending = true;
+      setTimeout(() => {
+        __boardRefreshPending = false;
+        const fn =
+          (typeof window.refreshBoard === 'function' && window.refreshBoard) ||
+          (typeof refreshBoard === 'function' && refreshBoard) ||
+          null;
+        if (fn) fn();
+      }, 0);
+    }
+    const Av        = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+    const Tm        = window.Tennis.Domain.time         || window.Tennis.Domain.Time;
+    const TimeFmt   = (window.Tennis.Domain.time || window.Tennis.Domain.Time);
+    
+    // --- One-time guard helper (no UI change)
+    const _one = (key) => (window[key] ? true : (window[key] = true, false));
+    
+    // ---- Storage & Event keys (constants; no behavior change) ----
+    const STORAGE = {
+      DATA: 'tennisClubData',
+      SETTINGS: 'tennisClubSettings',
+      BLOCKS: 'courtBlocks',
+      UPDATE_TICK: 'tennisDataUpdateTick'
+    };
+    const EVENTS = {
+      UPDATE: 'tennisDataUpdate'
+    };
+    
+    // ---- JSON storage helpers (pure wrappers; no behavior change) ----
+    const readJSON = (key) => {
+      try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
+      catch { return null; }
+    };
+    const writeJSON = (key, val) => {
+      try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+      catch { return false; }
+    };
+    
+    // ---- Safe defaults for app data (no behavior change) ----
+    const getEmptyData = () => ({
+      courts: Array(12).fill(null),
+      waitingGroups: [],
+      recentlyCleared: [],
+      calculatedAvailability: null
+    });
+    
+    const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
+    
+    // ---- Core constants (declared only; not replacing existing usages) ----
+    const APP = {
+      COURT_COUNT: 12,
+      PLAYERS: { MIN: 1, MAX: 4 },
+      DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 }
+    };
+    
+    // --- Waiting selectors (CourtBoard) ---
+    function selectWaitingGroups(data) {
+      return Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+    }
+    function selectWaitingCount(data) {
+      return selectWaitingGroups(data).length;
+    }
+
+    // ---- Read-only guard (prevent accidental writes in this view) ----
+    const readOnlyWrite = (...args) => {
+      console.warn('Read-only view: write ignored', args);
+      return false;
+    };
+    
+    // Status → Tailwind classes (no color classes outside this map)
+    function classForStatus(statusObj) {
+      const s = typeof statusObj === 'string' ? statusObj : statusObj?.status;
+      const selectable = statusObj?.selectable;
+      const selectableReason = statusObj?.selectableReason;
+      
+      switch (s) {
+        case 'occupied':           // blue (in use)
+          return 'bg-gradient-to-b from-blue-400 to-blue-500 border-blue-400';
+        case 'overtime':
+          // dark green if selectable (fallback), grey if not
+          return selectable 
+            ? 'bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-600'
+            : 'bg-gradient-to-b from-gray-300 to-gray-400 border-gray-300';
+        case 'overtime-available': // legacy support
+          return 'bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-600';
+        case 'overtimeAvailable':  // legacy support
+          return 'bg-gradient-to-b from-green-600 to-green-700 border-green-600';
+        case 'wet':                // grey (or your wet palette)
+        case 'blocked':
+          return 'bg-gradient-to-b from-gray-300 to-gray-400 border-gray-300';
+        case 'free':               // emerald (empty/available)
+        default:
+          return 'bg-gradient-to-b from-emerald-400 to-emerald-500 border-emerald-400';
+      }
+    }
+
+    // Unified status source for the board UI
+    function computeBoardStatuses() {
+      const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+      const S = window.Tennis?.Storage;
+      const now = new Date();
+      const data = S.readDataSafe();
+      const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+      const wetSet = new Set(
+        (blocks || [])
+          .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
+          .map(b => b.courtNumber)
+      );
+      const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
+      return { data, map: Object.fromEntries(statuses.map(s => [s.courtNumber, s])) };
+    }
+    
+    // ---- Dev flag & assert (no UI change) ----
+    const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
+    const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj||''); };
+    
+    // ---- Debounce helper (no UI change) ----
+    const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+    
+    // ---- Logger (no UI change) ----
+    const LOG_LEVEL = (DEV ? 'debug' : 'warn');
+    const _PREFIX = '[CourtBoard]';
+    const log = {
+      debug: (...a)=> { if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a); },
+      info:  (...a)=> { if (['debug','info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a); },
+      warn:  (...a)=> { if (['debug','info','warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
+    };
+    
+    // central registry for timers in this view
+    const _timers = [];
+    
+    // ---- Helpers for domain-based tile text ----
+    function namesFor(courtObj) {
+      if (Array.isArray(courtObj?.current?.players)) {
+        return courtObj.current.players.map(p => p?.name).filter(Boolean).join(', ');
+      }
+      // fallback: last history entry if current is missing (e.g., older overtime)
+      const last = Array.isArray(courtObj?.history) && courtObj.history.length
+        ? courtObj.history[courtObj.history.length - 1] : null;
+      if (Array.isArray(last?.players)) {
+        return last.players.map(p => p?.name).filter(Boolean).join(', ');
+      }
+      return '';
+    }
+
+    // Formats an ISO string or Date to "12:34 PM"
+    function formatUntilTime(dt) {
+      if (!dt) return null;
+      const d = (dt instanceof Date) ? dt : new Date(dt);
+      if (isNaN(+d)) return null;
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatTime(dt) {
+      if (!dt) return null;
+      const d = dt instanceof Date ? dt : new Date(dt);
+      if (isNaN(+d)) return null;
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function labelFor(status, courtObj) {
+      if (status === 'occupied') {
+        const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
+        const until = end ? `Until ${end.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })}` : '';
+        const nm = namesFor(courtObj);
+        // Your board already renders mins elsewhere; keep it as-is. Just ensure not "Available".
+        return nm ? `${nm}${until ? '\n' + until : ''}` : until || '';
+      }
+      if (status === 'overtime') {
+        const nm = namesFor(courtObj);
+        // Explicitly "Overtime" + names; never "Available".
+        return nm ? `Overtime\n${nm}` : 'Overtime';
+      }
+      // free, wet, blocked etc.
+      if (status === 'free') return 'Available';
+      if (status === 'wet') return '🌧️\nWET COURT';
+      if (status === 'blocked') {
+        const label = courtObj?.blockedLabel || 'Blocked';
+        const until = courtObj?.blockedEnd ? courtObj.blockedEnd : null;
+        if (until) {
+          try {
+            const endTime = new Date(until);
+            if (!isNaN(endTime)) {
+              const timeStr = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+              return `${label}\nUntil ${timeStr}`;
+            }
+          } catch (e) {
+            // ignore invalid date
+          }
+        }
+        return label;
+      }
+      return '';
+    }
+
+    function computeClock(status, courtObj, now) {
+      if (status === 'occupied') {
+        const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
+        if (end && end > now) {
+          const mins = Math.max(0, Math.ceil((end - now) / 60000));
+          return {
+            primary: `${mins} min`,
+            secondary: `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`,
+          };
+        }
+        return { primary: 'Overtime', secondary: '' };
+      }
+      if (status === 'overtime') {
+        // Check if game has been running for over 150 minutes
+        const start = courtObj?.current?.startTime ? new Date(courtObj.current.startTime) : null;
+        if (start) {
+          const minutesPlaying = Math.floor((now - start) / 60000);
+          if (minutesPlaying >= 150) {
+            return { primary: 'Overtime', secondary: 'check status', secondaryColor: 'yellow' };
+          }
+        }
+        return { primary: 'Overtime', secondary: '' };
+      }
+      if (status === 'free')     return { primary: 'Available', secondary: '' };
+      if (status === 'wet')      return { primary: '🌧️\nWET COURT', secondary: '' };
+      if (status === 'blocked') {
+        const s = courtObj || {};
+        const label = s.blockedLabel || 'Blocked';
+        const until = s.blockedEnd ? s.blockedEnd : null;
+        let secondary = '';
+        if (until) {
+          try {
+            const endTime = new Date(until);
+            if (!isNaN(endTime)) {
+              secondary = `Until ${endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+            }
+          } catch (e) {
+            // ignore invalid date
+          }
+        }
+        return { primary: label, secondary };
+      }
+      return { primary: '', secondary: '' };
+    }
+
+    const addTimer = (id, type = 'interval') => { _timers.push({ id, type }); return id; };
+    const clearAllTimers = () => {
+      _timers.forEach(({id, type}) => {
+        try { 
+          if (type === 'interval') clearInterval(id);
+          else clearTimeout(id);
+        } catch {} 
+      });
+      _timers.length = 0;
+    };
+    
+    // Global cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      try { clearAllTimers(); } catch {}
+    });
+    
+    // Wait for everything to load
+    window.addEventListener('load', () => {
+      // console.log('🚀 Loading DataStore Integrated Tennis Display...');
+      addTimer(setTimeout(() => {
+        initializeApp();
+      }, 100), 'timeout');
+    });
+    
+    // ============================================================
+    // Section: Display state & live-sync wiring
+    // ============================================================
+    
+    async function initializeApp() {
+      // Boot data assertion
+      const _bootData = (U.readDataSafe ? U.readDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData()));
+      assert(!_bootData || Array.isArray(_bootData.courts), 'Expected data.courts array on boot', _bootData);
+      
+      const React = window.React;
+      const ReactDOM = window.ReactDOM;
+      const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+      // STEP 1: Initialize DataStore system (simulated for demo)
+      const dataStore = {
+        async get(key) {
+          const startTime = performance.now();
+          
+          // Simulate cache lookup (80% cache hit rate)
+          if (Math.random() > 0.2) {
+            const cached = localStorage.getItem(key);
+            let data = null;
+            if (cached) {
+              try { data = JSON.parse(cached); }
+              catch { /* transient partial write; skip this tick */ return null; }
+            }
+            this.updateMetrics(performance.now() - startTime, true);
+            return data;
+          } else {
+            // Cache miss - slower operation
+            const data = localStorage.getItem(key);
+            let result = null;
+            if (data) {
+              try { result = JSON.parse(data); }
+              catch { /* transient partial write; skip this tick */ return null; }
+            }
+            this.updateMetrics(performance.now() - startTime, false);
+            return result;
+          }
+        },
+
+        async set(key, data) {
+          const startTime = performance.now();
+          // Read-only view: prevent writes
+          readOnlyWrite(key, data);
+          this.updateMetrics(performance.now() - startTime, false);
+          
+          // Emit change event
+          this.emit('data:changed', { key, data });
+        },
+
+        // Event system simulation
+        subscribers: new Map(),
+        
+        subscribe(eventType, callback) {
+          if (!this.subscribers.has(eventType)) {
+            this.subscribers.set(eventType, new Set());
+          }
+          this.subscribers.get(eventType).add(callback);
+          
+          return () => {
+            const subs = this.subscribers.get(eventType);
+            if (subs) {
+              subs.delete(callback);
+            }
+          };
+        },
+
+        emit(eventType, data) {
+          const subscribers = this.subscribers.get(eventType);
+          if (subscribers) {
+            subscribers.forEach(callback => {
+              try {
+                callback({ type: eventType, data });
+              } catch (error) {
+                console.error('Event callback error:', error);
+              }
+            });
+          }
+        },
+
+        // Performance tracking
+        metrics: {
+          cacheHits: 0,
+          totalOperations: 0,
+          totalResponseTime: 0,
+          operationsSaved: 0
+        },
+
+        updateMetrics(responseTime, wasCacheHit) {
+          this.metrics.totalOperations++;
+          this.metrics.totalResponseTime += responseTime;
+          
+          if (wasCacheHit) {
+            this.metrics.cacheHits++;
+          }
+          
+          // Simulate operations saved by batching
+          this.metrics.operationsSaved = Math.floor(this.metrics.totalOperations * 0.85);
+        },
+
+        getPerformanceMetrics() {
+          const total = this.metrics.totalOperations;
+          return {
+            cacheHitRate: total > 0 ? (this.metrics.cacheHits / total) * 100 : 0,
+            averageResponseTime: total > 0 ? this.metrics.totalResponseTime / total : 0,
+            operationsPerformed: total,
+            operationsSaved: this.metrics.operationsSaved,
+            pollingLevel: 'CRITICAL',
+            batchEfficiency: Math.min(85, total > 10 ? (this.metrics.operationsSaved / total) * 100 : 0)
+          };
+        }
+      };
+
+      // STEP 2: Original configuration and components
+      const TENNIS_CONFIG = {
+        COURTS: {
+          TOTAL_COUNT: 12,
+          TOP_ROW: [1, 2, 3, 4, 5, 6, 7, 8],
+          BOTTOM_ROW: [12, 11, 10, 9]
+        },
+        TIMING: {
+          MAX_PLAY_DURATION_MS: 210 * 60 * 1000,
+          MAX_PLAY_DURATION_MIN: 210,
+          TIMEOUT_WARNING_MIN: 180,
+          SINGLES_DURATION_MIN: 60,
+          DOUBLES_DURATION_MIN: 90,
+          AVG_GAME_TIME_MIN: 75,
+          POLL_INTERVAL_MS: 2000, // Increased frequency for immediate updates
+          UPDATE_INTERVAL_MS: 1000,
+          SESSION_TIMEOUT_MS: 120000,
+          SESSION_WARNING_MS: 90000,
+          CHANGE_COURT_TIMEOUT_SEC: 30,
+          AUTO_RESET_SUCCESS_MS: 30000,
+          ALERT_DISPLAY_MS: 3000,
+          AUTO_RESET_CLEAR_MS: 5000
+        },
+        DISPLAY: {
+          MAX_WAITING_DISPLAY: 6,
+          MAX_AUTOCOMPLETE_RESULTS: 8,
+          MAX_FREQUENT_PARTNERS: 6,
+          HEADER_MARGIN_LEFT: '300px'
+        },
+        PLAYERS: {
+          MAX_PER_GROUP: 4,
+          MIN_PER_GROUP: 1
+        },
+        STORAGE: {
+          KEY: 'tennisClubData',
+          UPDATE_EVENT: 'tennisDataUpdate'
+        },
+        ADMIN: {
+          ACCESS_CODE: '9999'
+        }
+      };
+
+      // STEP 3: Icon components (from original)
+      const Clock = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '⏱️');
+      const Users = ({ size = 34, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '👥');
+      const TennisBall = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🎾');
+      const Calendar = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🏛️');
+      const AlertCircle = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🔔');
+      const Check = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '✅');
+
+      // STEP 4: Court block status function (from original)
+      const getCourtBlockStatus = (courtNumber) => {
+        const now = new Date();
+        
+        try {
+          let blocks = [];
+          try { blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+          catch { /* transient partial write; use empty array */ }
+          
+          // PRIORITY 1: Check for active wet court blocks first
+          const wetBlock = blocks.find(block => 
+            block.courtNumber === courtNumber && 
+            block.isWetCourt === true &&
+            new Date(block.endTime) >= now &&
+            new Date(block.startTime) <= now
+          );
+          
+          if (wetBlock) {
+            return {
+              isBlocked: true,
+              isCurrent: true,
+              reason: 'WET COURT',
+              startTime: wetBlock.startTime,
+              endTime: wetBlock.endTime,
+              remainingMinutes: Math.ceil((new Date(wetBlock.endTime) - now) / (1000 * 60)),
+              isWetCourt: true
+            };
+          }
+          
+          // PRIORITY 2: Check for other active blocks (maintenance, lessons, etc.)
+          const activeBlocks = blocks
+            .filter(block => 
+              block.courtNumber === courtNumber && 
+              !block.isWetCourt && // Exclude wet court blocks
+              new Date(block.startTime) <= now && // Block has started
+              new Date(block.endTime) > now       // Block hasn't ended
+            )
+            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+          
+          if (activeBlocks.length > 0) {
+            const currentBlock = activeBlocks[0];
+            
+            const blockStartTime = new Date(currentBlock.startTime);
+            const blockEndTime = new Date(currentBlock.endTime);
+            const isCurrent = now >= blockStartTime && now < blockEndTime;
+
+            return {
+              isBlocked: true,
+              isCurrent: isCurrent,
+              reason: currentBlock.reason,
+              title: currentBlock.title,
+              eventDetails: currentBlock.eventDetails,
+              startTime: currentBlock.startTime,
+              endTime: currentBlock.endTime,
+              remainingMinutes: isCurrent ? Math.ceil((blockEndTime - now) / (1000 * 60)) : 0,
+              isWetCourt: false
+            };
+          }
+        } catch (error) {
+          console.error('Error checking court blocks:', error);
+        }
+
+        return {
+          isBlocked: false,
+          isCurrent: false,
+          isWetCourt: false
+        };
+      };
+
+      // Check for upcoming blocks that would limit playing time
+      const getUpcomingBlockWarning = (courtNumber, duration = 60) => {
+        const now = new Date();
+        const sessionEndTime = new Date(now.getTime() + duration * 60 * 1000);
+        
+        try {
+          // Get all blocks from storage and filter for this court
+          const allBlocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
+          const blocks = allBlocks.filter(b => b.courtNumber === courtNumber);
+          
+          // Find the earliest block that would interfere with the session
+          const upcomingBlock = blocks
+            .filter(block => {
+              const blockStart = new Date(block.startTime);
+              const blockEnd = new Date(block.endTime);
+              
+              // Skip blocks that are currently active or already past
+              if (blockStart <= now || blockEnd <= now) return false;
+              
+              // Skip wet court blocks (they're handled separately)
+              if (block.isWetCourt) return false;
+              
+              // Block interferes if it starts before our session would naturally end
+              return blockStart < sessionEndTime;
+            })
+            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+          
+          if (!upcomingBlock) return null;
+          
+          const blockStart = new Date(upcomingBlock.startTime);
+          const minutesUntilBlock = Math.floor((blockStart.getTime() - now.getTime()) / (60 * 1000));
+          
+          // Don't allow registration if block starts within 5 minutes
+          if (minutesUntilBlock <= 5) {
+            return {
+              type: 'blocked',
+              reason: upcomingBlock.reason,
+              startTime: upcomingBlock.startTime,
+              minutesUntilBlock
+            };
+          }
+          
+          // Warn if playing time will be limited
+          if (minutesUntilBlock < duration) {
+            return {
+              type: 'limited',
+              reason: upcomingBlock.reason,
+              startTime: upcomingBlock.startTime,
+              limitedDuration: minutesUntilBlock,
+              originalDuration: duration,
+              minutesUntilBlock
+            };
+          }
+          
+          return null;
+        } catch (error) {
+          console.warn('Error checking upcoming blocks:', error);
+          return null;
+        }
+      };
+
+      // STEP 5: Court Display Component (from original with DataStore integration)
+      const CourtDisplay = ({ 
+        courtNumber, 
+        currentTime, 
+        timeoutWarningMinutes = 180,
+        formatPlayerName = (name) => name,
+        statusByCourt,
+        selectableByCourt,
+        statusObjectByCourt,
+        data
+      }) => {
+
+        const status = statusByCourt[courtNumber] || 'free';
+        const selectable = selectableByCourt[courtNumber] || false;
+        const statusObj = statusObjectByCourt?.[courtNumber] || {};
+        const s = statusObj;
+        const cObj    = data?.courts?.[courtNumber - 1] || {};
+        const content = labelFor(status, cObj);
+        const blockStatus = getCourtBlockStatus(courtNumber);
+        const endTime = cObj?.current?.endTime || cObj?.endTime;
+        
+        // Compute end times once
+        const endIso =
+          s?.endTime ||
+          s?.originalEndTime ||
+          cObj?.current?.endTime ||
+          null;
+
+        const showUntilForOccupied = status === 'occupied' && !s?.isOverdue && endIso;
+        const blockedUntil = status === 'blocked' ? s?.blockedEnd : null;
+        const timeRemaining = cObj && endTime && status !== 'blocked'
+          ? Math.max(0, Math.floor((new Date(endTime).getTime() - currentTime.getTime()) / 60000))
+          : 0;
+        let approachingTimeout = false;
+        const startTime = cObj?.current?.startTime || cObj?.startTime;
+        if (cObj && startTime && status !== 'blocked') {
+          const timePlayed = Math.floor((currentTime.getTime() - new Date(startTime).getTime()) / 60000);
+          approachingTimeout = timePlayed >= timeoutWarningMinutes;
+        }
+
+        // inside the render/map for each court:
+        const base = 'court-card border-4 rounded-xl flex flex-col items-center justify-start p-2 court-transition';
+        const courtClass = base + ' ' + classForStatus(s);
+
+        return (
+          <div
+            className={courtClass}
+            data-court={courtNumber}
+            data-available={status === 'free'}
+            role={status === 'free' ? "button" : undefined}
+            tabIndex={status === 'free' ? 0 : undefined}
+            onClick={status === 'free' ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
+            style={{ cursor: status === 'free' ? 'pointer' : 'default' }}
+          >
+            <h3 className={`court-text-lg font-bold ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} mb-1`}>
+              Court {courtNumber}
+            </h3>
+            <div className={`court-text-sm w-full ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}>
+              
+              {(() => {
+                const now     = new Date();
+                const { primary, secondary } = computeClock(status, status === 'blocked' ? statusObj : cObj, now);
+                const nm = namesFor(cObj);
+
+                // match legacy court text sizing
+                const primaryClass   = 'mt-1 court-text-base font-bold leading-tight';
+                const secondaryClass = 'mt-1 court-text-xs opacity-90';
+                const namesClass     = 'mt-1 court-text-sm font-medium';
+
+                return (
+                  <div className="flex flex-col h-full w-full">
+                    {status === 'free' || status === 'wet' ? (
+                      <>
+                        <div className={`${primaryClass} text-center flex-1 flex items-center justify-center`}>
+                          {status === 'wet' ? (
+                            <div className="flex flex-col items-center">
+                              <div style={{ fontSize: '2.5em', lineHeight: '1' }}>🌧️</div>
+                              <div className="mt-1">WET COURT</div>
+                            </div>
+                          ) : (
+                            primary
+                          )}
+                        </div>
+                        
+                        {/* Show amber block warning for free courts only */}
+                        {(() => {
+                          if (status !== 'free') return null;
+                          
+                          const blockWarning = getUpcomingBlockWarning(courtNumber, 60);
+                          if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                          
+                          return (
+                            <div className="mt-auto text-xs text-center" style={{ color: 'yellow', fontWeight: 'normal' }}>
+                              {blockWarning.reason} begins in {blockWarning.minutesUntilBlock}m
+                            </div>
+                          );
+                        })()}
+                      </>
+                    ) : status === 'blocked' ? (
+                      <>
+                        <div className={`${primaryClass} text-center`}>
+                          {s.blockedLabel || 'Blocked'}
+                        </div>
+                        <div className="flex-1"></div>
+                        {blockedUntil && (
+                          <div className="mt-auto text-sm opacity-90 text-center">
+                            Until {formatTime(blockedUntil)}
+                          </div>
+                        )}
+                      </>
+                    ) : status === 'occupied' ? (
+                      <>
+                        {/* Time remaining right under Court N */}
+                        <div className={`${primaryClass} text-center`}>{primary}</div>
+                        
+                        {/* Player names in the flexible middle space */}
+                        {nm ? (
+                          <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
+                            {nm}
+                          </div>
+                        ) : (
+                          <div className="flex-1"></div>
+                        )}
+                        
+                        {/* "Until..." at the bottom */}
+                        {showUntilForOccupied && (
+                          <div className="mt-auto text-sm opacity-90 text-center">
+                            Until {formatTime(endIso)}
+                          </div>
+                        )}
+                      </>
+                    ) : status === 'overtime' ? (
+                      <>
+                        {/* Overtime - no "Until..." */}
+                        <div className={`${primaryClass} text-center`}>{primary}</div>
+                        
+                        {/* Player names in the flexible middle space */}
+                        {nm ? (
+                          <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
+                            {nm}
+                          </div>
+                        ) : (
+                          <div className="flex-1"></div>
+                        )}
+                        
+                        {/* "check status" at the bottom if playing over 150 minutes */}
+                        {secondary && (
+                          <div className="mt-auto text-sm text-center" style={{ color: 'yellow' }}>
+                            {secondary}
+                          </div>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        );
+      };
+
+      // STEP 6: Waiting List Component (from original)
+      const WaitingList = ({ waitingGroups, courts, currentTime }) => {
+        const calculateEstimatedWaitTimeV2 = (position) => {
+          const DEBUG = false;
+          if (DEBUG) log.debug(`Calculating wait time for position ${position}`);
+          
+          // inputs
+          const now    = new Date();
+          const data   = Storage.readDataSafe();
+          const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+
+          // derive wetSet for current moment (used by free courts; not needed for nextTimes)
+          const wetSet = new Set(
+            blocks
+              .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+              .map(b => b.courtNumber)
+          );
+
+          // domain availability snapshots
+          const info      = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+          const nextTimes = A.getNextFreeTimes({ data, now, blocks });
+
+          // how many positions your UI renders (keep current value, e.g. 4)
+          const positions = [position];
+
+          // domain ETA (minutes, rounded up)
+          const etas = W.estimateWaitForPositions({
+            positions,
+            currentFreeCount: info.free.length,
+            nextFreeTimes: nextTimes,
+            avgGameMinutes: window.Tennis.Config.Timing.AVG_GAME
+          });
+
+          // If your UI expects absolute times, you can derive them from `now + minutes`
+          // const etaTimes  = etas.map(m => new Date(now.getTime() + m * 60000));
+          // const etaLabels = etaTimes.map(d => T?.formatTime ? T.formatTime(d) : d.toLocaleTimeString());
+
+          // Use `etas` (or `etaLabels`, depending on what the existing UI expects)
+          // Replace the previous variables that fed the DOM update with these values.
+          
+          return etas[0] || 0;
+        };
+
+        return (
+          <div className="bg-slate-700/50 p-4 rounded-xl backdrop-blur h-full overflow-hidden flex flex-col">
+            
+            <h3 className={`font-bold mb-3 flex items-center justify-between ${
+              waitingGroups.length === 0 ? "text-gray-400" : "text-yellow-400"
+            }`}>
+
+            <div className="flex items-center courtboard-text-xl">
+              <Users className={`mr-5 ${waitingGroups.length === 0 ? 'icon-grey' : ''}`} size={24} />
+              Waiting
+            </div>
+
+            {waitingGroups.length > 0 && (
+              <span className="courtboard-text-sm text-teal-400 font-normal">Estimated Time</span>
+            )}
+            </h3>
+          
+            {waitingGroups.length === 0 ? (
+
+              <div className="text-center flex-1 flex flex-col justify-start pt-8">
+                <p className="text-gray-400 courtboard-text-base">No groups waiting</p>
+                <p className="text-gray-500 courtboard-text-sm mt-4">Register at the iPad station</p>
+              </div>
+
+            ) : (
+              <div className="space-y-2 overflow-y-auto mt-4">
+                {waitingGroups.slice(0, TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY).map((group, idx) => {
+
+                  // Use the same selectable courts logic as the registration system
+                  let canRegisterNow = false;
+                  // Position 1 can register if any courts available
+                  // Position 2 can register if 2+ courts available
+                  if (idx === 0 || idx === 1) {
+                    try {
+                      const data = Storage.readDataSafe();
+                      const now = new Date();
+                      const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+                      const wetSet = new Set();
+                      // Use correct overtime logic: free courts OR overtime courts (not both)
+                      let availableCount = 0;
+                      if (A.getFreeCourtsInfo) {
+                        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+                        const freeCount = info.free?.length || 0;
+                        const overtimeCount = info.overtime?.length || 0;
+                        availableCount = freeCount > 0 ? freeCount : overtimeCount;
+                      }
+                      
+                      if (idx === 0) {
+                        // First group can register if any courts available
+                        canRegisterNow = availableCount > 0;
+                      } else if (idx === 1) {
+                        // Second group can register if 2+ courts available
+                        canRegisterNow = availableCount >= 2;
+                      }
+                    } catch (error) {
+                      console.warn('Error checking selectable courts for You\'re Up:', error);
+                      canRegisterNow = false;
+                    }
+                  }
+                  
+                  let estimatedWait = 0;
+                  if (!canRegisterNow) {
+                    estimatedWait = calculateEstimatedWaitTimeV2(idx + 1);
+                  }
+
+                  // Show "You're Up!" only if they can actually register now
+                  const showAlert = canRegisterNow;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center justify-between p-2 rounded-lg courtboard-text-sm ${
+                        idx === 0 
+                          ? "bg-gradient-to-r from-green-600/30 to-green-500/30 border-2 border-green-400" 
+                          : "bg-slate-600/50"
+                      }`}
+                    >
+                      <div className="flex items-center flex-1">
+                        <span className="courtboard-waiting-number font-bold mr-2 text-green-400">{idx + 1}.</span>
+                        <div className="flex-1">
+                          <span className="courtboard-text-sm font-medium player-name">
+                            {(group.names || [])
+                              .map((name) => {
+                                const names = name.split(" ");
+                                return names[names.length - 1];
+                              })
+                              .join(" / ")}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {showAlert && (
+                          <div className="flex items-center text-yellow-400 animate-pulse">
+                            <AlertCircle className="mr-1" size={16} />
+                            <span className="courtboard-text-xs font-bold">You're Up!</span>
+                          </div>
+                        )}
+                        {!showAlert && (
+                          <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
+                            {estimatedWait} min
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // Normalize block data from various formats
+      function normalizeBlock(raw) {
+        const reasonRaw = raw.reason || raw.title || (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) || "";
+        const reason = String(reasonRaw).trim().toUpperCase();
+
+        const start = raw.startTime ? new Date(raw.startTime) : null;
+        let end = raw.endTime ? new Date(raw.endTime) : null;
+        if (!end && start && (raw.duration || raw.duration === 0)) {
+          end = new Date(start);
+          end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
+        }
+
+        let courts = [];
+        if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
+        if (raw.eventDetails && Array.isArray(raw.eventDetails.courts)) courts = courts.concat(raw.eventDetails.courts);
+        if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
+
+        courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a,b)=>a-b);
+        if (!start || !end || courts.length === 0) return null;
+        return { courts, start, end, reason };
+      }
+
+      // Select reserved items from blocks (active now or later today)
+      function selectReservedItemsFromBlocks(blocks, now = new Date()) {
+        const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
+        const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
+
+        const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
+        const todayFuture = normalized
+          .filter(b => b.end > now && b.start <= endOfToday)
+          .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
+          .sort((a,b) => a.start - b.start);
+
+        const byKey = new Map();
+        for (const b of todayFuture) {
+          const k = `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
+          if (!byKey.has(k)) byKey.set(k, { ...b, courts: new Set(b.courts) });
+          else b.courts.forEach(c => byKey.get(k).courts.add(c));
+        }
+
+        return Array.from(byKey.values()).map(v => ({
+          key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
+          courts: Array.from(v.courts).sort((a,b)=>a-b),
+          start: v.start,
+          end: v.end,
+          label: v.reason || "RESERVED",
+          warning: (v.start.getTime() - now.getTime()) <= (60 * 60 * 1000) && (v.start.getTime() - now.getTime()) > 0
+        }));
+      }
+
+      // Reserved Courts Panel Component
+      function ReservedCourtsPanel({ items, className, title = "Reserved Courts" }) {
+        const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+        return (
+          <section id="reserved-courts-root" className={className}>
+            <h3 className={`courtboard-text-xl font-bold mb-3 flex items-center ${
+              (!items || items.length === 0) ? "text-gray-400" : "text-sky-500"
+            }`}>
+              <Calendar className={`mr-3 ${(!items || items.length === 0) ? 'icon-grey' : ''}`} size={24} />
+              {title}
+            </h3>
+            
+            {(!items || items.length === 0) ? (
+              <div className="text-center mt-8">
+                <p className="text-gray-400 reserved-courts-empty">No scheduled blocks today</p>
+              </div>
+            ) : (
+              <ul className="mt-2 space-y-2 reserved-courts-text text-gray-300">
+                {items.slice(0, 8).map((it, i) => (
+                  <li key={`${it.key || i}`} className="flex justify-between">
+                    <span className="font-medium text-gray-200">
+                      {it.courts.length > 1 ? `Courts ${it.courts.join(", ")}` : `Court ${it.courts[0]}`}
+                    </span>
+                    <span className="ml-2 whitespace-nowrap text-gray-400">
+                      {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? " ⚠️" : ""}
+                    </span>
+                  </li>
+                ))}
+                {items.length > 8 && (
+                  <li className="courtboard-text-xs text-gray-500 mt-1">+{items.length - 8} more…</li>
+                )}
+              </ul>
+            )}
+          </section>
+        );
+      }
+
+      // STEP 7: Next Available Panel Component (from original)
+      const NextAvailablePanel = ({ courts, currentTime, waitingGroups = [], courtBlocks = [] }) => {
+
+        const getCourtAvailabilityTimeline = (waitingGroups = []) => {
+          // console.log('🔍 getCourtAvailabilityTimeline called');
+          
+          if (!courts || !Array.isArray(courts)) {
+            // console.log('❌ Courts array invalid');
+            return [];
+          }
+          
+          const courtAvailability = [];
+          const overtimeCourts = [];
+          
+          // Get current blocks from localStorage
+          let courtBlocks = [];
+          try {
+            courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+            // console.log('📦 Loaded court blocks:', courtBlocks.length);
+          } catch (error) {
+            console.error('Error loading court blocks:', error);
+          }
+          
+          // Check if ALL courts are currently wet
+          const activeWetBlocks = courtBlocks.filter(block => 
+            block.isWetCourt === true &&
+            new Date(block.startTime) <= currentTime &&
+            new Date(block.endTime) > currentTime
+          );
+          const wetCourtNumbers = new Set(activeWetBlocks.map(block => block.courtNumber));
+          
+          // If all 12 courts are wet, return special marker
+          const totalCourts = courts.length;
+          if (wetCourtNumbers.size === totalCourts && totalCourts > 0) {
+            return [{ allCourtsWet: true }];
+          }
+          
+          // console.log('⏰ Current time:', currentTime);
+          
+          // Check each court for availability
+          courts.forEach((court, index) => {
+            const courtNumber = index + 1;
+            let endTime = null;
+            
+            // console.log(`🏟️ Checking court ${courtNumber}`);
+            
+            // Check for active blocks on this court (only currently active, not future)
+            const activeBlock = courtBlocks.find(block => 
+              block.courtNumber === courtNumber && 
+              new Date(block.startTime) <= currentTime &&
+              new Date(block.endTime) > currentTime
+            );
+            
+            if (activeBlock) {
+              // console.log(`🚫 Court ${courtNumber} blocked until:`, activeBlock.endTime);
+              endTime = activeBlock.endTime;
+            } else if (court) {
+              // Court has players - check for overtime or regular game
+              if (court.current && court.current.endTime) {
+                // console.log(`🎾 Court ${courtNumber} game until:`, court.current.endTime);
+                endTime = court.current.endTime;
+              } else if (court.endTime) {
+                // console.log(`🎾 Court ${courtNumber} old game until:`, court.endTime);
+                endTime = court.endTime;
+              }
+              
+              // Check if this is an overtime court (game has exceeded scheduled duration)
+              if (endTime) {
+                const parsedEndTime = new Date(endTime);
+                const hasPlayers = (court.current && court.current.players && court.current.players.length > 0) || 
+                                 (court.players && court.players.length > 0);
+                
+                if (hasPlayers && parsedEndTime <= currentTime) {
+                  // console.log(`⚡ Court ${courtNumber} is overtime (available now)`);
+                  overtimeCourts.push({
+                    courtNumber,
+                    endTime: null, // Special marker for "Now"
+                    isOvertime: true
+                  });
+                  return; // Don't add to regular availability
+                }
+              }
+            } else {
+              // console.log(`✅ Court ${courtNumber} empty`);
+            }
+            
+            // Parse and validate the end time for future availability
+            if (endTime) {
+              try {
+                const parsedEndTime = new Date(endTime);
+                if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
+                  // console.log(`✅ Court ${courtNumber} available at:`, parsedEndTime);
+                  courtAvailability.push({
+                    courtNumber,
+                    endTime: parsedEndTime
+                  });
+                } else {
+                  // console.log(`⏰ Court ${courtNumber} time is past:`, parsedEndTime);
+                }
+              } catch (error) {
+                console.error(`Error parsing end time for court ${courtNumber}:`, error);
+              }
+            }
+          });
+          
+          // Sort future availability by time
+          courtAvailability.sort((a, b) => a.endTime.getTime() - b.endTime.getTime());
+          
+          // Check if we should show overtime courts as "Now"
+          // Only show overtime as available if there aren't surplus empty courts
+          let filteredOvertimeCourts = overtimeCourts;
+          
+          try {
+            if (USE_SHARED_DOMAIN && A && A.getFreeCourtsInfo) {
+              const now = new Date();
+              const data = Storage.readDataSafe();
+              const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+              const wetSet = new Set(
+                blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                      .map(b => b.courtNumber)
+              );
+              const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+              const emptyCount = info.free ? info.free.length : 0;
+              const waitingCount = waitingGroups.length;
+              
+              // If there are surplus empty courts, overtime courts aren't truly "available now"
+              if (emptyCount > waitingCount) {
+                filteredOvertimeCourts = [];
+              }
+            }
+          } catch (error) {
+            console.error('Error filtering overtime courts:', error);
+          }
+          
+          // Combine filtered overtime courts (first) with future availability
+          const combinedAvailability = [...filteredOvertimeCourts, ...courtAvailability];
+          
+          // console.log('📋 Overtime courts:', overtimeCourts);
+          // console.log('📋 Future availability:', courtAvailability);
+          // console.log('📋 Combined timeline:', combinedAvailability);
+          
+          return combinedAvailability;
+        };
+          
+
+        const hasEmptyCourts = () => {
+          if (USE_SHARED_DOMAIN && A && A.getFreeCourts) {
+            try {
+              // Build a set of wet courts from active wet-court blocks
+              const now = new Date();
+              const data = Storage.readDataSafe();
+              const blocks = Storage.readJSON(
+                (Storage.STORAGE && Storage.STORAGE.BLOCKS) ||
+                (APP_UTILS && APP_UTILS.STORAGE && APP_UTILS.STORAGE.BLOCKS) ||
+                'courtBlocks'
+              ) || [];
+
+              const wetSet = new Set(
+                blocks
+                  .filter(b =>
+                    b && b.isWetCourt === true &&
+                    new Date(b.startTime) <= now &&
+                    new Date(b.endTime) >  now
+                  )
+                  .map(b => b.courtNumber)
+              );
+
+              // Compute free courts honoring wet courts + blocks
+              const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+              const free = info.free;            // use for "Available Now"
+              // (occupied available if needed later): const occupied = info.occupied;
+              
+              return free.length > 0;
+            } catch (error) {
+              console.error('Error calling A.getFreeCourts:', error);
+            }
+          }
+          
+          // Legacy logic (kept for fallback)
+          if (!courts || !Array.isArray(courts)) return false;
+          
+          // Get current blocks from localStorage
+          let courtBlocks = [];
+          try {
+            courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+          } catch (error) {
+            console.error('Error loading court blocks:', error);
+          }
+          
+          return courts.some((court, index) => {
+            const courtNumber = index + 1;
+            
+            // Check if court is blocked (only currently active blocks)
+            const isBlocked = courtBlocks.some(block => 
+              block.courtNumber === courtNumber && 
+              new Date(block.startTime) <= currentTime &&
+              new Date(block.endTime) > currentTime
+            );
+            
+            if (isBlocked) {
+              // console.log(`🚫 Court ${courtNumber} is blocked, not empty`);
+              return false; // Blocked courts are not empty
+            }
+            
+            if (!court) {
+              // console.log(`✅ Court ${courtNumber} is truly empty`);
+              return true; // No court data = empty
+            }
+            
+            // Check for players
+            const hasCurrentPlayers = court.current && court.current.players && court.current.players.length > 0;
+            const hasOldPlayers = court.players && court.players.length > 0;
+            
+            const isEmpty = !hasCurrentPlayers && !hasOldPlayers;
+            // console.log(`🏟️ Court ${courtNumber} empty check:`, isEmpty);
+            return isEmpty;
+          });
+        };
+
+        const timeline = getCourtAvailabilityTimeline(waitingGroups);
+        // console.log('🎯 Timeline length:', timeline.length);
+        // console.log('🎯 hasEmptyCourts():', hasEmptyCourts());
+
+        // Calculate if courts are available after serving the waitlist
+        let emptyCourtCount = 0;
+        if (USE_SHARED_DOMAIN && A && A.getFreeCourtsInfo) {
+          try {
+            const now = new Date();
+            const data = Storage.readDataSafe();
+            const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+            const wetSet = new Set(
+              blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                    .map(b => b.courtNumber)
+            );
+            const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+            emptyCourtCount = info.free ? info.free.length : 0;
+          } catch (error) {
+            console.error('Error getting free court count:', error);
+          }
+        }
+        
+        // Modified logic: Show "available now" if more empty courts than waiting groups
+        // This accounts for surplus courts after the waitlist is served
+        const surplusCourts = emptyCourtCount - waitingGroups.length;
+        const hasAvailableNow = surplusCourts > 0;
+
+        return (
+          
+          <div className="next-available-section h-full min-h-0 flex flex-col">
+            <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur flex-1">
+            
+             
+              {hasAvailableNow ? (
+                <>
+                <h2 className={`courtboard-text-xl font-bold mb-3 flex items-center ${
+                  hasAvailableNow ? "text-gray-400" : "text-sky-500"
+                }`}>
+                  <TennisBall className={`mr-3 ${hasAvailableNow ? 'icon-grey' : ''}`} size={24} />
+                  Next Available
+                </h2>
+                 
+                <div className="text-center mt-12">
+                  <p className="text-gray-400 courtboard-text-base">Courts available now</p>
+                </div>
+
+                </>
+              ) : (
+                <>
+
+                <h2 className={`courtboard-text-xl font-bold mb-3 flex items-center ${
+                  hasAvailableNow ? "text-gray-400" : "text-sky-500"
+                }`}>
+                  
+                <TennisBall className={`mr-3 ${hasAvailableNow ? 'icon-grey' : ''}`} size={24} />
+                Next Available
+                </h2>
+                <div className="border-b border-gray-600 mb-2"></div>
+
+                  <div className="space-y-2 mt-4">
+                    {timeline.length > 0 ? (
+                      timeline[0]?.allCourtsWet ? (
+                        <div className="text-center mt-8">
+                          <p className="text-yellow-400 courtboard-text-lg">Courts will become available as they dry</p>
+                        </div>
+                      ) : (
+                        timeline.slice(0, TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY).map((availability, idx) => (
+                          <div key={idx} className="bg-slate-700/50 p-2 rounded-lg">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="courtboard-text-base font-medium text-green-400">
+                                    Court {availability.courtNumber}
+                                  </span>
+                                </div>
+                                <div className="courtboard-text-base font-semibold text-white">
+                                
+                                  {availability.isOvertime ? (
+                                    <span className="text-white font-bold">Now</span>
+                                  ) : availability.endTime ? (
+                                    availability.endTime.toLocaleTimeString([], {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                    })
+                                  ) : (
+                                    "Time TBD"
+                                  )}
+                                 
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                      )
+                    ) : (
+                      <div className="text-center mt-8">
+                        <p className="text-gray-400 courtboard-text-lg">No availability data</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+            </div>
+            <div className="mt-auto pt-4">
+              <ReservedCourtsPanel
+                className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur"
+                items={selectReservedItemsFromBlocks(courtBlocks, currentTime)}
+              />
+            </div>
+          </div>
+        );
+      };
+
+      // STEP 8: Data Validation Utilities (from original)
+      const DataValidation = {
+        isValidCourtData(court) {
+          if (!court) return true;
+          
+          // For new structure with null current (cleared courts with history)
+          if (court.hasOwnProperty('current') && court.hasOwnProperty('history')) {
+            // If current is null, it's still valid (cleared court)
+            if (court.current === null) return true;
+            
+            // If current exists, validate it
+            if (court.current) {
+              return court.current &&
+                     typeof court.current === 'object' &&
+                     Array.isArray(court.current.players) &&
+                     court.current.players.length > 0 &&
+                     court.current.players.every(p => p && typeof p.name === 'string') &&
+                     court.current.startTime &&
+                     court.current.endTime &&
+                     new Date(court.current.endTime).getTime() > 0;
+            }
+          }
+          
+          // For blocked courts
+          if (court.blocked && court.blocked.isBlocked) {
+            return court &&
+                   typeof court === 'object' &&
+                   court.blocked.reason &&
+                   court.blocked.endTime;
+          }
+          
+          // For old structure
+          return court &&
+                 typeof court === 'object' &&
+                 Array.isArray(court.players) &&
+                 court.players.length > 0 &&
+                 court.players.every(p => p && typeof p.name === 'string') &&
+                 court.startTime &&
+                 court.endTime &&
+                 new Date(court.endTime).getTime() > 0;
+        },
+
+        isValidWaitingGroup(group) {
+          return group &&
+                 typeof group === 'object' &&
+                 Array.isArray(group.players) &&
+                 group.players.length > 0 &&
+                 group.players.every(p => p && typeof p.name === 'string');
+        },
+
+        sanitizeCourtData(data) {
+          const sanitized = {
+            courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
+            waitingGroups: [],
+            recentlyCleared: []
+          };
+
+          if (Array.isArray(data.courts)) {
+            data.courts.forEach((court, index) => {
+              if (index < TENNIS_CONFIG.COURTS.TOTAL_COUNT && this.isValidCourtData(court)) {
+                sanitized.courts[index] = court;
+              }
+            });
+          }
+
+          if (Array.isArray(data.waitingGroups)) {
+            sanitized.waitingGroups = data.waitingGroups.filter(group => 
+              this.isValidWaitingGroup(group)
+            );
+          }
+
+          if (Array.isArray(data.recentlyCleared)) {
+            sanitized.recentlyCleared = data.recentlyCleared.filter(session => 
+              session &&
+              typeof session === 'object' &&
+              Array.isArray(session.players) &&
+              session.players.length > 0 &&
+              session.endTime &&
+              new Date(session.endTime).getTime() > 0 // Keep all valid historical sessions
+            );
+          }
+
+          return sanitized;
+        }
+      };
+
+      // STEP 9: Main Tennis Court Display Component
+      const TennisCourtDisplay = () => {
+        useEffect(() => {
+          const style = document.createElement('style');
+          style.textContent = `
+            .animate-pulse {
+              will-change: opacity;
+              transform: translateZ(0);
+              backface-visibility: hidden;
+            }
+            
+            .backdrop-blur {
+              transform: translateZ(0);
+              will-change: backdrop-filter;
+            }
+            
+            .court-transition {
+              transition: background-color 200ms ease-out, 
+                          border-color 200ms ease-out,
+                          box-shadow 200ms ease-out;
+            }
+            
+            @media (prefers-reduced-motion: reduce) {
+              .animate-pulse {
+                animation: none;
+                opacity: 1;
+              }
+            }
+          `;
+          
+          document.head.appendChild(style);
+          
+          return () => {
+            document.head.removeChild(style);
+          };
+        }, []);
+
+        const CONSTANTS = {
+          COURT_COUNT: TENNIS_CONFIG.COURTS.TOTAL_COUNT,
+          MAX_PLAY_DURATION_MS: TENNIS_CONFIG.TIMING.MAX_PLAY_DURATION_MS,
+          TIMEOUT_WARNING_MIN: TENNIS_CONFIG.TIMING.TIMEOUT_WARNING_MIN,
+          POLL_INTERVAL_MS: TENNIS_CONFIG.TIMING.POLL_INTERVAL_MS,
+          UPDATE_INTERVAL_MS: TENNIS_CONFIG.TIMING.UPDATE_INTERVAL_MS,
+          MAX_WAITING_DISPLAY: TENNIS_CONFIG.DISPLAY.MAX_WAITING_DISPLAY,
+          AVG_GAME_TIME_MIN: TENNIS_CONFIG.TIMING.AVG_GAME_TIME_MIN,
+          COURTS_TOP_ROW: TENNIS_CONFIG.COURTS.TOP_ROW,
+          COURTS_BOTTOM_ROW: TENNIS_CONFIG.COURTS.BOTTOM_ROW,
+          HEADER_MARGIN_LEFT: TENNIS_CONFIG.DISPLAY.HEADER_MARGIN_LEFT
+        };
+
+        const formatPlayerDisplayName = (name) => {
+          const nameParts = name.trim().split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts[nameParts.length - 1] || firstName;
+          return nameParts.length > 1 
+            ? `${firstName.charAt(0)}. ${lastName}` 
+            : firstName;
+        };
+
+        const [courts, setCourts] = useState(Array(CONSTANTS.COURT_COUNT).fill(null));
+        const [waitingGroups, setWaitingGroups] = useState([]);
+        const [currentTime, setCurrentTime] = useState(new Date());
+        const [lastUpdate, setLastUpdate] = useState(new Date());
+        const [customMessage, setCustomMessage] = useState("");
+        const [courtBlocks, setCourtBlocks] = useState([]);
+        const [refreshTick, setRefreshTick] = useState(0);
+
+        React.useEffect(() => {
+          const onUpdate = (event) => {
+            console.log('[BOARD DEBUG] onUpdate event received:', event?.type, event?.detail);
+            setRefreshTick(t => t + 1);
+            scheduleBoardRefresh(); // Use coalescer for data reload
+          };
+          const it = setInterval(onUpdate, 30000); // re-render every 30s
+          document.addEventListener('DATA_UPDATED', onUpdate);
+          document.addEventListener('tennisDataUpdate', onUpdate);
+          return () => {
+            clearInterval(it);
+            document.removeEventListener('DATA_UPDATED', onUpdate);
+            document.removeEventListener('tennisDataUpdate', onUpdate);
+          };
+        }, [loadData]);
+
+        // Waitlist normalizer
+        function normalizeWaitingGroups(data) {
+          const raw = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+          return raw
+            .map((g, idx) => {
+              const players = Array.isArray(g?.players) ? g.players : [];
+              // Note: guests are already included in the players array with isGuest flag
+              // Don't create fake guest entries - just use the actual player names
+              const names = players
+                .map(p => p?.name || p?.id)
+                .filter(Boolean);
+              return names.length ? { id: g.id || `wg_${idx}`, names } : null;
+            })
+            .filter(Boolean);
+        }
+
+        // STEP 10: Enhanced data loading with DataStore
+        const loadData = useCallback(async () => {
+          try {
+            // Load court blocks
+            try {
+              const blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+              setCourtBlocks(blocks);
+            } catch {
+              setCourtBlocks([]);
+            }
+            
+            const storedData = await dataStore.get(TENNIS_CONFIG.STORAGE.KEY);
+            if (storedData) {
+              const data = storedData;
+              
+              // --- WAITLIST DEBUG (no UI change) ---
+              (function debugWaitlist() {
+                try {
+                  const U = window.APP_UTILS;
+                  const data = U.readDataSafe(); // fresh, normalized
+                  const raw = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+
+                  // sort by request time (supports requestedAt | timestamp)
+                  const waiters = raw
+                    .map((g, i) => ({
+                      ...g,
+                      _idx: i,
+                      _ts: new Date(g.requestedAt || g.timestamp || 0).getTime()
+                    }))
+                    .sort((a, b) => a._ts - b._ts);
+
+                  const pre = data?.calculatedAvailability?.waitTimes; // preferred ETA source if present
+                  const AVG = (window.TENNIS_CONFIG?.TIMING?.AVG_GAME_TIME_MIN) || 75;
+                  const etaForIndex = (idx) =>
+                    Array.isArray(pre) && typeof pre[idx] === 'number' ? pre[idx] : idx * AVG;
+
+                  // concise console snapshot (first up to 5)
+                  console.groupCollapsed(
+                    '[CourtBoard][Waitlist] len=%d, hasPre=%s',
+                    waiters.length,
+                    Array.isArray(pre)
+                  );
+                  console.table(
+                    waiters.slice(0, 5).map((g, i) => ({
+                      pos: i + 1,
+                      players: (g.players || []).map(p => p.name).join(', '),
+                      guests: g.guests || 0,
+                      requestedAt: g.requestedAt || g.timestamp || '(missing)',
+                      ts: g._ts || '(no ts)',
+                      ETA_min: Math.max(0, Math.round(etaForIndex(i)))
+                    }))
+                  );
+                  console.groupEnd();
+                } catch (e) {
+                  console.warn('[CourtBoard][Waitlist] debug failed', e);
+                }
+              })();
+              
+              // --- WAITLIST READ DEBUG (no UI change) ---
+              try {
+                const U = window.APP_UTILS;
+                const data = U.readDataSafe(); // fresh, normalized snapshot
+                const raw = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+                const waiters = raw
+                  .map((g, i) => ({
+                    pos: i + 1,
+                    players: (g.players || []).map(p => p.name).join(', '),
+                    guests: g.guests || 0,
+                    requestedAt: g.requestedAt || g.timestamp || '(missing)'
+                  }));
+
+                console.groupCollapsed('[CourtBoard] waitlist read: len=%d', waiters.length);
+                console.table(waiters.slice(0, 5));
+                console.groupEnd();
+              } catch (e) {
+                console.warn('[CourtBoard] waitlist read debug failed', e);
+              }
+              
+              if (!data || typeof data !== 'object') {
+                console.warn('Invalid data format in display monitor');
+                setCourts(Array(CONSTANTS.COURT_COUNT).fill(null));
+                setWaitingGroups([]);
+                return;
+              }
+              
+              const blockedCourts = data.courts ? data.courts.filter(c => c && c.blocked && c.blocked.isBlocked) : [];
+              if (blockedCourts.length > 0) {
+                // console.log('Display monitor - blocked courts found:', blockedCourts.length, blockedCourts);
+              }
+              
+              const validatedData = DataValidation.sanitizeCourtData(data);
+              console.log('[BOARD DEBUG] loadData - original waitingGroups:', data.waitingGroups?.length || 0);
+              console.log('[BOARD DEBUG] loadData - validated waitingGroups:', validatedData.waitingGroups?.length || 0);
+              
+              const maxDuration = CONSTANTS.MAX_PLAY_DURATION_MS;
+              let hasChanges = false;
+              
+              validatedData.courts = validatedData.courts.map((court, index) => {
+                if (court) {
+                  // Remove old block cleanup since we now use courtBlocks localStorage
+                  const courtStartTime = court.current?.startTime || court.startTime;
+                }
+                return court;
+              });
+              
+             // NEW: Clean up blocks at midnight to preserve historical data for current day
+            try {
+              let blocks = [];
+              try { blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
+              catch { /* transient partial write; use empty array */ }
+              const now = new Date();
+              
+              // Get start of today (midnight)
+              const startOfToday = new Date(now);
+              startOfToday.setHours(0, 0, 0, 0);
+              
+              // Only keep blocks that end today or in the future
+              const blocksToKeep = blocks.filter(block => {
+                const blockEndTime = new Date(block.endTime);
+                return blockEndTime >= startOfToday;
+              });
+              
+              if (blocksToKeep.length !== blocks.length) {
+                // Read-only view: prevent cleanup writes
+                readOnlyWrite('courtBlocks', blocksToKeep);
+                // console.log(`Read-only view: would have cleaned up ${blocks.length - blocksToKeep.length} blocks from previous days`);
+              }
+            } catch (error) {
+              console.error('Error cleaning up blocks:', error);
+            }
+              
+              setCourts(validatedData.courts);
+              const normalizedWaitlist = normalizeWaitingGroups(data);
+              console.log('[BOARD DEBUG] normalizeWaitingGroups result:', normalizedWaitlist);
+              // Ensure renderer consumes the normalized, sorted waitlist
+              data.waitingGroups = normalizedWaitlist;
+              setWaitingGroups(normalizedWaitlist);
+              setLastUpdate(new Date());
+            } else {
+              setCourts(Array(CONSTANTS.COURT_COUNT).fill(null));
+              setWaitingGroups([]);
+            }
+          } catch (error) {
+            console.error('Failed to load data in display monitor:', error);
+            setCourts(Array(CONSTANTS.COURT_COUNT).fill(null));
+            setWaitingGroups([]);
+          }
+        }, []);
+
+        window.refreshBoard = loadData;
+
+        // STEP 11: Event-driven updates with increased frequency
+        useEffect(() => {
+          // console.log('🎯 Setting up enhanced data loading...');
+          
+          // prevent duplicate attachment if this component re-mounts
+          if (_one('__CB_LISTENERS_INSTALLED')) return;
+          
+          // Initial load
+          loadData();
+
+          const handleUpdate = debounce(() => {
+            // console.log('📡 Received tennisDataUpdate event, reloading data...');
+            loadData();
+          }, 150);
+
+          window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate, { passive: true });
+          
+          // Shared Events subscription for availability updates
+          if (USE_SHARED_CORE && Events) {
+            Events.onDom('tennisDataUpdate', scheduleBoardRefresh);
+            Events.onDom('DATA_UPDATED', scheduleBoardRefresh);
+          }
+          
+          // Direct document event listeners for re-rendering (using coalescer)
+          document.removeEventListener?.('tennisDataUpdate', scheduleBoardRefresh);
+          document.removeEventListener?.('DATA_UPDATED', scheduleBoardRefresh);
+          document.addEventListener('tennisDataUpdate', scheduleBoardRefresh);
+          document.addEventListener('DATA_UPDATED', scheduleBoardRefresh);
+          window.addEventListener('BLOCKS_UPDATED', scheduleBoardRefresh, { passive: true });
+          document.addEventListener('BLOCKS_UPDATED', scheduleBoardRefresh, { passive: true });
+          
+          // Increased polling frequency for immediate updates
+          const interval = addTimer(setInterval(loadData, CONSTANTS.POLL_INTERVAL_MS));
+
+          // defensive cleanup on unload as well
+          window.addEventListener('beforeunload', () => {
+            try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate); } catch {}
+            try { clearAllTimers(); } catch {}
+          }, { once: true });
+
+          return () => {
+            try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleUpdate); } catch {}
+            try { clearAllTimers(); } catch {}
+          };
+        }, [loadData]);
+
+        // STEP 12: Performance metrics updates
+        useEffect(() => {
+          const updateMetrics = () => {
+            const metrics = dataStore.getPerformanceMetrics();
+            
+            // Update overlay
+            document.getElementById('cache-hit-rate').textContent = `${metrics.cacheHitRate.toFixed(1)}%`;
+            document.getElementById('avg-response').textContent = `${metrics.averageResponseTime.toFixed(1)}ms`;
+            document.getElementById('batch-efficiency').textContent = `${metrics.batchEfficiency.toFixed(1)}%`;
+            document.getElementById('polling-level').textContent = metrics.pollingLevel;
+            document.getElementById('operations-count').textContent = metrics.operationsPerformed;
+          };
+
+          const metricsInterval = addTimer(setInterval(updateMetrics, 2000));
+          return () => { try { clearInterval(metricsInterval); } catch {} };
+        }, []);
+
+        useEffect(() => {
+          const timer = addTimer(setInterval(() => {
+            setCurrentTime(new Date());
+          }, CONSTANTS.UPDATE_INTERVAL_MS));
+
+          return () => { try { clearInterval(timer); } catch {} };
+        }, []);
+
+        const hasEmptyCourts = () => {
+          return courts.some((court, index) => {
+            // Check if court is truly empty
+            if (!court) return true;
+            
+            // Check if court has current: null (cleared court with history)
+            if (court.current === null && court.history) return true;
+            
+            // Check if no players in either structure
+            const hasPlayers = (court.players && court.players.length > 0) || 
+                              (court.current && court.current.players && court.current.players.length > 0);
+            
+            return !hasPlayers;
+          });
+        };
+
+        // Build status map once
+        const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+        const S = window.Tennis?.Storage;
+        const now    = new Date();
+        const data   = S.readDataSafe();
+        const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+        const wetSet = new Set((blocks||[])
+          .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
+          .map(b => b.courtNumber)
+        );
+        const _statuses = A.getCourtStatuses({ data, now, blocks, wetSet }) || [];
+        const statusByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s.status]));
+        const selectableByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s.selectable]));
+        const statusObjectByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s]));
+
+        // Use state for waiting groups (independent of court availability)
+        const hasWaiting = waitingGroups.length > 0;
+
+        return (
+          <div className="h-screen min-h-screen bg-gradient-to-br from-slate-700 to-slate-600 p-4 text-white flex flex-col">
+            <div className="mb-4">
+              <div className="w-full flex justify-center">
+                <div className="flex items-center relative">
+                  
+                  {hasWaiting && (
+                    <div className="absolute left-[-140px] lg:left-[-100px] xl:left-[-140px]">
+                      <svg width="40" height="40" className="lg:w-20 lg:h-20 xl:w-32 xl:h-32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 20V4" stroke="#D4D4D8" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M5 4L17 7L5 10V4Z" fill="#FB923C" stroke="#EA580C" strokeWidth="1"/>
+                      </svg>
+                    </div>
+                  )}
+                  <div className="text-center">
+                    {customMessage ? (
+                      <div className="time-header font-bold text-yellow-300 mb-1 animate-pulse" style={{ fontFamily: 'Chalkboard SE, Comic Sans MS, cursive' }}>
+                        {customMessage}
+                      </div>
+                    ) : (
+                      <div className="time-header font-light text-white mb-1" style={{ fontFamily: 'Chalkboard SE, Comic Sans MS, cursive' }}>
+                        {currentTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                      </div>
+                    )}
+                    <div className="date-header text-gray-300 -mt-1" style={{ fontFamily: 'Chalkboard SE, Comic Sans MS, cursive' }}>
+                      {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1 main-layout h-full min-h-0 items-stretch">
+              {/* LEFT column wrapper */}
+              <div className="left-column courts-section h-full flex flex-col min-h-0" data-left-col>
+                <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 h-full backdrop-blur flex flex-col min-h-0">
+                  {/* Desktop layout */}
+                  <div className="courts-grid mb-4">
+                    {CONSTANTS.COURTS_TOP_ROW.map((num) => (
+                      <div key={num} className="flex justify-center">
+                        <CourtDisplay
+                          courtNumber={num}
+                          currentTime={currentTime}
+                          timeoutWarningMinutes={CONSTANTS.TIMEOUT_WARNING_MIN}
+                          formatPlayerName={formatPlayerDisplayName}
+                          statusByCourt={statusByCourt}
+                          selectableByCourt={selectableByCourt}
+                          statusObjectByCourt={statusObjectByCourt}
+                          data={data}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="h-3 bg-gray-400 mb-4 rounded-full flex-shrink-0 divider-line" />
+                  <div className="bottom-section min-h-0 overflow-auto">
+                    <WaitingList 
+                      waitingGroups={waitingGroups} 
+                      courts={courts} 
+                      currentTime={currentTime} 
+                    />
+                    <div className="courts-grid-bottom">
+                      {CONSTANTS.COURTS_BOTTOM_ROW.map((num) => (
+                        <div key={num} className="flex justify-center">
+                          <CourtDisplay
+                            courtNumber={num}
+                            currentTime={currentTime}
+                            timeoutWarningMinutes={CONSTANTS.TIMEOUT_WARNING_MIN}
+                            formatPlayerName={formatPlayerDisplayName}
+                            statusByCourt={statusByCourt}
+                            selectableByCourt={selectableByCourt}
+                            statusObjectByCourt={statusObjectByCourt}
+                            data={data}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Mobile layout - 2x6 grid for all 12 courts + waiting list */}
+                  <div className="mobile-layout">
+                    <div className="mobile-courts-grid">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                        <CourtDisplay
+                          key={num}
+                          courtNumber={num}
+                          currentTime={currentTime}
+                          timeoutWarningMinutes={CONSTANTS.TIMEOUT_WARNING_MIN}
+                          formatPlayerName={formatPlayerDisplayName}
+                          statusByCourt={statusByCourt}
+                          selectableByCourt={selectableByCourt}
+                          data={data}
+                        />
+                      ))}
+                    </div>
+                    
+                    {/* Mobile next available section - only show if active */}
+                    {(() => {
+                      const getCourtAvailabilityTimelineMobile = () => {
+                        if (!courts || !Array.isArray(courts)) return [];
+                        
+                        const courtAvailability = [];
+                        let courtBlocks = [];
+                        try {
+                          courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+                        } catch (error) {
+                          console.error('Error loading court blocks:', error);
+                        }
+                        
+                        // Check if ALL courts are currently wet (mobile version)
+                        const activeWetBlocks = courtBlocks.filter(block => 
+                          block.isWetCourt === true &&
+                          new Date(block.startTime) <= currentTime &&
+                          new Date(block.endTime) > currentTime
+                        );
+                        const wetCourtNumbers = new Set(activeWetBlocks.map(block => block.courtNumber));
+                        
+                        // If all courts are wet, return special marker
+                        if (wetCourtNumbers.size === courts.length && courts.length > 0) {
+                          return [{ allCourtsWet: true }];
+                        }
+                        
+                        courts.forEach((court, index) => {
+                          const courtNumber = index + 1;
+                          let endTime = null;
+                          
+                          const activeBlock = courtBlocks.find(block => 
+                            block.courtNumber === courtNumber && 
+                            new Date(block.startTime) <= currentTime &&
+                            new Date(block.endTime) > currentTime
+                          );
+                          
+                          if (activeBlock) {
+                            endTime = activeBlock.endTime;
+                          } else if (court) {
+                            if (court.current && court.current.endTime) {
+                              endTime = court.current.endTime;
+                            } else if (court.endTime) {
+                              endTime = court.endTime;
+                            }
+                          }
+                          
+                          if (endTime) {
+                            try {
+                              const parsedEndTime = new Date(endTime);
+                              if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
+                                courtAvailability.push({
+                                  courtNumber,
+                                  endTime: parsedEndTime
+                                });
+                              }
+                            } catch (error) {
+                              console.error(`Error parsing end time for court ${courtNumber}:`, error);
+                            }
+                          }
+                        });
+                        
+                        return courtAvailability.sort((a, b) => a.endTime.getTime() - b.endTime.getTime());
+                      };
+                      
+                      const timeline = getCourtAvailabilityTimelineMobile();
+                      
+                      // Mobile version - calculate if courts are available after serving waitlist
+                      let mobileEmptyCourtCount = 0;
+                      if (USE_SHARED_DOMAIN && A && A.getFreeCourtsInfo) {
+                        try {
+                          const now = new Date();
+                          const data = Storage.readDataSafe();
+                          const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+                          const wetSet = new Set(
+                            blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                                  .map(b => b.courtNumber)
+                          );
+                          const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+                          mobileEmptyCourtCount = info.free ? info.free.length : 0;
+                        } catch (error) {
+                          console.error('Error getting mobile free court count:', error);
+                        }
+                      }
+                      
+                      const mobileSurplusCourts = mobileEmptyCourtCount - waitingGroups.length;
+                      const hasAvailableNow = mobileSurplusCourts > 0;
+                      
+                      // Only show if there are courts with future availability times
+                      if (hasAvailableNow || timeline.length === 0) {
+                        return null;
+                      }
+                      
+                      return (
+                        <div className="mobile-next-available">
+                          <h3 className="courtboard-text-base font-semibold text-sky-500 mb-2">Next Available</h3>
+                          <div className="mobile-next-available-list">
+                            {timeline[0]?.allCourtsWet ? (
+                              <div className="text-center">
+                                <span className="text-yellow-400">Courts will become available as they dry</span>
+                              </div>
+                            ) : (
+                              timeline.slice(0, 3).map((availability, idx) => (
+                                <div key={idx} className="mobile-next-available-item">
+                                  <span className="text-green-400 font-medium">
+                                    Court {availability.courtNumber}
+                                  </span>
+                                  <span className="text-white font-semibold">
+                                    {availability.isOvertime ? (
+                                      <span className="text-white font-bold">Now</span>
+                                    ) : availability.endTime ? (
+                                      availability.endTime.toLocaleTimeString([], {
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                      })
+                                    ) : (
+                                      "Time TBD"
+                                    )}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    
+                    {/* Mobile waiting list section - only show if groups waiting */}
+                    {hasWaiting && (
+                      <div className="mobile-waiting-section">
+                        <WaitingList 
+                          waitingGroups={waitingGroups} 
+                          courts={courts} 
+                          currentTime={currentTime} 
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Mobile reserved courts section */}
+                    <div className="mobile-next-available mt-4">
+                      <ReservedCourtsPanel
+                        items={selectReservedItemsFromBlocks(courtBlocks, currentTime)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT column wrapper */}
+              <div className="right-column flex flex-col h-full min-h-0" data-right-col>
+                <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} courtBlocks={courtBlocks} />
+              </div>
+              </div>
+          </div>
+        );
+      };
+
+      // STEP 13: Render the application
+      // console.log('🎯 Rendering fully integrated application...');
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<TennisCourtDisplay />);
+      
+      // Hide performance overlay after 30 seconds for production use
+      addTimer(setTimeout(() => {
+        const overlay = document.getElementById('performance-overlay');
+        if (overlay) {
+          overlay.classList.add('hidden');
+        }
+      }, 30000), 'timeout');
+      
+      // console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
+    }
+  </script>
+
+  <!-- Debug Panel - Only visible when ?debug=1 -->
+  <script>
+  (function() {
+    const params = new URLSearchParams(location.search);
+    if (params.get('debug') !== '1') return;
+
+    const debugPanel = document.createElement('div');
+    debugPanel.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      width: 350px;
+      max-height: 500px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-y: auto;
+      z-index: 99999;
+      pointer-events: auto;
+      border: 1px solid #0f0;
+    `;
+    debugPanel.innerHTML = `
+      <div style="color: #ff0; margin-bottom: 5px;">DEBUG MODE - Events Log</div>
+      <div style="margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+        <button id="runSelfTests" style="background: #333; color: #0f0; border: 1px solid #0f0; padding: 4px 8px; border-radius: 3px; font-family: inherit; font-size: 10px; cursor: pointer;">Run self-tests</button>
+        <span style="color: #666; font-size: 10px; margin-left: 8px;">Press 't' to run</span>
+        <div id="selfTestResults" style="margin-top: 5px; font-size: 10px;"></div>
+      </div>
+      <div id="debugContent"></div>
+    `;
+    document.body.appendChild(debugPanel);
+
+    const updateDebugPanel = () => {
+      if (!window.Tennis || !window.Tennis.Events || !window.Tennis.Events.debug) return;
+      
+      const events = window.Tennis.Events.debug.getLog();
+      const content = document.getElementById('debugContent');
+      if (!content) return;
+
+      content.innerHTML = events.map((event, i) => {
+        const time = new Date(event.timestamp).toLocaleTimeString();
+        return `<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
+          <div style="color: #ff0;">[${time}] ${event.type}</div>
+          <div style="color: #0ff;">${event.eventName}</div>
+          ${event.data ? `<div style="color: #fff; font-size: 10px;">${JSON.stringify(event.data, null, 2)}</div>` : ''}
+        </div>`;
+      }).join('');
+    };
+
+    // Safe wrapper for self-tests
+    function runSelfTestsSafe() {
+      const fn = window.Tennis?.selfTest?.runAll;
+      if (typeof fn !== 'function') {
+        return {
+          passed: 0, failed: 1,
+          results: [{ name: 'SelfTest not available', ok: false, notes: 'Tennis.selfTest.runAll missing' }]
+        };
+      }
+      try { return fn(); }
+      catch (e) {
+        return {
+          passed: 0, failed: 1,
+          results: [{ name: 'Run failed', ok: false, notes: String(e?.message || e) }]
+        };
+      }
+    }
+
+    function renderSelfTestResults(result) {
+      const resultsDiv = document.getElementById('selfTestResults');
+      if (!resultsDiv) return;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const passed = result.passed || 0;
+      const failed = result.failed || 0;
+      
+      // Summary with color coding
+      const summaryColor = failed > 0 ? '#f00' : '#0f0';
+      let html = `<div style="color: ${summaryColor}; font-weight: bold;">${passed} passed / ${failed} failed</div>`;
+      html += `<div style="color: #666; font-size: 9px;">Last run: ${timestamp}</div>`;
+      
+      // Compact table
+      if (result.results && result.results.length > 0) {
+        html += '<div style="margin-top: 5px; max-height: 150px; overflow-y: auto;">';
+        html += '<table style="width: 100%; font-size: 9px; border-collapse: collapse;">';
+        html += '<tr style="color: #ff0;"><th style="text-align: left; padding: 2px;">Test</th><th style="text-align: center; padding: 2px;">OK</th><th style="text-align: left; padding: 2px;">Notes</th></tr>';
+        
+        result.results.forEach(test => {
+          const okColor = test.ok ? '#0f0' : '#f00';
+          const okText = test.ok ? '✓' : '✗';
+          html += `<tr style="border-top: 1px solid #333;">`;
+          html += `<td style="padding: 2px; color: #fff;">${test.name || test.Test || ''}</td>`;
+          html += `<td style="padding: 2px; text-align: center; color: ${okColor};">${okText}</td>`;
+          html += `<td style="padding: 2px; color: #aaa;">${(test.notes || test.Notes || '').slice(0, 30)}${(test.notes || test.Notes || '').length > 30 ? '...' : ''}</td>`;
+          html += `</tr>`;
+        });
+        html += '</table></div>';
+      }
+      
+      resultsDiv.innerHTML = html;
+    }
+
+    let running = false;
+    async function handleRunSelfTests() {
+      if (running) return;
+      running = true;
+      try {
+        const resultsDiv = document.getElementById('selfTestResults');
+        if (resultsDiv) {
+          resultsDiv.innerHTML = '<div style="color: #ff0;">Running tests...</div>';
+        }
+        const result = await runSelfTestsSafe();
+        renderSelfTestResults(result);
+      } finally {
+        running = false;
+      }
+    }
+    
+    // Button click handler
+    const runButton = document.getElementById('runSelfTests');
+    if (runButton) {
+      runButton.addEventListener('click', handleRunSelfTests);
+    }
+    
+    // Keyboard shortcut (t key)
+    window.addEventListener('keydown', (e) => {
+      if ((e.key || '').toLowerCase() === 't') {
+        e.preventDefault();
+        handleRunSelfTests();
+      }
+    }, { passive: false });
+
+    // Update every 500ms
+    setInterval(updateDebugPanel, 500);
+    
+    // Initial update
+    setTimeout(updateDebugPanel, 100);
+  })();
+  </script>
+
+</body>
+</html>
