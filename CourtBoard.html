@@ -412,10 +412,14 @@
       display: none !important;
     }
     
-    /* Add bottom padding so sticky bar doesn't cover content */
-    .variant-mobile body,
+    /* Extend light grey background to meet green bar with adjusted padding */
+    .variant-mobile .bg-gradient-to-br {
+      padding: 6px 16px calc(72px + 6px) 16px !important; /* Top: 6px, Sides: 16px, Bottom: 6px + 72px for bar */
+      min-height: 100vh !important; /* Ensure full coverage to bottom bar */
+    }
+    
     .variant-mobile .main-layout {
-      padding-bottom: 72px;
+      padding-bottom: 0; /* Remove extra padding since background handles it */
     }
     
     /* Z-index variables for reliable stacking */
@@ -680,22 +684,56 @@
       color: #e2e8f0; /* slate-200 */
     }
     
-    /* Court conditions needs full height - 90% of screen */
+    /* Court conditions needs full height - 100% of screen */
+    .modal-court-conditions-full {
+      align-items: flex-end !important; /* Keep at bottom for slide-up animation */
+    }
+    
     .modal-court-conditions-full .mobile-modal-content {
-      max-height: 95vh;
-      height: 90vh;
-      margin-top: 5vh; /* Start from 5% down the screen */
+      max-height: 100vh;
+      height: 100vh;
+      margin-top: 0; /* Start from top of screen for full coverage */
+      border-radius: 0; /* Remove rounded corners for full screen */
+    }
+    
+    .modal-court-conditions-full .mobile-modal-header {
+      display: none !important; /* Hide header completely */
     }
     
     .modal-court-conditions-full .mobile-modal-body {
-      max-height: 85vh;
-      height: 85vh;
+      max-height: 100vh; /* Full height since no header */
+      height: 100vh;
       padding: 0; /* Remove padding to maximize iframe space */
     }
     
     .modal-court-conditions-full .modal-court-conditions {
       height: 100%;
       width: 100%;
+      position: relative;
+    }
+    
+    /* Floating close button for court conditions */
+    .modal-court-conditions-full .court-conditions-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 36px;
+      height: 36px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      color: white;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    
+    .modal-court-conditions-full .court-conditions-close:active {
+      transform: scale(0.9);
     }
     
     /* Reserved courts modal - make it bigger to show all content */
@@ -3559,7 +3597,13 @@
                 src: wetCourtsUrl,
                 title: 'Court Conditions',
                 style: { width: '100%', height: '100%', border: 'none' }
-              })
+              }),
+              React.createElement('button', {
+                className: 'court-conditions-close',
+                onClick: onClose,
+                'aria-label': 'Close',
+                type: 'button'
+              }, '✕')
             );
             
           case 'reserved':
