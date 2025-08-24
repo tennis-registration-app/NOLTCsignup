@@ -122,6 +122,7 @@
         const d = e?.data; if (!d || d.type !== 'register') return;
         const n = Number(d.courtNumber);
         window.__mobileFlow = true;
+        window.__wasMobileFlow = true; // Persistent flag that doesn't get reset
         window.__mobileCourt = Number.isFinite(n) ? n : null;
 
         console.log('Mobile: Received register message for court', n);
@@ -146,6 +147,7 @@
 
       // 2) Success handler - will be attached when UI is ready
       window.__mobileSuccessHandler = function(courtNumber) {
+        console.log('🎯 MOBILE SUCCESS HANDLER - Mobile Flow:', window.__mobileFlow, 'Court:', courtNumber);
         if (!window.__mobileFlow) return;
         const n = Number(courtNumber) || Number(window.__mobileCourt) || null;
         try { 
@@ -153,8 +155,11 @@
         } catch(e) {
           console.log('Mobile: Error sending success message:', e);
         }
-        window.__mobileFlow = false; 
-        window.__mobileCourt = null;
+        // Delay clearing mobile flags so success screen can render first
+        setTimeout(() => {
+          window.__mobileFlow = false; 
+          window.__mobileCourt = null;
+        }, 200); // Slightly longer delay than the other timeout
       };
     })();
   </script>
@@ -263,6 +268,7 @@
         const n   = Number(window.__mobileCourt) || Number(api?.state?.selectedCourt) || window.__preselectedCourt || null;
 
         dbg('Registration: Sending success signal for court', n, 'mobile flow:', window.__mobileFlow);
+        console.log('🎯 SEND SUCCESS - Mobile Flow before timeout:', window.__mobileFlow);
         try {
           window.parent.postMessage({ type: 'registration:success', courtNumber: n }, '*');
           dbg('Registration: Success message sent successfully');
@@ -270,9 +276,11 @@
           if (DEBUG) console.log('Registration: Error sending success message:', e);
         }
 
-        // clear mobile flags (so standalone flows remain clean)
-        window.__mobileFlow  = false;
-        window.__mobileCourt = null;
+        // clear mobile flags after success screen renders (so standalone flows remain clean)
+        setTimeout(() => {
+          window.__mobileFlow  = false;
+          window.__mobileCourt = null;
+        }, 100); // Small delay to let success screen render first
       }
 
       const api = window.UI || window;
@@ -2285,10 +2293,12 @@ const SuccessScreen = ({
 // Fixed layout card component
   const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] h-auto md:h-[550px]">
-      {/* Fixed header area - always 80px on desktop, auto on mobile */}
-      <div className="h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4">
-        {headerContent}
-      </div>
+      {/* Fixed header area - only render if headerContent exists */}
+      {headerContent && (
+        <div className="h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4">
+          {headerContent}
+        </div>
+      )}
       
       {/* Fixed main content area - auto height on mobile, 310px on desktop */}
       <div className="h-auto md:h-[310px] p-6 sm:p-8 flex flex-col justify-center">
@@ -2302,8 +2312,11 @@ const SuccessScreen = ({
     </div>
   );
 
-  // Header content for both success types
-  const headerContent = (
+  // Header content for both success types - hide for mobile flow
+  // Use both current mobile flow and a persistent flag that doesn't get reset
+  const isMobileFlow = window.__mobileFlow || window.__wasMobileFlow || (window.top !== window.self);
+  console.log('🔍 SUCCESS SCREEN DEBUG - Mobile Flow:', window.__mobileFlow, 'Was Mobile:', window.__wasMobileFlow, 'Is Embedded:', (window.top !== window.self), 'Final:', isMobileFlow);
+  const headerContent = isMobileFlow ? null : (
     <div className="flex justify-between items-center h-full">
       <button
         onClick={onHome}
@@ -5694,7 +5707,7 @@ onFocus={() => {
    }
 
    return (
-     <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+     <div className={`w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex ${window.__mobileFlow ? 'items-start pt-[15vh]' : 'items-center justify-center'}`}>
        <ToastHost />
        <AlertDisplay show={showAlert} message={alertMessage} />
        {showTimeoutWarning && (
@@ -5702,7 +5715,7 @@ onFocus={() => {
            Session will expire in 30 seconds due to inactivity
          </div>
        )}
-       <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl h-full max-h-[95vh] flex flex-col relative overflow-hidden">
+       <div className={`bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl h-full ${window.__mobileFlow ? 'max-h-[70vh]' : 'max-h-[95vh]'} flex flex-col relative overflow-hidden`}>
          {/* Mobile-specific UI when no player added yet */}
          {window.__mobileFlow && currentGroup.length === 0 ? (
            <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-green-50 rounded-xl text-center">
@@ -5729,8 +5742,10 @@ onFocus={() => {
            {/* Only show Current Group section if there are players or not in mobile flow */}
            {(currentGroup.length > 0 || !window.__mobileFlow) && (
              <>
-               <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
-               <div className="space-y-2 mb-3 sm:mb-4">
+               {!window.__mobileFlow && (
+                 <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
+               )}
+               <div className={`space-y-2 ${!window.__mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
                  {currentGroup.map((player, idx) => (
                <div
                  key={idx}
@@ -6324,7 +6339,7 @@ onFocus={() => {
           }}
           className={`${isMobileView ? 'w-full btn--full' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
         >
-          {isMobileView ? 'Continue' : (window.__mobileFlow && window.__preselectedCourt ? `Register for Court ${window.__preselectedCourt}` : 'Select a Court')}
+          {isMobileView ? (window.__mobileFlow && window.__preselectedCourt ? `Take Court ${window.__preselectedCourt}` : 'Continue') : (window.__mobileFlow && window.__preselectedCourt ? `Register for Court ${window.__preselectedCourt}` : 'Select a Court')}
         </button>
       ) : (
         <button

@@ -183,12 +183,12 @@
         console.log('Mobile Shell: Opening registration for court', d.courtNumber);
         showReg(d.courtNumber);
       } else if (d.type === 'registration:success') {
-        console.log('Mobile Shell: Registration success for court', d.courtNumber, '- closing overlay in 5 seconds');
-        // Show success screen for 5 seconds before closing
+        console.log('Mobile Shell: Registration success for court', d.courtNumber, '- closing overlay in 15 seconds');
+        // Show success screen for 15 seconds before closing
         setTimeout(() => {
           hideReg();
-          console.log('Mobile Shell: Closing overlay after 5 second delay');
-        }, 5000);
+          console.log('Mobile Shell: Closing overlay after 15 second delay');
+        }, 15000);
         // visual confirmation on the board immediately
         try { iframeBoard.contentWindow.postMessage({ type:'highlight', courtNumber: Number(d.courtNumber) }, '*'); } catch {}
       }

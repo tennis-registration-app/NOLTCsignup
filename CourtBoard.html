@@ -325,10 +325,14 @@
         border-radius: 0.5rem;
       }
       
-      /* Ensure Reserved Courts looks good on mobile */
+      /* Ensure Reserved Courts looks good on mobile - larger text, tighter spacing */
       .mobile-next-available .reserved-courts-text,
       .mobile-next-available .reserved-courts-empty {
-        font-size: 0.75rem; /* Smaller for mobile layout */
+        font-size: 1.125rem; /* 50% larger: 0.75rem * 1.5 = 1.125rem */
+      }
+      
+      .mobile-next-available .reserved-courts-text {
+        line-height: 1.2; /* Tighter line spacing */
       }
       
       .time-header {
@@ -682,6 +686,12 @@
     
     .modal-reserved-courts .reserved-courts-text {
       color: #e2e8f0; /* slate-200 */
+      font-size: 1.125rem !important; /* 50% larger for mobile modal */
+      line-height: 1.2 !important; /* Tighter line spacing */
+    }
+    
+    .modal-reserved-courts .reserved-courts-empty {
+      font-size: 1.3125rem !important; /* 50% larger: 0.875rem * 1.5 */
     }
     
     /* Court conditions needs full height - 100% of screen */
@@ -2392,7 +2402,7 @@
                 <p className="text-gray-400 reserved-courts-empty">No scheduled blocks today</p>
               </div>
             ) : (
-              <ul className="mt-2 space-y-2 reserved-courts-text text-gray-300">
+              <ul className="mt-2 space-y-1 reserved-courts-text text-gray-300">
                 {items.slice(0, 8).map((it, i) => (
                   <li key={`${it.key || i}`} className="flex justify-between">
                     <span className="font-medium text-gray-200">
@@ -3612,14 +3622,14 @@
             const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
             return React.createElement('div', { className: 'modal-reserved-courts' },
               reservedItems.length === 0 
-                ? React.createElement('div', { className: 'text-center p-6' },
+                ? React.createElement('div', { className: 'text-center p-6 pb-16' },
                     React.createElement('p', { className: 'text-gray-400 reserved-courts-empty' }, 'No scheduled blocks today')
                   )
-                : React.createElement('ul', { className: 'space-y-1 reserved-courts-text text-gray-300 p-6' },
+                : React.createElement('ul', { className: 'space-y-0.5 reserved-courts-text text-gray-300 px-6 pb-16 pt-2' },
                     reservedItems.map((item, idx) => {
                       return React.createElement('li', { 
                         key: item.key || idx, 
-                        className: 'flex justify-between py-2'
+                        className: 'flex justify-between py-1'
                       }, [
                         React.createElement('span', { className: 'font-medium text-gray-200' }, 
                           item.courts?.length > 1 ? `Courts ${item.courts.join(", ")}` : `Court ${item.courts?.[0] || 'N/A'}`
