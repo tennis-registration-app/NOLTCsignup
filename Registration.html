@@ -34,11 +34,52 @@
         font-size: 0.75rem !important;       /* 12px */
       }
     }
+    
+    /* Mobile variant styles - only when ?view=mobile */
+    .variant-mobile .reg-modal--mobile {
+      padding: 12px;
+    }
+    
+    .variant-mobile .reg-modal--mobile .input--compact {
+      min-height: 44px;
+      font-size: 1rem;
+      padding: 10px 12px;
+    }
+    
+    .variant-mobile .reg-modal--mobile .actions .btn--full {
+      width: 100%;
+    }
+    
+    .variant-mobile .reg-modal--mobile h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Remove full-page backgrounds in mobile iframe (so parent blur shows through) */
+    .variant-mobile html,
+    .variant-mobile body {
+      background: transparent !important;
+    }
+    
+    /* Clear any page wrapper that paints gradients/solids */
+    .variant-mobile .bg-gradient-to-br {
+      background: transparent !important;
+    }
 
   </style>
 </head>
 <body>
   <div id="root"></div>
+  
+  <!-- Mobile View Detection -->
+  <script>
+    window.IS_MOBILE_VIEW = 
+      new URLSearchParams(location.search).get('view') === 'mobile';
+    document.documentElement.classList.toggle(
+      'variant-mobile',
+      window.IS_MOBILE_VIEW
+    );
+  </script>
   
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -2605,33 +2646,26 @@ const CourtSelectionScreen = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-16 sm:mb-20">
           {availableCourts.map(courtNum => {
             const warningInfo = getCourtWarningInfo(courtNum);
-            const hasUpcomingBlock = warningInfo && warningInfo.type === 'limited' && warningInfo.minutesUntilBlock < 60;
-            const isBlocked = warningInfo && warningInfo.type === 'blocked';
+            const hasUpcomingBlock = warningInfo && warningInfo.minutesUntilBlock < 60;
+            // Don't treat upcoming blocks as "blocked" - they're still playable with limited time
             
             return (
               <button
                 key={courtNum}
                 onClick={() => handleCourtClick(courtNum)}
-                disabled={isBlocked}
                 className={`relative p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform shadow-lg ${
                   showingOvertimeCourts 
                     ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800" 
                     : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600"
-                } ${isBlocked ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105'}`}
+                } hover:scale-105`}
               >
                 <div className="flex flex-col items-center justify-center h-full">
                   <span>Court {courtNum}</span>
                   
-                  {/* Only show notice on regular available courts (not overtime courts) and when block is within 60 minutes */}
-                  {hasUpcomingBlock && !showingOvertimeCourts && (
-                    <div className="absolute bottom-2 left-2 right-2 bg-amber-500 bg-opacity-90 text-white text-xs px-2 py-1 rounded text-center font-normal">
-                      {warningInfo.reason} begins in {warningInfo.minutesUntilBlock}m
-                    </div>
-                  )}
-                  
-                  {isBlocked && (
-                    <div className="absolute bottom-2 left-2 right-2 bg-red-500 bg-opacity-90 text-white text-xs px-2 py-1 rounded text-center font-normal">
-                      Unavailable - starts in {warningInfo.minutesUntilBlock}m
+                  {/* Show upcoming block warning as simple yellow text when within 60 minutes */}
+                  {hasUpcomingBlock && (
+                    <div className="absolute bottom-2 left-2 right-2 text-yellow-300 text-xs text-center font-normal">
+                      {warningInfo.reason} starting in {warningInfo.minutesUntilBlock}m
                     </div>
                   )}
                 </div>
@@ -2878,7 +2912,7 @@ function ToastHost() {
   );
 }
 
-const TennisRegistration = () => {
+const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Initialize data state
   const [data, setData] = useState(() => ({
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
@@ -4280,7 +4314,8 @@ console.log('✅ Court assigned result:', result);
         console.debug('[waitlist] joined ok');
       } else {
         console.error('[waitlist] service failed:', res?.error);
-        Tennis?.UI?.toast?.('Could not join waitlist', { type: 'error' });
+        // Show the specific error message from the service
+        Tennis?.UI?.toast?.(res?.error || 'Could not join waitlist', { type: 'error' });
       }
     } catch (e) {
       console.error('[waitlist] failed:', e);
@@ -5511,9 +5546,11 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
        <ToastHost />
        <AlertDisplay show={showAlert} message={alertMessage} />
-       <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-12 w-full max-w-2xl">
-         <div className="mb-6 sm:mb-8 relative">
-           <label className="block text-xl sm:text-2xl font-medium mb-3 sm:mb-4">Enter your name or member number</label>
+       <div className={`bg-white rounded-2xl shadow-2xl ${isMobileView ? 'p-4' : 'p-6 sm:p-12'} w-full max-w-2xl ${isMobileView ? 'reg-modal--mobile' : ''}`}>
+         <div className={`${isMobileView ? 'mb-4' : 'mb-6 sm:mb-8'} relative`}>
+           <label className={`block ${isMobileView ? 'text-base' : 'text-xl sm:text-2xl'} font-medium ${isMobileView ? 'mb-2' : 'mb-3 sm:mb-4'}`}>
+             {isMobileView ? 'Register Group' : 'Enter your name or member number'}
+           </label>
            <div className="relative">
              <input
                type="text"
@@ -5587,6 +5624,7 @@ onFocus={() => {
                // Set waitlist priority flag (but don't remove from waitlist yet)
                console.log('[COURT AVAILABLE BUTTON] Setting waitlist priority - NOT removing from waitlist yet');
                console.log('[COURT AVAILABLE BUTTON] Waitlist length remains:', data.waitingGroups?.length || 0);
+               console.log('[COURT AVAILABLE BUTTON] Loading group:', firstWaitingGroup.players);
                setHasWaitlistPriority(true);
                
                // Navigate to court selection (removal from waitlist happens after court assignment)
@@ -5682,7 +5720,7 @@ onFocus={() => {
                {currentGroup.length === 0
                  ? "Search for players to add to your group"
                  : currentGroup.length === 1 
-                 ? "Add more players to your group or select a court"
+                 ? (isMobileView ? "" : "Add more players to your group or select a court")
                  : `${currentGroup.length} players in your group`}
              </p>
            </div>
@@ -5750,8 +5788,8 @@ onFocus={() => {
                      markUserTyping();
                      setShowSuggestions(searchInput.length > 0);
                    }}
-                   placeholder="Enter your name or Member #"
-                   className="w-full p-4 sm:p-5 text-xl sm:text-2xl border-2 rounded-xl focus:border-green-500 focus:outline-none"
+                   placeholder={isMobileView ? "Enter Name or Number" : "Enter your name or Member #"}
+                   className={`w-full ${isMobileView ? 'p-3 text-base input--compact' : 'p-4 sm:p-5 text-xl sm:text-2xl'} border-2 rounded-xl focus:border-green-500 focus:outline-none`}
                    id="mobile-group-search-input"
                    autoFocus
                    autoComplete="off"
@@ -6284,9 +6322,9 @@ onFocus={() => {
               setCurrentScreen("court");
             }
           }}
-          className="bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors"
+          className={`${isMobileView ? 'w-full btn--full' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
         >
-          {window.__mobileFlow && window.__preselectedCourt ? `Register for Court ${window.__preselectedCourt}` : 'Select a Court'}
+          {isMobileView ? 'Continue' : (window.__mobileFlow && window.__preselectedCourt ? `Register for Court ${window.__preselectedCourt}` : 'Select a Court')}
         </button>
       ) : (
         <button
@@ -6310,7 +6348,7 @@ onFocus={() => {
               }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
             }
           }}
-          className="bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors"
+          className={`${isMobileView ? 'w-full btn--full' : ''} bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors`}
         >
           Join Waitlist
         </button>
@@ -6664,7 +6702,7 @@ onFocus={() => {
  
 // Mount the app
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<TennisRegistration />);
+root.render(<TennisRegistration isMobileView={window.IS_MOBILE_VIEW} />);
  </script>
 
   <!-- Debug Panel - Only visible when ?debug=1 -->

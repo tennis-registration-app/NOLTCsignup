@@ -10,6 +10,33 @@
     iframe{width:100%;height:100%;border:0;background:#111}
     .overlay{position:absolute;inset:0;display:none;background:rgba(0,0,0,.45);backdrop-filter:blur(6px)}
     .overlay.show{display:block}
+    
+    /* Force iframe to properly render court colors */
+    #iframeBoard {
+      opacity: 1;
+      transform: none;
+      filter: none;
+      color-scheme: normal;
+    }
+    
+    /* Ensure court colors are preserved on all screen sizes */
+    @media (max-width: 768px) {
+      #iframeBoard {
+        background: transparent !important;
+      }
+    }
+    
+    /* Make the Registration iframe transparent when overlay is visible */
+    #regOverlay.show #iframeReg {
+      background: transparent !important;
+    }
+    
+    /* The overlay itself applies the blur, so the court grid underneath shows through */
+    #regOverlay.show {
+      background: rgba(0, 0, 0, 0.4); /* tweak opacity as needed */
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
   </style>
   
   <!-- Shared modules -->
@@ -98,17 +125,36 @@
     // Run checks
     document.addEventListener('DOMContentLoaded', () => {
       checkModuleAvailability();
+      
+      // Ensure iframe content renders colors correctly
+      const boardFrame = document.getElementById('iframeBoard');
+      if (boardFrame) {
+        boardFrame.addEventListener('load', () => {
+          try {
+            // Force the iframe to recalculate styles
+            const iframeDoc = boardFrame.contentDocument || boardFrame.contentWindow.document;
+            if (iframeDoc && iframeDoc.body) {
+              // Trigger a reflow to ensure styles are applied
+              iframeDoc.body.style.display = 'none';
+              iframeDoc.body.offsetHeight; // Force reflow
+              iframeDoc.body.style.display = '';
+            }
+          } catch (e) {
+            console.warn('Could not access iframe content:', e);
+          }
+        });
+      }
     });
   </script>
 </head>
 <body>
   <main class="host">
-    <iframe id="iframeBoard" src="CourtBoard.html" title="Court Board"></iframe>
+    <iframe id="iframeBoard" src="CourtBoard.html?view=mobile" title="Court Board"></iframe>
     <div id="regOverlay" class="overlay" aria-hidden="true">
-      <div style="position:absolute;top:10px;right:10px;z-index:1000;">
-        <button onclick="hideReg()" style="background:rgba(0,0,0,0.8);color:white;border:none;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;">✕</button>
+      <div style="position:absolute;top:50px;right:30px;z-index:1000;">
+        <button type="button" onclick="hideReg()" style="background:white;color:#374151;border:none;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.4);">✕</button>
       </div>
-      <iframe id="iframeReg" src="Registration.html" title="Registration"></iframe>
+      <iframe id="iframeReg" src="Registration.html?view=mobile" title="Registration"></iframe>
     </div>
   </main>
 

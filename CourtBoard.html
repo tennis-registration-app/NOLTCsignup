@@ -277,6 +277,12 @@
         max-width: 140px;
       }
       
+      /* But not when in mobile variant mode */
+      .variant-mobile .court-card {
+        height: auto;
+        max-width: none;
+      }
+      
       .bottom-section {
         display: none;
       }
@@ -351,6 +357,393 @@
         font-size: 3rem !important;
       }
     }
+    
+    /* Mobile variant styles - only when ?view=mobile */
+    .variant-mobile .mobile-courts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: stretch;
+    }
+    
+    .variant-mobile .court-card {
+      height: auto;      /* let cards size naturally */
+      padding: 8px;      /* compact padding */
+      min-height: 64px;  /* 40% smaller than original, preserve tap target */
+    }
+    
+    /* Compact font sizes for mobile */
+    .variant-mobile .court-card h3 {
+      font-size: 0.95rem;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    
+    .variant-mobile .court-card .court-text-sm {
+      font-size: 0.9rem;
+      line-height: 1.2;
+    }
+    
+    .variant-mobile .court-card .text-xs,
+    .variant-mobile .court-card .court-text-xs {
+      font-size: 0.75rem;
+    }
+    
+    /* 2-line clamp for names to prevent overflow */
+    .variant-mobile .court-card .truncate {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Hide time/date header in mobile view only */
+    .variant-mobile .time-header,
+    .variant-mobile .date-header {
+      display: none !important;
+    }
+    
+    /* Mobile: hide secondary panels; grid becomes the focus */
+    .variant-mobile .next-available-section,
+    .variant-mobile .reserved-courts-panel,
+    .variant-mobile .mobile-waiting-section,
+    .variant-mobile .mobile-next-available {
+      display: none !important;
+    }
+    
+    /* Add bottom padding so sticky bar doesn't cover content */
+    .variant-mobile body,
+    .variant-mobile .main-layout {
+      padding-bottom: 72px;
+    }
+    
+    /* Z-index variables for reliable stacking */
+    :root { 
+      --modal-z: 2147482000; 
+      --bar-z: 2147483000; 
+    }
+    
+    /* Modal root must never eat clicks when closed */
+    #mobile-modal-root { 
+      pointer-events: none; 
+      z-index: var(--modal-z);
+    }
+    #mobile-modal-root.modal-open { 
+      pointer-events: auto; 
+    }
+    
+    /* Any passive blur/overlay layers must not capture clicks */
+    .blur-overlay { 
+      pointer-events: none !important; 
+    }
+
+    /* Plain-JS Fallback Bar - Always works, always visible */
+    .mbb-fallback {
+      position: fixed;
+      left: 0; 
+      right: 0; 
+      bottom: 0;
+      z-index: 2147483000; /* above anything */
+      display: flex; 
+      gap: 8px;
+      padding: 12px 8px 8px 8px; /* increased top padding to close seam */
+      padding-bottom: calc(8px + env(safe-area-inset-bottom,0));
+      background: rgba(16, 185, 129, 0.90); /* emerald theme to match courts */
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      pointer-events: auto;
+    }
+
+    /* Buttons: icon + visible label */
+    .mbb-fallback button {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      min-height: 44px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      font-size: 1.2rem;       /* emoji size */
+      line-height: 1;
+      cursor: pointer;
+      color: #e5e7eb; /* gray-200 for dark background */
+    }
+    
+    .mbb-fallback button .lbl {
+      display: block !important;          /* force visible */
+      font-size: 0.72rem;      /* label size */
+      line-height: 1.1;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+    
+    .mbb-fallback button[disabled] {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .mbb-fallback button:hover:not([disabled]) {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .mbb-fallback button:active:not([disabled]) {
+      background: rgba(255,255,255,0.15);
+      transform: scale(0.95);
+    }
+    
+    /* Mobile bottom bar styling - body level mounting */
+    .variant-mobile .mobile-bottom-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: var(--bar-z); /* above any overlay */
+      padding: 8px;
+      pointer-events: auto;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+      background: rgba(22, 101, 52, 0.95); /* dark green with transparency */
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(148, 163, 184, 0.2); /* slate-400 with opacity */
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .mobile-bottom-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: #94a3b8; /* slate-400 */
+      font-size: 1.2rem; /* Larger emoji */
+      font-weight: 500;
+      cursor: pointer;
+      padding: 8px 6px;
+      border-radius: 8px;
+      position: relative;
+      min-width: 0;
+      flex: 1;
+      transition: all 0.2s ease;
+    }
+    
+    .mobile-bottom-button:active {
+      background: rgba(148, 163, 184, 0.1);
+      transform: scale(0.95);
+    }
+    
+    .mobile-bottom-button span {
+      margin-top: 2px;
+      line-height: 1.1;
+      text-align: center;
+      white-space: normal;
+      font-size: 0.7rem; /* Smaller text for labels */
+    }
+    
+    .mobile-bottom-button.disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+    
+    .mobile-bottom-button.disabled:active {
+      background: none;
+      transform: none;
+    }
+    
+    .mobile-badge {
+      position: absolute;
+      top: 4px;
+      right: 8px;
+      background: #f59e0b; /* amber-500 */
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+    
+    /* Mobile modal styling */
+    .mobile-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-end;
+      z-index: 100;
+    }
+    
+    .mobile-modal-content {
+      background: #1e293b; /* slate-800 */
+      width: 100%;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+    
+    .mobile-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    
+    .mobile-modal-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: white;
+      margin: 0;
+    }
+    
+    .mobile-modal-close {
+      background: rgba(148, 163, 184, 0.2);
+      border: none;
+      color: #94a3b8;
+      font-size: 1.25rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .mobile-modal-close:active {
+      background: rgba(148, 163, 184, 0.3);
+      transform: scale(0.95);
+    }
+    
+    .mobile-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+      max-height: 80vh;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-reserved-courts,
+    .modal-waitlist {
+      /* Reset some styles that might interfere */
+    }
+    
+    .modal-court-conditions {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    
+    .modal-court-conditions iframe {
+      flex: 1;
+      border: none;
+      background: white;
+    }
+    
+    /* Ensure modal body has proper overflow */
+    .mobile-modal-body {
+      max-height: 80vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-reserved-courts .reserved-courts-text {
+      color: #e2e8f0; /* slate-200 */
+    }
+    
+    /* Court conditions needs full height - 90% of screen */
+    .modal-court-conditions-full .mobile-modal-content {
+      max-height: 95vh;
+      height: 90vh;
+      margin-top: 5vh; /* Start from 5% down the screen */
+    }
+    
+    .modal-court-conditions-full .mobile-modal-body {
+      max-height: 85vh;
+      height: 85vh;
+      padding: 0; /* Remove padding to maximize iframe space */
+    }
+    
+    .modal-court-conditions-full .modal-court-conditions {
+      height: 100%;
+      width: 100%;
+    }
+    
+    /* Reserved courts modal - make it bigger to show all content */
+    .modal-reserved-large .mobile-modal-content {
+      max-height: 75vh;
+      height: auto;
+      min-height: 400px;
+    }
+    
+    .modal-reserved-large .mobile-modal-body {
+      max-height: 65vh;
+      height: auto;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    /* Waitlist modal - larger sizing to accommodate all entries */
+    .modal-waitlist-large .mobile-modal-content {
+      max-height: 80vh;
+      height: auto;
+      min-height: 400px;
+    }
+    
+    .modal-waitlist-large .mobile-modal-body {
+      max-height: 70vh;
+      height: auto;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .mobile-join-button {
+      background: #0ea5e9; /* sky-500 */
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      max-width: 240px;
+    }
+    
+    .mobile-join-button:active {
+      background: #0284c7; /* sky-600 */
+      transform: scale(0.98);
+    }
 
     /* Mobile tap highlight animation */
     @keyframes courtPulse { 
@@ -393,6 +786,11 @@
       z-index: 1000;
       min-width: 200px;
       backdrop-filter: blur(4px);
+    }
+    
+    /* Hide performance overlay in mobile view */
+    .variant-mobile .performance-overlay {
+      display: none !important;
     }
 
     .performance-overlay.hidden {
@@ -475,6 +873,18 @@
   </div>
 
   <div id="root"></div>
+  <!-- Second React root for mobile modals (isolated from main app) -->
+  <div id="mobile-modal-root"></div>
+  <!-- Third React root for mobile bottom bar (body level to avoid stacking contexts) -->
+  <div id="mobile-bottom-bar-root"></div>
+  
+  <!-- Plain-JS fallback bar -->
+  <div id="mobile-bottom-bar-fallback" hidden>
+    <button type="button" data-action="conditions">🌦️<span class="lbl">Court Conditions</span></button>
+    <button type="button" data-action="reserved">🏛️<span class="lbl">Reserved</span></button>
+    <button type="button" data-action="waitlist">👥<span class="lbl">Waitlist</span></button>
+    <button type="button" data-action="join" disabled aria-disabled="true">🎾<span class="lbl">Join Waitlist</span></button>
+  </div>
   
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -493,6 +903,31 @@
       // call this when an available court is tapped
       window.mobileTapToRegister = function(courtNumber){
         if (!MOBILE) return false; // do nothing on desktop/iPad standalone
+        
+        // Check if there's a waitlist - if so, redirect to join waitlist instead
+        try {
+          const storage = window.Tennis?.Storage;
+          const dataKey = 'tennisClubData';
+          
+          let data = null;
+          if (storage?.readJSON) {
+            data = storage.readJSON(dataKey) || {};
+          } else {
+            const jsonData = localStorage.getItem(dataKey);
+            data = jsonData ? JSON.parse(jsonData) : {};
+          }
+          
+          const waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
+          if (waitingGroups.length > 0) {
+            // Redirect to waitlist join instead of court selection
+            try { window.parent.postMessage({ type:'register', courtNumber: null }, '*'); } catch {}
+            return true;
+          }
+        } catch (e) {
+          console.warn('Error checking waitlist in mobileTapToRegister:', e);
+        }
+        
+        // Normal behavior: select the court
         try { window.parent.postMessage({ type:'register', courtNumber:Number(courtNumber) }, '*'); } catch {}
         return true;
       };
@@ -602,6 +1037,279 @@
     // run every 5 minutes
     window.__autoClearInterval = setInterval(() => run('interval'), 5 * 60 * 1000);
   })();
+  </script>
+  
+  <!-- Mobile View Detection -->
+  <script>
+    window.IS_MOBILE_VIEW = 
+      new URLSearchParams(location.search).get('view') === 'mobile';
+    // Optional: root class for simple CSS toggles
+    document.documentElement.classList.toggle(
+      'variant-mobile',
+      window.IS_MOBILE_VIEW
+    );
+    
+    // Initialize Mobile Modal Bus IMMEDIATELY (before any React rendering)
+    (function initModalBus(){
+      if (!window.MobileModal) {
+        let lastOpen = 0;
+        let currentModalType = null;
+        window.MobileModal = {
+          open(type, payload){
+            const now = Date.now();
+            if (now - lastOpen < 250) return; // debounce guard
+            lastOpen = now;
+            
+            // If same modal type is already open, close it instead
+            if (currentModalType === type) {
+              console.debug('Modal bus toggle close:', type);
+              this.close();
+              return;
+            }
+            
+            console.debug('Modal bus open:', type);
+            currentModalType = type;
+            document.dispatchEvent(new CustomEvent('mm:open', { detail: { type, payload } }));
+          },
+          close(){
+            console.debug('Modal bus close');
+            currentModalType = null;
+            document.dispatchEvent(new Event('mm:close'));
+          }
+        };
+        console.debug('Modal bus initialized for mobile view');
+      }
+    })();
+
+    // Plain-JS fallback bar (emergency restoration)
+    (function mountFallbackBar(){
+      if (!window.IS_MOBILE_VIEW) return;
+
+      const el = document.getElementById('mobile-bottom-bar-fallback');
+      if (!el) return;
+
+      // Style & show
+      el.hidden = false;
+      el.setAttribute('role','toolbar');
+      el.className = 'mbb-fallback';
+
+      // Helper functions for safe data reading
+      function readCourtBlocksSafe() { 
+        try { 
+          // Try multiple data sources
+          const storage = window.Tennis?.Storage;
+          const blocksKey = 'courtBlocks';
+          if (storage?.readJSON) {
+            return storage.readJSON(blocksKey) || [];
+          }
+          // Fallback to localStorage
+          const data = localStorage.getItem(blocksKey);
+          return data ? JSON.parse(data) : [];
+        } catch { 
+          return []; 
+        } 
+      }
+      
+      function selectReservedSafe(blocks, now) { 
+        try { 
+          // Use the same logic as selectReservedItemsFromBlocks
+          function normalizeBlock(block) {
+            if (!block) return null;
+            const start = new Date(block.startTime || block.start);
+            const end = new Date(block.endTime || block.end);
+            const courts = Array.isArray(block.courts) ? block.courts : [block.courtNumber].filter(Boolean);
+            const reason = block.reason || block.templateName || 'Reserved';
+            if (!start || !end || courts.length === 0) return null;
+            return { courts, start, end, reason };
+          }
+
+          const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
+          const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
+
+          const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
+          const todayFuture = normalized
+            .filter(b => b.end > now && b.start <= endOfToday)
+            .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
+            .sort((a,b) => a.start - b.start);
+
+          const byKey = new Map();
+          for (const b of todayFuture) {
+            const k = `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
+            if (!byKey.has(k)) byKey.set(k, { ...b, courts: new Set(b.courts) });
+            else b.courts.forEach(c => byKey.get(k).courts.add(c));
+          }
+
+          return Array.from(byKey.values()).map(v => ({
+            key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
+            courts: Array.from(v.courts).sort((a,b)=>a-b),
+            start: v.start,
+            end: v.end,
+            reason: v.reason
+          }));
+        } catch(e) { 
+          console.warn('Error in selectReservedSafe:', e);
+          return []; 
+        } 
+      }
+      
+      function readWaitlistSafe() { 
+        try { 
+          const storage = window.Tennis?.Storage;
+          const dataKey = 'tennisClubData';
+          
+          // Read main data object
+          let data = null;
+          if (storage?.readJSON) {
+            data = storage.readJSON(dataKey) || {};
+          } else {
+            const jsonData = localStorage.getItem(dataKey);
+            data = jsonData ? JSON.parse(jsonData) : {};
+          }
+          
+          // Return waitingGroups from main data
+          return Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
+        } catch(e) { 
+          console.warn('Error reading waitlist:', e);
+          return []; 
+        } 
+      }
+
+      // Queue mechanism for modal opening
+      let modalQueue = [];
+      let queueTimer = null;
+      
+      function openModal(type, payload) {
+        if (window.MobileModal) {
+          window.MobileModal.open(type, payload);
+        } else {
+          modalQueue.push({ type, payload });
+          if (!queueTimer) {
+            queueTimer = setInterval(() => {
+              if (window.MobileModal) {
+                clearInterval(queueTimer);
+                queueTimer = null;
+                modalQueue.forEach(({ type, payload }) => {
+                  window.MobileModal.open(type, payload);
+                });
+                modalQueue = [];
+              }
+            }, 100);
+          }
+        }
+      }
+
+      // Click delegation (no React required)
+      el.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        
+        console.debug('[Fallback] Button clicked:', action);
+        
+        if (action === 'conditions') {
+          openModal('court-conditions');
+          return;
+        }
+        
+        if (action === 'reserved') {
+          const blocks = readCourtBlocksSafe();
+          openModal('reserved', { reservedData: selectReservedSafe(blocks, new Date()) });
+          return;
+        }
+        
+        if (action === 'waitlist') {
+          openModal('waitlist', { waitlistData: readWaitlistSafe() });
+          return;
+        }
+        
+        if (action === 'join') {
+          if (btn.disabled) return;
+          // Open registration screen directly instead of modal
+          if (window.parent && window.parent.postMessage) {
+            window.parent.postMessage({ type: 'register', courtNumber: null }, '*');
+          }
+          return;
+        }
+      });
+
+      // Optional: listen for app events to toggle Join/Waitlist count
+      const joinBtn = el.querySelector('button[data-action="join"]');
+      const wlBtn   = el.querySelector('button[data-action="waitlist"] .lbl');
+
+      // Function to check if waitlist join should be allowed
+      function updateJoinButtonState() {
+        try {
+          const storage = window.Tennis?.Storage;
+          const dataKey = 'tennisClubData';
+          
+          let data = null;
+          if (storage?.readJSON) {
+            data = storage.readJSON(dataKey) || {};
+          } else {
+            const jsonData = localStorage.getItem(dataKey);
+            data = jsonData ? JSON.parse(jsonData) : {};
+          }
+          
+          // Check if there are available courts using availability domain
+          const Availability = window.Tennis?.Domain?.Availability || window.Tennis?.Domain?.availability;
+          if (Availability && Availability.shouldAllowWaitlistJoin) {
+            const blocks = readCourtBlocksSafe();
+            const wetSet = new Set(); // Assume no wet courts for now
+            
+            // Check for existing waitlist
+            const waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
+            const hasWaitlist = waitingGroups.length > 0;
+            
+            // Original logic: no courts available
+            const shouldAllowByNoAvail = Availability.shouldAllowWaitlistJoin({
+              data: data,
+              now: new Date(),
+              blocks: blocks,
+              wetSet: wetSet
+            });
+            
+            // New logic: enable when waitlist exists OR no courts available
+            const shouldAllow = hasWaitlist || shouldAllowByNoAvail;
+            
+            joinBtn.disabled = !shouldAllow;
+            joinBtn.setAttribute('aria-disabled', String(!shouldAllow));
+          } else {
+            // Fallback: simple check based on occupied courts vs waiting groups
+            const occupiedCourts = Array.isArray(data.courts) ? data.courts.filter(c => c !== null).length : 0;
+            const waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups.length : 0;
+            const totalCourts = 12;
+            
+            // Enable join if all courts occupied OR there are waiting groups
+            const shouldEnableJoin = occupiedCourts >= totalCourts || waitingGroups > 0;
+            joinBtn.disabled = !shouldEnableJoin;
+            joinBtn.setAttribute('aria-disabled', String(!shouldEnableJoin));
+          }
+        } catch (e) {
+          console.warn('Error updating join button state:', e);
+        }
+      }
+
+      // Listen for app events
+      document.addEventListener('app:availability', (evt) => {
+        const hasAvail = !!evt.detail?.hasAvailable;
+        // Join button should be ENABLED when NO courts available (hasAvail = false)
+        joinBtn.disabled = hasAvail;
+        joinBtn.setAttribute('aria-disabled', String(hasAvail));
+      });
+
+      document.addEventListener('app:waitlistCount', (evt) => {
+        const n = Number(evt.detail?.count || 0);
+        wlBtn.textContent = n ? `Waitlist (${n})` : 'Waitlist';
+      });
+
+      // Listen for data updates to update button state
+      document.addEventListener('tennisDataUpdate', updateJoinButtonState);
+      
+      // Initial check
+      updateJoinButtonState();
+
+      console.debug('Plain-JS fallback bar mounted');
+    })();
   </script>
   
   <script type="text/babel">
@@ -1051,6 +1759,8 @@
       const Calendar = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🏛️');
       const AlertCircle = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🔔');
       const Check = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '✅');
+      const Plus = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🏸');
+      const Weather = ({ size = 24, className = '' }) => React.createElement('span', { style: { fontSize: `${size}px` }, className }, '🌦️');
 
       // STEP 4: Court block status function (from original)
       const getCourtBlockStatus = (courtNumber) => {
@@ -1191,8 +1901,59 @@
         statusByCourt,
         selectableByCourt,
         statusObjectByCourt,
-        data
+        data,
+        isMobileView = window.IS_MOBILE_VIEW
       }) => {
+
+        // Mobile-only: "F. Lastname" + "+N"
+        // Accepts either a string like "Amy Beth Jones, Bob A. Smith, Li Wei"
+        // or an array of names.
+        function formatMobileNames(input) {
+          if (!input) return "";
+
+          // Normalize to array
+          const names = Array.isArray(input)
+            ? input
+            : String(input)
+                .split(/,\s*/)       // split on comma + optional spaces
+                .map(s => s.trim())
+                .filter(Boolean);
+
+          if (!names.length) return "";
+
+          // Helpers
+          const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV"]);
+          const formatOne = (full) => {
+            // Collapse multiple spaces, trim
+            const tokens = full.replace(/\s+/g, " ").trim().split(" ");
+            if (tokens.length === 1) {
+              // Single token — show as-is (short names often already compact)
+              const t = tokens[0];
+              return t.length <= 3 ? t : `${t[0]}. ${t.slice(1)}`;
+            }
+
+            // Handle suffix: keep it with the last name if present
+            let last = tokens[tokens.length - 1];
+            let last2 = tokens[tokens.length - 2];
+            let lastName, remainder;
+            if (SUFFIXES.has(last)) {
+              lastName = `${last2} ${last}`;           // e.g., "Smith Jr."
+              remainder = tokens.slice(0, -2);         // everything before last2
+            } else {
+              lastName = last;                          // e.g., "DeLaCruz"
+              remainder = tokens.slice(0, -1);
+            }
+
+            // First initial from the first remaining token
+            const first = remainder[0] || "";
+            const firstInitial = first ? `${first[0]}.` : "";
+
+            return `${firstInitial} ${lastName}`.trim();
+          };
+
+          const primary = formatOne(names[0]);
+          return names.length > 1 ? `${primary} +${names.length - 1}` : primary;
+        }
 
         const status = statusByCourt[courtNumber] || 'free';
         const selectable = selectableByCourt[courtNumber] || false;
@@ -1235,6 +1996,7 @@
             tabIndex={status === 'free' ? 0 : undefined}
             onClick={status === 'free' ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
             style={{ cursor: status === 'free' ? 'pointer' : 'default' }}
+            aria-label={status === 'free' && isMobileView ? `Court ${courtNumber} available. Tap to select.` : undefined}
           >
             <h3 className={`court-text-lg font-bold ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} mb-1`}>
               Court {courtNumber}
@@ -1255,14 +2017,14 @@
                   <div className="flex flex-col h-full w-full">
                     {status === 'free' || status === 'wet' ? (
                       <>
-                        <div className={`${primaryClass} text-center flex-1 flex items-center justify-center`}>
+                        <div className={`${primaryClass} ${isMobileView && status === 'free' ? 'text-sm font-normal' : ''} text-center flex-1 flex items-center justify-center`}>
                           {status === 'wet' ? (
                             <div className="flex flex-col items-center">
                               <div style={{ fontSize: '2.5em', lineHeight: '1' }}>🌧️</div>
                               <div className="mt-1">WET COURT</div>
                             </div>
                           ) : (
-                            primary
+                            isMobileView ? 'Tap to Select' : primary
                           )}
                         </div>
                         
@@ -1286,7 +2048,7 @@
                           {s.blockedLabel || 'Blocked'}
                         </div>
                         <div className="flex-1"></div>
-                        {blockedUntil && (
+                        {blockedUntil && !isMobileView && (
                           <div className="mt-auto text-sm opacity-90 text-center">
                             Until {formatTime(blockedUntil)}
                           </div>
@@ -1294,23 +2056,45 @@
                       </>
                     ) : status === 'occupied' ? (
                       <>
-                        {/* Time remaining right under Court N */}
-                        <div className={`${primaryClass} text-center`}>{primary}</div>
-                        
-                        {/* Player names in the flexible middle space */}
-                        {nm ? (
-                          <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
-                            {nm}
-                          </div>
+                        {isMobileView ? (
+                          <>
+                            {/* Mobile layout: names in center, time at bottom */}
+                            {nm ? (
+                              <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
+                                <div className="truncate text-sm leading-tight px-1" title={nm}>
+                                  {formatMobileNames(nm)}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-1"></div>
+                            )}
+                            
+                            {/* Time remaining at the bottom for mobile */}
+                            <div className="mt-auto text-sm opacity-90 text-center">
+                              {primary}
+                            </div>
+                          </>
                         ) : (
-                          <div className="flex-1"></div>
-                        )}
-                        
-                        {/* "Until..." at the bottom */}
-                        {showUntilForOccupied && (
-                          <div className="mt-auto text-sm opacity-90 text-center">
-                            Until {formatTime(endIso)}
-                          </div>
+                          <>
+                            {/* Desktop layout: time at top, names in middle, Until at bottom */}
+                            <div className={`${primaryClass} text-center`}>{primary}</div>
+                            
+                            {/* Player names in the flexible middle space */}
+                            {nm ? (
+                              <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
+                                {nm}
+                              </div>
+                            ) : (
+                              <div className="flex-1"></div>
+                            )}
+                            
+                            {/* "Until..." at the bottom */}
+                            {showUntilForOccupied && (
+                              <div className="mt-auto text-sm opacity-90 text-center">
+                                Until {formatTime(endIso)}
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     ) : status === 'overtime' ? (
@@ -1321,7 +2105,11 @@
                         {/* Player names in the flexible middle space */}
                         {nm ? (
                           <div className={`${namesClass} text-center flex-1 flex items-center justify-center`}>
-                            {nm}
+                            {isMobileView ? (
+                              <div className="truncate text-sm leading-tight px-1" title={nm}>
+                                {formatMobileNames(nm)}
+                              </div>
+                            ) : nm}
                           </div>
                         ) : (
                           <div className="flex-1"></div>
@@ -2003,8 +2791,80 @@
         }
       };
 
+      // Court Conditions Modal Component
+      const CourtConditionsModal = ({ onClose }) => {
+        const [loaded, setLoaded] = React.useState(false);
+        const [fallback, setFallback] = React.useState(false);
+        
+        React.useEffect(() => {
+          // Watchdog: if no load event within 4s, show fallback
+          const watchdog = setTimeout(() => {
+            if (!loaded) setFallback(true);
+          }, 4000);
+          
+          return () => clearTimeout(watchdog);
+        }, [loaded]);
+        
+        return (
+          <div className="modal-court-conditions">
+            {!fallback && (
+              <iframe 
+                src="https://camera.noltc.com/courtconditions.html"
+                className="w-full h-full rounded bg-white"
+                style={{ minHeight: '80vh' }}
+                title="Court Conditions"
+                loading="eager"
+                allowFullScreen
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                onLoad={() => setLoaded(true)}
+                onError={() => setFallback(true)}
+              />
+            )}
+            
+            {/* Loading spinner */}
+            {!loaded && !fallback && (
+              <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
+                <div className="text-center">
+                  <div className="animate-pulse text-lg text-gray-400 mb-2">Loading cameras...</div>
+                  <div className="text-sm text-gray-500">Please wait</div>
+                </div>
+              </div>
+            )}
+            
+            {/* Fallback UI if blocked or error */}
+            {fallback && (
+              <div className="p-6 space-y-4 text-center">
+                <div className="text-yellow-400 text-4xl mb-4">⚠️</div>
+                <p className="text-gray-300">
+                  The camera page can't be shown inside the app on this device.
+                </p>
+                <a
+                  href="https://camera.noltc.com/courtconditions.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center rounded-xl py-3 px-6 font-semibold bg-sky-500 text-white hover:bg-sky-600 transition-colors"
+                  onClick={onClose}
+                >
+                  Open Cameras in New Tab
+                </a>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full rounded-xl py-2 px-6 border border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      };
+
       // STEP 9: Main Tennis Court Display Component
       const TennisCourtDisplay = () => {
+        // Mobile view detection
+        const isMobileView = window.IS_MOBILE_VIEW || false;
+        
         useEffect(() => {
           const style = document.createElement('style');
           style.textContent = `
@@ -2069,10 +2929,14 @@
         const [customMessage, setCustomMessage] = useState("");
         const [courtBlocks, setCourtBlocks] = useState([]);
         const [refreshTick, setRefreshTick] = useState(0);
+        
+        // Mobile modal state now handled by isolated second React root
+        // No state in main component to avoid refresh interference
 
         React.useEffect(() => {
           const onUpdate = (event) => {
             console.log('[BOARD DEBUG] onUpdate event received:', event?.type, event?.detail);
+            console.log('[BOARD DEBUG] isMobileView:', isMobileView, 'activeModal:', activeModal);
             setRefreshTick(t => t + 1);
             scheduleBoardRefresh(); // Use coalescer for data reload
           };
@@ -2448,6 +3312,7 @@
                           formatPlayerName={formatPlayerDisplayName}
                           statusByCourt={statusByCourt}
                           selectableByCourt={selectableByCourt}
+                          statusObjectByCourt={statusObjectByCourt}
                           data={data}
                         />
                       ))}
@@ -2605,14 +3470,19 @@
                 <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} courtBlocks={courtBlocks} />
               </div>
               </div>
+              
+              {/* Mobile modals now handled by isolated second React root */}
+              {/* Mobile bottom bar now handled by isolated third React root */}
           </div>
         );
       };
+
 
       // STEP 13: Render the application
       // console.log('🎯 Rendering fully integrated application...');
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(<TennisCourtDisplay />);
+
       
       // Hide performance overlay after 30 seconds for production use
       addTimer(setTimeout(() => {
@@ -2624,6 +3494,387 @@
       
       // console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
+    
+    // ========================================
+    // MOBILE MODAL SYSTEM (Second React Root)
+    // ========================================
+
+    // Error Boundary for Modal System
+    class ModalErrorBoundary extends React.Component {
+      state = { hasError: false };
+      componentDidCatch(err, info) { 
+        console.error('[ModalRoot]', err, info); 
+        this.setState({ hasError: true }); 
+      }
+      render() { 
+        return this.state.hasError ? null : this.props.children; 
+      }
+    }
+
+    // Mobile Modal Sheet Component (reusing existing styles)
+    function MobileModalSheet({ type, payload, onClose }) {
+      // Focus trap & return focus
+      React.useEffect(() => {
+        const opener = document.activeElement;
+        return () => opener?.focus();
+      }, []);
+
+      // Scroll lock while modal is open
+      React.useEffect(() => {
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prevOverflow; };
+      }, []);
+
+      // Keyboard handlers (scoped to modal only)
+      React.useEffect(() => {
+        const esc = e => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }
+        };
+        document.addEventListener('keydown', esc);
+        return () => document.removeEventListener('keydown', esc);
+      }, [onClose]);
+
+      const getTitle = () => {
+        switch (type) {
+          case 'court-conditions': return 'Court Conditions';
+          case 'reserved': return 'Reserved Courts';
+          case 'waitlist': return 'Waitlist';
+          // join-waitlist case removed - no longer used
+          default: return '';
+        }
+      };
+
+      const getBodyContent = () => {
+        switch (type) {
+          case 'court-conditions':
+            // Court conditions with iframe
+            const wetCourtsUrl = 'https://camera.noltc.com/courtconditions.html';
+            return React.createElement('div', { className: 'modal-court-conditions' },
+              React.createElement('iframe', {
+                src: wetCourtsUrl,
+                title: 'Court Conditions',
+                style: { width: '100%', height: '100%', border: 'none' }
+              })
+            );
+            
+          case 'reserved':
+            // Reserved courts list matching original format - no duplicate title
+            const reservedItems = payload?.reservedData || [];
+            const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+            return React.createElement('div', { className: 'modal-reserved-courts' },
+              reservedItems.length === 0 
+                ? React.createElement('div', { className: 'text-center p-6' },
+                    React.createElement('p', { className: 'text-gray-400 reserved-courts-empty' }, 'No scheduled blocks today')
+                  )
+                : React.createElement('ul', { className: 'space-y-1 reserved-courts-text text-gray-300 p-6' },
+                    reservedItems.map((item, idx) => {
+                      return React.createElement('li', { 
+                        key: item.key || idx, 
+                        className: 'flex justify-between py-2'
+                      }, [
+                        React.createElement('span', { className: 'font-medium text-gray-200' }, 
+                          item.courts?.length > 1 ? `Courts ${item.courts.join(", ")}` : `Court ${item.courts?.[0] || 'N/A'}`
+                        ),
+                        React.createElement('span', { className: 'ml-2 whitespace-nowrap text-gray-400' },
+                          `${fmt(item.start)} – ${fmt(item.end)} (${item.reason || 'Reserved'})`
+                        )
+                      ]);
+                    })
+                  )
+            );
+            
+          case 'waitlist':
+            // Waitlist display with column headers - mobile modal only
+            const waitlistData = payload?.waitlistData || [];
+            return React.createElement('div', { className: 'modal-waitlist' },
+              waitlistData.length === 0
+                ? React.createElement('div', { className: 'text-center p-6' },
+                    React.createElement('p', { className: 'text-gray-400' }, 'No groups waiting.')
+                  )
+                : React.createElement('div', { className: 'p-4' }, [
+                    // Column headers
+                    React.createElement('div', { 
+                      className: 'flex justify-between items-center pb-3 mb-4 border-b border-gray-600' 
+                    }, [
+                      React.createElement('div', { className: 'font-semibold text-gray-300 text-sm' }, 'Position'),
+                      React.createElement('div', { className: 'font-semibold text-gray-300 text-sm' }, 'Estimated')
+                    ]),
+                    // Waitlist entries
+                    React.createElement('div', { className: 'space-y-3' },
+                      waitlistData.map((group, idx) => {
+                        // Handle different data formats: group.players array or group object with name
+                        let names = [];
+                        if (Array.isArray(group.players)) {
+                          names = group.players.map(p => p.name || p.id || 'Player');
+                        } else if (group.names) {
+                          names = Array.isArray(group.names) ? group.names : [group.names];
+                        } else if (group.name) {
+                          names = [group.name];
+                        } else {
+                          names = ['Group'];
+                        }
+                        
+                        // Use mobile name formatting (First Initial, Last name +1)
+                        const formatMobileNames = (nameArray) => {
+                          if (!nameArray.length) return "Group";
+                          const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV"]);
+                          const formatOne = (full) => {
+                            const tokens = full.replace(/\s+/g, " ").trim().split(" ");
+                            if (tokens.length === 1) {
+                              const t = tokens[0];
+                              return t.length <= 3 ? t : `${t[0]}. ${t.slice(1)}`;
+                            }
+                            // Handle suffix: keep it with the last name if present
+                            let last = tokens[tokens.length - 1];
+                            let last2 = tokens[tokens.length - 2];
+                            let lastName, remainder;
+                            if (SUFFIXES.has(last) && tokens.length > 2) {
+                              lastName = `${last2} ${last}`;
+                              remainder = tokens.slice(0, -2);
+                            } else {
+                              lastName = last;
+                              remainder = tokens.slice(0, -1);
+                            }
+                            const first = remainder[0] || "";
+                            return first ? `${first[0]}. ${lastName}` : lastName;
+                          };
+                          const primary = formatOne(nameArray[0]);
+                          return nameArray.length > 1 ? `${primary} +${nameArray.length - 1}` : primary;
+                        };
+                        
+                        const formattedNames = formatMobileNames(names);
+                        
+                        // Calculate estimated wait time using same logic as CourtBoard
+                        let estimatedStr = '—';
+                        try {
+                          // Use the same calculation as CourtBoard's calculateEstimatedWaitTimeV2
+                          const calculateEstimatedWaitTimeV2 = (position) => {
+                            const DEBUG = false;
+                            if (DEBUG) console.log(`Calculating wait time for position ${position}`);
+                            
+                            // inputs
+                            const now    = new Date();
+                            const data   = Storage.readDataSafe();
+                            const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+
+                            // derive wetSet for current moment (used by free courts; not needed for nextTimes)
+                            const wetSet = new Set(
+                              blocks
+                                .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                                .map(b => b.courtNumber)
+                            );
+
+                            // domain availability snapshots
+                            const A = Tennis.Domain.Availability;
+                            const W = Tennis.Domain.Waitlist;
+                            const info      = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+                            const nextTimes = A.getNextFreeTimes({ data, now, blocks });
+
+                            // how many positions your UI renders (keep current value, e.g. 4)
+                            const positions = [position];
+
+                            // domain ETA (minutes, rounded up)
+                            const etas = W.estimateWaitForPositions({
+                              positions,
+                              currentFreeCount: info.free.length,
+                              nextFreeTimes: nextTimes,
+                              avgGameMinutes: window.Tennis.Config.Timing.AVG_GAME
+                            });
+
+                            // If your UI expects absolute times, you can derive them from `now + minutes`
+                            // const etaTimes  = etas.map(m => new Date(now.getTime() + m * 60000));
+                            // const etaLabels = etaTimes.map(d => T?.formatTime ? T.formatTime(d) : d.toLocaleTimeString());
+
+                            // Use `etas` (or `etaLabels`, depending on what the existing UI expects)
+                            // Replace the previous variables that fed the DOM update with these values.
+                            
+                            return etas[0] || 0;
+                          };
+
+                          const estimatedMinutes = calculateEstimatedWaitTimeV2(idx + 1);
+                          estimatedStr = estimatedMinutes > 0 ? `${estimatedMinutes}m` : 'Now';
+                        } catch (e) {
+                          console.warn('Error calculating wait time:', e);
+                          // Fallback: simple position-based estimate
+                          const position = idx + 1;
+                          estimatedStr = position === 1 ? 'Now' : `${position * 15}m`;
+                        }
+                        
+                        return React.createElement('div', { 
+                          key: idx, 
+                          className: 'flex justify-between items-center py-1'
+                        }, [
+                          React.createElement('div', { className: 'text-white' }, `${idx + 1}. ${formattedNames}`),
+                          React.createElement('div', { className: 'text-gray-400 text-sm' }, estimatedStr)
+                        ]);
+                      })
+                    )
+                  ])
+            );
+            
+          // join-waitlist case removed - button now opens registration directly
+            
+          default: 
+            return React.createElement('div', { className: 'p-6 text-center' },
+              React.createElement('p', null, 'Unknown modal type')
+            );
+        }
+      };
+
+      const titleId = `modal-title-${type}`;
+      
+      const getModalClass = () => {
+        if (type === 'court-conditions') return ' modal-court-conditions-full';
+        if (type === 'reserved') return ' modal-reserved-large';
+        if (type === 'waitlist') return ' modal-waitlist-large';
+        return '';
+      };
+
+      return React.createElement('div', { 
+        className: `mobile-modal-overlay${getModalClass()}`,
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-labelledby': titleId
+      },
+        React.createElement('div', { className: 'mobile-modal-content' },
+          React.createElement('div', { className: 'mobile-modal-header' },
+            React.createElement('h3', { 
+              id: titleId,
+              className: 'mobile-modal-title' 
+            }, getTitle()),
+            React.createElement('button', {
+              type: 'button',
+              className: 'mobile-modal-close',
+              onClick: onClose,
+              'aria-label': 'Close modal'
+            }, '✕')
+          ),
+          React.createElement('div', { className: 'mobile-modal-body' }, getBodyContent())
+        )
+      );
+    }
+
+    function MobileModalApp() {
+      const [state, setState] = React.useState({ open: false, type: null, payload: null });
+
+      React.useEffect(() => {
+        if (!window.IS_MOBILE_VIEW) return;
+        
+        const onOpen = e => {
+          setState({ open: true, type: e.detail.type, payload: e.detail.payload || null });
+          document.getElementById('mobile-modal-root')?.classList.add('modal-open');
+        };
+        const onClose = () => {
+          setState({ open: false, type: null, payload: null });
+          document.getElementById('mobile-modal-root')?.classList.remove('modal-open');
+        };
+        
+        document.addEventListener('mm:open', onOpen);
+        document.addEventListener('mm:close', onClose);
+        
+        return () => { 
+          document.removeEventListener('mm:open', onOpen); 
+          document.removeEventListener('mm:close', onClose); 
+        };
+      }, []);
+
+      if (!window.IS_MOBILE_VIEW || !state.open) return null;
+      return React.createElement(MobileModalSheet, { 
+        type: state.type, 
+        payload: state.payload, 
+        onClose: window.MobileModal.close 
+      });
+    }
+
+    // Render the second React root with error boundary
+    (() => {
+      const modalNode = document.getElementById('mobile-modal-root');
+      if (modalNode && window.IS_MOBILE_VIEW && window.ReactDOM) {
+        const modalRoot = ReactDOM.createRoot(modalNode);
+        modalRoot.render(
+          React.createElement(ModalErrorBoundary, null,
+            React.createElement(MobileModalApp)
+          )
+        );
+        console.debug('Modal root mounted');
+        
+        // Debug snippet to verify modal root is listening
+        document.addEventListener('mm:open', e => console.debug('[ModalRoot] mm:open seen', e.detail));
+        document.addEventListener('mm:close', e => console.debug('[ModalRoot] mm:close seen'));
+      }
+    })();
+
+    // ========================================
+    // MOBILE BOTTOM BAR (Third React Root)
+    // ========================================
+    
+    // Bottom Bar Component - Dependency-free and safe
+    function MobileBottomBarSafe() {
+      // Optional: subscribe to lightweight events for counts
+      const [waitingCount, setWaitingCount] = React.useState(0);
+      const [hasAvailableCourts, setHasAvailableCourts] = React.useState(false);
+
+      React.useEffect(() => {
+        // Main app should dispatch these; if not, we stay with defaults
+        const onWL = e => setWaitingCount(Number(e.detail?.count ?? 0));
+        const onAvail = e => setHasAvailableCourts(Boolean(e.detail?.hasAvailable));
+        document.addEventListener('app:waitlistCount', onWL);
+        document.addEventListener('app:availability', onAvail);
+        return () => {
+          document.removeEventListener('app:waitlistCount', onWL);
+          document.removeEventListener('app:availability', onAvail);
+        };
+      }, []);
+
+      const open = (type, payload) => window.MobileModal && window.MobileModal.open(type, payload);
+
+      return (
+        <div className="mobile-bottom-bar">
+          <button type="button" onClick={() => open('court-conditions')} title="Court Conditions">
+            🌦️<span>Court<br/>Conditions</span>
+          </button>
+          <button type="button" onClick={() => open('reserved')} title="Reserved Courts">
+            🏛️<span>Reserved<br/>Courts</span>
+          </button>
+          <button type="button" onClick={() => open('waitlist')} title="Waitlist">
+            👥<span>Waitlist{waitingCount ? ` (${waitingCount})` : ''}</span>
+          </button>
+          <button 
+            type="button" 
+            disabled={hasAvailableCourts} 
+            aria-disabled={hasAvailableCourts}
+            onClick={() => {
+              if (hasAvailableCourts) return;
+              // Open registration screen directly
+              if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage({ type: 'register', courtNumber: null }, '*');
+              }
+            }}
+            title="Join Waitlist"
+          >
+            ➕<span>Join<br/>Waitlist</span>
+          </button>
+        </div>
+      );
+    }
+
+    function MobileBottomBarRoot() {
+      if (!window.IS_MOBILE_VIEW) return null;
+      return React.createElement(MobileBottomBarSafe);
+    }
+
+    // React third root disabled - using plain-JS fallback instead
+    // (function mountBottomBarWhenReady(){
+    //   if (!window.IS_MOBILE_VIEW) return;
+    //   const node = document.getElementById('mobile-bottom-bar-root');
+    //   if (!node) return;
+    //   // ... React mounting logic disabled
+    // })();
   </script>
 
   <!-- Debug Panel - Only visible when ?debug=1 -->

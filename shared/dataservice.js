@@ -333,6 +333,21 @@
           return { name, id, memberId: id };
         }) : [];
 
+        // Check for duplicates using roster domain logic
+        const R = T.Domain?.roster;
+        if (R?.findEngagementFor) {
+          for (const player of normalizedPlayers) {
+            const engagement = R.findEngagementFor(player, data);
+            if (engagement) {
+              if (engagement.type === 'playing') {
+                return { success: false, error: `${player.name} is already playing on Court ${engagement.court}` };
+              } else if (engagement.type === 'waitlist') {
+                return { success: false, error: `${player.name} is already on the waitlist (position ${engagement.position})` };
+              }
+            }
+          }
+        }
+
         // normalize guests
         const guests = Array.isArray(opts.guests) ? opts.guests.length : (Number(opts.guests) || 0);
 
