@@ -819,51 +819,6 @@
         display: none;
       }
     }
-
-    /* Performance Metrics Overlay */
-    .performance-overlay {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 12px;
-      border-radius: 8px;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      z-index: 1000;
-      min-width: 200px;
-      backdrop-filter: blur(4px);
-    }
-    
-    /* Hide performance overlay in mobile view */
-    .variant-mobile .performance-overlay {
-      display: none !important;
-    }
-
-    .performance-overlay.hidden {
-      display: none;
-    }
-
-    .metric-row {
-      display: flex;
-      justify-content: space-between;
-      margin: 2px 0;
-    }
-
-    .metric-label {
-      opacity: 0.8;
-    }
-
-    .metric-value {
-      font-weight: bold;
-      color: #4ade80;
-    }
-
-    .improvement {
-      color: #22c55e;
-      font-weight: bold;
-    }
     
     .icon-grey {
       filter: grayscale(100%) opacity(0.5);
@@ -891,34 +846,6 @@
 </head>
 
 <body>
-  <!-- Performance Metrics Overlay -->
-  <div id="performance-overlay" class="performance-overlay">
-    <div style="margin-bottom: 8px; font-weight: bold; color: #60a5fa;">📊 DataStore Performance</div>
-    <div class="metric-row">
-      <span class="metric-label">Cache Hit Rate:</span>
-      <span id="cache-hit-rate" class="metric-value">0%</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Avg Response:</span>
-      <span id="avg-response" class="metric-value">0ms</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Batch Efficiency:</span>
-      <span id="batch-efficiency" class="metric-value">0%</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Polling Level:</span>
-      <span id="polling-level" class="metric-value">NORMAL</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Operations:</span>
-      <span id="operations-count" class="metric-value">0</span>
-    </div>
-    <div class="metric-row">
-      <span class="metric-label">Storage Ops Saved:</span>
-      <span id="storage-saved" class="improvement">85%+</span>
-    </div>
-  </div>
 
   <div id="root"></div>
   <!-- Second React root for mobile modals (isolated from main app) -->
@@ -1604,7 +1531,20 @@
       if (status === 'wet')      return { primary: '🌧️\nWET COURT', secondary: '' };
       if (status === 'blocked') {
         const s = courtObj || {};
-        const label = s.blockedLabel || 'Blocked';
+        const rawLabel = s.blockedLabel || s.reason || 'Blocked';
+        
+        // Normalize the label to prevent name formatting issues
+        let label = rawLabel.toUpperCase();
+        if (label.includes('COURT WORK') || label.includes('MAINTENANCE')) {
+          label = 'COURT WORK';
+        } else if (label.includes('LESSON')) {
+          label = 'LESSON';
+        } else if (label.includes('CLINIC')) {
+          label = 'CLINIC';
+        } else if (label.includes('LEAGUE')) {
+          label = 'LEAGUE';
+        }
+        
         const until = s.blockedEnd ? s.blockedEnd : null;
         let secondary = '';
         if (until) {
@@ -2095,24 +2035,50 @@
                       </>
                     ) : status === 'blocked' ? (
                       <>
-                        <div className={`${primaryClass} text-center font-semibold flex-1 flex items-center justify-center`} 
+                        <div className={`text-center font-bold flex-1 flex items-center justify-center`} 
                              style={{ 
-                               textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                               fontSize: 'clamp(0.75rem, 1.3vw, 1.3rem)',
+                               lineHeight: '1.2',
+                               marginTop: '0.25rem',
+                               WebkitTextStroke: '1.5px black',
+                               textStroke: '1.5px black',
+                               paintOrder: 'stroke fill',
                                color: (() => {
                                  const label = (s.blockedLabel || 'Blocked').toUpperCase();
-                                 if (label.includes('MAINTENANCE') || label.includes('COURT WORK')) {
-                                   return '#fcd34d'; // amber-300
+                                 if (label.includes('COURT WORK') || label.includes('MAINTENANCE')) {
+                                   return '#475569'; // slate-600
                                  }
                                  if (label.includes('LESSON') || label.includes('CLINIC')) {
-                                   return '#818cf8'; // indigo-400
+                                   return '#6366f1'; // indigo-500
                                  }
                                  if (label.includes('LEAGUE')) {
-                                   return '#2563eb'; // blue-600
+                                   return '#1d4ed8'; // blue-700
                                  }
-                                 return '#374151'; // gray-700
+                                 return '#1f2937'; // gray-800
                                })()
                              }}>
-                          {s.blockedLabel || 'Blocked'}
+                          {(() => {
+                            // Extract the block reason directly from blockedLabel
+                            let blockReason = s.blockedLabel || s.reason || 'BLOCKED';
+                            
+                            // Convert to uppercase and normalize labels
+                            const upperReason = blockReason.toUpperCase();
+                            
+                            if (upperReason.includes('COURT WORK') || upperReason.includes('MAINTENANCE')) {
+                              return 'COURT WORK';
+                            }
+                            if (upperReason.includes('LESSON')) {
+                              return 'LESSON';
+                            }
+                            if (upperReason.includes('CLINIC')) {
+                              return 'CLINIC';
+                            }
+                            if (upperReason.includes('LEAGUE')) {
+                              return 'LEAGUE';
+                            }
+                            
+                            return upperReason;
+                          })()}
                         </div>
                         {blockedUntil && !isMobileView && (
                           <div className="mt-auto text-sm text-gray-700 opacity-90 text-center">
@@ -3230,21 +3196,6 @@
         }, [loadData]);
 
         // STEP 12: Performance metrics updates
-        useEffect(() => {
-          const updateMetrics = () => {
-            const metrics = dataStore.getPerformanceMetrics();
-            
-            // Update overlay
-            document.getElementById('cache-hit-rate').textContent = `${metrics.cacheHitRate.toFixed(1)}%`;
-            document.getElementById('avg-response').textContent = `${metrics.averageResponseTime.toFixed(1)}ms`;
-            document.getElementById('batch-efficiency').textContent = `${metrics.batchEfficiency.toFixed(1)}%`;
-            document.getElementById('polling-level').textContent = metrics.pollingLevel;
-            document.getElementById('operations-count').textContent = metrics.operationsPerformed;
-          };
-
-          const metricsInterval = addTimer(setInterval(updateMetrics, 2000));
-          return () => { try { clearInterval(metricsInterval); } catch {} };
-        }, []);
 
         useEffect(() => {
           const timer = addTimer(setInterval(() => {
@@ -3550,13 +3501,6 @@
       root.render(<TennisCourtDisplay />);
 
       
-      // Hide performance overlay after 30 seconds for production use
-      addTimer(setTimeout(() => {
-        const overlay = document.getElementById('performance-overlay');
-        if (overlay) {
-          overlay.classList.add('hidden');
-        }
-      }, 30000), 'timeout');
       
       // console.log('✅ DataStore integrated Tennis Display loaded with full original styling!');
     }
