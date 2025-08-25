@@ -1454,22 +1454,24 @@
       const s = typeof statusObj === 'string' ? statusObj : statusObj?.status;
       const selectable = statusObj?.selectable;
       const selectableReason = statusObj?.selectableReason;
+      const blockedLabel = statusObj?.blockedLabel;
       
       switch (s) {
         case 'occupied':           // blue (in use)
           return 'bg-gradient-to-b from-blue-400 to-blue-500 border-blue-400';
         case 'overtime':
-          // dark green if selectable (fallback), grey if not
+          // dark green if selectable (fallback), blue-500 if not
           return selectable 
             ? 'bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-600'
-            : 'bg-gradient-to-b from-gray-300 to-gray-400 border-gray-300';
+            : 'bg-gradient-to-b from-blue-500 to-blue-600 border-blue-500';
         case 'overtime-available': // legacy support
           return 'bg-gradient-to-b from-emerald-600 to-emerald-700 border-emerald-600';
         case 'overtimeAvailable':  // legacy support
           return 'bg-gradient-to-b from-green-600 to-green-700 border-green-600';
         case 'wet':                // grey (or your wet palette)
-        case 'blocked':
           return 'bg-gradient-to-b from-gray-300 to-gray-400 border-gray-300';
+        case 'blocked':
+          return 'bg-gradient-to-b from-slate-300 to-slate-400 border-slate-400';
         case 'free':               // emerald (empty/available)
         default:
           return 'bg-gradient-to-b from-emerald-400 to-emerald-500 border-emerald-400';
@@ -2046,10 +2048,10 @@
             style={{ cursor: status === 'free' ? 'pointer' : 'default' }}
             aria-label={status === 'free' && isMobileView ? `Court ${courtNumber} available. Tap to select.` : undefined}
           >
-            <h3 className={`court-text-lg font-bold ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} mb-1`}>
+            <h3 className={`court-text-lg font-bold ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} mb-1`}>
               Court {courtNumber}
             </h3>
-            <div className={`court-text-sm w-full ${status === 'blocked' || status === 'wet' ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}>
+            <div className={`court-text-sm w-full ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}>
               
               {(() => {
                 const now     = new Date();
@@ -2065,7 +2067,8 @@
                   <div className="flex flex-col h-full w-full">
                     {status === 'free' || status === 'wet' ? (
                       <>
-                        <div className={`${primaryClass} ${isMobileView && status === 'free' ? 'text-sm font-normal' : ''} text-center flex-1 flex items-center justify-center`}>
+                        <div className={`${primaryClass} ${isMobileView && status === 'free' ? 'text-sm font-normal' : ''} text-center flex-1 flex items-center justify-center`}
+                             style={status === 'free' ? { textShadow: '1px 1px 2px rgba(0,0,0,0.3)' } : undefined}>
                           {status === 'wet' ? (
                             <div className="flex flex-col items-center">
                               <div style={{ fontSize: '2.5em', lineHeight: '1' }}>🌧️</div>
@@ -2092,12 +2095,27 @@
                       </>
                     ) : status === 'blocked' ? (
                       <>
-                        <div className={`${primaryClass} text-center`}>
+                        <div className={`${primaryClass} text-center font-semibold flex-1 flex items-center justify-center`} 
+                             style={{ 
+                               textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
+                               color: (() => {
+                                 const label = (s.blockedLabel || 'Blocked').toUpperCase();
+                                 if (label.includes('MAINTENANCE') || label.includes('COURT WORK')) {
+                                   return '#fcd34d'; // amber-300
+                                 }
+                                 if (label.includes('LESSON') || label.includes('CLINIC')) {
+                                   return '#818cf8'; // indigo-400
+                                 }
+                                 if (label.includes('LEAGUE')) {
+                                   return '#2563eb'; // blue-600
+                                 }
+                                 return '#374151'; // gray-700
+                               })()
+                             }}>
                           {s.blockedLabel || 'Blocked'}
                         </div>
-                        <div className="flex-1"></div>
                         {blockedUntil && !isMobileView && (
-                          <div className="mt-auto text-sm opacity-90 text-center">
+                          <div className="mt-auto text-sm text-gray-700 opacity-90 text-center">
                             Until {formatTime(blockedUntil)}
                           </div>
                         )}
@@ -2235,7 +2253,7 @@
             </div>
 
             {waitingGroups.length > 0 && (
-              <span className="courtboard-text-sm text-teal-400 font-normal">Estimated Time</span>
+              <span className="courtboard-text-sm text-emerald-400 font-normal">Estimated Time</span>
             )}
             </h3>
           
@@ -3286,15 +3304,15 @@
                   )}
                   <div className="text-center">
                     {customMessage ? (
-                      <div className="time-header font-bold text-yellow-300 mb-1 animate-pulse" style={{ fontFamily: 'Chalkboard SE, Comic Sans MS, cursive' }}>
+                      <div className="time-header font-bold text-yellow-300 mb-1 animate-pulse" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                         {customMessage}
                       </div>
                     ) : (
-                      <div className="time-header font-light text-white mb-1" style={{ fontFamily: 'Chalkboard SE, Comic Sans MS, cursive' }}>
+                      <div className="time-header font-light text-white mb-1" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                         {currentTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
                       </div>
                     )}
-                    <div className="date-header text-gray-300 -mt-1" style={{ fontFamily: 'Chalkboard SE, Comic Sans MS, cursive' }}>
+                    <div className="date-header text-gray-300 -mt-1" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
                       {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
                     </div>
                   </div>
