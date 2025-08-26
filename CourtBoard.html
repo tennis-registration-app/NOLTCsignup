@@ -479,7 +479,7 @@
       border: 0;
       border-radius: 10px;
       background: transparent;
-      font-size: 1.2rem;       /* emoji size */
+      font-size: 1.5rem;       /* emoji size */
       line-height: 1;
       cursor: pointer;
       color: #e5e7eb; /* gray-200 for dark background */
@@ -517,7 +517,7 @@
       padding: 8px;
       pointer-events: auto;
       padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
-      background: rgba(22, 101, 52, 0.95); /* dark green with transparency */
+      background: rgba(255, 255, 255, 0.95); /* white with transparency */
       backdrop-filter: blur(10px);
       border-top: 1px solid rgba(148, 163, 184, 0.2); /* slate-400 with opacity */
       display: flex;
@@ -536,6 +536,33 @@
       background: rgba(59, 130, 246, 0.3) !important;
     }
     
+    /* Mobile-only court card styling */
+    .variant-mobile .court-card {
+      border-width: 2px !important; /* Half thickness: 4px -> 2px */
+      border-color: white !important; /* White borders instead of colored */
+    }
+    
+    /* Mobile bottom bar - fallback system styling */
+    .variant-mobile .mbb-fallback {
+      background: rgba(255, 255, 255, 0.95) !important; /* white background */
+    }
+    
+    .variant-mobile .mbb-fallback button {
+      color: #000000 !important; /* black text on white background */
+    }
+    
+    /* Clear Court confirmation modal - positioned above mobile bar */
+    .modal-clear-court-confirm {
+      align-items: flex-end !important; /* Slide up from bottom */
+    }
+    
+    .modal-clear-court-confirm .mobile-modal-content {
+      margin-bottom: 80px !important; /* Space above mobile bar (72px + 8px) */
+      max-height: calc(100vh - 120px) !important; /* Leave room for mobile bar */
+      border-radius: 16px 16px 0 0 !important; /* Rounded top corners only */
+    }
+    
+    
     .mobile-bottom-button {
       display: flex;
       flex-direction: column;
@@ -544,7 +571,7 @@
       background: none;
       border: none;
       color: #94a3b8; /* slate-400 */
-      font-size: 1.2rem; /* Larger emoji */
+      font-size: 1.5rem; /* Larger emoji */
       font-weight: 500;
       cursor: pointer;
       padding: 8px 6px;
@@ -877,6 +904,14 @@
   
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <script>
+    // ---- Toast bridge (global) ----
+    window.Tennis = window.Tennis || {};
+    window.Tennis.UI = window.Tennis.UI || {};
+    window.Tennis.UI.toast = (msg, opts={}) =>
+      window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg, ...opts }}));
+  </script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Shared utils (schema + helpers; no UI changes) -->
   <script src="./shared-utils.js"></script>
@@ -892,6 +927,40 @@
       // call this when an available court is tapped
       window.mobileTapToRegister = function(courtNumber){
         if (!MOBILE) return false; // do nothing on desktop/iPad standalone
+        
+        // Check if user is already registered - show toast instead of registration
+        const registeredCourt = sessionStorage.getItem('mobile-registered-court');
+        if (registeredCourt) {
+          // Verify the registration is still valid by checking if the court is actually occupied
+          try {
+            const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
+            const court = data.courts && data.courts[registeredCourt - 1];
+            const isActuallyOnCourt = court && (
+              (court.current && court.current.players && court.current.players.length > 0) ||
+              (court.players && court.players.length > 0)
+            );
+            
+            if (!isActuallyOnCourt) {
+              // Registration is stale - clear it and allow new registration
+              console.log('Clearing stale mobile registration for court', registeredCourt);
+              sessionStorage.removeItem('mobile-registered-court');
+              window.parent.postMessage({ type: 'resetRegistration' }, '*');
+              return false; // Allow registration to proceed
+            }
+          } catch (e) {
+            console.error('Error verifying court occupation:', e);
+            // If we can't verify, clear the stale registration
+            sessionStorage.removeItem('mobile-registered-court');
+            window.parent.postMessage({ type: 'resetRegistration' }, '*');
+            return false;
+          }
+          
+          // Only show toast if registration is still valid
+          if (window.Tennis?.UI?.toast) {
+            window.Tennis.UI.toast(`You are currently registered for play on Court ${registeredCourt}`, { type: 'warning' });
+          }
+          return false; // Don't proceed with registration
+        }
         
         // Check if there's a waitlist - if so, redirect to join waitlist instead
         try {
@@ -945,16 +1014,33 @@
       let _tapLock = 0;
       document.addEventListener('click', (ev) => {
         if (window.top === window.self) return; // only when embedded
+        
+        // Check if this click was on a court card that already has a React onClick handler
         const card = ev.target.closest('[data-court][data-available="true"]');
         if (!card) return;
+        
+        // If the court has a React onClick handler (available courts), let React handle it
+        const hasReactHandler = card.onclick !== null || card.getAttribute('role') === 'button';
+        if (hasReactHandler) return; // Let React onClick handle it
+        
         const now = Date.now();
         if (now - _tapLock < 300) return; // debounce
         _tapLock = now;
 
         const n = Number(card.getAttribute('data-court'));
         if (!Number.isFinite(n)) return;
-        try { window.parent.postMessage({ type:'register', courtNumber: n }, '*'); } catch {}
-        ev.preventDefault();
+        
+        // Use mobileTapToRegister to ensure proper registration checks (toast for already registered users)
+        if (window.mobileTapToRegister) {
+          const proceeded = window.mobileTapToRegister(n);
+          if (proceeded) {
+            ev.preventDefault();
+          }
+        } else {
+          // Fallback to direct message if mobileTapToRegister not available
+          try { window.parent.postMessage({ type:'register', courtNumber: n }, '*'); } catch {}
+          ev.preventDefault();
+        }
       });
     })();
   </script>
@@ -1232,23 +1318,10 @@
         
         if (action === 'clear-court') {
           const registeredCourt = sessionStorage.getItem('mobile-registered-court');
-          if (registeredCourt && confirm(`Clear Court ${registeredCourt}?`)) {
-            // Clear the court
-            try {
-              const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
-              if (data.courts && data.courts[registeredCourt - 1]) {
-                data.courts[registeredCourt - 1] = null;
-                localStorage.setItem('tennisClubData', JSON.stringify(data));
-                // Clear the mobile registration
-                sessionStorage.removeItem('mobile-registered-court');
-                // Refresh the display
-                scheduleBoardRefresh();
-                // Update button back to Join Waitlist
-                updateJoinButtonForMobile();
-                console.log('Cleared court', registeredCourt);
-              }
-            } catch (e) {
-              console.error('Error clearing court:', e);
+          if (registeredCourt) {
+            // Open Clear Court confirmation modal instead of using confirm()
+            if (window.MobileModal) {
+              window.MobileModal.open('clear-court-confirm', { courtNumber: registeredCourt });
             }
           }
           return;
@@ -1260,16 +1333,42 @@
       const wlBtn   = el.querySelector('button[data-action="waitlist"] .lbl');
       
       // Function to update Join/Clear button based on mobile registration status
-      function updateJoinButtonForMobile() {
+      window.updateJoinButtonForMobile = function updateJoinButtonForMobile() {
+        // Only apply in mobile view within iframe
+        if (!window.IS_MOBILE_VIEW || window.top === window.self) return;
+        
         const registeredCourt = sessionStorage.getItem('mobile-registered-court');
+        // Verify the user is actually on a court (not just in sessionStorage)
+        let isActuallyOnCourt = false;
         if (registeredCourt) {
-          // Change to Clear Court button
+          try {
+            const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
+            const court = data.courts && data.courts[registeredCourt - 1];
+            isActuallyOnCourt = court && (
+              (court.current && court.current.players && court.current.players.length > 0) ||
+              (court.players && court.players.length > 0)
+            );
+            console.debug(`[Mobile Clear Court Check] Court ${registeredCourt}:`, {
+              hasData: !!data,
+              hasCourts: !!(data.courts),
+              court: court,
+              isActuallyOnCourt: isActuallyOnCourt
+            });
+          } catch (e) {
+            console.error('Error checking court occupation:', e);
+            isActuallyOnCourt = false;
+          }
+        }
+        
+        if (registeredCourt && isActuallyOnCourt) {
+          // Change to Clear Court button - blue square like occupied courts, no emoji
           joinBtn.setAttribute('data-action', 'clear-court');
-          joinBtn.innerHTML = '🏸<span class="lbl">Clear Court</span>';
+          joinBtn.innerHTML = '<span class="lbl" style="font-size: 1.0em; line-height: 1.2;">Clear<br/>Court</span>';
           joinBtn.disabled = false;
           joinBtn.setAttribute('aria-disabled', 'false');
-          joinBtn.style.background = 'rgba(59, 130, 246, 0.2)'; // blue background
-          joinBtn.style.border = '1px solid rgba(59, 130, 246, 0.4)';
+          joinBtn.style.background = 'rgb(147, 197, 253)'; // same blue as occupied courts
+          joinBtn.style.border = '1px solid black';
+          joinBtn.style.color = 'black';
           joinBtn.title = `Clear Court ${registeredCourt}`;
         } else {
           // Reset to Join Waitlist button
@@ -1277,6 +1376,7 @@
           joinBtn.innerHTML = '🎾<span class="lbl">Join Waitlist</span>';
           joinBtn.style.background = '';
           joinBtn.style.border = '';
+          joinBtn.style.color = '';
           joinBtn.title = 'Join Waitlist';
           // Let updateJoinButtonState handle the disabled state
           updateJoinButtonState();
@@ -1358,8 +1458,11 @@
       // Listen for mobile registration events
       window.addEventListener('message', (evt) => {
         if (evt.data?.type === 'mobile:registrationSuccess') {
-          // Small delay to ensure sessionStorage is set
+          // Try multiple times with increasing delays to ensure data is synchronized
           setTimeout(updateJoinButtonForMobile, 100);
+          setTimeout(updateJoinButtonForMobile, 500);
+          setTimeout(updateJoinButtonForMobile, 1000);
+          setTimeout(updateJoinButtonForMobile, 2000);
         }
       });
       
@@ -2068,8 +2171,34 @@
             data-available={status === 'free'}
             role={status === 'free' ? "button" : undefined}
             tabIndex={status === 'free' ? 0 : undefined}
-            onClick={status === 'free' ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
-            style={{ cursor: status === 'free' ? 'pointer' : 'default' }}
+            onClick={(() => {
+              if (status === 'free') {
+                return () => window.mobileTapToRegister?.(courtNumber);
+              }
+              // Mobile only: Check if user is occupying this court
+              if (isMobileView && status === 'occupied') {
+                const registeredCourt = sessionStorage.getItem('mobile-registered-court');
+                if (registeredCourt && Number(registeredCourt) === courtNumber) {
+                  return () => {
+                    // Open Clear Court confirmation modal - same as Clear Court button
+                    if (window.MobileModal) {
+                      window.MobileModal.open('clear-court-confirm', { courtNumber: registeredCourt });
+                    }
+                  };
+                }
+              }
+              return undefined;
+            })()}
+            style={{ cursor: (() => {
+              if (status === 'free' && isMobileView) return 'pointer';
+              if (isMobileView && status === 'occupied') {
+                const registeredCourt = sessionStorage.getItem('mobile-registered-court');
+                if (registeredCourt && Number(registeredCourt) === courtNumber) {
+                  return 'pointer';
+                }
+              }
+              return 'default';
+            })() }}
             aria-label={status === 'free' && isMobileView ? `Court ${courtNumber} available. Tap to select.` : undefined}
           >
             <h3 className={`court-text-lg font-bold ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} mb-1`}
@@ -2960,6 +3089,35 @@
         );
       };
 
+      // STEP 8.5: Toast Host Component (matching Registration.html)
+      function ToastHost() {
+        const [toasts, setToasts] = React.useState([]);
+        React.useEffect(() => {
+          const onToast = (e) => {
+            const t = { id: Date.now() + Math.random(), duration: 3000, type: 'warning', ...e.detail };
+            setToasts((xs) => [...xs, t]);
+            setTimeout(() => setToasts((xs) => xs.filter(x => x.id !== t.id)), t.duration);
+          };
+          window.addEventListener('UI_TOAST', onToast);
+          return () => window.removeEventListener('UI_TOAST', onToast);
+        }, []);
+
+        return React.createElement('div', { className: 'fixed top-4 inset-x-0 z-[1000] flex justify-center pointer-events-none' },
+          React.createElement('div', { className: 'w-full max-w-lg px-4 space-y-2' },
+            toasts.map(t => 
+              React.createElement('div', {
+                key: t.id,
+                className: `pointer-events-auto rounded-xl px-4 py-3 shadow-lg ring-1 ${
+                  t.type === 'error' ? 'bg-red-50 ring-red-200 text-red-800' :
+                  t.type === 'success' ? 'bg-green-50 ring-green-200 text-green-800' :
+                  'bg-yellow-50 ring-yellow-200 text-yellow-800'
+                }`
+              }, t.msg || t.message)
+            )
+          )
+        );
+      }
+
       // STEP 9: Main Tennis Court Display Component
       const TennisCourtDisplay = () => {
         // Mobile view detection
@@ -3566,7 +3724,12 @@
       // STEP 13: Render the application
       // console.log('🎯 Rendering fully integrated application...');
       const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(<TennisCourtDisplay />);
+      root.render(
+        <>
+          <ToastHost />
+          <TennisCourtDisplay />
+        </>
+      );
 
       
       
@@ -3622,6 +3785,7 @@
           case 'court-conditions': return 'Court Conditions';
           case 'reserved': return 'Reserved Courts';
           case 'waitlist': return 'Waitlist';
+          case 'clear-court-confirm': return `Clear Court ${payload?.courtNumber || ''}?`;
           // join-waitlist case removed - no longer used
           default: return '';
         }
@@ -3803,6 +3967,54 @@
             
           // join-waitlist case removed - button now opens registration directly
             
+          case 'clear-court-confirm':
+            // Clear Court confirmation modal
+            const courtNumber = payload?.courtNumber || '';
+            return React.createElement('div', { className: 'p-6 text-center' },
+              React.createElement('button', {
+                key: 'confirm',
+                type: 'button',
+                className: 'w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium',
+                onClick: () => {
+                  // Use proper TennisDataService to clear court with game history
+                  if (window.TennisDataService && window.TennisDataService.clearCourt) {
+                    try {
+                      window.TennisDataService.clearCourt(Number(courtNumber));
+                      // Clear mobile registration
+                      sessionStorage.removeItem('mobile-registered-court');
+                      // Notify mobile shell to reset registration state
+                      window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                      // Update button state
+                      if (window.updateJoinButtonForMobile) {
+                        window.updateJoinButtonForMobile();
+                      }
+                      // Close modal
+                      onClose();
+                      console.log(`Court ${courtNumber} cleared with game history`);
+                    } catch (e) {
+                      console.error('Error clearing court with service:', e);
+                      // Fallback to manual clearing
+                      try {
+                        const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
+                        if (data.courts && data.courts[courtNumber - 1]) {
+                          data.courts[courtNumber - 1] = null;
+                          localStorage.setItem('tennisClubData', JSON.stringify(data));
+                          sessionStorage.removeItem('mobile-registered-court');
+                          window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                          if (window.updateJoinButtonForMobile) {
+                            window.updateJoinButtonForMobile();
+                          }
+                          onClose();
+                        }
+                      } catch (fallbackError) {
+                        console.error('Fallback clearing also failed:', fallbackError);
+                      }
+                    }
+                  }
+                }
+              }, `Yes, we are finished and leaving court ${courtNumber}`)
+            );
+            
           default: 
             return React.createElement('div', { className: 'p-6 text-center' },
               React.createElement('p', null, 'Unknown modal type')
@@ -3816,6 +4028,7 @@
         if (type === 'court-conditions') return ' modal-court-conditions-full';
         if (type === 'reserved') return ' modal-reserved-large';
         if (type === 'waitlist') return ' modal-waitlist-large';
+        if (type === 'clear-court-confirm') return ' modal-clear-court-confirm';
         return '';
       };
 

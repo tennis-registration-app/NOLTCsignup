@@ -184,13 +184,35 @@
         showReg(d.courtNumber);
       } else if (d.type === 'registration:success') {
         console.log('Mobile Shell: Registration success for court', d.courtNumber, '- closing overlay in 15 seconds');
+        // Store the registration in sessionStorage at the top level
+        sessionStorage.setItem('mobile-registered-court', d.courtNumber);
         // Show success screen for 15 seconds before closing
-        setTimeout(() => {
+        window._registrationTimeout = setTimeout(() => {
           hideReg();
           console.log('Mobile Shell: Closing overlay after 15 second delay');
+          window._registrationTimeout = null;
         }, 15000);
         // visual confirmation on the board immediately
-        try { iframeBoard.contentWindow.postMessage({ type:'highlight', courtNumber: Number(d.courtNumber) }, '*'); } catch {}
+        try { 
+          iframeBoard.contentWindow.postMessage({ type:'highlight', courtNumber: Number(d.courtNumber) }, '*'); 
+          // Also notify the board about the mobile registration
+          iframeBoard.contentWindow.postMessage({ type:'mobile:registrationSuccess', courtNumber: Number(d.courtNumber) }, '*');
+          // Force reload of the board to pick up the sessionStorage change
+          iframeBoard.contentWindow.location.reload();
+        } catch {}
+      } else if (d.type === 'resetRegistration') {
+        console.log('Mobile Shell: Resetting registration overlay');
+        // Clear any pending timeout
+        if (window._registrationTimeout) {
+          clearTimeout(window._registrationTimeout);
+          window._registrationTimeout = null;
+        }
+        // Hide the registration overlay immediately
+        hideReg();
+        // Reload the registration iframe to reset its state
+        try {
+          iframeReg.src = iframeReg.src; // Force reload
+        } catch {}
       }
     });
   </script>

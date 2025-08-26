@@ -997,7 +997,7 @@ const handleAllCourtsDry = async () => {
   // if you compute occupied/free, use domain:
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const now = new Date();
-  const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+  const blocks = courtBlocks || [];
   const wetSet = new Set((blocks||[])
     .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
     .map(b => b.courtNumber));
@@ -5801,8 +5801,7 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
       }
 
       const next = existing.concat(newBlocks);
-      Storage.writeJSON(key, next);
-      Events.emitDom('tennisDataUpdate', { key, data: next }); // notify other pages
+      await dataStore.set('courtBlocks', next, { immediate: true });
       console.log('[Admin] wrote blocks:', newBlocks);
 
       successCount += newBlocks.length;
