@@ -2012,7 +2012,7 @@
                   <div className="flex flex-col h-full w-full">
                     {status === 'free' || status === 'wet' ? (
                       <>
-                        <div className={`${primaryClass} ${isMobileView && status === 'free' ? 'text-sm font-normal' : ''} text-center flex-1 flex items-center justify-center`}>
+                        <div className={`${isMobileView && status === 'free' ? 'mt-1 court-text-base font-medium leading-tight text-sm font-normal' : status === 'free' ? 'mt-1 court-text-base font-medium leading-tight' : primaryClass} text-center flex-1 flex items-center justify-center`}>
                           {status === 'wet' ? (
                             <div className="flex flex-col items-center">
                               <div style={{ fontSize: '2.5em', lineHeight: '1' }}>🌧️</div>
