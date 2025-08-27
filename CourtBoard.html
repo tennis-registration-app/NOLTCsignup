@@ -538,7 +538,7 @@
     
     /* Mobile-only court card styling */
     .variant-mobile .court-card {
-      border-width: 2px !important; /* Half thickness: 4px -> 2px */
+      border-width: 1px !important; /* Thin white borders for mobile */
       border-color: white !important; /* White borders instead of colored */
     }
     
@@ -1363,7 +1363,7 @@
         if (registeredCourt && isActuallyOnCourt) {
           // Change to Clear Court button - blue square like occupied courts, no emoji
           joinBtn.setAttribute('data-action', 'clear-court');
-          joinBtn.innerHTML = '<span class="lbl" style="font-size: 1.0em; line-height: 1.2;">Clear<br/>Court</span>';
+          joinBtn.innerHTML = '<span class="lbl" style="font-size: 0.9em; line-height: 1.2;">Clear<br/>Court</span>';
           joinBtn.disabled = false;
           joinBtn.setAttribute('aria-disabled', 'false');
           joinBtn.style.background = 'rgb(147, 197, 253)'; // same blue as occupied courts
