@@ -2590,7 +2590,8 @@ const CourtSelectionScreen = ({
   onAssignNext,
   onGoBack,
   onStartOver,
-  currentGroup = [] // Add currentGroup prop to determine duration
+  currentGroup = [], // Add currentGroup prop to determine duration
+  isMobileView = false
 }) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
@@ -2694,7 +2695,7 @@ const CourtSelectionScreen = ({
             onClick={onGoBack}
             className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors"
           >
-            Go Back
+            {isMobileView ? 'Back' : 'Go Back'}
           </button>
           
           <button
@@ -6268,20 +6269,26 @@ onFocus={() => {
              </div>
            )}
          </div>
-         <div className={`absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex ${isMobileView ? 'justify-center' : 'justify-between'} items-end gap-2 bottom-nav-buttons`}>
+         <div className={`absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex ${isMobileView ? 'justify-between' : 'justify-between gap-2'} items-end bottom-nav-buttons`}>
          <button
     onClick={() => {
-      setCurrentGroup([]);
-      setMemberNumber("");
-      setCurrentScreen("search");
+      if (window.__mobileFlow) {
+        // In mobile, close the registration overlay
+        window.parent.postMessage({ type: 'resetRegistration' }, '*');
+      } else {
+        // Desktop behavior - go back to search
+        setCurrentGroup([]);
+        setMemberNumber("");
+        setCurrentScreen("search");
+      }
     }}
-    className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors"
+    className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors relative z-10"
   >
-    Go Back
+    {isMobileView ? 'Back' : 'Go Back'}
   </button>
   
   {currentGroup.length >= 1 && (
-    <>
+    <div className={isMobileView ? 'flex-1 flex justify-center' : ''}>
       {(() => {
         // Check if there's a waitlist and if this group is not the first waiting group
         const data = Tennis.Storage.readDataSafe();
@@ -6337,7 +6344,7 @@ onFocus={() => {
               setCurrentScreen("court");
             }
           }}
-          className={`${isMobileView ? 'w-full btn--full' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
+          className={`${isMobileView ? 'px-6' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
         >
           {isMobileView ? (window.__mobileFlow && window.__preselectedCourt ? `Take Court ${window.__preselectedCourt}` : 'Continue') : (window.__mobileFlow && window.__preselectedCourt ? `Register for Court ${window.__preselectedCourt}` : 'Select a Court')}
         </button>
@@ -6363,12 +6370,12 @@ onFocus={() => {
               }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
             }
           }}
-          className={`${isMobileView ? 'w-full btn--full' : ''} bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors`}
+          className={`${isMobileView ? 'px-6' : ''} bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors`}
         >
           Join Waitlist
         </button>
       )}
-    </>
+    </div>
   )}
   
   {!isMobileView && (
@@ -6489,6 +6496,7 @@ onFocus={() => {
          hasWaitingGroups={hasWaitingGroups}
          waitingGroupsCount={data.waitingGroups.length}
          currentGroup={currentGroup}
+         isMobileView={isMobileView}
          onCourtSelect={async (courtNum) => {
            const DEBUG_SELECT = false;
            if (DEBUG_SELECT) console.log('[SelectCourt] clicked', { courtNumber: courtNum });
