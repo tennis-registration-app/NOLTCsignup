@@ -2203,7 +2203,8 @@ const SuccessScreen = ({
   onNewRegistration,
   onHome,
   currentGroup, // Added to support ball purchase
-  mobileCountdown // Added for mobile auto-close countdown
+  mobileCountdown, // Added for mobile auto-close countdown
+  isMobile = false // Added to properly detect mobile mode
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
@@ -2392,7 +2393,7 @@ const SuccessScreen = ({
     const courtFooterContent = !ballsPurchased ? (
       <div className="bg-yellow-50 rounded-2xl p-3 sm:p-4 h-full flex items-center">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
-          {canChangeCourt && changeTimeRemaining > 0 && (
+          {canChangeCourt && changeTimeRemaining > 0 && !isMobile && window.top === window.self && (
             <button
               onClick={onChangeCourt}
               className="flex-1 bg-blue-100 text-blue-700 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-medium hover:bg-blue-200 transition-colors duration-150"
@@ -4192,6 +4193,7 @@ console.log('✅ Court assigned result:', result);
   setCanChangeCourt(allowCourtChange);  // Only true if alternatives exist
   setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
   setShowSuccess(true);
+  
   // Mobile: notify parent on success
   if (window.__mobileSuccessHandler) {
     window.__mobileSuccessHandler(justAssignedCourt || courtNumber);
@@ -4339,6 +4341,7 @@ console.log('✅ Court assigned result:', result);
 
   // Reset form
   const resetForm = () => {
+    
     setCurrentGroup([]);
     setShowSuccess(false);
     setMemberNumber("");
@@ -4754,6 +4757,7 @@ console.log('✅ Court assigned result:', result);
           estimatedWait={estimatedWait}
           currentGroup={currentGroup}
           mobileCountdown={window.__mobileFlow ? mobileCountdown : null}
+          isMobile={!!window.__mobileFlow}
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
@@ -6273,8 +6277,19 @@ onFocus={() => {
          <button
     onClick={() => {
       if (window.__mobileFlow) {
-        // In mobile, close the registration overlay
-        window.parent.postMessage({ type: 'resetRegistration' }, '*');
+        // Check if we're in Clear Court workflow - handle navigation properly
+        if (currentScreen === "clearCourt") {
+          // In Clear Court, Back should go to previous step or exit
+          if (clearCourtStep > 1) {
+            setClearCourtStep(clearCourtStep - 1);
+          } else {
+            // Exit Clear Court workflow
+            window.parent.postMessage({ type: 'resetRegistration' }, '*');
+          }
+        } else {
+          // For other screens, close the registration overlay
+          window.parent.postMessage({ type: 'resetRegistration' }, '*');
+        }
       } else {
         // Desktop behavior - go back to search
         setCurrentGroup([]);
@@ -6608,10 +6623,18 @@ onFocus={() => {
            
            <div className="flex justify-center">
              <button
-               onClick={() => setCurrentScreen("welcome")}
+               onClick={() => {
+                 if (window.__mobileFlow) {
+                   // In mobile, close the Clear Court overlay
+                   window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                 } else {
+                   // Desktop behavior - go back to welcome
+                   setCurrentScreen("welcome");
+                 }
+               }}
                className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors"
              >
-               Go Back
+               {window.__mobileFlow ? 'Back' : 'Go Back'}
              </button>
            </div>
          </div>
@@ -6662,20 +6685,34 @@ onFocus={() => {
            
            <div className="flex flex-col sm:flex-row justify-between gap-3">
              <button
-               onClick={() => setClearCourtStep(1)}
+               onClick={() => {
+                 if (window.__mobileFlow) {
+                   // In mobile, go back to step 1 (court selection)
+                   setClearCourtStep(1);
+                 } else {
+                   // Desktop behavior - go back to step 1
+                   setClearCourtStep(1);
+                 }
+               }}
                className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors order-2 sm:order-1"
              >
-               Go Back
+               {window.__mobileFlow ? 'Back' : 'Go Back'}
              </button>
              
              <button
                onClick={() => {
                  resetForm();
-                 setCurrentScreen("welcome");
+                 if (window.__mobileFlow) {
+                   // In mobile, close the Clear Court overlay
+                   window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                 } else {
+                   // Desktop behavior - go back to welcome
+                   setCurrentScreen("welcome");
+                 }
                }}
                className="bg-red-500 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-red-600 transition-colors order-1 sm:order-2"
              >
-               Start Over
+               {window.__mobileFlow ? 'Exit' : 'Start Over'}
              </button>
            </div>
          </div>

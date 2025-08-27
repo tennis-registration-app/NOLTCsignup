@@ -1338,16 +1338,20 @@
         if (!window.IS_MOBILE_VIEW || window.top === window.self) return;
         
         const registeredCourt = sessionStorage.getItem('mobile-registered-court');
-        // Verify the user is actually on a court (not just in sessionStorage)
         let isActuallyOnCourt = false;
+        
+        // Only check the specific court that sessionStorage says we're on
         if (registeredCourt) {
           try {
             const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
             const court = data.courts && data.courts[registeredCourt - 1];
+            
+            // Verify the user is actually on THIS specific court
             isActuallyOnCourt = court && (
               (court.current && court.current.players && court.current.players.length > 0) ||
               (court.players && court.players.length > 0)
             );
+            
             console.debug(`[Mobile Clear Court Check] Court ${registeredCourt}:`, {
               hasData: !!data,
               hasCourts: !!(data.courts),

@@ -174,7 +174,9 @@
           const nextAssigned = countAssigned(value);
 
           // Core guard: don't overwrite active courts with an empty snapshot
-          if (currAssigned > 0 && nextAssigned === 0 && hasFutureCurrent(current, now)) {
+          // EXCEPT when this is a legitimate clearCourt operation (marked with __clearCourtOperation flag)
+          const isClearCourtOp = value && value.__clearCourtOperation === true;
+          if (currAssigned > 0 && nextAssigned === 0 && hasFutureCurrent(current, now) && !isClearCourtOp) {
             console.warn('[StorageGuard] Skip DATA overwrite: candidate has assigned=0 but live data has active courts with future end times');
             // Nudge listeners to recompute with current data (no state loss)
             try {
@@ -229,7 +231,9 @@
           const nextAssigned = asCount(value);
 
           // Guard: if we have live courts with future end times, don't accept a write that zeroes them out.
-          if (currAssigned > 0 && nextAssigned === 0 && hasFuture(current, now)) {
+          // EXCEPT when this is a legitimate clearCourt operation (marked with __clearCourtOperation flag)
+          const isClearCourtOp = value && value.__clearCourtOperation === true;
+          if (currAssigned > 0 && nextAssigned === 0 && hasFuture(current, now) && !isClearCourtOp) {
             console.warn('[StorageGuard] Skip DATA write: would clear active courts with future end times');
             if (Events?.emitDom) {
               // Keep all listeners in sync with the current, preserved state

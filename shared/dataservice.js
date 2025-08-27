@@ -68,8 +68,32 @@
     data.recentlyCleared = Array.isArray(data.recentlyCleared) ? data.recentlyCleared.slice() : [];
     data.recentlyCleared.push({ courtNumber, clearedAt: nowISO, source: opts.source || 'admin' });
 
-    // Persist using guarded path (emits DATA_UPDATED + tennisDataUpdate)
-    DS.set('tennisClubData', data);
+    // Mark this as a legitimate clearCourt operation for StorageGuard
+    data.__clearCourtOperation = true;
+    
+    // Use normal storage path - StorageGuard will check for this flag
+    S.writeJSON('tennisClubData', data);
+    
+    // Remove the flag after write
+    delete data.__clearCourtOperation;
+    
+    // Emit events that DS.set normally handles
+    const E = window.Tennis?.Events;
+    if (E?.emitDom) {
+      E.emitDom('DATA_UPDATED', { key: 'tennisClubData', data });
+      E.emitDom('tennisDataUpdate', { key: 'tennisClubData', data });
+    }
+    
+    // Also emit DOM events for maximum compatibility
+    try {
+      window.dispatchEvent(new CustomEvent('tennisDataUpdate', {
+        detail: { key: 'tennisClubData', data }
+      }));
+      window.dispatchEvent(new CustomEvent('DATA_UPDATED', {
+        detail: { key: 'tennisClubData', data }
+      }));
+    } catch {}
+    
     return { success: true };
   }
 
