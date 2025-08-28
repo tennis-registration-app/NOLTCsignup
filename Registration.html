@@ -2998,7 +2998,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const handleStorageUpdate = async (event) => {
       if (event.detail && event.detail.key === TENNIS_CONFIG.STORAGE.KEY) {
         // Don't trigger updates if we're in the middle of a screen transition
-        if (currentScreen === "search" || currentScreen === "group") {
+        const s = currentScreenRef.current;
+        if (s === "search" || s === "group") {
           console.log('Skipping storage update during screen transition');
           return;
         }
@@ -3017,7 +3018,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Handle storage events from localStorage changes
       if (event.key === TENNIS_CONFIG.STORAGE.KEY && event.newValue) {
         // Don't trigger updates if we're in the middle of a screen transition
-        if (currentScreen === "search" || currentScreen === "group") {
+        const s = currentScreenRef.current;
+        if (s === "search" || s === "group") {
           dbg('Skipping localStorage update during screen transition');
           return;
         }
@@ -3039,23 +3041,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // Listen for storage events from other windows/tabs
     window.addEventListener('storage', handleStorageEvent);
 
-    // Refresh clear screen on updates
-    const refreshClearScreen = () => {
-      if (currentScreen === "clearCourt") {
-        // Force re-render by updating state
-        setCurrentScreen("clearCourt");
-      }
-    };
-    document.addEventListener('tennisDataUpdate', refreshClearScreen);
-    document.addEventListener('DATA_UPDATED', refreshClearScreen);
 
     return () => {
       clearTimeout(updateTimeout);
       window.removeEventListener(EVENTS.UPDATE, scheduleAvailabilityRefresh);
       window.removeEventListener('DATA_UPDATED', scheduleAvailabilityRefresh);
       window.removeEventListener('storage', handleStorageEvent);
-      document.removeEventListener('tennisDataUpdate', refreshClearScreen);
-      document.removeEventListener('DATA_UPDATED', refreshClearScreen);
     };
   }, []);
 
@@ -3350,6 +3341,15 @@ useEffect(() => {
   const [changeTimeRemaining, setChangeTimeRemaining] = useState(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
   const [isTimeLimited, setIsTimeLimited] = useState(false);
   const [currentScreen, setCurrentScreen] = useState("welcome");
+  // keep a live, non-stale view of the current screen for long-lived handlers
+  const currentScreenRef = useRef(currentScreen);
+  useEffect(() => { currentScreenRef.current = currentScreen; }, [currentScreen]);
+  
+  // helper: set screen and sync the ref immediately to avoid any "between renders" race
+  function setScreen(next) {
+    currentScreenRef.current = next;
+    setCurrentScreen(next);
+  }
   const [searchInput, setSearchInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
@@ -4706,7 +4706,7 @@ console.log('✅ Court assigned result:', result);
       winRate: enrichedMember.winRate
     }]);
     
-    setCurrentScreen("group");
+    setScreen("group");
   };
 
   // Success screen
@@ -4790,7 +4790,7 @@ console.log('✅ Court assigned result:', result);
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
-            setCurrentScreen("search");
+            setScreen("search");
           }}
           onHome={resetForm}
         />
@@ -4813,10 +4813,10 @@ if (currentScreen === "welcome") {
       )}
       <WelcomeScreen 
         onRegisterClick={() => {
-          checkLocationAndProceed(() => setCurrentScreen("search"));
+          checkLocationAndProceed(() => setScreen("search"));
         }}
         onClearCourtClick={() => {
-          checkLocationAndProceed(() => setCurrentScreen("clearCourt"));
+          checkLocationAndProceed(() => setScreen("clearCourt"));
         }}
       />
     </>
@@ -6323,7 +6323,7 @@ onFocus={() => {
         // Desktop behavior - go back to search
         setCurrentGroup([]);
         setMemberNumber("");
-        setCurrentScreen("search");
+        setScreen("search");
       }
     }}
     className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors relative z-10"
@@ -6591,7 +6591,7 @@ onFocus={() => {
            }
          }}
          onGoBack={() => {
-           setCurrentScreen("group");
+           setScreen("group");
            setIsChangingCourt(false);
            setWasOvertimeCourt(false);
            // If we were changing courts and had replaced an overtime court, restore it
