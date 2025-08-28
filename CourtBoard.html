@@ -401,9 +401,12 @@
     .variant-mobile .court-card .truncate {
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2; /* Standard property */
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
+      line-height: 1.2em;
+      max-height: 2.4em; /* fallback for non-webkit browsers */
     }
     
     /* Hide time/date header in mobile view only */
@@ -702,7 +705,8 @@
     
     .modal-reserved-courts,
     .modal-waitlist {
-      /* Reset some styles that might interfere */
+      /* Styles can be added here if needed */
+      display: block;
     }
     
     .modal-court-conditions {
