@@ -965,6 +965,39 @@ const CourtStatusGrid = ({ courts, courtBlocks, selectedDate, onClearCourt, onMo
     }
   };
 
+  const handleSaveBlock = async (updatedBlock) => {
+    try {
+      // Get current blocks
+      const existingBlocks = await dataStore.get('courtBlocks') || [];
+      
+      // Find and update the block
+      const blockIndex = existingBlocks.findIndex(b => 
+        b.id === updatedBlock.id || 
+        (b.courtNumber === updatedBlock.courtNumber && 
+         b.startTime === updatedBlock.startTime)
+      );
+      
+      if (blockIndex !== -1) {
+        // Update existing block
+        existingBlocks[blockIndex] = updatedBlock;
+      } else {
+        // This shouldn't happen, but handle it gracefully
+        existingBlocks.push(updatedBlock);
+      }
+      
+      // Save updated blocks
+      await dataStore.set('courtBlocks', existingBlocks, { immediate: true });
+      window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+      
+      Tennis?.UI?.toast?.('Block updated successfully', { type: 'success' });
+      setEditingBlock(null);
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error saving block:', error);
+      Tennis?.UI?.toast?.('Failed to save block', { type: 'error' });
+    }
+  };
+
 const handleAllCourtsDry = async () => {
   // If parent provided a callback, use it
   if (onClearAllWetCourts) {

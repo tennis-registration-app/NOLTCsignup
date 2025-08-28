@@ -64,9 +64,19 @@
     // Clear current
     court.current = null;
 
-    // Track recentlyCleared (optional but useful)
+    // Track recentlyCleared with originalEndTime and players for time extension prevention
     data.recentlyCleared = Array.isArray(data.recentlyCleared) ? data.recentlyCleared.slice() : [];
-    data.recentlyCleared.push({ courtNumber, clearedAt: nowISO, source: opts.source || 'admin' });
+    
+    const recentlyClearedEntry = { 
+      courtNumber, 
+      clearedAt: nowISO, 
+      originalEndTime: gameData.endTime, // Store the original end time
+      players: gameData.players || [], // Store the players who were cleared
+      source: opts.source || 'admin' 
+    };
+    
+    
+    data.recentlyCleared.push(recentlyClearedEntry);
 
     // Mark this as a legitimate clearCourt operation for StorageGuard
     data.__clearCourtOperation = true;
@@ -310,11 +320,44 @@
         }
       }
       
+      // Check if any player recently cleared a court and should get limited time
+      const recentlyCleared = Array.isArray(data.recentlyCleared) ? data.recentlyCleared : [];
+      
+      let endTime;
+      let originalEndTime = null;
+      let isTimeLimited = false;
+      
+      // Check each recently cleared session
+      for (const session of recentlyCleared) {
+        
+        // Skip if session has expired
+        if (!session.originalEndTime || new Date(session.originalEndTime) <= now) {
+          continue;
+        }
+        
+        // Check if this is the exact same group that was recently cleared
+        const hasExactMatch = sameGroup(normalizedPlayers, session.players);
+        
+        if (hasExactMatch) {
+          originalEndTime = session.originalEndTime;
+          break;
+        }
+      }
+      
+      if (originalEndTime && new Date(originalEndTime) > now) {
+        // Use the original end time to prevent time extension abuse
+        endTime = new Date(originalEndTime);
+        isTimeLimited = true;
+      } else {
+        // Normal case - calculate end time based on duration
+        endTime = new Date(now.getTime() + duration*60000);
+      }
+
       court.current = {
         players: normalizedPlayers,
         guests: group?.guests || 0,
         startTime: now.toISOString(),
-        endTime: new Date(now.getTime() + duration*60000).toISOString(),
+        endTime: endTime.toISOString(),
         assignedAt: now.toISOString(),
         duration,
         courtNumber
@@ -337,7 +380,7 @@
       // Persist through guarded path
       await DS.set(S.STORAGE.DATA, data);
 
-      return { success: true, courtNumber, replacedGroup };
+      return { success: true, courtNumber, replacedGroup, isTimeLimited };
     } catch (err) {
       return { success: false, error: String(err?.message || err) };
     }

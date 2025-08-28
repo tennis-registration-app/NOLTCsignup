@@ -862,7 +862,7 @@ const DataValidation = {
   isValidPlayer(player) {
     return player && 
            typeof player === 'object' &&
-           typeof player.id === 'number' &&
+           (typeof player.id === 'number' || (typeof player.id === 'string' && !isNaN(Number(player.id)))) &&
            typeof player.name === 'string' &&
            player.name.trim().length > 0;
   },
@@ -1180,9 +1180,11 @@ const TennisDataService = window.TennisDataService || {
     const originalEndTime = TennisBusinessLogic.getOriginalEndTimeForGroup(playersArray, next.recentlyCleared);
     
     let end;
+    let isTimeLimited = false;
     if (originalEndTime && new Date(originalEndTime) > now) {
       // Use the original end time to prevent time extension abuse
       end = new Date(originalEndTime);
+      isTimeLimited = true;
       console.log(`Group contains players who recently cleared early. Using original end time: ${end.toLocaleTimeString()}`);
     } else {
       // Normal case - calculate end time based on duration
@@ -1246,7 +1248,7 @@ const TennisDataService = window.TennisDataService || {
       window.Tennis?.Events?.emitDom?.('tennisDataUpdate', { key: S.STORAGE.DATA, data: next });
     }
     
-    return { success: true, replacedGroup: replacedGroup };
+    return { success: true, replacedGroup: replacedGroup, isTimeLimited };
   },
 
   // Add this helper method to TennisDataService
@@ -1298,6 +1300,7 @@ const TennisDataService = window.TennisDataService || {
     // Move current to history and end it "now" if needed
     const now = new Date();
     const cur = court.current;
+    const originalEndTime = cur.endTime; // Store original end time BEFORE modification
     // Ensure endTime is not in the future after a manual clear
     const end = cur?.endTime ? new Date(cur.endTime) : null;
     if (!end || isNaN(end) || end > now) {
@@ -1317,6 +1320,20 @@ const TennisDataService = window.TennisDataService || {
         clearReason: opts.clearReason || 'Cleared'
       });
     }
+
+    // Track recentlyCleared with originalEndTime and players for time extension prevention
+    data.recentlyCleared = Array.isArray(data.recentlyCleared) ? data.recentlyCleared.slice() : [];
+    
+    const recentlyClearedEntry = { 
+      courtNumber, 
+      clearedAt: now.toISOString(), 
+      originalEndTime: originalEndTime, // Store the original end time BEFORE modification
+      players: cur.players || [], // Store the players who were cleared
+      source: opts.source || 'manual'
+    };
+    
+    
+    data.recentlyCleared.push(recentlyClearedEntry);
 
     // Persist via unified path (no direct localStorage.setItem)
     const key = Tennis.Storage.STORAGE.DATA;
@@ -2055,6 +2072,8 @@ for (let i = 0; i < data.courts.length; i++) {
   getOriginalEndTimeForGroup(players, recentlyCleared) {
     const ps = Array.isArray(players) ? players : [];
     const rc = Array.isArray(recentlyCleared) ? recentlyCleared : [];
+    
+    
     if (ps.length === 0) return null;  // nothing to derive
     
     if (rc.length === 0) {
@@ -2062,20 +2081,20 @@ for (let i = 0; i < data.courts.length; i++) {
     }
     
     const now = new Date();
-    const groupMemberIds = ps.map(p => p.id);
+    
     
     // Check each recently cleared session
     for (const session of rc) {
+      
       // Skip if session has expired
       if (new Date(session.originalEndTime) <= now) {
         continue;
       }
       
-      // Check if any player from this group was in the recently cleared session
-      const sessionMemberIds = Array.isArray(session.players) ? session.players.map(p => p.id) : [];
-      const hasOverlap = groupMemberIds.some(id => sessionMemberIds.includes(id));
+      // Check if this is the exact same group that was recently cleared
+      const hasExactMatch = sameGroup(ps, session.players);
       
-      if (hasOverlap) {
+      if (hasExactMatch) {
         return session.originalEndTime;
       }
     }
@@ -2204,7 +2223,8 @@ const SuccessScreen = ({
   onHome,
   currentGroup, // Added to support ball purchase
   mobileCountdown, // Added for mobile auto-close countdown
-  isMobile = false // Added to properly detect mobile mode
+  isMobile = false, // Added to properly detect mobile mode
+  isTimeLimited = false // Added to show when time was limited
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
@@ -2362,7 +2382,12 @@ const SuccessScreen = ({
                     minute: "2-digit"
                   })}
                 </strong>
-
+              </p>
+              {isTimeLimited && (
+                <p className="text-sm text-gray-500 mt-1">
+                  (Remaining time from previous session)
+                </p>
+              )}
 
                 {(() => {
   const courtBlockStatus = getCourtBlockStatus(justAssignedCourt);
@@ -2375,9 +2400,6 @@ const SuccessScreen = ({
     </span>
   ) : null;
 })()}
-
-
-              </p>
               {replacedGroup && replacedGroup.players && replacedGroup.players.length > 0 && (
                 <p className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
                   Please courteously request {replacedGroup.players[0].name} and partners conclude their play
@@ -3326,6 +3348,7 @@ useEffect(() => {
   const [originalCourtData, setOriginalCourtData] = useState(null);
   const [canChangeCourt, setCanChangeCourt] = useState(false);
   const [changeTimeRemaining, setChangeTimeRemaining] = useState(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
+  const [isTimeLimited, setIsTimeLimited] = useState(false);
   const [currentScreen, setCurrentScreen] = useState("welcome");
   const [searchInput, setSearchInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -3840,6 +3863,7 @@ const checkLocationAndProceed = async (onSuccess) => {
         setReplacedGroup(null);
         setOriginalCourtData(null);
         setCanChangeCourt(false);
+        setIsTimeLimited(false);
         setCurrentScreen("welcome");
         setSearchInput("");
         setShowSuggestions(false);
@@ -3942,16 +3966,18 @@ if (startTime && !isCurrentlyBlocked) {
       return court;
     });
     
-    // Clean up expired recentlyCleared sessions
+    // Clean up expired recentlyCleared sessions (keep for 4 hours after clearing)
     if (data.recentlyCleared && data.recentlyCleared.length > 0) {
       const originalLength = data.recentlyCleared.length;
+      const fourHoursAgo = new Date(now - 4 * 60 * 60 * 1000); // 4 hours ago
+      
       data.recentlyCleared = data.recentlyCleared.filter(session => {
-        return new Date(session.originalEndTime).getTime() >= now;
+        // Keep sessions that were cleared less than 4 hours ago
+        return new Date(session.clearedAt).getTime() > fourHoursAgo.getTime();
       });
       
       if (data.recentlyCleared.length !== originalLength) {
         hasChanges = true;
-        console.log(`Cleaned up ${originalLength - data.recentlyCleared.length} expired sessions from recentlyCleared`);
       }
     }
     
@@ -4192,6 +4218,7 @@ console.log('✅ Court assigned result:', result);
   setHasAssignedCourt(true);  // Track that this group has a court
   setCanChangeCourt(allowCourtChange);  // Only true if alternatives exist
   setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
+  setIsTimeLimited(result.isTimeLimited || false);  // Track if time was limited
   setShowSuccess(true);
   
   // Mobile: notify parent on success
@@ -4265,7 +4292,7 @@ console.log('✅ Court assigned result:', result);
   }
 
   const clearCourt = async (courtNumber, clearReason = 'Cleared') => {
-    console.log(`clearCourt called for court ${courtNumber} with reason: ${clearReason}`);
+    console.log(`[Registration UI] clearCourt called for court ${courtNumber} with reason: ${clearReason}`);
     
     const res = await clearViaService(courtNumber, clearReason);
     if (!res?.success) {
@@ -4349,6 +4376,7 @@ console.log('✅ Court assigned result:', result);
     setReplacedGroup(null);
     setOriginalCourtData(null);
     setCanChangeCourt(false);
+    setIsTimeLimited(false);
     setCurrentScreen("welcome");
     setSearchInput("");
     setShowSuggestions(false);
@@ -4758,6 +4786,7 @@ console.log('✅ Court assigned result:', result);
           currentGroup={currentGroup}
           mobileCountdown={window.__mobileFlow ? mobileCountdown : null}
           isMobile={!!window.__mobileFlow}
+          isTimeLimited={isTimeLimited}
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
