@@ -1428,6 +1428,11 @@
             
             joinBtn.disabled = !shouldAllow;
             joinBtn.setAttribute('aria-disabled', String(!shouldAllow));
+            
+            // Dispatch availability event for mobile bottom bar
+            document.dispatchEvent(new CustomEvent('app:availability', {
+              detail: { hasAvailable: !shouldAllow } // Inverted: shouldAllow=true means no courts available
+            }));
           } else {
             // Fallback: simple check based on occupied courts vs waiting groups
             const occupiedCourts = Array.isArray(data.courts) ? data.courts.filter(c => c !== null).length : 0;
@@ -1438,6 +1443,11 @@
             const shouldEnableJoin = occupiedCourts >= totalCourts || waitingGroups > 0;
             joinBtn.disabled = !shouldEnableJoin;
             joinBtn.setAttribute('aria-disabled', String(!shouldEnableJoin));
+            
+            // Dispatch availability event for mobile bottom bar (fallback path)
+            document.dispatchEvent(new CustomEvent('app:availability', {
+              detail: { hasAvailable: !shouldEnableJoin } // Inverted: shouldEnableJoin=true means no courts available
+            }));
           }
         } catch (e) {
           console.warn('Error updating join button state:', e);
