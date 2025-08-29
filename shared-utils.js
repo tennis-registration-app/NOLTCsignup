@@ -123,6 +123,9 @@
 
       safe.waitingGroups = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
       safe.recentlyCleared = Array.isArray(data?.recentlyCleared) ? data.recentlyCleared : [];
+      
+      // Promotions: make present (read-only default) without mutating storage
+      safe.waitlistPromotions = Array.isArray(data?.waitlistPromotions) ? data.waitlistPromotions : [];
 
       // Preserve any other top-level fields without mutating the source
       if (data && typeof data === 'object') {
@@ -139,6 +142,7 @@
         courts: Array.from({ length: 12 }, () => ({ history: [], current: null })),
         waitingGroups: [],
         recentlyCleared: [],
+        waitlistPromotions: [],
       };
     }
   }
@@ -216,6 +220,55 @@
     addHistoricalGame,
     searchHistoricalGames,
   };
+})();
+
+// ---- Promotions helpers (shared, tiny, no UI changes) ----
+(function(){
+  const U = window.APP_UTILS;
+  if (!U) return;
+
+  function waitlistSignature(group) {
+    const names = Array.isArray(group?.players)
+      ? group.players.map(p => (p?.name ?? String(p ?? '')).trim().toLowerCase()).filter(Boolean).sort()
+      : [];
+    const guests = Number(group?.guests || 0);
+    return `v1|${names.join(',')}|guests:${guests}|size:${names.length + guests}`;
+  }
+
+  function purgeExpiredPromotions(data, now = new Date()) {
+    const promos = Array.isArray(data?.waitlistPromotions) ? data.waitlistPromotions : [];
+    const kept = promos.filter(p => {
+      try { return new Date(p.expiresAt) > now; }
+      catch { return false; }
+    });
+    // Return a new data object with purged promos (non-mutating)
+    return { ...(data || {}), waitlistPromotions: kept };
+  }
+
+  // Expose on APP_UTILS and on Tennis.Domain (for legacy access)
+  U.waitlistSignature = waitlistSignature;
+  U.purgeExpiredPromotions = purgeExpiredPromotions;
+
+  window.Tennis = window.Tennis || {};
+  window.Tennis.Domain = window.Tennis.Domain || {};
+  window.Tennis.Domain.waitlist = window.Tennis.Domain.waitlist || {};
+  window.Tennis.Domain.waitlist.signature = waitlistSignature;
+})();
+
+(function(){
+  const U = window.APP_UTILS; if (!U) return;
+
+  // Keep promotions across writes unless the caller explicitly sets them
+  function preservePromotions(prev, next){
+    const prevPromos = Array.isArray(prev?.waitlistPromotions) ? prev.waitlistPromotions : [];
+    const nextHas = Object.prototype.hasOwnProperty.call(next || {}, 'waitlistPromotions');
+    if (!nextHas) {
+      return { ...(next || {}), waitlistPromotions: prevPromos };
+    }
+    return next || {};
+  }
+
+  U.preservePromotions = preservePromotions;
 })();
 
 // ===== Shared classes & constants (no UI changes) =====

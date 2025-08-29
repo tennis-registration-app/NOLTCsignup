@@ -461,6 +461,97 @@ Tennis.UI.toast = (msg, opts={}) =>
 })();
 </script>
 
+<script>
+(function(){
+  const Storage = (window.Tennis && window.Tennis.Storage) || window.APP_UTILS;
+  const U       = window.APP_UTILS;
+
+  window.Promotions = window.Promotions || {};
+  window.Promotions.__state = { showGreenCTA: false, eligibleCourts: [], matchedSig: null };
+
+  function getCurrentGroup() {
+    try {
+      const s = window.UI?.state || {};
+      if (Array.isArray(s.currentGroup) && s.currentGroup.length) {
+        const players = s.currentGroup.map(p => (p?.name ? p.name : String(p))).filter(Boolean);
+        const guests = Number(s.guests || 0);
+        return { players: players.map(n => ({ name: n })), guests };
+      }
+    } catch {}
+    try {
+      const rs = window.__reactState;
+      if (rs && Array.isArray(rs.currentGroup) && rs.currentGroup.length) {
+        const players = rs.currentGroup.map(p => (p?.name ? p.name : String(p))).filter(Boolean);
+        const guests = Number(rs.guests || 0);
+        return { players: players.map(n => ({ name: n })), guests };
+      }
+    } catch {}
+    try {
+      const data = Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem((Storage?.STORAGE?.DATA)||'tennisClubData')||'null');
+      const wg = Array.isArray(data?.waitingGroups) ? data.waitingGroups[0] : null;
+      if (wg && Array.isArray(wg.players)) return wg;
+    } catch {}
+    return null;
+  }
+
+  function refreshPromotionState() {
+    const key = (Storage?.STORAGE?.DATA) || 'tennisClubData';
+    const data = Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key)||'null');
+    const nowMs = Date.now();
+    const promos = Array.isArray(data?.waitlistPromotions) ? data.waitlistPromotions : [];
+    const group = getCurrentGroup();
+    if (!group) { window.Promotions.__state = { showGreenCTA:false, eligibleCourts:[], matchedSig:null }; return; }
+    const sig = U.waitlistSignature(group);
+    const match = promos.find(p => p.groupSig === sig && new Date(p.expiresAt).getTime() > nowMs);
+    window.Promotions.__state = {
+      showGreenCTA: !!match,
+      eligibleCourts: Array.isArray(match?.courtNumbers) ? match.courtNumbers : [],
+      matchedSig: sig
+    };
+  }
+
+  window.Promotions.shouldShowGreenCTA = function(){ refreshPromotionState(); return !!window.Promotions.__state.showGreenCTA; };
+  window.Promotions.getEligibleCourts  = function(){ refreshPromotionState(); return window.Promotions.__state.eligibleCourts.slice(); };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ()=> setTimeout(refreshPromotionState,0), { once:true });
+  else setTimeout(refreshPromotionState,0);
+  window.addEventListener('tennisDataUpdate', ()=> setTimeout(refreshPromotionState,0), { passive:true });
+  window.addEventListener('DATA_UPDATED',      ()=> setTimeout(refreshPromotionState,0), { passive:true });
+
+  function removeMatchedPromotion() {
+    try {
+      const key = (Storage?.STORAGE?.DATA) || 'tennisClubData';
+      const data = Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key)||'null') || {};
+      const state = window.Promotions.__state;
+      const promos = Array.isArray(data?.waitlistPromotions) ? data.waitlistPromotions : [];
+      const next = promos.filter(p => p.groupSig !== state.matchedSig);
+      if (next.length !== promos.length) {
+        const nextData = { ...data, waitlistPromotions: next };
+        if (Storage.writeJSON) Storage.writeJSON(key, nextData); else localStorage.setItem(key, JSON.stringify(nextData));
+        window.dispatchEvent(new Event('tennisDataUpdate'));
+        window.dispatchEvent(new Event('DATA_UPDATED'));
+      }
+    } catch(e) { console.warn('[Registration promotions] cleanup error:', e); }
+  }
+
+  (function attachSuccessHook(){
+    const api = window.UI || window;
+    if (typeof api.onRegistrationSuccess === 'function' && !api.__promoCleanupPatched){
+      const orig = api.onRegistrationSuccess;
+      api.onRegistrationSuccess = function(...args){
+        const res = orig.apply(this, args);
+        setTimeout(removeMatchedPromotion, 0);
+        return res;
+      };
+      api.__promoCleanupPatched = true;
+    } else {
+      window.UI = window.UI || {};
+      if (!window.UI.__promoCleanup__) window.UI.__promoCleanup__ = () => setTimeout(removeMatchedPromotion, 0);
+    }
+  })();
+})();
+</script>
+
   <script>
 (function registerAutoClear() {
   const DEBUG = false;
@@ -473,6 +564,20 @@ Tennis.UI.toast = (msg, opts={}) =>
         dbg('[AutoClear@Registration] cleared/bumped', n, 'sessions');
       }
     } catch (e) { /* swallow in prod */ }
+    
+    // also purge expired promotions silently
+    try {
+      const U = window.APP_UTILS;
+      const Storage = window.Tennis?.Storage || window.APP_UTILS;
+      const key = (Storage?.STORAGE?.DATA) || 'tennisClubData';
+      const data = Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key)||'null');
+      const next = U.purgeExpiredPromotions(data);
+      if (JSON.stringify(next.waitlistPromotions) !== JSON.stringify(data.waitlistPromotions)) {
+        if (Storage.writeJSON) Storage.writeJSON(key, next); else localStorage.setItem(key, JSON.stringify(next));
+        window.dispatchEvent(new Event('tennisDataUpdate'));
+        window.dispatchEvent(new Event('DATA_UPDATED'));
+      }
+    } catch {}
   };
   // run once on boot
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
@@ -485,6 +590,17 @@ Tennis.UI.toast = (msg, opts={}) =>
   window.__autoClearRegTimer && clearInterval(window.__autoClearRegTimer);
   window.__autoClearRegTimer = setInterval(run, FIVE_MIN);
 })();
+</script>
+
+<script>
+// Safety export so any legacy path can call a validator
+window.Tennis = window.Tennis || {};
+window.Tennis.Domain = window.Tennis.Domain || {};
+window.Tennis.Domain.waitlist = window.Tennis.Domain.waitlist || {};
+if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
+  window.Tennis.Domain.waitlist.validateGroup = ({ players, guests }) =>
+    validateGroupCompat(players, guests);
+}
 </script>
   
   <script type="text/babel">
@@ -536,42 +652,38 @@ Tennis.UI.toast = (msg, opts={}) =>
     const STORAGE = USE_SHARED_CORE ? Storage.KEYS : STORAGE_ORIGINAL;
     const EVENTS = { UPDATE: 'tennisDataUpdate' };
 
+    // --- Robust validation wrapper: always returns { ok, errors[] }
     function validateGroupCompat(players, guests) {
-      const W = (window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist);
+      const W = (window.Tennis?.Domain?.waitlist) || (window.Tennis?.Domain?.Waitlist) || null;
       const norm = (ok, errs) => ({ ok: !!ok, errors: Array.isArray(errs) ? errs : (errs ? [errs] : []) });
-      if (!W || typeof W.validateGroup !== 'function') return norm(true, []);
 
-      // Try new API (object)
+      // 1) Prefer domain-level validator if available
       try {
-        const out = W.validateGroup({ players, guests });
-        if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
-          return norm(out.ok, out.errors);
+        if (W && typeof W.validateGroup === 'function') {
+          const out = W.validateGroup({ players, guests });
+          if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
+            return norm(out.ok, out.errors);
+          }
         }
-      } catch(_) {}
-
-      // Candidate arrays for legacy API
-      const cands = [
-        players,                                                  // [{id,name}, ...] or similar
-        Array.isArray(players) ? players.map(p => p?.name).filter(Boolean) : [], // ['Name', ...]
-        Array.isArray(players) ? players.map(p => p?.id).filter(Boolean)   : [], // ['ID', ...]
-      ].filter(arr => Array.isArray(arr) && arr.length > 0);
-
-      for (const cand of cands) {
-        try {
-          const out = W.validateGroup(cand);
-          if (out && typeof out.valid === 'boolean') {
-            return norm(out.valid, out.error || []);
-          }
-          if (Array.isArray(out)) {
-            return norm(out.length === 0, out);
-          }
-          if (typeof out === 'string') {
-            return norm(false, out);
-          }
-        } catch(_) {}
+      } catch (e) {
+        // fall through to local rules
       }
-      // Conservative default if all attempts are ambiguous
-      return norm(true, []);
+
+      // 2) Local minimal validator (matches club rules)
+      // - At least 1 named player or guest
+      // - Guests is a non-negative integer
+      // - Total size 1–4 (singles/doubles max 4)
+      const names = Array.isArray(players)
+        ? players.map(p => String(p?.name ?? p ?? '').trim()).filter(Boolean)
+        : [];
+      const g = Number.isFinite(guests) ? guests : parseInt(guests || 0, 10);
+      const errs = [];
+      if (names.length < 1 && g < 1) errs.push('Enter at least one player.');
+      if (!Number.isFinite(g) || g < 0) errs.push('Guests must be 0 or more.');
+      if (names.length + g < 1) errs.push('Group size must be at least 1.');
+      if (names.length + g > 4) errs.push('Maximum group size is 4.');
+
+      return norm(errs.length === 0, errs);
     }
     
     // ---- Original Storage & Event keys (kept intact but unused when USE_SHARED_CORE=true) ----
@@ -1072,39 +1184,13 @@ const TennisDataService = window.TennisDataService || {
 
   // Service-local validation that tolerates legacy and new APIs
   serviceValidateGroupCompat(group) {
-    const W = (window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist);
-    const norm = (ok, errs) => ({ ok: !!ok, errors: Array.isArray(errs) ? errs : (errs ? [errs] : []) });
-    if (!W || typeof W.validateGroup !== 'function') return norm(true, []);
-
     const playersArr = Array.isArray(group?.players) ? group.players
                      : Array.isArray(group)          ? group
                      : [];
-    // 1) Legacy: array of player objects (this branch is known-good from your trace)
-    try {
-      const out = W.validateGroup(playersArr);
-      if (out && typeof out.valid === 'boolean') return norm(out.valid, out.error || []);
-      if (Array.isArray(out))                    return norm(out.length === 0, out);
-      if (typeof out === 'string')               return norm(false, out);
-    } catch (_) {}
-
-    // 2) New API: object shape
-    try {
-      const out = W.validateGroup({ players: playersArr, guests: group?.guests ?? 0 });
-      if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
-        return norm(out.ok, out.errors);
-      }
-    } catch (_) {}
-
-    // 3) Names fallback (some older builds)
-    try {
-      const names = playersArr.map(p => p?.name).filter(Boolean);
-      const out = W.validateGroup(names);
-      if (out && typeof out.valid === 'boolean') return norm(out.valid, out.error || []);
-      if (Array.isArray(out))                    return norm(out.length === 0, out);
-      if (typeof out === 'string')               return norm(false, out);
-    } catch (_) {}
-
-    return norm(true, []); // conservative default
+    const guests = group?.guests ?? 0;
+    
+    // Use the robust validateGroupCompat function
+    return validateGroupCompat(playersArr, guests);
   },
 
   async assignCourt(courtNumber, group, duration) {
@@ -1238,14 +1324,24 @@ const TennisDataService = window.TennisDataService || {
     });
 
     // Write via the unified path (uses StorageGuard + UPDATE_TICK + dual events)
+    const key = S.STORAGE.DATA;
+    const prev = S.readDataSafe ? S.readDataSafe() : JSON.parse(localStorage.getItem(key) || 'null') || {};
+    const merged = window.APP_UTILS.preservePromotions(prev, next);
+    
     if (typeof DataStore?.set === 'function') {
-      await DataStore.set(S.STORAGE.DATA, next);
+      await DataStore.set(key, merged);
     } else {
       // extremely unlikely fallback; prefer DataStore.set
       S.writeJSON(S.STORAGE.UPDATE_TICK, Date.now());
-      S.writeJSON(S.STORAGE.DATA, next);
-      window.Tennis?.Events?.emitDom?.('DATA_UPDATED', { key: S.STORAGE.DATA, data: next });
-      window.Tennis?.Events?.emitDom?.('tennisDataUpdate', { key: S.STORAGE.DATA, data: next });
+      if (S.writeJSON) {
+        S.writeJSON(key, merged);
+      } else {
+        localStorage.setItem(key, JSON.stringify(merged));
+      }
+      window.Tennis?.Events?.emitDom?.('DATA_UPDATED', { key, data: merged });
+      window.Tennis?.Events?.emitDom?.('tennisDataUpdate', { key, data: merged });
+      window.dispatchEvent(new Event('tennisDataUpdate'));
+      window.dispatchEvent(new Event('DATA_UPDATED'));
     }
     
     return { success: true, replacedGroup: replacedGroup, isTimeLimited };
@@ -1337,7 +1433,9 @@ const TennisDataService = window.TennisDataService || {
 
     // Persist via unified path (no direct localStorage.setItem)
     const key = Tennis.Storage.STORAGE.DATA;
-    Tennis.DataStore.set(key, data); // this writes via guarded writeJSON, updates UPDATE_TICK, and emits both events
+    const prev = Tennis.Storage.readDataSafe ? Tennis.Storage.readDataSafe() : JSON.parse(localStorage.getItem(key) || 'null') || {};
+    const merged = window.APP_UTILS.preservePromotions(prev, data);
+    Tennis.DataStore.set(key, merged); // this writes via guarded writeJSON, updates UPDATE_TICK, and emits both events
     return { success: true };
   },
 
@@ -1436,10 +1534,9 @@ const TennisDataService = window.TennisDataService || {
 
     const guests = group.filter(p => p.isGuest).length;
 
-    const validation = W.validateGroup({ players, guests });
-    const { ok, errors } = validation || { ok: false, errors: ['Validation failed'] };
-    if (!ok) {
-      return { success: false, error: (errors || ['Unknown validation error']).join('\n') };
+    const validation = validateGroupCompat(players, guests);
+    if (!validation.ok) {
+      return { success: false, error: validation.errors.join('\n') };
     }
     
     const data = await this.loadData();
@@ -2248,70 +2345,6 @@ const SuccessScreen = ({
     };
     loadBallPrice();
   }, []);
-
-  // --- Auto-reset timer logic (SuccessScreen only) ---
-  const AUTO_RESET_MS = 30_000; // 30s before modal
-  const RESUME_MS     = 8_000;  // 8s after modal closes
-
-  // store timer / flags in a ref to avoid re-renders or stale closures
-  const autoResetRef = React.useRef({
-    timerId: null,
-    hadModalOpenThisCycle: false,
-  });
-
-  // always keep a fresh callback ref, avoids stale onHome in timeouts
-  const onHomeRef = React.useRef(onHome);
-  React.useEffect(() => { onHomeRef.current = onHome; }, [onHome]);
-
-  // clear helper
-  const clearTimer = () => {
-    const api = autoResetRef.current;
-    if (api.timerId) {
-      clearTimeout(api.timerId);
-      api.timerId = null;
-    }
-  };
-
-  // start helper (decides delay based on whether modal was opened this cycle)
-  const startTimer = () => {
-    const api = autoResetRef.current;
-    clearTimer();
-    const delay = api.hadModalOpenThisCycle ? RESUME_MS : AUTO_RESET_MS;
-    api.timerId = setTimeout(() => {
-      api.timerId = null;
-      // reset the modal flag for the next cycle
-      api.hadModalOpenThisCycle = false;
-      // invoke the parent reset (same as tapping "Home")
-      if (typeof onHomeRef.current === 'function') onHomeRef.current();
-    }, delay);
-  };
-
-  // lifecycle: manage pause/resume around the modal
-  React.useEffect(() => {
-    const api = autoResetRef.current;
-
-    // Modal OPEN → pause (do not schedule); remember that we had a modal
-    if (showBallPurchaseModal) {
-      api.hadModalOpenThisCycle = true;
-      clearTimer();
-      return; // exit without starting a timer
-    }
-
-    // Modal CLOSED or never opened → (re)start the appropriate timer
-    startTimer();
-
-    // cleanup on dependency change
-    return clearTimer;
-  }, [showBallPurchaseModal]);
-
-  // cleanup on unmount (defensive)
-  React.useEffect(() => clearTimer, []);
-
-  // Make buttons "timer-safe" - clear timer when user takes manual action
-  const handleNewRegistration = () => { clearTimer(); onNewRegistration?.(); };
-  const handleChangeCourt     = () => { clearTimer(); onChangeCourt?.(); };
-  const handleAddBalls        = () => { clearTimer(); setShowBallPurchaseModal(true); };
-  const handleHome            = () => { clearTimer(); onHome?.(); };
   
   const nonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
   const splitPrice = nonGuestPlayers > 0 ? ballPrice / nonGuestPlayers : ballPrice;
@@ -2404,13 +2437,13 @@ const SuccessScreen = ({
   const headerContent = isMobileFlow ? null : (
     <div className="flex justify-between items-center h-full">
       <button
-        onClick={handleHome}
+        onClick={onHome}
         className="bg-gray-400 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-gray-500 transition-colors duration-150"
       >
         Home
       </button>
       <button
-        onClick={handleNewRegistration}
+        onClick={onNewRegistration}
         className="bg-green-500 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-green-600 transition-colors duration-150"
       >
         New Registration
@@ -2479,16 +2512,16 @@ const SuccessScreen = ({
     const courtFooterContent = !ballsPurchased ? (
       <div className="bg-yellow-50 rounded-2xl p-3 sm:p-4 h-full flex items-center">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
-          {canChangeCourt && changeTimeRemaining > 0 && !isMobile && (
+          {canChangeCourt && changeTimeRemaining > 0 && !isMobile && window.top === window.self && (
             <button
-              onClick={handleChangeCourt}
+              onClick={onChangeCourt}
               className="flex-1 bg-blue-100 text-blue-700 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-medium hover:bg-blue-200 transition-colors duration-150"
             >
               Change Court <span className="text-black">{changeTimeRemaining}</span>
             </button>
           )}
           <button
-            onClick={handleAddBalls}
+            onClick={() => setShowBallPurchaseModal(true)}
             className="flex-1 bg-gradient-to-r from-amber-500 to-amber-400 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-medium hover:from-amber-600 hover:to-amber-500 transition-colors duration-150 flex items-center justify-center gap-2 shadow-md"
           >
             <span className="text-lg sm:text-xl">🎾</span>
@@ -3062,8 +3095,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const handleStorageUpdate = async (event) => {
       if (event.detail && event.detail.key === TENNIS_CONFIG.STORAGE.KEY) {
         // Don't trigger updates if we're in the middle of a screen transition
-        const s = currentScreenRef.current;
-        if (s === "search" || s === "group") {
+        if (currentScreen === "search" || currentScreen === "group") {
           console.log('Skipping storage update during screen transition');
           return;
         }
@@ -3082,8 +3114,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Handle storage events from localStorage changes
       if (event.key === TENNIS_CONFIG.STORAGE.KEY && event.newValue) {
         // Don't trigger updates if we're in the middle of a screen transition
-        const s = currentScreenRef.current;
-        if (s === "search" || s === "group") {
+        if (currentScreen === "search" || currentScreen === "group") {
           dbg('Skipping localStorage update during screen transition');
           return;
         }
@@ -3105,12 +3136,23 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // Listen for storage events from other windows/tabs
     window.addEventListener('storage', handleStorageEvent);
 
+    // Refresh clear screen on updates
+    const refreshClearScreen = () => {
+      if (currentScreen === "clearCourt") {
+        // Force re-render by updating state
+        setCurrentScreen("clearCourt");
+      }
+    };
+    document.addEventListener('tennisDataUpdate', refreshClearScreen);
+    document.addEventListener('DATA_UPDATED', refreshClearScreen);
 
     return () => {
       clearTimeout(updateTimeout);
       window.removeEventListener(EVENTS.UPDATE, scheduleAvailabilityRefresh);
       window.removeEventListener('DATA_UPDATED', scheduleAvailabilityRefresh);
       window.removeEventListener('storage', handleStorageEvent);
+      document.removeEventListener('tennisDataUpdate', refreshClearScreen);
+      document.removeEventListener('DATA_UPDATED', refreshClearScreen);
     };
   }, []);
 
@@ -3214,11 +3256,19 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         const firstWaitingGroupData = data.waitingGroups.length > 0 ? data.waitingGroups[0] : null;
         // Use tempAvailableCourts (without waitlist check) to determine if first group can play
         const canPlay = firstWaitingGroupData && tempAvailableCourts.length > 0;
-        setCanFirstGroupPlay(canPlay);
+        
+        // Check promotion markers for immediate green CTA
+        const promoCta = typeof window.Promotions?.shouldShowGreenCTA === 'function'
+          ? window.Promotions.shouldShowGreenCTA()
+          : false;
+        
+        // Show green CTA if either condition is true
+        const shouldShowGreenCTA = promoCta || canPlay;
+        setCanFirstGroupPlay(shouldShowGreenCTA);
         setFirstWaitingGroup(firstWaitingGroupData);
         
         // Create display names for the waiting group
-        if (canPlay) {
+        if (shouldShowGreenCTA && firstWaitingGroupData) {
           const names = firstWaitingGroupData.players.map(p => p.name.split(' ').pop());
           if (names.length <= 3) {
             setWaitingGroupDisplay(names.join(", "));
@@ -3249,7 +3299,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       } catch (error) {
         console.error('Error updating available courts:', error);
         setAvailableCourts([]);
-        setCanFirstGroupPlay(false);
+        
+        // Even in error case, check for promotions
+        const promoCta = typeof window.Promotions?.shouldShowGreenCTA === 'function'
+          ? window.Promotions.shouldShowGreenCTA()
+          : false;
+        setCanFirstGroupPlay(promoCta);
+        
         setFirstWaitingGroup(null);
         setWaitingGroupDisplay("");
         setCanSecondGroupPlay(false);
@@ -3405,15 +3461,6 @@ useEffect(() => {
   const [changeTimeRemaining, setChangeTimeRemaining] = useState(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
   const [isTimeLimited, setIsTimeLimited] = useState(false);
   const [currentScreen, setCurrentScreen] = useState("welcome");
-  // keep a live, non-stale view of the current screen for long-lived handlers
-  const currentScreenRef = useRef(currentScreen);
-  useEffect(() => { currentScreenRef.current = currentScreen; }, [currentScreen]);
-  
-  // helper: set screen and sync the ref immediately to avoid any "between renders" race
-  function setScreen(next) {
-    currentScreenRef.current = next;
-    setCurrentScreen(next);
-  }
   const [searchInput, setSearchInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAddPlayer, setShowAddPlayer] = useState(false);
@@ -4389,11 +4436,10 @@ console.log('✅ Court assigned result:', result);
       console.log('[waitlist] calling addToWaitlist with', players.map(p=>p.name), 'guests:', guests);
       
       // Validation check
-      const validation = W.validateGroup(players);
-      const ok = validation?.valid !== false;
-      const errors = validation?.error ? [validation.error] : (validation?.errors || []);
-      if (!ok) {
-        showAlertMessage((errors || ['Unknown validation error']).join('\n'));
+      const validation = validateGroupCompat(players, guests);
+      if (!validation.ok) {
+        try { Tennis.UI.toast(validation.errors.join(' '), { type: 'error' }); } catch {}
+        showAlertMessage(validation.errors.join('\n'));
         return;
       }
       
@@ -4709,7 +4755,12 @@ console.log('✅ Court assigned result:', result);
         
         // Remove the group from waitlist
         data.waitingGroups.shift();
-        await dataStore.set('tennisClubData', data, { immediate: true });
+        const key = 'tennisClubData';
+        const prev = Tennis.Storage?.readDataSafe
+          ? Tennis.Storage.readDataSafe()
+          : JSON.parse(localStorage.getItem(key) || 'null') || {};
+        const merged = window.APP_UTILS.preservePromotions(prev, data);
+        await dataStore.set(key, merged, { immediate: true });
         if (USE_SHARED_CORE && Events) {
           Events.emitDom('tennisDataUpdate', {});
         } else {
@@ -4741,7 +4792,12 @@ console.log('✅ Court assigned result:', result);
         
         // Remove the group from waitlist
         data.waitingGroups.splice(1, 1); // Remove second group
-        await dataStore.set('tennisClubData', data, { immediate: true });
+        const key = 'tennisClubData';
+        const prev = Tennis.Storage?.readDataSafe
+          ? Tennis.Storage.readDataSafe()
+          : JSON.parse(localStorage.getItem(key) || 'null') || {};
+        const merged = window.APP_UTILS.preservePromotions(prev, data);
+        await dataStore.set(key, merged, { immediate: true });
         if (USE_SHARED_CORE && Events) {
           Events.emitDom('tennisDataUpdate', {});
         } else {
@@ -4770,7 +4826,7 @@ console.log('✅ Court assigned result:', result);
       winRate: enrichedMember.winRate
     }]);
     
-    setScreen("group");
+    setCurrentScreen("group");
   };
 
   // Success screen
@@ -4849,12 +4905,12 @@ console.log('✅ Court assigned result:', result);
           estimatedWait={estimatedWait}
           currentGroup={currentGroup}
           mobileCountdown={window.__mobileFlow ? mobileCountdown : null}
-          isMobile={!!(window.__mobileFlow || window.__wasMobileFlow) && window.top !== window.self}
+          isMobile={!!window.__mobileFlow}
           isTimeLimited={isTimeLimited}
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
-            setScreen("search");
+            setCurrentScreen("search");
           }}
           onHome={resetForm}
         />
@@ -4877,10 +4933,10 @@ if (currentScreen === "welcome") {
       )}
       <WelcomeScreen 
         onRegisterClick={() => {
-          checkLocationAndProceed(() => setScreen("search"));
+          checkLocationAndProceed(() => setCurrentScreen("search"));
         }}
         onClearCourtClick={() => {
-          checkLocationAndProceed(() => setScreen("clearCourt"));
+          checkLocationAndProceed(() => setCurrentScreen("clearCourt"));
         }}
       />
     </>
@@ -5719,9 +5775,14 @@ onFocus={() => {
            )}
          </div>
          
-         {canFirstGroupPlay && (
+         {(canFirstGroupPlay || (typeof window.Promotions?.shouldShowGreenCTA === 'function' && window.Promotions.shouldShowGreenCTA())) && (
            <button
              onClick={() => {
+               const eligible = (typeof window.Promotions?.getEligibleCourts === 'function')
+                 ? window.Promotions.getEligibleCourts()
+                 : [];
+               const chosenCourt = Number(eligible[0]) || null;
+               
                // Load the waiting group
                setCurrentGroup(firstWaitingGroup.players.map(player => ({
                  ...player,
@@ -6387,7 +6448,7 @@ onFocus={() => {
         // Desktop behavior - go back to search
         setCurrentGroup([]);
         setMemberNumber("");
-        setScreen("search");
+        setCurrentScreen("search");
       }
     }}
     className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors relative z-10"
@@ -6655,7 +6716,7 @@ onFocus={() => {
            }
          }}
          onGoBack={() => {
-           setScreen("group");
+           setCurrentScreen("group");
            setIsChangingCourt(false);
            setWasOvertimeCourt(false);
            // If we were changing courts and had replaced an overtime court, restore it

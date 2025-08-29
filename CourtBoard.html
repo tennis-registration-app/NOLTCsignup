@@ -401,12 +401,9 @@
     .variant-mobile .court-card .truncate {
       display: -webkit-box;
       -webkit-line-clamp: 2;
-      line-clamp: 2; /* Standard property */
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      line-height: 1.2em;
-      max-height: 2.4em; /* fallback for non-webkit browsers */
     }
     
     /* Hide time/date header in mobile view only */
@@ -705,8 +702,7 @@
     
     .modal-reserved-courts,
     .modal-waitlist {
-      /* Styles can be added here if needed */
-      display: block;
+      /* Reset some styles that might interfere */
     }
     
     .modal-court-conditions {
@@ -1057,6 +1053,90 @@
   <script src="./shared/dataservice.js"></script>
   <script src="./shared/blocks.js"></script>
   <script src="./shared/maintenance.js"></script>
+
+<script>
+(function(){
+  const Storage = (window.Tennis && window.Tennis.Storage) || window.APP_UTILS;
+  const Avail   = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+  const U       = window.APP_UTILS;
+
+  function computeFreeCourts({ data, now, blocks }) {
+    try {
+      if (Avail?.getFreeCourtsInfo) {
+        const info = Avail.getFreeCourtsInfo({ data, now, blocks });
+        if (info && Array.isArray(info.free)) return info.free;
+      }
+    } catch {}
+    const free = [];
+    const activeBlocks = (Array.isArray(blocks) ? blocks : []).filter(b => {
+      return new Date(b.startTime) <= now && now < new Date(b.endTime);
+    });
+    const n = Array.isArray(data?.courts) ? data.courts.length : 12;
+    for (let i = 1; i <= n; i++) {
+      const c = data?.courts?.[i-1];
+      const occ = !!(c && c.current);
+      const blk = activeBlocks.some(b => b.courtNumber === i);
+      if (!occ && !blk) free.push(i);
+    }
+    return free;
+  }
+
+  function syncWaitlistPromotions() {
+    try {
+      const now = new Date();
+      const key = (Storage?.STORAGE?.DATA) || 'tennisClubData';
+      const data = (Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key) || 'null')) || {};
+      const blocks = (Storage.readJSON ? Storage.readJSON(Storage.STORAGE?.BLOCKS || 'courtBlocks') : JSON.parse(localStorage.getItem('courtBlocks') || '[]'));
+      const free = computeFreeCourts({ data, now, blocks });
+
+      const waiting = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
+      const k = Math.max(0, Math.min(free.length, waiting.length));
+      const up = waiting.slice(0, k);
+
+      const TTL_MIN = 4;
+      const expiresAt = new Date(now.getTime() + TTL_MIN*60*1000).toISOString();
+      const desired = up.map((g, idx) => {
+        const sig = U.waitlistSignature(g);
+        const cn = free[idx] ? [ free[idx] ] : [];
+        return { id: `${sig}-${Date.now()}`, groupSig: sig, courtNumbers: cn, promotedAt: now.toISOString(), expiresAt, version: 1 };
+      });
+
+      const prev = Array.isArray(data.waitlistPromotions) ? data.waitlistPromotions : [];
+      const live = prev.filter(p => new Date(p.expiresAt) > now);
+      const bySig = new Map(live.map(p => [p.groupSig, p]));
+      desired.forEach(d => {
+        const e = bySig.get(d.groupSig);
+        if (e) { e.courtNumbers = d.courtNumbers; e.expiresAt = d.expiresAt; }
+        else   { bySig.set(d.groupSig, d); }
+      });
+      const nextPromos = Array.from(bySig.values());
+
+      const same = nextPromos.length === prev.length &&
+                   nextPromos.every((p,i)=> prev[i] && prev[i].groupSig===p.groupSig && String(prev[i].courtNumbers)===String(p.courtNumbers));
+      if (same) return;
+
+      const prevData = Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key) || 'null') || {};
+      const nextData = { ...data, waitlistPromotions: nextPromos };
+      const merged = window.APP_UTILS.preservePromotions(prevData, nextData);
+      
+      if (Storage.writeJSON) Storage.writeJSON(key, merged);
+      else localStorage.setItem(key, JSON.stringify(merged));
+
+      window.dispatchEvent(new Event('tennisDataUpdate'));
+      window.dispatchEvent(new Event('DATA_UPDATED'));
+    } catch (e) {
+      console.warn('[Board promotions] sync error:', e);
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(syncWaitlistPromotions, 0), { once: true });
+  else setTimeout(syncWaitlistPromotions, 0);
+
+  window.addEventListener('tennisDataUpdate', ()=> setTimeout(syncWaitlistPromotions,0), { passive:true });
+  window.addEventListener('DATA_UPDATED',      ()=> setTimeout(syncWaitlistPromotions,0), { passive:true });
+  window.addEventListener('storage', (e)=>{ if (e.key === ((Storage?.STORAGE?.DATA)||'tennisClubData')) setTimeout(syncWaitlistPromotions,0); }, { passive:true });
+})();
+</script>
 
   <script>
 (function () {
@@ -1428,11 +1508,6 @@
             
             joinBtn.disabled = !shouldAllow;
             joinBtn.setAttribute('aria-disabled', String(!shouldAllow));
-            
-            // Dispatch availability event for mobile bottom bar
-            document.dispatchEvent(new CustomEvent('app:availability', {
-              detail: { hasAvailable: !shouldAllow } // Inverted: shouldAllow=true means no courts available
-            }));
           } else {
             // Fallback: simple check based on occupied courts vs waiting groups
             const occupiedCourts = Array.isArray(data.courts) ? data.courts.filter(c => c !== null).length : 0;
@@ -1443,11 +1518,6 @@
             const shouldEnableJoin = occupiedCourts >= totalCourts || waitingGroups > 0;
             joinBtn.disabled = !shouldEnableJoin;
             joinBtn.setAttribute('aria-disabled', String(!shouldEnableJoin));
-            
-            // Dispatch availability event for mobile bottom bar (fallback path)
-            document.dispatchEvent(new CustomEvent('app:availability', {
-              detail: { hasAvailable: !shouldEnableJoin } // Inverted: shouldEnableJoin=true means no courts available
-            }));
           }
         } catch (e) {
           console.warn('Error updating join button state:', e);
@@ -3211,18 +3281,22 @@
 
         React.useEffect(() => {
           const onUpdate = (event) => {
-            console.log('[BOARD DEBUG] onUpdate event received:', event?.type, event?.detail);
-            console.log('[BOARD DEBUG] isMobileView:', isMobileView, 'activeModal:', activeModal);
-            setRefreshTick(t => t + 1);
-            scheduleBoardRefresh(); // Use coalescer for data reload
+            try {
+              console.log('[BOARD DEBUG] onUpdate event received:', event?.type || '(no type)');
+            } catch {}
+            // Invalidate any cache if present (defensive)
+            try { dataStore?.cache?.delete?.(TENNIS_CONFIG.STORAGE.KEY); } catch {}
+            // Force a refresh
+            try { setRefreshTick((t) => t + 1); } catch {}
+            try { scheduleBoardRefresh(); } catch {}
           };
           const it = setInterval(onUpdate, 30000); // re-render every 30s
-          document.addEventListener('DATA_UPDATED', onUpdate);
-          document.addEventListener('tennisDataUpdate', onUpdate);
+          window.addEventListener('tennisDataUpdate', onUpdate, { passive: true });
+          window.addEventListener('DATA_UPDATED', onUpdate, { passive: true });
           return () => {
             clearInterval(it);
-            document.removeEventListener('DATA_UPDATED', onUpdate);
-            document.removeEventListener('tennisDataUpdate', onUpdate);
+            window.removeEventListener('tennisDataUpdate', onUpdate);
+            window.removeEventListener('DATA_UPDATED', onUpdate);
           };
         }, [loadData]);
 
@@ -4013,10 +4087,23 @@
                       console.error('Error clearing court with service:', e);
                       // Fallback to manual clearing
                       try {
-                        const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
+                        const key = 'tennisClubData';
+                        const prev = Tennis.Storage?.readDataSafe
+                          ? Tennis.Storage.readDataSafe()
+                          : JSON.parse(localStorage.getItem(key) || 'null') || {};
+                        const data = JSON.parse(localStorage.getItem(key) || '{}');
                         if (data.courts && data.courts[courtNumber - 1]) {
                           data.courts[courtNumber - 1] = null;
-                          localStorage.setItem('tennisClubData', JSON.stringify(data));
+                          const merged = window.APP_UTILS.preservePromotions(prev, data);
+                          
+                          if (Tennis.Storage?.writeJSON) {
+                            Tennis.Storage.writeJSON(key, merged);
+                          } else {
+                            localStorage.setItem(key, JSON.stringify(merged));
+                          }
+                          
+                          window.dispatchEvent(new Event('tennisDataUpdate'));
+                          window.dispatchEvent(new Event('DATA_UPDATED'));
                           sessionStorage.removeItem('mobile-registered-court');
                           window.parent.postMessage({ type: 'resetRegistration' }, '*');
                           if (window.updateJoinButtonForMobile) {
@@ -4189,16 +4276,27 @@
                 if (confirm(`Clear Court ${registeredCourtNumber}?`)) {
                   // Clear the court
                   try {
-                    const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
+                    const key = 'tennisClubData';
+                    const prev = Tennis.Storage?.readDataSafe
+                      ? Tennis.Storage.readDataSafe()
+                      : JSON.parse(localStorage.getItem(key) || 'null') || {};
+                    const data = JSON.parse(localStorage.getItem(key) || '{}');
                     const courtIndex = parseInt(registeredCourtNumber) - 1;
                     if (data.courts && data.courts[courtIndex]) {
                       data.courts[courtIndex] = null;
-                      localStorage.setItem('tennisClubData', JSON.stringify(data));
+                      const merged = window.APP_UTILS.preservePromotions(prev, data);
+                      
+                      if (Tennis.Storage?.writeJSON) {
+                        Tennis.Storage.writeJSON(key, merged);
+                      } else {
+                        localStorage.setItem(key, JSON.stringify(merged));
+                      }
+                      
+                      window.dispatchEvent(new Event('tennisDataUpdate'));
+                      window.dispatchEvent(new Event('DATA_UPDATED'));
                       // Clear the registration state
                       sessionStorage.removeItem('mobile-registered-court');
                       setRegisteredCourtNumber(null);
-                      // Trigger update event
-                      window.dispatchEvent(new Event('tennisDataUpdate'));
                     }
                   } catch (error) {
                     console.error('Error clearing court:', error);
