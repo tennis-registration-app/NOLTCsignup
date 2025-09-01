@@ -602,6 +602,118 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
     validateGroupCompat(players, guests);
 }
 </script>
+
+<script>
+/**
+ * Authoritative, promotion-free gating for Registration CTAs.
+ * Rules:
+ *  - If waitlist.length >= 1 && freeCount >= 1 => first group gets CTA
+ *  - If waitlist.length >= 2 && freeCount >= 2 => first TWO groups get CTAs
+ * Computes via Tennis.Domain.availability.getFreeCourtsInfo with a deterministic fallback.
+ * Emits a single 'cta:state' event consumed by React (no direct React setters here).
+ */
+(function(){
+  function emitCtaState(detail){
+    try { window.dispatchEvent(new CustomEvent('cta:state', { detail })); } catch {}
+  }
+
+  function computeFreeCourtsNow(dataNow, blocksNow){
+    const Av = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+    // Primary
+    try {
+      if (Av?.getFreeCourtsInfo) {
+        const info = Av.getFreeCourtsInfo({ data: dataNow, now: new Date(), blocks: blocksNow });
+        if (info && Array.isArray(info.free)) return info.free;
+      }
+    } catch {}
+    // Fallback deterministic
+    const now = new Date();
+    const activeBlocks = (Array.isArray(blocksNow) ? blocksNow : []).filter(b => {
+      try { return new Date(b.startTime) <= now && now < new Date(b.endTime); }
+      catch { return false; }
+    });
+    const count = Array.isArray(dataNow?.courts) ? dataNow.courts.length : 12;
+    const free = [];
+    for (let i = 1; i <= count; i++) {
+      const c = dataNow?.courts?.[i-1] || null;
+      const occupied = !!(c && c.current);
+      const blocked  = activeBlocks.some(b => Number(b.courtNumber) === i);
+      if (!occupied && !blocked) free.push(i);
+    }
+    return free;
+  }
+
+  window.recomputeCtaLive = function recomputeCtaLive(){
+    let free = [];
+    let first = null, second = null;
+    try {
+      const Storage   = window.Tennis?.Storage || window.APP_UTILS;
+      const DATA_KEY  = (Storage?.STORAGE?.DATA)   || 'tennisClubData';
+      const BLOCK_KEY = (Storage?.STORAGE?.BLOCKS) || 'courtBlocks';
+
+      const dataNow   = Storage?.readDataSafe
+        ? Storage.readDataSafe()
+        : JSON.parse(localStorage.getItem(DATA_KEY) || 'null');
+
+      const blocksNow = JSON.parse(localStorage.getItem(BLOCK_KEY) || '[]');
+
+      const waitlist  = Array.isArray(dataNow?.waitingGroups) ? dataNow.waitingGroups : [];
+      first  = waitlist[0] || null;
+      second = waitlist[1] || null;
+
+      free = computeFreeCourtsNow(dataNow, blocksNow);
+      const freeCount = Array.isArray(free) ? free.length : 0;
+      const wlCount   = (first ? 1 : 0) + (second ? 1 : 0);
+
+      // Build state for React: which CTAs should be live?
+      const live1 = (freeCount >= 1) && !!first;
+      const live2 = (freeCount >= 2) && !!second;
+
+      emitCtaState({
+        freeCourts: free,             // e.g., [3,7,...] (optional info)
+        liveFirst:  !!live1,
+        liveSecond: !!live2,
+        firstGroup: first,
+        secondGroup: second
+      });
+    } catch {
+      emitCtaState({
+        freeCourts: [],
+        liveFirst:  false,
+        liveSecond: false,
+        firstGroup: null,
+        secondGroup: null
+      });
+    }
+  };
+
+  // Initial run
+  try { window.recomputeCtaLive(); } catch {}
+
+  // Event sources + heartbeat
+  (function attachCtaListeners(){
+    const onUpdate = () => { try { window.recomputeCtaLive(); } catch {} };
+
+    window.addEventListener('tennisDataUpdate', onUpdate, { passive: true });
+    window.addEventListener('DATA_UPDATED',      onUpdate, { passive: true });
+    window.addEventListener('visibilitychange',  () => { if (!document.hidden) onUpdate(); }, { passive: true });
+    window.addEventListener('focus',             onUpdate, { passive: true });
+
+    // Only react to relevant storage changes
+    window.addEventListener('storage', (e) => {
+      if (!e) return;
+      const S = window.Tennis?.Storage || window.APP_UTILS;
+      const DATA_KEY  = (S?.STORAGE?.DATA)   || 'tennisClubData';
+      const BLOCK_KEY = (S?.STORAGE?.BLOCKS) || 'courtBlocks';
+      if (e.key === DATA_KEY || e.key === BLOCK_KEY) onUpdate();
+    }, { passive: true });
+
+    try { window.__ctaLiveTimer && clearInterval(window.__ctaLiveTimer); } catch {}
+    window.__ctaLiveTimer = setInterval(onUpdate, 2000);
+    window.addEventListener('beforeunload', () => { try { clearInterval(window.__ctaLiveTimer); } catch {} }, { once: true });
+  })();
+})();
+</script>
   
   <script type="text/babel">
     // Access shared utils (optional convenience)
@@ -3224,7 +3336,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // Calculate available courts and waiting group display
+  // Update available courts only - CTA state now handled by cta:state event
   useEffect(() => {
     const updateAvailableCourts = () => {
       try {
@@ -3232,90 +3344,23 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           console.log("useEffect: Updating available courts...");
         }
         
-        const data = getCourtData();
-        const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
-        const hasUnoccupiedCourts = data.courts.some((court, index) => {
-          const courtNumber = index + 1;
-          const blockStatus = getCourtBlockStatus(courtNumber);
-          if (blockStatus && blockStatus.isCurrent) return false;
-          
-          return !court || court.wasCleared || (court.current === null && court.history) ||
-                 ((!court.players || court.players.length === 0) && 
-                  (!court.current || !court.current.players || court.current.players.length === 0));
-        });
-        
-        // Use the new gating logic - this useEffect is now mainly for debug/legacy compat
+        // Use the new gating logic - this useEffect is now mainly for updating available courts
         const courts = getAvailableCourts(false);
         if (DEBUG) {
           console.log("useEffect: Available courts from getAvailableCourts:", courts);
         }
         setAvailableCourts(courts);
         
-        // Check if there's a waiting group that can now play  
-        // Note: data is already loaded above
-        const firstWaitingGroupData = data.waitingGroups.length > 0 ? data.waitingGroups[0] : null;
-        // Use tempAvailableCourts (without waitlist check) to determine if first group can play
-        const canPlay = firstWaitingGroupData && tempAvailableCourts.length > 0;
-        
-        // Check promotion markers for immediate green CTA
-        const promoCta = typeof window.Promotions?.shouldShowGreenCTA === 'function'
-          ? window.Promotions.shouldShowGreenCTA()
-          : false;
-        
-        // Show green CTA if either condition is true
-        const shouldShowGreenCTA = promoCta || canPlay;
-        setCanFirstGroupPlay(shouldShowGreenCTA);
-        setFirstWaitingGroup(firstWaitingGroupData);
-        
-        // Create display names for the waiting group
-        if (shouldShowGreenCTA && firstWaitingGroupData) {
-          const names = firstWaitingGroupData.players.map(p => p.name.split(' ').pop());
-          if (names.length <= 3) {
-            setWaitingGroupDisplay(names.join(", "));
-          } else {
-            setWaitingGroupDisplay(`${names.slice(0, 3).join(", ")}, etc`);
-          }
-        } else {
-          setWaitingGroupDisplay("");
-        }
-        
-        // Check if second waiting group can play (when 2+ courts available)
-        const secondWaitingGroupData = data.waitingGroups.length > 1 ? data.waitingGroups[1] : null;
-        const canSecondPlay = secondWaitingGroupData && tempAvailableCourts.length >= 2;
-        setCanSecondGroupPlay(canSecondPlay);
-        setSecondWaitingGroup(secondWaitingGroupData);
-        
-        // Create display names for the second waiting group
-        if (canSecondPlay) {
-          const names = secondWaitingGroupData.players.map(p => p.name.split(' ').pop());
-          if (names.length <= 3) {
-            setSecondWaitingGroupDisplay(names.join(", "));
-          } else {
-            setSecondWaitingGroupDisplay(`${names.slice(0, 3).join(", ")}, etc`);
-          }
-        } else {
-          setSecondWaitingGroupDisplay("");
-        }
+        // NOTE: CTA state (canFirstGroupPlay, canSecondGroupPlay, etc.) is now 
+        // managed by the cta:state event listener above, not here
       } catch (error) {
         console.error('Error updating available courts:', error);
         setAvailableCourts([]);
-        
-        // Even in error case, check for promotions
-        const promoCta = typeof window.Promotions?.shouldShowGreenCTA === 'function'
-          ? window.Promotions.shouldShowGreenCTA()
-          : false;
-        setCanFirstGroupPlay(promoCta);
-        
-        setFirstWaitingGroup(null);
-        setWaitingGroupDisplay("");
-        setCanSecondGroupPlay(false);
-        setSecondWaitingGroup(null);
-        setSecondWaitingGroupDisplay("");
       }
     };
     
     updateAvailableCourts();
-  }, [data, currentScreen]); // Re-run when data or screen changes
+  }, [currentScreen]); // Re-run when screen changes
 
 // Auto-clear expired courts function
 useEffect(() => {
@@ -3452,6 +3497,9 @@ useEffect(() => {
   const [canSecondGroupPlay, setCanSecondGroupPlay] = useState(false);
   const [secondWaitingGroup, setSecondWaitingGroup] = useState(null);
   const [secondWaitingGroupDisplay, setSecondWaitingGroupDisplay] = useState("");
+  // State for CTA data from global recompute
+  const [firstWaitingGroupData, setFirstWaitingGroupData] = useState(null);
+  const [secondWaitingGroupData, setSecondWaitingGroupData] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
@@ -3512,6 +3560,52 @@ useEffect(() => {
   // Determine which search value to use based on input type
   const shouldDebounceMainSearch = !/^\d+$/.test(searchInput);
   const effectiveSearchInput = shouldDebounceMainSearch ? debouncedSearchInput : searchInput;
+  
+  // Subscribe to CTA state updates from global recompute
+  useEffect(() => {
+    const onCta = (e) => {
+      try {
+        const d = e?.detail || {};
+        setCanFirstGroupPlay(!!d.liveFirst);
+        setCanSecondGroupPlay(!!d.liveSecond);
+        setFirstWaitingGroupData(d.firstGroup || null);
+        setSecondWaitingGroupData(d.secondGroup || null);
+        
+        // Update display names based on the new data
+        if (d.liveFirst && d.firstGroup) {
+          const names = d.firstGroup.players.map(p => p.name.split(' ').pop());
+          if (names.length <= 3) {
+            setWaitingGroupDisplay(names.join(", "));
+          } else {
+            setWaitingGroupDisplay(`${names.slice(0, 3).join(", ")}, etc`);
+          }
+        } else {
+          setWaitingGroupDisplay("");
+        }
+        
+        if (d.liveSecond && d.secondGroup) {
+          const names = d.secondGroup.players.map(p => p.name.split(' ').pop());
+          if (names.length <= 3) {
+            setSecondWaitingGroupDisplay(names.join(", "));
+          } else {
+            setSecondWaitingGroupDisplay(`${names.slice(0, 3).join(", ")}, etc`);
+          }
+        } else {
+          setSecondWaitingGroupDisplay("");
+        }
+        
+        // Also sync the legacy state variables for compatibility
+        setFirstWaitingGroup(d.firstGroup || null);
+        setSecondWaitingGroup(d.secondGroup || null);
+      } catch {}
+    };
+    window.addEventListener('cta:state', onCta, { passive: true });
+
+    // Kick once on mount (in case recompute already ran)
+    try { window.recomputeCtaLive && window.recomputeCtaLive(); } catch {}
+
+    return () => window.removeEventListener('cta:state', onCta);
+  }, []);
   
   const shouldDebounceAddPlayer = !/^\d+$/.test(addPlayerSearch);
   const effectiveAddPlayerSearch = shouldDebounceAddPlayer ? debouncedAddPlayerSearch : addPlayerSearch;
@@ -4181,7 +4275,8 @@ const tryAssignCourtToGroup = () => {
     const isBlocked = court?.blocked && new Date(court.blocked.startTime) <= new Date();
 
     if (!isOccupied && !isBlocked) {
-      tryAssignCourtToGroup();
+      // Found an available court - assign it to the group
+      assignCourtToGroup(courtNumber);
       return;
     }
   }
@@ -4651,7 +4746,14 @@ console.log('✅ Court assigned result:', result);
   
   // Helper to compare groups (ID-first, name fallback)
   const sameGroup = (a = [], b = []) => {
-    const norm = (p) => (p?.memberId || '').toLowerCase() || (p?.id || '').toLowerCase() || (p?.name || '').trim().toLowerCase();
+    const norm = (p) => {
+      // Ensure we're working with strings before calling toLowerCase
+      const memberId = String(p?.memberId || '');
+      const id = String(p?.id || '');
+      const name = String(p?.name || '');
+      
+      return memberId.toLowerCase() || id.toLowerCase() || name.trim().toLowerCase();
+    };
     if (a.length !== b.length) return false;
     const A = a.map(norm).sort(); 
     const B = b.map(norm).sort();
@@ -5775,14 +5877,10 @@ onFocus={() => {
            )}
          </div>
          
-         {(canFirstGroupPlay || (typeof window.Promotions?.shouldShowGreenCTA === 'function' && window.Promotions.shouldShowGreenCTA())) && (
+         {/* CTA #1 — first group */}
+         {canFirstGroupPlay && (
            <button
              onClick={() => {
-               const eligible = (typeof window.Promotions?.getEligibleCourts === 'function')
-                 ? window.Promotions.getEligibleCourts()
-                 : [];
-               const chosenCourt = Number(eligible[0]) || null;
-               
                // Load the waiting group
                setCurrentGroup(firstWaitingGroup.players.map(player => ({
                  ...player,
@@ -5803,15 +5901,18 @@ onFocus={() => {
                console.log('[COURT AVAILABLE BUTTON] Navigating to court selection');
                setCurrentScreen("court");
              }}
-             className="w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
+             className="pulse-cta cta-primary w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
+             aria-live="polite"
            >
-             <div className="flex items-center justify-center">
-               <span className="mr-2">Court Available:</span>
-               <span>{waitingGroupDisplay}</span>
-             </div>
+             {(() => {
+               const g = firstWaitingGroupData;
+               const names = Array.isArray(g?.players) ? g.players.map(p => p?.name).filter(Boolean) : [];
+               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
+             })()}
            </button>
          )}
          
+         {/* CTA #2 — second group (only when >=2 free courts AND a second group exists) */}
          {canSecondGroupPlay && (
            <button
              onClick={() => {
@@ -5834,12 +5935,14 @@ onFocus={() => {
                console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Navigating to court selection');
                setCurrentScreen("court");
              }}
-             className="w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
+             className="pulse-cta cta-secondary w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
+             aria-live="polite"
            >
-             <div className="flex items-center justify-center">
-               <span className="mr-2">Court Available:</span>
-               <span>{secondWaitingGroupDisplay}</span>
-             </div>
+             {(() => {
+               const g = secondWaitingGroupData;
+               const names = Array.isArray(g?.players) ? g.players.map(p => p?.name).filter(Boolean) : [];
+               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
+             })()}
            </button>
          )}
          
@@ -7062,5 +7165,369 @@ root.render(<TennisRegistration isMobileView={window.IS_MOBILE_VIEW} />);
     setTimeout(updateDebugPanel, 100);
   })();
   </script>
+  
+<script>window.__navDiagVerbose = false;</script>
+
+<script>
+/**
+ * Diagnostic: Screen Bounce Observer (no behavior change).
+ * - Watches window.__regScreen transitions.
+ * - If we leave 'welcome' and bounce back to 'welcome' within 800ms, logs a warning.
+ * - Also logs suspected component re-mounts if __mountSeen flips.
+ * This does NOT block or alter navigation or CTA logic.
+ */
+(function screenBounceObserver(){
+  try {
+    // Track screen changes
+    var lastScreen = window.__regScreen || 'welcome';
+    var leftWelcomeAt = 0;
+    var earlyWindowMs = 800;
+
+    // Optional: detect remounts by flipping a sticky flag on first run
+    // If this code runs again without a full page reload, it indicates a re-mount-like behavior.
+    if (!window.__navDiagMountSeen) {
+      window.__navDiagMountSeen = 1;
+    } else {
+      console.warn('[NavDiag] Registration instrumentation re-executed (possible re-mount). count=', ++window.__navDiagMountSeen);
+      // Light breadcrumb for your black box, if available
+      try { window.__bbLog && window.__bbLog('nav', 'diag-reexec:' + window.__navDiagMountSeen); } catch(e){}
+    }
+
+    // Poll for screen transitions (read-only)
+    var tickMs = 120;
+    var t = setInterval(function(){
+      var s = window.__regScreen || lastScreen;
+      // detect leave-welcome
+      if (lastScreen === 'welcome' && (s === 'search' || s === 'group' || s === 'clearCourt')) {
+        leftWelcomeAt = performance.now();
+      }
+      // detect early bounce back to welcome
+      if ((s === 'welcome') && (lastScreen === 'search' || lastScreen === 'group' || lastScreen === 'clearCourt')) {
+        var dt = performance.now() - (leftWelcomeAt || 0);
+        if (leftWelcomeAt && dt >= 0 && dt < earlyWindowMs) {
+          console.warn('[NavDiag] Early bounce back to Welcome detected in', Math.round(dt), 'ms. prev=', lastScreen);
+          try { window.__bbLog && window.__bbLog('nav', 'early-bounce:' + lastScreen + '|' + Math.round(dt)); } catch(e){}
+        }
+      }
+      lastScreen = s;
+    }, tickMs);
+
+    // Cleanup
+    window.addEventListener('beforeunload', function(){ try { clearInterval(t); } catch(e){} }, { once: true });
+    console.log('[NavDiag] Screen Bounce Observer active (read-only).');
+  } catch (e) {
+    console.warn('[NavDiag] Screen Bounce Observer failed to start:', e);
+  }
+})();
+</script>
+
+<script>
+/**
+ * Early-bounce HARD blocker (CTA-safe).
+ * Blocks only: mid-flow -> welcome within ~900ms, with a non-allowed reason.
+ * Leaves all legitimate navigation and CTA logic intact.
+ */
+(function earlyBounceHardBlocker(){
+  try {
+    var allowedReasons = new Set([
+      'user-cancel',
+      'timeout-expired',
+      'registration-complete',
+      'clear-court-complete'
+    ]);
+    var earlyMs = 1200;
+    var lastLeftWelcomeAt = 0;
+
+    // Track screen transitions to know when we left welcome
+    (function trackLeaveWelcome(){
+      var prev = window.__regScreen || 'welcome';
+      setInterval(function(){
+        var cur = window.__regScreen || prev;
+        if (prev === 'welcome' &&
+            (cur === 'search' || cur === 'group' || cur === 'clearCourt')) {
+          lastLeftWelcomeAt = performance.now();
+        }
+        prev = cur;
+      }, 100);
+    })();
+
+    function shouldBlock(to, reason){
+      var from = window.__regScreen || 'welcome';
+      var midFlow = (from === 'search' || from === 'group' || from === 'clearCourt');
+      var dt = performance.now() - (lastLeftWelcomeAt || 0);
+      if (midFlow && to === 'welcome' && !allowedReasons.has(String(reason||'').toLowerCase())) {
+        if (lastLeftWelcomeAt && dt >= 0 && dt < earlyMs) {
+          (function(){
+            var msg = '[NavGuard] BLOCKED early bounce:';
+            var payload = { from, to, reason, dt: Math.round(dt) };
+            (window.__navDiagVerbose ? console.warn : console.debug)(msg, payload);
+            try {
+              // attach a tiny stack for breadcrumbs (non-fatal)
+              var st = new Error('blocked-early-bounce').stack;
+              (window.__navDiagVerbose ? console.warn : console.debug)('[NavGuard] Trace:', st);
+            } catch(e){}
+            try { window.__bbLog && window.__bbLog('nav', 'blocked-early:'+from+'->'+to+':'+(reason||'')+':'+Math.round(dt)); } catch(e){}
+          })();
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Wrap any known nav API without changing its signature
+    var api = window.UI || window;
+    var wrapped = false;
+
+    function wrap(name){
+      var orig = api[name];
+      if (typeof orig !== 'function') return;
+      api[name] = function(next, reason){
+        var to  = (typeof next === 'string' ? next : String(next||'')).toLowerCase();
+        var rsn = (typeof reason === 'string' ? reason : String(reason||''));
+        if (shouldBlock(to, rsn)) return;
+        return orig.apply(this, arguments);
+      };
+      wrapped = true;
+    }
+
+    wrap('navigate');
+    wrap('goToStep');
+    wrap('setStep');
+
+    if (wrapped) {
+      console.log('[NavGuard] Early-bounce hard blocker ACTIVE');
+    } else {
+      (window.__navDiagVerbose ? console.warn : console.debug)('[NavGuard] Could not find a nav API to wrap (navigate/goToStep/setStep)');
+    }
+  } catch (e) {
+    console.warn('[NavGuard] Failed to install early-bounce blocker:', e);
+  }
+})();
+</script>
+
+<script>
+/**
+ * Diagnostic: Root re-mount detector (CTA-safe).
+ * Logs if the #root subtree is torn down/replaced shortly after leaving Welcome.
+ */
+(function rootRemountDetector(){
+  try {
+    var host = document.getElementById('root') || document.body;
+    if (!host) return;
+
+    var leftWelcomeAt = 0;
+    var watchForMs = 5000;       // watch up to 5s after leaving Welcome
+    var watching = false;
+    var prevChildCount = host.childNodes.length;
+
+    // Track when we leave Welcome
+    setInterval(function(){
+      var s = window.__regScreen || 'welcome';
+      if ((s === 'search' || s === 'group' || s === 'clearCourt') && !watching) {
+        leftWelcomeAt = performance.now();
+        watching = true;
+        setTimeout(function(){ watching = false; }, watchForMs);
+      }
+    }, 120);
+
+    // Observe wholesale subtree changes
+    var obs = new MutationObserver(function(muts){
+      if (!watching) return;
+      try {
+        // Heuristic: large childList changes or root cleared shortly after leaving Welcome
+        var totalAdds = 0, totalRems = 0;
+        muts.forEach(function(m){
+          if (m.type === 'childList') {
+            totalAdds += m.addedNodes.length;
+            totalRems += m.removedNodes.length;
+          }
+        });
+        var now = performance.now();
+        var dt = Math.round(now - leftWelcomeAt);
+        var childCount = host.childNodes.length;
+
+        // Trigger when many nodes removed/added or childCount sharply changes
+        if ((totalRems + totalAdds) >= 5 || Math.abs(childCount - prevChildCount) >= 3) {
+          console.warn('[NavDiag] RE-MOUNT DETECTED: subtree replaced/changed significantly', { dt, totalAdds, totalRems, childCount, prevChildCount });
+          try { window.__bbLog && window.__bbLog('nav', 'remount:'+dt+':'+totalAdds+'/'+totalRems); } catch(e){}
+        }
+        prevChildCount = childCount;
+      } catch(e){}
+    });
+
+    obs.observe(host, { childList: true, subtree: true });
+
+    window.addEventListener('beforeunload', function(){
+      try { obs.disconnect(); } catch(e){}
+    }, { once: true });
+
+    console.log('[NavDiag] Root re-mount detector active (read-only).');
+  } catch (e) {
+    console.warn('[NavDiag] Root re-mount detector failed to start:', e);
+  }
+})();
+</script>
+
+<script>
+/**
+ * Diagnostic: Instrument writes to window.__regScreen (CTA-safe).
+ * Logs every set with prev->next and a stack trace to identify the caller.
+ * Does NOT block or change the assignment.
+ */
+(function instrumentRegScreenSetter(){
+  try {
+    if (window.__regScreen__instrumented) return;
+    window.__regScreen__instrumented = true;
+
+    // Track when we leave welcome to annotate timings
+    (function trackWelcomeExit(){
+      var prev = window.__regScreen || 'welcome';
+      setInterval(function(){
+        var cur = window.__regScreen || prev;
+        if (prev === 'welcome' &&
+            (cur === 'search' || cur === 'group' || cur === 'clearCourt')) {
+          window.__leftWelcomeAt = performance.now();
+        }
+        prev = cur;
+      }, 120);
+    })();
+
+    // Preserve current value
+    var _val = (typeof window.__regScreen === 'string') ? window.__regScreen : 'welcome';
+
+    // Define logging accessor
+    Object.defineProperty(window, '__regScreen', {
+      get: function(){ return _val; },
+      set: function(next){
+        try {
+          var prev = _val;
+          _val = next;
+          var dt = (window.__leftWelcomeAt ? (performance.now() - window.__leftWelcomeAt) : NaN);
+          console.warn('[NavDiag] __regScreen set:', { prev, next, dt: isNaN(dt)?null:Math.round(dt) });
+          try {
+            var trace = new Error('__regScreen set trace').stack;
+            console.warn('[NavDiag] __regScreen setter trace:', trace);
+          } catch(e){}
+          // Optional breadcrumb to black box
+          try { window.__bbLog && window.__bbLog('nav', 'set:'+prev+'->'+next+':'+(isNaN(dt)?'':Math.round(dt))); } catch(e){}
+        } catch(e) {
+          // never throw from diagnostics
+        }
+      },
+      configurable: true
+    });
+
+    console.log('[NavDiag] __regScreen setter instrumentation active (read-only).');
+  } catch (e) {
+    console.warn('[NavDiag] Failed to instrument __regScreen:', e);
+  }
+})();
+</script>
+
+<script>
+/**
+ * Early-window storage-event muffler (CTA-safe).
+ * Swallows browser 'storage' events for ~1.2s after leaving Welcome,
+ * to prevent mid-flow resets triggered by cross-tab sync.
+ */
+(function earlyStorageMuffler(){
+  try {
+    var earlyMs = 900;
+    var leftWelcomeAt = 0;
+
+    // Track when we leave Welcome (polling is fine and decoupled)
+    setInterval(function(){
+      var s = window.__regScreen || 'welcome';
+      if ((s === 'search' || s === 'group' || s === 'clearCourt')) {
+        if (!leftWelcomeAt) leftWelcomeAt = performance.now();
+      } else {
+        leftWelcomeAt = 0; // reset when back on welcome
+      }
+    }, 120);
+
+    // CAPTURING listener to intercept before app handlers
+    function onStorageCapture(ev){
+      try {
+        if (!leftWelcomeAt) return; // not in early window
+        var dt = performance.now() - leftWelcomeAt;
+        if (dt >= 0 && dt < earlyMs) {
+          // Swallow ONLY during the early window
+          (window.__navDiagVerbose ? console.warn : console.debug)('[NavDiag] Swallowing browser storage event during early window (dt=', Math.round(dt), 'ms)');
+          ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+          ev.stopPropagation && ev.stopPropagation();
+          // Do NOT preventDefault (storage has no default)
+        }
+      } catch(e){}
+    }
+    // capture=true ensures we beat app-level handlers
+    window.addEventListener('storage', onStorageCapture, { capture: true, passive: true });
+
+    window.addEventListener('beforeunload', function(){
+      try { window.removeEventListener('storage', onStorageCapture, { capture: true }); } catch(e){}
+    }, { once: true });
+
+    console.log('[NavDiag] Early-window storage-event muffler ACTIVE.');
+  } catch (e) {
+    console.warn('[NavDiag] Failed to install storage muffler:', e);
+  }
+})();
+</script>
+
+<script>
+/**
+ * Early-window app-event muffler for 'tennisDataUpdate' (CTA-safe).
+ * Swallows ONLY 'tennisDataUpdate' for ~1.2s after leaving Welcome,
+ * preventing mid-flow resets caused by immediate sync handlers.
+ */
+(function earlyAppEventMuffler(){
+  try {
+    var earlyMs = 900;
+    var leftWelcomeAt = 0;
+
+    // Track when we leave Welcome
+    setInterval(function(){
+      var s = window.__regScreen || 'welcome';
+      if ((s === 'search' || s === 'group' || s === 'clearCourt')) {
+        if (!leftWelcomeAt) leftWelcomeAt = performance.now();
+      } else {
+        leftWelcomeAt = 0; // reset when back on Welcome
+      }
+    }, 120);
+
+    function shouldSwallow(){
+      if (!leftWelcomeAt) return false;
+      var dt = performance.now() - leftWelcomeAt;
+      return (dt >= 0 && dt < earlyMs);
+    }
+
+    // Capture phase listeners to beat app handlers
+    function onCapture(ev){
+      try {
+        if (shouldSwallow()) {
+          (window.__navDiagVerbose ? console.warn : console.debug)('[NavDiag] Swallowing app event during early window:', ev.type);
+          ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+          ev.stopPropagation && ev.stopPropagation();
+        }
+      } catch(e){}
+    }
+
+    // Register on both window and document to be safe
+    window.addEventListener('tennisDataUpdate', onCapture, { capture: true, passive: true });
+    document.addEventListener('tennisDataUpdate', onCapture, { capture: true, passive: true });
+
+    window.addEventListener('beforeunload', function(){
+      try {
+        window.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
+        document.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
+      } catch(e){}
+    }, { once: true });
+
+    console.log('[NavDiag] Early-window app-event muffler ACTIVE (tennisDataUpdate).');
+  } catch (e) {
+    console.warn('[NavDiag] Failed to install app-event muffler:', e);
+  }
+})();
+</script>
+
 </body>
 </html>
