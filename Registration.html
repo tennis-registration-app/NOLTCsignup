@@ -617,30 +617,61 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
     try { window.dispatchEvent(new CustomEvent('cta:state', { detail })); } catch {}
   }
 
-  function computeFreeCourtsNow(dataNow, blocksNow){
+  /**
+   * Compute courts that are SELECTABLE right now.
+   * SELECTABLE = not blocked (and not wet) AND (unoccupied OR occupied in overtime).
+   * Notes:
+   * - We use a single rounded 'now' to avoid flicker.
+   * - We treat "wet" blocks as non-selectable.
+   * - We accept multiple possible end fields on current session.
+   */
+  function computeSelectableCourtsNow(dataNow, blocksNow) {
     const Av = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-    // Primary
+
+    // Rounded 'now' to avoid micro-flips
+    const now = new Date(); now.setMilliseconds(0);
+
+    // Prefer a domain helper if available
     try {
-      if (Av?.getFreeCourtsInfo) {
-        const info = Av.getFreeCourtsInfo({ data: dataNow, now: new Date(), blocks: blocksNow });
-        if (info && Array.isArray(info.free)) return info.free;
+      if (Av?.getSelectableCourtsStrict) {
+        const out = Av.getSelectableCourtsStrict({ data: dataNow, now, blocks: blocksNow });
+        if (Array.isArray(out)) return out;
+        if (out && Array.isArray(out.courts)) return out.courts;
       }
     } catch {}
-    // Fallback deterministic
-    const now = new Date();
-    const activeBlocks = (Array.isArray(blocksNow) ? blocksNow : []).filter(b => {
+
+    // Normalize blocks active "right now"
+    const blocks = Array.isArray(blocksNow) ? blocksNow : [];
+    const activeBlocks = blocks.filter(b => {
       try { return new Date(b.startTime) <= now && now < new Date(b.endTime); }
       catch { return false; }
     });
-    const count = Array.isArray(dataNow?.courts) ? dataNow.courts.length : 12;
-    const free = [];
-    for (let i = 1; i <= count; i++) {
+
+    const isWet     = (n) => activeBlocks.some(b => !!b?.isWetCourt && Number(b.courtNumber) === n);
+    const isBlocked = (n) => activeBlocks.some(b => !b?.isWetCourt && Number(b.courtNumber) === n);
+
+    // Overtime: current session exists AND its end/expectedEnd/until/endsAt is in the past
+    const isOvertime = (court) => {
+      try {
+        const cur = court?.current;
+        if (!cur) return false;
+        const t = cur.endTime || cur.expectedEnd || cur.until || cur.endsAt;
+        return !!t && (new Date(t) < now);
+      } catch { return false; }
+    };
+
+    const total = Array.isArray(dataNow?.courts) ? dataNow.courts.length : (window.Tennis?.Config?.COURTS?.COUNT || 12);
+    const selectable = [];
+    for (let i = 1; i <= total; i++) {
       const c = dataNow?.courts?.[i-1] || null;
       const occupied = !!(c && c.current);
-      const blocked  = activeBlocks.some(b => Number(b.courtNumber) === i);
-      if (!occupied && !blocked) free.push(i);
+      const overtime = occupied && isOvertime(c);
+      // Selectable if NOT wet/blocked and (unoccupied OR overtime)
+      if (!isWet(i) && !isBlocked(i) && (!occupied || overtime)) {
+        selectable.push(i);
+      }
     }
-    return free;
+    return selectable;
   }
 
   window.recomputeCtaLive = function recomputeCtaLive(){
@@ -661,16 +692,26 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
       first  = waitlist[0] || null;
       second = waitlist[1] || null;
 
-      free = computeFreeCourtsNow(dataNow, blocksNow);
-      const freeCount = Array.isArray(free) ? free.length : 0;
-      const wlCount   = (first ? 1 : 0) + (second ? 1 : 0);
+      // Build lists
+      const selectable = computeSelectableCourtsNow(dataNow, blocksNow);
 
-      // Build state for React: which CTAs should be live?
-      const live1 = (freeCount >= 1) && !!first;
-      const live2 = (freeCount >= 2) && !!second;
+      // Derive "emptyOnly" (unblocked & unoccupied) from selectable
+      const emptyOnly = selectable.filter(i => {
+        const c = dataNow?.courts?.[i-1] || null;
+        return !(c && c.current); // strictly unoccupied
+      });
 
+      // Priority rule: if any empty courts exist, only their count gates the CTAs.
+      // Otherwise, fall back to the full selectable list (overtime included).
+      const gateList = emptyOnly.length > 0 ? emptyOnly : selectable;
+      const gateCount = gateList.length;
+
+      const live1 = (gateCount >= 1) && !!first;
+      const live2 = (gateCount >= 2) && !!second;
+
+      // Keep the event shape stable: reuse 'freeCourts' key but now it means "selectable"
       emitCtaState({
-        freeCourts: free,             // e.g., [3,7,...] (optional info)
+        freeCourts: selectable,   // SELECTABLE courts (includes overtime)
         liveFirst:  !!live1,
         liveSecond: !!live2,
         firstGroup: first,
@@ -4436,6 +4477,13 @@ console.log('✅ Court assigned result:', result);
   if (window.UI?.__mobileSendSuccess__) {
     dbg('Registration: Calling mobile success signal');
     window.UI.__mobileSendSuccess__();
+  }
+
+  // Auto-reset timer for court assignment (same as waitlist)
+  if (!window.__mobileFlow) {
+    setTimeout(() => {
+      resetForm();
+    }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
   }
 
   if (allowCourtChange) {
