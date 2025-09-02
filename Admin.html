@@ -909,6 +909,29 @@ const CourtStatusGrid = ({ courts, courtBlocks, selectedDate, onClearCourt, onMo
     setShowActions(null);
   };
 
+  const handleSaveBlock = async (updatedBlock) => {
+    try {
+      // Get current blocks
+      const blocks = await dataStore.get('courtBlocks') || [];
+      
+      // Update the block
+      const updatedBlocks = blocks.map(block => 
+        block.id === updatedBlock.id ? updatedBlock : block
+      );
+      
+      // Save to storage
+      await dataStore.set('courtBlocks', updatedBlocks);
+      
+      // Close the modal
+      setEditingBlock(null);
+      
+      // Refresh the view
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Error saving block:', error);
+    }
+  };
+
   const handleMoveCourt = async (from, to) => {
     try {
       const res = await onMoveCourt(from, to);   // <-- await the move
