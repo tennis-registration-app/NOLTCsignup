@@ -6642,12 +6642,22 @@ onFocus={() => {
                        console.log('💾 Guest charge saved to localStorage');
                        
                        // Dispatch event for real-time updates
-                       if (USE_SHARED_CORE && Events) {
-                         Events.emitDom(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, {});
-                       } else {
-                         window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-                       }
-                       console.log('📡 Dispatched update event');
+                       (function deferUpdateAfterSuccess(){
+                         const isOnSuccess = (window.__regScreen === 'success');
+                         const DISPATCH_DELAY_MS = 1500; // small delay so Success screen is stable
+
+                         const doDispatch = () => {
+                           window.dispatchEvent(new CustomEvent('tennisDataUpdate', { detail: { source: 'guest-charge' } }));
+                           console.log('📡 Dispatched update event (source=guest-charge)');
+                         };
+
+                         if (isOnSuccess) {
+                           setTimeout(doDispatch, DISPATCH_DELAY_MS);
+                           console.log('[SuccessHold-lite] Deferred tennisDataUpdate by', DISPATCH_DELAY_MS, 'ms');
+                         } else {
+                           doDispatch();
+                         }
+                       })();
                        
                      } catch (error) {
                        console.error('❌ Error saving guest charge:', error);
@@ -7701,6 +7711,92 @@ root.render(<TennisRegistration isMobileView={window.IS_MOBILE_VIEW} />);
     console.log('[NavDiag] Early-window app-event muffler ACTIVE (tennisDataUpdate).');
   } catch (e) {
     console.warn('[NavDiag] Failed to install app-event muffler:', e);
+  }
+})();
+</script>
+
+<script>
+(function successNavLite(){
+  try {
+    var HOLD_MS = 1500;
+    var successAt = 0;
+
+    // Track success entry
+    setInterval(function(){
+      var s = window.__regScreen || 'welcome';
+      if (s === 'success') {
+        if (!successAt) successAt = performance.now();
+      } else {
+        successAt = 0;
+      }
+    }, 120);
+
+    function inHold(){ return successAt && (performance.now() - successAt) < HOLD_MS; }
+
+    // Wrap navigate only for Success -> Welcome during the hold window
+    var api = window.UI || window;
+    var orig = api && api.navigate;
+    if (typeof orig === 'function') {
+      api.navigate = function(next, reason){
+        var from = window.__regScreen || 'welcome';
+        var to = (typeof next === 'string' ? next : String(next||''));
+        var rsn = (typeof reason === 'string' ? reason : String(reason||''));
+        if (from === 'success' && to === 'welcome' && inHold() && rsn !== 'user-cancel' && rsn !== 'timeout-expired') {
+          (window.__navDiagVerbose ? console.warn : console.debug)('[SuccessNavLite] blocked early success->welcome', {rsn});
+          return;
+        }
+        return orig.apply(this, arguments);
+      };
+      console.log('[SuccessNavLite] active (', HOLD_MS, 'ms )');
+    }
+  } catch(e) {
+    console.warn('[SuccessNavLite] init failed:', e);
+  }
+})();
+</script>
+
+<script>
+/**
+ * GroupNavHard: navigation-only guard that lasts while we're on 'group'.
+ * Blocks group->welcome unless the reason is explicitly allowed.
+ * Keeps data updates flowing; only navigation is filtered.
+ */
+(function groupNavHard(){
+  try {
+    var onGroup = false;
+
+    // Track current screen
+    setInterval(function(){
+      var s = window.__regScreen || 'welcome';
+      onGroup = (s === 'group');
+    }, 120);
+
+    // Wrap navigate ONLY to filter group->welcome unless reason allowed
+    var api = window.UI || window;
+    var orig = api && api.navigate;
+    if (typeof orig === 'function') {
+      // Add any other legit reasons your app uses to return to welcome
+      var allowed = new Set(['user-cancel','timeout-expired']);
+
+      api.navigate = function(next, reason){
+        var from = window.__regScreen || 'welcome';
+        var to = (typeof next === 'string' ? next : String(next||''));
+        var rsn = (typeof reason === 'string' ? reason : String(reason||''));
+
+        if (onGroup && from === 'group' && to === 'welcome' && !allowed.has(rsn)) {
+          (window.__navDiagVerbose ? console.warn : console.debug)(
+            '[GroupNavHard] blocked group->welcome', { rsn }
+          );
+          return; // swallow only this unintended jump
+        }
+        return orig.apply(this, arguments);
+      };
+      console.log('[GroupNavHard] active (nav-only; indefinite while on group)');
+    } else {
+      console.warn('[GroupNavHard] navigate() not found to wrap.');
+    }
+  } catch (e) {
+    console.warn('[GroupNavHard] init failed:', e);
   }
 })();
 </script>
