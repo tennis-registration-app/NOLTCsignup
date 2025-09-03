@@ -1691,11 +1691,11 @@ const TennisDataService = window.TennisDataService || {
     
     // Build the group object from existing form fields / variables
     let players = group
-      .filter(p => !p.isGuest)  // Exclude guests from players array
       .map(p => ({
         id: String(p.id || '').trim(),
         name: String(p.name || '').trim(),
-        memberId: p.memberId
+        memberId: p.memberId,
+        isGuest: p.isGuest || false  // Preserve guest flag
       }))
       .filter(p => p && p.id && p.name);
 
@@ -1711,8 +1711,9 @@ const TennisDataService = window.TennisDataService || {
     } catch (_) {}
 
     const guests = group.filter(p => p.isGuest).length;
+    const nonGuestPlayers = players.filter(p => !p.isGuest);
 
-    const validation = validateGroupCompat(players, guests);
+    const validation = validateGroupCompat(nonGuestPlayers, guests);
     if (!validation.ok) {
       return { success: false, error: validation.errors.join('\n') };
     }
@@ -4424,17 +4425,19 @@ const now = new Date();
   
   // Reuse the same extraction as the form submit path:
 const players = currentGroup
-  .filter(p => !p.isGuest)  // Exclude guests from players array
   .map(p => ({
     id: String(p.id || '').trim(),
-    name: String(p.name || '').trim()
+    name: String(p.name || '').trim(),
+    isGuest: p.isGuest || false  // Preserve guest flag
   }))
   .filter(p => p && p.id && p.name);
 
+// Count guests separately for validation (don't pass guest players to validator)
+const nonGuestPlayers = players.filter(p => !p.isGuest);
 const guests = currentGroup.filter(p => p.isGuest).length;
 
 // Domain validation (reuse the same error UI as submit)
-const { ok, errors } = validateGroupCompat(players, guests);
+const { ok, errors } = validateGroupCompat(nonGuestPlayers, guests);
 if (!ok) {
   try {
     // Try to infer the variables you use in this scope:
@@ -4484,9 +4487,10 @@ if (!ok) {
   return;
 }
 
-// Duration determined from group size
+// Duration determined from total group size (members + guests)
 const Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
-const duration = Tm.durationForGroupSize(players.length); // typically 60/90
+const totalPlayers = players.length; // Now includes all players including guests
+const duration = Tm.durationForGroupSize(totalPlayers); // typically 60/90
 
 // Canonical group object
 const group = { players, guests };
@@ -4676,19 +4680,21 @@ console.log('✅ Court assigned result:', result);
 
       // Build the players array
       const players = group
-        .filter(p => !p.isGuest)  // Exclude guests from players array
         .map(p => ({
           id: String(p.id || '').trim(),
-          name: String(p.name || '').trim()
+          name: String(p.name || '').trim(),
+          isGuest: p.isGuest || false  // Preserve guest flag
         }))
         .filter(p => p && p.id && p.name);
 
+      // Count guests separately for validation
+      const nonGuestPlayers = players.filter(p => !p.isGuest);
       const guests = group.filter(p => p.isGuest).length;
 
       console.log('[waitlist] calling addToWaitlist with', players.map(p=>p.name), 'guests:', guests);
       
       // Validation check
-      const validation = validateGroupCompat(players, guests);
+      const validation = validateGroupCompat(nonGuestPlayers, guests);
       if (!validation.ok) {
         try { Tennis.UI.toast(validation.errors.join(' '), { type: 'error' }); } catch {}
         showAlertMessage(validation.errors.join('\n'));
