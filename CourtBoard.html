@@ -2739,7 +2739,10 @@
             
             // console.log(`🏟️ Checking court ${courtNumber}`);
             
-            // Check for active blocks on this court (only currently active, not future)
+            // Check for blocks that affect this court's availability
+            let blockingUntil = null;
+            
+            // First check currently active blocks
             const activeBlock = courtBlocks.find(block => 
               block.courtNumber === courtNumber && 
               new Date(block.startTime) <= currentTime &&
@@ -2747,16 +2750,27 @@
             );
             
             if (activeBlock) {
-              // console.log(`🚫 Court ${courtNumber} blocked until:`, activeBlock.endTime);
-              endTime = activeBlock.endTime;
+              blockingUntil = activeBlock.endTime;
             } else if (court) {
               // Court has players - check for overtime or regular game
               if (court.current && court.current.endTime) {
-                // console.log(`🎾 Court ${courtNumber} game until:`, court.current.endTime);
                 endTime = court.current.endTime;
               } else if (court.endTime) {
-                // console.log(`🎾 Court ${courtNumber} old game until:`, court.endTime);
                 endTime = court.endTime;
+              }
+              
+              // Check for future blocks that would overlap with game availability
+              if (endTime) {
+                const gameEndTime = new Date(endTime).getTime();
+                const futureBlock = courtBlocks.find(block => 
+                  block.courtNumber === courtNumber &&
+                  new Date(block.startTime).getTime() < gameEndTime &&
+                  new Date(block.endTime).getTime() > currentTime.getTime()
+                );
+                
+                if (futureBlock) {
+                  blockingUntil = futureBlock.endTime;
+                }
               }
               
               // Check if this is an overtime court (game has exceeded scheduled duration)
@@ -2779,18 +2793,18 @@
               // console.log(`✅ Court ${courtNumber} empty`);
             }
             
+            // Use the blocking time if blocks interfere, otherwise use game end time
+            const finalEndTime = blockingUntil || endTime;
+            
             // Parse and validate the end time for future availability
-            if (endTime) {
+            if (finalEndTime) {
               try {
-                const parsedEndTime = new Date(endTime);
+                const parsedEndTime = new Date(finalEndTime);
                 if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
-                  // console.log(`✅ Court ${courtNumber} available at:`, parsedEndTime);
                   courtAvailability.push({
                     courtNumber,
                     endTime: parsedEndTime
                   });
-                } else {
-                  // console.log(`⏰ Court ${courtNumber} time is past:`, parsedEndTime);
                 }
               } catch (error) {
                 console.error(`Error parsing end time for court ${courtNumber}:`, error);
