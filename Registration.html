@@ -4497,7 +4497,7 @@ const Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
 const duration = Tm.durationForGroupSize(allPlayers.length); // typically 60/90
 
 // Canonical group object (use allPlayers so guests appear on court)
-const group = { players: allPlayers, guests: 0 };
+const group = { players: allPlayers, guests };
 
 // Check for upcoming block on selected court using new system
 const blockStatus = await getCourtBlockStatus(courtNumber);
@@ -4682,12 +4682,13 @@ console.log('✅ Court assigned result:', result);
         return;
       }
 
-      // Build the players array
+      // Build the players array (keep guests for waitlist display)
       const players = group
-        .filter(p => !p.isGuest)  // Exclude guests from players array
         .map(p => ({
           id: String(p.id || '').trim(),
-          name: String(p.name || '').trim()
+          name: String(p.name || '').trim(),
+          ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
+          ...(p.sponsor && { sponsor: p.sponsor })
         }))
         .filter(p => p && p.id && p.name);
 
