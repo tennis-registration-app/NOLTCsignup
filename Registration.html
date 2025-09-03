@@ -2070,14 +2070,18 @@ async getCourtNextTrueAvailability(court, courtNumber, currentTime) {
         currentTimeLocal: new Date(currentTime).toLocaleTimeString()
       });
       
-      // If this block starts at or before our check time, move check time to block end
-      if (blockStart <= checkTime) {
+      // Check if block overlaps with availability window (now -> checkTime)
+      const windowStart = currentTime.getTime();
+      
+      // Block overlaps if it starts before court becomes available AND ends after now
+      if (blockStart < checkTime && blockEnd > windowStart) {
+        // Court blocked - not available until after this block ends
         checkTime = Math.max(checkTime, blockEnd);
-        console.log(`DEBUG: Court ${courtNumber} check time moved to:`, new Date(checkTime).toLocaleTimeString());
+        console.log(`DEBUG: Court ${courtNumber} block overlaps, check time moved to:`, new Date(checkTime).toLocaleTimeString());
       }
-      // If there's a gap before this block, court is available at checkTime
-      else {
-        console.log(`DEBUG: Court ${courtNumber} gap found, available at:`, new Date(checkTime).toLocaleTimeString());
+      // If block starts after our current availability time, we found a gap
+      else if (blockStart >= checkTime) {
+        console.log(`DEBUG: Court ${courtNumber} gap found before block, available at:`, new Date(checkTime).toLocaleTimeString());
         break;
       }
     }
