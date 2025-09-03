@@ -6734,12 +6734,12 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
     return [...filteredPurchases].sort((a, b) => {
       let aVal = a[sortField];
       let bVal = b[sortField];
-      
+
       if (sortField === 'timestamp') {
         aVal = new Date(aVal);
         bVal = new Date(bVal);
       }
-      
+
       if (sortOrder === 'asc') {
         return aVal > bVal ? 1 : -1;
       } else {

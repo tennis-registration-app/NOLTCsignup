@@ -378,7 +378,8 @@
       data.UPDATE_TICK = (data.UPDATE_TICK || 0) + 1;
 
       // Persist through guarded path
-      await DS.set(S.STORAGE.DATA, data);
+      const dataKey = S.STORAGE?.DATA || S.KEYS?.DATA || 'tennisClubData';
+      await DS.set(dataKey, data);
 
       return { success: true, courtNumber, replacedGroup, isTimeLimited };
     } catch (err) {
@@ -425,7 +426,21 @@
         });
 
         const position = data.waitingGroups.length;
-        await DS.set(S.STORAGE.DATA, data, { reason: 'ADD_WAITLIST' });
+        const dataKey = S.STORAGE?.DATA || S.KEYS?.DATA || 'tennisClubData';
+        
+        // Use DS if available, otherwise fallback to direct storage write
+        if (DS && DS.set) {
+          await DS.set(dataKey, data, { reason: 'ADD_WAITLIST' });
+        } else {
+          // Fallback to direct storage write with events
+          S.writeJSON(dataKey, data);
+          window.dispatchEvent(new Event('tennisDataUpdate'));
+          if (window.Tennis?.Events?.emitDom) {
+            window.Tennis.Events.emitDom('DATA_UPDATED', { key: dataKey, data });
+            window.Tennis.Events.emitDom('tennisDataUpdate', { key: dataKey, data });
+          }
+        }
+        
         return { success: true, position };
       } catch (e) {
         console.error('[DataService.addToWaitlist]', e);
@@ -488,7 +503,8 @@
           duration
         };
 
-        await DS.set(S.STORAGE.DATA, data, { reason: 'ASSIGN_NEXT' });
+        const dataKey = S.STORAGE?.DATA || S.KEYS?.DATA || 'tennisClubData';
+        await DS.set(dataKey, data, { reason: 'ASSIGN_NEXT' });
         return { success: true, court, group };
       } catch (e) {
         return { success:false, error: e?.message || 'Failed to assign next from waitlist' };
@@ -530,7 +546,8 @@
       data.UPDATE_TICK = (data.UPDATE_TICK || 0) + 1;
 
       // Persist through the guarded, event-emitting path
-      DS.set(S.STORAGE.DATA, data);
+      const dataKey = S.STORAGE?.DATA || S.KEYS?.DATA || 'tennisClubData';
+      DS.set(dataKey, data);
 
       return { success: true, from, to };
     } catch (err) {

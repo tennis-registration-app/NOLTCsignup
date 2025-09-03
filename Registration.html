@@ -826,17 +826,39 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
       // - At least 1 named player or guest
       // - Guests is a non-negative integer
       // - Total size 1–4 (singles/doubles max 4)
-      const names = Array.isArray(players)
-        ? players.map(p => String(p?.name ?? p ?? '').trim()).filter(Boolean)
-        : [];
-      const g = Number.isFinite(guests) ? guests : parseInt(guests || 0, 10);
-      const errs = [];
-      if (names.length < 1 && g < 1) errs.push('Enter at least one player.');
-      if (!Number.isFinite(g) || g < 0) errs.push('Guests must be 0 or more.');
-      if (names.length + g < 1) errs.push('Group size must be at least 1.');
-      if (names.length + g > 4) errs.push('Maximum group size is 4.');
+      
+// Build raw name list
+const rawNames = Array.isArray(players)
+  ? players.map(p => String(p?.name ?? p ?? '').trim()).filter(Boolean)
+  : [];
 
-      return norm(errs.length === 0, errs);
+// Count any explicit "Guest" rows already present in players[]
+const guestRowCount = rawNames.reduce((acc, n) => {
+  return acc + (n.toLowerCase() === 'guest' ? 1 : 0);
+}, 0);
+
+// Parse the separate guests field
+const gVal = Number.isFinite(guests) ? guests : parseInt(guests || 0, 10);
+
+const errs = [];
+// Keep your existing friendly message if you like:
+if (rawNames.length < 1 && gVal < 1) errs.push('Enter at least one player.');
+if (!Number.isFinite(gVal) || gVal < 0) errs.push('Guests must be 0 or more.');
+
+// Effective guest count is the MAX of the two representations (not the sum),
+// so we never double-count a guest.
+const effectiveGuestCount = Math.max(guestRowCount, Math.max(0, gVal));
+
+// Named players excluding explicit guest placeholder rows
+const namedCount = rawNames.length - guestRowCount;
+
+// Final effective size
+const totalSize = namedCount + effectiveGuestCount;
+
+if (totalSize < 1) errs.push('Group size must be at least 1.');
+if (totalSize > 4) errs.push('Maximum group size is 4.');
+
+return norm(errs.length === 0, errs);
     }
     
     // ---- Original Storage & Event keys (kept intact but unused when USE_SHARED_CORE=true) ----
@@ -1668,11 +1690,14 @@ const TennisDataService = window.TennisDataService || {
     }
     
     // Build the group object from existing form fields / variables
-    let players = group.map(p => ({
-      id: String(p.id || '').trim(),
-      name: String(p.name || '').trim(),
-      memberId: p.memberId
-    })).filter(p => p && p.id && p.name);
+    let players = group
+      .filter(p => !p.isGuest)  // Exclude guests from players array
+      .map(p => ({
+        id: String(p.id || '').trim(),
+        name: String(p.name || '').trim(),
+        memberId: p.memberId
+      }))
+      .filter(p => p && p.id && p.name);
 
     // Resolve/attach memberId where possible (no-op if roster not available)
     try {
@@ -2504,7 +2529,9 @@ const SuccessScreen = ({
   
   // Get member's last 4 digits (mock implementation - in real app, would come from member data)
   const getLastFourDigits = React.useCallback((memberNumber) => {
-    return memberNumber ? memberNumber.slice(-4).padStart(4, '0') : '****';
+    if (!memberNumber) return '****';
+    const str = String(memberNumber);
+    return str.length >= 4 ? str.slice(-4) : str.padStart(4, '0');
   }, []);
   
   const handleBallPurchase = React.useCallback(async () => {
@@ -2529,6 +2556,21 @@ const SuccessScreen = ({
       // Calculate nonGuestPlayers fresh in the callback
       const currentNonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
       
+      /** Return the raw member number for a player (never masked). */
+      function getRawMemberNumber(p){
+        // Try multiple possible field names where member number might be stored
+        const n = p?.memberNumber ?? p?.memberNo ?? p?.member ?? p?.id ?? '';
+        if (!n) return '';
+        const s = String(n);
+        // If it looks masked (starts with asterisks), try fallbacks; else return the value
+        if (/^\*+/.test(s)) {
+          if (p.memberNumberRaw && !/^\*+/.test(String(p.memberNumberRaw))) return String(p.memberNumberRaw);
+          if (p.originalMemberNumber && !/^\*+/.test(String(p.originalMemberNumber))) return String(p.originalMemberNumber);
+          return '';
+        }
+        return s;
+      }
+      
       // Save purchase to localStorage
       const purchase = {
         id: Date.now(),
@@ -2536,20 +2578,37 @@ const SuccessScreen = ({
         type: ballPurchaseOption,
         amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice,
         totalAmount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice * currentNonGuestPlayers,
-        players: ballPurchaseOption === 'charge' 
+        players: (ballPurchaseOption === 'charge' 
           ? [currentGroup[0]] 
-          : currentGroup.filter(p => !p.isGuest),
+          : currentGroup.filter(p => !p.isGuest)).map(p => ({
+            name: p?.name ?? '',
+            memberId: p?.memberId ?? p?.id ?? null,
+            memberNumber: getRawMemberNumber(p),   // RAW number only; never masked here
+            amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice               // keep your existing variable
+          })),
         courtNumber: justAssignedCourt
       };
       
       console.log('[handleBallPurchase] Purchase object:', purchase);
 
       // Get existing purchases and save them directly to the dedicated key
-      const existingPurchases = await dataStore.get('tennisBallPurchases') || [];
-      existingPurchases.push(purchase);
-      
-      // Save purchases to the dedicated key (not embedded in main data)
-      await dataStore.set('tennisBallPurchases', existingPurchases, { immediate: true });
+      // Use window.Tennis.DataStore if available, otherwise fall back to localStorage
+      let existingPurchases = [];
+      if (window.Tennis?.DataStore) {
+        existingPurchases = await window.Tennis.DataStore.get('tennisBallPurchases') || [];
+        existingPurchases.push(purchase);
+        await window.Tennis.DataStore.set('tennisBallPurchases', existingPurchases, { immediate: true });
+      } else {
+        // Fallback to localStorage
+        try {
+          const stored = localStorage.getItem('tennisBallPurchases');
+          existingPurchases = stored ? JSON.parse(stored) : [];
+          existingPurchases.push(purchase);
+          localStorage.setItem('tennisBallPurchases', JSON.stringify(existingPurchases));
+        } catch (error) {
+          console.error('[handleBallPurchase] Error saving to localStorage:', error);
+        }
+      }
       
       console.log('[handleBallPurchase] Purchase saved successfully');
 
@@ -2559,7 +2618,7 @@ const SuccessScreen = ({
       console.error('[handleBallPurchase] Error processing purchase:', error);
       // You might want to show an error message to the user here
     }
-  }, [ballPurchaseOption, ballPrice, splitPrice, currentGroup, getLastFourDigits, justAssignedCourt]);
+  }, [ballPurchaseOption, ballPrice, currentGroup, justAssignedCourt]);
  
 // Fixed layout card component
   const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
@@ -4364,16 +4423,63 @@ const now = new Date();
   }
   
   // Reuse the same extraction as the form submit path:
-const players = currentGroup.map(p => ({
-  id: String(p.id || '').trim(),
-  name: String(p.name || '').trim()
-})).filter(p => p && p.id && p.name);
+const players = currentGroup
+  .filter(p => !p.isGuest)  // Exclude guests from players array
+  .map(p => ({
+    id: String(p.id || '').trim(),
+    name: String(p.name || '').trim()
+  }))
+  .filter(p => p && p.id && p.name);
 
 const guests = currentGroup.filter(p => p.isGuest).length;
 
 // Domain validation (reuse the same error UI as submit)
 const { ok, errors } = validateGroupCompat(players, guests);
 if (!ok) {
+  try {
+    // Try to infer the variables you use in this scope:
+    const playersVar =
+      (typeof selectedPlayers !== 'undefined' ? selectedPlayers :
+      (typeof groupPlayers !== 'undefined' ? groupPlayers :
+      (typeof players !== 'undefined' ? players : [])));
+
+    const hasGuestFlag =
+      (typeof hasGuest !== 'undefined' ? hasGuest :
+      (typeof includeGuest !== 'undefined' ? includeGuest :
+      (typeof guest !== 'undefined' ? guest : false)));
+
+    // Heuristics to detect a guest row in the list
+    const playersArr = Array.isArray(playersVar) ? playersVar.filter(Boolean) : [];
+    const guestRows = playersArr.filter(p =>
+      p?.isGuest === true ||
+      (typeof p?.type === 'string' && p.type.toLowerCase() === 'guest') ||
+      (typeof p?.name === 'string' && p.name.trim().toLowerCase() === 'guest')
+    );
+
+    // What the current code thinks the size is (best guess: try common expressions)
+    let sizeRaw = NaN;
+    try {
+      if (typeof size !== 'undefined') sizeRaw = size;
+    } catch {}
+    if (Number.isNaN(sizeRaw)) {
+      try { sizeRaw = playersArr.length + (hasGuestFlag ? 1 : 0); } catch {}
+    }
+
+    console.warn('[GroupSizeDiag] about to show MAX SIZE error — details:', {
+      playersCount: playersArr.length,
+      guestRowsCount: guestRows.length,
+      hasGuestFlag: !!hasGuestFlag,
+      sizeRaw
+    });
+    console.warn('[GroupSizeDiag] players snapshot:', playersArr.map(p => ({
+      name: p?.name ?? null,
+      isGuest: !!p?.isGuest,
+      type: p?.type ?? null,
+      memberNumber: p?.memberNumber ?? null
+    })));
+  } catch (e) {
+    console.warn('[GroupSizeDiag] logging failed:', e);
+  }
   showAlertMessage(errors.join('\n'));
   return;
 }
@@ -4569,10 +4675,13 @@ console.log('✅ Court assigned result:', result);
       }
 
       // Build the players array
-      const players = group.map(p => ({
-        id: String(p.id || '').trim(),
-        name: String(p.name || '').trim()
-      })).filter(p => p && p.id && p.name);
+      const players = group
+        .filter(p => !p.isGuest)  // Exclude guests from players array
+        .map(p => ({
+          id: String(p.id || '').trim(),
+          name: String(p.name || '').trim()
+        }))
+        .filter(p => p && p.id && p.name);
 
       const guests = group.filter(p => p.isGuest).length;
 
@@ -4784,8 +4893,14 @@ console.log('✅ Court assigned result:', result);
 
   // Find member number
   const findMemberNumber = (playerId) => {
+    // First check if the playerId itself is a member number
+    if (memberDatabase[playerId]) {
+      return playerId;
+    }
+    
+    // Then check family members
     for (const [memberNum, member] of Object.entries(memberDatabase)) {
-      if (member.familyMembers.some(m => m.id === playerId)) {
+      if (member.familyMembers.some(m => String(m.id) === String(playerId))) {
         return memberNum;
       }
     }
