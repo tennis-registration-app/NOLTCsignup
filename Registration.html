@@ -1686,13 +1686,14 @@ const TennisDataService = window.TennisDataService || {
       return window.TennisDataService.addToWaitlist(group);
     }
     
-    // Build the group object from existing form fields / variables
+    // Build the group object from existing form fields / variables  
     let players = group
-      .filter(p => !p.isGuest)  // Exclude guests from players array
       .map(p => ({
         id: String(p.id || '').trim(),
         name: String(p.name || '').trim(),
-        memberId: p.memberId
+        memberId: p.memberId,
+        ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
+        ...(p.sponsor && { sponsor: p.sponsor })
       }))
       .filter(p => p && p.id && p.name);
 
@@ -4419,12 +4420,22 @@ const now = new Date();
     return;
   }
   
-  // Reuse the same extraction as the form submit path:
+  // Create arrays for validation and assignment
 const players = currentGroup
-  .filter(p => !p.isGuest)  // Exclude guests from players array
+  .filter(p => !p.isGuest)  // Non-guests for validation
   .map(p => ({
     id: String(p.id || '').trim(),
     name: String(p.name || '').trim()
+  }))
+  .filter(p => p && p.id && p.name);
+
+const allPlayers = currentGroup  // ALL players including guests for court assignment
+  .map(p => ({
+    id: String(p.id || '').trim(),
+    name: String(p.name || '').trim(),
+    ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
+    ...(p.sponsor && { sponsor: p.sponsor }),
+    ...(p.memberNumber && { memberNumber: p.memberNumber })
   }))
   .filter(p => p && p.id && p.name);
 
@@ -4481,12 +4492,12 @@ if (!ok) {
   return;
 }
 
-// Duration determined from group size
+// Duration determined from group size (including guests)
 const Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
-const duration = Tm.durationForGroupSize(players.length); // typically 60/90
+const duration = Tm.durationForGroupSize(allPlayers.length); // typically 60/90
 
-// Canonical group object
-const group = { players, guests };
+// Canonical group object (use allPlayers so guests appear on court)
+const group = { players: allPlayers, guests: 0 };
 
 // Check for upcoming block on selected court using new system
 const blockStatus = await getCourtBlockStatus(courtNumber);
