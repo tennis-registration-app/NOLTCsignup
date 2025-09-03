@@ -827,30 +827,27 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
       // - Guests is a non-negative integer
       // - Total size 1–4 (singles/doubles max 4)
       
-// Build raw name list
-const rawNames = Array.isArray(players)
-  ? players.map(p => String(p?.name ?? p ?? '').trim()).filter(Boolean)
-  : [];
-
-// Count any explicit "Guest" rows already present in players[]
-const guestRowCount = rawNames.reduce((acc, n) => {
-  return acc + (n.toLowerCase() === 'guest' ? 1 : 0);
-}, 0);
+// Count guests by isGuest flag in players array
+const guestRowCount = Array.isArray(players)
+  ? players.filter(p => p && p.isGuest === true).length
+  : 0;
 
 // Parse the separate guests field
 const gVal = Number.isFinite(guests) ? guests : parseInt(guests || 0, 10);
 
+// Count non-guest players
+const namedPlayers = Array.isArray(players)
+  ? players.filter(p => p && !p.isGuest && String(p?.name ?? p ?? '').trim())
+  : [];
+const namedCount = namedPlayers.length;
+
 const errs = [];
-// Keep your existing friendly message if you like:
-if (rawNames.length < 1 && gVal < 1) errs.push('Enter at least one player.');
+if (namedCount < 1 && Math.max(guestRowCount, gVal) < 1) errs.push('Enter at least one player.');
 if (!Number.isFinite(gVal) || gVal < 0) errs.push('Guests must be 0 or more.');
 
 // Effective guest count is the MAX of the two representations (not the sum),
 // so we never double-count a guest.
 const effectiveGuestCount = Math.max(guestRowCount, Math.max(0, gVal));
-
-// Named players excluding explicit guest placeholder rows
-const namedCount = rawNames.length - guestRowCount;
 
 // Final effective size
 const totalSize = namedCount + effectiveGuestCount;

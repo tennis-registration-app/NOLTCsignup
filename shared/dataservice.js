@@ -269,7 +269,9 @@
           id: p.id || p.memberId || (p.name || p.playerName || String(p)).toLowerCase(),
           memberId: p.memberId || p.id || null,
           ...(p.phone && { phone: p.phone }),
-          ...(p.ranking && { ranking: p.ranking })
+          ...(p.ranking && { ranking: p.ranking }),
+          ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
+          ...(p.sponsor && { sponsor: p.sponsor })
         };
       });
       
