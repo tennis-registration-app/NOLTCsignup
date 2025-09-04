@@ -2952,6 +2952,20 @@
         // This accounts for surplus courts after the waitlist is served
         const surplusCourts = emptyCourtCount - waitingGroups.length;
         const hasAvailableNow = surplusCourts > 0;
+        
+        // Check club hours for closed message
+        const currentHour = currentTime.getHours();
+        const currentMinutes = currentTime.getMinutes();
+        const currentTimeDecimal = currentHour + (currentMinutes / 60);
+        const dayOfWeek = currentTime.getDay();
+        const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+        const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
+        const openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
+        
+        // Show opening message when courts are available but club is closed
+        // Only between 4:00 AM and opening time
+        const isInEarlyHours = currentTimeDecimal >= 4 && currentTimeDecimal < openingTime;
+        const shouldShowOpeningMessage = hasAvailableNow && isInEarlyHours;
 
         return (
           
@@ -2969,7 +2983,9 @@
                 </h2>
                  
                 <div className="text-center mt-12">
-                  <p className="text-gray-400 courtboard-text-base">Courts available now</p>
+                  <p className="text-gray-400 courtboard-text-base">
+                    {shouldShowOpeningMessage ? `Courts open at ${openingTimeString}` : 'Courts available now'}
+                  </p>
                 </div>
 
                 </>
