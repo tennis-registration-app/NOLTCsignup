@@ -898,7 +898,8 @@
   
   <!-- Plain-JS fallback bar -->
   <div id="mobile-bottom-bar-fallback" hidden>
-    <button type="button" data-action="conditions">🌦️<span class="lbl">Court Conditions</span></button>
+    <button type="button" data-action="conditions">🌦️<span class="lbl">Conditions</span></button>
+    <button type="button" data-action="roster">📖<span class="lbl">Roster</span></button>
     <button type="button" data-action="reserved">🏛️<span class="lbl">Reserved</span></button>
     <button type="button" data-action="waitlist">👥<span class="lbl">Waitlist</span></button>
     <button type="button" data-action="join" disabled aria-disabled="true">🎾<span class="lbl">Join Waitlist</span></button>
@@ -1379,6 +1380,11 @@
         
         if (action === 'conditions') {
           openModal('court-conditions');
+          return;
+        }
+        
+        if (action === 'roster') {
+          openModal('roster');
           return;
         }
         
@@ -3907,6 +3913,7 @@
       const getTitle = () => {
         switch (type) {
           case 'court-conditions': return 'Court Conditions';
+          case 'roster': return 'Member Roster';
           case 'reserved': return 'Reserved Courts';
           case 'waitlist': return 'Waitlist';
           case 'clear-court-confirm': return `Clear Court ${payload?.courtNumber || ''}?`;
@@ -3932,6 +3939,103 @@
                 'aria-label': 'Close',
                 type: 'button'
               }, '✕')
+            );
+            
+          case 'roster':
+            // Member roster display - get data from various sources
+            let rosterData = [];
+            try {
+              const S = window.Tennis?.Storage;
+              // Try to get member data from various sources as used in Registration.html
+              rosterData = (window.__memberRoster) || 
+                          (S?.readJSON ? S.readJSON('tennisMembers') : null) || 
+                          (S?.readJSON ? S.readJSON('members') : null) ||
+                          JSON.parse(localStorage.getItem('tennisMembers') || 'null') ||
+                          JSON.parse(localStorage.getItem('members') || 'null') ||
+                          [];
+              
+              // If no data found, use test data matching Registration.html
+              if (!rosterData || rosterData.length === 0) {
+                const names = [
+                  "Novak Djokovic", "Carlos Alcaraz", "Jannik Sinner", "Daniil Medvedev", 
+                  "Alexander Zverev", "Andrey Rublev", "Casper Ruud", "Hubert Hurkacz",
+                  "Taylor Fritz", "Alex de Minaur", "Iga Swiatek", "Aryna Sabalenka",
+                  "Coco Gauff", "Elena Rybakina", "Jessica Pegula", "Ons Jabeur",
+                  "Marketa Vondrousova", "Karolina Muchova", "Beatriz Haddad Maia", "Petra Kvitova",
+                  "Stefanos Tsitsipas", "Felix Auger-Aliassime", "Cameron Norrie", "Karen Khachanov",
+                  "Frances Tiafoe", "Tommy Paul", "Lorenzo Musetti", "Ben Shelton",
+                  "Nicolas Jarry", "Sebastian Korda", "Madison Keys", "Victoria Azarenka",
+                  "Daria Kasatkina", "Belinda Bencic", "Caroline Garcia", "Simona Halep",
+                  "Elina Svitolina", "Maria Sakkari", "Liudmila Samsonova", "Zheng Qinwen"
+                ];
+                
+                rosterData = names.map((name, i) => ({
+                  id: 1000 + i + 1,
+                  name: name,
+                  memberNumber: String(1000 + i + 1),
+                  memberId: `m_${1000 + i + 1}`
+                }));
+              }
+            } catch (e) {
+              console.warn('Failed to load roster data:', e);
+              rosterData = [];
+            }
+            
+            // Debug logging
+            console.log('Roster data found:', rosterData.length, 'members');
+            if (rosterData.length > 0) {
+              console.log('Sample member:', rosterData[0]);
+            }
+            
+            // Sort alphabetically by last name
+            const sortedRoster = [...rosterData].sort((a, b) => {
+              const getLastName = (fullName) => {
+                const parts = (fullName || '').trim().split(' ');
+                return parts[parts.length - 1] || '';
+              };
+              const lastNameA = getLastName(a.name || a.fullName).toLowerCase();
+              const lastNameB = getLastName(b.name || b.fullName).toLowerCase();
+              // If last names are the same, sort by first name
+              if (lastNameA === lastNameB) {
+                const firstNameA = (a.name || a.fullName || '').toLowerCase();
+                const firstNameB = (b.name || b.fullName || '').toLowerCase();
+                return firstNameA.localeCompare(firstNameB);
+              }
+              return lastNameA.localeCompare(lastNameB);
+            });
+            
+            return React.createElement('div', { className: 'modal-roster' },
+              sortedRoster.length === 0
+                ? React.createElement('div', { className: 'text-center p-6' },
+                    React.createElement('p', { className: 'text-gray-400' }, 'No member data available.')
+                  )
+                : React.createElement('div', { 
+                    className: 'p-4 h-full overflow-y-auto',
+                    style: { height: 'calc(100vh - 80px)' }
+                  },
+                    // Header
+                    React.createElement('div', { key: 'roster-header', 
+                      className: 'flex justify-between items-center pb-3 mb-4 border-b border-gray-600 sticky top-0 bg-gray-800' 
+                    }, [
+                      React.createElement('div', { key: 'header-name', className: 'font-semibold text-gray-300 text-sm' }, 'Member Name'),
+                      React.createElement('div', { key: 'header-number', className: 'font-semibold text-gray-300 text-sm' }, 'Member #')
+                    ]),
+                    // Member list
+                    React.createElement('div', { key: 'roster-list', className: 'space-y-2' },
+                      sortedRoster.map((member, idx) => {
+                        const memberName = member.name || member.fullName || 'Unknown Member';
+                        const memberNumber = member.memberNumber || member.clubNumber || member.memberId || 'N/A';
+                        
+                        return React.createElement('div', { 
+                          key: member.memberId || member.memberNumber || idx,
+                          className: 'flex justify-between items-center py-2 px-3 rounded bg-gray-700 hover:bg-gray-600 transition-colors'
+                        }, [
+                          React.createElement('span', { key: 'name', className: 'text-gray-200 font-medium' }, memberName),
+                          React.createElement('span', { key: 'number', className: 'text-gray-400 text-sm' }, memberNumber)
+                        ]);
+                      })
+                    )
+                  )
             );
             
           case 'reserved':
@@ -3968,16 +4072,16 @@
                 ? React.createElement('div', { className: 'text-center p-6' },
                     React.createElement('p', { className: 'text-gray-400' }, 'No groups waiting.')
                   )
-                : React.createElement('div', { className: 'p-4' }, [
+                : React.createElement('div', { className: 'p-4' },
                     // Column headers
-                    React.createElement('div', { 
+                    React.createElement('div', { key: 'headers', 
                       className: 'flex justify-between items-center pb-3 mb-4 border-b border-gray-600' 
                     }, [
-                      React.createElement('div', { className: 'font-semibold text-gray-300 text-sm' }, 'Position'),
-                      React.createElement('div', { className: 'font-semibold text-gray-300 text-sm' }, 'Estimated')
+                      React.createElement('div', { key: 'position', className: 'font-semibold text-gray-300 text-sm' }, 'Position'),
+                      React.createElement('div', { key: 'estimated', className: 'font-semibold text-gray-300 text-sm' }, 'Estimated')
                     ]),
                     // Waitlist entries
-                    React.createElement('div', { className: 'space-y-3' },
+                    React.createElement('div', { key: 'entries', className: 'space-y-3' },
                       waitlistData.map((group, idx) => {
                         // Handle different data formats: group.players array or group object with name
                         let names = [];
@@ -4081,12 +4185,12 @@
                           key: idx, 
                           className: 'flex justify-between items-center py-1'
                         }, [
-                          React.createElement('div', { className: 'text-white' }, `${idx + 1}. ${formattedNames}`),
-                          React.createElement('div', { className: 'text-gray-400 text-sm' }, estimatedStr)
+                          React.createElement('div', { key: 'position', className: 'text-white' }, `${idx + 1}. ${formattedNames}`),
+                          React.createElement('div', { key: 'time', className: 'text-gray-400 text-sm' }, estimatedStr)
                         ]);
                       })
                     )
-                  ])
+                  )
             );
             
           // join-waitlist case removed - button now opens registration directly
@@ -4163,6 +4267,7 @@
       
       const getModalClass = () => {
         if (type === 'court-conditions') return ' modal-court-conditions-full';
+        if (type === 'roster') return ' modal-court-conditions-full';
         if (type === 'reserved') return ' modal-reserved-large';
         if (type === 'waitlist') return ' modal-waitlist-large';
         if (type === 'clear-court-confirm') return ' modal-clear-court-confirm';
@@ -4293,7 +4398,10 @@
       return (
         <div className="mobile-bottom-bar">
           <button type="button" onClick={() => open('court-conditions')} title="Court Conditions">
-            🌦️<span>Court<br/>Conditions</span>
+            🌦️<span>Conditions</span>
+          </button>
+          <button type="button" onClick={() => open('roster')} title="Member Roster">
+            📖<span>Roster</span>
           </button>
           <button type="button" onClick={() => open('reserved')} title="Reserved Courts">
             🏛️<span>Reserved<br/>Courts</span>
