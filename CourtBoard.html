@@ -2238,11 +2238,37 @@
         const endTime = cObj?.current?.endTime || cObj?.endTime;
         
         // Compute end times once
-        const endIso =
-          s?.endTime ||
-          s?.originalEndTime ||
-          cObj?.current?.endTime ||
-          null;
+        const scheduledEndTime = cObj?.current?.endTime;
+        let endIso = scheduledEndTime;
+        let isBlockInterruption = false;
+        let blockType = '';
+
+        // Check for upcoming blocks that would interrupt the session
+        if (scheduledEndTime && status === 'occupied') {
+          try {
+            const allBlocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
+            const upcomingBlock = allBlocks
+              .filter(block => {
+                if (block.courtNumber !== courtNumber) return false;
+                const blockStart = new Date(block.startTime);
+                const blockEnd = new Date(block.endTime);
+                const sessionEnd = new Date(scheduledEndTime);
+                
+                // Block interferes if it starts before the session would naturally end
+                // and the block hasn't already ended
+                return blockStart < sessionEnd && blockEnd > currentTime;
+              })
+              .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+
+            if (upcomingBlock) {
+              endIso = upcomingBlock.startTime;
+              isBlockInterruption = true;
+              blockType = upcomingBlock.label || upcomingBlock.title || upcomingBlock.templateName || upcomingBlock.reason || 'Court Work';
+            }
+          } catch (error) {
+            console.warn('Error checking upcoming blocks for court', courtNumber, error);
+          }
+        }
 
         const showUntilForOccupied = status === 'occupied' && !s?.isOverdue && endIso;
         const blockedUntil = status === 'blocked' ? s?.blockedEnd : null;
@@ -2415,7 +2441,11 @@
                             {/* "Until..." at the bottom */}
                             {showUntilForOccupied && (
                               <div className="mt-auto text-sm opacity-90 text-center">
-                                Until {formatTime(endIso)}
+                                {isBlockInterruption ? (
+                                  `${blockType} begins in ${Math.max(0, Math.ceil((new Date(endIso).getTime() - currentTime.getTime()) / 60000))} min`
+                                ) : (
+                                  `Until ${formatTime(endIso)}`
+                                )}
                               </div>
                             )}
                           </>
