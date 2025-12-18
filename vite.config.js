@@ -10,6 +10,9 @@ export default defineConfig({
     }),
   ],
 
+  // Base path for GitHub Pages deployment (repo name)
+  base: '/NOLTCsignup/',
+
   // Root directory for resolving entry points
   root: '.',
 
