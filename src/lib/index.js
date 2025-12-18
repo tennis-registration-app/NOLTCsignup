@@ -1,0 +1,182 @@
+/**
+ * Tennis Court Registration System - Shared Library
+ *
+ * Main entry point for all shared utilities.
+ * Import from this file for convenient access to all exports.
+ *
+ * @example
+ * // Import everything
+ * import * as Tennis from './src/lib';
+ *
+ * // Import specific items
+ * import { STORAGE, readJSON, formatTime, TennisCourtDataStore } from './src/lib';
+ */
+
+// ============================================================
+// Constants
+// ============================================================
+
+export {
+  // Storage keys
+  STORAGE,
+  EVENTS,
+
+  // Court configuration
+  COURT_COUNT,
+  COURTS,
+  TOP_ROW_COURTS,
+  BOTTOM_ROW_COURTS,
+
+  // Timing configuration
+  TIMING,
+
+  // Player configuration
+  PLAYERS,
+
+  // Display configuration
+  DISPLAY,
+
+  // Time slots
+  TIME_SLOTS,
+
+  // Schema
+  SCHEMA_VERSION,
+
+  // Legacy combined config
+  APP,
+} from './constants.js';
+
+// ============================================================
+// Storage Utilities
+// ============================================================
+
+export {
+  // Core JSON helpers
+  readJSON,
+  writeJSON,
+
+  // Data shape helpers
+  getEmptyData,
+  normalizeData,
+  normalizeDataShape,
+  normalizeDataShapePure,
+
+  // Safe data access
+  readDataSafe,
+
+  // Historical games
+  getHistoricalGames,
+  addHistoricalGame,
+  searchHistoricalGames,
+
+  // Waitlist promotions
+  waitlistSignature,
+  purgeExpiredPromotions,
+  preservePromotions,
+} from './storage.js';
+
+// ============================================================
+// Formatters
+// ============================================================
+
+export {
+  // Time formatters
+  formatTime,
+  formatDate,
+  formatDateShort,
+  formatDateTime,
+  formatTimeRange,
+
+  // Duration formatters
+  formatTimeRemaining,
+  formatDuration,
+
+  // String formatters
+  formatPhone,
+  formatName,
+  truncate,
+
+  // Number formatters
+  formatCurrency,
+  formatNumber,
+
+  // Court display formatters
+  formatCourt,
+  formatCourts,
+  formatPlayerNames,
+} from './formatters.js';
+
+// ============================================================
+// Data Store
+// ============================================================
+
+export {
+  TennisCourtDataStore,
+  broadcastEvent,
+  listenForEvent,
+  getDataStore,
+} from './TennisCourtDataStore.js';
+
+// ============================================================
+// Court Block Utilities
+// ============================================================
+
+export {
+  getCourtBlockStatus,
+  getUpcomingBlockWarning,
+} from './court-blocks.js';
+
+// ============================================================
+// Configuration
+// ============================================================
+
+export {
+  // Extended storage keys
+  STORAGE_EXTENDED,
+  // Admin settings
+  ADMIN,
+  // Pricing settings
+  PRICING,
+  // Geolocation settings
+  GEOLOCATION,
+  // Club hours
+  CLUB_HOURS,
+  // Combined config object (backward compatible)
+  TENNIS_CONFIG,
+} from './config.js';
+
+// ============================================================
+// Data Validation
+// ============================================================
+
+export {
+  DataValidation,
+} from './DataValidation.js';
+
+// ============================================================
+// Storage Adapter
+// ============================================================
+
+export {
+  LocalStorageAdapter,
+  storageAdapter,
+} from './StorageAdapter.js';
+
+// ============================================================
+// Business Logic Service
+// ============================================================
+
+export {
+  TennisBusinessLogic,
+  tennisBusinessLogic,
+} from './TennisBusinessLogic.js';
+
+// ============================================================
+// Data Service
+// ============================================================
+
+export {
+  TennisDataService,
+  tennisDataService,
+  setTennisBusinessLogic,
+} from './TennisDataService.js';

@@ -16,14 +16,16 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Shared utils (schema + helpers; no UI changes) -->
-  <script src="./shared-utils.js"></script>
-  <script src="./shared/config.js"></script>
-  <script src="./shared/storage.js"></script>
-  <script src="./shared/events.js"></script>
-  <script src="./shared/datastore.js"></script>
-  <script src="./shared/maintenance.js"></script>
-  <script src="./shared/dataservice.js"></script>
-  <script src="./shared/blocks.js"></script>
+  <script src="/shared-utils.js"></script>
+  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
+  <script type="module" src="/src/lib/browser-bridge.js"></script>
+  <script src="/shared/config.js"></script>
+  <script src="/shared/storage.js"></script>
+  <script src="/shared/events.js"></script>
+  <script src="/shared/datastore.js"></script>
+  <script src="/shared/maintenance.js"></script>
+  <script src="/shared/dataservice.js"></script>
+  <script src="/shared/blocks.js"></script>
 
   <script>
 (function () {
@@ -45,12 +47,12 @@
 })();
 </script>
 
-  <script src="./domain/time.js"></script>
-  <script src="./domain/blocks.js"></script>
-  <script src="./domain/wetCourts.js"></script>
-  <script src="./domain/availability.js"></script>
-  <script src="./shared/domain/roster.js"></script>
-  <script src="shared/selftest.js"></script>
+  <script src="/domain/time.js"></script>
+  <script src="/domain/blocks.js"></script>
+  <script src="/domain/wetCourts.js"></script>
+  <script src="/domain/availability.js"></script>
+  <script src="/shared/domain/roster.js"></script>
+  <script src="/shared/selftest.js"></script>
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
   
@@ -59,8 +61,20 @@
 
   <!-- All code in one file -->
   <script type="text/babel">
-   // Access shared utils (optional convenience)
+   // Access shared utils - destructure commonly used items from window.APP_UTILS
    const U = window.APP_UTILS || {};
+   const {
+     STORAGE,
+     EVENTS,
+     readJSON,
+     writeJSON,
+     getEmptyData,
+     readDataSafe: _sharedReadDataSafe,
+     COURT_COUNT,
+     TennisCourtDataStore,
+     TENNIS_CONFIG: _sharedTennisConfig
+   } = U;
+
    // --- One-time guard helper (no UI change)
    const _one = (key) => (window[key] ? true : (window[key] = true, false));
    
@@ -121,36 +135,15 @@
    const Events = window.Tennis.Events;
    const BL = window.Tennis.Domain.blocks || window.Tennis.Domain.Blocks; // handle both names
    
-   // ---- Storage & Event keys (constants; no behavior change) ----
-   const STORAGE = {
-     DATA: 'tennisClubData',
-     SETTINGS: 'tennisClubSettings',
-     BLOCKS: 'courtBlocks',
-     UPDATE_TICK: 'tennisDataUpdateTick'
-   };
-   const EVENTS = {
-     UPDATE: 'tennisDataUpdate'
-   };
-   
-   // ---- JSON storage helpers (pure wrappers; no behavior change) ----
-   const readJSON = (key) => {
-     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
-     catch { return null; }
-   };
-   const writeJSON = (key, val) => {
-     try { localStorage.setItem(key, JSON.stringify(val)); return true; }
-     catch { return false; }
-   };
-   
-   // ---- Safe defaults for app data (no behavior change) ----
-   const getEmptyData = () => ({
-     courts: Array(12).fill(null),
-     waitingGroups: [],
-     recentlyCleared: [],
-     calculatedAvailability: null
-   });
-   
-   const readDataSafe = () => readJSON(STORAGE.DATA) || getEmptyData();
+   // ---- Storage & Event keys: NOW IMPORTED FROM window.APP_UTILS ----
+   // REMOVED: local STORAGE object (now destructured from U at top)
+   // REMOVED: local EVENTS object (now destructured from U at top)
+   // REMOVED: local readJSON (now destructured from U at top)
+   // REMOVED: local writeJSON (now destructured from U at top)
+   // REMOVED: local getEmptyData (now destructured from U at top)
+
+   // Local readDataSafe wraps the shared version for backward compatibility
+   const readDataSafe = () => _sharedReadDataSafe ? _sharedReadDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData());
    
    // ---- Core constants (declared only; not replacing existing usages) ----
    const APP = {
@@ -217,103 +210,13 @@
       const React = window.React;
       const ReactDOM = window.ReactDOM;
       const { useState, useEffect, useCallback, useMemo, memo, useRef } = React;
-      
-      // DataStore Integration
-      class TennisCourtDataStore {
-        constructor() {
-          this.cache = new Map();
-          this.metrics = {
-            cacheHits: 0,
-            cacheMisses: 0,
-            totalOperations: 0,
-            totalResponseTime: 0,
-            storageOperationsSaved: 0
-          };
-          
-          // Initialize immediately
-          this.warmCache();
-        }
 
-        warmCache() {
-          const keys = ['tennisClubData', 'tennisClubSettings', 'tennisBlockTemplates', 'tennisRecurringBlocks', 'tennisBallPurchases', 'tennisAnalytics', 'courtBlocks', 'tennisGuestCharges'];
-          keys.forEach(key => {
-            const data = localStorage.getItem(key);
-            if (data) {
-              try {
-                this.cache.set(key, JSON.parse(data));
-              } catch (e) {
-                console.warn(`Failed to parse ${key}:`, e);
-              }
-            }
-          });
-        }
+      // ---- TennisCourtDataStore: NOW IMPORTED FROM window.APP_UTILS ----
+      // REMOVED: local TennisCourtDataStore class (~92 lines)
+      // The class is now imported via destructuring at the top of the script
 
-        async get(key) {
-          const startTime = performance.now();
-          this.metrics.totalOperations++;
-          
-          if (this.cache.has(key)) {
-            this.metrics.cacheHits++;
-            const responseTime = performance.now() - startTime;
-            this.metrics.totalResponseTime += responseTime;
-            return this.cache.get(key);
-          }
-          
-          this.metrics.cacheMisses++;
-          this.metrics.storageOperationsSaved++;
-          
-          const data = localStorage.getItem(key);
-          let parsed = null;
-          if (data) {
-            try {
-              parsed = JSON.parse(data);
-              this.cache.set(key, parsed);
-            } catch (e) {
-              console.warn(`Failed to parse ${key}:`, e);
-            }
-          }
-          
-          const responseTime = performance.now() - startTime;
-          this.metrics.totalResponseTime += responseTime;
-          return parsed;
-        }
-
-        async set(key, data, options = {}) {
-          const startTime = performance.now();
-          this.metrics.totalOperations++;
-          
-          this.cache.set(key, data);
-          
-          if (options.immediate || key === 'tennisClubData' || key === 'courtBlocks') {
-            localStorage.setItem(key, JSON.stringify(data));
-          }
-          
-          const responseTime = performance.now() - startTime;
-          this.metrics.totalResponseTime += responseTime;
-          
-          // Dispatch update event
-          window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
-        }
-
-        getMetrics() {
-          const avgResponseTime = this.metrics.totalOperations > 0 
-            ? this.metrics.totalResponseTime / this.metrics.totalOperations 
-            : 0;
-          
-          const cacheHitRate = this.metrics.totalOperations > 0 
-            ? (this.metrics.cacheHits / this.metrics.totalOperations) * 100 
-            : 0;
-
-          return {
-            ...this.metrics,
-            avgResponseTime: parseFloat(avgResponseTime.toFixed(3)),
-            cacheHitRate: parseFloat(cacheHitRate.toFixed(1))
-          };
-        }
-      }
-
-      // Initialize DataStore
-      const dataStore = new (window.APP_UTILS?.TennisCourtDataStore || class {})();
+      // Initialize DataStore using the shared class
+      const dataStore = new TennisCourtDataStore();
       
     // For the regular Lucide library, we'll create simple icon components
 
@@ -379,28 +282,10 @@ const Check = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>✔️<
 const MessageCircle = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>💬</span>;
 const greyFilter = { filter: 'grayscale(100%) opacity(0.6)' };
 
-// Configuration (will be imported from main app)
-const TENNIS_CONFIG = {
-  COURTS: { TOTAL_COUNT: 12 },
-  TIMING: {
-    CLUB_OPEN: 4,
-    CLUB_CLOSE: 22,
-    AVG_GAME_TIME_MIN: 75
-  },
-  STORAGE: {
-  KEY: 'tennisClubData',
-  UPDATE_EVENT: 'tennisDataUpdate',
-  SETTINGS_KEY: 'tennisClubSettings',
-  BLOCK_TEMPLATES_KEY: 'tennisBlockTemplates',
-  RECURRING_BLOCKS_KEY: 'tennisRecurringBlocks',
-  BALL_SALES_KEY: 'tennisBallPurchases',  // ADD THIS LINE
-  ANALYTICS_KEY: 'tennisAnalytics',  // ALSO ADD THIS LINE while you're at it
-  GUEST_CHARGES_KEY: 'tennisGuestCharges'  // For tracking guest fees
-},
-  PRICING: {
-    TENNIS_BALLS: 5.00
-  }
-};
+// ---- TENNIS_CONFIG: NOW IMPORTED FROM window.APP_UTILS ----
+// REMOVED: local TENNIS_CONFIG (~21 lines)
+// The shared config includes all properties (COURTS, TIMING, STORAGE, PRICING, etc.)
+const TENNIS_CONFIG = _sharedTennisConfig;
 
 // Utility Functions
 const formatTime = (date) => {

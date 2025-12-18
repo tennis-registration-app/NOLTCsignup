@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis Admin Panel</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Shared utils (schema + helpers; no UI changes) -->
+  <script src="/shared-utils.js"></script>
+  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
+  <script type="module" src="/src/lib/browser-bridge.js"></script>
+  <script src="/shared/config.js"></script>
+  <script src="/shared/storage.js"></script>
+  <script src="/shared/events.js"></script>
+  <script src="/shared/datastore.js"></script>
+  <script src="/shared/maintenance.js"></script>
+  <script src="/shared/dataservice.js"></script>
+  <script src="/shared/blocks.js"></script>
+
+  <script>
+(function () {
+  if (location.protocol !== 'file:') return;
+
+  console.warn('[dev] Loaded via file:// — this uses a different storage and won\'t receive app events.');
+
+  function addBanner() {
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;padding:8px 12px;' +
+                      'background:#f59e0b;color:#111;font:600 14px/1.2 system-ui;' +
+                      'z-index:99999;text-align:center';
+    b.textContent = '⚠️ Running from file:// — use http://127.0.0.1:5500 for correct behavior';
+    document.body.appendChild(b);
+  }
+
+  if (document.body) addBanner();
+  else window.addEventListener('DOMContentLoaded', addBanner, { once: true });
+})();
+</script>
+
+  <script src="/domain/time.js"></script>
+  <script src="/domain/blocks.js"></script>
+  <script src="/domain/wetCourts.js"></script>
+  <script src="/domain/availability.js"></script>
+  <script src="/shared/domain/roster.js"></script>
+  <script src="/shared/selftest.js"></script>
+  <!-- Preflight self-heal (normalize storage shape before app code runs) -->
+  <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
+
+  <!-- Vite-bundled React app -->
+  <script type="module" src="./main.jsx"></script>
+</body>
+</html>

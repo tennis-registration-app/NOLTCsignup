@@ -85,7 +85,9 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- Shared utils (schema + helpers; no UI changes) -->
-  <script src="./shared-utils.js"></script>
+  <script src="/shared-utils.js"></script>
+  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
+  <script type="module" src="/src/lib/browser-bridge.js"></script>
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
   
@@ -313,13 +315,13 @@
   </script>
   
   <!-- Load shared modules before app script -->
-  <script src="./shared/config.js"></script>
-  <script src="./shared/storage.js"></script>
-  <script src="./shared/events.js"></script>
-  <script src="./shared/datastore.js"></script>
-  <script src="./shared/maintenance.js"></script>
-  <script src="./shared/dataservice.js"></script>
-  <script src="./shared/blocks.js"></script>
+  <script src="/shared/config.js"></script>
+  <script src="/shared/storage.js"></script>
+  <script src="/shared/events.js"></script>
+  <script src="/shared/datastore.js"></script>
+  <script src="/shared/maintenance.js"></script>
+  <script src="/shared/dataservice.js"></script>
+  <script src="/shared/blocks.js"></script>
 
   <script>
 (function () {
@@ -342,14 +344,14 @@
 </script>
   
   <!-- Load domain modules -->
-  <script src="./domain/time.js"></script>
-  <script src="./domain/availability.js"></script>
-  <script src="./domain/waitlist.js"></script>
-  <script src="./domain/blocks.js"></script>
-  <script src="./domain/wetCourts.js"></script>
-  <script src="./domain/selfTest.js"></script>
-  <script src="./shared/domain/roster.js"></script>
-  <script src="shared/selftest.js"></script>
+  <script src="/domain/time.js"></script>
+  <script src="/domain/availability.js"></script>
+  <script src="/domain/waitlist.js"></script>
+  <script src="/domain/blocks.js"></script>
+  <script src="/domain/wetCourts.js"></script>
+  <script src="/domain/selfTest.js"></script>
+  <script src="/shared/domain/roster.js"></script>
+  <script src="/shared/selftest.js"></script>
   
   <script>
 // ---- Toast bridge (global) ----
@@ -757,9 +759,22 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
 </script>
   
   <script type="text/babel">
-    // Access shared utils (optional convenience)
+    // Access shared utils - destructure commonly used items from window.APP_UTILS
     const U = window.APP_UTILS || {};
-    
+    const {
+      STORAGE: STORAGE_SHARED,
+      EVENTS: EVENTS_SHARED,
+      readJSON: _sharedReadJSON,
+      writeJSON: _sharedWriteJSON,
+      getEmptyData: _sharedGetEmptyData,
+      readDataSafe: _sharedReadDataSafe,
+      COURT_COUNT,
+      TennisCourtDataStore,
+      getCourtBlockStatus: _sharedGetCourtBlockStatus,
+      getUpcomingBlockWarning: _sharedGetUpcomingBlockWarning,
+      TENNIS_CONFIG: _sharedTennisConfig
+    } = U;
+
     // === Shared Core Integration Flag ===
     const USE_SHARED_CORE = true;
     const USE_SHARED_DOMAIN = true;
@@ -797,13 +812,15 @@ if (typeof window.Tennis.Domain.waitlist.validateGroup !== 'function') {
     const Wait    = window.Tennis.Domain.waitlist     || window.Tennis.Domain.Waitlist;
     const W       = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
     
-    // Individual function/constant redirects for backward compatibility
-    const readJSON = USE_SHARED_CORE ? Storage.readJSON : ((key) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } });
-    const writeJSON = USE_SHARED_CORE ? Storage.writeJSON : ((key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch { return false; } });
-    const readDataSafe = USE_SHARED_CORE ? Storage.readDataSafe : (() => readJSON(STORAGE_ORIGINAL.DATA) || getEmptyData());
-    const getEmptyData = USE_SHARED_CORE ? Storage.getEmptyData : (() => ({ __schema: 1, courts: Array(12).fill(null), waitingGroups: [], recentlyCleared: [], calculatedAvailability: null }));
-    const STORAGE = USE_SHARED_CORE ? Storage.KEYS : STORAGE_ORIGINAL;
-    const EVENTS = { UPDATE: 'tennisDataUpdate' };
+    // ---- Storage helpers: NOW IMPORTED FROM window.APP_UTILS ----
+    // SIMPLIFIED: USE_SHARED_CORE is always true, so we use shared versions directly
+    // REMOVED: Conditional ternary fallbacks for readJSON, writeJSON, getEmptyData, readDataSafe
+    const readJSON = _sharedReadJSON;
+    const writeJSON = _sharedWriteJSON;
+    const getEmptyData = _sharedGetEmptyData;
+    const readDataSafe = () => _sharedReadDataSafe ? _sharedReadDataSafe() : (readJSON(STORAGE_SHARED.DATA) || getEmptyData());
+    const STORAGE = Storage.KEYS;
+    const EVENTS = EVENTS_SHARED || { UPDATE: 'tennisDataUpdate' };
 
     // --- Robust validation wrapper: always returns { ok, errors[] }
     function validateGroupCompat(players, guests) {
@@ -858,15 +875,8 @@ if (totalSize > 4) errs.push('Maximum group size is 4.');
 return norm(errs.length === 0, errs);
     }
     
-    // ---- Original Storage & Event keys (kept intact but unused when USE_SHARED_CORE=true) ----
-    const STORAGE_ORIGINAL = {
-      DATA: 'tennisClubData',
-      SETTINGS: 'tennisClubSettings',
-      BLOCKS: 'courtBlocks',
-      UPDATE_TICK: 'tennisDataUpdateTick'
-    };
-    
-    // ---- Original JSON storage helpers removed (now using shadowed versions above) ----
+    // ---- Storage & Event keys: NOW IMPORTED FROM window.APP_UTILS ----
+    // REMOVED: STORAGE_ORIGINAL constant (no longer needed since USE_SHARED_CORE is always true)
     
     // ---- Core constants (declared only; not replacing existing usages) ----
     const APP = {
@@ -894,110 +904,11 @@ return norm(errs.length === 0, errs);
 // Section: Data access & persistence
 // ============================================================
 
-// Initialize DataStore immediately
-class TennisCourtDataStore {
-  constructor() {
-    this.cache = new Map();
-    this.metrics = {
-      cacheHits: 0,
-      cacheMisses: 0,
-      totalOperations: 0,
-      totalResponseTime: 0,
-      storageOperationsSaved: 0
-    };
-    
-    // Initialize immediately
-    this.warmCache();
-  }
+// ---- TennisCourtDataStore: NOW IMPORTED FROM window.APP_UTILS ----
+// REMOVED: local TennisCourtDataStore class (~96 lines)
+// The class is now imported via destructuring at the top of the script
 
-  warmCache() {
-    const keys = ['tennisClubData', 'tennisClubSettings', 'tennisBlockTemplates', 'tennisRecurringBlocks', 'tennisBallPurchases', 'tennisAnalytics', 'courtBlocks', 'tennisGuestCharges'];
-    keys.forEach(key => {
-      const data = localStorage.getItem(key);
-      if (data) {
-        try {
-          this.cache.set(key, JSON.parse(data));
-        } catch (e) {
-          console.warn(`Failed to parse ${key}:`, e);
-        }
-      }
-    });
-  }
-
-  async get(key) {
-    const startTime = performance.now();
-    this.metrics.totalOperations++;
-    
-    if (this.cache.has(key)) {
-      this.metrics.cacheHits++;
-      const responseTime = performance.now() - startTime;
-      this.metrics.totalResponseTime += responseTime;
-      return this.cache.get(key);
-    }
-    
-    this.metrics.cacheMisses++;
-    this.metrics.storageOperationsSaved++;
-    
-    const data = localStorage.getItem(key);
-    let parsed = null;
-    if (data) {
-      try {
-        parsed = JSON.parse(data);
-        this.cache.set(key, parsed);
-      } catch (e) {
-        console.warn(`Failed to parse ${key}:`, e);
-      }
-    }
-    
-    const responseTime = performance.now() - startTime;
-    this.metrics.totalResponseTime += responseTime;
-    return parsed;
-  }
-
-  async set(key, data, options = {}) {
-    const startTime = performance.now();
-    this.metrics.totalOperations++;
-    
-    this.cache.set(key, data);
-    
-    if (options.immediate || key === 'tennisClubData' || key === 'courtBlocks') {
-      localStorage.setItem(key, JSON.stringify(data));
-    }
-    
-    const responseTime = performance.now() - startTime;
-    this.metrics.totalResponseTime += responseTime;
-    
-    // Dispatch update event for real-time sync
-    if (USE_SHARED_CORE && Events) {
-      Events.emitDom(EVENTS.UPDATE, { key, data });
-    } else {
-      window.dispatchEvent(new CustomEvent(EVENTS.UPDATE, { detail: { key, data } }));
-    }
-  }
-
-  getMetrics() {
-    const avgResponseTime = this.metrics.totalOperations > 0 
-      ? this.metrics.totalResponseTime / this.metrics.totalOperations 
-      : 0;
-    
-    const cacheHitRate = this.metrics.totalOperations > 0 
-      ? (this.metrics.cacheHits / this.metrics.totalOperations) * 100 
-      : 0;
-
-    return {
-      ...this.metrics,
-      avgResponseTime: parseFloat(avgResponseTime.toFixed(3)),
-      cacheHitRate: parseFloat(cacheHitRate.toFixed(1))
-    };
-  }
-}
-
-// Initialize original DataStore instance (will be unused if USE_SHARED_CORE is true)
-const dataStoreOriginal = new (window.APP_UTILS?.TennisCourtDataStore || class {})();
-// Use shadowed dataStore or fallback to original
-if (!USE_SHARED_CORE) {
-  dataStore = dataStoreOriginal;
-}
+// Initialize DataStore using the shared class (dataStore already set via window.Tennis.DataStore above)
 
 // Boot data assertion
 const _bootData = (U.readDataSafe ? U.readDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData()));
@@ -1011,129 +922,10 @@ const UserPlus = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>👤
 const ChevronRight = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>▶️</span>;
 const Check = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>✅</span>;
 
-// Original Configuration (kept intact but unused when USE_SHARED_CORE=true)
-const TENNIS_CONFIG_ORIGINAL = {
-  COURTS: {
-    TOTAL_COUNT: 12,
-    TOP_ROW: [1, 2, 3, 4, 5, 6, 7, 8],
-    BOTTOM_ROW: [12, 11, 10, 9]
-  },
-  TIMING: {
-    MAX_PLAY_DURATION_MS: 210 * 60 * 1000, // 3.5 hours in milliseconds
-    MAX_PLAY_DURATION_MIN: 210, // 3.5 hours in minutes
-    TIMEOUT_WARNING_MIN: 180, // 3 hours in minutes for warning
-    SINGLES_DURATION_MIN: 60, // 60 minutes for < 4 players
-    DOUBLES_DURATION_MIN: 90, // 90 minutes for 4 players
-    AVG_GAME_TIME_MIN: 75, // Average game time for wait calculations
-    POLL_INTERVAL_MS: 5000, // Poll for updates every 5 seconds
-    UPDATE_INTERVAL_MS: 1000, // Update time every second
-    SESSION_TIMEOUT_MS: 120000, // 2 minutes in milliseconds
-    SESSION_WARNING_MS: 90000, // 90 seconds in milliseconds
-    CHANGE_COURT_TIMEOUT_SEC: 30, // 30 seconds to change court
-    AUTO_RESET_SUCCESS_MS: 30000, // 30 seconds auto-reset on success screen
-    ALERT_DISPLAY_MS: 3000, // 3 seconds for alerts
-    AUTO_RESET_CLEAR_MS: 5000 // 5 seconds auto-reset after clearing court
-  },
-  DISPLAY: {
-    MAX_WAITING_DISPLAY: 6, // Maximum waiting groups to display
-    MAX_AUTOCOMPLETE_RESULTS: 8,
-    MAX_FREQUENT_PARTNERS: 6,
-    HEADER_MARGIN_LEFT: '300px' // For centering the clock
-  },
-  PLAYERS: {
-    MAX_PER_GROUP: 4,
-    MIN_PER_GROUP: 1
-  },
-
-    STORAGE: {
-  KEY: 'tennisClubData',
-  UPDATE_EVENT: 'tennisDataUpdate',
-  SETTINGS_KEY: 'tennisClubSettings',
-  BALL_SALES_KEY: 'tennisBallPurchases',  // ADD THIS LINE
-  GUEST_CHARGES_KEY: 'tennisGuestCharges'  // For tracking guest fees
-},
-  ADMIN: {
-    ACCESS_CODE: '9999'
-  },
-  PRICING: {
-    TENNIS_BALLS: 5.00 // Default price for tennis balls
-  },
-  GEOLOCATION: {
-    ENABLED: false,  // ADD THIS LINE - Set to false for development
-    CLUB_CENTER: {
-      latitude: 29.919030,
-      longitude: -90.114767
-    },
-    ALLOWED_RADIUS_METERS: 200,
-    DENIAL_MESSAGE: "Please register on the tablet at the sign in desk",
-    CHECKING_MESSAGE: "Verifying location...",
-    ERROR_MESSAGE: "Location services required. Please register on the tablet at the sign in desk",
-    TIMEOUT_MS: 10000
-  }
-};
-
-// Shadowed TENNIS_CONFIG (routes to shared core or original based on USE_SHARED_CORE flag)
-const TENNIS_CONFIG = USE_SHARED_CORE ? {
-  COURTS: {
-    TOTAL_COUNT: Config.Courts.TOTAL_COUNT,
-    TOP_ROW: Config.Courts.TOP_ROW,
-    BOTTOM_ROW: Config.Courts.BOTTOM_ROW
-  },
-  TIMING: {
-    MAX_PLAY_DURATION_MS: Config.Timing.MAX_PLAY * 60 * 1000,
-    MAX_PLAY_DURATION_MIN: Config.Timing.MAX_PLAY,
-    TIMEOUT_WARNING_MIN: 180,
-    SINGLES_DURATION_MIN: Config.Timing.SINGLES,
-    DOUBLES_DURATION_MIN: Config.Timing.DOUBLES,
-    AVG_GAME_TIME_MIN: Config.Timing.AVG_GAME,
-    POLL_INTERVAL_MS: 5000,
-    UPDATE_INTERVAL_MS: 1000,
-    SESSION_TIMEOUT_MS: 120000,
-    SESSION_WARNING_MS: 90000,
-    CHANGE_COURT_TIMEOUT_SEC: 30,
-    AUTO_RESET_SUCCESS_MS: 30000,
-    ALERT_DISPLAY_MS: 3000,
-    AUTO_RESET_CLEAR_MS: 5000
-  },
-  DISPLAY: {
-    MAX_WAITING_DISPLAY: Config.Display.MAX_WAITING_DISPLAY,
-    MAX_AUTOCOMPLETE_RESULTS: 8,
-    MAX_FREQUENT_PARTNERS: 6,
-    HEADER_MARGIN_LEFT: '300px'
-  },
-  PLAYERS: {
-    MAX_PER_GROUP: 4,
-    MIN_PER_GROUP: 1
-  },
-  STORAGE: {
-    KEY: Storage.KEYS.DATA,
-    UPDATE_EVENT: EVENTS.UPDATE,
-    SETTINGS_KEY: Storage.KEYS.SETTINGS,
-    BLOCK_TEMPLATES_KEY: 'tennisBlockTemplates',
-    RECURRING_BLOCKS_KEY: 'tennisRecurringBlocks',
-    BALL_SALES_KEY: 'tennisBallPurchases',
-    ANALYTICS_KEY: 'tennisAnalytics',
-    GUEST_CHARGES_KEY: 'tennisGuestCharges'
-  },
-  ADMIN: {
-    ACCESS_CODE: '9999'
-  },
-  PRICING: {
-    TENNIS_BALLS: 5.00
-  },
-  GEOLOCATION: {
-    ENABLED: false,
-    CLUB_CENTER: {
-      latitude: 29.9511,
-      longitude: -90.0715
-    },
-    ALLOWED_RADIUS_METERS: 200,
-    CHECKING_MESSAGE: "Checking your location...",
-    DENIAL_MESSAGE: "You must be at the club to register for courts. Please register on the tablet at the sign in desk.",
-    ERROR_MESSAGE: "Location services required. Please register on the tablet at the sign in desk",
-    TIMEOUT_MS: 10000
-  }
-} : TENNIS_CONFIG_ORIGINAL;
+// ---- TENNIS_CONFIG: NOW IMPORTED FROM window.APP_UTILS ----
+// REMOVED: local TENNIS_CONFIG (~61 lines)
+// The shared config includes all properties (COURTS, TIMING, DISPLAY, PLAYERS, STORAGE, ADMIN, PRICING, GEOLOCATION)
+const TENNIS_CONFIG = _sharedTennisConfig;
 
 // Data Validation Utilities (in real app, import from './utils/validation')
 const DataValidation = {
@@ -3068,96 +2860,11 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
-// Unified Court Block Status Function
-const getCourtBlockStatus = (courtNumber) => {
-  const now = new Date();
-
-// Use the TennisDataService function to get relevant blocks
-const activeBlocks = TennisDataService.getActiveBlocksForCourt(courtNumber, now);
-  
-  if (activeBlocks.length > 0) {
-    const currentBlock = activeBlocks[0]; // Blocks are sorted by start time
-    const blockStartTime = new Date(currentBlock.startTime);
-    const blockEndTime = new Date(currentBlock.endTime);
-
-    const isCurrent = now >= blockStartTime && now < blockEndTime;
-
-    return {
-      isBlocked: true,
-      isCurrent: isCurrent,
-      reason: currentBlock.reason,
-      startTime: currentBlock.startTime,
-      endTime: currentBlock.endTime,
-      remainingMinutes: isCurrent ? Math.ceil((blockEndTime - now) / (1000 * 60)) : 0
-    };
-  }
-
-  return {
-    isBlocked: false,
-    isCurrent: false
-  };
-};
-
-// Check for upcoming blocks that would limit playing time
-const getUpcomingBlockWarning = (courtNumber, duration = 60) => {
-  const now = new Date();
-  const sessionEndTime = new Date(now.getTime() + duration * 60 * 1000);
-  
-  try {
-    // Get all blocks from storage and filter for this court
-    const allBlocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
-    const blocks = allBlocks.filter(b => b.courtNumber === courtNumber);
-    
-    // Find the earliest block that would interfere with the session
-    const upcomingBlock = blocks
-      .filter(block => {
-        const blockStart = new Date(block.startTime);
-        const blockEnd = new Date(block.endTime);
-        
-        // Skip blocks that are currently active or already past
-        if (blockStart <= now || blockEnd <= now) return false;
-        
-        // Skip wet court blocks (they're handled separately)
-        if (block.isWetCourt) return false;
-        
-        // Block interferes if it starts before our session would naturally end
-        return blockStart < sessionEndTime;
-      })
-      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
-    
-    if (!upcomingBlock) return null;
-    
-    const blockStart = new Date(upcomingBlock.startTime);
-    const minutesUntilBlock = Math.floor((blockStart.getTime() - now.getTime()) / (60 * 1000));
-    
-    // Don't allow registration if block starts within 5 minutes
-    if (minutesUntilBlock <= 5) {
-      return {
-        type: 'blocked',
-        reason: upcomingBlock.reason,
-        startTime: upcomingBlock.startTime,
-        minutesUntilBlock
-      };
-    }
-    
-    // Warn if playing time will be limited
-    if (minutesUntilBlock < duration) {
-      return {
-        type: 'limited',
-        reason: upcomingBlock.reason,
-        startTime: upcomingBlock.startTime,
-        limitedDuration: minutesUntilBlock,
-        originalDuration: duration,
-        minutesUntilBlock
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    console.warn('Error checking upcoming blocks:', error);
-    return null;
-  }
-};
+// ---- Court Block Functions: NOW IMPORTED FROM window.APP_UTILS ----
+// REMOVED: local getCourtBlockStatus (~28 lines) and getUpcomingBlockWarning (~59 lines)
+// These functions are now imported via destructuring at the top of the script
+const getCourtBlockStatus = _sharedGetCourtBlockStatus;
+const getUpcomingBlockWarning = _sharedGetUpcomingBlockWarning;
 
 // Block Warning Confirmation Modal
 const BlockWarningModal = ({ warning, onConfirm, onCancel }) => {

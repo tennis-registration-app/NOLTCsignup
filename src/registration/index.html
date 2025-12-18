@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tennis Registration - DataStore Integrated</title>
+  <link rel="icon" href="data:,">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    /* Mobile-specific styles */
+    @media (max-width: 640px) {
+      /* Ensure modals don't exceed viewport */
+      .modal-mobile-full {
+        max-height: 100vh;
+        max-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+      }
+    }
+
+    /* Very small screen button fixes */
+    @media (max-width: 380px) {
+      /* Force smaller buttons on very small screens */
+      .bottom-nav-buttons button {
+        padding-top: 0.375rem !important;    /* 6px */
+        padding-bottom: 0.375rem !important; /* 6px */
+        padding-left: 0.5rem !important;     /* 8px */
+        padding-right: 0.5rem !important;    /* 8px */
+        font-size: 0.75rem !important;       /* 12px */
+      }
+    }
+
+    /* Mobile variant styles - only when ?view=mobile */
+    .variant-mobile .reg-modal--mobile {
+      padding: 12px;
+    }
+
+    .variant-mobile .reg-modal--mobile .input--compact {
+      min-height: 44px;
+      font-size: 1rem;
+      padding: 10px 12px;
+    }
+
+    .variant-mobile .reg-modal--mobile .actions .btn--full {
+      width: 100%;
+    }
+
+    .variant-mobile .reg-modal--mobile h2 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Remove full-page backgrounds in mobile iframe (so parent blur shows through) */
+    .variant-mobile html,
+    .variant-mobile body {
+      background: transparent !important;
+    }
+
+    /* Clear any page wrapper that paints gradients/solids */
+    .variant-mobile .bg-gradient-to-br {
+      background: transparent !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Mobile View Detection -->
+  <script>
+    window.IS_MOBILE_VIEW =
+      new URLSearchParams(location.search).get('view') === 'mobile';
+    document.documentElement.classList.toggle(
+      'variant-mobile',
+      window.IS_MOBILE_VIEW
+    );
+  </script>
+
+  <!-- Shared utils (schema + helpers; no UI changes) -->
+  <script src="/shared-utils.js"></script>
+  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
+  <script type="module" src="/src/lib/browser-bridge.js"></script>
+  <!-- Preflight self-heal (normalize storage shape before app code runs) -->
+  <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
+
+  <!-- Add aliases for waitlist debugging -->
+  <script>
+    window.WaitlistUtils = window.APP_UTILS;      // shared storage helpers alias
+    window.WaitlistDataService = window.TennisDataService || window.Tennis?.DataService;
+  </script>
+
+  <!-- Toast bridge (global) -->
+  <script>
+    window.Tennis = window.Tennis || {};
+    window.Tennis.UI = window.Tennis.UI || {};
+    window.Tennis.UI.toast = (msg, opts={}) =>
+      window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg, ...opts }}));
+  </script>
+
+  <!-- Load shared modules before app script -->
+  <script src="/shared/config.js"></script>
+  <script src="/shared/storage.js"></script>
+  <script src="/shared/events.js"></script>
+  <script src="/shared/datastore.js"></script>
+  <script src="/shared/maintenance.js"></script>
+  <script src="/shared/dataservice.js"></script>
+  <script src="/shared/blocks.js"></script>
+
+  <!-- File protocol warning -->
+  <script>
+(function () {
+  if (location.protocol !== 'file:') return;
+
+  console.warn('[dev] Loaded via file:// — this uses a different storage and won\'t receive app events.');
+
+  function addBanner() {
+    var b = document.createElement('div');
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;padding:8px 12px;' +
+                      'background:#f59e0b;color:#111;font:600 14px/1.2 system-ui;' +
+                      'z-index:99999;text-align:center';
+    b.textContent = '⚠️ Running from file:// — use http://127.0.0.1:5500 for correct behavior';
+    document.body.appendChild(b);
+  }
+
+  if (document.body) addBanner();
+  else window.addEventListener('DOMContentLoaded', addBanner, { once: true });
+})();
+</script>
+
+  <!-- Load domain modules -->
+  <script src="/domain/time.js"></script>
+  <script src="/domain/availability.js"></script>
+  <script src="/domain/waitlist.js"></script>
+  <script src="/domain/blocks.js"></script>
+  <script src="/domain/wetCourts.js"></script>
+  <script src="/domain/selfTest.js"></script>
+  <script src="/shared/domain/roster.js"></script>
+  <script src="/shared/selftest.js"></script>
+
+  <!-- CTA Live Recompute - Waitlist Court Available buttons -->
+  <script src="./cta-live.js"></script>
+
+  <!-- Vite-bundled React app -->
+  <script type="module" src="./main.jsx"></script>
+
+  <!-- Navigation diagnostic scripts -->
+  <script src="/src/registration/nav-diagnostics.js"></script>
+</body>
+</html>

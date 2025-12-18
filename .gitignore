@@ -10,8 +10,14 @@
 ehthumbs.db
 Thumbs.db
 
-# Node modules (if you add them later)
+# Node modules
 node_modules/
+
+# Vite build output
+dist/
+
+# Vite cache
+.vite/
 
 # Log files
 *.log
