@@ -81,9 +81,9 @@
   </script>
 
   <!-- Shared utils (schema + helpers; no UI changes) -->
-  <script src="/shared-utils.js"></script>
+  <script src="../../shared-utils.js"></script>
   <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
-  <script type="module" src="/src/lib/browser-bridge.js"></script>
+  <script type="module" src="../lib/browser-bridge.js"></script>
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
 
@@ -102,13 +102,13 @@
   </script>
 
   <!-- Load shared modules before app script -->
-  <script src="/shared/config.js"></script>
-  <script src="/shared/storage.js"></script>
-  <script src="/shared/events.js"></script>
-  <script src="/shared/datastore.js"></script>
-  <script src="/shared/maintenance.js"></script>
-  <script src="/shared/dataservice.js"></script>
-  <script src="/shared/blocks.js"></script>
+  <script src="../../shared/config.js"></script>
+  <script src="../../shared/storage.js"></script>
+  <script src="../../shared/events.js"></script>
+  <script src="../../shared/datastore.js"></script>
+  <script src="../../shared/maintenance.js"></script>
+  <script src="../../shared/dataservice.js"></script>
+  <script src="../../shared/blocks.js"></script>
 
   <!-- File protocol warning -->
   <script>
@@ -132,14 +132,14 @@
 </script>
 
   <!-- Load domain modules -->
-  <script src="/domain/time.js"></script>
-  <script src="/domain/availability.js"></script>
-  <script src="/domain/waitlist.js"></script>
-  <script src="/domain/blocks.js"></script>
-  <script src="/domain/wetCourts.js"></script>
-  <script src="/domain/selfTest.js"></script>
-  <script src="/shared/domain/roster.js"></script>
-  <script src="/shared/selftest.js"></script>
+  <script src="../../domain/time.js"></script>
+  <script src="../../domain/availability.js"></script>
+  <script src="../../domain/waitlist.js"></script>
+  <script src="../../domain/blocks.js"></script>
+  <script src="../../domain/wetCourts.js"></script>
+  <script src="../../domain/selfTest.js"></script>
+  <script src="../../shared/domain/roster.js"></script>
+  <script src="../../shared/selftest.js"></script>
 
   <!-- CTA Live Recompute - Waitlist Court Available buttons -->
   <script src="./cta-live.js"></script>
@@ -148,6 +148,6 @@
   <script type="module" src="./main.jsx"></script>
 
   <!-- Navigation diagnostic scripts -->
-  <script src="/src/registration/nav-diagnostics.js"></script>
+  <script src="./nav-diagnostics.js"></script>
 </body>
 </html>
