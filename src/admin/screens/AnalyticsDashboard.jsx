@@ -61,12 +61,18 @@ const AnalyticsDashboard = ({ onClose }) => {
           setAnalyticsData(storedAnalytics);
         }
 
-        // Load ball purchases
-        const storedPurchases = await dataStore.get(TENNIS_CONFIG.STORAGE.BALL_SALES_KEY);
-        if (storedPurchases) {
-          setBallPurchases(storedPurchases);
-        }
       }
+
+      // Load ball purchases - use localStorage as source of truth for real-time updates
+      console.log('📊 Loading ball purchases...');
+      const localStoragePurchases = localStorage.getItem(TENNIS_CONFIG.STORAGE.BALL_SALES_KEY);
+      let ballPurchasesData = [];
+      if (localStoragePurchases) {
+        try { ballPurchasesData = JSON.parse(localStoragePurchases); }
+        catch { /* transient partial write; use empty array */ }
+      }
+      console.log('📊 Ball purchases found:', ballPurchasesData.length);
+      setBallPurchases(ballPurchasesData);
 
       // Load guest charges - use localStorage as source of truth for real-time updates
       console.log('📊 Loading guest charges...');
