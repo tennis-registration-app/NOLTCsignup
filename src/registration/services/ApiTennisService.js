@@ -226,27 +226,67 @@ class ApiTennisService {
 
     // Transform players to API format
     const participants = await Promise.all(players.map(async (player) => {
-      // Try to get account_id from various sources
-      let accountId = player.accountId || player.account_id || player.billingAccountId;
+      console.log('🔍 Processing player:', JSON.stringify(player));
 
-      // If no account_id and we have a member_id, look it up
-      if (!accountId && (player.id || player.memberId || player.member_id)) {
-        const memberId = player.id || player.memberId || player.member_id;
+      // Try to get account_id and member UUID from various sources
+      let accountId = player.accountId || player.account_id || player.billingAccountId;
+      let memberUuid = null;
+
+      // Check if player already has a valid UUID (36 chars with dashes)
+      const playerId = player.id || player.memberId || player.member_id;
+      const isUuid = playerId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(playerId);
+
+      if (isUuid) {
+        memberUuid = playerId;
+        console.log('🔍 Player ID is already a UUID:', memberUuid);
+      }
+
+      // If we have a memberNumber, use it to look up the member
+      const memberNumber = player.memberNumber || player.clubNumber || player.account_number;
+      if (memberNumber && (!accountId || !memberUuid)) {
         try {
-          // Search for this member to get their account_id
-          const members = await this.api.getMembers();
-          const member = members.members?.find(m => m.id === memberId);
-          if (member) {
-            accountId = member.account_id;
+          console.log(`🔍 Looking up by member_number: ${memberNumber}`);
+          const result = await this.api.getMembersByAccount(String(memberNumber));
+          console.log('🔍 getMembersByAccount result:', JSON.stringify(result));
+
+          if (result.members && result.members.length > 0) {
+            // Find primary member or first member
+            const member = result.members.find(m => m.is_primary) || result.members[0];
+            if (!accountId) accountId = member.account_id;
+            if (!memberUuid) memberUuid = member.id;
+            console.log(`🔍 Found member: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`);
           }
         } catch (e) {
-          console.warn('Could not look up member account_id:', e);
+          console.warn('Could not look up member by member_number:', e);
         }
       }
 
-      // For members from the search results, they should have account_id
-      if (!accountId && player.account_id) {
-        accountId = player.account_id;
+      // If still no account_id, try searching by name
+      if (!accountId || !memberUuid) {
+        const searchName = player.name || player.displayName;
+        if (searchName) {
+          try {
+            console.log(`🔍 Searching by name: ${searchName}`);
+            const result = await this.api.getMembers(searchName);
+            console.log('🔍 getMembers result:', JSON.stringify(result));
+
+            if (result.members && result.members.length > 0) {
+              // Find exact match by name
+              const normalizedSearch = searchName.toLowerCase().trim();
+              const member = result.members.find(m =>
+                m.display_name?.toLowerCase().trim() === normalizedSearch
+              ) || result.members[0];
+
+              if (member) {
+                if (!accountId) accountId = member.account_id;
+                if (!memberUuid) memberUuid = member.id;
+                console.log(`🔍 Found by name: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`);
+              }
+            }
+          } catch (e) {
+            console.warn('Could not look up member by name:', e);
+          }
+        }
       }
 
       if (player.isGuest || player.type === 'guest') {
@@ -261,7 +301,7 @@ class ApiTennisService {
       } else {
         return {
           type: 'member',
-          member_id: player.id || player.memberId || player.member_id,
+          member_id: memberUuid || playerId, // Use looked-up UUID or fall back to original
           account_id: accountId,
         };
       }
