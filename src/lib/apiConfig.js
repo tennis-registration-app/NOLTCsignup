@@ -1,6 +1,12 @@
 // NOLTC Backend API Configuration
 export const API_CONFIG = {
+  // Supabase project URL (for Realtime connections)
+  SUPABASE_URL: 'https://dncjloqewjubodkoruou.supabase.co',
+
+  // Edge Functions base URL
   BASE_URL: 'https://dncjloqewjubodkoruou.supabase.co/functions/v1',
+
+  // Anonymous key for public access
   ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
 
   // Device configuration for this client

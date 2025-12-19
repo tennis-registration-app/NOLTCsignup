@@ -187,3 +187,13 @@ export {
 
 export { ApiAdapter } from './ApiAdapter.js';
 export { API_CONFIG, ENDPOINTS } from './apiConfig.js';
+
+// ============================================================
+// Realtime Client (Live Updates)
+// ============================================================
+
+export {
+  RealtimeClient,
+  getRealtimeClient,
+  resetRealtimeClient,
+} from './RealtimeClient.js';
