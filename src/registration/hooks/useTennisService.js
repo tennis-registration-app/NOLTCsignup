@@ -28,10 +28,11 @@ export function useTennisService(options = {}) {
         setIsLoading(true);
         setError(null);
 
-        const service = await getTennisService(options);
+        // getTennisService is synchronous - returns instance immediately
+        const service = getTennisService(options);
         serviceRef.current = service;
 
-        // Load initial data
+        // Load initial data (this is async)
         const data = await service.loadInitialData();
 
         if (mountedRef.current) {
