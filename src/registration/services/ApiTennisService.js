@@ -189,7 +189,30 @@ class ApiTennisService {
     return courts.find(c => c.number === courtNumber);
   }
 
-  async assignCourt(courtNumber, players, options = {}) {
+  async assignCourt(courtNumber, playersOrGroup, optionsOrDuration = {}) {
+    // Handle legacy format: assignCourt(courtNumber, group, duration)
+    // where group = { players: [...], guests: number }
+    let players;
+    let options = {};
+
+    if (playersOrGroup && playersOrGroup.players && Array.isArray(playersOrGroup.players)) {
+      // Legacy format: { players: [...], guests: number }
+      players = playersOrGroup.players;
+
+      // Duration passed as third argument
+      if (typeof optionsOrDuration === 'number') {
+        options = { duration: optionsOrDuration };
+      } else {
+        options = optionsOrDuration || {};
+      }
+    } else if (Array.isArray(playersOrGroup)) {
+      // New format: array of players directly
+      players = playersOrGroup;
+      options = optionsOrDuration || {};
+    } else {
+      throw new Error('Invalid players format');
+    }
+
     // Find the court ID from court number
     const courts = await this.getAllCourts();
     const court = courts.find(c => c.number === courtNumber);
@@ -203,13 +226,14 @@ class ApiTennisService {
       if (player.isGuest || player.type === 'guest') {
         return {
           type: 'guest',
-          guest_name: player.name || player.guest_name,
-          account_id: player.chargedToAccountId || player.account_id,
+          guest_name: player.name || player.displayName || player.guest_name || 'Guest',
+          account_id: player.chargedToAccountId || player.accountId || player.account_id,
+          charged_to_account_id: player.chargedToAccountId || player.accountId || player.account_id,
         };
       } else {
         return {
           type: 'member',
-          member_id: player.id || player.member_id,
+          member_id: player.id || player.memberId || player.member_id,
           account_id: player.accountId || player.account_id,
         };
       }
@@ -242,7 +266,8 @@ class ApiTennisService {
       throw new Error(`Court ${courtNumber} not found`);
     }
 
-    const endReason = options.reason || 'completed';
+    // Handle both legacy format (clearReason) and new format (reason)
+    const endReason = options.clearReason || options.reason || 'completed';
 
     const result = await this.api.endSessionByCourt(court.id, endReason);
 
