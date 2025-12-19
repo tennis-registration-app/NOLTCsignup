@@ -40,3 +40,10 @@ export {
   GeolocationService,
   geolocationService
 } from './GeolocationService.js';
+
+// API-backed tennis service (backend integration)
+export {
+  ApiTennisService,
+  getApiTennisService,
+  resetApiTennisService
+} from './ApiTennisService.js';

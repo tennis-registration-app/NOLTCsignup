@@ -1,0 +1,421 @@
+/**
+ * ApiTennisService - Backend-connected data service for Registration app
+ *
+ * This service provides the same interface as the localStorage-based service
+ * but uses the backend API for all operations.
+ */
+
+import { ApiAdapter } from '@lib/ApiAdapter.js';
+import { getRealtimeClient } from '@lib/RealtimeClient.js';
+
+class ApiTennisService {
+  constructor(options = {}) {
+    this.api = new ApiAdapter({
+      deviceId: options.deviceId || 'a0000000-0000-0000-0000-000000000001',
+      deviceType: options.deviceType || 'kiosk',
+    });
+
+    this.listeners = new Set();
+    this.courtData = null;
+    this.waitlistData = null;
+    this.membersCache = null;
+    this.settings = null;
+
+    // Get realtime client
+    this.realtimeClient = getRealtimeClient({ debug: options.debug || false });
+
+    // Start realtime subscriptions
+    this._setupRealtime();
+  }
+
+  // ===========================================
+  // Realtime Setup
+  // ===========================================
+
+  _setupRealtime() {
+    this.realtimeClient.onSessionChange(() => {
+      this._notifyListeners('sessions');
+      this.refreshCourtData();
+    });
+
+    this.realtimeClient.onWaitlistChange(() => {
+      this._notifyListeners('waitlist');
+      this.refreshWaitlist();
+    });
+
+    this.realtimeClient.onBlockChange(() => {
+      this._notifyListeners('blocks');
+      this.refreshCourtData();
+    });
+  }
+
+  // ===========================================
+  // Event Listeners
+  // ===========================================
+
+  addListener(callback) {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  _notifyListeners(changeType) {
+    this.listeners.forEach(cb => {
+      try {
+        cb({ type: changeType, timestamp: Date.now() });
+      } catch (e) {
+        console.error('Listener error:', e);
+      }
+    });
+  }
+
+  // ===========================================
+  // Data Loading
+  // ===========================================
+
+  async loadInitialData() {
+    try {
+      const [courtStatus, waitlist, settings, members] = await Promise.all([
+        this.api.getCourtStatus(),
+        this.api.getWaitlist(),
+        this.api.getSettings(),
+        this.api.getMembers(),
+      ]);
+
+      this.courtData = courtStatus;
+      this.waitlistData = waitlist;
+      this.settings = settings;
+      this.membersCache = members;
+
+      return {
+        courts: this._transformCourts(courtStatus.courts),
+        waitlist: this._transformWaitlist(waitlist.waitlist),
+        settings: settings.settings,
+        members: members.members,
+      };
+    } catch (error) {
+      console.error('Failed to load initial data:', error);
+      throw error;
+    }
+  }
+
+  async refreshCourtData() {
+    try {
+      this.courtData = await this.api.getCourtStatus(true);
+      this._notifyListeners('courts');
+      return this._transformCourts(this.courtData.courts);
+    } catch (error) {
+      console.error('Failed to refresh court data:', error);
+      throw error;
+    }
+  }
+
+  async refreshWaitlist() {
+    try {
+      this.waitlistData = await this.api.getWaitlist();
+      this._notifyListeners('waitlist');
+      return this._transformWaitlist(this.waitlistData.waitlist);
+    } catch (error) {
+      console.error('Failed to refresh waitlist:', error);
+      throw error;
+    }
+  }
+
+  // ===========================================
+  // Data Transformers (API -> Legacy Format)
+  // ===========================================
+
+  _transformCourts(apiCourts) {
+    if (!apiCourts) return [];
+
+    return apiCourts.map(court => ({
+      number: court.court_number,
+      id: court.court_id,
+      name: court.court_name,
+      status: court.status,
+      isAvailable: court.status === 'available',
+      isOccupied: !!court.session,
+      isBlocked: !!court.block,
+      session: court.session ? {
+        id: court.session.id,
+        type: court.session.type,
+        players: court.session.participants || [],
+        startTime: new Date(court.session.started_at).getTime(),
+        endTime: new Date(court.session.scheduled_end_at).getTime(),
+        timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
+        duration: court.session.duration_minutes,
+      } : null,
+      block: court.block ? {
+        id: court.block.id,
+        type: court.block.type,
+        title: court.block.title,
+        endTime: new Date(court.block.ends_at).getTime(),
+      } : null,
+    }));
+  }
+
+  _transformWaitlist(apiWaitlist) {
+    if (!apiWaitlist) return [];
+
+    return apiWaitlist.map(entry => ({
+      id: entry.id,
+      position: entry.position,
+      type: entry.group_type,
+      players: entry.participants || [],
+      joinedAt: new Date(entry.joined_at).getTime(),
+      waitTime: (entry.minutes_waiting || 0) * 60 * 1000,
+    }));
+  }
+
+  // ===========================================
+  // Court Operations
+  // ===========================================
+
+  async getAvailableCourts() {
+    if (!this.courtData) {
+      await this.refreshCourtData();
+    }
+    return this._transformCourts(this.courtData.courts).filter(c => c.isAvailable);
+  }
+
+  async getAllCourts() {
+    if (!this.courtData) {
+      await this.refreshCourtData();
+    }
+    return this._transformCourts(this.courtData.courts);
+  }
+
+  async getCourtByNumber(courtNumber) {
+    const courts = await this.getAllCourts();
+    return courts.find(c => c.number === courtNumber);
+  }
+
+  async assignCourt(courtNumber, players, options = {}) {
+    // Find the court ID from court number
+    const courts = await this.getAllCourts();
+    const court = courts.find(c => c.number === courtNumber);
+
+    if (!court) {
+      throw new Error(`Court ${courtNumber} not found`);
+    }
+
+    // Transform players to API format
+    const participants = players.map(player => {
+      if (player.isGuest || player.type === 'guest') {
+        return {
+          type: 'guest',
+          guest_name: player.name || player.guest_name,
+          account_id: player.chargedToAccountId || player.account_id,
+        };
+      } else {
+        return {
+          type: 'member',
+          member_id: player.id || player.member_id,
+          account_id: player.accountId || player.account_id,
+        };
+      }
+    });
+
+    // Determine session type
+    const sessionType = options.type || options.sessionType ||
+      (participants.length <= 2 ? 'singles' : 'doubles');
+
+    const result = await this.api.assignCourt(court.id, sessionType, participants, {
+      addBalls: options.addBalls || options.balls || false,
+      splitBalls: options.splitBalls || false,
+    });
+
+    // Refresh court data
+    await this.refreshCourtData();
+
+    return {
+      success: true,
+      session: result.session,
+      court: courtNumber,
+    };
+  }
+
+  async clearCourt(courtNumber, options = {}) {
+    const courts = await this.getAllCourts();
+    const court = courts.find(c => c.number === courtNumber);
+
+    if (!court) {
+      throw new Error(`Court ${courtNumber} not found`);
+    }
+
+    const endReason = options.reason || 'completed';
+
+    const result = await this.api.endSessionByCourt(court.id, endReason);
+
+    // Refresh court data
+    await this.refreshCourtData();
+
+    return {
+      success: true,
+      session: result.session,
+    };
+  }
+
+  // ===========================================
+  // Waitlist Operations
+  // ===========================================
+
+  async getWaitlist() {
+    if (!this.waitlistData) {
+      await this.refreshWaitlist();
+    }
+    return this._transformWaitlist(this.waitlistData.waitlist);
+  }
+
+  async addToWaitlist(players, options = {}) {
+    // Transform players to API format
+    const participants = players.map(player => {
+      if (player.isGuest || player.type === 'guest') {
+        return {
+          type: 'guest',
+          guest_name: player.name || player.guest_name,
+          account_id: player.chargedToAccountId || player.account_id,
+        };
+      } else {
+        return {
+          type: 'member',
+          member_id: player.id || player.member_id,
+          account_id: player.accountId || player.account_id,
+        };
+      }
+    });
+
+    const groupType = options.type || options.groupType ||
+      (participants.length <= 2 ? 'singles' : 'doubles');
+
+    const result = await this.api.joinWaitlist(groupType, participants);
+
+    // Refresh waitlist
+    await this.refreshWaitlist();
+
+    return {
+      success: true,
+      waitlist: result.waitlist,
+    };
+  }
+
+  async removeFromWaitlist(waitlistId) {
+    // If passed an index (legacy), we need to look up the actual ID
+    if (typeof waitlistId === 'number') {
+      const waitlist = await this.getWaitlist();
+      const entry = waitlist[waitlistId];
+      if (!entry) {
+        throw new Error(`Waitlist entry at index ${waitlistId} not found`);
+      }
+      waitlistId = entry.id;
+    }
+
+    const result = await this.api.cancelWaitlist(waitlistId);
+
+    // Refresh waitlist
+    await this.refreshWaitlist();
+
+    return {
+      success: true,
+    };
+  }
+
+  async assignFromWaitlist(waitlistId, courtNumber, options = {}) {
+    // If passed an index (legacy), look up the actual ID
+    if (typeof waitlistId === 'number') {
+      const waitlist = await this.getWaitlist();
+      const entry = waitlist[waitlistId];
+      if (!entry) {
+        throw new Error(`Waitlist entry at index ${waitlistId} not found`);
+      }
+      waitlistId = entry.id;
+    }
+
+    // Get court ID from court number
+    const courts = await this.getAllCourts();
+    const court = courts.find(c => c.number === courtNumber);
+
+    if (!court) {
+      throw new Error(`Court ${courtNumber} not found`);
+    }
+
+    const result = await this.api.assignFromWaitlist(waitlistId, court.id, {
+      addBalls: options.addBalls || options.balls || false,
+      splitBalls: options.splitBalls || false,
+    });
+
+    // Refresh both
+    await Promise.all([this.refreshCourtData(), this.refreshWaitlist()]);
+
+    return {
+      success: true,
+      session: result.session,
+    };
+  }
+
+  // ===========================================
+  // Member Operations
+  // ===========================================
+
+  async searchMembers(query) {
+    const result = await this.api.getMembers(query);
+    return result.members || [];
+  }
+
+  async getMembersByAccount(memberNumber) {
+    const result = await this.api.getMembersByAccount(memberNumber);
+    return result.members || [];
+  }
+
+  async getAllMembers() {
+    if (!this.membersCache) {
+      const result = await this.api.getMembers();
+      this.membersCache = result;
+    }
+    return this.membersCache.members || [];
+  }
+
+  // ===========================================
+  // Settings
+  // ===========================================
+
+  async getSettings() {
+    if (!this.settings) {
+      this.settings = await this.api.getSettings();
+    }
+    return this.settings;
+  }
+
+  async refreshSettings() {
+    this.settings = await this.api.getSettings(true);
+    return this.settings;
+  }
+
+  // ===========================================
+  // Cleanup
+  // ===========================================
+
+  destroy() {
+    this.listeners.clear();
+    this.realtimeClient.disconnect();
+  }
+}
+
+// Export singleton factory
+let instance = null;
+
+export function getApiTennisService(options = {}) {
+  if (!instance) {
+    instance = new ApiTennisService(options);
+  }
+  return instance;
+}
+
+export function resetApiTennisService() {
+  if (instance) {
+    instance.destroy();
+    instance = null;
+  }
+}
+
+export { ApiTennisService };
+export default ApiTennisService;
