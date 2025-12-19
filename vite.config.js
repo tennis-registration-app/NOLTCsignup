@@ -34,8 +34,9 @@ export default defineConfig({
         admin: resolve(__dirname, 'src/admin/index.html'),
         // Mobile shell (iframes to Vite apps)
         mobile: resolve(__dirname, 'Mobile.html'),
-        // Test page
+        // Test pages
         'test-react': resolve(__dirname, 'src/test-react/index.html'),
+        'test-api': resolve(__dirname, 'src/test-api/index.html'),
         // Homepage
         index: resolve(__dirname, 'index.html'),
       },

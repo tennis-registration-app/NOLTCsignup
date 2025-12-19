@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NOLTC API Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #2d5a27; }
+    h2 { color: #333; margin-top: 30px; }
+    .test-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #2d5a27;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+    button:hover { background: #3d7a37; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    button.danger { background: #c0392b; }
+    button.danger:hover { background: #e74c3c; }
+    .result {
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .result.success { border-color: #27ae60; background: #e8f5e9; }
+    .result.error { border-color: #c0392b; background: #ffebee; }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .status.ok { background: #27ae60; color: white; }
+    .status.fail { background: #c0392b; color: white; }
+    .court-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .court-card {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .court-card.occupied { background: #fff3e0; }
+    .court-card.blocked { background: #ffebee; }
+    .court-card h3 { margin: 0 0 10px 0; }
+    .court-card .status-text { font-size: 12px; color: #666; }
+    input, select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 5px;
+      font-size: 14px;
+    }
+    label { margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🎾 NOLTC Backend API Test</h1>
+  <p>Test page to verify frontend-backend integration.</p>
+
+  <!-- Connection Test -->
+  <div class="test-section">
+    <h2>1. Connection Test</h2>
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="connection-result" class="result"></div>
+  </div>
+
+  <!-- Court Status -->
+  <div class="test-section">
+    <h2>2. Court Status</h2>
+    <button onclick="getCourtStatus()">Get Court Status</button>
+    <div id="court-grid" class="court-grid"></div>
+    <div id="court-result" class="result" style="display:none;"></div>
+  </div>
+
+  <!-- Members -->
+  <div class="test-section">
+    <h2>3. Member Lookup</h2>
+    <input type="text" id="member-search" placeholder="Search by name...">
+    <button onclick="searchMembers()">Search Members</button>
+    <div id="members-result" class="result"></div>
+  </div>
+
+  <!-- Assign Court -->
+  <div class="test-section">
+    <h2>4. Assign Court (Test)</h2>
+    <p>Assigns John Smith & Bob Johnson to a court</p>
+    <label>Court:
+      <select id="assign-court-select">
+        <option value="">Select court...</option>
+      </select>
+    </label>
+    <label>Type:
+      <select id="assign-type">
+        <option value="singles">Singles</option>
+        <option value="doubles">Doubles</option>
+      </select>
+    </label>
+    <button onclick="assignTestCourt()">Assign Court</button>
+    <div id="assign-result" class="result"></div>
+  </div>
+
+  <!-- End Session -->
+  <div class="test-section">
+    <h2>5. End Session</h2>
+    <label>Court:
+      <select id="end-court-select">
+        <option value="">Select court...</option>
+      </select>
+    </label>
+    <button class="danger" onclick="endSession()">End Session</button>
+    <div id="end-result" class="result"></div>
+  </div>
+
+  <!-- Waitlist -->
+  <div class="test-section">
+    <h2>6. Waitlist</h2>
+    <button onclick="getWaitlist()">Get Waitlist</button>
+    <button onclick="joinTestWaitlist()">Join Waitlist (Jane & Alice)</button>
+    <div id="waitlist-result" class="result"></div>
+  </div>
+
+  <!-- Settings -->
+  <div class="test-section">
+    <h2>7. Settings</h2>
+    <button onclick="getSettings()">Get Settings</button>
+    <div id="settings-result" class="result"></div>
+  </div>
+
+  <!-- AI Assistant -->
+  <div class="test-section">
+    <h2>8. AI Assistant (Admin Only)</h2>
+    <input type="text" id="ai-prompt" placeholder="Ask the AI assistant..." style="width: 400px;">
+    <button onclick="askAI()">Ask AI</button>
+    <div id="ai-result" class="result"></div>
+  </div>
+
+  <script type="module">
+    import { ApiAdapter } from '../lib/ApiAdapter.js';
+    import { API_CONFIG } from '../lib/apiConfig.js';
+
+    // Create adapter instances
+    const kioskApi = new ApiAdapter({
+      deviceId: 'a0000000-0000-0000-0000-000000000001',
+      deviceType: 'kiosk',
+    });
+
+    const adminApi = new ApiAdapter({
+      deviceId: 'a0000000-0000-0000-0000-000000000002',
+      deviceType: 'admin',
+    });
+
+    // Test member IDs (from seed data)
+    const TEST_MEMBERS = {
+      johnSmith: {
+        member_id: 'c0000000-0000-0000-0000-000000000001',
+        account_id: 'b0000000-0000-0000-0000-000000000001',
+      },
+      janeSmith: {
+        member_id: 'c0000000-0000-0000-0000-000000000002',
+        account_id: 'b0000000-0000-0000-0000-000000000001',
+      },
+      bobJohnson: {
+        member_id: 'c0000000-0000-0000-0000-000000000003',
+        account_id: 'b0000000-0000-0000-0000-000000000002',
+      },
+      aliceJohnson: {
+        member_id: 'c0000000-0000-0000-0000-000000000004',
+        account_id: 'b0000000-0000-0000-0000-000000000002',
+      },
+    };
+
+    // Store court data for selects
+    let courtsData = [];
+
+    // Make functions available globally
+    window.testConnection = async function() {
+      const result = document.getElementById('connection-result');
+      result.textContent = 'Testing...';
+      result.className = 'result';
+
+      try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/hello-world`, {
+          headers: { 'Authorization': `Bearer ${API_CONFIG.ANON_KEY}` }
+        });
+        const data = await response.json();
+
+        if (data.ok) {
+          result.textContent = JSON.stringify(data, null, 2);
+          result.className = 'result success';
+        } else {
+          throw new Error(data.error || 'Connection failed');
+        }
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.getCourtStatus = async function() {
+      const grid = document.getElementById('court-grid');
+      const result = document.getElementById('court-result');
+      grid.innerHTML = 'Loading...';
+
+      try {
+        const data = await kioskApi.getCourtStatus();
+        courtsData = data.courts || [];
+
+        // Update court selects
+        updateCourtSelects(courtsData);
+
+        // Render court grid
+        grid.innerHTML = courtsData.map(court => {
+          let statusClass = '';
+          let statusText = 'Available';
+
+          if (court.session) {
+            statusClass = 'occupied';
+            statusText = `${court.session.participants?.join(', ') || 'Occupied'} (${court.session.minutes_remaining}m left)`;
+          } else if (court.block) {
+            statusClass = 'blocked';
+            statusText = `Blocked: ${court.block.title}`;
+          }
+
+          return `
+            <div class="court-card ${statusClass}">
+              <h3>Court ${court.court_number}</h3>
+              <div class="status-text">${statusText}</div>
+            </div>
+          `;
+        }).join('');
+
+        result.style.display = 'none';
+      } catch (error) {
+        grid.innerHTML = '';
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+        result.style.display = 'block';
+      }
+    };
+
+    function updateCourtSelects(courts) {
+      const assignSelect = document.getElementById('assign-court-select');
+      const endSelect = document.getElementById('end-court-select');
+
+      const availableCourts = courts.filter(c => c.status === 'available');
+      const occupiedCourts = courts.filter(c => c.session);
+
+      assignSelect.innerHTML = '<option value="">Select court...</option>' +
+        availableCourts.map(c => `<option value="${c.court_id}">Court ${c.court_number}</option>`).join('');
+
+      endSelect.innerHTML = '<option value="">Select court...</option>' +
+        occupiedCourts.map(c => `<option value="${c.court_id}">Court ${c.court_number}</option>`).join('');
+    }
+
+    window.searchMembers = async function() {
+      const search = document.getElementById('member-search').value;
+      const result = document.getElementById('members-result');
+      result.textContent = 'Searching...';
+
+      try {
+        const data = await kioskApi.getMembers(search);
+        result.textContent = JSON.stringify(data, null, 2);
+        result.className = 'result success';
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.assignTestCourt = async function() {
+      const courtId = document.getElementById('assign-court-select').value;
+      const sessionType = document.getElementById('assign-type').value;
+      const result = document.getElementById('assign-result');
+
+      if (!courtId) {
+        result.textContent = 'Please select a court';
+        result.className = 'result error';
+        return;
+      }
+
+      result.textContent = 'Assigning...';
+
+      try {
+        const participants = [
+          { type: 'member', ...TEST_MEMBERS.johnSmith },
+          { type: 'member', ...TEST_MEMBERS.bobJohnson },
+        ];
+
+        const data = await kioskApi.assignCourt(courtId, sessionType, participants);
+        result.textContent = JSON.stringify(data, null, 2);
+        result.className = 'result success';
+
+        // Refresh court status
+        await getCourtStatus();
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.endSession = async function() {
+      const courtId = document.getElementById('end-court-select').value;
+      const result = document.getElementById('end-result');
+
+      if (!courtId) {
+        result.textContent = 'Please select a court';
+        result.className = 'result error';
+        return;
+      }
+
+      result.textContent = 'Ending session...';
+
+      try {
+        const data = await kioskApi.endSessionByCourt(courtId, 'completed');
+        result.textContent = JSON.stringify(data, null, 2);
+        result.className = 'result success';
+
+        // Refresh court status
+        await getCourtStatus();
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.getWaitlist = async function() {
+      const result = document.getElementById('waitlist-result');
+      result.textContent = 'Loading...';
+
+      try {
+        const data = await kioskApi.getWaitlist();
+        result.textContent = JSON.stringify(data, null, 2);
+        result.className = 'result success';
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.joinTestWaitlist = async function() {
+      const result = document.getElementById('waitlist-result');
+      result.textContent = 'Joining waitlist...';
+
+      try {
+        const participants = [
+          { type: 'member', ...TEST_MEMBERS.janeSmith },
+          { type: 'member', ...TEST_MEMBERS.aliceJohnson },
+        ];
+
+        const data = await kioskApi.joinWaitlist('singles', participants);
+        result.textContent = JSON.stringify(data, null, 2);
+        result.className = 'result success';
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.getSettings = async function() {
+      const result = document.getElementById('settings-result');
+      result.textContent = 'Loading...';
+
+      try {
+        const data = await adminApi.getSettings();
+        result.textContent = JSON.stringify(data, null, 2);
+        result.className = 'result success';
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    window.askAI = async function() {
+      const prompt = document.getElementById('ai-prompt').value;
+      const result = document.getElementById('ai-result');
+
+      if (!prompt) {
+        result.textContent = 'Please enter a prompt';
+        result.className = 'result error';
+        return;
+      }
+
+      result.textContent = 'Thinking...';
+
+      try {
+        const data = await adminApi.aiAssistant(prompt);
+        result.textContent = `Response: ${data.response}\n\nTool Calls: ${JSON.stringify(data.tool_calls, null, 2)}`;
+        result.className = 'result success';
+      } catch (error) {
+        result.textContent = `Error: ${error.message}`;
+        result.className = 'result error';
+      }
+    };
+
+    // Initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      testConnection();
+      getCourtStatus();
+    });
+  </script>
+</body>
+</html>
