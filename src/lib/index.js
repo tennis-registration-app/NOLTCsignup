@@ -180,3 +180,10 @@ export {
   tennisDataService,
   setTennisBusinessLogic,
 } from './TennisDataService.js';
+
+// ============================================================
+// API Adapter (Backend Integration)
+// ============================================================
+
+export { ApiAdapter } from './ApiAdapter.js';
+export { API_CONFIG, ENDPOINTS } from './apiConfig.js';
