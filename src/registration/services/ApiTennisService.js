@@ -213,6 +213,9 @@ class ApiTennisService {
       throw new Error('Invalid players format');
     }
 
+    // Log player data for debugging
+    console.log('🔍 Players to assign:', JSON.stringify(players, null, 2));
+
     // Find the court ID from court number
     const courts = await this.getAllCourts();
     const court = courts.find(c => c.number === courtNumber);
@@ -222,22 +225,69 @@ class ApiTennisService {
     }
 
     // Transform players to API format
-    const participants = players.map(player => {
+    const participants = await Promise.all(players.map(async (player) => {
+      // Try to get account_id from various sources
+      let accountId = player.accountId || player.account_id || player.billingAccountId;
+
+      // If no account_id and we have a member_id, look it up
+      if (!accountId && (player.id || player.memberId || player.member_id)) {
+        const memberId = player.id || player.memberId || player.member_id;
+        try {
+          // Search for this member to get their account_id
+          const members = await this.api.getMembers();
+          const member = members.members?.find(m => m.id === memberId);
+          if (member) {
+            accountId = member.account_id;
+          }
+        } catch (e) {
+          console.warn('Could not look up member account_id:', e);
+        }
+      }
+
+      // For members from the search results, they should have account_id
+      if (!accountId && player.account_id) {
+        accountId = player.account_id;
+      }
+
       if (player.isGuest || player.type === 'guest') {
+        // For guests, we need an account to charge - use the first member's account
+        // This will be set after we process all participants
         return {
           type: 'guest',
           guest_name: player.name || player.displayName || player.guest_name || 'Guest',
-          account_id: player.chargedToAccountId || player.accountId || player.account_id,
-          charged_to_account_id: player.chargedToAccountId || player.accountId || player.account_id,
+          account_id: accountId || '__NEEDS_ACCOUNT__',
+          charged_to_account_id: accountId || '__NEEDS_ACCOUNT__',
         };
       } else {
         return {
           type: 'member',
           member_id: player.id || player.memberId || player.member_id,
-          account_id: player.accountId || player.account_id,
+          account_id: accountId,
         };
       }
-    });
+    }));
+
+    // Find a valid account_id from members for any guests that need it
+    const memberWithAccount = participants.find(p => p.type === 'member' && p.account_id);
+    if (memberWithAccount) {
+      participants.forEach(p => {
+        if (p.account_id === '__NEEDS_ACCOUNT__') {
+          p.account_id = memberWithAccount.account_id;
+        }
+        if (p.charged_to_account_id === '__NEEDS_ACCOUNT__') {
+          p.charged_to_account_id = memberWithAccount.account_id;
+        }
+      });
+    }
+
+    // Final validation
+    const missingAccountId = participants.find(p => !p.account_id || p.account_id === '__NEEDS_ACCOUNT__');
+    if (missingAccountId) {
+      console.error('Participant missing account_id:', missingAccountId);
+      throw new Error('Could not determine account_id for participant');
+    }
+
+    console.log('🔍 Transformed participants:', JSON.stringify(participants, null, 2));
 
     // Determine session type
     const sessionType = options.type || options.sessionType ||
