@@ -37,6 +37,7 @@ export default defineConfig({
         // Test pages
         'test-react': resolve(__dirname, 'src/test-react/index.html'),
         'test-api': resolve(__dirname, 'src/test-api/index.html'),
+        'test-react-api': resolve(__dirname, 'src/test-react-api/index.html'),
         // Homepage
         index: resolve(__dirname, 'index.html'),
       },
