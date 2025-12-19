@@ -50,6 +50,13 @@ import { BlockWarningModal } from './modals';
 // Import custom hooks
 import { useDebounce } from './hooks';
 
+// API Backend Integration
+import { getTennisService } from './services/index.js';
+import { getRealtimeClient } from '@lib/RealtimeClient.js';
+
+// Flag to enable API backend (set to true to use new backend)
+const USE_API_BACKEND = true;
+
 // Import utility functions
 import {
   normalizeName as _utilNormalizeName,
@@ -234,25 +241,68 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // to avoid TDZ (Temporal Dead Zone) errors when the code is minified
   const [currentScreen, setCurrentScreen] = useState("welcome");
   const [availableCourts, setAvailableCourts] = useState([]);
+  const [apiError, setApiError] = useState(null);
 
-  // Define loadData function to refresh data
-  const loadData = async () => {
-    const updatedData = await TennisDataService.loadData();
-    setData(updatedData);
-    
-    // Compute strict selectable courts after data update
-    const Av = Tennis.Domain.availability;
-    const S = Tennis.Storage;
-    const data = S.readDataSafe();
-    const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
-    const wetSet = new Set();
-    const now = new Date();
-    
-    const selectable = [...Av.getSelectableCourtsStrict({ data, now, blocks, wetSet })];
-    
-    // Update available courts to use strict selection
-    setAvailableCourts(selectable);
-  };
+  // Get the appropriate data service based on USE_API_BACKEND flag
+  const getDataService = useCallback(() => {
+    if (USE_API_BACKEND) {
+      return getTennisService({
+        deviceId: 'a0000000-0000-0000-0000-000000000001',
+        deviceType: 'kiosk',
+      });
+    }
+    return window.Tennis?.DataService || window.TennisDataService || TennisDataService;
+  }, []);
+
+  // Define loadData function to refresh data (handles both API and legacy backends)
+  const loadData = useCallback(async () => {
+    try {
+      if (USE_API_BACKEND) {
+        const service = getDataService();
+        const initialData = await service.loadInitialData();
+
+        // Transform API data to legacy format
+        const courts = initialData.courts || [];
+        const waitingGroups = initialData.waitlist || [];
+
+        const updatedData = {
+          courts: courts,
+          waitingGroups: waitingGroups,
+          recentlyCleared: data.recentlyCleared || [],
+        };
+
+        setData(updatedData);
+
+        // Compute available courts from API data
+        const available = courts.filter(c => c.isAvailable).map(c => c.number);
+        setAvailableCourts(available);
+        setApiError(null);
+
+        return updatedData;
+      } else {
+        // Legacy localStorage loading
+        const updatedData = await TennisDataService.loadData();
+        setData(updatedData);
+
+        // Compute strict selectable courts after data update
+        const Av = window.Tennis?.Domain?.availability;
+        const S = window.Tennis?.Storage;
+        if (Av && S) {
+          const storageData = S.readDataSafe();
+          const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+          const wetSet = new Set();
+          const now = new Date();
+          const selectable = [...Av.getSelectableCourtsStrict({ data: storageData, now, blocks, wetSet })];
+          setAvailableCourts(selectable);
+        }
+
+        return updatedData;
+      }
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      setApiError(error.message);
+    }
+  }, [getDataService]);
   window.loadData = loadData; // expose for coalescer/tests
   
   // Expose setData globally for scheduleAvailabilityRefresh
@@ -336,6 +386,42 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       document.removeEventListener('DATA_UPDATED', refreshClearScreen);
     };
   }, []);
+
+  // API Real-time subscriptions (when using API backend)
+  useEffect(() => {
+    if (!USE_API_BACKEND) return;
+
+    let subscription = null;
+
+    const setupRealtimeSubscription = async () => {
+      try {
+        const realtimeClient = getRealtimeClient();
+
+        // Subscribe to all relevant changes
+        subscription = realtimeClient.onAnyChange((change) => {
+          console.log('[Realtime] Change received:', change.type, change.table);
+
+          // Refresh data on any change
+          if (loadData) {
+            loadData();
+          }
+        });
+
+        console.log('[Realtime] Subscribed to real-time updates');
+      } catch (error) {
+        console.error('[Realtime] Failed to setup subscription:', error);
+      }
+    };
+
+    setupRealtimeSubscription();
+
+    return () => {
+      if (subscription && subscription.unsubscribe) {
+        subscription.unsubscribe();
+        console.log('[Realtime] Unsubscribed from real-time updates');
+      }
+    };
+  }, [loadData]);
 
   // CSS Performance Optimizations
   useEffect(() => {
@@ -1497,25 +1583,13 @@ console.log('🔵 UI preparing to assignCourt with:', {
   duration
 });
 
-console.log('🔵 TennisDataService available?', !!TennisDataService);
-console.log('🔵 window.TennisDataService available?', !!window.TennisDataService);
-console.log('🔵 Tennis.DataService available?', !!window.Tennis?.DataService);
-console.log('🔵 TennisDataService.assignCourt available?', !!TennisDataService?.assignCourt);
-console.log('🔵 window.TennisDataService.assignCourt available?', !!window.TennisDataService?.assignCourt);
-console.log('🔵 Tennis.DataService.assignCourt available?', !!window.Tennis?.DataService?.assignCourt);
+// Get the correct service reference based on backend toggle
+const dataService = USE_API_BACKEND
+  ? getDataService()
+  : (window.Tennis?.DataService || window.TennisDataService || TennisDataService);
 
-// Get the correct service reference - prioritize shared service
-const dataService = window.Tennis?.DataService || window.TennisDataService || TennisDataService;
-console.log('🔵 Using service:', !!dataService, 'has assignCourt:', !!dataService?.assignCourt);
-
-// Check if we're using the local or shared service
-if (dataService === TennisDataService) {
-  console.log('🔵 WARNING: Using LOCAL TennisDataService, not the shared one!');
-} else if (dataService === window.Tennis?.DataService) {
-  console.log('🔵 Using shared Tennis.DataService from dataservice.js');
-} else if (dataService === window.TennisDataService) {
-  console.log('🔵 Using window.TennisDataService');
-}
+console.log('🔵 Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
+console.log('🔵 Service has assignCourt:', !!dataService?.assignCourt);
 
 if (!dataService?.assignCourt) {
   showAlertMessage('Tennis registration service unavailable. Please refresh the page.');
@@ -1619,16 +1693,23 @@ console.log('✅ Court assigned result:', result);
   };
 
   // Clear a court via service
-  const TD = window.TennisDataService || window.Tennis?.DataService;
   async function clearViaService(courtNumber, clearReason) {
-    if (!TD) return { success:false, error:'Service unavailable' };
+    // Get the correct service based on backend toggle
+    const TD = USE_API_BACKEND
+      ? getDataService()
+      : (window.TennisDataService || window.Tennis?.DataService);
+
+    if (!TD) return { success: false, error: 'Service unavailable' };
+
+    console.log('[clearViaService] Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
+
     if (typeof TD.clearCourt === 'function') {
       return await TD.clearCourt(courtNumber, { clearReason });
     }
     if (typeof TD.unassignCourt === 'function') {
       return await TD.unassignCourt(courtNumber, { clearReason });
     }
-    return { success:false, error:'No clearCourt/unassignCourt service available' };
+    return { success: false, error: 'No clearCourt/unassignCourt service available' };
   }
 
   const clearCourt = async (courtNumber, clearReason = 'Cleared') => {
@@ -1685,12 +1766,18 @@ console.log('✅ Court assigned result:', result);
         }
       }
 
-      // Call service
-      const res = await window.TennisDataService.addToWaitlist(players, { guests });
+      // Call service with backend toggle
+      const waitlistService = USE_API_BACKEND
+        ? getDataService()
+        : (window.TennisDataService || window.Tennis?.DataService);
+
+      console.log('[waitlist] Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
+
+      const res = await waitlistService.addToWaitlist(players, { guests });
       console.log('[waitlist] service result:', res);
 
-      // Read back fresh storage to confirm persistence
-      const after = window.WaitlistUtils.readDataSafe();  // fresh, normalized snapshot
+      // Read back fresh storage to confirm persistence (only for localStorage backend)
+      const after = !USE_API_BACKEND ? window.WaitlistUtils?.readDataSafe?.() : null;
       const len = (after?.waitingGroups?.length || 0);
       console.log('[waitlist] persisted length now:', len);
 
