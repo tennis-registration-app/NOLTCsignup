@@ -2162,18 +2162,77 @@ console.log('✅ Court assigned result:', result);
 
   // Get frequent partners
   const getFrequentPartners = (memberNumber) => {
+    // When API backend is enabled, use apiMembers
+    if (USE_API_BACKEND) {
+      if (apiMembers.length === 0) {
+        console.warn('⚠️ API members not loaded yet, frequent partners unavailable');
+        return [];
+      }
+
+      // Find the current member to exclude them
+      const currentMember = apiMembers.find(m => m.member_number === memberNumber);
+      if (!currentMember) {
+        console.warn('⚠️ Current member not found in API members');
+        return [];
+      }
+
+      // Use member_number as seed for consistent random generation
+      const seed = parseInt(memberNumber) || 0;
+
+      // Get all potential partners (excluding self and family members on same account)
+      const potentialPartners = [];
+
+      apiMembers.forEach(apiMember => {
+        // Skip self and family members (same account_id)
+        if (apiMember.id === currentMember.id || apiMember.account_id === currentMember.account_id) {
+          return;
+        }
+
+        // Check if this player is currently playing (use UUID)
+        const playerStatus = isPlayerAlreadyPlaying(apiMember.id);
+        if (!playerStatus.isPlaying) {
+          // Generate a consistent "play count" based on both member numbers
+          const partnerSeed = parseInt(apiMember.member_number) || 0;
+          const combinedSeed = seed + partnerSeed;
+          const playCount = (combinedSeed * 9301 + 49297) % 233280;
+          const normalizedCount = (playCount % 10) + 1;
+
+          // Build player object with API data
+          const player = {
+            id: apiMember.id, // UUID from API
+            name: apiMember.display_name || apiMember.name || '',
+            memberNumber: apiMember.member_number,
+            accountId: apiMember.account_id,
+            memberId: apiMember.id,
+            isPrimary: apiMember.is_primary,
+          };
+
+          potentialPartners.push({
+            player: player,
+            count: normalizedCount
+          });
+        }
+      });
+
+      // Sort by play count and return top 6
+      return potentialPartners
+        .sort((a, b) => b.count - a.count)
+        .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS);
+    }
+
+    // Legacy: Use hardcoded memberDatabase
     const member = memberDatabase[memberNumber];
     if (!member || !member.familyMembers || member.familyMembers.length === 0) return [];
 
     // Use member ID as seed for consistent random generation
     const seed = member.familyMembers[0].id;
-    
+
     const allMembers = getAllMembers();
     const memberIds = Object.keys(allMembers);
-    
+
     // Get all potential partners (excluding self)
     const potentialPartners = [];
-    
+
     memberIds.forEach((partnerId, index) => {
       if (partnerId != member.familyMembers[0].id) {
         const player = allMembers[partnerId];
@@ -2185,7 +2244,7 @@ console.log('✅ Court assigned result:', result);
             const combinedSeed = seed + parseInt(partnerId);
             const playCount = (combinedSeed * 9301 + 49297) % 233280;
             const normalizedCount = (playCount % 10) + 1;
-            
+
             potentialPartners.push({
               player: player,
               count: normalizedCount
@@ -2194,7 +2253,7 @@ console.log('✅ Court assigned result:', result);
         }
       }
     });
-    
+
     // Sort by play count and return top 6
     return potentialPartners
       .sort((a, b) => b.count - a.count)
@@ -2237,22 +2296,29 @@ console.log('✅ Court assigned result:', result);
       showAlertMessage("Invalid player data. Please try again.");
       return;
     }
-    
-    // Enrich player with memberId if possible (non-fatal)
-    const R = window.Tennis?.Domain?.roster;
-    const enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], memberRoster)[0] : player;
-    
+
+    // For API backend, player should already have all data from apiMembers
+    // For legacy, enrich from roster
+    let enriched;
+    if (USE_API_BACKEND) {
+      // Player from getFrequentPartners already has API data
+      enriched = player;
+    } else {
+      const R = window.Tennis?.Domain?.roster;
+      enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], memberRoster)[0] : player;
+    }
+
     // Ensure player has at least a name
     if (!enriched?.name && !player?.name) {
       showAlertMessage("Player must have a name");
       return;
     }
-    
+
     // Check if player is already playing or on waitlist
     if (!guardAddPlayerEarly(enriched)) {
       return; // Toast message already shown by guardAddPlayerEarly
     }
-    
+
     // Validate group size
     if (currentGroup.length >= CONSTANTS.MAX_PLAYERS) {
       setAlertMessage(`Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`);
@@ -2260,22 +2326,26 @@ console.log('✅ Court assigned result:', result);
       setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
       return;
     }
-    
+
     // Check for duplicate in current group
     if (!guardAgainstGroupDuplicate(enriched, currentGroup)) {
       Tennis.UI.toast(`${enriched.name} is already in this group`);
       return;
     }
 
-    setCurrentGroup([...currentGroup, {
+    // For API backend, use the data directly; for legacy, look up memberNumber
+    const newPlayer = {
       name: enriched.name,
-      memberNumber: findMemberNumber(enriched.id),
+      memberNumber: enriched.memberNumber || findMemberNumber(enriched.id),
       id: enriched.id,
-      memberId: enriched.memberId,
+      memberId: enriched.memberId || enriched.id,
       phone: enriched.phone || '',
       ranking: enriched.ranking || null,
-      winRate: enriched.winRate || 0.5
-    }]);
+      winRate: enriched.winRate || 0.5,
+      accountId: enriched.accountId, // Include accountId for API backend
+    };
+    console.log('🔵 Adding frequent partner to group:', newPlayer);
+    setCurrentGroup([...currentGroup, newPlayer]);
     window.computeEtaPreview();
   };
 
