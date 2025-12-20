@@ -2204,7 +2204,11 @@ console.log('✅ Court assigned result:', result);
   if (showSuccess) {
     const isCourtAssignment = justAssignedCourt !== null;
     const data = getCourtData();
-    const assignedCourt = justAssignedCourt ? data.courts[justAssignedCourt - 1] : null;
+    // Find court by number (API may return courts in different order than array index)
+    const courts = data.courts || [];
+    const assignedCourt = justAssignedCourt
+      ? (courts.find(c => c.number === justAssignedCourt) || courts[justAssignedCourt - 1])
+      : null;
     
     let estimatedWait = 0;
     let position = 0;

@@ -130,18 +130,39 @@ const SuccessScreen = ({
 
       // Try to use API backend if available
       const sessionId = assignedCourt?.session?.id;
-      const primaryAccountId = currentGroup[0]?.accountId || currentGroup[0]?.account_id;
+
+      // Get account ID from multiple sources:
+      // 1. currentGroup player's accountId (if enriched)
+      // 2. From session participants (if API populated them)
+      // 3. Look up by member number using dataService
+      let primaryAccountId = currentGroup[0]?.accountId || currentGroup[0]?.account_id;
+
+      // If no accountId in currentGroup, try to look it up by member number
+      if (!primaryAccountId && dataService && currentGroup[0]?.memberNumber) {
+        try {
+          const memberNumber = currentGroup[0].memberNumber;
+          // Use getMembersByAccount for efficient lookup by member number
+          const members = await dataService.getMembersByAccount?.(memberNumber) || [];
+          if (members.length > 0) {
+            const member = members.find(m => m.is_primary) || members[0];
+            primaryAccountId = member.account_id;
+            console.log('[handleBallPurchase] Found accountId by member lookup:', primaryAccountId);
+          }
+        } catch (e) {
+          console.warn('[handleBallPurchase] Member lookup failed:', e);
+        }
+      }
 
       if (dataService && typeof dataService.purchaseBalls === 'function' && sessionId && primaryAccountId) {
-        console.log('[handleBallPurchase] Using API backend for purchase');
+        console.log('[handleBallPurchase] Using API backend for purchase', { sessionId, primaryAccountId });
 
         // Get account IDs for split purchase
         let splitAccountIds = null;
         if (isSplit && currentNonGuestPlayers > 1) {
-          splitAccountIds = currentGroup
-            .filter(p => !p.isGuest)
-            .map(p => p.accountId || p.account_id)
-            .filter(Boolean);
+          // For split, we'd need to look up each player's account
+          // For now, just use the primary account for full purchase
+          // TODO: Implement split account lookup
+          splitAccountIds = null;
         }
 
         const result = await dataService.purchaseBalls(sessionId, primaryAccountId, {
@@ -157,6 +178,13 @@ const SuccessScreen = ({
         } else {
           console.error('[handleBallPurchase] API purchase failed, falling back to localStorage');
         }
+      } else {
+        console.log('[handleBallPurchase] API not available or missing data:', {
+          hasDataService: !!dataService,
+          hasPurchaseBalls: typeof dataService?.purchaseBalls === 'function',
+          sessionId,
+          primaryAccountId
+        });
       }
 
       // Fallback to localStorage if API not available or failed
