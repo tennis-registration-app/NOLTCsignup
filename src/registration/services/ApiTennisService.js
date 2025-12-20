@@ -181,6 +181,17 @@ class ApiTennisService {
       const isActive = hasSession && timeRemaining > 0;
       const isBlocked = hasBlock;
 
+      console.log(`🎾 Court ${court.court_number} transform:`, {
+        hasSession,
+        hasBlock,
+        apiMinutesRemaining: court.session?.minutes_remaining,
+        transformedTimeRemaining: timeRemaining,
+        isUnoccupied,
+        isOvertime,
+        isActive,
+        isBlocked,
+      });
+
       // Build legacy-compatible court object
       // Legacy UI expects: court.current.endTime, court.current.players, court.endTime
       return {

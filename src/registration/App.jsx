@@ -294,6 +294,51 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setAvailableCourts(selectableNumbers);
         setApiError(null);
 
+        // Emit CTA state for API backend
+        if (USE_API_BACKEND) {
+          const waitlistGroups = initialData.waitlist || [];
+          const firstGroup = waitlistGroups[0] || null;
+          const secondGroup = waitlistGroups[1] || null;
+
+          const gateCount = selectableCourts.length;
+          const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
+          const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
+
+          console.log('🎯 CTA State (API):', {
+            gateCount,
+            selectableCourts: selectableCourts.map(c => c.number),
+            waitlistCount: waitlistGroups.length,
+            canFirstGroupPlay,
+            canSecondGroupPlay,
+          });
+
+          window.dispatchEvent(new CustomEvent('cta:state', {
+            detail: {
+              live1: canFirstGroupPlay,
+              live2: canSecondGroupPlay,
+              first: firstGroup ? {
+                players: (firstGroup.participants || []).map((name, i) => ({
+                  id: `wl-${firstGroup.id}-${i}`,
+                  name: typeof name === 'string' ? name : name.name,
+                  memberNumber: String(firstGroup.position),
+                })),
+                id: firstGroup.id,
+                position: firstGroup.position,
+              } : null,
+              second: secondGroup ? {
+                players: (secondGroup.participants || []).map((name, i) => ({
+                  id: `wl-${secondGroup.id}-${i}`,
+                  name: typeof name === 'string' ? name : name.name,
+                  memberNumber: String(secondGroup.position),
+                })),
+                id: secondGroup.id,
+                position: secondGroup.position,
+              } : null,
+              selectable: selectableCourts.map(c => c.number),
+            }
+          }));
+        }
+
         // Debug logging
         console.log('🎾 Court categories:', {
           unoccupied: unoccupiedCourts.map(c => c.number),
@@ -329,7 +374,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
   }, [getDataService]);
   window.loadData = loadData; // expose for coalescer/tests
-  
+
+  // Debug: log whenever availableCourts changes
+  useEffect(() => {
+    console.log('🔄 availableCourts state changed:', availableCourts);
+  }, [availableCourts]);
+
   // Expose setData globally for scheduleAvailabilityRefresh
   useEffect(() => {
     window.__setRegistrationData = setData;
