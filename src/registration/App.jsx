@@ -2291,8 +2291,19 @@ console.log('✅ Court assigned result:', result);
 
   // Add frequent partner
   const addFrequentPartner = (player) => {
+    console.log('🔵 addFrequentPartner called with:', JSON.stringify(player, null, 2));
+
     // Validate player object
     if (!DataValidation.isValidPlayer(player)) {
+      console.log('🔴 Invalid player data - validation failed:', {
+        player,
+        hasId: !!player?.id,
+        idType: typeof player?.id,
+        idValue: player?.id,
+        hasName: !!player?.name,
+        nameType: typeof player?.name,
+        nameValue: player?.name,
+      });
       showAlertMessage("Invalid player data. Please try again.");
       return;
     }
