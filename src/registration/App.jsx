@@ -57,6 +57,11 @@ import { getRealtimeClient } from '@lib/RealtimeClient.js';
 // Flag to enable API backend (set to true to use new backend)
 const USE_API_BACKEND = true;
 
+// Set global flag for cta-live.js to check
+if (USE_API_BACKEND) {
+  window.NOLTC_USE_API_BACKEND = true;
+}
+
 // Import utility functions
 import {
   normalizeName as _utilNormalizeName,
@@ -296,6 +301,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         // Emit CTA state for API backend
         if (USE_API_BACKEND) {
+          console.log('🎯 API CTA: Starting emission, waitlist:', initialData.waitlist?.length, 'selectable:', selectableCourts?.length);
           const waitlistGroups = initialData.waitlist || [];
           const firstGroup = waitlistGroups[0] || null;
           const secondGroup = waitlistGroups[1] || null;
@@ -310,8 +316,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             waitlistCount: waitlistGroups.length,
             canFirstGroupPlay,
             canSecondGroupPlay,
+            firstGroup,
+            secondGroup,
           });
 
+          console.log('🎯 Dispatching cta:state event...');
           window.dispatchEvent(new CustomEvent('cta:state', {
             detail: {
               live1: canFirstGroupPlay,
@@ -337,6 +346,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               selectable: selectableCourts.map(c => c.number),
             }
           }));
+          console.log('🎯 cta:state event dispatched');
         }
 
         // Debug logging
@@ -817,14 +827,24 @@ useEffect(() => {
     const onCta = (e) => {
       try {
         const d = e?.detail || {};
-        setCanFirstGroupPlay(!!d.liveFirst);
-        setCanSecondGroupPlay(!!d.liveSecond);
-        setFirstWaitingGroupData(d.firstGroup || null);
-        setSecondWaitingGroupData(d.secondGroup || null);
+        console.log('🎯 CTA event received:', d);
+        // Map event properties: live1/live2/first/second from API mode
+        // vs liveFirst/liveSecond/firstGroup/secondGroup from legacy mode
+        const live1 = d.live1 ?? d.liveFirst ?? false;
+        const live2 = d.live2 ?? d.liveSecond ?? false;
+        const firstGroup = d.first ?? d.firstGroup ?? null;
+        const secondGroup = d.second ?? d.secondGroup ?? null;
+
+        console.log('🎯 CTA state parsed:', { live1, live2, firstGroup, secondGroup });
+
+        setCanFirstGroupPlay(!!live1);
+        setCanSecondGroupPlay(!!live2);
+        setFirstWaitingGroupData(firstGroup);
+        setSecondWaitingGroupData(secondGroup);
         
         // Update display names based on the new data
-        if (d.liveFirst && d.firstGroup) {
-          const names = d.firstGroup.players.map(p => p.name.split(' ').pop());
+        if (live1 && firstGroup?.players) {
+          const names = firstGroup.players.map(p => p.name.split(' ').pop());
           if (names.length <= 3) {
             setWaitingGroupDisplay(names.join(", "));
           } else {
@@ -833,9 +853,9 @@ useEffect(() => {
         } else {
           setWaitingGroupDisplay("");
         }
-        
-        if (d.liveSecond && d.secondGroup) {
-          const names = d.secondGroup.players.map(p => p.name.split(' ').pop());
+
+        if (live2 && secondGroup?.players) {
+          const names = secondGroup.players.map(p => p.name.split(' ').pop());
           if (names.length <= 3) {
             setSecondWaitingGroupDisplay(names.join(", "));
           } else {
@@ -844,10 +864,10 @@ useEffect(() => {
         } else {
           setSecondWaitingGroupDisplay("");
         }
-        
+
         // Also sync the legacy state variables for compatibility
-        setFirstWaitingGroup(d.firstGroup || null);
-        setSecondWaitingGroup(d.secondGroup || null);
+        setFirstWaitingGroup(firstGroup);
+        setSecondWaitingGroup(secondGroup);
       } catch {}
     };
     window.addEventListener('cta:state', onCta, { passive: true });

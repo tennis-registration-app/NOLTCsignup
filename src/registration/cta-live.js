@@ -67,6 +67,11 @@
   }
 
   window.recomputeCtaLive = function recomputeCtaLive(){
+    // Skip localStorage-based CTA when using API backend
+    if (window.NOLTC_USE_API_BACKEND) {
+      return;
+    }
+
     let free = [];
     let first = null, second = null;
     try {
