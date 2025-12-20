@@ -252,6 +252,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [availableCourts, setAvailableCourts] = useState([]);
   const [apiError, setApiError] = useState(null);
   const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
+  const [operatingHours, setOperatingHours] = useState(null); // Operating hours from API
 
   // Get the appropriate data service based on USE_API_BACKEND flag
   const getDataService = useCallback(() => {
@@ -283,6 +284,17 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         };
 
         setData(updatedData);
+
+        // Store operating hours from API
+        if (initialData.operatingHours) {
+          setOperatingHours(initialData.operatingHours);
+        }
+
+        // Store API members for autocomplete search
+        if (initialData.members && Array.isArray(initialData.members)) {
+          console.log('🔵 Loaded', initialData.members.length, 'members from API');
+          setApiMembers(initialData.members);
+        }
 
         // Compute court categories using new availability flags
         const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
@@ -402,6 +414,16 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       window.__setRegistrationData = null;
     };
   }, []);
+
+  // Expose current data globally for guardAddPlayerEarly (API backend mode)
+  useEffect(() => {
+    if (USE_API_BACKEND) {
+      window.__registrationData = data;
+    }
+    return () => {
+      window.__registrationData = null;
+    };
+  }, [data]);
 
   // Load initial data
   useEffect(() => {
@@ -788,6 +810,7 @@ useEffect(() => {
   const [showAddPlayer, setShowAddPlayer] = useState(false);
   const [addPlayerSearch, setAddPlayerSearch] = useState("");
   const [showAddPlayerSuggestions, setShowAddPlayerSuggestions] = useState(false);
+  const [apiMembers, setApiMembers] = useState([]); // Cached API members for search
 
   const [selectedCourtToClear, setSelectedCourtToClear] = useState(null);
   const [clearCourtStep, setClearCourtStep] = useState(1);
@@ -1013,20 +1036,26 @@ function __findEngagementFor(name, data) {
 function guardAddPlayerEarly(player) {
   const S = window.Tennis?.Storage;
   const R = window.Tennis?.Domain?.roster;
-  const data = S?.readDataSafe?.() || {};
-  
+
+  // Use API data from React state when available, otherwise fall back to localStorage
+  const data = (USE_API_BACKEND && window.__registrationData)
+    ? window.__registrationData
+    : (S?.readDataSafe?.() || {});
+
   // Enrich the player with memberId if possible
   const enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], window.__memberRoster)[0] : player;
-  
+
   // Use hybrid detection
   const engagement = R?.findEngagementFor ? R.findEngagementFor(enriched, data) : __findEngagementFor(player, data);
-  
+
   if (DEBUG) {
     console.log('[guardAddPlayerEarly] Checking player:', player);
     console.log('[guardAddPlayerEarly] Enriched player:', enriched);
+    console.log('[guardAddPlayerEarly] Data source:', USE_API_BACKEND ? 'API' : 'localStorage');
+    console.log('[guardAddPlayerEarly] Data:', data);
     console.log('[guardAddPlayerEarly] Engagement found:', engagement);
   }
-  
+
   if (!engagement) return true;
 
   const display = (enriched?.name || player?.name || player || '').toString().trim();
@@ -1035,26 +1064,40 @@ function guardAddPlayerEarly(player) {
     return false;
   } else if (engagement.type === 'waitlist') {
     // Check if waitlist member can register based on available courts
-    const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-    if (A?.getFreeCourtsInfo) {
-      try {
-        const now = new Date();
-        const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
-        const wetSet = new Set();
-        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-        const freeCount = info.free?.length || 0;
-        const overtimeCount = info.overtime?.length || 0;
-        const totalAvailable = freeCount > 0 ? freeCount : overtimeCount;
-        const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
-        
-        if (engagement.position <= maxAllowedPosition) {
-          return true; // Allow this waitlist member to register
+    // For API backend, use availableCourts from the data directly
+    if (USE_API_BACKEND) {
+      const courts = Array.isArray(data?.courts) ? data.courts : [];
+      const unoccupiedCount = courts.filter(c => c.isUnoccupied).length;
+      const overtimeCount = courts.filter(c => c.isOvertime).length;
+      const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
+      const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
+
+      if (engagement.position <= maxAllowedPosition) {
+        return true; // Allow this waitlist member to register
+      }
+    } else {
+      // Legacy localStorage path
+      const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+      if (A?.getFreeCourtsInfo) {
+        try {
+          const now = new Date();
+          const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+          const wetSet = new Set();
+          const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+          const freeCount = info.free?.length || 0;
+          const overtimeCount = info.overtime?.length || 0;
+          const totalAvailable = freeCount > 0 ? freeCount : overtimeCount;
+          const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
+
+          if (engagement.position <= maxAllowedPosition) {
+            return true; // Allow this waitlist member to register
+          }
+        } catch (error) {
+          console.warn('Error checking waitlist eligibility:', error);
         }
-      } catch (error) {
-        console.warn('Error checking waitlist eligibility:', error);
       }
     }
-    
+
     Tennis.UI.toast(`${display} is already on the waitlist (position ${engagement.position})`);
     return false;
   }
@@ -1623,18 +1666,44 @@ const assignCourtToGroup = async (courtNumber) => {
     console.log('Mobile: Using preselected court', courtNumber);
   }
 
-// Check if club is open
+// Check if club is open (using API operating hours when available)
 const now = new Date();
   const currentHour = now.getHours();
   const currentMinutes = now.getMinutes();
-  const currentTime = currentHour + (currentMinutes / 60); // Convert to decimal hours
   const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  // Determine opening time
-  const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-  const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
-  const openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
-  
+
+  // Get opening time from API or use fallback
+  let openingTime;
+  let openingTimeString;
+
+  if (USE_API_BACKEND && operatingHours && Array.isArray(operatingHours)) {
+    // Find today's operating hours from API
+    const todayHours = operatingHours.find(h => h.day_of_week === dayOfWeek);
+    if (todayHours && !todayHours.is_closed) {
+      // Parse opens_at (format: "HH:MM:SS")
+      const [hours, minutes] = todayHours.opens_at.split(':').map(Number);
+      openingTime = hours + (minutes / 60);
+      // Format for display (e.g., "5:00 AM")
+      const hour12 = hours % 12 || 12;
+      const ampm = hours < 12 ? 'AM' : 'PM';
+      openingTimeString = `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    } else if (todayHours && todayHours.is_closed) {
+      Tennis.UI.toast('The club is closed today.', { type: 'warning' });
+      return;
+    } else {
+      // Fallback if no hours found
+      openingTime = 7;
+      openingTimeString = "7:00 AM";
+    }
+  } else {
+    // Legacy fallback: hardcoded hours
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+    openingTime = isWeekend ? 7 : 6.5;
+    openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
+  }
+
+  const currentTime = currentHour + (currentMinutes / 60);
+
   // If too early, show alert and return
   if (currentTime < openingTime) {
     Tennis.UI.toast(`The club is not open yet. Court registration will be available at ${openingTimeString}.`, { type: 'warning' });
@@ -1956,26 +2025,35 @@ console.log('✅ Court assigned result:', result);
 
   // Send group to waitlist
   const sendGroupToWaitlist = async (group) => {
+    const traceId = `WL-${Date.now()}`;
     try {
-      console.log('[waitlist] sendGroupToWaitlist called with group:', group);
-      
+      console.log(`🔴🔴🔴 [${traceId}] sendGroupToWaitlist START`);
+      console.log(`🔴 [${traceId}] Raw group argument:`, JSON.stringify(group, null, 2));
+      console.log(`🔴 [${traceId}] Current currentGroup state:`, JSON.stringify(currentGroup, null, 2));
+
       if (!group || !group.length) {
-        console.warn('[waitlist] no players selected'); 
+        console.warn('[waitlist] no players selected');
         return;
       }
 
       // Build the players array (keep guests for waitlist display)
       const players = group
-        .map(p => ({
-          id: String(p.id || '').trim(),
-          name: String(p.name || '').trim(),
-          ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
-          ...(p.sponsor && { sponsor: p.sponsor })
-        }))
+        .map(p => {
+          const mapped = {
+            id: String(p.id || '').trim(),
+            name: String(p.name || '').trim(),
+            memberNumber: p.memberNumber || p.member_number || p.id,
+            ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
+            ...(p.sponsor && { sponsor: p.sponsor })
+          };
+          console.log(`🔴 [${traceId}] Mapping player: ${p.name} (id=${p.id}, memberNumber=${p.memberNumber}) -> ${mapped.name} (id=${mapped.id}, memberNumber=${mapped.memberNumber})`);
+          return mapped;
+        })
         .filter(p => p && p.id && p.name);
 
       const guests = group.filter(p => p.isGuest).length;
 
+      console.log(`🔴 [${traceId}] Final players to send:`, JSON.stringify(players, null, 2));
       console.log('[waitlist] calling addToWaitlist with', players.map(p=>p.name), 'guests:', guests);
       
       // Validation check
@@ -2000,9 +2078,10 @@ console.log('✅ Court assigned result:', result);
         ? getDataService()
         : (window.TennisDataService || window.Tennis?.DataService);
 
-      console.log('[waitlist] Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
+      console.log(`🔴 [${traceId}] Using backend:`, USE_API_BACKEND ? 'API' : 'localStorage');
+      console.log(`🔴 [${traceId}] Calling addToWaitlist with players:`, players.map(p => `${p.name}(id=${p.id},mn=${p.memberNumber})`));
 
-      const res = await waitlistService.addToWaitlist(players, { guests });
+      const res = await waitlistService.addToWaitlist(players, { guests, traceId });
       console.log('[waitlist] service result:', JSON.stringify(res, null, 2));
       console.log('[waitlist] res.position:', res?.position);
       console.log('[waitlist] res.waitlist?.position:', res?.waitlist?.position);
@@ -2232,46 +2311,75 @@ console.log('✅ Court assigned result:', result);
   // Get autocomplete suggestions
   const getAutocompleteSuggestions = (input) => {
     if (!input || input.length < 1) return [];
-    
+
     const suggestions = [];
     const lowerInput = input.toLowerCase();
-    
-    // Get member suggestions
-    Object.entries(memberDatabase).forEach(([memberNum, data]) => {
-      data.familyMembers.forEach(member => {
+
+    // Use API members when API backend is enabled
+    if (USE_API_BACKEND && apiMembers.length > 0) {
+      apiMembers.forEach(apiMember => {
+        const displayName = apiMember.display_name || apiMember.name || '';
+        const memberNumber = apiMember.member_number || '';
+
         // Split the name into parts
-        const nameParts = member.name.split(' ');
+        const nameParts = displayName.split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts[nameParts.length - 1] || '';
-        
+
         // Check if input matches the beginning of first or last name, or member number
-        if (firstName.toLowerCase().startsWith(lowerInput) || 
+        if (firstName.toLowerCase().startsWith(lowerInput) ||
             lastName.toLowerCase().startsWith(lowerInput) ||
-            memberNum.startsWith(input)) {
+            memberNumber.startsWith(input)) {
           suggestions.push({
-            memberNumber: memberNum,
-            member: member,
-            displayText: `${member.name} (#${memberNum})`
+            memberNumber: memberNumber,
+            member: {
+              id: apiMember.id, // This is the UUID from API
+              name: displayName,
+              accountId: apiMember.account_id,
+              isPrimary: apiMember.is_primary,
+            },
+            displayText: `${displayName} (#${memberNumber})`
           });
         }
       });
-    });
-    
+    } else {
+      // Legacy: Use hardcoded memberDatabase
+      Object.entries(memberDatabase).forEach(([memberNum, data]) => {
+        data.familyMembers.forEach(member => {
+          // Split the name into parts
+          const nameParts = member.name.split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts[nameParts.length - 1] || '';
+
+          // Check if input matches the beginning of first or last name, or member number
+          if (firstName.toLowerCase().startsWith(lowerInput) ||
+              lastName.toLowerCase().startsWith(lowerInput) ||
+              memberNum.startsWith(input)) {
+            suggestions.push({
+              memberNumber: memberNum,
+              member: member,
+              displayText: `${member.name} (#${memberNum})`
+            });
+          }
+        });
+      });
+    }
+
     // Sort suggestions to prioritize first name matches, then last name matches
     suggestions.sort((a, b) => {
       const aName = a.member.name.toLowerCase();
       const bName = b.member.name.toLowerCase();
       const aFirstName = aName.split(' ')[0];
       const bFirstName = bName.split(' ')[0];
-      
+
       // Prioritize first name matches
       if (aFirstName.startsWith(lowerInput) && !bFirstName.startsWith(lowerInput)) return -1;
       if (!aFirstName.startsWith(lowerInput) && bFirstName.startsWith(lowerInput)) return 1;
-      
+
       // Then sort alphabetically
       return aName.localeCompare(bName);
     });
-    
+
     return suggestions.slice(0, CONSTANTS.MAX_AUTOCOMPLETE_RESULTS);
   };
 
@@ -2282,16 +2390,31 @@ console.log('✅ Court assigned result:', result);
       showAlertMessage("Invalid member selection. Please try again.");
       return;
     }
-    
-    // Validate member is in database
-    if (!memberDatabase[suggestion.memberNumber]) {
+
+    // For API backend, member is already validated from API data
+    // For legacy, validate member is in hardcoded database
+    if (!USE_API_BACKEND && !memberDatabase[suggestion.memberNumber]) {
       showAlertMessage("Member number not found in database.");
       return;
     }
-    
-    // Enrich member with memberId
-    const R = window.Tennis?.Domain?.roster;
-    const enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
+
+    // Enrich member - for API mode, use the API data directly
+    let enrichedMember;
+    if (USE_API_BACKEND) {
+      // API member already has correct id (UUID) and accountId
+      enrichedMember = {
+        id: suggestion.member.id, // UUID from API
+        name: suggestion.member.name,
+        memberNumber: suggestion.memberNumber,
+        accountId: suggestion.member.accountId,
+        memberId: suggestion.member.id, // Same as id for API members
+      };
+      console.log('🔵 handleSuggestionClick - API enriched member:', enrichedMember);
+    } else {
+      // Legacy: enrich from local roster
+      const R = window.Tennis?.Domain?.roster;
+      enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
+    }
     
     // Early duplicate guard - if player is already playing/waiting, stop here
     if (!guardAddPlayerEarly(enrichedMember)) {
@@ -2385,18 +2508,22 @@ console.log('✅ Court assigned result:', result);
     // Normal flow for new players - we already checked conflicts above
     setSearchInput("");
     setShowSuggestions(false);
-    
-    // Add player to current group
-    setCurrentGroup([...currentGroup, {
+
+    // Add player to current group - include all API data for proper backend lookup
+    const newPlayer = {
       name: enrichedMember.name,
       memberNumber: suggestion.memberNumber,
       id: enrichedMember.id,
-      memberId: enrichedMember.memberId,
-      phone: enrichedMember.phone,
-      ranking: enrichedMember.ranking,
-      winRate: enrichedMember.winRate
-    }]);
-    
+      memberId: enrichedMember.memberId || enrichedMember.id,
+      phone: enrichedMember.phone || '',
+      ranking: enrichedMember.ranking || null,
+      winRate: enrichedMember.winRate || 0.5,
+      // API-specific fields
+      accountId: enrichedMember.accountId,
+    };
+    console.log('🔵 Adding player to group:', newPlayer);
+    setCurrentGroup([...currentGroup, newPlayer]);
+
     setCurrentScreen("group");
   };
 
@@ -3627,9 +3754,20 @@ onFocus={() => {
                              return;
                            }
                            
-                           // Enrich member with memberId
-                           const R = window.Tennis?.Domain?.roster;
-                           const enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
+                           // Enrich member - for API mode, use the API data directly
+                           let enrichedMember;
+                           if (USE_API_BACKEND) {
+                             enrichedMember = {
+                               id: suggestion.member.id,
+                               name: suggestion.member.name,
+                               memberNumber: suggestion.memberNumber,
+                               accountId: suggestion.member.accountId,
+                               memberId: suggestion.member.id,
+                             };
+                           } else {
+                             const R = window.Tennis?.Domain?.roster;
+                             enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
+                           }
                            
                            // Early duplicate guard
                            if (!guardAddPlayerEarly(enrichedMember)) {
@@ -3691,15 +3829,18 @@ onFocus={() => {
                                return;
                              }
                              
-                             setCurrentGroup([...currentGroup, {
+                             const newPlayer = {
                                name: enrichedMember.name,
                                memberNumber: suggestion.memberNumber,
                                id: enrichedMember.id,
-                               memberId: enrichedMember.memberId,
-                               phone: enrichedMember.phone,
-                               ranking: enrichedMember.ranking,
-                               winRate: enrichedMember.winRate
-                             }]);
+                               memberId: enrichedMember.memberId || enrichedMember.id,
+                               phone: enrichedMember.phone || '',
+                               ranking: enrichedMember.ranking || null,
+                               winRate: enrichedMember.winRate || 0.5,
+                               accountId: enrichedMember.accountId,
+                             };
+                             console.log('🔵 Adding player to group (add player flow):', newPlayer);
+                             setCurrentGroup([...currentGroup, newPlayer]);
                              setAddPlayerSearch("");
                              setShowAddPlayer(false);
                              setShowAddPlayerSuggestions(false);

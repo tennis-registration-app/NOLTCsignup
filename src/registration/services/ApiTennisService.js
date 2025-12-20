@@ -91,6 +91,7 @@ class ApiTennisService {
         courts: this._transformCourts(courtStatus.courts),
         waitlist: this._transformWaitlist(waitlist.waitlist),
         settings: settings.settings,
+        operatingHours: settings.operating_hours,
         members: members.members,
       };
     } catch (error) {
@@ -322,16 +323,58 @@ class ApiTennisService {
       const memberNumber = player.memberNumber || player.clubNumber || player.account_number;
       if (memberNumber && (!accountId || !memberUuid)) {
         try {
-          console.log(`🔍 Looking up by member_number: ${memberNumber}`);
+          console.log(`🔍 Looking up by member_number: ${memberNumber}, player.name: "${player.name}"`);
           const result = await this.api.getMembersByAccount(String(memberNumber));
-          console.log('🔍 getMembersByAccount result:', JSON.stringify(result));
+          const members = result.members || [];
+          console.log(`🔍 Found ${members.length} members for account:`, members.map(m => m.display_name));
 
-          if (result.members && result.members.length > 0) {
-            // Find primary member or first member
-            const member = result.members.find(m => m.is_primary) || result.members[0];
-            if (!accountId) accountId = member.account_id;
-            if (!memberUuid) memberUuid = member.id;
-            console.log(`🔍 Found member: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`);
+          if (members.length > 0) {
+            const playerNameLower = (player.name || '').toLowerCase().trim();
+            let member = null;
+
+            // Try exact match first (case-insensitive)
+            member = members.find(m =>
+              m.display_name?.toLowerCase().trim() === playerNameLower
+            );
+
+            // Try partial match (player name contains or is contained in display_name)
+            if (!member) {
+              member = members.find(m => {
+                const displayLower = (m.display_name || '').toLowerCase().trim();
+                return displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower);
+              });
+            }
+
+            // Try matching by last name only
+            if (!member && playerNameLower) {
+              member = members.find(m => {
+                const displayLower = (m.display_name || '').toLowerCase().trim();
+                const playerLastName = playerNameLower.split(' ').pop();
+                const memberLastName = displayLower.split(' ').pop();
+                return playerLastName === memberLastName;
+              });
+            }
+
+            // If only one member on account, use it
+            if (!member && members.length === 1) {
+              member = members[0];
+              console.log(`⚠️ Using only member on account: ${member.display_name}`);
+            }
+
+            // If multiple members and no match, use primary with warning
+            if (!member && members.length > 1) {
+              const primaryMember = members.find(m => m.is_primary);
+              if (primaryMember) {
+                console.warn(`⚠️ Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.display_name}"`);
+                member = primaryMember;
+              }
+            }
+
+            if (member) {
+              if (!accountId) accountId = member.account_id;
+              if (!memberUuid) memberUuid = member.id;
+              console.log(`✅ Matched: "${player.name}" -> "${member.display_name}" (${member.id})`);
+            }
           }
         } catch (e) {
           console.warn('Could not look up member by member_number:', e);
@@ -493,11 +536,16 @@ class ApiTennisService {
   }
 
   async addToWaitlist(players, options = {}) {
-    console.log('🔍 [addToWaitlist] Input players:', players);
-    console.log('🔍 [addToWaitlist] Options:', options);
+    const traceId = options.traceId || `API-${Date.now()}`;
+    console.log(`🔵🔵🔵 [${traceId}] addToWaitlist ENTRY`);
+    console.log(`🔵 [${traceId}] Input players:`, JSON.stringify(players, null, 2));
+    console.log(`🔵 [${traceId}] Players summary:`, players.map(p => `${p.name}(id=${p.id},mn=${p.memberNumber})`));
+    console.log(`🔵 [${traceId}] Options:`, options);
 
     // Transform players to API format (same logic as assignCourt)
-    const participants = await Promise.all(players.map(async (player) => {
+    const participants = await Promise.all(players.map(async (player, idx) => {
+      console.log(`🔵 [${traceId}] Processing player[${idx}]: name="${player.name}", id="${player.id}", memberNumber="${player.memberNumber}"`);
+
       let memberId = null;
       let accountId = null;
 
@@ -525,25 +573,62 @@ class ApiTennisService {
 
         if (memberNumber) {
           try {
-            console.log(`🔍 [addToWaitlist] Looking up member_number: ${memberNumber}`);
+            console.log(`🔵 [${traceId}] Looking up member_number: ${memberNumber}, player.name: "${player.name}"`);
             const result = await this.api.getMembersByAccount(String(memberNumber));
             const members = result.members || [];
+            console.log(`🔵 [${traceId}] Found ${members.length} members for account:`, members.map(m => `${m.display_name}(primary=${m.is_primary})`));
 
+            const playerNameLower = (player.name || '').toLowerCase().trim();
+
+            // Try exact match first (case-insensitive)
             let member = members.find(m =>
-              m.display_name?.toLowerCase() === player.name?.toLowerCase()
+              m.display_name?.toLowerCase().trim() === playerNameLower
             );
 
-            if (!member && members.length > 0) {
+            // Try partial match (player name contains or is contained in display_name)
+            if (!member) {
+              member = members.find(m => {
+                const displayLower = (m.display_name || '').toLowerCase().trim();
+                return displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower);
+              });
+            }
+
+            // Try matching by last name only (common case: "Sinner" -> "Jannik Sinner")
+            if (!member && playerNameLower) {
+              member = members.find(m => {
+                const displayLower = (m.display_name || '').toLowerCase().trim();
+                const playerLastName = playerNameLower.split(' ').pop();
+                const memberLastName = displayLower.split(' ').pop();
+                return playerLastName === memberLastName;
+              });
+            }
+
+            // If only one member on account, use it (single-member accounts)
+            if (!member && members.length === 1) {
               member = members[0];
+              console.log(`🔵 [${traceId}] Using only member on account: ${member.display_name}`);
+            }
+
+            // If multiple members and no match, prefer primary member with warning
+            if (!member && members.length > 1) {
+              const primaryMember = members.find(m => m.is_primary);
+              if (primaryMember) {
+                console.warn(`🔵⚠️ [${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.display_name}"`);
+                member = primaryMember;
+              } else {
+                console.error(`🔵❌ [${traceId}] Name mismatch! Player "${player.name}" not found in:`, members.map(m => m.display_name));
+                throw new Error(`Could not match "${player.name}" to any member on account ${memberNumber}. Available: ${members.map(m => m.display_name).join(', ')}`);
+              }
             }
 
             if (member) {
               memberId = member.id;
               accountId = member.account_id;
-              console.log(`✅ [addToWaitlist] Found member: ${player.name} -> ${memberId}`);
+              console.log(`🔵✅ [${traceId}] Matched: "${player.name}" -> "${member.display_name}" (${memberId})`);
             }
           } catch (e) {
             console.error('[addToWaitlist] Error looking up member:', e);
+            throw e; // Re-throw to prevent wrong member assignment
           }
         }
       }
