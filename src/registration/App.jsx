@@ -1887,19 +1887,52 @@ if (USE_API_BACKEND && currentWaitlistEntryId) {
   } catch (error) {
     console.error('❌ assignFromWaitlist failed:', error);
     setCurrentWaitlistEntryId(null);
-    Tennis.UI.toast(error.message || 'Failed to assign court from waitlist');
+
+    // Handle "Court is currently occupied" race condition
+    if (error.message?.toLowerCase().includes('occupied')) {
+      Tennis.UI.toast('This court was just taken. Refreshing available courts...', { type: 'warning' });
+      await loadData();
+      // Stay on court selection screen - user can pick another court
+      return;
+    }
+
+    Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
     return;
   }
 }
 
 // Call service with canonical object (NOT an array and NOT a single player object)
-const result = await dataService.assignCourt(courtNumber, group, duration);
-console.log('✅ Court assigned result:', result);
+let result;
+try {
+  result = await dataService.assignCourt(courtNumber, group, duration);
+  console.log('✅ Court assigned result:', result);
+} catch (error) {
+  console.error('❌ assignCourt threw error:', error);
 
-  if (!result.success) {
-    Tennis.UI.toast(result.error || 'Failed to assign court');
+  // Handle "Court is currently occupied" race condition
+  if (error.message?.toLowerCase().includes('occupied')) {
+    Tennis.UI.toast('This court was just taken. Refreshing available courts...', { type: 'warning' });
+    // Refresh court data so user sees current state
+    await loadData();
+    // Stay on court selection screen - user can pick another court
     return;
   }
+
+  // Handle other API errors
+  Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', { type: 'error' });
+  return;
+}
+
+if (!result.success) {
+  // Handle "occupied" error from result object (non-throwing API)
+  if (result.error?.toLowerCase().includes('occupied')) {
+    Tennis.UI.toast('This court was just taken. Refreshing available courts...', { type: 'warning' });
+    await loadData();
+    return;
+  }
+  Tennis.UI.toast(result.error || 'Failed to assign court');
+  return;
+}
 
   // Refresh data after successful assignment (important for API backend)
   if (USE_API_BACKEND) {
