@@ -794,6 +794,30 @@ function computeOccupiedCourts() {
 
 // Helper function to get courts that can be cleared (occupied or overtime)
 function getCourtsOccupiedForClearing() {
+  // For API backend, use React state data
+  if (USE_API_BACKEND) {
+    const reactData = getCourtData();
+    const courts = reactData.courts || [];
+    const now = new Date();
+
+    const clearableCourts = courts
+      .filter(c => {
+        // Court has a session (is occupied)
+        if (c.session || c.current || c.isOccupied) {
+          // Not blocked
+          if (c.isBlocked) return false;
+          return true;
+        }
+        return false;
+      })
+      .map(c => c.number)
+      .sort((a, b) => a - b);
+
+    console.log('[getCourtsOccupiedForClearing] API courts:', clearableCourts);
+    return clearableCourts;
+  }
+
+  // Legacy localStorage path
   const Av  = Tennis.Domain.availability || Tennis.Domain.Availability;
   const now = new Date();
   const S   = Tennis.Storage;
@@ -4026,6 +4050,7 @@ onFocus={() => {
        showAlert={showAlert}
        alertMessage={alertMessage}
        getCourtsOccupiedForClearing={getCourtsOccupiedForClearing}
+       courtData={getCourtData()}
        CONSTANTS={CONSTANTS}
        TennisBusinessLogic={TennisBusinessLogic}
      />

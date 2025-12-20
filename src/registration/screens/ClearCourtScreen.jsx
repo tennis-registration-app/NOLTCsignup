@@ -16,6 +16,7 @@
  * - showAlert: boolean - Whether to show alert
  * - alertMessage: string - Alert message
  * - getCourtsOccupiedForClearing: () => number[] - Get clearable courts
+ * - courtData: object - Court data from React state (API backend) or localStorage
  * - CONSTANTS: object - App constants
  * - TennisBusinessLogic: object - Business logic service
  */
@@ -32,12 +33,15 @@ const ClearCourtScreen = ({
   showAlert,
   alertMessage,
   getCourtsOccupiedForClearing,
+  courtData,
   CONSTANTS,
   TennisBusinessLogic
 }) => {
   const clearableCourts = getCourtsOccupiedForClearing();
   const hasAny = clearableCourts.length > 0;
-  const data = window.Tennis.Storage.readDataSafe();
+  // Use courtData prop (from React state for API backend, or from parent)
+  // Fall back to localStorage only if courtData is not provided
+  const data = courtData || window.Tennis?.Storage?.readDataSafe?.() || { courts: [] };
   const occupiedCourts = clearableCourts.map(courtNumber => ({
     courtNumber,
     players: data?.courts?.[courtNumber - 1]?.current?.players || data?.courts?.[courtNumber - 1]?.players || [],
