@@ -1600,12 +1600,17 @@ if (!dataService?.assignCourt) {
 const result = await dataService.assignCourt(courtNumber, group, duration);
 console.log('✅ Court assigned result:', result);
 
-
   if (!result.success) {
     Tennis.UI.toast(result.error || 'Failed to assign court');
     return;
   }
-  
+
+  // Refresh data after successful assignment (important for API backend)
+  if (USE_API_BACKEND) {
+    await loadData();
+    console.log('✅ Data refreshed after court assignment');
+  }
+
   // Check if there were other courts available at time of assignment
   const availableAtAssignment = getAvailableCourts(
     !isChangingCourt, 

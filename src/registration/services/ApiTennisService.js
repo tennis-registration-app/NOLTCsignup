@@ -127,30 +127,63 @@ class ApiTennisService {
   _transformCourts(apiCourts) {
     if (!apiCourts) return [];
 
-    return apiCourts.map(court => ({
-      number: court.court_number,
-      id: court.court_id,
-      name: court.court_name,
-      status: court.status,
-      isAvailable: court.status === 'available',
-      isOccupied: !!court.session,
-      isBlocked: !!court.block,
-      session: court.session ? {
+    return apiCourts.map(court => {
+      // Transform session data
+      const session = court.session ? {
         id: court.session.id,
         type: court.session.type,
-        players: court.session.participants || [],
+        players: (court.session.participants || []).map(p => ({
+          id: p.member_id || p.id,
+          name: p.display_name || p.guest_name || p.name,
+          isGuest: p.type === 'guest',
+        })),
         startTime: new Date(court.session.started_at).getTime(),
         endTime: new Date(court.session.scheduled_end_at).getTime(),
         timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
         duration: court.session.duration_minutes,
-      } : null,
-      block: court.block ? {
+      } : null;
+
+      // Transform block data
+      const block = court.block ? {
         id: court.block.id,
         type: court.block.type,
         title: court.block.title,
+        reason: court.block.title,
+        startTime: new Date(court.block.starts_at).getTime(),
         endTime: new Date(court.block.ends_at).getTime(),
-      } : null,
-    }));
+      } : null;
+
+      // Build legacy-compatible court object
+      // Legacy UI expects: court.current.endTime, court.current.players, court.endTime
+      return {
+        number: court.court_number,
+        id: court.court_id,
+        name: court.court_name,
+        status: court.status,
+        isAvailable: court.status === 'available',
+        isOccupied: !!court.session,
+        isBlocked: !!court.block,
+        // New API format
+        session,
+        block,
+        // Legacy format compatibility
+        current: session ? {
+          players: session.players,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          duration: session.duration,
+        } : null,
+        // Also add top-level for some legacy code paths
+        players: session?.players || [],
+        startTime: session?.startTime || block?.startTime,
+        endTime: session?.endTime || block?.endTime,
+        blocked: block ? {
+          startTime: block.startTime,
+          endTime: block.endTime,
+          reason: block.reason,
+        } : null,
+      };
+    });
   }
 
   _transformWaitlist(apiWaitlist) {
