@@ -102,7 +102,17 @@ const ClearCourtScreen = ({
     const court = courts.find(c => c.number === selectedCourtToClear) || courts[selectedCourtToClear - 1];
     // Get players from session.players (API format), current.players (legacy), or top-level players
     const players = court?.session?.players || court?.current?.players || court?.players || [];
-    const displayNames = players.map(p => TennisBusinessLogic.formatPlayerDisplayName(p.name)).join(" and ");
+
+    // Debug logging
+    console.log('🔍 ClearCourt Step 2 - selectedCourtToClear:', selectedCourtToClear);
+    console.log('🔍 ClearCourt Step 2 - court found:', court);
+    console.log('🔍 ClearCourt Step 2 - players array:', players);
+
+    // Handle players as array of strings or objects with name/displayName property
+    const displayNames = players.map(p => {
+      const name = typeof p === 'string' ? p : (p.name || p.displayName || p.display_name || 'Unknown');
+      return TennisBusinessLogic.formatPlayerDisplayName(name);
+    }).filter(Boolean).join(" and ");
 
     return (
       <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
