@@ -840,13 +840,19 @@ useEffect(() => {
     const onCta = (e) => {
       try {
         const d = e?.detail || {};
-        console.log('🎯 CTA event received:', d);
-        // Map event properties: live1/live2/first/second from API mode
-        // vs liveFirst/liveSecond/firstGroup/secondGroup from legacy mode
-        const live1 = d.live1 ?? d.liveFirst ?? false;
-        const live2 = d.live2 ?? d.liveSecond ?? false;
-        const firstGroup = d.first ?? d.firstGroup ?? null;
-        const secondGroup = d.second ?? d.secondGroup ?? null;
+
+        // Ignore old format from cta-live.js (has liveFirst/freeCourts instead of live1/live2)
+        if ('liveFirst' in d || 'freeCourts' in d) {
+          console.log('🎯 Ignoring old CTA format event:', d);
+          return;
+        }
+
+        console.log('🎯 CTA event received (API format):', d);
+        // API mode uses: live1/live2/first/second
+        const live1 = d.live1 ?? false;
+        const live2 = d.live2 ?? false;
+        const firstGroup = d.first ?? null;
+        const secondGroup = d.second ?? null;
 
         console.log('🎯 CTA state parsed:', { live1, live2, firstGroup, secondGroup });
         console.log('🎯 Setting CTA button state:', { canFirstGroupPlay: !!live1, canSecondGroupPlay: !!live2 });
