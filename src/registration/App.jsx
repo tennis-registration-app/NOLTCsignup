@@ -4199,6 +4199,14 @@ onFocus={() => {
         console.log("  - courtsToCheck:", courtsToCheck);
         console.log("  - availableCourtCount:", availableCourtCount);
         console.log("  - showSelectCourt:", showSelectCourt);
+        console.log('🎾 Selectable courts details:', courtsToCheck?.map(c => ({
+          number: c.number,
+          isUnoccupied: c.isUnoccupied,
+          isOvertime: c.isOvertime,
+          timeRemaining: c.timeRemaining,
+          status: c.status,
+          scheduledEndAt: c.session?.scheduledEndAt
+        })));
         
         return showSelectCourt;
       })() ? (
