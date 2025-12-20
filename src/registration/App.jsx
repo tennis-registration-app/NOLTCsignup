@@ -331,19 +331,19 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               live1: canFirstGroupPlay,
               live2: canSecondGroupPlay,
               first: firstGroup ? {
-                players: (firstGroup.participants || []).map((name, i) => ({
+                players: (firstGroup.players || []).map((p, i) => ({
                   id: `wl-${firstGroup.id}-${i}`,
-                  name: typeof name === 'string' ? name : name.name,
-                  memberNumber: String(firstGroup.position),
+                  name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
+                  memberNumber: typeof p === 'object' ? (p.member_number || String(firstGroup.position)) : String(firstGroup.position),
                 })),
                 id: firstGroup.id,
                 position: firstGroup.position,
               } : null,
               second: secondGroup ? {
-                players: (secondGroup.participants || []).map((name, i) => ({
+                players: (secondGroup.players || []).map((p, i) => ({
                   id: `wl-${secondGroup.id}-${i}`,
-                  name: typeof name === 'string' ? name : name.name,
-                  memberNumber: String(secondGroup.position),
+                  name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
+                  memberNumber: typeof p === 'object' ? (p.member_number || String(secondGroup.position)) : String(secondGroup.position),
                 })),
                 id: secondGroup.id,
                 position: secondGroup.position,
