@@ -389,8 +389,23 @@ class ApiTennisService {
       throw new Error(`Court ${courtNumber} not found`);
     }
 
-    // Handle both legacy format (clearReason) and new format (reason)
-    const endReason = options.clearReason || options.reason || 'completed';
+    // Map legacy clearReason to valid API end_reason values
+    // Valid API values: 'completed', 'cleared_early', 'admin_override'
+    const legacyReason = options.clearReason || options.reason || '';
+    let endReason = 'completed';
+
+    if (legacyReason) {
+      const reasonLower = String(legacyReason).toLowerCase();
+      if (reasonLower.includes('early') || reasonLower.includes('left') || reasonLower.includes('done') || reasonLower === 'cleared') {
+        endReason = 'cleared_early';
+      } else if (reasonLower.includes('observed') || reasonLower.includes('empty')) {
+        endReason = 'completed';
+      } else if (reasonLower.includes('admin') || reasonLower.includes('override') || reasonLower.includes('force')) {
+        endReason = 'admin_override';
+      }
+    }
+
+    console.log(`🔍 Clearing court ${courtNumber} with reason: ${endReason} (legacy: ${legacyReason})`);
 
     const result = await this.api.endSessionByCourt(court.id, endReason);
 

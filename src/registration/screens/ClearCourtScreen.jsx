@@ -97,8 +97,11 @@ const ClearCourtScreen = ({
 
   // Step 2: Confirm clearing method
   if (clearCourtStep === 2) {
-    const court = data.courts[selectedCourtToClear - 1];
-    const players = court?.current?.players || court?.players || [];
+    // Find court by number (API may return courts in different order than array index)
+    const courts = data.courts || [];
+    const court = courts.find(c => c.number === selectedCourtToClear) || courts[selectedCourtToClear - 1];
+    // Get players from session.players (API format), current.players (legacy), or top-level players
+    const players = court?.session?.players || court?.current?.players || court?.players || [];
     const displayNames = players.map(p => TennisBusinessLogic.formatPlayerDisplayName(p.name)).join(" and ");
 
     return (
