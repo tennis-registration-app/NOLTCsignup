@@ -562,13 +562,22 @@ class ApiTennisService {
       const existingId = player.id || player.memberId || player.member_id;
       const isUUID = existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
 
+      console.log(`🔵 [${traceId}] Player UUID check:`, {
+        existingId,
+        isUUID,
+        'player.accountId': player.accountId,
+        'player.account_id': player.account_id,
+      });
+
       if (isUUID) {
         memberId = existingId;
         accountId = player.accountId || player.account_id;
+        console.log(`🔵 [${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`);
       }
 
-      // If we don't have a UUID, look up by member_number
+      // If we don't have BOTH UUID and accountId, look up by member_number
       if (!memberId || !accountId) {
+        console.log(`🔵 [${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`);
         const memberNumber = player.memberNumber || player.member_number || player.id;
 
         if (memberNumber) {
