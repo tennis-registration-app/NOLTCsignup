@@ -274,19 +274,34 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         setData(updatedData);
 
-        // Compute available courts from API data
-        const available = courts.filter(c => c.isAvailable).map(c => c.number);
-        setAvailableCourts(available);
+        // Compute court categories using new availability flags
+        const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
+        const overtimeCourts = courts.filter(c => c.isOvertime);
+        const activeCourts = courts.filter(c => c.isActive);
+        const blockedCourts = courts.filter(c => c.isBlocked);
+
+        // Selectable courts: unoccupied first, then overtime if no unoccupied
+        let selectableCourts;
+        if (unoccupiedCourts.length > 0) {
+          selectableCourts = unoccupiedCourts;
+        } else if (overtimeCourts.length > 0) {
+          selectableCourts = overtimeCourts;
+        } else {
+          selectableCourts = []; // No courts available, show waitlist
+        }
+
+        const selectableNumbers = selectableCourts.map(c => c.number);
+        setAvailableCourts(selectableNumbers);
         setApiError(null);
 
         // Debug logging
-        console.log('🔍 Loaded courts:', courts.map(c => ({
-          number: c.number,
-          isAvailable: c.isAvailable,
-          hasSession: !!c.session,
-          status: c.status
-        })));
-        console.log('🔍 Available court numbers:', available);
+        console.log('🎾 Court categories:', {
+          unoccupied: unoccupiedCourts.map(c => c.number),
+          overtime: overtimeCourts.map(c => c.number),
+          active: activeCourts.map(c => c.number),
+          blocked: blockedCourts.map(c => c.number),
+          selectable: selectableNumbers,
+        });
 
         return updatedData;
       } else {
@@ -2268,22 +2283,48 @@ console.log('✅ Court assigned result:', result);
       
       // Calculate estimated wait time based on court end times
       if (USE_API_BACKEND) {
-        // API backend: use court session data directly
+        // API backend: use court session and block data directly
         try {
+          const now = currentTime.getTime();
+
+          // Collect end times from sessions and blocks (courts that are occupied/blocked)
           const courtEndTimes = data.courts
-            .filter(court => court && court.session && court.session.endTime)
-            .map(court => court.session.endTime)
+            .map(court => {
+              if (!court) return null;
+              // Session end time
+              if (court.session?.endTime && court.session.endTime > now) {
+                return court.session.endTime;
+              }
+              // Block end time (court is blocked)
+              if (court.block?.endTime && court.block.endTime > now) {
+                return court.block.endTime;
+              }
+              // Fallback: top-level endTime
+              if (court.endTime && court.endTime > now) {
+                return court.endTime;
+              }
+              return null;
+            })
+            .filter(endTime => endTime !== null)
             .sort((a, b) => a - b);
 
-          if (courtEndTimes.length === 0 && position === 1) {
-            estimatedWait = 0;
+          console.log('[SuccessScreen] Court end times:', courtEndTimes.map(t => new Date(t).toLocaleTimeString()));
+          console.log('[SuccessScreen] Position:', position, 'Courts with end times:', courtEndTimes.length);
+
+          if (courtEndTimes.length === 0) {
+            // No courts occupied - either available immediately or fallback to avg time
+            estimatedWait = position === 1 ? 0 : (position - 1) * CONSTANTS.AVG_GAME_TIME_MIN;
           } else if (position <= courtEndTimes.length) {
-            estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
+            // Position N means wait for the Nth court to free up
+            const waitMs = courtEndTimes[position - 1] - now;
+            estimatedWait = Math.max(0, Math.ceil(waitMs / 60000));
           } else {
-            // Estimate based on average game time
+            // More waitlist positions than courts - estimate additional cycles
             const avgGameTime = CONSTANTS.AVG_GAME_TIME_MIN;
-            const cyclesNeeded = Math.ceil(position / Math.max(courtEndTimes.length, 1));
-            estimatedWait = cyclesNeeded * avgGameTime;
+            const lastEndTime = courtEndTimes[courtEndTimes.length - 1];
+            const baseWait = Math.max(0, Math.ceil((lastEndTime - now) / 60000));
+            const extraCycles = Math.ceil((position - courtEndTimes.length) / Math.max(courtEndTimes.length, 1));
+            estimatedWait = baseWait + (extraCycles * avgGameTime);
           }
           console.log('[SuccessScreen] API estimated wait:', estimatedWait, 'minutes');
         } catch (e) {
@@ -3953,20 +3994,33 @@ onFocus={() => {
    const now = new Date();
 
    // For API backend, compute selectable from the transformed court data
+   // Uses new availability flags: isUnoccupied, isOvertime, isActive, isBlocked
    let selectable = [];
    if (USE_API_BACKEND) {
-     // API data already has isAvailable flag set correctly
-     selectable = (freshData.courts || [])
-       .filter(c => c.isAvailable)
-       .map(c => c.number);
-     console.log('[COURT SCREEN] API backend - available courts:', selectable);
+     const courts = freshData.courts || [];
+     // Compute court categories using new availability flags
+     const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
+     const overtimeCourts = courts.filter(c => c.isOvertime);
+
+     // Selectable: unoccupied first, then overtime if no unoccupied
+     if (unoccupiedCourts.length > 0) {
+       selectable = unoccupiedCourts.map(c => c.number);
+     } else if (overtimeCourts.length > 0) {
+       selectable = overtimeCourts.map(c => c.number);
+     }
+
+     console.log('[COURT SCREEN] API backend - court categories:', {
+       unoccupied: unoccupiedCourts.map(c => c.number),
+       overtime: overtimeCourts.map(c => c.number),
+       selectable
+     });
    } else {
      selectable = [...Av.getSelectableCourtsStrict({ data: freshData, now, blocks, wetSet })];
    }
 
    // Use React state for other operations
    const data = reactData;
-   
+
    const hasWaiters = (data.waitingGroups?.length || 0) > 0;
 
    // If user has waitlist priority, they should ONLY see FREE courts (not overtime)
@@ -3974,20 +4028,14 @@ onFocus={() => {
    let availableCourts = [];
    if (hasWaitlistPriority) {
      if (USE_API_BACKEND) {
-       // For API backend, use the already-computed selectable courts
-       // API data distinguishes available vs occupied via isAvailable flag
+       // For waitlist priority users, prefer unoccupied courts, fallback to overtime
        const courts = freshData.courts || [];
-       const freeCourts = courts.filter(c => c.isAvailable && !c.isBlocked).map(c => c.number);
-       const overtimeCourts = courts.filter(c => {
-         if (c.isAvailable || c.isBlocked) return false;
-         // Check if session is overtime (endTime in the past)
-         const endTime = c.current?.endTime || c.endTime;
-         return endTime && new Date(endTime) < now;
-       }).map(c => c.number);
+       const unoccupiedCourts = courts.filter(c => c.isUnoccupied).map(c => c.number);
+       const overtimeCourts = courts.filter(c => c.isOvertime).map(c => c.number);
 
-       if (freeCourts.length > 0) {
-         availableCourts = freeCourts;
-         console.log('[COURT SCREEN] API - Waitlist priority - FREE courts:', availableCourts);
+       if (unoccupiedCourts.length > 0) {
+         availableCourts = unoccupiedCourts;
+         console.log('[COURT SCREEN] API - Waitlist priority - UNOCCUPIED courts:', availableCourts);
        } else if (overtimeCourts.length > 0) {
          availableCourts = overtimeCourts;
          console.log('[COURT SCREEN] API - Waitlist priority - OVERTIME courts:', availableCourts);

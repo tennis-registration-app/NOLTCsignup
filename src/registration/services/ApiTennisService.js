@@ -167,6 +167,20 @@ class ApiTennisService {
         endTimeFormatted: formatCourtTime(court.block.ends_at),
       } : null;
 
+      // Determine court availability status
+      // - isUnoccupied: No session AND no block - always selectable first
+      // - isOvertime: Has session but time expired (timeRemaining <= 0) - selectable when no unoccupied
+      // - isActive: Has session with time remaining - never selectable
+      // - isBlocked: Has active block - never selectable
+      const hasSession = !!court.session;
+      const hasBlock = !!court.block;
+      const timeRemaining = session?.timeRemaining || 0;
+
+      const isUnoccupied = !hasSession && !hasBlock;
+      const isOvertime = hasSession && timeRemaining <= 0;
+      const isActive = hasSession && timeRemaining > 0;
+      const isBlocked = hasBlock;
+
       // Build legacy-compatible court object
       // Legacy UI expects: court.current.endTime, court.current.players, court.endTime
       return {
@@ -174,9 +188,14 @@ class ApiTennisService {
         id: court.court_id,
         name: court.court_name,
         status: court.status,
-        isAvailable: court.status === 'available',
-        isOccupied: !!court.session,
-        isBlocked: !!court.block,
+        // New availability flags
+        isUnoccupied,      // No session, no block - always selectable first
+        isOvertime,        // Has session but time expired - conditionally selectable
+        isActive,          // Has session with time remaining - never selectable
+        isBlocked,         // Has active block - never selectable
+        // Legacy compatibility
+        isAvailable: isUnoccupied, // Legacy: true if unoccupied (for backward compat)
+        isOccupied: hasSession,
         // New API format
         session,
         block,
