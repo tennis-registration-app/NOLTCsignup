@@ -278,6 +278,15 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setAvailableCourts(available);
         setApiError(null);
 
+        // Debug logging
+        console.log('🔍 Loaded courts:', courts.map(c => ({
+          number: c.number,
+          isAvailable: c.isAvailable,
+          hasSession: !!c.session,
+          status: c.status
+        })));
+        console.log('🔍 Available court numbers:', available);
+
         return updatedData;
       } else {
         // Legacy localStorage loading
@@ -3809,38 +3818,69 @@ onFocus={() => {
  if (currentScreen === "court") {
    // When a group has already been assigned a court, treat it like changing courts
    const isSelectingDifferentCourt = isChangingCourt || hasAssignedCourt;
-   
-   // Use fresh data from storage, not cached React state, to avoid data inconsistency
+
+   // Get court data - use React state for API backend, localStorage for legacy
    const Av = Tennis.Domain.availability;
    const S = Tennis.Storage;
-   const freshData = S.readDataSafe(); // Read fresh data from storage
-   const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
+   const reactData = getCourtData();
+
+   // For API backend, use React state which has the API data
+   // For legacy, read fresh from localStorage
+   const freshData = USE_API_BACKEND ? reactData : S.readDataSafe();
+   const blocks = USE_API_BACKEND ? [] : (S.readJSON(S.STORAGE.BLOCKS) || []);
    const wetSet = new Set();
    const now = new Date();
 
-   const selectable = [...Av.getSelectableCourtsStrict({ data: freshData, now, blocks, wetSet })];
-   
-   // Use cached React state for other operations that don't need real-time accuracy
-   const data = getCourtData();
+   // For API backend, compute selectable from the transformed court data
+   let selectable = [];
+   if (USE_API_BACKEND) {
+     // API data already has isAvailable flag set correctly
+     selectable = (freshData.courts || [])
+       .filter(c => c.isAvailable)
+       .map(c => c.number);
+     console.log('[COURT SCREEN] API backend - available courts:', selectable);
+   } else {
+     selectable = [...Av.getSelectableCourtsStrict({ data: freshData, now, blocks, wetSet })];
+   }
+
+   // Use React state for other operations
+   const data = reactData;
    
    const hasWaiters = (data.waitingGroups?.length || 0) > 0;
-   
+
    // If user has waitlist priority, they should ONLY see FREE courts (not overtime)
    // Otherwise, only show courts when no one is waiting
    let availableCourts = [];
    if (hasWaitlistPriority) {
-     // Waitlist priority users follow the same rules as everyone else:
-     // - Free courts first
-     // - Overtime courts when no free courts available
-     const info = Av?.getFreeCourtsInfo ? Av.getFreeCourtsInfo({ data: freshData, now: new Date(), blocks, wetSet: new Set() }) : { free: [], overtime: [] };
-     if (info.free && info.free.length > 0) {
-       // If free courts exist, show only free courts
-       availableCourts = info.free;
-       console.log('[COURT SCREEN] Waitlist priority - FREE courts available:', availableCourts);
-     } else if (info.overtime && info.overtime.length > 0) {
-       // If no free courts, show overtime courts
-       availableCourts = info.overtime;
-       console.log('[COURT SCREEN] Waitlist priority - Only OVERTIME courts available:', availableCourts);
+     if (USE_API_BACKEND) {
+       // For API backend, use the already-computed selectable courts
+       // API data distinguishes available vs occupied via isAvailable flag
+       const courts = freshData.courts || [];
+       const freeCourts = courts.filter(c => c.isAvailable && !c.isBlocked).map(c => c.number);
+       const overtimeCourts = courts.filter(c => {
+         if (c.isAvailable || c.isBlocked) return false;
+         // Check if session is overtime (endTime in the past)
+         const endTime = c.current?.endTime || c.endTime;
+         return endTime && new Date(endTime) < now;
+       }).map(c => c.number);
+
+       if (freeCourts.length > 0) {
+         availableCourts = freeCourts;
+         console.log('[COURT SCREEN] API - Waitlist priority - FREE courts:', availableCourts);
+       } else if (overtimeCourts.length > 0) {
+         availableCourts = overtimeCourts;
+         console.log('[COURT SCREEN] API - Waitlist priority - OVERTIME courts:', availableCourts);
+       }
+     } else {
+       // Legacy localStorage path
+       const info = Av?.getFreeCourtsInfo ? Av.getFreeCourtsInfo({ data: freshData, now: new Date(), blocks, wetSet: new Set() }) : { free: [], overtime: [] };
+       if (info.free && info.free.length > 0) {
+         availableCourts = info.free;
+         console.log('[COURT SCREEN] Waitlist priority - FREE courts available:', availableCourts);
+       } else if (info.overtime && info.overtime.length > 0) {
+         availableCourts = info.overtime;
+         console.log('[COURT SCREEN] Waitlist priority - Only OVERTIME courts available:', availableCourts);
+       }
      }
    } else if (!hasWaiters && selectable.length > 0) {
      // Normal users get all selectable courts when no waitlist
