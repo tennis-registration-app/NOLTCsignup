@@ -125,11 +125,20 @@
     }
   };
 
-  // Initial run
-  try { window.recomputeCtaLive(); } catch {}
+  // Initial run (only if not using API backend)
+  try {
+    if (!window.NOLTC_USE_API_BACKEND) {
+      window.recomputeCtaLive();
+    }
+  } catch {}
 
-  // Event sources + heartbeat
+  // Event sources + heartbeat (only if not using API backend)
   (function attachCtaListeners(){
+    // Skip all listeners if API backend - App.jsx handles CTA events
+    if (window.NOLTC_USE_API_BACKEND) {
+      return;
+    }
+
     const onUpdate = () => { try { window.recomputeCtaLive(); } catch {} };
 
     window.addEventListener('tennisDataUpdate', onUpdate, { passive: true });
@@ -150,4 +159,14 @@
     window.__ctaLiveTimer = setInterval(onUpdate, 2000);
     window.addEventListener('beforeunload', () => { try { clearInterval(window.__ctaLiveTimer); } catch {} }, { once: true });
   })();
+
+  // Expose function to stop cta-live from App.jsx
+  window.stopCtaLive = function() {
+    try {
+      if (window.__ctaLiveTimer) {
+        clearInterval(window.__ctaLiveTimer);
+        window.__ctaLiveTimer = null;
+      }
+    } catch {}
+  };
 })();

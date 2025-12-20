@@ -60,6 +60,10 @@ const USE_API_BACKEND = true;
 // Set global flag for cta-live.js to check
 if (USE_API_BACKEND) {
   window.NOLTC_USE_API_BACKEND = true;
+  // Stop any running cta-live interval (in case it started before flag was set)
+  if (typeof window.stopCtaLive === 'function') {
+    window.stopCtaLive();
+  }
 }
 
 // Import utility functions
@@ -836,6 +840,7 @@ useEffect(() => {
         const secondGroup = d.second ?? d.secondGroup ?? null;
 
         console.log('🎯 CTA state parsed:', { live1, live2, firstGroup, secondGroup });
+        console.log('🎯 Setting CTA button state:', { canFirstGroupPlay: !!live1, canSecondGroupPlay: !!live2 });
 
         setCanFirstGroupPlay(!!live1);
         setCanSecondGroupPlay(!!live2);

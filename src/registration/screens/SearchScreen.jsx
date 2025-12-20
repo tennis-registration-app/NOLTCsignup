@@ -61,6 +61,7 @@ const SearchScreen = ({
   isMobileView,
   CONSTANTS
 }) => {
+  console.log('🎯 SearchScreen props:', { canFirstGroupPlay, canSecondGroupPlay, firstWaitingGroup, secondWaitingGroup });
   return (
     <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
       <ToastHost />
