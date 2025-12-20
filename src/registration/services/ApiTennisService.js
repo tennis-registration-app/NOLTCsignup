@@ -463,35 +463,131 @@ class ApiTennisService {
   }
 
   async addToWaitlist(players, options = {}) {
-    // Transform players to API format
-    const participants = players.map(player => {
+    console.log('🔍 [addToWaitlist] Input players:', players);
+    console.log('🔍 [addToWaitlist] Options:', options);
+
+    // Transform players to API format (same logic as assignCourt)
+    const participants = await Promise.all(players.map(async (player) => {
+      let memberId = null;
+      let accountId = null;
+
+      // Check if this is a guest
       if (player.isGuest || player.type === 'guest') {
         return {
           type: 'guest',
-          guest_name: player.name || player.guest_name,
-          account_id: player.chargedToAccountId || player.account_id,
-        };
-      } else {
-        return {
-          type: 'member',
-          member_id: player.id || player.member_id,
-          account_id: player.accountId || player.account_id,
+          guest_name: player.name || player.displayName || player.guest_name || 'Guest',
+          account_id: '__NEEDS_ACCOUNT__',
         };
       }
-    });
+
+      // Try to get existing IDs if they're UUIDs
+      const existingId = player.id || player.memberId || player.member_id;
+      const isUUID = existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
+
+      if (isUUID) {
+        memberId = existingId;
+        accountId = player.accountId || player.account_id;
+      }
+
+      // If we don't have a UUID, look up by member_number
+      if (!memberId || !accountId) {
+        const memberNumber = player.memberNumber || player.member_number || player.id;
+
+        if (memberNumber) {
+          try {
+            console.log(`🔍 [addToWaitlist] Looking up member_number: ${memberNumber}`);
+            const result = await this.api.getMembersByAccount(String(memberNumber));
+            const members = result.members || [];
+
+            let member = members.find(m =>
+              m.display_name?.toLowerCase() === player.name?.toLowerCase()
+            );
+
+            if (!member && members.length > 0) {
+              member = members[0];
+            }
+
+            if (member) {
+              memberId = member.id;
+              accountId = member.account_id;
+              console.log(`✅ [addToWaitlist] Found member: ${player.name} -> ${memberId}`);
+            }
+          } catch (e) {
+            console.error('[addToWaitlist] Error looking up member:', e);
+          }
+        }
+      }
+
+      // Fallback: search by name
+      if (!memberId || !accountId) {
+        try {
+          const searchName = player.name || player.displayName;
+          if (searchName) {
+            console.log(`🔍 [addToWaitlist] Searching by name: ${searchName}`);
+            const result = await this.api.getMembers(searchName);
+            const members = result.members || [];
+            const member = members.find(m =>
+              m.display_name?.toLowerCase() === searchName.toLowerCase()
+            );
+            if (member) {
+              memberId = member.id;
+              accountId = member.account_id;
+              console.log(`✅ [addToWaitlist] Found by name: ${searchName} -> ${memberId}`);
+            }
+          }
+        } catch (e) {
+          console.error('[addToWaitlist] Error searching by name:', e);
+        }
+      }
+
+      if (!memberId || !accountId) {
+        console.error('[addToWaitlist] Could not resolve member:', player);
+        throw new Error(`Could not find member in database: ${player.name} (${player.memberNumber || player.id})`);
+      }
+
+      return {
+        type: 'member',
+        member_id: memberId,
+        account_id: accountId,
+      };
+    }));
+
+    // Handle guests needing account
+    const memberWithAccount = participants.find(p => p.type === 'member' && p.account_id);
+    if (memberWithAccount) {
+      participants.forEach(p => {
+        if (p.account_id === '__NEEDS_ACCOUNT__') {
+          p.account_id = memberWithAccount.account_id;
+        }
+      });
+    }
 
     const groupType = options.type || options.groupType ||
       (participants.length <= 2 ? 'singles' : 'doubles');
 
-    const result = await this.api.joinWaitlist(groupType, participants);
+    console.log('🔍 [addToWaitlist] Calling API with:', { groupType, participants });
 
-    // Refresh waitlist
-    await this.refreshWaitlist();
+    try {
+      const result = await this.api.joinWaitlist(groupType, participants);
+      console.log('🔍 [addToWaitlist] API response:', JSON.stringify(result, null, 2));
 
-    return {
-      success: true,
-      waitlist: result.waitlist,
-    };
+      // Refresh waitlist and log it
+      await this.refreshWaitlist();
+      console.log('🔍 [addToWaitlist] Waitlist after refresh:', this.waitlistData?.waitlist?.length, 'entries');
+
+      // Extract position from API response
+      const position = result.waitlist?.position || 1;
+      console.log('🔍 [addToWaitlist] Extracted position:', position);
+
+      return {
+        success: true,
+        waitlist: result.waitlist,
+        position: position,
+      };
+    } catch (error) {
+      console.error('🔍 [addToWaitlist] API error:', error);
+      throw error;
+    }
   }
 
   async removeFromWaitlist(waitlistId) {

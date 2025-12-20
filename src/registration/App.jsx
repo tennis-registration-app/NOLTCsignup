@@ -242,6 +242,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [currentScreen, setCurrentScreen] = useState("welcome");
   const [availableCourts, setAvailableCourts] = useState([]);
   const [apiError, setApiError] = useState(null);
+  const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
 
   // Get the appropriate data service based on USE_API_BACKEND flag
   const getDataService = useCallback(() => {
@@ -333,13 +334,19 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     let updateTimeout = null;
     
     const handleStorageUpdate = async (event) => {
+      // Skip localStorage-based updates when using API backend
+      if (USE_API_BACKEND) {
+        dbg('Skipping localStorage update - using API backend');
+        return;
+      }
+
       if (event.detail && event.detail.key === TENNIS_CONFIG.STORAGE.KEY) {
         // Don't trigger updates if we're in the middle of a screen transition
         if (currentScreen === "search" || currentScreen === "group") {
           console.log('Skipping storage update during screen transition');
           return;
         }
-        
+
         // Clear any pending update and debounce
         clearTimeout(updateTimeout);
         updateTimeout = setTimeout(async () => {
@@ -351,6 +358,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
 
     const handleStorageEvent = async (event) => {
+      // Skip localStorage events when using API backend
+      if (USE_API_BACKEND) {
+        dbg('Skipping storage event - using API backend');
+        return;
+      }
+
       // Handle storage events from localStorage changes
       if (event.key === TENNIS_CONFIG.STORAGE.KEY && event.newValue) {
         // Don't trigger updates if we're in the middle of a screen transition
@@ -358,7 +371,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           dbg('Skipping localStorage update during screen transition');
           return;
         }
-        
+
         // Clear any pending update and debounce
         clearTimeout(updateTimeout);
         updateTimeout = setTimeout(async () => {
@@ -501,28 +514,37 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   }, []);
 
   // Update available courts only - CTA state now handled by cta:state event
+  // NOTE: Skip this when using API backend - availableCourts is set by loadData()
   useEffect(() => {
+    // When using API backend, don't overwrite availableCourts with localStorage data
+    if (USE_API_BACKEND) {
+      if (DEBUG) {
+        console.log("useEffect: Skipping localStorage court update - using API backend");
+      }
+      return;
+    }
+
     const updateAvailableCourts = () => {
       try {
         if (DEBUG) {
-          console.log("useEffect: Updating available courts...");
+          console.log("useEffect: Updating available courts from localStorage...");
         }
-        
+
         // Use the new gating logic - this useEffect is now mainly for updating available courts
         const courts = getAvailableCourts(false);
         if (DEBUG) {
           console.log("useEffect: Available courts from getAvailableCourts:", courts);
         }
         setAvailableCourts(courts);
-        
-        // NOTE: CTA state (canFirstGroupPlay, canSecondGroupPlay, etc.) is now 
+
+        // NOTE: CTA state (canFirstGroupPlay, canSecondGroupPlay, etc.) is now
         // managed by the cta:state event listener above, not here
       } catch (error) {
         console.error('Error updating available courts:', error);
         setAvailableCourts([]);
       }
     };
-    
+
     updateAvailableCourts();
   }, [currentScreen]); // Re-run when screen changes
 
@@ -1147,7 +1169,14 @@ const checkLocationAndProceed = async (onSuccess) => {
   }, [showSuccess, justAssignedCourt]);
 
   // Update available courts when current group changes
+  // NOTE: Skip this when using API backend - availableCourts is set by loadData()
   useEffect(() => {
+    // When using API backend, don't overwrite availableCourts with localStorage data
+    if (USE_API_BACKEND) {
+      console.log("useEffect (currentGroup): Skipping localStorage update - using API backend");
+      return;
+    }
+
     const updateAvailableCourts = () => {
       try {
         const data = getCourtData();
@@ -1156,21 +1185,21 @@ const checkLocationAndProceed = async (onSuccess) => {
           const courtNumber = index + 1;
           const blockStatus = getCourtBlockStatus(courtNumber);
           if (blockStatus && blockStatus.isCurrent) return false;
-          
+
           return !court || court.wasCleared || (court.current === null && court.history) ||
-                 ((!court.players || court.players.length === 0) && 
+                 ((!court.players || court.players.length === 0) &&
                   (!court.current || !court.current.players || court.current.players.length === 0));
         });
-        
+
         // If there are available courts but no unoccupied courts, these must be overtime courts
         const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
-        
+
         console.log("🔍 useEffect (currentGroup) DEBUG:");
         console.log("  - tempAvailableCourts:", tempAvailableCourts);
         console.log("  - hasUnoccupiedCourts:", hasUnoccupiedCourts);
         console.log("  - shouldBypassWaitlistPriority:", shouldBypassWaitlistPriority);
         console.log("  - waitlist length:", data.waitingGroups.length);
-        
+
         // Use the synchronous getAvailableCourts function with appropriate priority setting
         const courts = getAvailableCourts(!shouldBypassWaitlistPriority);
         console.log("useEffect (currentGroup): Available courts:", courts);
@@ -1187,7 +1216,14 @@ const checkLocationAndProceed = async (onSuccess) => {
   }, [currentGroup]);
 
   // Wire up event listeners for availability updates (once only)
+  // NOTE: Skip this when using API backend - these events update from localStorage
   useEffect(() => {
+    // When using API backend, don't wire up localStorage-based event listeners
+    if (USE_API_BACKEND) {
+      console.log("useEffect: Skipping localStorage event listeners - using API backend");
+      return;
+    }
+
     if (!window.__wiredAvailabilityEvents) {
       const refreshAvailability = () => {
         // This is called by both events, reusing the existing updateAvailableCourts logic
@@ -1200,11 +1236,11 @@ const checkLocationAndProceed = async (onSuccess) => {
                 const courtNumber = index + 1;
                 const blockStatus = getCourtBlockStatus(courtNumber);
                 if (blockStatus && blockStatus.isCurrent) return false;
-                
+
                 return !court || court.wasCleared || (court.current === null && court.history) ||
                   (court.history && court.history.length > 0 && (!court.players || court.players.length === 0));
               });
-              
+
               if (hasUnoccupiedCourts) {
                 setAvailableCourts(tempAvailableCourts);
               } else {
@@ -1218,7 +1254,7 @@ const checkLocationAndProceed = async (onSuccess) => {
           updateAvailableCourts();
         }
       };
-      
+
       window.addEventListener('tennisDataUpdate', refreshAvailability);
       window.addEventListener('DATA_UPDATED', refreshAvailability);
       window.addEventListener('BLOCKS_UPDATED', refreshAvailability, { passive: true });
@@ -1812,7 +1848,9 @@ console.log('✅ Court assigned result:', result);
       console.log('[waitlist] Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
 
       const res = await waitlistService.addToWaitlist(players, { guests });
-      console.log('[waitlist] service result:', res);
+      console.log('[waitlist] service result:', JSON.stringify(res, null, 2));
+      console.log('[waitlist] res.position:', res?.position);
+      console.log('[waitlist] res.waitlist?.position:', res?.waitlist?.position);
 
       // Read back fresh storage to confirm persistence (only for localStorage backend)
       const after = !USE_API_BACKEND ? window.WaitlistUtils?.readDataSafe?.() : null;
@@ -1820,6 +1858,11 @@ console.log('✅ Court assigned result:', result);
       console.log('[waitlist] persisted length now:', len);
 
       if (res && res.success) {
+        // Store the position from API response for the success screen
+        if (USE_API_BACKEND && res.position) {
+          setWaitlistPosition(res.position);
+          console.log('[waitlist] API position:', res.position);
+        }
         // (Optional) simple toast, rely on events for UI refresh
         Tennis?.UI?.toast?.(`Added to waiting list (position ${res.position})`, { type: 'success' });
         console.debug('[waitlist] joined ok');
@@ -1852,6 +1895,7 @@ console.log('✅ Court assigned result:', result);
     setAddPlayerSearch("");
     setShowAddPlayerSuggestions(false);
     setHasWaitlistPriority(false);
+    setWaitlistPosition(0); // Reset API waitlist position
     setSelectedCourtToClear(null);
     setClearCourtStep(1);
     setIsChangingCourt(false);
@@ -2213,54 +2257,86 @@ console.log('✅ Court assigned result:', result);
     let estimatedWait = 0;
     let position = 0;
     if (!isCourtAssignment) {
-      // Position in queue - they were just added so they're last
-      position = data.waitingGroups.length;
+      // Position in queue - use API position if available, otherwise count from state
+      if (USE_API_BACKEND && waitlistPosition > 0) {
+        position = waitlistPosition;
+        console.log('[SuccessScreen] Using API waitlist position:', position);
+      } else {
+        position = data.waitingGroups.length;
+        console.log('[SuccessScreen] Using state waitlist length as position:', position);
+      }
       
-      // Use the same domain-based calculation as CourtBoard
-      try {
-        const Avail = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
-        const Wait = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
-        const Storage = window.Tennis.Storage;
-        
-        const now = new Date();
-        const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
-        const wetSet = new Set(
-          blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-                .map(b => b.courtNumber)
-        );
-        
-        // Get availability info same as CourtBoard
-        const nextTimes = Avail.getNextFreeTimes({ data, now, blocks });
-        const info = Avail.getFreeCourtsInfo({ data, now, blocks, wetSet });
-        
-        // Calculate wait time using proper domain logic
-        const etas = Wait.estimateWaitForPositions({
-          positions: [position],
-          currentFreeCount: info.free.length,
-          nextFreeTimes: nextTimes,
-          avgGameMinutes: CONSTANTS.AVG_GAME_TIME_MIN
-        });
-        
-        estimatedWait = etas[0] || 0;
-      } catch (e) {
-        console.error('Error calculating wait time:', e);
-        // Fallback to simple calculation if domain logic fails
-        const courtEndTimes = data.courts
-          .filter(court => court && court.current && new Date(court.current.endTime) >= currentTime)
-          .map(court => new Date(court.current.endTime).getTime())
-          .sort((a, b) => a - b);
-        
-        if (courtEndTimes.length === 0 && position === 1) {
-          estimatedWait = 0;
-        } else if (position <= courtEndTimes.length) {
-          estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
-        } else {
-          estimatedWait = TennisBusinessLogic.calculateEstimatedWaitTime(
-            position, 
-            data.courts, 
-            currentTime, 
-            CONSTANTS.AVG_GAME_TIME_MIN
+      // Calculate estimated wait time based on court end times
+      if (USE_API_BACKEND) {
+        // API backend: use court session data directly
+        try {
+          const courtEndTimes = data.courts
+            .filter(court => court && court.session && court.session.endTime)
+            .map(court => court.session.endTime)
+            .sort((a, b) => a - b);
+
+          if (courtEndTimes.length === 0 && position === 1) {
+            estimatedWait = 0;
+          } else if (position <= courtEndTimes.length) {
+            estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
+          } else {
+            // Estimate based on average game time
+            const avgGameTime = CONSTANTS.AVG_GAME_TIME_MIN;
+            const cyclesNeeded = Math.ceil(position / Math.max(courtEndTimes.length, 1));
+            estimatedWait = cyclesNeeded * avgGameTime;
+          }
+          console.log('[SuccessScreen] API estimated wait:', estimatedWait, 'minutes');
+        } catch (e) {
+          console.error('Error calculating wait time:', e);
+          estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
+        }
+      } else {
+        // localStorage backend: use domain-based calculation
+        try {
+          const Avail = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+          const Wait = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
+          const Storage = window.Tennis.Storage;
+
+          const now = new Date();
+          const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
+          const wetSet = new Set(
+            blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+                  .map(b => b.courtNumber)
           );
+
+          // Get availability info same as CourtBoard
+          const nextTimes = Avail.getNextFreeTimes({ data, now, blocks });
+          const info = Avail.getFreeCourtsInfo({ data, now, blocks, wetSet });
+
+          // Calculate wait time using proper domain logic
+          const etas = Wait.estimateWaitForPositions({
+            positions: [position],
+            currentFreeCount: info.free.length,
+            nextFreeTimes: nextTimes,
+            avgGameMinutes: CONSTANTS.AVG_GAME_TIME_MIN
+          });
+
+          estimatedWait = etas[0] || 0;
+        } catch (e) {
+          console.error('Error calculating wait time:', e);
+          // Fallback to simple calculation if domain logic fails
+          const courtEndTimes = data.courts
+            .filter(court => court && court.current && new Date(court.current.endTime) >= currentTime)
+            .map(court => new Date(court.current.endTime).getTime())
+            .sort((a, b) => a - b);
+
+          if (courtEndTimes.length === 0 && position === 1) {
+            estimatedWait = 0;
+          } else if (position <= courtEndTimes.length) {
+            estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
+          } else {
+            estimatedWait = TennisBusinessLogic.calculateEstimatedWaitTime(
+              position,
+              data.courts,
+              currentTime,
+              CONSTANTS.AVG_GAME_TIME_MIN
+            );
+          }
         }
       }
     }
@@ -3733,8 +3809,14 @@ onFocus={() => {
     <div className={isMobileView ? 'flex-1 flex justify-center' : ''}>
       {(() => {
         // Check if there's a waitlist and if this group is not the first waiting group
-        const data = Tennis.Storage.readDataSafe();
-        const waitingGroups = data?.waitingGroups || [];
+        // When using API backend, use React state; otherwise use localStorage
+        let waitingGroups;
+        if (USE_API_BACKEND) {
+          waitingGroups = data?.waitingGroups || [];
+        } else {
+          const storageData = Tennis.Storage.readDataSafe();
+          waitingGroups = storageData?.waitingGroups || [];
+        }
         const hasWaitlist = waitingGroups.length > 0;
         
         // Check if current group is in the allowed positions (1st or 2nd when 2+ courts)
@@ -3747,15 +3829,23 @@ onFocus={() => {
         }
         
         // Calculate available courts for this group
-        // For new groups not on waitlist: use standard selectable (includes overtime)
-        // For waitlist groups: use appropriate logic based on position
-        const availableCourts = groupWaitlistPosition === 0 
-          ? getAvailableCourts(false)  // New group - includes overtime courts
-          : getAvailableCourts(true);  // Waitlist group - free courts only
-        
+        // When using API backend, use the availableCourts state (already set from API data)
+        // When using localStorage, use getAvailableCourts() function
+        let courtsToCheck;
+        if (USE_API_BACKEND) {
+          // Use state variable that was set from API data in loadData()
+          courtsToCheck = availableCourts;
+        } else {
+          // For new groups not on waitlist: use standard selectable (includes overtime)
+          // For waitlist groups: use appropriate logic based on position
+          courtsToCheck = groupWaitlistPosition === 0
+            ? getAvailableCourts(false)  // New group - includes overtime courts
+            : getAvailableCourts(true);  // Waitlist group - free courts only
+        }
+
         // Check if there are actually any courts available to select
-        const hasAvailableCourts = availableCourts && availableCourts.length > 0;
-        const availableCourtCount = availableCourts?.length || 0;
+        const hasAvailableCourts = courtsToCheck && courtsToCheck.length > 0;
+        const availableCourtCount = courtsToCheck?.length || 0;
         
         // Show "Select a Court" if:
         // 1. No waitlist and courts available OR
@@ -3768,11 +3858,13 @@ onFocus={() => {
         );
         
         console.log("🎯 GROUP SCREEN BUTTON DEBUG:");
+        console.log("  - USE_API_BACKEND:", USE_API_BACKEND);
         console.log("  - waitingGroups.length:", waitingGroups.length);
         console.log("  - hasWaitlist:", hasWaitlist);
         console.log("  - groupWaitlistPosition:", groupWaitlistPosition);
         console.log("  - hasAvailableCourts:", hasAvailableCourts);
-        console.log("  - availableCourts.length:", availableCourts?.length || 0);
+        console.log("  - courtsToCheck:", courtsToCheck);
+        console.log("  - availableCourtCount:", availableCourtCount);
         console.log("  - showSelectCourt:", showSelectCourt);
         
         return showSelectCourt;
