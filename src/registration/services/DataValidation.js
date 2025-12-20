@@ -21,9 +21,16 @@ export const DataValidation = {
   },
 
   isValidPlayer(player) {
+    // ID can be:
+    // - A number (legacy hardcoded data)
+    // - A numeric string like "1021" (legacy)
+    // - A UUID string like "4f3a4213-4c17-44e1-aeea-1ac0276bcfa2" (API backend)
+    const hasValidId = typeof player.id === 'number' ||
+                       (typeof player.id === 'string' && player.id.length > 0);
+
     return player &&
            typeof player === 'object' &&
-           (typeof player.id === 'number' || (typeof player.id === 'string' && !isNaN(Number(player.id)))) &&
+           hasValidId &&
            typeof player.name === 'string' &&
            player.name.trim().length > 0;
   },
