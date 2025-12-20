@@ -48,6 +48,7 @@ const SearchScreen = ({
   setCurrentGroup,
   setMemberNumber,
   setHasWaitlistPriority,
+  setCurrentWaitlistEntryId,
   findMemberNumber,
   canFirstGroupPlay,
   canSecondGroupPlay,
@@ -141,9 +142,12 @@ const SearchScreen = ({
               const firstPlayerMemberNum = findMemberNumber(firstWaitingGroup.players[0].id);
               setMemberNumber(firstPlayerMemberNum);
 
-              // Set waitlist priority flag
-              console.log('[COURT AVAILABLE BUTTON] Setting waitlist priority');
+              // Set waitlist priority flag and store entry ID for assignFromWaitlist
+              console.log('[COURT AVAILABLE BUTTON] Setting waitlist priority, entryId:', firstWaitingGroup?.id);
               setHasWaitlistPriority(true);
+              if (setCurrentWaitlistEntryId && firstWaitingGroup?.id) {
+                setCurrentWaitlistEntryId(firstWaitingGroup.id);
+              }
 
               // Navigate to court selection
               setCurrentScreen("court");
@@ -173,9 +177,12 @@ const SearchScreen = ({
               const firstPlayerMemberNum = findMemberNumber(secondWaitingGroup.players[0].id);
               setMemberNumber(firstPlayerMemberNum);
 
-              // Set waitlist priority flag
-              console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Setting waitlist priority');
+              // Set waitlist priority flag and store entry ID for assignFromWaitlist
+              console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Setting waitlist priority, entryId:', secondWaitingGroup?.id);
               setHasWaitlistPriority(true);
+              if (setCurrentWaitlistEntryId && secondWaitingGroup?.id) {
+                setCurrentWaitlistEntryId(secondWaitingGroup.id);
+              }
 
               // Navigate to court selection
               setCurrentScreen("court");

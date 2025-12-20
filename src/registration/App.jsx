@@ -803,6 +803,7 @@ useEffect(() => {
   const [moveToCourtNum, setMoveToCourtNum] = useState(null);
   const [hasAssignedCourt, setHasAssignedCourt] = useState(false);
   const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
+  const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
 
   const [waitlistMoveFrom, setWaitlistMoveFrom] = useState(null);
   const [showGuestForm, setShowGuestForm] = useState(false);
@@ -1770,6 +1771,55 @@ if (!dataService?.assignCourt) {
   return;
 }
 
+// If this is a waitlist group (CTA flow), use assignFromWaitlist instead
+if (USE_API_BACKEND && currentWaitlistEntryId) {
+  console.log('🎯 Using assignFromWaitlist for waitlist group:', currentWaitlistEntryId, 'to court:', courtNumber);
+  try {
+    const result = await dataService.assignFromWaitlist(currentWaitlistEntryId, courtNumber);
+    console.log('✅ Waitlist group assigned result:', result);
+
+    // Clear the waitlist entry ID after successful assignment
+    setCurrentWaitlistEntryId(null);
+    setHasWaitlistPriority(false);
+
+    // Refresh data
+    await loadData();
+    console.log('✅ Data refreshed after waitlist assignment');
+
+    // Update UI state
+    setJustAssignedCourt(courtNumber);
+    setReplacedGroup(null);
+    setOriginalCourtData(null);
+    setIsChangingCourt(false);
+    setWasOvertimeCourt(false);
+    setHasAssignedCourt(true);
+    setCanChangeCourt(false); // Waitlist groups typically don't get court change option
+    setShowSuccess(true);
+
+    // Mobile: notify parent on success
+    if (window.__mobileSuccessHandler) {
+      window.__mobileSuccessHandler(courtNumber);
+    }
+    if (window.UI?.__mobileSendSuccess__) {
+      window.UI.__mobileSendSuccess__();
+    }
+
+    // Auto-reset timer
+    if (!window.__mobileFlow) {
+      setTimeout(() => {
+        resetForm();
+      }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+    }
+
+    return;
+  } catch (error) {
+    console.error('❌ assignFromWaitlist failed:', error);
+    setCurrentWaitlistEntryId(null);
+    Tennis.UI.toast(error.message || 'Failed to assign court from waitlist');
+    return;
+  }
+}
+
 // Call service with canonical object (NOT an array and NOT a single player object)
 const result = await dataService.assignCourt(courtNumber, group, duration);
 console.log('✅ Court assigned result:', result);
@@ -2000,6 +2050,7 @@ console.log('✅ Court assigned result:', result);
     setAddPlayerSearch("");
     setShowAddPlayerSuggestions(false);
     setHasWaitlistPriority(false);
+    setCurrentWaitlistEntryId(null); // Clear waitlist entry ID
     setWaitlistPosition(0); // Reset API waitlist position
     setSelectedCourtToClear(null);
     setClearCourtStep(1);
@@ -3308,6 +3359,7 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
        setCurrentGroup={setCurrentGroup}
        setMemberNumber={setMemberNumber}
        setHasWaitlistPriority={setHasWaitlistPriority}
+       setCurrentWaitlistEntryId={setCurrentWaitlistEntryId}
        findMemberNumber={findMemberNumber}
        canFirstGroupPlay={canFirstGroupPlay}
        canSecondGroupPlay={canSecondGroupPlay}
