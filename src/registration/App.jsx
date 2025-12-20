@@ -293,7 +293,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Store API members for autocomplete search
         if (initialData.members && Array.isArray(initialData.members)) {
           console.log('🔵 Loaded', initialData.members.length, 'members from API');
+          console.log('🔵 First 3 members:', initialData.members.slice(0, 3).map(m => m.display_name));
           setApiMembers(initialData.members);
+        } else {
+          console.error('❌ No members returned from API!', initialData);
         }
 
         // Compute court categories using new availability flags
@@ -2315,8 +2318,14 @@ console.log('✅ Court assigned result:', result);
     const suggestions = [];
     const lowerInput = input.toLowerCase();
 
-    // Use API members when API backend is enabled
-    if (USE_API_BACKEND && apiMembers.length > 0) {
+    // When API backend is enabled, ONLY use API members - never fall back to hardcoded data
+    if (USE_API_BACKEND) {
+      // If API members haven't loaded yet, return empty (user will see no suggestions until loaded)
+      if (apiMembers.length === 0) {
+        console.warn('⚠️ API members not loaded yet, autocomplete unavailable');
+        return [];
+      }
+
       apiMembers.forEach(apiMember => {
         const displayName = apiMember.display_name || apiMember.name || '';
         const memberNumber = apiMember.member_number || '';
@@ -2343,7 +2352,7 @@ console.log('✅ Court assigned result:', result);
         }
       });
     } else {
-      // Legacy: Use hardcoded memberDatabase
+      // Legacy: Use hardcoded memberDatabase (only when API backend is disabled)
       Object.entries(memberDatabase).forEach(([memberNum, data]) => {
         data.familyMembers.forEach(member => {
           // Split the name into parts
