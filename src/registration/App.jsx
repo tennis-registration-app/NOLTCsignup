@@ -2285,6 +2285,7 @@ console.log('✅ Court assigned result:', result);
           }}
           onHome={resetForm}
           dataStore={dataStore}
+          dataService={USE_API_BACKEND ? getDataService() : null}
           TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
         />

@@ -8,7 +8,7 @@
  * Props:
  * - isCourtAssignment: boolean - Whether this is a court assignment (vs waitlist)
  * - justAssignedCourt: number - Court number just assigned
- * - assignedCourt: object - Court assignment details
+ * - assignedCourt: object - Court assignment details (includes session.id for API)
  * - replacedGroup: object - Previous group that was replaced (if any)
  * - canChangeCourt: boolean - Whether court can be changed
  * - changeTimeRemaining: number - Seconds remaining to change court
@@ -22,6 +22,7 @@
  * - isMobile: boolean - Whether in mobile mode
  * - isTimeLimited: boolean - Whether time was limited due to block
  * - dataStore: object - Data store for settings/purchases
+ * - dataService: object - API data service for ball purchases (optional)
  * - TENNIS_CONFIG: object - Tennis configuration constants
  * - getCourtBlockStatus: (courtNumber) => BlockStatus - Court block status checker
  */
@@ -67,6 +68,7 @@ const SuccessScreen = ({
   isMobile = false,
   isTimeLimited = false,
   dataStore,
+  dataService,
   TENNIS_CONFIG,
   getCourtBlockStatus
 }) => {
@@ -107,7 +109,11 @@ const SuccessScreen = ({
     try {
       console.log('[handleBallPurchase] Starting purchase process:', { ballPurchaseOption, ballPrice, currentGroup });
 
-      // Process the purchase
+      // Calculate nonGuestPlayers fresh in the callback
+      const currentNonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
+      const isSplit = ballPurchaseOption === 'split';
+
+      // Set purchase details for UI
       if (ballPurchaseOption === 'charge') {
         setPurchaseDetails({
           type: 'single',
@@ -122,8 +128,39 @@ const SuccessScreen = ({
         });
       }
 
-      // Calculate nonGuestPlayers fresh in the callback
-      const currentNonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
+      // Try to use API backend if available
+      const sessionId = assignedCourt?.session?.id;
+      const primaryAccountId = currentGroup[0]?.accountId || currentGroup[0]?.account_id;
+
+      if (dataService && typeof dataService.purchaseBalls === 'function' && sessionId && primaryAccountId) {
+        console.log('[handleBallPurchase] Using API backend for purchase');
+
+        // Get account IDs for split purchase
+        let splitAccountIds = null;
+        if (isSplit && currentNonGuestPlayers > 1) {
+          splitAccountIds = currentGroup
+            .filter(p => !p.isGuest)
+            .map(p => p.accountId || p.account_id)
+            .filter(Boolean);
+        }
+
+        const result = await dataService.purchaseBalls(sessionId, primaryAccountId, {
+          splitBalls: isSplit,
+          splitAccountIds: splitAccountIds,
+        });
+
+        if (result.success) {
+          console.log('[handleBallPurchase] API purchase successful:', result);
+          setBallsPurchased(true);
+          setShowBallPurchaseModal(false);
+          return;
+        } else {
+          console.error('[handleBallPurchase] API purchase failed, falling back to localStorage');
+        }
+      }
+
+      // Fallback to localStorage if API not available or failed
+      console.log('[handleBallPurchase] Using localStorage fallback');
 
       /** Return the raw member number for a player (never masked). */
       function getRawMemberNumber(p) {
@@ -182,7 +219,7 @@ const SuccessScreen = ({
     } catch (error) {
       console.error('[handleBallPurchase] Error processing purchase:', error);
     }
-  }, [ballPurchaseOption, ballPrice, currentGroup, justAssignedCourt, splitPrice, getLastFourDigits]);
+  }, [ballPurchaseOption, ballPrice, currentGroup, justAssignedCourt, splitPrice, getLastFourDigits, assignedCourt, dataService]);
 
   // Header content for both success types - hide for mobile flow
   const isMobileFlow = window.__mobileFlow || window.__wasMobileFlow || (window.top !== window.self);

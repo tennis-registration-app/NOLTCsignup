@@ -426,6 +426,25 @@ class ApiTennisService {
   }
 
   // ===========================================
+  // Ball Purchase Operations
+  // ===========================================
+
+  async purchaseBalls(sessionId, accountId, options = {}) {
+    console.log('🔍 Purchasing balls for session:', sessionId, 'account:', accountId);
+
+    const result = await this.api.purchaseBalls(sessionId, accountId, {
+      splitBalls: options.split || options.splitBalls || false,
+      splitAccountIds: options.splitAccountIds || options.split_account_ids || null,
+    });
+
+    return {
+      success: result.ok,
+      transactions: result.transactions,
+      totalCents: result.total_cents,
+    };
+  }
+
+  // ===========================================
   // Waitlist Operations
   // ===========================================
 

@@ -206,6 +206,15 @@ export class ApiAdapter {
     return result;
   }
 
+  async purchaseBalls(sessionId, accountId, options = {}) {
+    return this._post(ENDPOINTS.PURCHASE_BALLS, {
+      session_id: sessionId,
+      account_id: accountId,
+      split_balls: options.splitBalls || false,
+      split_account_ids: options.splitAccountIds || null,
+    });
+  }
+
   // ===========================================
   // Waitlist Operations
   // ===========================================

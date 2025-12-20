@@ -29,6 +29,8 @@ export const ENDPOINTS = {
   EXPORT_TRANSACTIONS: '/export-transactions',
   AI_ASSISTANT: '/ai-assistant',
 
+  PURCHASE_BALLS: '/purchase-balls',
+
   // Read-only
   GET_COURT_STATUS: '/get-court-status',
   GET_WAITLIST: '/get-waitlist',
