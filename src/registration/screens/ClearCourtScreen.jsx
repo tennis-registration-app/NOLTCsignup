@@ -106,7 +106,7 @@ const ClearCourtScreen = ({
     // Debug logging
     console.log('🔍 ClearCourt Step 2 - selectedCourtToClear:', selectedCourtToClear);
     console.log('🔍 ClearCourt Step 2 - court found:', court);
-    console.log('🔍 ClearCourt Step 2 - players array:', players);
+    console.log('🔍 ClearCourt Step 2 - players array:', JSON.stringify(players, null, 2));
 
     // Handle players as array of strings or objects with name/displayName property
     const displayNames = players.map(p => {

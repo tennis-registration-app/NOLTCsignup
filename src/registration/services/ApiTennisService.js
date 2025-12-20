@@ -129,14 +129,21 @@ class ApiTennisService {
 
     return apiCourts.map(court => {
       // Transform session data
+      // Note: API returns participants as array of strings (names) or objects
       const session = court.session ? {
         id: court.session.id,
         type: court.session.type,
-        players: (court.session.participants || []).map(p => ({
-          id: p.member_id || p.id,
-          name: p.display_name || p.guest_name || p.name,
-          isGuest: p.type === 'guest',
-        })),
+        players: (court.session.participants || []).map(p => {
+          // Handle both string (just name) and object formats
+          if (typeof p === 'string') {
+            return { id: null, name: p, isGuest: false };
+          }
+          return {
+            id: p.member_id || p.id,
+            name: p.display_name || p.guest_name || p.name,
+            isGuest: p.type === 'guest',
+          };
+        }),
         startTime: new Date(court.session.started_at).getTime(),
         endTime: new Date(court.session.scheduled_end_at).getTime(),
         timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
