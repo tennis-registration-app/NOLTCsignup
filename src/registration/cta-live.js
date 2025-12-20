@@ -5,7 +5,20 @@
  * when waitlist groups can claim available courts.
  */
 (function(){
+  // Completely disable for API backend - App.jsx handles CTA events
+  if (window.NOLTC_USE_API_BACKEND) {
+    console.log('🔴 cta-live.js: Completely disabled for API backend');
+    window.recomputeCtaLive = () => {};
+    window.stopCtaLive = () => {};
+    return; // Exit IIFE immediately
+  }
+
   function emitCtaState(detail){
+    // Double-check API backend flag before dispatching
+    if (window.NOLTC_USE_API_BACKEND) {
+      console.log('🔴 cta-live.js: Skipping event dispatch - API backend active');
+      return;
+    }
     try { window.dispatchEvent(new CustomEvent('cta:state', { detail })); } catch {}
   }
 

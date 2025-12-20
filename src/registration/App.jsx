@@ -266,6 +266,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Define loadData function to refresh data (handles both API and legacy backends)
   const loadData = useCallback(async () => {
+    console.log('🎯 loadData called', new Date().toISOString());
     try {
       if (USE_API_BACKEND) {
         const service = getDataService();
@@ -756,10 +757,18 @@ useEffect(() => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   // NOTE: availableCourts moved to top of component (line ~236) to avoid TDZ errors
-  const [canFirstGroupPlay, setCanFirstGroupPlay] = useState(false);
+  const [canFirstGroupPlay, _setCanFirstGroupPlay] = useState(false);
+  const setCanFirstGroupPlay = (val) => {
+    console.log('🎯 setCanFirstGroupPlay:', val, 'stack:', new Error().stack.split('\n')[2]);
+    _setCanFirstGroupPlay(val);
+  };
   const [firstWaitingGroup, setFirstWaitingGroup] = useState(null);
   const [waitingGroupDisplay, setWaitingGroupDisplay] = useState("");
-  const [canSecondGroupPlay, setCanSecondGroupPlay] = useState(false);
+  const [canSecondGroupPlay, _setCanSecondGroupPlay] = useState(false);
+  const setCanSecondGroupPlay = (val) => {
+    console.log('🎯 setCanSecondGroupPlay:', val, 'stack:', new Error().stack.split('\n')[2]);
+    _setCanSecondGroupPlay(val);
+  };
   const [secondWaitingGroup, setSecondWaitingGroup] = useState(null);
   const [secondWaitingGroupDisplay, setSecondWaitingGroupDisplay] = useState("");
   // State for CTA data from global recompute
