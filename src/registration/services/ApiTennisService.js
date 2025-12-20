@@ -7,6 +7,7 @@
 
 import { ApiAdapter } from '@lib/ApiAdapter.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
+import { formatCourtTime } from '@lib/dateUtils.js';
 
 class ApiTennisService {
   constructor(options = {}) {
@@ -148,6 +149,9 @@ class ApiTennisService {
         endTime: new Date(court.session.scheduled_end_at).getTime(),
         timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
         duration: court.session.duration_minutes,
+        // Formatted times in Central Time for display
+        startTimeFormatted: formatCourtTime(court.session.started_at),
+        endTimeFormatted: formatCourtTime(court.session.scheduled_end_at),
       } : null;
 
       // Transform block data
@@ -158,6 +162,9 @@ class ApiTennisService {
         reason: court.block.title,
         startTime: new Date(court.block.starts_at).getTime(),
         endTime: new Date(court.block.ends_at).getTime(),
+        // Formatted times in Central Time for display
+        startTimeFormatted: formatCourtTime(court.block.starts_at),
+        endTimeFormatted: formatCourtTime(court.block.ends_at),
       } : null;
 
       // Build legacy-compatible court object
