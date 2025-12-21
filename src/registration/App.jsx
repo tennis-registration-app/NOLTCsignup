@@ -1862,26 +1862,48 @@ console.log('🔵 UI preparing to assignCourt with:', {
   duration
 });
 
-// PHASE1C: Court assignment now uses backend.commands.assignCourtWithPlayers
-// dataService is only used for assignFromWaitlist (to be migrated next)
-const dataService = USE_API_BACKEND
-  ? getDataService()
-  : (window.Tennis?.DataService || window.TennisDataService || TennisDataService);
-
 // If this is a waitlist group (CTA flow), use assignFromWaitlist instead
-if (USE_API_BACKEND && currentWaitlistEntryId) {
-  console.log('🎯 Using assignFromWaitlist for waitlist group:', currentWaitlistEntryId, 'to court:', courtNumber);
+if (currentWaitlistEntryId) {
+  // Get court UUID for the waitlist assignment
+  const waitlistCourt = data.courts.find(c => c.number === courtNumber);
+  if (!waitlistCourt) {
+    console.error('❌ Court not found for waitlist assignment:', courtNumber);
+    Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
+    return;
+  }
+
+  console.log('🎯 Using backend.commands.assignFromWaitlist:', {
+    waitlistEntryId: currentWaitlistEntryId,
+    courtId: waitlistCourt.id,
+    courtNumber,
+  });
+
   try {
-    const result = await dataService.assignFromWaitlist(currentWaitlistEntryId, courtNumber);
+    const result = await backend.commands.assignFromWaitlist({
+      waitlistEntryId: currentWaitlistEntryId,
+      courtId: waitlistCourt.id,
+    });
     console.log('✅ Waitlist group assigned result:', result);
+
+    if (!result.ok) {
+      // Handle "Court occupied" race condition
+      if (result.code === 'COURT_OCCUPIED') {
+        Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
+        setCurrentWaitlistEntryId(null);
+        await backend.queries.refresh();
+        return;
+      }
+      Tennis.UI.toast(result.message || 'Failed to assign court from waitlist', { type: 'error' });
+      setCurrentWaitlistEntryId(null);
+      return;
+    }
 
     // Clear the waitlist entry ID after successful assignment
     setCurrentWaitlistEntryId(null);
     setHasWaitlistPriority(false);
 
-    // Refresh data
-    await loadData();
-    console.log('✅ Data refreshed after waitlist assignment');
+    // Board subscription will auto-refresh
+    console.log('✅ Waitlist assignment successful, waiting for board refresh signal');
 
     // Update UI state
     setJustAssignedCourt(courtNumber);
@@ -1912,15 +1934,6 @@ if (USE_API_BACKEND && currentWaitlistEntryId) {
   } catch (error) {
     console.error('❌ assignFromWaitlist failed:', error);
     setCurrentWaitlistEntryId(null);
-
-    // Handle "Court is currently occupied" race condition
-    if (error.message?.toLowerCase().includes('occupied')) {
-      Tennis.UI.toast('This court was just taken. Refreshing available courts...', { type: 'warning' });
-      await loadData();
-      // Stay on court selection screen - user can pick another court
-      return;
-    }
-
     Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
     return;
   }
@@ -2060,24 +2073,32 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     setCurrentScreen("court");
   };
 
-  // Clear a court via service
+  // Clear a court via TennisBackend
   async function clearViaService(courtNumber, clearReason) {
-    // Get the correct service based on backend toggle
-    const TD = USE_API_BACKEND
-      ? getDataService()
-      : (window.TennisDataService || window.Tennis?.DataService);
-
-    if (!TD) return { success: false, error: 'Service unavailable' };
-
-    console.log('[clearViaService] Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
-
-    if (typeof TD.clearCourt === 'function') {
-      return await TD.clearCourt(courtNumber, { clearReason });
+    // Get court UUID from court number
+    const court = data.courts.find(c => c.number === courtNumber);
+    if (!court) {
+      console.error('[clearViaService] Court not found for number:', courtNumber);
+      return { success: false, error: 'Court not found' };
     }
-    if (typeof TD.unassignCourt === 'function') {
-      return await TD.unassignCourt(courtNumber, { clearReason });
+
+    console.log('[clearViaService] Using TennisBackend for court:', court.id);
+
+    try {
+      const result = await backend.commands.endSession({
+        courtId: court.id,
+        reason: clearReason || 'completed',
+      });
+
+      // Map {ok, message} to {success, error} for compatibility
+      return {
+        success: result.ok,
+        error: result.ok ? undefined : result.message,
+      };
+    } catch (error) {
+      console.error('[clearViaService] Error:', error);
+      return { success: false, error: error.message || 'Failed to clear court' };
     }
-    return { success: false, error: 'No clearCourt/unassignCourt service available' };
   }
 
   const clearCourt = async (courtNumber, clearReason = 'Cleared') => {
@@ -2143,37 +2164,33 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
         }
       }
 
-      // Call service with backend toggle
-      const waitlistService = USE_API_BACKEND
-        ? getDataService()
-        : (window.TennisDataService || window.Tennis?.DataService);
+      // Determine group type from player count
+      const groupType = players.length <= 2 ? 'singles' : 'doubles';
 
-      console.log(`🔴 [${traceId}] Using backend:`, USE_API_BACKEND ? 'API' : 'localStorage');
-      console.log(`🔴 [${traceId}] Calling addToWaitlist with players:`, players.map(p => `${p.name}(id=${p.id},mn=${p.memberNumber})`));
+      console.log('[waitlist] Calling backend.commands.joinWaitlistWithPlayers:', {
+        playerCount: players.length,
+        groupType,
+        players: players.map(p => `${p.name}(mn=${p.memberNumber})`),
+      });
 
-      const res = await waitlistService.addToWaitlist(players, { guests, traceId });
-      console.log('[waitlist] service result:', JSON.stringify(res, null, 2));
-      console.log('[waitlist] res.position:', res?.position);
-      console.log('[waitlist] res.waitlist?.position:', res?.waitlist?.position);
+      const result = await backend.commands.joinWaitlistWithPlayers({
+        players,
+        groupType,
+      });
+      console.log('[waitlist] Result:', result);
 
-      // Read back fresh storage to confirm persistence (only for localStorage backend)
-      const after = !USE_API_BACKEND ? window.WaitlistUtils?.readDataSafe?.() : null;
-      const len = (after?.waitingGroups?.length || 0);
-      console.log('[waitlist] persisted length now:', len);
-
-      if (res && res.success) {
-        // Store the position from API response for the success screen
-        if (USE_API_BACKEND && res.position) {
-          setWaitlistPosition(res.position);
-          console.log('[waitlist] API position:', res.position);
+      if (result.ok) {
+        // Store the position from response for the success screen
+        if (result.position) {
+          setWaitlistPosition(result.position);
+          console.log('[waitlist] Position:', result.position);
         }
-        // (Optional) simple toast, rely on events for UI refresh
-        Tennis?.UI?.toast?.(`Added to waiting list (position ${res.position})`, { type: 'success' });
+        // Toast and rely on board subscription for UI refresh
+        Tennis?.UI?.toast?.(`Added to waiting list (position ${result.position})`, { type: 'success' });
         console.debug('[waitlist] joined ok');
       } else {
-        console.error('[waitlist] service failed:', res?.error);
-        // Show the specific error message from the service
-        Tennis?.UI?.toast?.(res?.error || 'Could not join waitlist', { type: 'error' });
+        console.error('[waitlist] Failed:', result.code, result.message);
+        Tennis?.UI?.toast?.(result.message || 'Could not join waitlist', { type: 'error' });
       }
     } catch (e) {
       console.error('[waitlist] failed:', e);
