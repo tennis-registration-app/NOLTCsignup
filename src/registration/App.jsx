@@ -1862,18 +1862,11 @@ console.log('🔵 UI preparing to assignCourt with:', {
   duration
 });
 
-// Get the correct service reference based on backend toggle
+// PHASE1C: Court assignment now uses backend.commands.assignCourtWithPlayers
+// dataService is only used for assignFromWaitlist (to be migrated next)
 const dataService = USE_API_BACKEND
   ? getDataService()
   : (window.Tennis?.DataService || window.TennisDataService || TennisDataService);
-
-console.log('🔵 Using backend:', USE_API_BACKEND ? 'API' : 'localStorage');
-console.log('🔵 Service has assignCourt:', !!dataService?.assignCourt);
-
-if (!dataService?.assignCourt) {
-  showAlertMessage('Tennis registration service unavailable. Please refresh the page.');
-  return;
-}
 
 // If this is a waitlist group (CTA flow), use assignFromWaitlist instead
 if (USE_API_BACKEND && currentWaitlistEntryId) {
@@ -1933,44 +1926,53 @@ if (USE_API_BACKEND && currentWaitlistEntryId) {
   }
 }
 
-// Call service with canonical object (NOT an array and NOT a single player object)
+// Get court UUID from court number
+const court = data.courts.find(c => c.number === courtNumber);
+if (!court) {
+  console.error('❌ Court not found for number:', courtNumber);
+  Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
+  return;
+}
+
+// Determine group type from player count
+const groupType = allPlayers.length <= 2 ? 'singles' : 'doubles';
+
+console.log('🔵 Calling backend.commands.assignCourtWithPlayers:', {
+  courtId: court.id,
+  courtNumber: court.number,
+  groupType,
+  playerCount: allPlayers.length,
+});
+
 let result;
 try {
-  result = await dataService.assignCourt(courtNumber, group, duration);
+  result = await backend.commands.assignCourtWithPlayers({
+    courtId: court.id,
+    players: allPlayers,
+    groupType,
+  });
   console.log('✅ Court assigned result:', result);
 } catch (error) {
-  console.error('❌ assignCourt threw error:', error);
-
-  // Handle "Court is currently occupied" race condition
-  if (error.message?.toLowerCase().includes('occupied')) {
-    Tennis.UI.toast('This court was just taken. Refreshing available courts...', { type: 'warning' });
-    // Refresh court data so user sees current state
-    await loadData();
-    // Stay on court selection screen - user can pick another court
-    return;
-  }
-
-  // Handle other API errors
+  console.error('❌ assignCourtWithPlayers threw error:', error);
   Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', { type: 'error' });
   return;
 }
 
-if (!result.success) {
-  // Handle "occupied" error from result object (non-throwing API)
-  if (result.error?.toLowerCase().includes('occupied')) {
-    Tennis.UI.toast('This court was just taken. Refreshing available courts...', { type: 'warning' });
-    await loadData();
+if (!result.ok) {
+  console.log('❌ assignCourtWithPlayers returned ok:false:', result.code, result.message);
+  // Handle "Court occupied" race condition
+  if (result.code === 'COURT_OCCUPIED') {
+    Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
+    // Board subscription will auto-refresh, but force immediate refresh
+    await backend.queries.refresh();
     return;
   }
-  Tennis.UI.toast(result.error || 'Failed to assign court');
+  Tennis.UI.toast(result.message || 'Failed to assign court', { type: 'error' });
   return;
 }
 
-  // Refresh data after successful assignment (important for API backend)
-  if (USE_API_BACKEND) {
-    await loadData();
-    console.log('✅ Data refreshed after court assignment');
-  }
+// Success! Board subscription will auto-refresh from signal
+console.log('✅ Court assignment successful, waiting for board refresh signal');
 
   // Check if there were other courts available at time of assignment
   const availableAtAssignment = getAvailableCourts(
