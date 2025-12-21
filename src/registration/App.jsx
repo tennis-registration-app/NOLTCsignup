@@ -54,6 +54,8 @@ import { useDebounce } from './hooks';
 import { getTennisService } from './services/index.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
 
+// Phase 1B: TennisBackend interface (gate tests)
+
 // Flag to enable API backend (set to true to use new backend)
 const USE_API_BACKEND = true;
 

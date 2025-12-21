@@ -81,6 +81,51 @@ export class ApiAdapter {
   }
 
   // ===========================================
+  // Public HTTP Methods (for TennisBackend)
+  // ===========================================
+
+  /**
+   * Generic GET request (returns raw response, doesn't throw on ok:false)
+   * @param {string} endpoint - API endpoint path (e.g., '/get-board')
+   * @returns {Promise<Object>} Response data with { ok, ... }
+   */
+  async get(endpoint) {
+    const url = `${this.baseUrl}${endpoint}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.anonKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.json();
+  }
+
+  /**
+   * Generic POST request with device info auto-added (returns raw response)
+   * @param {string} endpoint - API endpoint path (e.g., '/assign-court')
+   * @param {Object} body - Request body
+   * @returns {Promise<Object>} Response data with { ok, ... }
+   */
+  async post(endpoint, body = {}) {
+    const url = `${this.baseUrl}${endpoint}`;
+    const bodyWithDevice = {
+      ...body,
+      device_id: this.deviceId,
+      device_type: this.deviceType,
+    };
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bodyWithDevice),
+    });
+    return response.json();
+  }
+
+  // ===========================================
   // Cache Helpers
   // ===========================================
 
