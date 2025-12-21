@@ -126,6 +126,7 @@ export class TennisQueries {
    */
   _normalizeCourt(c) {
     return {
+      id: c.court_id,  // UUID for commands
       number: c.court_number,
       status: c.status,
       session: c.session_id ? {
@@ -136,7 +137,7 @@ export class TennisQueries {
           displayName: p.display_name,
           isGuest: p.is_guest || false,
         })),
-        groupType: c.group_type,
+        groupType: c.session_type || c.group_type,
         startedAt: c.started_at,
         scheduledEndAt: c.scheduled_end_at,
         minutesRemaining: c.minutes_remaining,
@@ -144,8 +145,8 @@ export class TennisQueries {
       block: c.block_id ? {
         id: c.block_id,
         courtNumber: c.court_number,
-        reason: c.block_reason,
-        endTime: c.block_end_time,
+        reason: c.block_title || c.block_reason,
+        endTime: c.block_ends_at || c.block_end_time,
       } : null,
     };
   }

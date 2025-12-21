@@ -17,18 +17,26 @@
  */
 export function toAssignCourtPayload(input) {
   return {
-    court_id: input.courtNumber,  // Current API uses court_id (number), not court_number
-    session_type: input.groupType,  // Current API uses session_type, not group_type
+    court_id: input.courtId,  // UUID of the court
+    session_type: input.groupType,  // 'singles' | 'doubles'
     participants: input.participants.map(p => {
       if (p.kind === 'member') {
-        return { member_id: p.memberId, is_guest: false };
+        return {
+          type: 'member',
+          member_id: p.memberId,
+          account_id: p.accountId,
+        };
       } else {
-        return { guest_name: p.guestName, is_guest: true };
+        return {
+          type: 'guest',
+          guest_name: p.guestName,
+          account_id: p.accountId,
+          charged_to_account_id: p.chargedToAccountId || p.accountId,
+        };
       }
     }),
     add_balls: input.addBalls || false,
     split_balls: input.splitBalls || false,
-    // billing_member_id derived from first participant on backend currently
   };
 }
 
@@ -39,8 +47,8 @@ export function toAssignCourtPayload(input) {
  */
 export function toEndSessionPayload(input) {
   return {
-    court_id: input.courtNumber,  // Current API uses court_id
-    end_reason: input.reason || 'normal',
+    court_id: input.courtId,  // UUID of the court
+    end_reason: input.reason || 'completed',
   };
 }
 
@@ -51,15 +59,22 @@ export function toEndSessionPayload(input) {
  */
 export function toJoinWaitlistPayload(input) {
   return {
-    session_type: input.groupType,  // Current API uses session_type
+    group_type: input.groupType,  // 'singles' | 'doubles'
     participants: input.participants.map(p => {
       if (p.kind === 'member') {
-        return { member_id: p.memberId, is_guest: false };
+        return {
+          type: 'member',
+          member_id: p.memberId,
+          account_id: p.accountId,
+        };
       } else {
-        return { guest_name: p.guestName, is_guest: true };
+        return {
+          type: 'guest',
+          guest_name: p.guestName,
+          account_id: p.accountId,
+        };
       }
     }),
-    // billing_member_id derived from first participant on backend currently
   };
 }
 
@@ -82,7 +97,7 @@ export function toCancelWaitlistPayload(input) {
 export function toAssignFromWaitlistPayload(input) {
   return {
     waitlist_id: input.waitlistEntryId,
-    court_id: input.courtNumber,  // Current API uses court_id
+    court_id: input.courtId,  // UUID of the court
   };
 }
 
@@ -93,10 +108,11 @@ export function toAssignFromWaitlistPayload(input) {
  */
 export function toCreateBlockPayload(input) {
   return {
-    court_number: input.courtNumber,
-    reason: input.reason,
-    start_time: input.startTime,
-    end_time: input.endTime,
+    court_id: input.courtId,  // UUID of the court
+    block_type: input.blockType || 'maintenance',
+    title: input.reason,
+    starts_at: input.startTime,
+    ends_at: input.endTime,
   };
 }
 

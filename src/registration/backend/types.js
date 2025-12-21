@@ -14,12 +14,15 @@
  * @typedef {Object} MemberParticipant
  * @property {'member'} kind
  * @property {string} memberId - UUID from members table
+ * @property {string} accountId - UUID from accounts table
  */
 
 /**
  * @typedef {Object} GuestParticipant
  * @property {'guest'} kind
  * @property {string} guestName
+ * @property {string} accountId - UUID of account to charge
+ * @property {string} [chargedToAccountId] - UUID of account to charge guest fee to (defaults to accountId)
  */
 
 /** @typedef {MemberParticipant | GuestParticipant} ParticipantInput */
@@ -28,9 +31,8 @@
 
 /**
  * @typedef {Object} AssignCourtInput
- * @property {number} courtNumber
+ * @property {string} courtId - UUID of the court
  * @property {ParticipantInput[]} participants
- * @property {string} billingMemberId - UUID of member responsible for charges
  * @property {'singles' | 'doubles'} groupType
  * @property {boolean} [addBalls]
  * @property {boolean} [splitBalls]
@@ -38,7 +40,7 @@
 
 /**
  * @typedef {Object} EndSessionInput
- * @property {number} courtNumber
+ * @property {string} courtId - UUID of the court
  * @property {string} [reason] - 'normal', 'admin_override', 'no_show'
  */
 
@@ -57,12 +59,12 @@
 /**
  * @typedef {Object} AssignFromWaitlistInput
  * @property {string} waitlistEntryId
- * @property {number} courtNumber
+ * @property {string} courtId - UUID of the court
  */
 
 /**
  * @typedef {Object} CreateBlockInput
- * @property {number} courtNumber
+ * @property {string} courtId - UUID of the court
  * @property {string} reason
  * @property {string} [startTime] - ISO timestamp
  * @property {string} [endTime] - ISO timestamp
@@ -103,7 +105,8 @@
 
 /**
  * @typedef {Object} CourtState
- * @property {number} number
+ * @property {string} id - UUID of the court
+ * @property {number} number - Court number (1-12)
  * @property {'available' | 'occupied' | 'overtime' | 'blocked'} status
  * @property {Session | null} session
  * @property {Block | null} block

@@ -19,7 +19,7 @@ export class TennisDirectory {
       return [];
     }
 
-    const response = await this.api.get(`/get-members?q=${encodeURIComponent(query)}`);
+    const response = await this.api.get(`/get-members?search=${encodeURIComponent(query)}`);
 
     if (!response.ok) {
       console.error('Member search failed:', response.message);
@@ -41,7 +41,7 @@ export class TennisDirectory {
       return cached.members;
     }
 
-    const response = await this.api.get(`/get-members?account=${encodeURIComponent(memberNumber)}`);
+    const response = await this.api.get(`/get-members?member_number=${encodeURIComponent(memberNumber)}`);
 
     if (!response.ok) {
       console.error('Account lookup failed:', response.message);
@@ -54,6 +54,82 @@ export class TennisDirectory {
     this._cache.set(memberNumber, { members, timestamp: Date.now() });
 
     return members;
+  }
+
+  /**
+   * Get all members (for autocomplete)
+   * @returns {Promise<import('./types').Member[]>}
+   */
+  async getAllMembers() {
+    // Check cache
+    const cached = this._cache.get('__all__');
+    if (cached && Date.now() - cached.timestamp < this._cacheTimeout) {
+      return cached.members;
+    }
+
+    const response = await this.api.get('/get-members');
+
+    if (!response.ok) {
+      console.error('Get all members failed:', response.message);
+      return [];
+    }
+
+    const members = (response.members || []).map(m => this._normalizeMember(m));
+
+    // Cache result
+    this._cache.set('__all__', { members, timestamp: Date.now() });
+
+    return members;
+  }
+
+  /**
+   * Find member by name within an account
+   * Matches exactly, then by partial match, then by last name
+   * @param {string} memberNumber - 4-digit family number
+   * @param {string} name - Name to match
+   * @returns {Promise<import('./types').Member | null>}
+   */
+  async findMemberByName(memberNumber, name) {
+    const members = await this.getMembersByAccount(memberNumber);
+    if (members.length === 0) return null;
+
+    const nameLower = name.toLowerCase().trim();
+
+    // Exact match
+    let match = members.find(m =>
+      m.displayName.toLowerCase().trim() === nameLower
+    );
+    if (match) return match;
+
+    // Partial match (contains)
+    match = members.find(m => {
+      const display = m.displayName.toLowerCase().trim();
+      return display.includes(nameLower) || nameLower.includes(display);
+    });
+    if (match) return match;
+
+    // Last name match
+    match = members.find(m => {
+      const displayLast = m.displayName.toLowerCase().split(' ').pop();
+      const nameLast = nameLower.split(' ').pop();
+      return displayLast === nameLast;
+    });
+    if (match) return match;
+
+    // Single member on account - use it with warning
+    if (members.length === 1) {
+      console.warn(`[TennisDirectory] Using only member on account: ${members[0].displayName} (searched: ${name})`);
+      return members[0];
+    }
+
+    // Multiple members, no match - use primary if available
+    const primary = members.find(m => m.isPrimary);
+    if (primary) {
+      console.warn(`[TennisDirectory] Name mismatch! Using primary: ${primary.displayName} (searched: ${name})`);
+      return primary;
+    }
+
+    return null;
   }
 
   /**

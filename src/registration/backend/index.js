@@ -25,8 +25,8 @@ export { DenialCodes } from './types.js';
 class TennisBackend {
   constructor(apiAdapter) {
     this.queries = new TennisQueries(apiAdapter);
-    this.commands = new TennisCommands(apiAdapter);
     this.directory = new TennisDirectory(apiAdapter);
+    this.commands = new TennisCommands(apiAdapter, this.directory);
   }
 }
 
