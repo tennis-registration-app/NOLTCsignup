@@ -32,8 +32,9 @@ export const ENDPOINTS = {
   PURCHASE_BALLS: '/purchase-balls',
 
   // Read-only
-  GET_COURT_STATUS: '/get-court-status',
-  GET_WAITLIST: '/get-waitlist',
+  GET_BOARD: '/get-board',  // Unified court + waitlist endpoint
+  GET_COURT_STATUS: '/get-court-status',  // Legacy, use GET_BOARD instead
+  GET_WAITLIST: '/get-waitlist',  // Legacy, use GET_BOARD instead
   GET_MEMBERS: '/get-members',
   GET_SETTINGS: '/get-settings',
   GET_SESSION_HISTORY: '/get-session-history',
