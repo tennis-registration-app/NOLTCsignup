@@ -91,6 +91,7 @@ export class ApiAdapter {
    */
   async get(endpoint) {
     const url = `${this.baseUrl}${endpoint}`;
+    console.log('[ApiAdapter] GET', endpoint);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -98,7 +99,9 @@ export class ApiAdapter {
         'Content-Type': 'application/json',
       },
     });
-    return response.json();
+    const data = await response.json();
+    console.log('[ApiAdapter] GET response ok:', data.ok);
+    return data;
   }
 
   /**

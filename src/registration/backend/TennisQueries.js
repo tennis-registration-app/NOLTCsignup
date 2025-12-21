@@ -22,8 +22,10 @@ export class TennisQueries {
    * @returns {Promise<import('./types').BoardState>}
    */
   async getBoard() {
+    console.log('[TennisQueries] getBoard() called');
     const response = await this.api.get('/get-board');
-    
+    console.log('[TennisQueries] getBoard response ok:', response.ok, 'courts:', response.courts?.length);
+
     if (!response.ok) {
       throw new Error(response.message || 'Failed to load board');
     }
@@ -51,8 +53,15 @@ export class TennisQueries {
    * @returns {() => void} Unsubscribe function
    */
   subscribeToBoardChanges(callback) {
+    console.log('[TennisQueries] subscribeToBoardChanges called, callback type:', typeof callback);
     // Initial fetch
-    this.getBoard().then(callback).catch(console.error);
+    console.log('[TennisQueries] Starting initial fetch...');
+    this.getBoard()
+      .then((board) => {
+        console.log('[TennisQueries] Initial fetch resolved:', board?.serverNow, 'courts:', board?.courts?.length);
+        return callback?.(board);
+      })
+      .catch((e) => console.error('[TennisQueries] Initial fetch failed:', e));
 
     // Subscribe to signals
     this.subscription = this.supabase

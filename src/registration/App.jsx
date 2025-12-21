@@ -60,6 +60,9 @@ import { createBackend, DenialCodes } from './backend/index.js';
 // Flag to enable API backend (set to true to use new backend)
 const USE_API_BACKEND = true;
 
+// TennisBackend singleton instance
+const backend = createBackend();
+
 // Set global flag for cta-live.js to check
 if (USE_API_BACKEND) {
   window.NOLTC_USE_API_BACKEND = true;
@@ -431,10 +434,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, [data]);
 
-  // Load initial data
-  useEffect(() => {
-    loadData();
-  }, []);
+  // PHASE1C: Redundant - subscribeToBoardChanges handles initial fetch
+  // useEffect(() => {
+  //   loadData();
+  // }, []);
 
   // Real-time synchronization with other apps
   useEffect(() => {
@@ -517,41 +520,67 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // API Real-time subscriptions (when using API backend)
+  // TennisBackend Real-time subscription
   useEffect(() => {
-    if (!USE_API_BACKEND) return;
-
-    let subscription = null;
-
-    const setupRealtimeSubscription = async () => {
-      try {
-        const realtimeClient = getRealtimeClient();
-
-        // Subscribe to all relevant changes
-        subscription = realtimeClient.onAnyChange((change) => {
-          console.log('[Realtime] Change received:', change.type, change.table);
-
-          // Refresh data on any change
-          if (loadData) {
-            loadData();
-          }
-        });
-
-        console.log('[Realtime] Subscribed to real-time updates');
-      } catch (error) {
-        console.error('[Realtime] Failed to setup subscription:', error);
+    console.log('[TennisBackend] Setting up board subscription...');
+    
+    const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
+      console.log('[TennisBackend] Board update received:', {
+        serverNow: board.serverNow,
+        courts: board.courts?.length,
+        waitlist: board.waitlist?.length,
+      });
+      
+      // Update courts and waitlist state
+      setData(prev => ({
+        ...prev,
+        courts: board.courts || [],
+        waitingGroups: board.waitlist || [],
+      }));
+      
+      // Update operating hours
+      if (board.operatingHours) {
+        setOperatingHours(board.operatingHours);
       }
-    };
-
-    setupRealtimeSubscription();
-
+      
+      // Update available courts (for court selection UI)
+      const selectable = (board.courts || [])
+        .filter(c => c.isUnoccupied || c.isOvertime)
+        .map(c => c.number);
+      setAvailableCourts(selectable);
+      
+      // Emit cta:state event for external components
+      window.dispatchEvent(new CustomEvent('cta:state', {
+        detail: {
+          courts: board.courts || [],
+          waitlist: board.waitlist || [],
+          serverNow: board.serverNow,
+        }
+      }));
+    });
+    
+    console.log('[TennisBackend] Board subscription active');
+    
     return () => {
-      if (subscription && subscription.unsubscribe) {
-        subscription.unsubscribe();
-        console.log('[Realtime] Unsubscribed from real-time updates');
+      console.log('[TennisBackend] Unsubscribing from board updates');
+      unsubscribe();
+    };
+  }, []);
+
+  // Load members for autocomplete (one-time fetch)
+  useEffect(() => {
+    const loadMembers = async () => {
+      try {
+        console.log('[TennisBackend] Loading members for autocomplete...');
+        const members = await backend.directory.getAllMembers();
+        setApiMembers(members);
+        console.log('[TennisBackend] Loaded', members.length, 'members');
+      } catch (error) {
+        console.error('[TennisBackend] Failed to load members:', error);
       }
     };
-  }, [loadData]);
+    loadMembers();
+  }, []);
 
   // CSS Performance Optimizations
   useEffect(() => {

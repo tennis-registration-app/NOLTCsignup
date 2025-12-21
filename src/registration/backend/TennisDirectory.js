@@ -163,11 +163,17 @@ export class TennisDirectory {
    */
   _normalizeMember(m) {
     return {
+      // Canonical camelCase properties
       id: m.id,
       accountId: m.account_id,
       memberNumber: m.member_number,
       displayName: m.display_name,
       isPrimary: m.is_primary,
+      // Snake_case aliases for UI compatibility
+      account_id: m.account_id,
+      member_number: m.member_number,
+      display_name: m.display_name,
+      is_primary: m.is_primary,
     };
   }
 }
