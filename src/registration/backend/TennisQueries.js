@@ -125,11 +125,29 @@ export class TennisQueries {
    * @returns {import('./types').CourtState}
    */
   _normalizeCourt(c) {
+    const hasSession = !!c.session_id;
+    const hasBlock = !!c.block_id;
+    const minutesRemaining = c.minutes_remaining ?? null;
+
+    // Compute availability flags for UI compatibility
+    const isUnoccupied = !hasSession && !hasBlock;
+    const isOvertime = hasSession && minutesRemaining !== null && minutesRemaining <= 0;
+    const isActive = hasSession && minutesRemaining !== null && minutesRemaining > 0;
+    const isBlocked = hasBlock;
+    const isOccupied = hasSession;
+
     return {
       id: c.court_id,  // UUID for commands
       number: c.court_number,
       status: c.status,
-      session: c.session_id ? {
+      // Availability flags for UI
+      isUnoccupied,
+      isOvertime,
+      isActive,
+      isBlocked,
+      isOccupied,
+      // Session data
+      session: hasSession ? {
         id: c.session_id,
         courtNumber: c.court_number,
         participants: (c.participants || []).map(p => ({
@@ -140,9 +158,10 @@ export class TennisQueries {
         groupType: c.session_type || c.group_type,
         startedAt: c.started_at,
         scheduledEndAt: c.scheduled_end_at,
-        minutesRemaining: c.minutes_remaining,
+        minutesRemaining: minutesRemaining,
       } : null,
-      block: c.block_id ? {
+      // Block data
+      block: hasBlock ? {
         id: c.block_id,
         courtNumber: c.court_number,
         reason: c.block_title || c.block_reason,
