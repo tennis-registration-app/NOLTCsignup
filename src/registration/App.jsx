@@ -4582,7 +4582,7 @@ onFocus={() => {
            
            // If changing courts, clear the original court first but skip adding to recentlyCleared
            if (isChangingCourt && justAssignedCourt) {
-             await TennisDataService.clearCourt(justAssignedCourt, { clearReason: 'Bumped' });
+             await clearCourt(justAssignedCourt, 'Bumped');
            }
            await assignCourtToGroup(courtNum);
            setIsChangingCourt(false);
