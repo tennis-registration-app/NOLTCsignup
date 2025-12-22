@@ -54,22 +54,17 @@ import { useDebounce } from './hooks';
 import { getTennisService } from './services/index.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
 
-// Phase 1C: TennisBackend interface layer
+// TennisBackend interface layer
 import { createBackend, DenialCodes } from './backend/index.js';
-
-// Flag to enable API backend (set to true to use new backend)
-const USE_API_BACKEND = true;
 
 // TennisBackend singleton instance
 const backend = createBackend();
 
 // Set global flag for cta-live.js to check
-if (USE_API_BACKEND) {
-  window.NOLTC_USE_API_BACKEND = true;
-  // Stop any running cta-live interval (in case it started before flag was set)
-  if (typeof window.stopCtaLive === 'function') {
-    window.stopCtaLive();
-  }
+window.NOLTC_USE_API_BACKEND = true;
+// Stop any running cta-live interval (in case it started before flag was set)
+if (typeof window.stopCtaLive === 'function') {
+  window.stopCtaLive();
 }
 
 // Import utility functions
@@ -260,150 +255,96 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
   const [operatingHours, setOperatingHours] = useState(null); // Operating hours from API
 
-  // Get the appropriate data service based on USE_API_BACKEND flag
+  // Get the API data service
   const getDataService = useCallback(() => {
-    if (USE_API_BACKEND) {
-      return getTennisService({
-        deviceId: 'a0000000-0000-0000-0000-000000000001',
-        deviceType: 'kiosk',
-      });
-    }
-    return window.Tennis?.DataService || window.TennisDataService || TennisDataService;
+    return getTennisService({
+      deviceId: 'a0000000-0000-0000-0000-000000000001',
+      deviceType: 'kiosk',
+    });
   }, []);
 
-  // Define loadData function to refresh data (handles both API and legacy backends)
+  // Load data from API (used for initial load and CTA state emission)
   const loadData = useCallback(async () => {
-    console.log('🎯 loadData called', new Date().toISOString());
     try {
-      if (USE_API_BACKEND) {
-        const service = getDataService();
-        const initialData = await service.loadInitialData();
+      const service = getDataService();
+      const initialData = await service.loadInitialData();
 
-        // Transform API data to legacy format
-        const courts = initialData.courts || [];
-        const waitingGroups = initialData.waitlist || [];
+      // Transform API data to legacy format
+      const courts = initialData.courts || [];
+      const waitingGroups = initialData.waitlist || [];
 
-        const updatedData = {
-          courts: courts,
-          waitingGroups: waitingGroups,
-          recentlyCleared: data.recentlyCleared || [],
-        };
+      const updatedData = {
+        courts: courts,
+        waitingGroups: waitingGroups,
+        recentlyCleared: data.recentlyCleared || [],
+      };
 
-        setData(updatedData);
+      setData(updatedData);
 
-        // Store operating hours from API
-        if (initialData.operatingHours) {
-          setOperatingHours(initialData.operatingHours);
-        }
-
-        // Store API members for autocomplete search
-        if (initialData.members && Array.isArray(initialData.members)) {
-          console.log('🔵 Loaded', initialData.members.length, 'members from API');
-          console.log('🔵 First 3 members:', initialData.members.slice(0, 3).map(m => m.display_name));
-          setApiMembers(initialData.members);
-        } else {
-          console.error('❌ No members returned from API!', initialData);
-        }
-
-        // Compute court categories using new availability flags
-        const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
-        const overtimeCourts = courts.filter(c => c.isOvertime);
-        const activeCourts = courts.filter(c => c.isActive);
-        const blockedCourts = courts.filter(c => c.isBlocked);
-
-        // Selectable courts: unoccupied first, then overtime if no unoccupied
-        let selectableCourts;
-        if (unoccupiedCourts.length > 0) {
-          selectableCourts = unoccupiedCourts;
-        } else if (overtimeCourts.length > 0) {
-          selectableCourts = overtimeCourts;
-        } else {
-          selectableCourts = []; // No courts available, show waitlist
-        }
-
-        const selectableNumbers = selectableCourts.map(c => c.number);
-        setAvailableCourts(selectableNumbers);
-        setApiError(null);
-
-        // Emit CTA state for API backend
-        if (USE_API_BACKEND) {
-          console.log('🎯 API CTA: Starting emission, waitlist:', initialData.waitlist?.length, 'selectable:', selectableCourts?.length);
-          const waitlistGroups = initialData.waitlist || [];
-          const firstGroup = waitlistGroups[0] || null;
-          const secondGroup = waitlistGroups[1] || null;
-
-          const gateCount = selectableCourts.length;
-          const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
-          const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
-
-          console.log('🎯 CTA State (API):', {
-            gateCount,
-            selectableCourts: selectableCourts.map(c => c.number),
-            waitlistCount: waitlistGroups.length,
-            canFirstGroupPlay,
-            canSecondGroupPlay,
-            firstGroup,
-            secondGroup,
-          });
-
-          console.log('🎯 Dispatching cta:state event...');
-          window.dispatchEvent(new CustomEvent('cta:state', {
-            detail: {
-              live1: canFirstGroupPlay,
-              live2: canSecondGroupPlay,
-              first: firstGroup ? {
-                players: (firstGroup.players || []).map((p, i) => ({
-                  id: `wl-${firstGroup.id}-${i}`,
-                  name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
-                  memberNumber: typeof p === 'object' ? (p.member_number || String(firstGroup.position)) : String(firstGroup.position),
-                })),
-                id: firstGroup.id,
-                position: firstGroup.position,
-              } : null,
-              second: secondGroup ? {
-                players: (secondGroup.players || []).map((p, i) => ({
-                  id: `wl-${secondGroup.id}-${i}`,
-                  name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
-                  memberNumber: typeof p === 'object' ? (p.member_number || String(secondGroup.position)) : String(secondGroup.position),
-                })),
-                id: secondGroup.id,
-                position: secondGroup.position,
-              } : null,
-              selectable: selectableCourts.map(c => c.number),
-            }
-          }));
-          console.log('🎯 cta:state event dispatched');
-        }
-
-        // Debug logging
-        console.log('🎾 Court categories:', {
-          unoccupied: unoccupiedCourts.map(c => c.number),
-          overtime: overtimeCourts.map(c => c.number),
-          active: activeCourts.map(c => c.number),
-          blocked: blockedCourts.map(c => c.number),
-          selectable: selectableNumbers,
-        });
-
-        return updatedData;
-      } else {
-        // Legacy localStorage loading
-        const updatedData = await TennisDataService.loadData();
-        setData(updatedData);
-
-        // Compute strict selectable courts after data update
-        const Av = window.Tennis?.Domain?.availability;
-        const S = window.Tennis?.Storage;
-        if (Av && S) {
-          const storageData = S.readDataSafe();
-          const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
-          const wetSet = new Set();
-          const now = new Date();
-          const selectable = [...Av.getSelectableCourtsStrict({ data: storageData, now, blocks, wetSet })];
-          setAvailableCourts(selectable);
-        }
-
-        return updatedData;
+      // Store operating hours from API
+      if (initialData.operatingHours) {
+        setOperatingHours(initialData.operatingHours);
       }
+
+      // Store API members for autocomplete search
+      if (initialData.members && Array.isArray(initialData.members)) {
+        setApiMembers(initialData.members);
+      }
+
+      // Compute court categories using new availability flags
+      const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
+      const overtimeCourts = courts.filter(c => c.isOvertime);
+
+      // Selectable courts: unoccupied first, then overtime if no unoccupied
+      let selectableCourts;
+      if (unoccupiedCourts.length > 0) {
+        selectableCourts = unoccupiedCourts;
+      } else if (overtimeCourts.length > 0) {
+        selectableCourts = overtimeCourts;
+      } else {
+        selectableCourts = []; // No courts available, show waitlist
+      }
+
+      const selectableNumbers = selectableCourts.map(c => c.number);
+      setAvailableCourts(selectableNumbers);
+      setApiError(null);
+
+      // Emit CTA state
+      const waitlistGroups = initialData.waitlist || [];
+      const firstGroup = waitlistGroups[0] || null;
+      const secondGroup = waitlistGroups[1] || null;
+
+      const gateCount = selectableCourts.length;
+      const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
+      const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
+
+      window.dispatchEvent(new CustomEvent('cta:state', {
+        detail: {
+          live1: canFirstGroupPlay,
+          live2: canSecondGroupPlay,
+          first: firstGroup ? {
+            players: (firstGroup.players || []).map((p, i) => ({
+              id: `wl-${firstGroup.id}-${i}`,
+              name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
+              memberNumber: typeof p === 'object' ? (p.member_number || String(firstGroup.position)) : String(firstGroup.position),
+            })),
+            id: firstGroup.id,
+            position: firstGroup.position,
+          } : null,
+          second: secondGroup ? {
+            players: (secondGroup.players || []).map((p, i) => ({
+              id: `wl-${secondGroup.id}-${i}`,
+              name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
+              memberNumber: typeof p === 'object' ? (p.member_number || String(secondGroup.position)) : String(secondGroup.position),
+            })),
+            id: secondGroup.id,
+            position: secondGroup.position,
+          } : null,
+          selectable: selectableCourts.map(c => c.number),
+        }
+      }));
+
+      return updatedData;
     } catch (error) {
       console.error('Failed to load data:', error);
       setApiError(error.message);
@@ -424,11 +365,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // Expose current data globally for guardAddPlayerEarly (API backend mode)
+  // Expose current data globally for guardAddPlayerEarly
   useEffect(() => {
-    if (USE_API_BACKEND) {
-      window.__registrationData = data;
-    }
+    window.__registrationData = data;
     return () => {
       window.__registrationData = null;
     };
@@ -438,87 +377,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // useEffect(() => {
   //   loadData();
   // }, []);
-
-  // Real-time synchronization with other apps
-  useEffect(() => {
-    // Debounced handlers to prevent rapid bouncing
-    let updateTimeout = null;
-    
-    const handleStorageUpdate = async (event) => {
-      // Skip localStorage-based updates when using API backend
-      if (USE_API_BACKEND) {
-        dbg('Skipping localStorage update - using API backend');
-        return;
-      }
-
-      if (event.detail && event.detail.key === TENNIS_CONFIG.STORAGE.KEY) {
-        // Don't trigger updates if we're in the middle of a screen transition
-        if (currentScreen === "search" || currentScreen === "group") {
-          console.log('Skipping storage update during screen transition');
-          return;
-        }
-
-        // Clear any pending update and debounce
-        clearTimeout(updateTimeout);
-        updateTimeout = setTimeout(async () => {
-          const updatedData = await TennisDataService.loadData();
-          setData(updatedData);
-          dbg('Data synchronized from external update');
-        }, 500); // Increased debounce delay
-      }
-    };
-
-    const handleStorageEvent = async (event) => {
-      // Skip localStorage events when using API backend
-      if (USE_API_BACKEND) {
-        dbg('Skipping storage event - using API backend');
-        return;
-      }
-
-      // Handle storage events from localStorage changes
-      if (event.key === TENNIS_CONFIG.STORAGE.KEY && event.newValue) {
-        // Don't trigger updates if we're in the middle of a screen transition
-        if (currentScreen === "search" || currentScreen === "group") {
-          dbg('Skipping localStorage update during screen transition');
-          return;
-        }
-
-        // Clear any pending update and debounce
-        clearTimeout(updateTimeout);
-        updateTimeout = setTimeout(async () => {
-          const updatedData = await TennisDataService.loadData();
-          setData(updatedData);
-          console.log('Data synchronized from localStorage change');
-        }, 500); // Increased debounce delay
-      }
-    };
-
-    // Listen for custom events from DataStore
-    window.addEventListener(EVENTS.UPDATE, scheduleAvailabilityRefresh);
-    window.addEventListener('DATA_UPDATED', scheduleAvailabilityRefresh);
-    
-    // Listen for storage events from other windows/tabs
-    window.addEventListener('storage', handleStorageEvent);
-
-    // Refresh clear screen on updates
-    const refreshClearScreen = () => {
-      if (currentScreen === "clearCourt") {
-        // Force re-render by updating state
-        setCurrentScreen("clearCourt");
-      }
-    };
-    document.addEventListener('tennisDataUpdate', refreshClearScreen);
-    document.addEventListener('DATA_UPDATED', refreshClearScreen);
-
-    return () => {
-      clearTimeout(updateTimeout);
-      window.removeEventListener(EVENTS.UPDATE, scheduleAvailabilityRefresh);
-      window.removeEventListener('DATA_UPDATED', scheduleAvailabilityRefresh);
-      window.removeEventListener('storage', handleStorageEvent);
-      document.removeEventListener('tennisDataUpdate', refreshClearScreen);
-      document.removeEventListener('DATA_UPDATED', refreshClearScreen);
-    };
-  }, []);
 
   // TennisBackend Real-time subscription
   useEffect(() => {
@@ -650,40 +508,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // Update available courts only - CTA state now handled by cta:state event
-  // NOTE: Skip this when using API backend - availableCourts is set by loadData()
-  useEffect(() => {
-    // When using API backend, don't overwrite availableCourts with localStorage data
-    if (USE_API_BACKEND) {
-      if (DEBUG) {
-        console.log("useEffect: Skipping localStorage court update - using API backend");
-      }
-      return;
-    }
-
-    const updateAvailableCourts = () => {
-      try {
-        if (DEBUG) {
-          console.log("useEffect: Updating available courts from localStorage...");
-        }
-
-        // Use the new gating logic - this useEffect is now mainly for updating available courts
-        const courts = getAvailableCourts(false);
-        if (DEBUG) {
-          console.log("useEffect: Available courts from getAvailableCourts:", courts);
-        }
-        setAvailableCourts(courts);
-
-        // NOTE: CTA state (canFirstGroupPlay, canSecondGroupPlay, etc.) is now
-        // managed by the cta:state event listener above, not here
-      } catch (error) {
-        console.error('Error updating available courts:', error);
-        setAvailableCourts([]);
-      }
-    };
-
-    updateAvailableCourts();
-  }, [currentScreen]); // Re-run when screen changes
+  // PHASE1D: Court availability now handled by TennisBackend subscription
 
 // Auto-clear expired courts function
 useEffect(() => {
@@ -980,46 +805,22 @@ function computeOccupiedCourts() {
 
 // Helper function to get courts that can be cleared (occupied or overtime)
 function getCourtsOccupiedForClearing() {
-  // For API backend, use React state data
-  if (USE_API_BACKEND) {
-    const reactData = getCourtData();
-    const courts = reactData.courts || [];
-    const now = new Date();
+  const reactData = getCourtData();
+  const courts = reactData.courts || [];
 
-    const clearableCourts = courts
-      .filter(c => {
-        // Court has a session (is occupied)
-        if (c.session || c.current || c.isOccupied) {
-          // Not blocked
-          if (c.isBlocked) return false;
-          return true;
-        }
-        return false;
-      })
-      .map(c => c.number)
-      .sort((a, b) => a - b);
-
-    console.log('[getCourtsOccupiedForClearing] API courts:', clearableCourts);
-    return clearableCourts;
-  }
-
-  // Legacy localStorage path
-  const Av  = Tennis.Domain.availability || Tennis.Domain.Availability;
-  const now = new Date();
-  const S   = Tennis.Storage;
-  const data   = S.readDataSafe();
-  const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
-  const wetSet = new Set(
-    blocks
-      .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
-      .map(b => b.courtNumber)
-  );
-
-  const statuses = Av.getCourtStatuses({ data, now, blocks, wetSet });
-  const clearableCourts = statuses
-    .filter(s => (s.isOccupied || s.isOvertime) && !s.isBlocked)   // include occupied + overtime, but NOT blocked courts
-    .map(s => s.courtNumber)
+  const clearableCourts = courts
+    .filter(c => {
+      // Court has a session (is occupied)
+      if (c.session || c.current || c.isOccupied) {
+        // Not blocked
+        if (c.isBlocked) return false;
+        return true;
+      }
+      return false;
+    })
+    .map(c => c.number)
     .sort((a, b) => a - b);
+
   return clearableCourts;
 }
 
@@ -1069,13 +870,10 @@ function __findEngagementFor(name, data) {
 }
 
 function guardAddPlayerEarly(player) {
-  const S = window.Tennis?.Storage;
   const R = window.Tennis?.Domain?.roster;
 
-  // Use API data from React state when available, otherwise fall back to localStorage
-  const data = (USE_API_BACKEND && window.__registrationData)
-    ? window.__registrationData
-    : (S?.readDataSafe?.() || {});
+  // Use API data from React state
+  const data = window.__registrationData || {};
 
   // Enrich the player with memberId if possible
   const enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], window.__memberRoster)[0] : player;
@@ -1086,7 +884,6 @@ function guardAddPlayerEarly(player) {
   if (DEBUG) {
     console.log('[guardAddPlayerEarly] Checking player:', player);
     console.log('[guardAddPlayerEarly] Enriched player:', enriched);
-    console.log('[guardAddPlayerEarly] Data source:', USE_API_BACKEND ? 'API' : 'localStorage');
     console.log('[guardAddPlayerEarly] Data:', data);
     console.log('[guardAddPlayerEarly] Engagement found:', engagement);
   }
@@ -1099,38 +896,14 @@ function guardAddPlayerEarly(player) {
     return false;
   } else if (engagement.type === 'waitlist') {
     // Check if waitlist member can register based on available courts
-    // For API backend, use availableCourts from the data directly
-    if (USE_API_BACKEND) {
-      const courts = Array.isArray(data?.courts) ? data.courts : [];
-      const unoccupiedCount = courts.filter(c => c.isUnoccupied).length;
-      const overtimeCount = courts.filter(c => c.isOvertime).length;
-      const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
-      const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
+    const courts = Array.isArray(data?.courts) ? data.courts : [];
+    const unoccupiedCount = courts.filter(c => c.isUnoccupied).length;
+    const overtimeCount = courts.filter(c => c.isOvertime).length;
+    const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
+    const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
 
-      if (engagement.position <= maxAllowedPosition) {
-        return true; // Allow this waitlist member to register
-      }
-    } else {
-      // Legacy localStorage path
-      const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-      if (A?.getFreeCourtsInfo) {
-        try {
-          const now = new Date();
-          const blocks = S.readJSON(S.STORAGE.BLOCKS) || [];
-          const wetSet = new Set();
-          const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-          const freeCount = info.free?.length || 0;
-          const overtimeCount = info.overtime?.length || 0;
-          const totalAvailable = freeCount > 0 ? freeCount : overtimeCount;
-          const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
-
-          if (engagement.position <= maxAllowedPosition) {
-            return true; // Allow this waitlist member to register
-          }
-        } catch (error) {
-          console.warn('Error checking waitlist eligibility:', error);
-        }
-      }
+    if (engagement.position <= maxAllowedPosition) {
+      return true; // Allow this waitlist member to register
     }
 
     Tennis.UI.toast(`${display} is already on the waitlist (position ${engagement.position})`);
@@ -1352,104 +1125,16 @@ const checkLocationAndProceed = async (onSuccess) => {
     }
   }, [showSuccess, justAssignedCourt]);
 
-  // Update available courts when current group changes
-  // NOTE: Skip this when using API backend - availableCourts is set by loadData()
+  // PHASE1D: Court availability now handled by TennisBackend subscription
+
+  // PHASE1D: Event listeners for localStorage removed - TennisBackend handles all updates
+
+  // Cleanup typing timeout on unmount
   useEffect(() => {
-    // When using API backend, don't overwrite availableCourts with localStorage data
-    if (USE_API_BACKEND) {
-      console.log("useEffect (currentGroup): Skipping localStorage update - using API backend");
-      return;
-    }
-
-    const updateAvailableCourts = () => {
-      try {
-        const data = getCourtData();
-        const tempAvailableCourts = getAvailableCourts(false); // Get courts without waitlist check
-        const hasUnoccupiedCourts = data.courts.some((court, index) => {
-          const courtNumber = index + 1;
-          const blockStatus = getCourtBlockStatus(courtNumber);
-          if (blockStatus && blockStatus.isCurrent) return false;
-
-          return !court || court.wasCleared || (court.current === null && court.history) ||
-                 ((!court.players || court.players.length === 0) &&
-                  (!court.current || !court.current.players || court.current.players.length === 0));
-        });
-
-        // If there are available courts but no unoccupied courts, these must be overtime courts
-        const shouldBypassWaitlistPriority = tempAvailableCourts.length > 0 && !hasUnoccupiedCourts;
-
-        console.log("🔍 useEffect (currentGroup) DEBUG:");
-        console.log("  - tempAvailableCourts:", tempAvailableCourts);
-        console.log("  - hasUnoccupiedCourts:", hasUnoccupiedCourts);
-        console.log("  - shouldBypassWaitlistPriority:", shouldBypassWaitlistPriority);
-        console.log("  - waitlist length:", data.waitingGroups.length);
-
-        // Use the synchronous getAvailableCourts function with appropriate priority setting
-        const courts = getAvailableCourts(!shouldBypassWaitlistPriority);
-        console.log("useEffect (currentGroup): Available courts:", courts);
-        setAvailableCourts(courts);
-      } catch (error) {
-        console.error('Error updating available courts:', error);
-        setAvailableCourts([]);
-      }
-    };
-    
-    if (currentGroup.length > 0) {
-      updateAvailableCourts();
-    }
-  }, [currentGroup]);
-
-  // Wire up event listeners for availability updates (once only)
-  // NOTE: Skip this when using API backend - these events update from localStorage
-  useEffect(() => {
-    // When using API backend, don't wire up localStorage-based event listeners
-    if (USE_API_BACKEND) {
-      console.log("useEffect: Skipping localStorage event listeners - using API backend");
-      return;
-    }
-
-    if (!window.__wiredAvailabilityEvents) {
-      const refreshAvailability = () => {
-        // This is called by both events, reusing the existing updateAvailableCourts logic
-        if (currentGroup.length > 0) {
-          const updateAvailableCourts = () => {
-            try {
-              const data = getCourtData();
-              const tempAvailableCourts = getAvailableCourts(false);
-              const hasUnoccupiedCourts = data.courts.some((court, index) => {
-                const courtNumber = index + 1;
-                const blockStatus = getCourtBlockStatus(courtNumber);
-                if (blockStatus && blockStatus.isCurrent) return false;
-
-                return !court || court.wasCleared || (court.current === null && court.history) ||
-                  (court.history && court.history.length > 0 && (!court.players || court.players.length === 0));
-              });
-
-              if (hasUnoccupiedCourts) {
-                setAvailableCourts(tempAvailableCourts);
-              } else {
-                setAvailableCourts([]);
-              }
-            } catch (error) {
-              console.error('Error updating available courts:', error);
-              setAvailableCourts([]);
-            }
-          };
-          updateAvailableCourts();
-        }
-      };
-
-      window.addEventListener('tennisDataUpdate', refreshAvailability);
-      window.addEventListener('DATA_UPDATED', refreshAvailability);
-      window.addEventListener('BLOCKS_UPDATED', refreshAvailability, { passive: true });
-      window.__wiredAvailabilityEvents = true;
-    }
-    
     return () => {
       clearTimeout(typingTimeoutRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentGroup]); // getCourtData, getAvailableCourts, getCourtBlockStatus are stable module-level functions
+  }, []);
 
   // Activity tracking for timeout
   const updateActivity = () => {
@@ -1707,11 +1392,11 @@ const now = new Date();
   const currentMinutes = now.getMinutes();
   const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
 
-  // Get opening time from API or use fallback
+  // Get opening time from API
   let openingTime;
   let openingTimeString;
 
-  if (USE_API_BACKEND && operatingHours && Array.isArray(operatingHours)) {
+  if (operatingHours && Array.isArray(operatingHours)) {
     // Find today's operating hours from API
     const todayHours = operatingHours.find(h => h.day_of_week === dayOfWeek);
     if (todayHours && !todayHours.is_closed) {
@@ -1731,10 +1416,9 @@ const now = new Date();
       openingTimeString = "7:00 AM";
     }
   } else {
-    // Legacy fallback: hardcoded hours
-    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-    openingTime = isWeekend ? 7 : 6.5;
-    openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
+    // Fallback: default to 7 AM
+    openingTime = 7;
+    openingTimeString = "7:00 AM";
   }
 
   const currentTime = currentHour + (currentMinutes / 60);
@@ -2244,97 +1928,53 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     return allMembers;
   };
 
-  // Get frequent partners
+  // Get frequent partners (uses API members)
   const getFrequentPartners = (memberNumber) => {
-    // When API backend is enabled, use apiMembers
-    if (USE_API_BACKEND) {
-      if (apiMembers.length === 0) {
-        console.warn('⚠️ API members not loaded yet, frequent partners unavailable');
-        return [];
-      }
-
-      // Find the current member to exclude them
-      const currentMember = apiMembers.find(m => m.member_number === memberNumber);
-      if (!currentMember) {
-        console.warn('⚠️ Current member not found in API members');
-        return [];
-      }
-
-      // Use member_number as seed for consistent random generation
-      const seed = parseInt(memberNumber) || 0;
-
-      // Get all potential partners (excluding self and family members on same account)
-      const potentialPartners = [];
-
-      apiMembers.forEach(apiMember => {
-        // Skip self and family members (same account_id)
-        if (apiMember.id === currentMember.id || apiMember.account_id === currentMember.account_id) {
-          return;
-        }
-
-        // Check if this player is currently playing (use UUID)
-        const playerStatus = isPlayerAlreadyPlaying(apiMember.id);
-        if (!playerStatus.isPlaying) {
-          // Generate a consistent "play count" based on both member numbers
-          const partnerSeed = parseInt(apiMember.member_number) || 0;
-          const combinedSeed = seed + partnerSeed;
-          const playCount = (combinedSeed * 9301 + 49297) % 233280;
-          const normalizedCount = (playCount % 10) + 1;
-
-          // Build player object with API data
-          const player = {
-            id: apiMember.id, // UUID from API
-            name: apiMember.display_name || apiMember.name || '',
-            memberNumber: apiMember.member_number,
-            accountId: apiMember.account_id,
-            memberId: apiMember.id,
-            isPrimary: apiMember.is_primary,
-          };
-
-          potentialPartners.push({
-            player: player,
-            count: normalizedCount
-          });
-        }
-      });
-
-      // Sort by play count and return top 6
-      return potentialPartners
-        .sort((a, b) => b.count - a.count)
-        .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS);
+    if (apiMembers.length === 0) {
+      return [];
     }
 
-    // Legacy: Use hardcoded memberDatabase
-    const member = memberDatabase[memberNumber];
-    if (!member || !member.familyMembers || member.familyMembers.length === 0) return [];
+    // Find the current member to exclude them
+    const currentMember = apiMembers.find(m => m.member_number === memberNumber);
+    if (!currentMember) {
+      return [];
+    }
 
-    // Use member ID as seed for consistent random generation
-    const seed = member.familyMembers[0].id;
+    // Use member_number as seed for consistent random generation
+    const seed = parseInt(memberNumber) || 0;
 
-    const allMembers = getAllMembers();
-    const memberIds = Object.keys(allMembers);
-
-    // Get all potential partners (excluding self)
+    // Get all potential partners (excluding self and family members on same account)
     const potentialPartners = [];
 
-    memberIds.forEach((partnerId, index) => {
-      if (partnerId != member.familyMembers[0].id) {
-        const player = allMembers[partnerId];
-        if (player) {
-          // Check if this player is currently playing
-          const playerStatus = isPlayerAlreadyPlaying(parseInt(partnerId));
-          if (!playerStatus.isPlaying) {
-            // Generate a consistent "play count" based on both IDs
-            const combinedSeed = seed + parseInt(partnerId);
-            const playCount = (combinedSeed * 9301 + 49297) % 233280;
-            const normalizedCount = (playCount % 10) + 1;
+    apiMembers.forEach(apiMember => {
+      // Skip self and family members (same account_id)
+      if (apiMember.id === currentMember.id || apiMember.account_id === currentMember.account_id) {
+        return;
+      }
 
-            potentialPartners.push({
-              player: player,
-              count: normalizedCount
-            });
-          }
-        }
+      // Check if this player is currently playing (use UUID)
+      const playerStatus = isPlayerAlreadyPlaying(apiMember.id);
+      if (!playerStatus.isPlaying) {
+        // Generate a consistent "play count" based on both member numbers
+        const partnerSeed = parseInt(apiMember.member_number) || 0;
+        const combinedSeed = seed + partnerSeed;
+        const playCount = (combinedSeed * 9301 + 49297) % 233280;
+        const normalizedCount = (playCount % 10) + 1;
+
+        // Build player object with API data
+        const player = {
+          id: apiMember.id, // UUID from API
+          name: apiMember.display_name || apiMember.name || '',
+          memberNumber: apiMember.member_number,
+          accountId: apiMember.account_id,
+          memberId: apiMember.id,
+          isPrimary: apiMember.is_primary,
+        };
+
+        potentialPartners.push({
+          player: player,
+          count: normalizedCount
+        });
       }
     });
 
@@ -2392,16 +2032,8 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
       return;
     }
 
-    // For API backend, player should already have all data from apiMembers
-    // For legacy, enrich from roster
-    let enriched;
-    if (USE_API_BACKEND) {
-      // Player from getFrequentPartners already has API data
-      enriched = player;
-    } else {
-      const R = window.Tennis?.Domain?.roster;
-      enriched = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([player], memberRoster)[0] : player;
-    }
+    // Player from getFrequentPartners already has API data
+    const enriched = player;
 
     // Ensure player has at least a name
     if (!enriched?.name && !player?.name) {
@@ -2476,68 +2108,43 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     return A.every((x,i)=>x===B[i]);
   };
 
-  // Get autocomplete suggestions
+  // Get autocomplete suggestions (uses API members)
   const getAutocompleteSuggestions = (input) => {
     if (!input || input.length < 1) return [];
 
     const suggestions = [];
     const lowerInput = input.toLowerCase();
 
-    // When API backend is enabled, ONLY use API members - never fall back to hardcoded data
-    if (USE_API_BACKEND) {
-      // If API members haven't loaded yet, return empty (user will see no suggestions until loaded)
-      if (apiMembers.length === 0) {
-        console.warn('⚠️ API members not loaded yet, autocomplete unavailable');
-        return [];
-      }
-
-      apiMembers.forEach(apiMember => {
-        const displayName = apiMember.display_name || apiMember.name || '';
-        const memberNumber = apiMember.member_number || '';
-
-        // Split the name into parts
-        const nameParts = displayName.split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts[nameParts.length - 1] || '';
-
-        // Check if input matches the beginning of first or last name, or member number
-        if (firstName.toLowerCase().startsWith(lowerInput) ||
-            lastName.toLowerCase().startsWith(lowerInput) ||
-            memberNumber.startsWith(input)) {
-          suggestions.push({
-            memberNumber: memberNumber,
-            member: {
-              id: apiMember.id, // This is the UUID from API
-              name: displayName,
-              accountId: apiMember.account_id,
-              isPrimary: apiMember.is_primary,
-            },
-            displayText: `${displayName} (#${memberNumber})`
-          });
-        }
-      });
-    } else {
-      // Legacy: Use hardcoded memberDatabase (only when API backend is disabled)
-      Object.entries(memberDatabase).forEach(([memberNum, data]) => {
-        data.familyMembers.forEach(member => {
-          // Split the name into parts
-          const nameParts = member.name.split(' ');
-          const firstName = nameParts[0] || '';
-          const lastName = nameParts[nameParts.length - 1] || '';
-
-          // Check if input matches the beginning of first or last name, or member number
-          if (firstName.toLowerCase().startsWith(lowerInput) ||
-              lastName.toLowerCase().startsWith(lowerInput) ||
-              memberNum.startsWith(input)) {
-            suggestions.push({
-              memberNumber: memberNum,
-              member: member,
-              displayText: `${member.name} (#${memberNum})`
-            });
-          }
-        });
-      });
+    // If API members haven't loaded yet, return empty
+    if (apiMembers.length === 0) {
+      return [];
     }
+
+    apiMembers.forEach(apiMember => {
+      const displayName = apiMember.display_name || apiMember.name || '';
+      const memberNumber = apiMember.member_number || '';
+
+      // Split the name into parts
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts[nameParts.length - 1] || '';
+
+      // Check if input matches the beginning of first or last name, or member number
+      if (firstName.toLowerCase().startsWith(lowerInput) ||
+          lastName.toLowerCase().startsWith(lowerInput) ||
+          memberNumber.startsWith(input)) {
+        suggestions.push({
+          memberNumber: memberNumber,
+          member: {
+            id: apiMember.id, // This is the UUID from API
+            name: displayName,
+            accountId: apiMember.account_id,
+            isPrimary: apiMember.is_primary,
+          },
+          displayText: `${displayName} (#${memberNumber})`
+        });
+      }
+    });
 
     // Sort suggestions to prioritize first name matches, then last name matches
     suggestions.sort((a, b) => {
@@ -2565,30 +2172,14 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
       return;
     }
 
-    // For API backend, member is already validated from API data
-    // For legacy, validate member is in hardcoded database
-    if (!USE_API_BACKEND && !memberDatabase[suggestion.memberNumber]) {
-      showAlertMessage("Member number not found in database.");
-      return;
-    }
-
-    // Enrich member - for API mode, use the API data directly
-    let enrichedMember;
-    if (USE_API_BACKEND) {
-      // API member already has correct id (UUID) and accountId
-      enrichedMember = {
-        id: suggestion.member.id, // UUID from API
-        name: suggestion.member.name,
-        memberNumber: suggestion.memberNumber,
-        accountId: suggestion.member.accountId,
-        memberId: suggestion.member.id, // Same as id for API members
-      };
-      console.log('🔵 handleSuggestionClick - API enriched member:', enrichedMember);
-    } else {
-      // Legacy: enrich from local roster
-      const R = window.Tennis?.Domain?.roster;
-      enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
-    }
+    // API member already has correct id (UUID) and accountId
+    const enrichedMember = {
+      id: suggestion.member.id, // UUID from API
+      name: suggestion.member.name,
+      memberNumber: suggestion.memberNumber,
+      accountId: suggestion.member.accountId,
+      memberId: suggestion.member.id, // Same as id for API members
+    };
     
     // Early duplicate guard - if player is already playing/waiting, stop here
     if (!guardAddPlayerEarly(enrichedMember)) {
@@ -2714,113 +2305,52 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     let estimatedWait = 0;
     let position = 0;
     if (!isCourtAssignment) {
-      // Position in queue - use API position if available, otherwise count from state
-      if (USE_API_BACKEND && waitlistPosition > 0) {
-        position = waitlistPosition;
-        console.log('[SuccessScreen] Using API waitlist position:', position);
-      } else {
-        position = data.waitingGroups.length;
-        console.log('[SuccessScreen] Using state waitlist length as position:', position);
-      }
-      
+      // Position in queue - use API position if available
+      position = waitlistPosition > 0 ? waitlistPosition : data.waitingGroups.length;
+
       // Calculate estimated wait time based on court end times
-      if (USE_API_BACKEND) {
-        // API backend: use court session and block data directly
-        try {
-          const now = currentTime.getTime();
+      try {
+        const now = currentTime.getTime();
 
-          // Collect end times from sessions and blocks (courts that are occupied/blocked)
-          const courtEndTimes = data.courts
-            .map(court => {
-              if (!court) return null;
-              // Session end time
-              if (court.session?.endTime && court.session.endTime > now) {
-                return court.session.endTime;
-              }
-              // Block end time (court is blocked)
-              if (court.block?.endTime && court.block.endTime > now) {
-                return court.block.endTime;
-              }
-              // Fallback: top-level endTime
-              if (court.endTime && court.endTime > now) {
-                return court.endTime;
-              }
-              return null;
-            })
-            .filter(endTime => endTime !== null)
-            .sort((a, b) => a - b);
+        // Collect end times from sessions and blocks (courts that are occupied/blocked)
+        const courtEndTimes = data.courts
+          .map(court => {
+            if (!court) return null;
+            // Session end time
+            if (court.session?.endTime && court.session.endTime > now) {
+              return court.session.endTime;
+            }
+            // Block end time (court is blocked)
+            if (court.block?.endTime && court.block.endTime > now) {
+              return court.block.endTime;
+            }
+            // Fallback: top-level endTime
+            if (court.endTime && court.endTime > now) {
+              return court.endTime;
+            }
+            return null;
+          })
+          .filter(endTime => endTime !== null)
+          .sort((a, b) => a - b);
 
-          console.log('[SuccessScreen] Court end times:', courtEndTimes.map(t => new Date(t).toLocaleTimeString()));
-          console.log('[SuccessScreen] Position:', position, 'Courts with end times:', courtEndTimes.length);
-
-          if (courtEndTimes.length === 0) {
-            // No courts occupied - either available immediately or fallback to avg time
-            estimatedWait = position === 1 ? 0 : (position - 1) * CONSTANTS.AVG_GAME_TIME_MIN;
-          } else if (position <= courtEndTimes.length) {
-            // Position N means wait for the Nth court to free up
-            const waitMs = courtEndTimes[position - 1] - now;
-            estimatedWait = Math.max(0, Math.ceil(waitMs / 60000));
-          } else {
-            // More waitlist positions than courts - estimate additional cycles
-            const avgGameTime = CONSTANTS.AVG_GAME_TIME_MIN;
-            const lastEndTime = courtEndTimes[courtEndTimes.length - 1];
-            const baseWait = Math.max(0, Math.ceil((lastEndTime - now) / 60000));
-            const extraCycles = Math.ceil((position - courtEndTimes.length) / Math.max(courtEndTimes.length, 1));
-            estimatedWait = baseWait + (extraCycles * avgGameTime);
-          }
-          console.log('[SuccessScreen] API estimated wait:', estimatedWait, 'minutes');
-        } catch (e) {
-          console.error('Error calculating wait time:', e);
-          estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
+        if (courtEndTimes.length === 0) {
+          // No courts occupied - either available immediately or fallback to avg time
+          estimatedWait = position === 1 ? 0 : (position - 1) * CONSTANTS.AVG_GAME_TIME_MIN;
+        } else if (position <= courtEndTimes.length) {
+          // Position N means wait for the Nth court to free up
+          const waitMs = courtEndTimes[position - 1] - now;
+          estimatedWait = Math.max(0, Math.ceil(waitMs / 60000));
+        } else {
+          // More waitlist positions than courts - estimate additional cycles
+          const avgGameTime = CONSTANTS.AVG_GAME_TIME_MIN;
+          const lastEndTime = courtEndTimes[courtEndTimes.length - 1];
+          const baseWait = Math.max(0, Math.ceil((lastEndTime - now) / 60000));
+          const extraCycles = Math.ceil((position - courtEndTimes.length) / Math.max(courtEndTimes.length, 1));
+          estimatedWait = baseWait + (extraCycles * avgGameTime);
         }
-      } else {
-        // localStorage backend: use domain-based calculation
-        try {
-          const Avail = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
-          const Wait = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
-          const Storage = window.Tennis.Storage;
-
-          const now = new Date();
-          const blocks = Storage.readJSON(Storage.STORAGE.BLOCKS) || [];
-          const wetSet = new Set(
-            blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-                  .map(b => b.courtNumber)
-          );
-
-          // Get availability info same as CourtBoard
-          const nextTimes = Avail.getNextFreeTimes({ data, now, blocks });
-          const info = Avail.getFreeCourtsInfo({ data, now, blocks, wetSet });
-
-          // Calculate wait time using proper domain logic
-          const etas = Wait.estimateWaitForPositions({
-            positions: [position],
-            currentFreeCount: info.free.length,
-            nextFreeTimes: nextTimes,
-            avgGameMinutes: CONSTANTS.AVG_GAME_TIME_MIN
-          });
-
-          estimatedWait = etas[0] || 0;
-        } catch (e) {
-          console.error('Error calculating wait time:', e);
-          // Fallback to simple calculation if domain logic fails
-          const courtEndTimes = data.courts
-            .filter(court => court && court.current && new Date(court.current.endTime) >= currentTime)
-            .map(court => new Date(court.current.endTime).getTime())
-            .sort((a, b) => a - b);
-
-          if (courtEndTimes.length === 0 && position === 1) {
-            estimatedWait = 0;
-          } else if (position <= courtEndTimes.length) {
-            estimatedWait = Math.ceil((courtEndTimes[position - 1] - currentTime.getTime()) / 60000);
-          } else {
-            estimatedWait = TennisBusinessLogic.calculateEstimatedWaitTime(
-              position,
-              data.courts,
-              currentTime,
-              CONSTANTS.AVG_GAME_TIME_MIN
-            );
-          }
-        }
+      } catch (e) {
+        console.error('Error calculating wait time:', e);
+        estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
       }
     }
 
@@ -2848,7 +2378,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
           }}
           onHome={resetForm}
           dataStore={dataStore}
-          dataService={USE_API_BACKEND ? getDataService() : null}
+          dataService={getDataService()}
           TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
         />
@@ -3928,20 +3458,14 @@ onFocus={() => {
                              return;
                            }
                            
-                           // Enrich member - for API mode, use the API data directly
-                           let enrichedMember;
-                           if (USE_API_BACKEND) {
-                             enrichedMember = {
-                               id: suggestion.member.id,
-                               name: suggestion.member.name,
-                               memberNumber: suggestion.memberNumber,
-                               accountId: suggestion.member.accountId,
-                               memberId: suggestion.member.id,
-                             };
-                           } else {
-                             const R = window.Tennis?.Domain?.roster;
-                             enrichedMember = R?.enrichPlayersWithIds ? R.enrichPlayersWithIds([suggestion.member], memberRoster)[0] : suggestion.member;
-                           }
+                           // API member already has correct data
+                           const enrichedMember = {
+                             id: suggestion.member.id,
+                             name: suggestion.member.name,
+                             memberNumber: suggestion.memberNumber,
+                             accountId: suggestion.member.accountId,
+                             memberId: suggestion.member.id,
+                           };
                            
                            // Early duplicate guard
                            if (!guardAddPlayerEarly(enrichedMember)) {
@@ -4307,16 +3831,9 @@ onFocus={() => {
     <div className={isMobileView ? 'flex-1 flex justify-center' : ''}>
       {(() => {
         // Check if there's a waitlist and if this group is not the first waiting group
-        // When using API backend, use React state; otherwise use localStorage
-        let waitingGroups;
-        if (USE_API_BACKEND) {
-          waitingGroups = data?.waitingGroups || [];
-        } else {
-          const storageData = Tennis.Storage.readDataSafe();
-          waitingGroups = storageData?.waitingGroups || [];
-        }
+        const waitingGroups = data?.waitingGroups || [];
         const hasWaitlist = waitingGroups.length > 0;
-        
+
         // Check if current group is in the allowed positions (1st or 2nd when 2+ courts)
         let groupWaitlistPosition = 0;
         for (let i = 0; i < waitingGroups.length; i++) {
@@ -4325,53 +3842,23 @@ onFocus={() => {
             break;
           }
         }
-        
-        // Calculate available courts for this group
-        // When using API backend, use the availableCourts state (already set from API data)
-        // When using localStorage, use getAvailableCourts() function
-        let courtsToCheck;
-        if (USE_API_BACKEND) {
-          // Use state variable that was set from API data in loadData()
-          courtsToCheck = availableCourts;
-        } else {
-          // For new groups not on waitlist: use standard selectable (includes overtime)
-          // For waitlist groups: use appropriate logic based on position
-          courtsToCheck = groupWaitlistPosition === 0
-            ? getAvailableCourts(false)  // New group - includes overtime courts
-            : getAvailableCourts(true);  // Waitlist group - free courts only
-        }
+
+        // Use availableCourts state (already set from API data)
+        const courtsToCheck = availableCourts;
 
         // Check if there are actually any courts available to select
         const hasAvailableCourts = courtsToCheck && courtsToCheck.length > 0;
         const availableCourtCount = courtsToCheck?.length || 0;
-        
+
         // Show "Select a Court" if:
         // 1. No waitlist and courts available OR
         // 2. Group is position 1 and courts available OR
         // 3. Group is position 2 and 2+ courts available
         const showSelectCourt = hasAvailableCourts && (
-          !hasWaitlist || 
+          !hasWaitlist ||
           groupWaitlistPosition === 1 ||
           (groupWaitlistPosition === 2 && availableCourtCount >= 2)
         );
-        
-        console.log("🎯 GROUP SCREEN BUTTON DEBUG:");
-        console.log("  - USE_API_BACKEND:", USE_API_BACKEND);
-        console.log("  - waitingGroups.length:", waitingGroups.length);
-        console.log("  - hasWaitlist:", hasWaitlist);
-        console.log("  - groupWaitlistPosition:", groupWaitlistPosition);
-        console.log("  - hasAvailableCourts:", hasAvailableCourts);
-        console.log("  - courtsToCheck:", courtsToCheck);
-        console.log("  - availableCourtCount:", availableCourtCount);
-        console.log("  - showSelectCourt:", showSelectCourt);
-        console.log('🎾 Selectable courts details:', courtsToCheck?.map(c => ({
-          number: c.number,
-          isUnoccupied: c.isUnoccupied,
-          isOvertime: c.isOvertime,
-          timeRemaining: c.timeRemaining,
-          status: c.status,
-          scheduledEndAt: c.session?.scheduledEndAt
-        })));
         
         return showSelectCourt;
       })() ? (
@@ -4446,45 +3933,22 @@ onFocus={() => {
    // When a group has already been assigned a court, treat it like changing courts
    const isSelectingDifferentCourt = isChangingCourt || hasAssignedCourt;
 
-   // Get court data - use React state for API backend, localStorage for legacy
-   const Av = Tennis.Domain.availability;
-   const S = Tennis.Storage;
+   // Get court data from React state
    const reactData = getCourtData();
-
-   // For API backend, use React state which has the API data
-   // For legacy, read fresh from localStorage
-   const freshData = USE_API_BACKEND ? reactData : S.readDataSafe();
-   const blocks = USE_API_BACKEND ? [] : (S.readJSON(S.STORAGE.BLOCKS) || []);
-   const wetSet = new Set();
-   const now = new Date();
-
-   // For API backend, compute selectable from the transformed court data
-   // Uses new availability flags: isUnoccupied, isOvertime, isActive, isBlocked
-   let selectable = [];
-   if (USE_API_BACKEND) {
-     const courts = freshData.courts || [];
-     // Compute court categories using new availability flags
-     const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
-     const overtimeCourts = courts.filter(c => c.isOvertime);
-
-     // Selectable: unoccupied first, then overtime if no unoccupied
-     if (unoccupiedCourts.length > 0) {
-       selectable = unoccupiedCourts.map(c => c.number);
-     } else if (overtimeCourts.length > 0) {
-       selectable = overtimeCourts.map(c => c.number);
-     }
-
-     console.log('[COURT SCREEN] API backend - court categories:', {
-       unoccupied: unoccupiedCourts.map(c => c.number),
-       overtime: overtimeCourts.map(c => c.number),
-       selectable
-     });
-   } else {
-     selectable = [...Av.getSelectableCourtsStrict({ data: freshData, now, blocks, wetSet })];
-   }
-
-   // Use React state for other operations
    const data = reactData;
+   const courts = data.courts || [];
+
+   // Compute court categories using availability flags
+   const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
+   const overtimeCourts = courts.filter(c => c.isOvertime);
+
+   // Selectable: unoccupied first, then overtime if no unoccupied
+   let selectable = [];
+   if (unoccupiedCourts.length > 0) {
+     selectable = unoccupiedCourts.map(c => c.number);
+   } else if (overtimeCourts.length > 0) {
+     selectable = overtimeCourts.map(c => c.number);
+   }
 
    const hasWaiters = (data.waitingGroups?.length || 0) > 0;
 
@@ -4492,29 +3956,14 @@ onFocus={() => {
    // Otherwise, only show courts when no one is waiting
    let availableCourts = [];
    if (hasWaitlistPriority) {
-     if (USE_API_BACKEND) {
-       // For waitlist priority users, prefer unoccupied courts, fallback to overtime
-       const courts = freshData.courts || [];
-       const unoccupiedCourts = courts.filter(c => c.isUnoccupied).map(c => c.number);
-       const overtimeCourts = courts.filter(c => c.isOvertime).map(c => c.number);
+     // For waitlist priority users, prefer unoccupied courts, fallback to overtime
+     const unoccupiedNumbers = unoccupiedCourts.map(c => c.number);
+     const overtimeNumbers = overtimeCourts.map(c => c.number);
 
-       if (unoccupiedCourts.length > 0) {
-         availableCourts = unoccupiedCourts;
-         console.log('[COURT SCREEN] API - Waitlist priority - UNOCCUPIED courts:', availableCourts);
-       } else if (overtimeCourts.length > 0) {
-         availableCourts = overtimeCourts;
-         console.log('[COURT SCREEN] API - Waitlist priority - OVERTIME courts:', availableCourts);
-       }
-     } else {
-       // Legacy localStorage path
-       const info = Av?.getFreeCourtsInfo ? Av.getFreeCourtsInfo({ data: freshData, now: new Date(), blocks, wetSet: new Set() }) : { free: [], overtime: [] };
-       if (info.free && info.free.length > 0) {
-         availableCourts = info.free;
-         console.log('[COURT SCREEN] Waitlist priority - FREE courts available:', availableCourts);
-       } else if (info.overtime && info.overtime.length > 0) {
-         availableCourts = info.overtime;
-         console.log('[COURT SCREEN] Waitlist priority - Only OVERTIME courts available:', availableCourts);
-       }
+     if (unoccupiedNumbers.length > 0) {
+       availableCourts = unoccupiedNumbers;
+     } else if (overtimeNumbers.length > 0) {
+       availableCourts = overtimeNumbers;
      }
    } else if (!hasWaiters && selectable.length > 0) {
      // Normal users get all selectable courts when no waitlist
