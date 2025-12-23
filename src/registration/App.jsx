@@ -243,7 +243,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // IMPORTANT: These state variables must be declared BEFORE any useEffect that references them
   // to avoid TDZ (Temporal Dead Zone) errors when the code is minified
-  const [currentScreen, setCurrentScreen] = useState("welcome");
+  const [currentScreen, _setCurrentScreen] = useState("welcome");
+  const setCurrentScreen = (screen, source = "unknown") => {
+    console.log(`[NAV] ${currentScreen} → ${screen} (from: ${source})`);
+    console.trace("[NAV] Stack trace");
+    _setCurrentScreen(screen);
+  };
   const [availableCourts, setAvailableCourts] = useState([]);
   const [apiError, setApiError] = useState(null);
   const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
@@ -1054,7 +1059,7 @@ const checkLocationAndProceed = async (onSuccess) => {
       window.RegistrationUI.startRegistration = (courtNumber) => {
         console.log('Mobile: Starting registration for court', courtNumber);
         // Navigate to group step and focus input
-        setCurrentScreen('group');
+        setCurrentScreen('group', 'mobileStartRegistration');
         requestAnimationFrame(() => {
           const input = 
             document.querySelector('#mobile-group-search-input') ||
@@ -1150,7 +1155,7 @@ const checkLocationAndProceed = async (onSuccess) => {
         setOriginalCourtData(null);
         setCanChangeCourt(false);
         setIsTimeLimited(false);
-        setCurrentScreen("welcome");
+        setCurrentScreen("welcome", "sessionTimeout");
         setSearchInput("");
         setShowSuggestions(false);
         setShowAddPlayer(false);
@@ -1754,7 +1759,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     setShowSuccess(false);
     setIsChangingCourt(true);
     setWasOvertimeCourt(wasOvertime);
-    setCurrentScreen("court");
+    setCurrentScreen("court", "changeCourt");
   };
 
   // Clear a court via TennisBackend
@@ -1902,7 +1907,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     setOriginalCourtData(null);
     setCanChangeCourt(false);
     setIsTimeLimited(false);
-    setCurrentScreen("welcome");
+    setCurrentScreen("welcome", "resetForm");
     setSearchInput("");
     setShowSuggestions(false);
     setShowAddPlayer(false);
@@ -2237,11 +2242,11 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
         
         setSearchInput("");
         setShowSuggestions(false);
-        setCurrentScreen("court"); // Go directly to court selection since group is already complete
+        setCurrentScreen("court", "waitlistPos1FastTrack"); // Go directly to court selection since group is already complete
         return;
       }
     }
-    
+
     // Check if player is in position 2 and there are 2+ courts available
     if (playerStatus.isPlaying && playerStatus.location === 'waiting' && playerStatus.position === 2) {
       const data = getCourtData();
@@ -2274,7 +2279,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
         
         setSearchInput("");
         setShowSuggestions(false);
-        setCurrentScreen("court"); // Go directly to court selection since group is already complete
+        setCurrentScreen("court", "waitlistPos2FastTrack"); // Go directly to court selection since group is already complete
         return;
       }
     }
@@ -2298,7 +2303,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
     console.log('🔵 Adding player to group:', newPlayer);
     setCurrentGroup([...currentGroup, newPlayer]);
 
-    setCurrentScreen("group");
+    setCurrentScreen("group", "handleSuggestionClick");
   };
 
   // Success screen
@@ -2383,7 +2388,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
-            setCurrentScreen("search");
+            setCurrentScreen("search", "successNewRegistration");
           }}
           onHome={resetForm}
           dataStore={dataStore}
@@ -2419,12 +2424,12 @@ if (currentScreen === "welcome") {
           </div>
         </div>
       )}
-      <WelcomeScreen 
+      <WelcomeScreen
         onRegisterClick={() => {
-          checkLocationAndProceed(() => setCurrentScreen("search"));
+          checkLocationAndProceed(() => setCurrentScreen("search", "welcomeRegisterClick"));
         }}
         onClearCourtClick={() => {
-          checkLocationAndProceed(() => setCurrentScreen("clearCourt"));
+          checkLocationAndProceed(() => setCurrentScreen("clearCourt", "welcomeClearCourtClick"));
         }}
       />
     </>
@@ -3180,7 +3185,7 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
          <div className="flex justify-center">
            <button
              onClick={() => {
-               setCurrentScreen("welcome");
+               setCurrentScreen("welcome", "exitAdminPanel");
                setSearchInput("");
              }}
              className="bg-gray-600 text-white py-2 sm:py-3 px-6 sm:px-8 rounded-xl text-base sm:text-lg font-semibold hover:bg-gray-700 transition-colors"
@@ -3324,7 +3329,7 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
                      
                      // Check for admin code (immediate, no debounce)
                      if (value === CONSTANTS.ADMIN_CODE) {
-                       setCurrentScreen("admin");
+                       setCurrentScreen("admin", "adminCodeEntered");
                        setSearchInput("");
                        return;
                      }
@@ -3839,7 +3844,7 @@ onFocus={() => {
         // Desktop behavior - go back to search
         setCurrentGroup([]);
         setMemberNumber("");
-        setCurrentScreen("search");
+        setCurrentScreen("search", "groupGoBack");
       }
     }}
     className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors relative z-10"
@@ -3888,7 +3893,7 @@ onFocus={() => {
             if (window.__mobileFlow && window.__preselectedCourt) {
               assignCourtToGroup(window.__preselectedCourt);
             } else {
-              setCurrentScreen("court");
+              setCurrentScreen("court", "selectCourtButton");
             }
           }}
           className={`${isMobileView ? 'px-6' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
@@ -4095,7 +4100,7 @@ onFocus={() => {
            }
          }}
          onGoBack={() => {
-           setCurrentScreen("group");
+           setCurrentScreen("group", "courtGoBack");
            setIsChangingCourt(false);
            setWasOvertimeCourt(false);
            // If we were changing courts and had replaced an overtime court, restore it
