@@ -17,6 +17,10 @@ import {
   TENNIS_CONFIG as _sharedTennisConfig
 } from '@lib';
 
+// TennisBackend for real-time board subscription
+import { createBackend } from '../registration/backend/index.js';
+const backend = createBackend();
+
 // Access shared utils from window for backward compatibility
 const U = window.APP_UTILS || {};
 
@@ -527,8 +531,9 @@ function TennisCourtDisplay() {
     }
   }, []);
 
-  // Initial load and event listeners
+  // DOM event listeners for cross-component updates (e.g., court blocks from localStorage)
   useEffect(() => {
+    // Initial load for court blocks (not yet from API)
     loadData();
 
     const handleUpdate = debounce(() => loadData(), 150);
@@ -536,29 +541,87 @@ function TennisCourtDisplay() {
     window.addEventListener('tennisDataUpdate', handleUpdate, { passive: true });
     window.addEventListener('DATA_UPDATED', handleUpdate, { passive: true });
 
-    const interval = setInterval(loadData, TENNIS_CONFIG.TIMING.POLL_INTERVAL_MS);
+    // No polling - TennisBackend subscription provides real-time updates
 
     return () => {
       window.removeEventListener('tennisDataUpdate', handleUpdate);
       window.removeEventListener('DATA_UPDATED', handleUpdate);
-      clearInterval(interval);
     };
   }, [loadData]);
 
+  // TennisBackend real-time subscription (primary data source)
+  useEffect(() => {
+    console.log('[Courtboard] Setting up TennisBackend subscription...');
+
+    const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
+      console.log('[Courtboard] Board update received:', {
+        serverNow: board.serverNow,
+        courts: board.courts?.length,
+        waitlist: board.waitlist?.length,
+      });
+
+      // Update courts state
+      if (board.courts) {
+      // Transform API courts to legacy format for Courtboard rendering
+      // Legacy expects: courts[courtNumber-1] = { current: { players: [{name}], endTime, startTime } }
+      const transformedCourts = Array(12).fill(null).map((_, idx) => {
+        const courtNumber = idx + 1;
+        const apiCourt = board.courts.find(c => c.number === courtNumber);
+        if (!apiCourt || !apiCourt.session) {
+          return null; // Empty court
+        }
+        return {
+          current: {
+            players: (apiCourt.session.participants || []).map(p => ({ 
+              name: p.displayName || p.name || 'Unknown'
+            })),
+            endTime: apiCourt.session.scheduledEndAt,
+            startTime: apiCourt.session.startedAt,
+          }
+        };
+      });
+      setCourts(transformedCourts);
+      }
+
+      // Normalize waitlist to match existing format { id, names }
+      if (board.waitlist) {
+        const normalized = board.waitlist
+          .map((g, idx) => {
+            const players = Array.isArray(g?.players) ? g.players : [];
+            const names = players.map(p => p?.name || p?.id).filter(Boolean);
+            return names.length ? { id: g.id || `wg_${idx}`, names } : null;
+          })
+          .filter(Boolean);
+        setWaitingGroups(normalized);
+      }
+    });
+
+    console.log('[Courtboard] TennisBackend subscription active');
+
+    return () => {
+      console.log('[Courtboard] Unsubscribing from board updates');
+      unsubscribe();
+    };
+  }, []);
+
   window.refreshBoard = loadData;
 
-  // Build status map
+  // Build status map using courts state from API (not localStorage)
   let statusByCourt = {};
   let selectableByCourt = {};
   let statusObjectByCourt = {};
-  let data = {};
+  // Build data object from courts state for status computation
+  let data = { courts: courts, waitingGroups: waitingGroups.map(g => ({ id: g.id, players: g.names.map(n => ({ name: n })) })) };
 
   try {
     const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
     const S = window.Tennis?.Storage;
     if (A && S) {
       const now = new Date();
-      data = S.readDataSafe();
+      // Use courts state from API, fall back to localStorage only if courts is empty
+      if (!courts || courts.length === 0 || courts.every(c => c === null)) {
+        data = S.readDataSafe();
+      }
       const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
       const wetSet = new Set((blocks || [])
         .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))

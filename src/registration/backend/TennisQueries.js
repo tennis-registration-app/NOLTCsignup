@@ -176,6 +176,25 @@ export class TennisQueries {
         reason: c.block_title || c.block_reason,
         endTime: c.block_ends_at || c.block_end_time,
       } : null,
+      // Legacy compatibility: add players array for isPlayerAlreadyPlaying checks
+      players: hasSession
+        ? (c.participants || []).map(p => ({
+            id: p.member_id,
+            name: p.display_name || 'Unknown',
+            member_id: p.member_id,
+          }))
+        : [],
+      current: hasSession
+        ? {
+            players: (c.participants || []).map(p => ({
+              id: p.member_id,
+              name: p.display_name || 'Unknown',
+              member_id: p.member_id,
+            })),
+            endTime: c.scheduled_end_at,
+            startTime: c.started_at,
+          }
+        : null,
     };
   }
 
