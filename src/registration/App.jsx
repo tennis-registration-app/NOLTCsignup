@@ -60,12 +60,6 @@ import { createBackend, DenialCodes } from './backend/index.js';
 // TennisBackend singleton instance
 const backend = createBackend();
 
-// Set global flag for cta-live.js to check
-window.NOLTC_USE_API_BACKEND = true;
-// Stop any running cta-live interval (in case it started before flag was set)
-if (typeof window.stopCtaLive === 'function') {
-  window.stopCtaLive();
-}
 
 // Import utility functions
 import {
@@ -725,13 +719,7 @@ useEffect(() => {
       try {
         const d = e?.detail || {};
 
-        // Ignore old format from cta-live.js (has liveFirst/freeCourts instead of live1/live2)
-        if ('liveFirst' in d || 'freeCourts' in d) {
-          console.log('🎯 Ignoring old CTA format event:', d);
-          return;
-        }
-
-        console.log('🎯 CTA event received (API format):', d);
+        console.log('🎯 CTA event received:', d);
         // API mode uses: live1/live2/first/second
         const live1 = d.live1 ?? false;
         const live2 = d.live2 ?? false;
@@ -775,9 +763,6 @@ useEffect(() => {
       } catch {}
     };
     window.addEventListener('cta:state', onCta, { passive: true });
-
-    // Kick once on mount (in case recompute already ran)
-    try { window.recomputeCtaLive && window.recomputeCtaLive(); } catch {}
 
     return () => window.removeEventListener('cta:state', onCta);
   }, []);
