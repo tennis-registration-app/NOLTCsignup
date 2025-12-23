@@ -1632,7 +1632,8 @@ if (!court) {
 // Determine group type from player count
 const groupType = allPlayers.length <= 2 ? 'singles' : 'doubles';
 
-console.log('🔵 Calling backend.commands.assignCourtWithPlayers:', {
+const assignStartTime = performance.now();
+console.log('🔵 [T+0ms] Calling backend.commands.assignCourtWithPlayers:', {
   courtId: court.id,
   courtNumber: court.number,
   groupType,
@@ -1647,9 +1648,11 @@ try {
     players: allPlayers,
     groupType,
   });
-  console.log('✅ Court assigned result:', result);
+  const apiDuration = Math.round(performance.now() - assignStartTime);
+  console.log(`✅ [T+${apiDuration}ms] Court assigned result:`, result);
 } catch (error) {
-  console.error('❌ assignCourtWithPlayers threw error:', error);
+  const apiDuration = Math.round(performance.now() - assignStartTime);
+  console.error(`❌ [T+${apiDuration}ms] assignCourtWithPlayers threw error:`, error);
   Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', { type: 'error' });
   setIsAssigning(false);
   return;
@@ -1674,18 +1677,19 @@ if (!result.ok) {
 setIsAssigning(false);
 
 // Success! Board subscription will auto-refresh from signal
-console.log('✅ Court assignment successful, waiting for board refresh signal');
+const successTime = Math.round(performance.now() - assignStartTime);
+console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI state...`);
 
   // Check if there were other courts available at time of assignment
   const availableAtAssignment = getAvailableCourts(
-    !isChangingCourt, 
+    !isChangingCourt,
     false,
     courtNumber  // Exclude the court we're about to assign
   );
-  
+
   // Only allow court changes if there were other options
   const allowCourtChange = availableAtAssignment.length > 0;
-  
+
   // Update UI state based on result
   setJustAssignedCourt(courtNumber);
   setReplacedGroup(result.replacedGroup);
@@ -1697,6 +1701,9 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
   setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
   setIsTimeLimited(result.isTimeLimited || false);  // Track if time was limited
   setShowSuccess(true);
+
+  const uiUpdateTime = Math.round(performance.now() - assignStartTime);
+  console.log(`✅ [T+${uiUpdateTime}ms] UI state updated, showSuccess=true`);
   
   // Mobile: notify parent on success
   if (window.__mobileSuccessHandler) {
@@ -1862,7 +1869,8 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
       // Determine group type from player count
       const groupType = players.length <= 2 ? 'singles' : 'doubles';
 
-      console.log('[waitlist] Calling backend.commands.joinWaitlistWithPlayers:', {
+      const waitlistStartTime = performance.now();
+      console.log('[waitlist] [T+0ms] Calling backend.commands.joinWaitlistWithPlayers:', {
         playerCount: players.length,
         groupType,
         players: players.map(p => `${p.name}(mn=${p.memberNumber})`),
@@ -1873,20 +1881,22 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
         players,
         groupType,
       });
+      const apiDuration = Math.round(performance.now() - waitlistStartTime);
       setIsJoiningWaitlist(false);
-      console.log('[waitlist] Result:', result);
+      console.log(`[waitlist] [T+${apiDuration}ms] Result:`, result);
 
       if (result.ok) {
         // Store the position from response for the success screen
         if (result.position) {
           setWaitlistPosition(result.position);
-          console.log('[waitlist] Position:', result.position);
+          console.log(`[waitlist] [T+${apiDuration}ms] Position:`, result.position);
         }
         // Toast and rely on board subscription for UI refresh
         Tennis?.UI?.toast?.(`Added to waiting list (position ${result.position})`, { type: 'success' });
-        console.debug('[waitlist] joined ok');
+        const successTime = Math.round(performance.now() - waitlistStartTime);
+        console.log(`[waitlist] [T+${successTime}ms] joined ok, UI updated`);
       } else {
-        console.error('[waitlist] Failed:', result.code, result.message);
+        console.error(`[waitlist] [T+${apiDuration}ms] Failed:`, result.code, result.message);
         Tennis?.UI?.toast?.(result.message || 'Could not join waitlist', { type: 'error' });
       }
     } catch (e) {
