@@ -2378,7 +2378,18 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
           }}
           onHome={resetForm}
           dataStore={dataStore}
-          dataService={getDataService()}
+          onPurchaseBalls={async (sessionId, accountId, options) => {
+            return backend.commands.purchaseBalls({
+              sessionId,
+              accountId,
+              splitBalls: options?.splitBalls || false,
+              splitAccountIds: options?.splitAccountIds || null,
+            });
+          }}
+          onLookupMemberAccount={async (memberNumber) => {
+            const members = await backend.directory.getMembersByAccount(memberNumber);
+            return members;
+          }}
           TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
         />

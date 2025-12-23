@@ -14,6 +14,7 @@ import {
   toAssignFromWaitlistPayload,
   toCreateBlockPayload,
   toCancelBlockPayload,
+  toPurchaseBallsPayload,
 } from './wire.js';
 
 export class TennisCommands {
@@ -104,6 +105,17 @@ export class TennisCommands {
   async cancelBlock(input) {
     const payload = toCancelBlockPayload(input);
     const response = await this.api.post('/cancel-block', payload);
+    return response;
+  }
+
+  /**
+   * Purchase balls for a session
+   * @param {import('./types').PurchaseBallsInput} input
+   * @returns {Promise<import('./types').CommandResponse & { transaction?: Object }>}
+   */
+  async purchaseBalls(input) {
+    const payload = toPurchaseBallsPayload(input);
+    const response = await this.api.post('/purchase-balls', payload);
     return response;
   }
 

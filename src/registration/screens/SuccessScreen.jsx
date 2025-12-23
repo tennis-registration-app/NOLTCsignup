@@ -22,7 +22,8 @@
  * - isMobile: boolean - Whether in mobile mode
  * - isTimeLimited: boolean - Whether time was limited due to block
  * - dataStore: object - Data store for settings/purchases
- * - dataService: object - API data service for ball purchases (optional)
+ * - onPurchaseBalls: (sessionId, accountId, options) => Promise - Ball purchase handler
+ * - onLookupMemberAccount: (memberNumber) => Promise<Member[]> - Member lookup handler
  * - TENNIS_CONFIG: object - Tennis configuration constants
  * - getCourtBlockStatus: (courtNumber) => BlockStatus - Court block status checker
  */
@@ -68,7 +69,8 @@ const SuccessScreen = ({
   isMobile = false,
   isTimeLimited = false,
   dataStore,
-  dataService,
+  onPurchaseBalls,
+  onLookupMemberAccount,
   TENNIS_CONFIG,
   getCourtBlockStatus
 }) => {
@@ -128,24 +130,22 @@ const SuccessScreen = ({
         });
       }
 
-      // Try to use API backend if available
+      // Use TennisBackend for ball purchase
       const sessionId = assignedCourt?.session?.id;
 
       // Get account ID from multiple sources:
       // 1. currentGroup player's accountId (if enriched)
-      // 2. From session participants (if API populated them)
-      // 3. Look up by member number using dataService
+      // 2. Look up by member number using onLookupMemberAccount
       let primaryAccountId = currentGroup[0]?.accountId || currentGroup[0]?.account_id;
 
       // If no accountId in currentGroup, try to look it up by member number
-      if (!primaryAccountId && dataService && currentGroup[0]?.memberNumber) {
+      if (!primaryAccountId && onLookupMemberAccount && currentGroup[0]?.memberNumber) {
         try {
           const memberNumber = currentGroup[0].memberNumber;
-          // Use getMembersByAccount for efficient lookup by member number
-          const members = await dataService.getMembersByAccount?.(memberNumber) || [];
+          const members = await onLookupMemberAccount(memberNumber) || [];
           if (members.length > 0) {
-            const member = members.find(m => m.is_primary) || members[0];
-            primaryAccountId = member.account_id;
+            const member = members.find(m => m.is_primary || m.isPrimary) || members[0];
+            primaryAccountId = member.account_id || member.accountId;
             console.log('[handleBallPurchase] Found accountId by member lookup:', primaryAccountId);
           }
         } catch (e) {
@@ -153,35 +153,32 @@ const SuccessScreen = ({
         }
       }
 
-      if (dataService && typeof dataService.purchaseBalls === 'function' && sessionId && primaryAccountId) {
-        console.log('[handleBallPurchase] Using API backend for purchase', { sessionId, primaryAccountId });
+      if (onPurchaseBalls && sessionId && primaryAccountId) {
+        console.log('[handleBallPurchase] Using TennisBackend for purchase', { sessionId, primaryAccountId });
 
         // Get account IDs for split purchase
         let splitAccountIds = null;
         if (isSplit && currentNonGuestPlayers > 1) {
-          // For split, we'd need to look up each player's account
-          // For now, just use the primary account for full purchase
           // TODO: Implement split account lookup
           splitAccountIds = null;
         }
 
-        const result = await dataService.purchaseBalls(sessionId, primaryAccountId, {
+        const result = await onPurchaseBalls(sessionId, primaryAccountId, {
           splitBalls: isSplit,
           splitAccountIds: splitAccountIds,
         });
 
-        if (result.success) {
-          console.log('[handleBallPurchase] API purchase successful:', result);
+        if (result.ok) {
+          console.log('[handleBallPurchase] Ball purchase successful:', result);
           setBallsPurchased(true);
           setShowBallPurchaseModal(false);
           return;
         } else {
-          console.error('[handleBallPurchase] API purchase failed, falling back to localStorage');
+          console.error('[handleBallPurchase] Ball purchase failed:', result.message);
         }
       } else {
-        console.log('[handleBallPurchase] API not available or missing data:', {
-          hasDataService: !!dataService,
-          hasPurchaseBalls: typeof dataService?.purchaseBalls === 'function',
+        console.log('[handleBallPurchase] Cannot purchase balls - missing data:', {
+          hasOnPurchaseBalls: !!onPurchaseBalls,
           sessionId,
           primaryAccountId
         });
@@ -247,7 +244,7 @@ const SuccessScreen = ({
     } catch (error) {
       console.error('[handleBallPurchase] Error processing purchase:', error);
     }
-  }, [ballPurchaseOption, ballPrice, currentGroup, justAssignedCourt, splitPrice, getLastFourDigits, assignedCourt, dataService]);
+  }, [ballPurchaseOption, ballPrice, currentGroup, justAssignedCourt, splitPrice, getLastFourDigits, assignedCourt, onPurchaseBalls, onLookupMemberAccount]);
 
   // Header content for both success types - hide for mobile flow
   const isMobileFlow = window.__mobileFlow || window.__wasMobileFlow || (window.top !== window.self);

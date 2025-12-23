@@ -126,3 +126,17 @@ export function toCancelBlockPayload(input) {
     block_id: input.blockId,
   };
 }
+
+/**
+ * Map PurchaseBallsInput to current purchase-balls payload
+ * @param {import('./types').PurchaseBallsInput} input
+ * @returns {Object} Wire payload for /purchase-balls
+ */
+export function toPurchaseBallsPayload(input) {
+  return {
+    session_id: input.sessionId,
+    account_id: input.accountId,
+    split_balls: input.splitBalls || false,
+    split_account_ids: input.splitAccountIds || null,
+  };
+}
