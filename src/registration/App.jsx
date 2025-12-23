@@ -696,7 +696,9 @@ useEffect(() => {
   const [blockStartTime, setBlockStartTime] = useState("now");
   const [blockEndTime, setBlockEndTime] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Add searching state
-  
+  const [isAssigning, setIsAssigning] = useState(false); // Prevent double-submit during court assignment
+  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false); // Prevent double-submit during waitlist join
+
   // Admin panel state - moved to top level
   const [ballPriceInput, setBallPriceInput] = useState('');
   const [showPriceSuccess, setShowPriceSuccess] = useState(false);
@@ -1365,6 +1367,12 @@ const tryAssignCourtToGroup = () => {
 
 
 const assignCourtToGroup = async (courtNumber) => {
+  // Prevent double-submit
+  if (isAssigning) {
+    console.log('⚠️ Assignment already in progress, ignoring duplicate request');
+    return;
+  }
+
   // Mobile: Use preselected court if in mobile flow
   if (window.__mobileFlow && window.__preselectedCourt && !courtNumber) {
     courtNumber = window.__preselectedCourt;
@@ -1626,6 +1634,7 @@ console.log('🔵 Calling backend.commands.assignCourtWithPlayers:', {
   playerCount: allPlayers.length,
 });
 
+setIsAssigning(true);
 let result;
 try {
   result = await backend.commands.assignCourtWithPlayers({
@@ -1637,6 +1646,7 @@ try {
 } catch (error) {
   console.error('❌ assignCourtWithPlayers threw error:', error);
   Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', { type: 'error' });
+  setIsAssigning(false);
   return;
 }
 
@@ -1647,11 +1657,16 @@ if (!result.ok) {
     Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
     // Board subscription will auto-refresh, but force immediate refresh
     await backend.queries.refresh();
+    setIsAssigning(false);
     return;
   }
   Tennis.UI.toast(result.message || 'Failed to assign court', { type: 'error' });
+  setIsAssigning(false);
   return;
 }
+
+// Success - clear the assigning flag
+setIsAssigning(false);
 
 // Success! Board subscription will auto-refresh from signal
 console.log('✅ Court assignment successful, waiting for board refresh signal');
@@ -1785,6 +1800,12 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
 
   // Send group to waitlist
   const sendGroupToWaitlist = async (group) => {
+    // Prevent double-submit
+    if (isJoiningWaitlist) {
+      console.log('⚠️ Waitlist join already in progress, ignoring duplicate request');
+      return;
+    }
+
     const traceId = `WL-${Date.now()}`;
     try {
       console.log(`🔴🔴🔴 [${traceId}] sendGroupToWaitlist START`);
@@ -1842,10 +1863,12 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
         players: players.map(p => `${p.name}(mn=${p.memberNumber})`),
       });
 
+      setIsJoiningWaitlist(true);
       const result = await backend.commands.joinWaitlistWithPlayers({
         players,
         groupType,
       });
+      setIsJoiningWaitlist(false);
       console.log('[waitlist] Result:', result);
 
       if (result.ok) {
@@ -1862,6 +1885,7 @@ console.log('✅ Court assignment successful, waiting for board refresh signal')
         Tennis?.UI?.toast?.(result.message || 'Could not join waitlist', { type: 'error' });
       }
     } catch (e) {
+      setIsJoiningWaitlist(false);
       console.error('[waitlist] failed:', e);
       Tennis?.UI?.toast?.('Could not join waitlist', { type: 'error' });
     }
