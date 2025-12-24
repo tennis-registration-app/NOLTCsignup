@@ -210,9 +210,11 @@ export class TennisCommands {
    * @param {'singles' | 'doubles'} params.groupType
    * @param {boolean} [params.addBalls]
    * @param {boolean} [params.splitBalls]
+   * @param {number} [params.latitude] - For mobile geofence validation
+   * @param {number} [params.longitude] - For mobile geofence validation
    * @returns {Promise<import('./types').CommandResponse & { session?: Object }>}
    */
-  async assignCourtWithPlayers({ courtId, players, groupType, addBalls = false, splitBalls = false }) {
+  async assignCourtWithPlayers({ courtId, players, groupType, addBalls = false, splitBalls = false, latitude, longitude }) {
     const participants = await this.resolvePlayersToParticipants(players);
 
     return this.assignCourt({
@@ -221,6 +223,8 @@ export class TennisCommands {
       groupType,
       addBalls,
       splitBalls,
+      latitude,
+      longitude,
     });
   }
 
@@ -231,14 +235,18 @@ export class TennisCommands {
    * @param {Object} params
    * @param {Array<Object>} params.players - Players in UI format
    * @param {'singles' | 'doubles'} params.groupType
+   * @param {number} [params.latitude] - For mobile geofence validation
+   * @param {number} [params.longitude] - For mobile geofence validation
    * @returns {Promise<import('./types').CommandResponse & { entry?: Object, position?: number }>}
    */
-  async joinWaitlistWithPlayers({ players, groupType }) {
+  async joinWaitlistWithPlayers({ players, groupType, latitude, longitude }) {
     const participants = await this.resolvePlayersToParticipants(players);
 
     return this.joinWaitlist({
       participants,
       groupType,
+      latitude,
+      longitude,
     });
   }
 }

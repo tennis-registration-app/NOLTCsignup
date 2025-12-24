@@ -31,6 +31,9 @@ import {
   geolocationService
 } from './services';
 
+// Import API config for mobile detection
+import { API_CONFIG } from '../lib/apiConfig.js';
+
 // Import extracted UI components
 import {
   Users,
@@ -950,6 +953,44 @@ const checkLocationAndProceed = async (onSuccess) => {
     }
   };
 
+  /**
+   * Get current geolocation coordinates for mobile backend validation
+   * Returns { latitude, longitude } or null if unavailable/not mobile
+   */
+  const getMobileGeolocation = async () => {
+    // Only needed for mobile device type
+    if (!API_CONFIG.IS_MOBILE) {
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        console.warn('[Mobile] Geolocation not available');
+        resolve(null);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('[Mobile] Got geolocation:', position.coords.latitude, position.coords.longitude);
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error('[Mobile] Geolocation error:', error);
+          resolve(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: TENNIS_CONFIG.GEOLOCATION.TIMEOUT_MS || 10000,
+          maximumAge: 0,
+        }
+      );
+    });
+  };
+
   // Track when main search is in progress
   useEffect(() => {
     if (shouldDebounceMainSearch && searchInput !== debouncedSearchInput && searchInput.length > 0) {
@@ -1632,12 +1673,16 @@ if (!court) {
 // Determine group type from player count
 const groupType = allPlayers.length <= 2 ? 'singles' : 'doubles';
 
+// Get geolocation for mobile (required by backend for geofence validation)
+const mobileLocation = await getMobileGeolocation();
+
 const assignStartTime = performance.now();
 console.log('🔵 [T+0ms] Calling backend.commands.assignCourtWithPlayers:', {
   courtId: court.id,
   courtNumber: court.number,
   groupType,
   playerCount: allPlayers.length,
+  mobileLocation: mobileLocation ? 'provided' : 'not-mobile',
 });
 
 setIsAssigning(true);
@@ -1647,6 +1692,7 @@ try {
     courtId: court.id,
     players: allPlayers,
     groupType,
+    ...(mobileLocation || {}), // Spread latitude/longitude if available
   });
   const apiDuration = Math.round(performance.now() - assignStartTime);
   console.log(`✅ [T+${apiDuration}ms] Court assigned result:`, result);
@@ -1869,17 +1915,22 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
       // Determine group type from player count
       const groupType = players.length <= 2 ? 'singles' : 'doubles';
 
+      // Get geolocation for mobile (required by backend for geofence validation)
+      const mobileLocation = await getMobileGeolocation();
+
       const waitlistStartTime = performance.now();
       console.log('[waitlist] [T+0ms] Calling backend.commands.joinWaitlistWithPlayers:', {
         playerCount: players.length,
         groupType,
         players: players.map(p => `${p.name}(mn=${p.memberNumber})`),
+        mobileLocation: mobileLocation ? 'provided' : 'not-mobile',
       });
 
       setIsJoiningWaitlist(true);
       const result = await backend.commands.joinWaitlistWithPlayers({
         players,
         groupType,
+        ...(mobileLocation || {}), // Spread latitude/longitude if available
       });
       const apiDuration = Math.round(performance.now() - waitlistStartTime);
       setIsJoiningWaitlist(false);

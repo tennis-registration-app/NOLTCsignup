@@ -62,6 +62,8 @@ export const DEVICES = {
   KIOSK_ID: 'a0000000-0000-0000-0000-000000000001',
   /** Admin device ID for admin-only operations */
   ADMIN_ID: 'a0000000-0000-0000-0000-000000000002',
+  /** Mobile device ID for member self-registration (requires geofence) */
+  MOBILE_ID: 'a0000000-0000-0000-0000-000000000003',
 };
 
 // ============================================================

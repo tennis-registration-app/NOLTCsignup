@@ -16,7 +16,7 @@
  * @returns {Object} Wire payload for /assign-court
  */
 export function toAssignCourtPayload(input) {
-  return {
+  const payload = {
     court_id: input.courtId,  // UUID of the court
     session_type: input.groupType,  // 'singles' | 'doubles'
     participants: input.participants.map(p => {
@@ -38,6 +38,14 @@ export function toAssignCourtPayload(input) {
     add_balls: input.addBalls || false,
     split_balls: input.splitBalls || false,
   };
+
+  // Add geolocation for mobile device (required by backend for geofence validation)
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    payload.latitude = input.latitude;
+    payload.longitude = input.longitude;
+  }
+
+  return payload;
 }
 
 /**
@@ -58,7 +66,7 @@ export function toEndSessionPayload(input) {
  * @returns {Object} Wire payload for /join-waitlist
  */
 export function toJoinWaitlistPayload(input) {
-  return {
+  const payload = {
     group_type: input.groupType,  // 'singles' | 'doubles'
     participants: input.participants.map(p => {
       if (p.kind === 'member') {
@@ -76,6 +84,14 @@ export function toJoinWaitlistPayload(input) {
       }
     }),
   };
+
+  // Add geolocation for mobile device (required by backend for geofence validation)
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    payload.latitude = input.latitude;
+    payload.longitude = input.longitude;
+  }
+
+  return payload;
 }
 
 /**
