@@ -17,6 +17,7 @@ import { ApiAdapter } from '../../lib/ApiAdapter.js';
 import { TennisQueries } from './TennisQueries.js';
 import { TennisCommands } from './TennisCommands.js';
 import { TennisDirectory } from './TennisDirectory.js';
+import { AdminCommands } from './admin/AdminCommands.js';
 export { DenialCodes } from './types.js';
 
 /**
@@ -27,6 +28,7 @@ class TennisBackend {
     this.queries = new TennisQueries(apiAdapter);
     this.directory = new TennisDirectory(apiAdapter);
     this.commands = new TennisCommands(apiAdapter, this.directory);
+    this.admin = new AdminCommands(apiAdapter);
   }
 }
 
