@@ -87,6 +87,25 @@ export class TennisCommands {
   }
 
   /**
+   * Higher-level method to assign from waitlist with mobile geolocation
+   *
+   * @param {Object} params
+   * @param {string} params.waitlistEntryId - UUID of the waitlist entry
+   * @param {string} params.courtId - UUID of the court to assign
+   * @param {number} [params.latitude] - For mobile geofence validation
+   * @param {number} [params.longitude] - For mobile geofence validation
+   * @returns {Promise<import('./types').CommandResponse & { session?: Object }>}
+   */
+  async assignFromWaitlistWithLocation({ waitlistEntryId, courtId, latitude, longitude }) {
+    return this.assignFromWaitlist({
+      waitlistEntryId,
+      courtId,
+      latitude,
+      longitude,
+    });
+  }
+
+  /**
    * Create a block on a court
    * @param {import('./types').CreateBlockInput} input
    * @returns {Promise<import('./types').CommandResponse & { block?: Object }>}

@@ -1595,16 +1595,21 @@ if (currentWaitlistEntryId) {
     return;
   }
 
+  // Get geolocation for mobile (required by backend for geofence validation)
+  const waitlistMobileLocation = await getMobileGeolocation();
+
   console.log('🎯 Using backend.commands.assignFromWaitlist:', {
     waitlistEntryId: currentWaitlistEntryId,
     courtId: waitlistCourt.id,
     courtNumber,
+    ...(waitlistMobileLocation || {}),
   });
 
   try {
     const result = await backend.commands.assignFromWaitlist({
       waitlistEntryId: currentWaitlistEntryId,
       courtId: waitlistCourt.id,
+      ...(waitlistMobileLocation || {}),
     });
     console.log('✅ Waitlist group assigned result:', result);
 

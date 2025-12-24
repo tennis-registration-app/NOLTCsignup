@@ -111,10 +111,18 @@ export function toCancelWaitlistPayload(input) {
  * @returns {Object} Wire payload for /assign-from-waitlist
  */
 export function toAssignFromWaitlistPayload(input) {
-  return {
+  const payload = {
     waitlist_id: input.waitlistEntryId,
     court_id: input.courtId,  // UUID of the court
   };
+
+  // Add geolocation for mobile device (required by backend for geofence validation)
+  if (input.latitude !== undefined && input.longitude !== undefined) {
+    payload.latitude = input.latitude;
+    payload.longitude = input.longitude;
+  }
+
+  return payload;
 }
 
 /**
