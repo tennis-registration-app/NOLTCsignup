@@ -2535,11 +2535,14 @@ if (currentScreen === "welcome") {
                   onClick={async () => {
                     const confirmClear = window.confirm("Clear all courts? This will make all courts immediately available.");
                     if (confirmClear) {
-                      const result = await TennisDataService.clearAllCourts();
-                      if (result.success) {
-                        showAlertMessage("All courts cleared successfully");
+                      const result = await backend.admin.clearAllCourts({
+                        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+                        reason: 'admin_clear_all',
+                      });
+                      if (result.ok) {
+                        showAlertMessage(`All courts cleared successfully (${result.sessionsEnded || 0} sessions ended)`);
                       } else {
-                        showAlertMessage(result.error || "Failed to clear courts");
+                        showAlertMessage(result.message || "Failed to clear courts");
                       }
                     }
                   }}
@@ -2759,7 +2762,7 @@ if (currentScreen === "welcome") {
                      Close
                    </button>
                    <button
-                     onClick={() => {
+                     onClick={async () => {
                        if (selectedCourtsToBlock.length === 0) {
                          showAlertMessage("Please select at least one court to block");
                          return;
@@ -2772,13 +2775,13 @@ if (currentScreen === "welcome") {
                          showAlertMessage("Please select an end time");
                          return;
                        }
-                       
+
                        // Set blocking in progress
                        setBlockingInProgress(true);
-                       
-                       const data = getCourtData();
+
+                       const boardData = getCourtData();
                        const currentTime = new Date(); // Use different name to avoid scope conflict
-                       
+
                        // Calculate start time
                        let startTime;
                        if (blockStartTime === "now") {
@@ -2788,45 +2791,70 @@ if (currentScreen === "welcome") {
                          startTime = new Date();
                          const [hours, minutes] = blockStartTime.split(':');
                          startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-                         
+
                          // Don't automatically adjust to tomorrow - let admin set past times if needed
                        }
-                       
+
                        // Calculate end time based on the selected time
                        const [endHours, endMinutes] = blockEndTime.split(':');
                        let endTime = new Date(startTime); // Start from the same date as start time
                        endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
-                       
+
                        // If end time is before start time, assume next day
                        if (endTime <= startTime) {
                          endTime.setDate(endTime.getDate() + 1);
                        }
-                       
+
                        console.log('Block times calculated:', {
                          blockStartTimeInput: blockStartTime,
                          currentTime: currentTime.toLocaleString(),
                          startTime: startTime.toLocaleString(),
                          endTime: endTime.toLocaleString()
                        });
-                       
 
-                    // Block selected courts
-selectedCourtsToBlock.forEach(courtNum => {
- // Use the new block system
- TennisDataService.addCourtBlock(
-   courtNum,
-   blockMessage,
-   startTime.toISOString(),
-   endTime.toISOString()
- );
-});
+                       // Map block message to block type
+                       const blockTypeMap = {
+                         'WET COURT': 'wet',
+                         'COURT WORK': 'maintenance',
+                         'LESSON': 'lesson',
+                       };
+                       const blockType = blockTypeMap[blockMessage.toUpperCase()] || 'other';
 
-showAlertMessage(`${selectedCourtsToBlock.length} court(s) blocked successfully`);
-                       
-                      
-                       // Don't reset the form, just set blocking state
-                       // This allows multiple blocks to be applied
-                       // setTimeout removed - keep state immediately
+                       // Block selected courts via backend API
+                       let successCount = 0;
+                       let failedCourts = [];
+
+                       for (const courtNum of selectedCourtsToBlock) {
+                         const court = boardData.courts[courtNum - 1];
+                         if (!court || !court.id) {
+                           failedCourts.push(courtNum);
+                           continue;
+                         }
+
+                         const result = await backend.admin.createBlock({
+                           courtId: court.id,
+                           blockType: blockType,
+                           title: blockMessage,
+                           startsAt: startTime.toISOString(),
+                           endsAt: endTime.toISOString(),
+                           deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+                         });
+
+                         if (result.ok) {
+                           successCount++;
+                         } else {
+                           failedCourts.push(courtNum);
+                           console.error(`Failed to block court ${courtNum}:`, result.message);
+                         }
+                       }
+
+                       if (failedCourts.length === 0) {
+                         showAlertMessage(`${successCount} court(s) blocked successfully`);
+                       } else if (successCount > 0) {
+                         showAlertMessage(`${successCount} court(s) blocked. Failed: courts ${failedCourts.join(', ')}`);
+                       } else {
+                         showAlertMessage(`Failed to block courts: ${failedCourts.join(', ')}`);
+                       }
                      }}
                      disabled={blockingInProgress}
                      className={`px-4 sm:px-6 py-2 rounded transition-colors text-sm sm:text-base ${

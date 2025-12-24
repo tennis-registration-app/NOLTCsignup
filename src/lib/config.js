@@ -51,6 +51,20 @@ export const ADMIN = {
 };
 
 // ============================================================
+// Device Configuration
+// ============================================================
+
+/**
+ * Device IDs for backend API authentication
+ */
+export const DEVICES = {
+  /** Kiosk device ID for standard registration operations */
+  KIOSK_ID: 'a0000000-0000-0000-0000-000000000001',
+  /** Admin device ID for admin-only operations */
+  ADMIN_ID: 'a0000000-0000-0000-0000-000000000002',
+};
+
+// ============================================================
 // Pricing Configuration
 // ============================================================
 
@@ -166,6 +180,7 @@ export const TENNIS_CONFIG = {
     GUEST_CHARGES_KEY: STORAGE_EXTENDED.GUEST_CHARGES,
   },
   ADMIN,
+  DEVICES,
   PRICING,
   GEOLOCATION,
 };
