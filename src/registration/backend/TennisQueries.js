@@ -54,6 +54,7 @@ export class TennisQueries {
    */
   subscribeToBoardChanges(callback) {
     console.log('[TennisQueries] subscribeToBoardChanges called, callback type:', typeof callback);
+
     // Initial fetch
     console.log('[TennisQueries] Starting initial fetch...');
     this.getBoard()
@@ -76,10 +77,27 @@ export class TennisQueries {
       )
       .subscribe((status) => {
         console.log('📡 Subscription status:', status);
+        // Refresh board on successful reconnection
+        if (status === 'SUBSCRIBED') {
+          console.log('📡 Channel connected/reconnected, refreshing board...');
+          this._handleSignal(callback);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('📡 Channel error:', status, '- will attempt reconnect');
+        }
       });
+
+    // Refresh board when tab becomes visible (handles sleep/wake, tab switching)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('📡 Tab visible, refreshing board...');
+        this._handleSignal(callback);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Return unsubscribe function
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (this.subscription) {
         this.supabase.removeChannel(this.subscription);
         this.subscription = null;
