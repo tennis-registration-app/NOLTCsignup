@@ -6,6 +6,10 @@
  * Future phases will break this into smaller component files.
  */
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import { createBackend } from '../registration/backend/index.js';
+
+// TennisBackend singleton for API operations
+const backend = createBackend();
 
 // Import extracted components
 import {
@@ -1222,6 +1226,44 @@ const deactivateWetCourts = () => {
       try { window.removeEventListener('storage', handleStorageEvent); } catch {}
     };
   }, [loadData]);
+
+  // Subscribe to TennisBackend realtime updates for courts/waitlist
+  useEffect(() => {
+    console.log('[Admin] Setting up TennisBackend subscription...');
+
+    const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
+      console.log('[Admin] Board update received:', board?.serverNow, 'courts:', board?.courts?.length);
+
+      if (board) {
+        // Update courts from API
+        setCourts(board.courts || []);
+        setWaitingGroups(board.waitlist || []);
+
+        // Extract block data from courts for UI compatibility
+        const apiBlocks = (board.courts || [])
+          .filter(c => c.block)
+          .map(c => ({
+            id: c.block.id,
+            courtNumber: c.number,
+            reason: c.block.reason,
+            startTime: c.block.startTime || new Date().toISOString(),
+            endTime: c.block.endTime,
+          }));
+
+        // Merge with localStorage blocks (for templates/scheduled)
+        // API blocks take precedence for active blocks
+        setCourtBlocks(prev => {
+          const localOnlyBlocks = prev.filter(b => !apiBlocks.some(ab => ab.id === b.id));
+          return [...apiBlocks, ...localOnlyBlocks];
+        });
+      }
+    });
+
+    return () => {
+      console.log('[Admin] Cleaning up TennisBackend subscription');
+      unsubscribe();
+    };
+  }, []);
 
   // Load court blocks from localStorage (ADD HERE)
 useEffect(() => {
