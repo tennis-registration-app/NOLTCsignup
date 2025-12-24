@@ -1181,23 +1181,16 @@ const deactivateWetCourts = () => {
     addTimer(setTimeout(() => setNotification(null), 3000), 'timeout');
   };
 
- // Load data on mount and poll for updates
+ // Load data on mount (realtime updates come via TennisBackend subscription)
  useEffect(() => {
     loadData();
-    
+
     // prevent duplicate attachment if this component re-mounts
     if (_one('__ADMIN_LISTENERS_INSTALLED')) return;
-    
-    // Poll for data changes every 2 seconds
-    const pollInterval = addTimer(setInterval(() => {
-      console.log('Polling for updates...');
-      loadData();
-    }, 2000));
-    
-    // Use coalesced refresh instead of direct handler
-    const handleStorageUpdate = scheduleAdminRefresh;
 
-    // Listen for storage events from other apps/tabs
+    // NOTE: Polling removed - using TennisBackend realtime subscription instead
+
+    // Listen for storage events from other apps/tabs (fallback for non-API data)
     const handleStorageEvent = (e) => {
       if (e.key === TENNIS_CONFIG.STORAGE.KEY || e.key === 'courtBlocks') {
         console.log('Cross-app storage update detected for:', e.key);
@@ -1206,23 +1199,16 @@ const deactivateWetCourts = () => {
         loadData();
       }
     };
-    
-    window.addEventListener('tennisDataUpdate', window.scheduleAdminRefresh, { passive: true });
-    window.addEventListener('DATA_UPDATED', window.scheduleAdminRefresh, { passive: true });
+
     window.addEventListener('storage', handleStorageEvent, { passive: true });
-    
+
     // defensive cleanup on unload as well
     window.addEventListener('beforeunload', () => {
       try { clearAllTimers(); } catch {}
-      try { window.removeEventListener('tennisDataUpdate', scheduleAdminRefresh); } catch {}
-      try { window.removeEventListener('DATA_UPDATED', scheduleAdminRefresh); } catch {}
       try { window.removeEventListener('storage', handleStorageEvent); } catch {}
     }, { once: true });
-    
+
     return () => {
-      try { clearInterval(pollInterval); } catch {}
-      try { window.removeEventListener('tennisDataUpdate', scheduleAdminRefresh); } catch {}
-      try { window.removeEventListener('DATA_UPDATED', scheduleAdminRefresh); } catch {}
       try { window.removeEventListener('storage', handleStorageEvent); } catch {}
     };
   }, [loadData]);
@@ -1265,55 +1251,9 @@ const deactivateWetCourts = () => {
     };
   }, []);
 
-  // Load court blocks from localStorage (ADD HERE)
-useEffect(() => {
-  const loadBlocks = async () => {
-    try {
-      const blocks = await dataStore.get('courtBlocks') || [];
-      setCourtBlocks(blocks);
-    } catch (error) {
-      console.error('Error loading court blocks:', error);
-    }
-  };
-
-  loadBlocks();
-  
-  // Add periodic refresh to catch when scheduled blocks become active
-  const refreshInterval = setInterval(() => {
-    loadBlocks();
-  }, 5000); // Check every 5 seconds
-  
-  // prevent duplicate block listeners
-  if (_one('__ADMIN_BLOCK_LISTENERS_INSTALLED')) return;
-  
-  // Listen for block updates
-  const handleBlockUpdate = debounce(() => loadBlocks(), 150);
-  
-  // Listen for storage events from other apps/tabs
-  const handleBlockStorageEvent = (e) => {
-    if (e.key === 'courtBlocks') {
-      console.log('Cross-app storage update detected for court blocks');
-      // Invalidate cache for this key
-      dataStore.cache.delete('courtBlocks');
-      loadBlocks();
-    }
-  };
-  
-  window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate, { passive: true });
-  window.addEventListener('storage', handleBlockStorageEvent, { passive: true });
-  
-  // defensive cleanup on unload
-  window.addEventListener('beforeunload', () => {
-    try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate); } catch {}
-    try { window.removeEventListener('storage', handleBlockStorageEvent); } catch {}
-  }, { once: true });
-  
-  return () => {
-    clearInterval(refreshInterval);
-    try { window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleBlockUpdate); } catch {}
-    try { window.removeEventListener('storage', handleBlockStorageEvent); } catch {}
-  };
-}, []);
+  // NOTE: Block loading now handled by TennisBackend subscription
+  // The subscription extracts block data from court responses and updates courtBlocks state
+  // See the subscribeToBoardChanges useEffect above
 
 // Update current time every second
 useEffect(() => {
