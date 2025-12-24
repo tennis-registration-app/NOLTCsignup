@@ -1445,7 +1445,8 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
     }
 
     let successCount = 0;
-    
+    let failCount = 0;
+
     // Process all blocks and courts
     for (const block of blocks) {
       // read form values from existing variables
@@ -1462,53 +1463,58 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
         return;
       }
 
-      // Don't use BL.applyTemplate for scheduled blocks as it always uses "now"
-      // Instead, use the provided start/end times from the form
-      const newBlocks = selectedCourts.map(courtNumber => ({
-        id: block.id || `${Date.now()}-${courtNumber}-${Math.random()}`,
-        courtNumber: courtNumber,
-        reason: reason,
-        title: block.title || name,
-        startTime: block.startTime,  // Use the provided time, not "now"
-        endTime: block.endTime,      // Use the provided time
-        createdAt: new Date().toISOString(),
-        isEvent: block.isEvent,
-        eventDetails: block.eventDetails
-      }));
+      // Map reason to block type for API
+      const reasonLower = reason.toLowerCase();
+      let blockType = 'other';
+      if (reasonLower.includes('wet') || reasonLower.includes('rain')) {
+        blockType = 'wet';
+      } else if (reasonLower.includes('maintenance') || reasonLower.includes('repair')) {
+        blockType = 'maintenance';
+      } else if (reasonLower.includes('lesson') || reasonLower.includes('class')) {
+        blockType = 'lesson';
+      } else if (reasonLower.includes('clinic') || reasonLower.includes('camp')) {
+        blockType = 'clinic';
+      }
 
-      // load/persist using existing key
-      const key = Storage.STORAGE.BLOCKS; // "courtBlocks"
-      const existing = Storage.readJSON(key) || [];
+      // Create blocks via backend API for each selected court
+      for (const courtNumber of selectedCourts) {
+        const court = courts.find(c => c.number === courtNumber);
+        if (!court) {
+          console.error(`[Admin] Court ${courtNumber} not found`);
+          failCount++;
+          continue;
+        }
 
-      // optional: prevent overlaps (keeps current UX; skip if you already do this elsewhere)
-      const conflicts = [];
-      for (const nb of newBlocks) {
-        for (const b of existing) {
-          if (b.courtNumber === nb.courtNumber && BL.overlaps(nb, b)) { conflicts.push(nb.courtNumber); break; }
+        try {
+          const result = await backend.admin.createBlock({
+            courtId: court.id,
+            blockType: blockType,
+            title: name,
+            startsAt: block.startTime,
+            endsAt: block.endTime,
+            deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+            deviceType: 'admin',
+          });
+
+          if (result.ok) {
+            console.log('[Admin] Created block via API:', result.block);
+            successCount++;
+          } else {
+            console.error('[Admin] Failed to create block:', result.message);
+            failCount++;
+          }
+        } catch (error) {
+          console.error('[Admin] Error creating block:', error);
+          failCount++;
         }
       }
-      if (conflicts.length) {
-        alert(`Cannot add blocks. Overlaps on courts: ${[...new Set(conflicts)].sort((a,b)=>a-b).join(', ')}`);
-        return;
-      }
-
-      // Preserve additional properties from original block
-      for (const nb of newBlocks) {
-        nb.id = block.id || Date.now() + Math.random();
-        nb.title = block.title; // Preserve the custom title
-        nb.isEvent = block.isEvent;
-        nb.eventDetails = block.eventDetails;
-        nb.createdAt = new Date().toISOString();
-      }
-
-      const next = existing.concat(newBlocks);
-      await dataStore.set('courtBlocks', next, { immediate: true });
-      console.log('[Admin] wrote blocks:', newBlocks);
-
-      successCount += newBlocks.length;
     }
 
-    showNotification(`Applied ${successCount} block(s) successfully`, 'success');
+    if (failCount > 0) {
+      showNotification(`Applied ${successCount} block(s), ${failCount} failed`, failCount === 0 ? 'success' : 'warning');
+    } else {
+      showNotification(`Applied ${successCount} block(s) successfully`, 'success');
+    }
   };
 
   // Template operations
