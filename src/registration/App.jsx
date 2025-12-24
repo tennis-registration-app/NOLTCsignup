@@ -3028,12 +3028,29 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
                          )}
                          <button
                            onClick={async () => {
-                             await clearCourt(courtNum);
-                             showAlertMessage(`Court ${courtNum} ${isBlocked || isFutureBlock ? 'unblocked' : 'cleared'}`);
+                             // Check if court has an active block from API data
+                             if (court && court.block && court.block.id) {
+                               // Cancel the block via backend
+                               const result = await backend.admin.cancelBlock({
+                                 blockId: court.block.id,
+                                 deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+                               });
+                               if (result.ok) {
+                                 showAlertMessage(`Court ${courtNum} unblocked`);
+                               } else {
+                                 showAlertMessage(result.message || 'Failed to unblock court');
+                               }
+                             } else if (isOccupied) {
+                               // Clear the session
+                               await clearCourt(courtNum);
+                               showAlertMessage(`Court ${courtNum} cleared`);
+                             } else {
+                               showAlertMessage(`Court ${courtNum} has nothing to clear`);
+                             }
                            }}
                            className="bg-orange-600 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm hover:bg-orange-700 transition-colors"
                          >
-                           Clear
+                           {court && court.block ? 'Unblock' : 'Clear'}
                          </button>
                        </div>
                      )}
@@ -3058,11 +3075,35 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
                  onClick={async () => {
                    const confirmClear = window.confirm("Clear the waitlist? This will remove all waiting groups.");
                    if (confirmClear) {
-                     const result = await TennisDataService.clearWaitlist();
-                     if (result.success) {
-                       showAlertMessage("Waitlist cleared successfully");
+                     // Remove all waitlist entries via backend
+                     let successCount = 0;
+                     let failCount = 0;
+
+                     for (const group of data.waitingGroups) {
+                       if (!group.id) {
+                         failCount++;
+                         continue;
+                       }
+
+                       const result = await backend.admin.removeFromWaitlist({
+                         waitlistEntryId: group.id,
+                         reason: 'admin_clear_all',
+                         deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+                       });
+
+                       if (result.ok) {
+                         successCount++;
+                       } else {
+                         failCount++;
+                       }
+                     }
+
+                     if (failCount === 0) {
+                       showAlertMessage(`Waitlist cleared (${successCount} groups removed)`);
+                     } else if (successCount > 0) {
+                       showAlertMessage(`Removed ${successCount} groups, ${failCount} failed`);
                      } else {
-                       showAlertMessage(result.error || "Failed to clear waitlist");
+                       showAlertMessage("Failed to clear waitlist");
                      }
                    }
                  }}
@@ -3147,12 +3188,22 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
                      </button>
                      <button
                        onClick={async () => {
-                         const result = await TennisDataService.removeFromWaitlist(index);
-                         
-                         if (result.success) {
+                         // Use waitlist entry ID from API data
+                         if (!group.id) {
+                           showAlertMessage("Cannot remove: group ID not found");
+                           return;
+                         }
+
+                         const result = await backend.admin.removeFromWaitlist({
+                           waitlistEntryId: group.id,
+                           reason: 'admin_removed',
+                           deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+                         });
+
+                         if (result.ok) {
                            showAlertMessage("Group removed from waitlist");
                          } else {
-                           showAlertMessage(result.error || "Failed to remove group");
+                           showAlertMessage(result.message || "Failed to remove group");
                          }
                        }}
                        className="bg-orange-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded hover:bg-orange-700 transition-colors text-xs sm:text-sm flex-1 sm:flex-initial"
