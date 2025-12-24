@@ -45,6 +45,11 @@ export function toAssignCourtPayload(input) {
     payload.longitude = input.longitude;
   }
 
+  // Add location token for QR-based verification (fallback when GPS fails)
+  if (input.location_token) {
+    payload.location_token = input.location_token;
+  }
+
   return payload;
 }
 
@@ -91,6 +96,11 @@ export function toJoinWaitlistPayload(input) {
     payload.longitude = input.longitude;
   }
 
+  // Add location token for QR-based verification (fallback when GPS fails)
+  if (input.location_token) {
+    payload.location_token = input.location_token;
+  }
+
   return payload;
 }
 
@@ -120,6 +130,11 @@ export function toAssignFromWaitlistPayload(input) {
   if (input.latitude !== undefined && input.longitude !== undefined) {
     payload.latitude = input.latitude;
     payload.longitude = input.longitude;
+  }
+
+  // Add location token for QR-based verification (fallback when GPS fails)
+  if (input.location_token) {
+    payload.location_token = input.location_token;
   }
 
   return payload;

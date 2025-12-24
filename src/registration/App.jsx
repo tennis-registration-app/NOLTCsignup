@@ -43,7 +43,8 @@ import {
   ChevronRight,
   Check,
   AlertDisplay,
-  ToastHost
+  ToastHost,
+  QRScanner
 } from './components';
 
 // Import extracted screens and modals
@@ -715,6 +716,11 @@ useEffect(() => {
   const [isUserTyping, setIsUserTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
 
+  // QR location token state (mobile GPS fallback)
+  const [locationToken, setLocationToken] = useState(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [gpsFailedPrompt, setGpsFailedPrompt] = useState(false);
+
   // Debouncing hooks - MUST be at top level
   const debouncedSearchInput = useDebounce(searchInput, 300);
   const debouncedAddPlayerSearch = useDebounce(addPlayerSearch, 300);
@@ -955,12 +961,19 @@ const checkLocationAndProceed = async (onSuccess) => {
 
   /**
    * Get current geolocation coordinates for mobile backend validation
-   * Returns { latitude, longitude } or null if unavailable/not mobile
+   * Returns { latitude, longitude } or { location_token } or null if unavailable/not mobile
+   * If GPS fails but we have a location token from QR scan, use that instead
    */
   const getMobileGeolocation = async () => {
     // Only needed for mobile device type
     if (!API_CONFIG.IS_MOBILE) {
       return null;
+    }
+
+    // If we have a location token from QR scan, use that
+    if (locationToken) {
+      console.log('[Mobile] Using location token instead of GPS');
+      return { location_token: locationToken };
     }
 
     return new Promise((resolve) => {
@@ -1621,6 +1634,11 @@ if (currentWaitlistEntryId) {
         await backend.queries.refresh();
         return;
       }
+      // Handle mobile location errors - offer QR fallback
+      if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
+        setGpsFailedPrompt(true);
+        return;
+      }
       Tennis.UI.toast(result.message || 'Failed to assign court from waitlist', { type: 'error' });
       setCurrentWaitlistEntryId(null);
       return;
@@ -1716,6 +1734,12 @@ if (!result.ok) {
     Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
     // Board subscription will auto-refresh, but force immediate refresh
     await backend.queries.refresh();
+    setIsAssigning(false);
+    return;
+  }
+  // Handle mobile location errors - offer QR fallback
+  if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
+    setGpsFailedPrompt(true);
     setIsAssigning(false);
     return;
   }
@@ -1953,6 +1977,11 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
         console.log(`[waitlist] [T+${successTime}ms] joined ok, UI updated`);
       } else {
         console.error(`[waitlist] [T+${apiDuration}ms] Failed:`, result.code, result.message);
+        // Handle mobile location errors - offer QR fallback
+        if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
+          setGpsFailedPrompt(true);
+          return;
+        }
         Tennis?.UI?.toast?.(result.message || 'Could not join waitlist', { type: 'error' });
       }
     } catch (e) {
@@ -4187,6 +4216,52 @@ onFocus={() => {
      <>
        <ToastHost />
        <AlertDisplay show={showAlert} message={alertMessage} />
+
+       {/* QR Scanner modal for mobile GPS fallback */}
+       {showQRScanner && (
+         <QRScanner
+           onScan={(token) => {
+             console.log('[Mobile] QR token scanned:', token);
+             setLocationToken(token);
+             setShowQRScanner(false);
+             setGpsFailedPrompt(false);
+             Tennis.UI.toast('Location verified! You can now register.', { type: 'success' });
+           }}
+           onClose={() => {
+             setShowQRScanner(false);
+           }}
+           onError={(err) => {
+             console.error('[Mobile] QR scanner error:', err);
+           }}
+         />
+       )}
+
+       {/* GPS failed prompt for mobile */}
+       {gpsFailedPrompt && API_CONFIG.IS_MOBILE && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+           <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+             <h3 className="text-lg font-semibold text-gray-800 mb-2">Location Required</h3>
+             <p className="text-gray-600 mb-4">
+               We couldn't detect your location. Please scan the QR code on the kiosk screen to verify you're at the club.
+             </p>
+             <div className="flex gap-3">
+               <button
+                 onClick={() => setShowQRScanner(true)}
+                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+               >
+                 Scan QR Code
+               </button>
+               <button
+                 onClick={() => setGpsFailedPrompt(false)}
+                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
+               >
+                 Cancel
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
        <CourtSelectionScreen
          availableCourts={availableCourts}
          showingOvertimeCourts={showingOvertimeCourts}
