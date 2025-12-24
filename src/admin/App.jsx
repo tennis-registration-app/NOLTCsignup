@@ -1324,32 +1324,46 @@ useEffect(() => {
     return () => { try { clearInterval(timer); } catch {} };
   }, []);
 
-  // Court operations
+  // Court operations - using TennisBackend API
   const clearCourt = async (courtNumber) => {
-  // Use TennisDataService API which handles history preservation
-  try {
-    const TD = window.TennisDataService || window.Tennis?.DataService || window.Tennis?.Services?.Data;
-    if (typeof TD?.clearCourt === 'function') {
-      await TD.clearCourt(courtNumber, { source: 'admin', clearReason: 'Admin-Cleared' });
-    } else if (typeof TD?.unassignCourt === 'function') {
-      await TD.unassignCourt(courtNumber, { source: 'admin', clearReason: 'Admin-Cleared' });
-    } else {
-      throw new Error('No clearCourt/unassignCourt service available');
-    }
+    try {
+      // Find court UUID from courts state
+      const court = courts.find(c => c.number === courtNumber);
+      if (!court) {
+        throw new Error(`Court ${courtNumber} not found`);
+      }
 
-    // Invalidate cache before refreshing
-    if (dataStore.cache) {
-      dataStore.cache.delete('courtBlocks');
-      dataStore.cache.delete(TENNIS_CONFIG.STORAGE.KEY);
-    }
+      // Check if court has a block - cancel it instead of ending session
+      if (court.block && court.block.id) {
+        const result = await backend.admin.cancelBlock({
+          blockId: court.block.id,
+          deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+        });
+        if (!result.ok) {
+          throw new Error(result.message || 'Failed to cancel block');
+        }
+        showNotification(`Court ${courtNumber} unblocked`, 'success');
+      } else if (court.session) {
+        // End the session via backend
+        const result = await backend.admin.adminEndSession({
+          courtId: court.id,
+          reason: 'admin_force_end',
+          deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+        });
+        if (!result.ok) {
+          throw new Error(result.message || 'Failed to clear court');
+        }
+        showNotification(`Court ${courtNumber} cleared`, 'success');
+      } else {
+        showNotification(`Court ${courtNumber} is already empty`, 'info');
+      }
 
-    // Refresh admin display (now includes courtBlocks)
-    await loadData();
-  } catch (error) {
-    console.error('Error clearing court:', error);
-    showNotification('Failed to clear court', 'error');
-  }
-};
+      // Realtime subscription will update the UI automatically
+    } catch (error) {
+      console.error('Error clearing court:', error);
+      showNotification(error.message || 'Failed to clear court', 'error');
+    }
+  };
 
   const moveCourt = async (from, to) => {
     const TD = window.TennisDataService || window.Tennis?.DataService;
@@ -1375,29 +1389,47 @@ useEffect(() => {
     return res;
   };
 
-  const clearAllCourts = () => {
-  const confirmMessage = 'Are you sure you want to clear ALL courts?\n\n' +
-    'This will remove:\n' +
-    '• All current games\n' +
-    '• All court blocks\n' +
-    '• All wet court statuses\n\n' +
-    'This action cannot be undone!';
-    
-  if (window.confirm(confirmMessage)) {
-    // Clear all courts
-    const newCourts = Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null);
-    saveData(newCourts, waitingGroups);
-    
-    // Clear all blocks from localStorage
-    dataStore.set('courtBlocks', [], { immediate: true });
-    
-    // Trigger update
-    window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-    setRefreshTrigger(prev => prev + 1);
-    
-    showNotification('All courts cleared successfully', 'success');
-  }
-};
+  const clearAllCourts = async () => {
+    const confirmMessage = 'Are you sure you want to clear ALL courts?\n\n' +
+      'This will remove:\n' +
+      '• All current games\n' +
+      '• All court blocks\n' +
+      '• All wet court statuses\n\n' +
+      'This action cannot be undone!';
+
+    if (window.confirm(confirmMessage)) {
+      try {
+        // Clear all sessions via backend
+        const result = await backend.admin.clearAllCourts({
+          deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+          reason: 'admin_clear_all',
+        });
+
+        if (!result.ok) {
+          throw new Error(result.message || 'Failed to clear courts');
+        }
+
+        // Also cancel any active blocks
+        const activeBlocks = courts.filter(c => c.block && c.block.id);
+        for (const court of activeBlocks) {
+          await backend.admin.cancelBlock({
+            blockId: court.block.id,
+            deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+          });
+        }
+
+        // Clear localStorage blocks (for local templates)
+        dataStore.set('courtBlocks', [], { immediate: true });
+
+        showNotification(`All courts cleared (${result.sessionsEnded || 0} sessions ended)`, 'success');
+
+        // Realtime subscription will update the UI
+      } catch (error) {
+        console.error('Error clearing all courts:', error);
+        showNotification(error.message || 'Failed to clear courts', 'error');
+      }
+    }
+  };
 
 // Add existingBlocks calculation
 const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
@@ -1507,10 +1539,31 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
     }]);
   };
 
-  // Waitlist operations
-  const removeFromWaitlist = (index) => {
-    const newWaitingGroups = waitingGroups.filter((_, i) => i !== index);
-    saveData(courts, newWaitingGroups);
+  // Waitlist operations - using TennisBackend API
+  const removeFromWaitlist = async (index) => {
+    const group = waitingGroups[index];
+    if (!group || !group.id) {
+      showNotification('Cannot remove: group ID not found', 'error');
+      return;
+    }
+
+    try {
+      const result = await backend.admin.removeFromWaitlist({
+        waitlistEntryId: group.id,
+        reason: 'admin_removed',
+        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+      });
+
+      if (!result.ok) {
+        throw new Error(result.message || 'Failed to remove from waitlist');
+      }
+
+      showNotification('Group removed from waitlist', 'success');
+      // Realtime subscription will update the UI
+    } catch (error) {
+      console.error('Error removing from waitlist:', error);
+      showNotification(error.message || 'Failed to remove group', 'error');
+    }
   };
 
   const moveInWaitlist = (from, to) => {
