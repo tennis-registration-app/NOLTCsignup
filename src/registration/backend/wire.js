@@ -43,6 +43,10 @@ export function toAssignCourtPayload(input) {
   if (input.latitude !== undefined && input.longitude !== undefined) {
     payload.latitude = input.latitude;
     payload.longitude = input.longitude;
+    // Include GPS accuracy if available (for audit logging)
+    if (input.accuracy !== undefined) {
+      payload.accuracy = input.accuracy;
+    }
   }
 
   // Add location token for QR-based verification (fallback when GPS fails)
@@ -94,6 +98,10 @@ export function toJoinWaitlistPayload(input) {
   if (input.latitude !== undefined && input.longitude !== undefined) {
     payload.latitude = input.latitude;
     payload.longitude = input.longitude;
+    // Include GPS accuracy if available (for audit logging)
+    if (input.accuracy !== undefined) {
+      payload.accuracy = input.accuracy;
+    }
   }
 
   // Add location token for QR-based verification (fallback when GPS fails)
@@ -130,6 +138,10 @@ export function toAssignFromWaitlistPayload(input) {
   if (input.latitude !== undefined && input.longitude !== undefined) {
     payload.latitude = input.latitude;
     payload.longitude = input.longitude;
+    // Include GPS accuracy if available (for audit logging)
+    if (input.accuracy !== undefined) {
+      payload.accuracy = input.accuracy;
+    }
   }
 
   // Add location token for QR-based verification (fallback when GPS fails)

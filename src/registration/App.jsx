@@ -985,10 +985,11 @@ const checkLocationAndProceed = async (onSuccess) => {
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('[Mobile] Got geolocation:', position.coords.latitude, position.coords.longitude);
+          console.log('[Mobile] Got geolocation:', position.coords.latitude, position.coords.longitude, 'accuracy:', position.coords.accuracy);
           resolve({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy, // GPS accuracy in meters
           });
         },
         (error) => {
