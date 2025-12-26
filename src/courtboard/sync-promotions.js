@@ -1,8 +1,15 @@
 // Sync Waitlist Promotions for CourtBoard
 (function(){
-  const Storage = (window.Tennis && window.Tennis.Storage) || window.APP_UTILS;
   const Avail   = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const U       = window.APP_UTILS;
+
+  /**
+   * Get Courtboard state from React (via window bridge).
+   * Uses the centralized accessor - NO localStorage reads for tennis state.
+   */
+  function getCourtboardState() {
+    return window.CourtboardState ?? { courts: [], courtBlocks: [], waitingGroups: [] };
+  }
 
   function computeFreeCourts({ data, now, blocks }) {
     try {
@@ -15,10 +22,12 @@
     const activeBlocks = (Array.isArray(blocks) ? blocks : []).filter(b => {
       return new Date(b.startTime) <= now && now < new Date(b.endTime);
     });
-    const n = Array.isArray(data?.courts) ? data.courts.length : 12;
+    const courts = data?.courts || [];
+    const n = courts.length || 12;
     for (let i = 1; i <= n; i++) {
-      const c = data?.courts?.[i-1];
-      const occ = !!(c && c.current);
+      const c = courts[i-1];
+      // Check for occupation using API format (isOccupied) or legacy format (current)
+      const occ = !!(c && (c.isOccupied || c.current));
       const blk = activeBlocks.some(b => b.courtNumber === i);
       if (!occ && !blk) free.push(i);
     }
@@ -28,12 +37,17 @@
   function syncWaitlistPromotions() {
     try {
       const now = new Date();
-      const key = (Storage?.STORAGE?.DATA) || 'tennisClubData';
-      const data = (Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key) || 'null')) || {};
-      const blocks = (Storage.readJSON ? Storage.readJSON(Storage.STORAGE?.BLOCKS || 'courtBlocks') : JSON.parse(localStorage.getItem('courtBlocks') || '[]'));
+      // Use React state via getCourtboardState() - no localStorage for tennis state
+      const state = getCourtboardState();
+      const courts = state.courts || [];
+      const blocks = state.courtBlocks || [];
+      const waitingGroups = state.waitingGroups || [];
+
+      // Build data object for computeFreeCourts
+      const data = { courts: courts, waitingGroups: waitingGroups };
       const free = computeFreeCourts({ data, now, blocks });
 
-      const waiting = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
+      const waiting = waitingGroups;
       const k = Math.max(0, Math.min(free.length, waiting.length));
       const up = waiting.slice(0, k);
 
@@ -59,12 +73,15 @@
                    nextPromos.every((p,i)=> prev[i] && prev[i].groupSig===p.groupSig && String(prev[i].courtNumbers)===String(p.courtNumbers));
       if (same) return;
 
-      const prevData = Storage.readDataSafe ? Storage.readDataSafe() : JSON.parse(localStorage.getItem(key) || 'null') || {};
+      // NOTE: Promotions are now computed by backend. This localStorage write is for
+      // backward compatibility with legacy UI components only. Tennis state (courts,
+      // waitlist) is read from React state above, not localStorage.
+      const key = 'tennisClubData';
+      const prevData = JSON.parse(localStorage.getItem(key) || '{}');
       const nextData = { ...data, waitlistPromotions: nextPromos };
-      const merged = window.APP_UTILS.preservePromotions(prevData, nextData);
+      const merged = window.APP_UTILS?.preservePromotions?.(prevData, nextData) || nextData;
 
-      if (Storage.writeJSON) Storage.writeJSON(key, merged);
-      else localStorage.setItem(key, JSON.stringify(merged));
+      localStorage.setItem(key, JSON.stringify(merged));
 
       window.dispatchEvent(new Event('tennisDataUpdate'));
       window.dispatchEvent(new Event('DATA_UPDATED'));

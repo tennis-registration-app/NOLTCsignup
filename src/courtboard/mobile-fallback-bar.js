@@ -10,21 +10,18 @@
   el.setAttribute('role','toolbar');
   el.className = 'mbb-fallback';
 
-  // Helper functions for safe data reading
+  /**
+   * Single source of truth accessor for Courtboard state.
+   * All reads in mobile-fallback-bar should use this, NOT localStorage.
+   * The state is written by main.jsx useEffect and synced on every React render.
+   */
+  function getCourtboardState() {
+    return window.CourtboardState ?? { courts: [], courtBlocks: [], waitingGroups: [] };
+  }
+
+  // Helper functions for safe data reading - now uses getCourtboardState()
   function readCourtBlocksSafe() {
-    try {
-      // Try multiple data sources
-      const storage = window.Tennis?.Storage;
-      const blocksKey = 'courtBlocks';
-      if (storage?.readJSON) {
-        return storage.readJSON(blocksKey) || [];
-      }
-      // Fallback to localStorage
-      const data = localStorage.getItem(blocksKey);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
+    return getCourtboardState().courtBlocks || [];
   }
 
   function selectReservedSafe(blocks, now) {
@@ -70,25 +67,8 @@
   }
 
   function readWaitlistSafe() {
-    try {
-      const storage = window.Tennis?.Storage;
-      const dataKey = 'tennisClubData';
-
-      // Read main data object
-      let data = null;
-      if (storage?.readJSON) {
-        data = storage.readJSON(dataKey) || {};
-      } else {
-        const jsonData = localStorage.getItem(dataKey);
-        data = jsonData ? JSON.parse(jsonData) : {};
-      }
-
-      // Return waitingGroups from main data
-      return Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
-    } catch(e) {
-      console.warn('Error reading waitlist:', e);
-      return [];
-    }
+    // Use React state via getCourtboardState() - no localStorage fallback
+    return getCourtboardState().waitingGroups || [];
   }
 
   // Queue mechanism for modal opening
@@ -140,7 +120,13 @@
     }
 
     if (action === 'waitlist') {
-      openModal('waitlist', { waitlistData: readWaitlistSafe() });
+      // Include courts data from React state for consistent calculations
+      const state = window.CourtboardState || {};
+      openModal('waitlist', {
+        waitlistData: readWaitlistSafe(),
+        courts: state.courts || [],
+        courtBlocks: state.courtBlocks || []
+      });
       return;
     }
 
@@ -180,18 +166,22 @@
     // Only check the specific court that sessionStorage says we're on
     if (registeredCourt) {
       try {
-        const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
-        const court = data.courts && data.courts[registeredCourt - 1];
+        // Use React state via getCourtboardState() - no localStorage
+        const state = getCourtboardState();
+        const courts = state.courts || [];
+        const courtIndex = parseInt(registeredCourt, 10) - 1;
+        const court = courts[courtIndex];
 
         // Verify the user is actually on THIS specific court
+        // API returns court objects with session/players data
         isActuallyOnCourt = court && (
-          (court.current && court.current.players && court.current.players.length > 0) ||
+          court.isOccupied ||
+          (court.session && court.session.participants && court.session.participants.length > 0) ||
           (court.players && court.players.length > 0)
         );
 
         console.debug(`[Mobile Clear Court Check] Court ${registeredCourt}:`, {
-          hasData: !!data,
-          hasCourts: !!(data.courts),
+          hasCourts: courts.length > 0,
           court: court,
           isActuallyOnCourt: isActuallyOnCourt
         });
@@ -227,26 +217,20 @@
   // Function to check if waitlist join should be allowed
   function updateJoinButtonState() {
     try {
-      const storage = window.Tennis?.Storage;
-      const dataKey = 'tennisClubData';
-
-      let data = null;
-      if (storage?.readJSON) {
-        data = storage.readJSON(dataKey) || {};
-      } else {
-        const jsonData = localStorage.getItem(dataKey);
-        data = jsonData ? JSON.parse(jsonData) : {};
-      }
+      // Use React state via getCourtboardState() - no localStorage
+      const state = getCourtboardState();
+      const courts = state.courts || [];
+      const waitingGroups = state.waitingGroups || [];
+      const blocks = state.courtBlocks || [];
 
       // Check if there are available courts using availability domain
       const Availability = window.Tennis?.Domain?.Availability || window.Tennis?.Domain?.availability;
       if (Availability && Availability.shouldAllowWaitlistJoin) {
-        const blocks = readCourtBlocksSafe();
         const wetSet = new Set(); // Assume no wet courts for now
-
-        // Check for existing waitlist
-        const waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
         const hasWaitlist = waitingGroups.length > 0;
+
+        // Build data object for availability check
+        const data = { courts: courts };
 
         // Original logic: no courts available
         const shouldAllowByNoAvail = Availability.shouldAllowWaitlistJoin({
@@ -263,12 +247,11 @@
         joinBtn.setAttribute('aria-disabled', String(!shouldAllow));
       } else {
         // Fallback: simple check based on occupied courts vs waiting groups
-        const occupiedCourts = Array.isArray(data.courts) ? data.courts.filter(c => c !== null).length : 0;
-        const waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups.length : 0;
+        const occupiedCourts = courts.filter(c => c && c.isOccupied).length;
         const totalCourts = 12;
 
         // Enable join if all courts occupied OR there are waiting groups
-        const shouldEnableJoin = occupiedCourts >= totalCourts || waitingGroups > 0;
+        const shouldEnableJoin = occupiedCourts >= totalCourts || waitingGroups.length > 0;
         joinBtn.disabled = !shouldEnableJoin;
         joinBtn.setAttribute('aria-disabled', String(!shouldEnableJoin));
       }

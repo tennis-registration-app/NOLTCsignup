@@ -399,16 +399,18 @@ const CourtStatusGrid = ({
     }
   };
 
-  // Get data for grid rendering
-  const S = window.Tennis?.Storage;
-  const data = S?.readDataSafe?.() || { courts: [] };
-  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+  // Get data for grid rendering - use courts prop from TennisBackend API
+  // Create a lookup map by court number for efficient access
+  const courtsByNumber = {};
+  (courts || []).forEach(c => {
+    courtsByNumber[c.number] = c;
+  });
+
   const now = new Date();
   const blocks = courtBlocks || [];
   const wetSet = new Set((blocks || [])
     .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
     .map(b => b.courtNumber));
-  const statuses = A?.getCourtStatuses?.({ data, now, blocks, wetSet }) || [];
 
   return (
     <>
@@ -430,8 +432,8 @@ const CourtStatusGrid = ({
 
         <div className="grid grid-cols-3 gap-3">
           {Array.from({ length: 12 }, (_, index) => {
-            const court = data?.courts?.[index] || null;
             const courtNum = index + 1;
+            const court = courtsByNumber[courtNum] || null;
             const { status, info } = getCourtStatus(court, courtNum);
             const isMoving = movingFrom === courtNum;
             const canReceiveMove = movingFrom && movingFrom !== courtNum && status === 'available';

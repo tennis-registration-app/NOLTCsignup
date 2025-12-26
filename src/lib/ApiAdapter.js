@@ -117,6 +117,7 @@ export class ApiAdapter {
       device_id: this.deviceId,
       device_type: this.deviceType,
     };
+    console.log(`[ApiAdapter] POST ${endpoint}`, bodyWithDevice);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -125,7 +126,11 @@ export class ApiAdapter {
       },
       body: JSON.stringify(bodyWithDevice),
     });
-    return response.json();
+    const data = await response.json();
+    if (!data.ok) {
+      console.error(`[ApiAdapter] POST ${endpoint} failed:`, data);
+    }
+    return data;
   }
 
   // ===========================================

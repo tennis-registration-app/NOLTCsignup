@@ -28,7 +28,17 @@ function detectMobileContext() {
   return false;
 }
 
+/**
+ * Detect if running in admin context
+ * Admin context = URL contains /admin/
+ */
+function detectAdminContext() {
+  if (typeof window === 'undefined') return false;
+  return window.location.pathname.includes('/admin/');
+}
+
 const IS_MOBILE = detectMobileContext();
+const IS_ADMIN = detectAdminContext();
 
 export const API_CONFIG = {
   // Supabase project URL (for Realtime connections)
@@ -41,11 +51,13 @@ export const API_CONFIG = {
   ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
 
   // Device configuration - auto-detected based on context
-  DEVICE_ID: IS_MOBILE ? DEVICES.MOBILE_ID : DEVICES.KIOSK_ID,
-  DEVICE_TYPE: IS_MOBILE ? 'mobile' : 'kiosk',
+  // Priority: Admin > Mobile > Kiosk (default)
+  DEVICE_ID: IS_ADMIN ? DEVICES.ADMIN_ID : (IS_MOBILE ? DEVICES.MOBILE_ID : DEVICES.KIOSK_ID),
+  DEVICE_TYPE: IS_ADMIN ? 'admin' : (IS_MOBILE ? 'mobile' : 'kiosk'),
 
-  // Expose detection flag for other modules
+  // Expose detection flags for other modules
   IS_MOBILE,
+  IS_ADMIN,
 };
 
 // Endpoint paths

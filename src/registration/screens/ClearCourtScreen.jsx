@@ -20,7 +20,7 @@
  * - CONSTANTS: object - App constants
  * - TennisBusinessLogic: object - Business logic service
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
 
 const ClearCourtScreen = ({
@@ -42,6 +42,41 @@ const ClearCourtScreen = ({
   // Use courtData prop (from React state for API backend, or from parent)
   // Fall back to localStorage only if courtData is not provided
   const data = courtData || window.Tennis?.Storage?.readDataSafe?.() || { courts: [] };
+
+  // Auto-reset timer for success screens (step 3 and 4)
+  const timerRef = useRef(null);
+  const timerStepRef = useRef(null);  // Track which step the timer was set for
+
+  useEffect(() => {
+    // Only set timer when on success screens (step 3 or 4)
+    // AND we haven't already set a timer for this step
+    if ((clearCourtStep === 3 || clearCourtStep === 4) && timerStepRef.current !== clearCourtStep) {
+      // Clear any existing timer from a different step
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+
+      timerStepRef.current = clearCourtStep;  // Mark that we've set timer for this step
+      const timeoutMs = CONSTANTS?.AUTO_RESET_CLEAR_MS || 2000;
+      console.log(`[ClearCourtScreen] Starting ${timeoutMs}ms timer for step ${clearCourtStep}`);
+
+      timerRef.current = setTimeout(() => {
+        console.log('[ClearCourtScreen] Auto-reset timer fired');
+        timerStepRef.current = null;  // Reset so we can set timer again if needed
+        resetForm();
+      }, timeoutMs);
+    }
+
+    // Only cleanup on unmount, NOT on every re-render
+    return () => {
+      if (timerRef.current && timerStepRef.current !== clearCourtStep) {
+        console.log('[ClearCourtScreen] Cleaning up timer on unmount');
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+        timerStepRef.current = null;
+      }
+    };
+  }, [clearCourtStep]);  // Remove resetForm and CONSTANTS from deps - they cause re-renders
   const occupiedCourts = clearableCourts.map(courtNumber => ({
     courtNumber,
     players: data?.courts?.[courtNumber - 1]?.current?.players || data?.courts?.[courtNumber - 1]?.players || [],
@@ -174,11 +209,8 @@ const ClearCourtScreen = ({
   }
 
   // Step 3: Success - players leaving
+  // Timer is handled by useEffect above - no setTimeout during render
   if (clearCourtStep === 3) {
-    setTimeout(() => {
-      resetForm();
-    }, CONSTANTS.AUTO_RESET_CLEAR_MS);
-
     return (
       <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <ToastHost />
@@ -194,11 +226,8 @@ const ClearCourtScreen = ({
   }
 
   // Step 4: Success - observed empty
+  // Timer is handled by useEffect above - no setTimeout during render
   if (clearCourtStep === 4) {
-    setTimeout(() => {
-      resetForm();
-    }, CONSTANTS.AUTO_RESET_CLEAR_MS);
-
     return (
       <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
         <ToastHost />

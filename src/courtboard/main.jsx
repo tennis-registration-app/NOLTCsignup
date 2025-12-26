@@ -82,21 +82,6 @@ function classForStatus(statusObj) {
 }
 
 // Unified status source for the board UI
-function computeBoardStatuses() {
-  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-  const S = window.Tennis?.Storage;
-  const now = new Date();
-  const data = S.readDataSafe();
-  const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
-  const wetSet = new Set(
-    (blocks || [])
-      .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
-      .map(b => b.courtNumber)
-  );
-  const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
-  return { data, map: Object.fromEntries(statuses.map(s => [s.courtNumber, s])) };
-}
-
 // ---- Dev flag & assert (no UI change) ----
 const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
 const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj || ''); };
@@ -604,25 +589,42 @@ function TennisCourtDisplay() {
     };
   }, []);
 
+  /**
+   * TWO-ROOT BRIDGE: Sync React state to window for mobile modal access.
+   *
+   * ARCHITECTURE INVARIANT:
+   * - This useEffect is the ONLY WRITER to window.CourtboardState
+   * - The mobile modal (second React root in MobileModalSheet) reads via getCourtboardState()
+   * - mobile-fallback-bar.js reads via getCourtboardState()
+   * - NO OTHER CODE should write to window.CourtboardState
+   *
+   * This bridge exists because the mobile modal is rendered in a separate React tree
+   * and cannot access this component's state directly.
+   */
+  useEffect(() => {
+    window.CourtboardState = {
+      courts: courts,
+      courtBlocks: courtBlocks,
+      waitingGroups: waitingGroups,
+      timestamp: Date.now()
+    };
+  }, [courts, courtBlocks, waitingGroups]);
+
   window.refreshBoard = loadData;
 
-  // Build status map using courts state from API (not localStorage)
+  // Build status map using courts state from API (no localStorage fallback)
   let statusByCourt = {};
   let selectableByCourt = {};
   let statusObjectByCourt = {};
-  // Build data object from courts state for status computation
-  let data = { courts: courts, waitingGroups: waitingGroups.map(g => ({ id: g.id, players: g.names.map(n => ({ name: n })) })) };
+  // Build data object from React courts state for status computation
+  const data = { courts: courts, waitingGroups: waitingGroups.map(g => ({ id: g.id, players: g.names.map(n => ({ name: n })) })) };
 
   try {
     const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-    const S = window.Tennis?.Storage;
-    if (A && S) {
+    if (A) {
       const now = new Date();
-      // Use courts state from API, fall back to localStorage only if courts is empty
-      if (!courts || courts.length === 0 || courts.every(c => c === null)) {
-        data = S.readDataSafe();
-      }
-      const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+      // Use courtBlocks from React state instead of localStorage
+      const blocks = courtBlocks || [];
       const wetSet = new Set((blocks || [])
         .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
         .map(b => b.courtNumber)
@@ -913,16 +915,20 @@ function WaitingList({ waitingGroups, courts, currentTime }) {
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
   const S = window.Tennis?.Storage;
 
+  // Convert React courts state to the data format expected by availability functions
+  // This uses the passed props instead of reading from localStorage
+  const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
+
   // Calculate estimated wait time using domain functions
   const calculateEstimatedWaitTime = (position) => {
     try {
-      if (!A || !W || !S) {
+      if (!A || !W) {
         return position * 15; // Fallback to simple estimate
       }
 
       const now = new Date();
-      const data = S.readDataSafe();
-      const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+      const data = courtsToData(courts);  // Use React state instead of localStorage
+      const blocks = S?.readJSON?.(S.STORAGE?.BLOCKS) || [];
 
       // Derive wetSet for current moment
       const wetSet = new Set(
@@ -957,11 +963,11 @@ function WaitingList({ waitingGroups, courts, currentTime }) {
   // Check if a group can register now (courts are available)
   const canGroupRegisterNow = (idx) => {
     try {
-      if (!A || !S) return false;
+      if (!A) return false;
 
       const now = new Date();
-      const data = S.readDataSafe();
-      const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+      const data = courtsToData(courts);  // Use React state instead of localStorage
+      const blocks = S?.readJSON?.(S.STORAGE?.BLOCKS) || [];
       const wetSet = new Set(
         blocks
           .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
@@ -1069,7 +1075,9 @@ function WaitingList({ waitingGroups, courts, currentTime }) {
 // NextAvailablePanel Component (full implementation from legacy)
 function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBlocks = [] }) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-  const S = window.Tennis?.Storage;
+
+  // Convert React courts state to the data format expected by availability functions
+  const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
 
   // Calculate court availability timeline
   const getCourtAvailabilityTimeline = (waitingGroups = []) => {
@@ -1080,13 +1088,8 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
     const courtAvailability = [];
     const overtimeCourts = [];
 
-    // Get current blocks from localStorage
-    let blocks = [];
-    try {
-      blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-    } catch (error) {
-      console.error('Error loading court blocks:', error);
-    }
+    // Use courtBlocks from props instead of localStorage
+    const blocks = courtBlocks || [];
 
     // Check if ALL courts are currently wet
     const activeWetBlocks = blocks.filter(block =>
@@ -1185,15 +1188,14 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
     let filteredOvertimeCourts = overtimeCourts;
 
     try {
-      if (A && A.getFreeCourtsInfo && S) {
+      if (A && A.getFreeCourtsInfo) {
         const now = new Date();
-        const data = S.readDataSafe();
-        const blocksData = S.readJSON(S.STORAGE?.BLOCKS) || [];
+        const data = courtsToData(courts);  // Use React state instead of localStorage
         const wetSet = new Set(
-          blocksData.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+          blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
             .map(b => b.courtNumber)
         );
-        const info = A.getFreeCourtsInfo({ data, now, blocks: blocksData, wetSet });
+        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
         const emptyCount = info.free ? info.free.length : 0;
         const waitingCount = waitingGroups.length;
 
@@ -1215,15 +1217,14 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
   // Calculate if courts are available after serving the waitlist
   let emptyCourtCount = 0;
   try {
-    if (A && A.getFreeCourtsInfo && S) {
+    if (A && A.getFreeCourtsInfo) {
       const now = new Date();
-      const data = S.readDataSafe();
-      const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+      const data = courtsToData(courts);  // Use React state instead of localStorage
       const wetSet = new Set(
-        blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+        courtBlocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
           .map(b => b.courtNumber)
       );
-      const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+      const info = A.getFreeCourtsInfo({ data, now, blocks: courtBlocks, wetSet });
       emptyCourtCount = info.free ? info.free.length : 0;
     }
   } catch (error) {
@@ -1589,8 +1590,13 @@ function MobileModalSheet({ type, payload, onClose }) {
         );
 
       case 'waitlist':
-        // Waitlist display
+        // Waitlist display - uses courts data from payload (passed from React state)
         const waitlistData = payload?.waitlistData || [];
+        const modalCourts = payload?.courts || [];
+        const modalCourtBlocks = payload?.courtBlocks || [];
+
+        // Helper to convert courts array to data format for availability functions
+        const courtsToDataModal = (courtsArray) => ({ courts: courtsArray || [] });
 
         // Mobile name formatting
         const formatMobileNamesModal = (nameArray) => {
@@ -1619,20 +1625,19 @@ function MobileModalSheet({ type, payload, onClose }) {
           return nameArray.length > 1 ? `${primary} +${nameArray.length - 1}` : primary;
         };
 
-        // Calculate estimated wait time for mobile modal (same logic as WaitingList)
+        // Calculate estimated wait time for mobile modal (uses payload data, not localStorage)
         const calculateMobileWaitTime = (position) => {
           try {
             const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
             const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
-            const S = window.Tennis?.Storage;
 
-            if (!A || !W || !S) {
+            if (!A || !W) {
               return position * 15;
             }
 
             const now = new Date();
-            const data = S.readDataSafe();
-            const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+            const data = courtsToDataModal(modalCourts);  // Use payload data
+            const blocks = modalCourtBlocks;  // Use payload data
             const wetSet = new Set(
               blocks
                 .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
@@ -1659,16 +1664,15 @@ function MobileModalSheet({ type, payload, onClose }) {
           }
         };
 
-        // Check if first group can register now
+        // Check if first group can register now (uses payload data, not localStorage)
         const canFirstGroupRegister = () => {
           try {
             const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-            const S = window.Tennis?.Storage;
-            if (!A || !S) return false;
+            if (!A) return false;
 
             const now = new Date();
-            const data = S.readDataSafe();
-            const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+            const data = courtsToDataModal(modalCourts);  // Use payload data
+            const blocks = modalCourtBlocks;  // Use payload data
             const wetSet = new Set(
               blocks
                 .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)

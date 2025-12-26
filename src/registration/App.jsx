@@ -1449,18 +1449,21 @@ const now = new Date();
   let openingTime;
   let openingTimeString;
 
+  console.log('[DEBUG] operatingHours:', operatingHours, 'dayOfWeek:', dayOfWeek);
   if (operatingHours && Array.isArray(operatingHours)) {
     // Find today's operating hours from API
-    const todayHours = operatingHours.find(h => h.day_of_week === dayOfWeek);
-    if (todayHours && !todayHours.is_closed) {
-      // Parse opens_at (format: "HH:MM:SS")
-      const [hours, minutes] = todayHours.opens_at.split(':').map(Number);
+    // TennisQueries normalizes to camelCase (dayOfWeek, opensAt, closesAt, isClosed)
+    const todayHours = operatingHours.find(h => h.dayOfWeek === dayOfWeek);
+    console.log('[DEBUG] todayHours:', todayHours);
+    if (todayHours && !todayHours.isClosed) {
+      // Parse opensAt (format: "HH:MM:SS")
+      const [hours, minutes] = todayHours.opensAt.split(':').map(Number);
       openingTime = hours + (minutes / 60);
       // Format for display (e.g., "5:00 AM")
       const hour12 = hours % 12 || 12;
       const ampm = hours < 12 ? 'AM' : 'PM';
       openingTimeString = `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-    } else if (todayHours && todayHours.is_closed) {
+    } else if (todayHours && todayHours.isClosed) {
       Tennis.UI.toast('The club is closed today.', { type: 'warning' });
       return;
     } else {
@@ -2183,7 +2186,6 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
     };
     console.log('🔵 Adding frequent partner to group:', newPlayer);
     setCurrentGroup([...currentGroup, newPlayer]);
-    window.computeEtaPreview();
   };
 
   // Find member number
@@ -3477,7 +3479,6 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
                  <button
                    onClick={() => {
                      setCurrentGroup(currentGroup.filter((_, i) => i !== idx));
-                     window.computeEtaPreview();
                    }}
                    className="text-red-500 hover:bg-red-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-sm sm:text-base"
                  >

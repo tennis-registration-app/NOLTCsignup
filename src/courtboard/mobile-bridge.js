@@ -3,6 +3,14 @@
   // Mobile-only: only active when embedded
   const MOBILE = (window.top !== window.self);
 
+  /**
+   * Get Courtboard state from React (via window bridge).
+   * Uses the centralized accessor - NO localStorage reads.
+   */
+  function getCourtboardState() {
+    return window.CourtboardState ?? { courts: [], courtBlocks: [], waitingGroups: [] };
+  }
+
   // call this when an available court is tapped
   window.mobileTapToRegister = function(courtNumber){
     if (!MOBILE) return false; // do nothing on desktop/iPad standalone
@@ -12,10 +20,16 @@
     if (registeredCourt) {
       // Verify the registration is still valid by checking if the court is actually occupied
       try {
-        const data = JSON.parse(localStorage.getItem('tennisClubData') || '{}');
-        const court = data.courts && data.courts[registeredCourt - 1];
+        // Use React state via getCourtboardState() - no localStorage
+        const state = getCourtboardState();
+        const courts = state.courts || [];
+        const courtIndex = parseInt(registeredCourt, 10) - 1;
+        const court = courts[courtIndex];
+
+        // Check if court is actually occupied (API returns isOccupied flag)
         const isActuallyOnCourt = court && (
-          (court.current && court.current.players && court.current.players.length > 0) ||
+          court.isOccupied ||
+          (court.session && court.session.participants && court.session.participants.length > 0) ||
           (court.players && court.players.length > 0)
         );
 
@@ -43,18 +57,10 @@
 
     // Check if there's a waitlist - if so, redirect to join waitlist instead
     try {
-      const storage = window.Tennis?.Storage;
-      const dataKey = 'tennisClubData';
+      // Use React state via getCourtboardState() - no localStorage
+      const state = getCourtboardState();
+      const waitingGroups = state.waitingGroups || [];
 
-      let data = null;
-      if (storage?.readJSON) {
-        data = storage.readJSON(dataKey) || {};
-      } else {
-        const jsonData = localStorage.getItem(dataKey);
-        data = jsonData ? JSON.parse(jsonData) : {};
-      }
-
-      const waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
       if (waitingGroups.length > 0) {
         // Redirect to waitlist join instead of court selection
         try { window.parent.postMessage({ type:'register', courtNumber: null }, '*'); } catch {}
