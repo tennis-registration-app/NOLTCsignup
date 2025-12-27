@@ -119,7 +119,7 @@ const CourtSelectionScreen = ({
                 key={courtNum}
                 onClick={() => handleCourtClick(courtNum)}
                 disabled={isDisabled}
-                className={`relative p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform shadow-lg ${
+                className={`relative overflow-visible p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform shadow-lg ${
                   isLoading
                     ? "bg-gradient-to-r from-green-500 to-green-600 scale-105"
                     : isDisabled
@@ -131,20 +131,35 @@ const CourtSelectionScreen = ({
               >
                 {/* Rotating progress ring - only on selected tile */}
                 {isLoading && (
-                  <div
-                    className="absolute rounded-xl pointer-events-none animate-spin"
-                    style={{
-                      inset: '-4px',
-                      background: 'conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.8) 60deg, transparent 120deg)',
-                      animationDuration: '1.2s'
-                    }}
+                  <svg
+                    className="absolute -inset-[3px] w-[calc(100%+6px)] h-[calc(100%+6px)] pointer-events-none"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
                   >
-                    {/* Inner mask to create ring effect */}
-                    <div
-                      className="absolute rounded-lg bg-gradient-to-r from-green-500 to-green-600"
-                      style={{ inset: '4px' }}
+                    <style>
+                      {`
+                        @keyframes dash-move {
+                          0% { stroke-dashoffset: 0; }
+                          100% { stroke-dashoffset: -140; }
+                        }
+                      `}
+                    </style>
+                    <rect
+                      x="1"
+                      y="1"
+                      width="98"
+                      height="98"
+                      rx="12"
+                      ry="12"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.8)"
+                      strokeWidth="2"
+                      strokeDasharray="60 80"
+                      style={{
+                        animation: 'dash-move 1s linear infinite'
+                      }}
                     />
-                  </div>
+                  </svg>
                 )}
 
                 <div className="relative z-10 flex flex-col items-center justify-center h-full">
