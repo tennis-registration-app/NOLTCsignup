@@ -368,6 +368,16 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
+  // Cleanup success reset timer on unmount
+  useEffect(() => {
+    return () => {
+      if (successResetTimerRef.current) {
+        clearTimeout(successResetTimerRef.current);
+        successResetTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // Expose current data globally for guardAddPlayerEarly
   useEffect(() => {
     window.__registrationData = data;
@@ -683,6 +693,7 @@ useEffect(() => {
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const timeoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
+  const successResetTimerRef = useRef(null);
   const frequentPartnersCacheRef = useRef({});
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courtToMove, setCourtToMove] = useState(null);
@@ -1675,7 +1686,9 @@ if (currentWaitlistEntryId) {
 
     // Auto-reset timer
     if (!window.__mobileFlow) {
-      setTimeout(() => {
+      clearSuccessResetTimer();
+      successResetTimerRef.current = setTimeout(() => {
+        successResetTimerRef.current = null;
         resetForm();
       }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
     }
@@ -1797,7 +1810,9 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
 
   // Auto-reset timer for court assignment (same as waitlist)
   if (!window.__mobileFlow) {
-    setTimeout(() => {
+    clearSuccessResetTimer();
+    successResetTimerRef.current = setTimeout(() => {
+      successResetTimerRef.current = null;
       resetForm();
     }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
   }
@@ -1995,9 +2010,19 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
     }
   };
 
+  // Clear any pending success reset timer
+  const clearSuccessResetTimer = () => {
+    if (successResetTimerRef.current) {
+      clearTimeout(successResetTimerRef.current);
+      successResetTimerRef.current = null;
+    }
+  };
+
   // Reset form
   const resetForm = () => {
-    
+    // Clear any pending success timer to prevent stale callbacks
+    clearSuccessResetTimer();
+
     setCurrentGroup([]);
     setShowSuccess(false);
     setMemberNumber("");
@@ -4093,7 +4118,9 @@ onFocus={() => {
             
             // Don't auto-reset in mobile flow - let the overlay handle timing
             if (!window.__mobileFlow) {
-              setTimeout(() => {
+              clearSuccessResetTimer();
+              successResetTimerRef.current = setTimeout(() => {
+                successResetTimerRef.current = null;
                 resetForm();
               }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
             }
@@ -4297,7 +4324,9 @@ onFocus={() => {
            }
            // Don't auto-reset in mobile flow - let the overlay handle timing
            if (!window.__mobileFlow) {
-             setTimeout(() => {
+             clearSuccessResetTimer();
+             successResetTimerRef.current = setTimeout(() => {
+               successResetTimerRef.current = null;
                resetForm();
              }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
            }

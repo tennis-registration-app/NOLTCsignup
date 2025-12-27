@@ -37,6 +37,7 @@ const CourtSelectionScreen = ({
 }) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
+  const [loadingCourt, setLoadingCourt] = useState(null);
 
   // Determine session duration based on group size
   const getSessionDuration = (group) => {
@@ -46,6 +47,9 @@ const CourtSelectionScreen = ({
 
   // Handle court selection with block checking
   const handleCourtClick = (courtNumber) => {
+    // Ignore clicks if already loading
+    if (loadingCourt) return;
+
     const duration = getSessionDuration(currentGroup);
     const warning = getUpcomingBlockWarning(courtNumber, duration);
 
@@ -60,7 +64,8 @@ const CourtSelectionScreen = ({
         setPendingCourtNumber(courtNumber);
       }
     } else {
-      // No block issues - proceed normally
+      // No block issues - proceed with loading state
+      setLoadingCourt(courtNumber);
       onCourtSelect(courtNumber);
     }
   };
@@ -68,6 +73,7 @@ const CourtSelectionScreen = ({
   // Confirm selection despite limited time
   const handleConfirmSelection = () => {
     if (pendingCourtNumber) {
+      setLoadingCourt(pendingCourtNumber);
       onCourtSelect(pendingCourtNumber);
     }
     setBlockWarning(null);
@@ -105,17 +111,43 @@ const CourtSelectionScreen = ({
             const warningInfo = getCourtWarningInfo(courtNum);
             const hasUpcomingBlock = warningInfo && warningInfo.minutesUntilBlock < 60;
 
+            const isLoading = loadingCourt === courtNum;
+            const isDisabled = loadingCourt && loadingCourt !== courtNum;
+
             return (
               <button
                 key={courtNum}
                 onClick={() => handleCourtClick(courtNum)}
+                disabled={isDisabled}
                 className={`relative p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform shadow-lg ${
-                  showingOvertimeCourts
-                    ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800"
-                    : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600"
-                } hover:scale-105`}
+                  isLoading
+                    ? "bg-gradient-to-r from-green-500 to-green-600 scale-105"
+                    : isDisabled
+                      ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-green-400 to-green-500"
+                      : showingOvertimeCourts
+                        ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:scale-105"
+                        : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 hover:scale-105"
+                }`}
               >
-                <div className="flex flex-col items-center justify-center h-full">
+                {/* Rotating progress ring - only on selected tile */}
+                {isLoading && (
+                  <div
+                    className="absolute rounded-xl pointer-events-none animate-spin"
+                    style={{
+                      inset: '-4px',
+                      background: 'conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.8) 60deg, transparent 120deg)',
+                      animationDuration: '1.2s'
+                    }}
+                  >
+                    {/* Inner mask to create ring effect */}
+                    <div
+                      className="absolute rounded-lg bg-gradient-to-r from-green-500 to-green-600"
+                      style={{ inset: '4px' }}
+                    />
+                  </div>
+                )}
+
+                <div className="relative z-10 flex flex-col items-center justify-center h-full">
                   <span>Court {courtNum}</span>
 
                   {/* Show upcoming block warning as simple yellow text when within 60 minutes */}

@@ -161,10 +161,16 @@ const ClearCourtScreen = ({
 
           <div className="space-y-4 sm:space-y-8 mb-6 sm:mb-8">
             <button
-              onClick={async () => {
-                await clearCourt(selectedCourtToClear, 'Cleared');
+              onClick={() => {
+                // Optimistic UI: show success immediately
                 console.log(`Clearing court ${selectedCourtToClear} - players leaving`);
                 setClearCourtStep(3);
+
+                // API call in background
+                clearCourt(selectedCourtToClear, 'Cleared').catch(error => {
+                  console.error('[ClearCourt] API error:', error);
+                  // Error will be logged; Thank You screen auto-dismisses anyway
+                });
               }}
               className="w-full bg-green-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-green-600 transition-colors"
             >
@@ -172,10 +178,16 @@ const ClearCourtScreen = ({
             </button>
 
             <button
-              onClick={async () => {
-                await clearCourt(selectedCourtToClear, 'Observed-Cleared');
+              onClick={() => {
+                // Optimistic UI: show success immediately
                 console.log(`Clearing court ${selectedCourtToClear} - observed empty`);
                 setClearCourtStep(4);
+
+                // API call in background
+                clearCourt(selectedCourtToClear, 'Observed-Cleared').catch(error => {
+                  console.error('[ClearCourt] API error:', error);
+                  // Error will be logged; Thank You screen auto-dismisses anyway
+                });
               }}
               className="w-full bg-blue-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-blue-600 transition-colors"
             >
