@@ -19,6 +19,7 @@ import {
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../registration/backend/index.js';
+import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 const backend = createBackend();
 
 // Access shared utils from window for backward compatibility
@@ -568,37 +569,11 @@ function TennisCourtDisplay() {
       setCourts(transformedCourts);
       }
 
-      // Normalize waitlist to match existing format { id, names }
+      // Normalize waitlist using shared helper
       console.log('[Courtboard] Raw waitlist from API:', board.waitlist);
-      if (board.waitlist) {
-        const normalized = (board.waitlist || []).map((entry, idx) => {
-          // Handle participants - might be string (JSONB) or array
-          let participants = entry?.participants;
-          if (typeof participants === 'string') {
-            try {
-              participants = JSON.parse(participants);
-              console.log('[Courtboard] Parsed participants from string');
-            } catch (e) {
-              console.error('[Courtboard] Failed to parse participants:', e);
-              participants = [];
-            }
-          }
-
-          const names = (participants || []).map((p, j) => {
-            console.log(`[Courtboard] Entry ${idx} participant ${j}:`, JSON.stringify(p));
-            console.log(`[Courtboard] Participant keys:`, Object.keys(p || {}));
-            return p?.displayName || p?.display_name || p?.name || 'Unknown';
-          });
-
-          return {
-            id: entry?.id || `wg_${idx}`,
-            names: names
-          };
-        });
-        // Don't filter - keep all entries for debugging
-        console.log('[Courtboard] Final normalized:', normalized);
-        setWaitingGroups(normalized);
-      }
+      const normalized = normalizeWaitlist(board.waitlist);
+      console.log('[Courtboard] Normalized waitlist:', normalized);
+      setWaitingGroups(normalized);
     });
 
     console.log('[Courtboard] TennisBackend subscription active');

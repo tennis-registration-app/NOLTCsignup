@@ -34,6 +34,9 @@ import {
 // Import API config for mobile detection
 import { API_CONFIG } from '../lib/apiConfig.js';
 
+// Import shared waitlist normalization
+import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
+
 // Import extracted UI components
 import {
   Users,
@@ -312,44 +315,28 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setAvailableCourts(selectableNumbers);
       setApiError(null);
 
-      // Emit CTA state
-      const waitlistGroups = initialData.waitlist || [];
+      // Emit CTA state using shared normalization
       console.log('[Registration] Raw waitlist from API:', initialData.waitlist);
-      console.log('[Registration] waitlistGroups length:', waitlistGroups.length);
-      const firstGroup = waitlistGroups[0] || null;
-      const secondGroup = waitlistGroups[1] || null;
-      console.log('[Registration] firstGroup:', firstGroup);
-      console.log('[Registration] secondGroup:', secondGroup);
+      const normalizedWaitlist = normalizeWaitlist(initialData.waitlist);
+      console.log('[Registration] Normalized waitlist:', normalizedWaitlist);
+      const firstGroup = normalizedWaitlist[0] || null;
+      const secondGroup = normalizedWaitlist[1] || null;
 
       const gateCount = selectableCourts.length;
       const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
       const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
       console.log('[Registration] gateCount:', gateCount, 'canFirstGroupPlay:', canFirstGroupPlay, 'canSecondGroupPlay:', canSecondGroupPlay);
 
-      // API returns participants with displayName (camelCase)
-      const normalizeParticipants = (group) => {
-        console.log('[Registration] normalizeParticipants input:', group);
-        const participants = group.participants || group.players || [];
-        console.log('[Registration] participants array:', participants);
-        const result = participants.map((p, i) => ({
-          id: `wl-${group.id}-${i}`,
-          name: typeof p === 'string' ? p : (p.displayName || p.display_name || p.name || 'Unknown'),
-          memberNumber: typeof p === 'object' ? (p.memberId || p.member_id || p.member_number || String(group.position)) : String(group.position),
-        }));
-        console.log('[Registration] normalized result:', result);
-        return result;
-      };
-
       const ctaDetail = {
         live1: canFirstGroupPlay,
         live2: canSecondGroupPlay,
         first: firstGroup ? {
-          players: normalizeParticipants(firstGroup),
+          players: firstGroup.players,
           id: firstGroup.id,
           position: firstGroup.position,
         } : null,
         second: secondGroup ? {
-          players: normalizeParticipants(secondGroup),
+          players: secondGroup.players,
           id: secondGroup.id,
           position: secondGroup.position,
         } : null,
@@ -431,24 +418,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         .map(c => c.number);
       setAvailableCourts(selectable);
       
-      // Emit cta:state event for external components
-      // Compute CTA state from board data
-      const waitlistGroups = board.waitlist || [];
-      const firstGroup = waitlistGroups[0] || null;
-      const secondGroup = waitlistGroups[1] || null;
+      // Emit cta:state event for external components using shared normalization
+      const normalizedWaitlist = normalizeWaitlist(board.waitlist);
+      const firstGroup = normalizedWaitlist[0] || null;
+      const secondGroup = normalizedWaitlist[1] || null;
       const gateCount = selectable.length;
       const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
       const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
-
-      // Normalize participants to players format
-      const normalizeParticipants = (group) => {
-        const participants = group.participants || group.players || [];
-        return participants.map((p, i) => ({
-          id: `wl-${group.id}-${i}`,
-          name: typeof p === 'string' ? p : (p.displayName || p.display_name || p.name || 'Unknown'),
-          memberNumber: typeof p === 'object' ? (p.memberId || p.member_id || p.member_number || String(group.position)) : String(group.position),
-        }));
-      };
 
       window.dispatchEvent(new CustomEvent('cta:state', {
         detail: {
@@ -459,12 +435,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           live1: canFirstGroupPlay,
           live2: canSecondGroupPlay,
           first: firstGroup ? {
-            players: normalizeParticipants(firstGroup),
+            players: firstGroup.players,
             id: firstGroup.id,
             position: firstGroup.position,
           } : null,
           second: secondGroup ? {
-            players: normalizeParticipants(secondGroup),
+            players: secondGroup.players,
             id: secondGroup.id,
             position: secondGroup.position,
           } : null,
