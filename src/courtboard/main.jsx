@@ -569,14 +569,34 @@ function TennisCourtDisplay() {
       }
 
       // Normalize waitlist to match existing format { id, names }
+      console.log('[Courtboard] Raw waitlist from API:', board.waitlist);
       if (board.waitlist) {
-        const normalized = board.waitlist
-          .map((g, idx) => {
-            const players = Array.isArray(g?.players) ? g.players : [];
-            const names = players.map(p => p?.name || p?.id).filter(Boolean);
-            return names.length ? { id: g.id || `wg_${idx}`, names } : null;
-          })
-          .filter(Boolean);
+        const normalized = (board.waitlist || []).map((entry, idx) => {
+          // Handle participants - might be string (JSONB) or array
+          let participants = entry?.participants;
+          if (typeof participants === 'string') {
+            try {
+              participants = JSON.parse(participants);
+              console.log('[Courtboard] Parsed participants from string');
+            } catch (e) {
+              console.error('[Courtboard] Failed to parse participants:', e);
+              participants = [];
+            }
+          }
+
+          const names = (participants || []).map((p, j) => {
+            console.log(`[Courtboard] Entry ${idx} participant ${j}:`, JSON.stringify(p));
+            console.log(`[Courtboard] Participant keys:`, Object.keys(p || {}));
+            return p?.displayName || p?.display_name || p?.name || 'Unknown';
+          });
+
+          return {
+            id: entry?.id || `wg_${idx}`,
+            names: names
+          };
+        });
+        // Don't filter - keep all entries for debugging
+        console.log('[Courtboard] Final normalized:', normalized);
         setWaitingGroups(normalized);
       }
     });
@@ -911,6 +931,7 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
 
 // WaitingList Component (with proper wait time calculations)
 function WaitingList({ waitingGroups, courts, currentTime }) {
+  console.log('[WaitingList] Received waitingGroups:', waitingGroups);
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
   const S = window.Tennis?.Storage;

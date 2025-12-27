@@ -118,9 +118,13 @@ export const TennisBusinessLogic = {
    * @returns {Object} Status object with isPlaying, location, and details
    */
   isPlayerAlreadyPlaying(playerId, data, currentGroup = []) {
+    // Defensive: if data is missing or malformed, player is not playing
+    if (!data) return { isPlaying: false };
+
     // Check courts
-    for (let i = 0; i < data.courts.length; i++) {
-      const court = data.courts[i];
+    const courts = data.courts || [];
+    for (let i = 0; i < courts.length; i++) {
+      const court = courts[i];
 
       // Check old structure
       if (court && court.players && court.players.some(player => player.id === playerId)) {
@@ -146,9 +150,10 @@ export const TennisBusinessLogic = {
     }
 
     // Check waiting groups
-    for (let i = 0; i < data.waitingGroups.length; i++) {
-      const group = data.waitingGroups[i];
-      if (group.players.some(player => player.id === playerId)) {
+    const waitingGroups = data.waitingGroups || [];
+    for (let i = 0; i < waitingGroups.length; i++) {
+      const group = waitingGroups[i];
+      if (group && group.players && group.players.some(player => player.id === playerId)) {
         const player = group.players.find(p => p.id === playerId);
         return {
           isPlaying: true,
@@ -160,7 +165,7 @@ export const TennisBusinessLogic = {
     }
 
     // Check current group
-    if (currentGroup.some(player => player.id === playerId)) {
+    if (currentGroup && currentGroup.some(player => player.id === playerId)) {
       const player = currentGroup.find(p => p.id === playerId);
       return {
         isPlaying: true,

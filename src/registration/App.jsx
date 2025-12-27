@@ -314,38 +314,49 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       // Emit CTA state
       const waitlistGroups = initialData.waitlist || [];
+      console.log('[Registration] Raw waitlist from API:', initialData.waitlist);
+      console.log('[Registration] waitlistGroups length:', waitlistGroups.length);
       const firstGroup = waitlistGroups[0] || null;
       const secondGroup = waitlistGroups[1] || null;
+      console.log('[Registration] firstGroup:', firstGroup);
+      console.log('[Registration] secondGroup:', secondGroup);
 
       const gateCount = selectableCourts.length;
       const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
       const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
+      console.log('[Registration] gateCount:', gateCount, 'canFirstGroupPlay:', canFirstGroupPlay, 'canSecondGroupPlay:', canSecondGroupPlay);
 
-      window.dispatchEvent(new CustomEvent('cta:state', {
-        detail: {
-          live1: canFirstGroupPlay,
-          live2: canSecondGroupPlay,
-          first: firstGroup ? {
-            players: (firstGroup.players || []).map((p, i) => ({
-              id: `wl-${firstGroup.id}-${i}`,
-              name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
-              memberNumber: typeof p === 'object' ? (p.member_number || String(firstGroup.position)) : String(firstGroup.position),
-            })),
-            id: firstGroup.id,
-            position: firstGroup.position,
-          } : null,
-          second: secondGroup ? {
-            players: (secondGroup.players || []).map((p, i) => ({
-              id: `wl-${secondGroup.id}-${i}`,
-              name: typeof p === 'string' ? p : (p.name || p.display_name || 'Unknown'),
-              memberNumber: typeof p === 'object' ? (p.member_number || String(secondGroup.position)) : String(secondGroup.position),
-            })),
-            id: secondGroup.id,
-            position: secondGroup.position,
-          } : null,
-          selectable: selectableCourts.map(c => c.number),
-        }
-      }));
+      // API returns participants with displayName (camelCase)
+      const normalizeParticipants = (group) => {
+        console.log('[Registration] normalizeParticipants input:', group);
+        const participants = group.participants || group.players || [];
+        console.log('[Registration] participants array:', participants);
+        const result = participants.map((p, i) => ({
+          id: `wl-${group.id}-${i}`,
+          name: typeof p === 'string' ? p : (p.displayName || p.display_name || p.name || 'Unknown'),
+          memberNumber: typeof p === 'object' ? (p.memberId || p.member_id || p.member_number || String(group.position)) : String(group.position),
+        }));
+        console.log('[Registration] normalized result:', result);
+        return result;
+      };
+
+      const ctaDetail = {
+        live1: canFirstGroupPlay,
+        live2: canSecondGroupPlay,
+        first: firstGroup ? {
+          players: normalizeParticipants(firstGroup),
+          id: firstGroup.id,
+          position: firstGroup.position,
+        } : null,
+        second: secondGroup ? {
+          players: normalizeParticipants(secondGroup),
+          id: secondGroup.id,
+          position: secondGroup.position,
+        } : null,
+        selectable: selectableCourts.map(c => c.number),
+      };
+      console.log('[Registration] Dispatching CTA event with detail:', ctaDetail);
+      window.dispatchEvent(new CustomEvent('cta:state', { detail: ctaDetail }));
 
       return updatedData;
     } catch (error) {
@@ -421,11 +432,43 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setAvailableCourts(selectable);
       
       // Emit cta:state event for external components
+      // Compute CTA state from board data
+      const waitlistGroups = board.waitlist || [];
+      const firstGroup = waitlistGroups[0] || null;
+      const secondGroup = waitlistGroups[1] || null;
+      const gateCount = selectable.length;
+      const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
+      const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
+
+      // Normalize participants to players format
+      const normalizeParticipants = (group) => {
+        const participants = group.participants || group.players || [];
+        return participants.map((p, i) => ({
+          id: `wl-${group.id}-${i}`,
+          name: typeof p === 'string' ? p : (p.displayName || p.display_name || p.name || 'Unknown'),
+          memberNumber: typeof p === 'object' ? (p.memberId || p.member_id || p.member_number || String(group.position)) : String(group.position),
+        }));
+      };
+
       window.dispatchEvent(new CustomEvent('cta:state', {
         detail: {
           courts: board.courts || [],
           waitlist: board.waitlist || [],
           serverNow: board.serverNow,
+          // CTA-specific fields
+          live1: canFirstGroupPlay,
+          live2: canSecondGroupPlay,
+          first: firstGroup ? {
+            players: normalizeParticipants(firstGroup),
+            id: firstGroup.id,
+            position: firstGroup.position,
+          } : null,
+          second: secondGroup ? {
+            players: normalizeParticipants(secondGroup),
+            id: secondGroup.id,
+            position: secondGroup.position,
+          } : null,
+          selectable: selectable,
         }
       }));
     });
@@ -1362,7 +1405,9 @@ if (startTime && !isCurrentlyBlocked) {
     const data = getCourtData();
     if (data.waitingGroups.length > 0) {
       const firstGroup = data.waitingGroups[0];
-      return firstGroup.players.some(player => player.id === playerId);
+      // API returns 'participants' with 'memberId'
+      const participants = firstGroup.participants || firstGroup.players || [];
+      return participants.some(p => (p.memberId || p.member_id || p.id) === playerId);
     }
     return false;
   };
@@ -2342,10 +2387,12 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
         // Player is in first waiting group and courts are available
         const firstWaitingGroup = data.waitingGroups[0];
         
-        // Load the entire waiting group
-        setCurrentGroup(firstWaitingGroup.players.map(player => ({
-          ...player,
-          memberNumber: findMemberNumber(player.id)
+        // Load the entire waiting group - API returns 'participants' with 'displayName'
+        const participants = firstWaitingGroup.participants || firstWaitingGroup.players || [];
+        setCurrentGroup(participants.map(p => ({
+          id: p.memberId || p.member_id || p.id,
+          name: p.displayName || p.display_name || p.name || 'Unknown',
+          memberNumber: findMemberNumber(p.memberId || p.member_id || p.id)
         })));
         
         
@@ -2379,10 +2426,12 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
         // Player is in second waiting group and there are at least 2 courts
         const secondWaitingGroup = data.waitingGroups[1];
         
-        // Load the entire waiting group
-        setCurrentGroup(secondWaitingGroup.players.map(player => ({
-          ...player,
-          memberNumber: findMemberNumber(player.id)
+        // Load the entire waiting group - API returns 'participants' with 'displayName'
+        const participants = secondWaitingGroup.participants || secondWaitingGroup.players || [];
+        setCurrentGroup(participants.map(p => ({
+          id: p.memberId || p.member_id || p.id,
+          name: p.displayName || p.display_name || p.name || 'Unknown',
+          memberNumber: findMemberNumber(p.memberId || p.member_id || p.id)
         })));
         
         
@@ -3286,10 +3335,10 @@ if (blockStatusResult && blockStatusResult.isBlocked) {
                  <div key={index} className="bg-gray-700 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                    <div className="flex-1">
                      <p className="text-white font-medium text-sm sm:text-base">
-                       Position {index + 1}: {group.players.map(p => p.name).join(", ")}
+                       Position {index + 1}: {(group.participants || group.players || []).map(p => p.displayName || p.display_name || p.name || 'Unknown').join(", ")}
                      </p>
                      <p className="text-gray-400 text-xs sm:text-sm">
-                       {group.players.length} player{group.players.length > 1 ? 's' : ''}
+                       {(group.participants || group.players || []).length} player{(group.participants || group.players || []).length > 1 ? 's' : ''}
                      </p>
                    </div>
                    <div className="flex gap-2 w-full sm:w-auto">
@@ -3726,9 +3775,12 @@ onFocus={() => {
                              
                              if (availableCourts.length > 0) {
                                const firstWaitingGroup = data.waitingGroups[0];
-                               setCurrentGroup(firstWaitingGroup.players.map(player => ({
-                                 ...player,
-                                 memberNumber: findMemberNumber(player.id)
+                               // API returns 'participants' with 'displayName'
+                               const participants = firstWaitingGroup.participants || firstWaitingGroup.players || [];
+                               setCurrentGroup(participants.map(p => ({
+                                 id: p.memberId || p.member_id || p.id,
+                                 name: p.displayName || p.display_name || p.name || 'Unknown',
+                                 memberNumber: findMemberNumber(p.memberId || p.member_id || p.id)
                                })));
                                
                                setHasWaitlistPriority(true);
