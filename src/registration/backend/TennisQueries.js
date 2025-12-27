@@ -127,9 +127,20 @@ export class TennisQueries {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Periodic refresh to catch expired blocks (every 30 seconds)
+    // Blocks don't trigger database signals when they expire naturally
+    const BLOCK_EXPIRY_POLL_INTERVAL = 30000; // 30 seconds
+    const pollInterval = setInterval(() => {
+      if (!document.hidden) {
+        console.log('📡 [poll] Checking for expired blocks...');
+        this._handleSignal(callback, 'block_expiry_poll');
+      }
+    }, BLOCK_EXPIRY_POLL_INTERVAL);
+
     // Return unsubscribe function
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(pollInterval);
       if (this.subscription) {
         this.supabase.removeChannel(this.subscription);
         this.subscription = null;

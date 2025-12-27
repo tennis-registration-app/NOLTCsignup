@@ -298,8 +298,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       }
 
       // Compute court categories using new availability flags
-      const unoccupiedCourts = courts.filter(c => c.isUnoccupied);
-      const overtimeCourts = courts.filter(c => c.isOvertime);
+      // Exclude blocked courts from all selectable categories
+      const unoccupiedCourts = courts.filter(c => c.isUnoccupied && !c.isBlocked);
+      const overtimeCourts = courts.filter(c => c.isOvertime && !c.isBlocked);
 
       // Selectable courts: unoccupied first, then overtime if no unoccupied
       let selectableCourts;
@@ -413,11 +414,22 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       }
       
       // Update available courts (for court selection UI)
+      // Exclude blocked courts from selectable list
       const selectable = (board.courts || [])
-        .filter(c => c.isUnoccupied || c.isOvertime)
+        .filter(c => (c.isUnoccupied || c.isOvertime) && !c.isBlocked)
         .map(c => c.number);
       setAvailableCourts(selectable);
-      
+
+      // DEBUG: Log court block status for CTA debugging
+      console.log('[Registration CTA Debug] Courts from API:', board.courts?.map(c => ({
+        num: c.number,
+        isBlocked: c.isBlocked,
+        isUnoccupied: c.isUnoccupied,
+        isOvertime: c.isOvertime,
+        block: c.block ? { id: c.block.id, reason: c.block.reason } : null
+      })));
+      console.log('[Registration CTA Debug] Selectable courts:', selectable);
+
       // Emit cta:state event for external components using shared normalization
       const normalizedWaitlist = normalizeWaitlist(board.waitlist);
       const firstGroup = normalizedWaitlist[0] || null;
@@ -425,6 +437,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       const gateCount = selectable.length;
       const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
       const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
+
+      console.log('[Registration CTA Debug] gateCount:', gateCount, 'waitlist:', normalizedWaitlist.length);
+      console.log('[Registration CTA Debug] canFirstGroupPlay:', canFirstGroupPlay, 'canSecondGroupPlay:', canSecondGroupPlay);
 
       window.dispatchEvent(new CustomEvent('cta:state', {
         detail: {
@@ -2475,20 +2490,30 @@ console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI s
         const now = currentTime.getTime();
 
         // Collect end times from sessions and blocks (courts that are occupied/blocked)
+        // Convert ISO strings to milliseconds for comparison
+        const parseEndTime = (timeVal) => {
+          if (!timeVal) return null;
+          const ms = typeof timeVal === 'string' ? new Date(timeVal).getTime() : timeVal;
+          return isNaN(ms) ? null : ms;
+        };
+
         const courtEndTimes = data.courts
           .map(court => {
             if (!court) return null;
-            // Session end time
-            if (court.session?.endTime && court.session.endTime > now) {
-              return court.session.endTime;
+            // Session end time (scheduledEndAt from API)
+            const sessionEnd = parseEndTime(court.session?.scheduledEndAt || court.session?.endTime);
+            if (sessionEnd && sessionEnd > now) {
+              return sessionEnd;
             }
             // Block end time (court is blocked)
-            if (court.block?.endTime && court.block.endTime > now) {
-              return court.block.endTime;
+            const blockEnd = parseEndTime(court.block?.endTime);
+            if (blockEnd && blockEnd > now) {
+              return blockEnd;
             }
             // Fallback: top-level endTime
-            if (court.endTime && court.endTime > now) {
-              return court.endTime;
+            const topEnd = parseEndTime(court.endTime);
+            if (topEnd && topEnd > now) {
+              return topEnd;
             }
             return null;
           })

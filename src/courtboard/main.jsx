@@ -553,20 +553,37 @@ function TennisCourtDisplay() {
       const transformedCourts = Array(12).fill(null).map((_, idx) => {
         const courtNumber = idx + 1;
         const apiCourt = board.courts.find(c => c.number === courtNumber);
-        if (!apiCourt || !apiCourt.session) {
+        if (!apiCourt) {
           return null; // Empty court
         }
+        if (!apiCourt.session && !apiCourt.block) {
+          return null; // No session or block
+        }
         return {
-          current: {
-            players: (apiCourt.session.participants || []).map(p => ({ 
+          current: apiCourt.session ? {
+            players: (apiCourt.session.participants || []).map(p => ({
               name: p.displayName || p.name || 'Unknown'
             })),
             endTime: apiCourt.session.scheduledEndAt,
             startTime: apiCourt.session.startedAt,
-          }
+          } : null
         };
       });
       setCourts(transformedCourts);
+
+      // Extract blocks from API response and update courtBlocks state
+      const apiBlocks = board.courts
+        .filter(c => c.block)
+        .map(c => ({
+          id: c.block.id,
+          courtNumber: c.number,
+          reason: c.block.reason || c.block.title || 'Blocked',
+          startTime: c.block.startTime || new Date().toISOString(),
+          endTime: c.block.endTime,
+          isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
+        }));
+      console.log('[Courtboard] Blocks from API:', apiBlocks);
+      setCourtBlocks(apiBlocks);
       }
 
       // Normalize waitlist using shared helper
@@ -690,6 +707,7 @@ function TennisCourtDisplay() {
                 waitingGroups={waitingGroups}
                 courts={courts}
                 currentTime={currentTime}
+                courtBlocks={courtBlocks}
               />
               <div className="courts-grid-bottom">
                 {[9, 10, 11, 12].map((num) => (
@@ -731,6 +749,7 @@ function TennisCourtDisplay() {
                     waitingGroups={waitingGroups}
                     courts={courts}
                     currentTime={currentTime}
+                    courtBlocks={courtBlocks}
                   />
                 </div>
               )}
@@ -905,11 +924,10 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
 }
 
 // WaitingList Component (with proper wait time calculations)
-function WaitingList({ waitingGroups, courts, currentTime }) {
-  console.log('[WaitingList] Received waitingGroups:', waitingGroups);
+function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
+  console.log('[WaitingList] Received waitingGroups:', waitingGroups, 'courtBlocks:', courtBlocks);
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
-  const S = window.Tennis?.Storage;
 
   // Convert React courts state to the data format expected by availability functions
   // This uses the passed props instead of reading from localStorage
@@ -924,7 +942,7 @@ function WaitingList({ waitingGroups, courts, currentTime }) {
 
       const now = new Date();
       const data = courtsToData(courts);  // Use React state instead of localStorage
-      const blocks = S?.readJSON?.(S.STORAGE?.BLOCKS) || [];
+      const blocks = courtBlocks || [];  // Use prop instead of localStorage
 
       // Derive wetSet for current moment
       const wetSet = new Set(
@@ -963,7 +981,7 @@ function WaitingList({ waitingGroups, courts, currentTime }) {
 
       const now = new Date();
       const data = courtsToData(courts);  // Use React state instead of localStorage
-      const blocks = S?.readJSON?.(S.STORAGE?.BLOCKS) || [];
+      const blocks = courtBlocks || [];  // Use prop instead of localStorage
       const wetSet = new Set(
         blocks
           .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)

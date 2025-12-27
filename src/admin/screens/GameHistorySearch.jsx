@@ -2,12 +2,14 @@
  * GameHistorySearch Component
  *
  * Search interface for historical game records.
+ * Uses the get-session-history backend API.
  */
 import React, { useState } from 'react';
 import { FileText } from '../components';
+import { ApiAdapter } from '../../lib/ApiAdapter.js';
 
-// Access shared utils from window
-const U = window.APP_UTILS || {};
+// Direct API adapter for session history queries
+const api = new ApiAdapter();
 
 const GameHistorySearch = () => {
   const [searchFilters, setSearchFilters] = useState({
@@ -20,23 +22,59 @@ const GameHistorySearch = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setIsSearching(true);
     setHasSearched(true);
+    setError(null);
 
-    // Build filters object
-    const filters = {};
-    if (searchFilters.courtNumber) filters.courtNumber = parseInt(searchFilters.courtNumber);
-    if (searchFilters.playerName) filters.playerName = searchFilters.playerName;
-    if (searchFilters.startDate) filters.startDate = searchFilters.startDate;
-    if (searchFilters.endDate) filters.endDate = searchFilters.endDate;
-    if (searchFilters.clearReason) filters.clearReason = searchFilters.clearReason;
+    try {
+      // Build query params for API
+      const params = new URLSearchParams();
+      if (searchFilters.courtNumber) params.append('court_number', searchFilters.courtNumber);
+      if (searchFilters.playerName) params.append('member_name', searchFilters.playerName);
+      if (searchFilters.startDate) params.append('date_start', searchFilters.startDate);
+      if (searchFilters.endDate) params.append('date_end', searchFilters.endDate);
+      params.append('limit', '100');
 
-    // Use shared utils to search historical games
-    const results = U.searchHistoricalGames ? U.searchHistoricalGames(filters) : [];
-    setSearchResults(results);
-    setIsSearching(false);
+      console.log('[GameHistory] Search params:', params.toString());
+
+      // Call the backend API
+      const response = await api.get(`/get-session-history?${params.toString()}`);
+      console.log('[GameHistory] API response:', response);
+
+      if (response.ok && response.sessions) {
+        // Transform API response to component format
+        let results = response.sessions.map(session => ({
+          id: session.id,
+          courtNumber: session.court_number,
+          startTime: session.started_at,
+          endTime: session.ended_at,
+          players: (session.participants || []).map(p => ({
+            name: p.name || 'Unknown',
+            type: p.type
+          })),
+          clearReason: session.end_reason || 'Cleared'
+        }));
+
+        // Client-side filter by clearReason if specified
+        if (searchFilters.clearReason) {
+          results = results.filter(r => r.clearReason === searchFilters.clearReason);
+        }
+
+        setSearchResults(results);
+      } else {
+        setError(response.error || 'Failed to fetch history');
+        setSearchResults([]);
+      }
+    } catch (err) {
+      console.error('[GameHistory] Search error:', err);
+      setError(err.message);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleClearFilters = () => {
@@ -152,6 +190,13 @@ const GameHistorySearch = () => {
         </button>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+          Error: {error}
+        </div>
+      )}
+
       {/* Search Results */}
       {hasSearched && (
         <div className="border-t pt-6">
@@ -159,12 +204,12 @@ const GameHistorySearch = () => {
             Search Results ({searchResults.length} games found)
           </h4>
 
-          {searchResults.length === 0 ? (
+          {searchResults.length === 0 && !error ? (
             <div className="text-center py-8 text-gray-500">
               <FileText size={48} className="mx-auto mb-2 opacity-50" />
               <p>No games found matching your criteria.</p>
             </div>
-          ) : (
+          ) : searchResults.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -233,7 +278,7 @@ const GameHistorySearch = () => {
                 </tbody>
               </table>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>

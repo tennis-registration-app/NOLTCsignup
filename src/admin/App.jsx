@@ -7,6 +7,7 @@
  */
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createBackend } from '../registration/backend/index.js';
+import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 
 // TennisBackend singleton for API operations
 const backend = createBackend();
@@ -1118,7 +1119,8 @@ const deactivateWetCourts = () => {
       const courtData = await dataStore.get(TENNIS_CONFIG.STORAGE.KEY);
       if (courtData) {
         setCourts(courtData.courts || []);
-        setWaitingGroups(courtData.waitingGroups || []);
+        // Normalize waitlist using shared helper
+        setWaitingGroups(normalizeWaitlist(courtData.waitingGroups));
       }
 
       // Load court blocks (important for Court Status tab)
@@ -1223,7 +1225,8 @@ const deactivateWetCourts = () => {
       if (board) {
         // Update courts from API
         setCourts(board.courts || []);
-        setWaitingGroups(board.waitlist || []);
+        // Normalize waitlist using shared helper
+        setWaitingGroups(normalizeWaitlist(board.waitlist));
 
         // Extract block data from courts for UI compatibility
         const apiBlocks = (board.courts || [])
@@ -1778,10 +1781,10 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
             <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="font-medium">
-                  Position {index + 1}: {group.players.map(p => p.name).join(', ')}
+                  Position {index + 1}: {(group.names || []).join(', ') || 'Unknown'}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {group.players.length} player{group.players.length > 1 ? 's' : ''}
+                  {(group.names || []).length} player{(group.names || []).length !== 1 ? 's' : ''}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -1928,10 +1931,10 @@ const existingBlocks = courts.filter(c => c?.blocked).map((c, i) => ({
                   <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                       <p className="font-medium">
-                        Position {index + 1}: {group.players.map(p => p.name).join(', ')}
+                        Position {index + 1}: {(group.names || []).join(', ') || 'Unknown'}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {group.players.length} player{group.players.length > 1 ? 's' : ''}
+                        {(group.names || []).length} player{(group.names || []).length !== 1 ? 's' : ''}
                       </p>
                     </div>
                     <div className="flex gap-2">
