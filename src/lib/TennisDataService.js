@@ -1,6 +1,10 @@
 /**
  * TennisDataService - Main data service for tennis court management
  *
+ * @deprecated This is a legacy localStorage-based service.
+ * Migrate to API-based TennisBackend (TennisQueries + TennisCommands).
+ * Slated for removal once API-only migration completes.
+ *
  * Handles CRUD operations for courts, waitlist, and blocks.
  * Currently uses localStorage via window globals (dataStore, Tennis.Storage).
  *
