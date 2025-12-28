@@ -121,10 +121,7 @@ export {
 // Court Block Utilities
 // ============================================================
 
-export {
-  getCourtBlockStatus,
-  getUpcomingBlockWarning,
-} from './court-blocks.js';
+export { getCourtBlockStatus, getUpcomingBlockWarning } from './court-blocks.js';
 
 // ============================================================
 // Configuration
@@ -149,27 +146,19 @@ export {
 // Data Validation
 // ============================================================
 
-export {
-  DataValidation,
-} from './DataValidation.js';
+export { DataValidation } from './DataValidation.js';
 
 // ============================================================
 // Storage Adapter
 // ============================================================
 
-export {
-  LocalStorageAdapter,
-  storageAdapter,
-} from './StorageAdapter.js';
+export { LocalStorageAdapter, storageAdapter } from './StorageAdapter.js';
 
 // ============================================================
 // Business Logic Service
 // ============================================================
 
-export {
-  TennisBusinessLogic,
-  tennisBusinessLogic,
-} from './TennisBusinessLogic.js';
+export { TennisBusinessLogic, tennisBusinessLogic } from './TennisBusinessLogic.js';
 
 // ============================================================
 // Data Service
@@ -192,11 +181,7 @@ export { API_CONFIG, ENDPOINTS } from './apiConfig.js';
 // Realtime Client (Live Updates)
 // ============================================================
 
-export {
-  RealtimeClient,
-  getRealtimeClient,
-  resetRealtimeClient,
-} from './RealtimeClient.js';
+export { RealtimeClient, getRealtimeClient, resetRealtimeClient } from './RealtimeClient.js';
 
 // ============================================================
 // Date Utilities (Central Time Conversion)
@@ -213,3 +198,9 @@ export {
 
 // Also export as a namespace for convenience
 export { default as DateUtils } from './dateUtils.js';
+
+// ============================================================
+// Logging Utility
+// ============================================================
+
+export { logger } from './logger.js';
