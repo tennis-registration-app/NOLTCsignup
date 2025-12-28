@@ -1,0 +1,266 @@
+{
+  "_meta": {
+    "capturedAt": "2025-12-28T13:18:58.165Z",
+    "httpStatus": 200,
+    "description": "current-state"
+  },
+  "ok": true,
+  "serverNow": "2025-12-28T13:18:58.040Z",
+  "courts": [
+    {
+      "court_id": "a35cf3b7-8db2-4fb5-b3ef-fc745bbe5d3f",
+      "court_number": 1,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "aafe42e2-2057-4053-9a08-1f85cc4dd449",
+      "court_number": 2,
+      "status": "overtime",
+      "session_id": "85bbf080-42c4-490b-ad9a-4bce3018360d",
+      "started_at": "2025-12-28T04:55:06.423+00:00",
+      "scheduled_end_at": "2025-12-28T05:55:06.423+00:00",
+      "session_type": "singles",
+      "minutes_remaining": 0,
+      "participants": [
+        {
+          "member_id": "c0000000-0000-0000-0000-000000000039",
+          "display_name": "Aslan Karatsev",
+          "participant_type": "member"
+        }
+      ],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "bb001d29-dc29-4ba5-8bec-8bf5d4fc1622",
+      "court_number": 3,
+      "status": "overtime",
+      "session_id": "1de630fa-7a46-4b2f-b482-f36e7486bf62",
+      "started_at": "2025-12-28T03:37:21.535+00:00",
+      "scheduled_end_at": "2025-12-28T04:37:21.535+00:00",
+      "session_type": "singles",
+      "minutes_remaining": 0,
+      "participants": [
+        {
+          "member_id": "c0000000-0000-0000-0000-000000000046",
+          "display_name": "Anastasia Rubleva",
+          "participant_type": "member"
+        },
+        {
+          "member_id": "c0000000-0000-0000-0000-000000000038",
+          "display_name": "Roman Safiullin",
+          "participant_type": "member"
+        }
+      ],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "5d355e2e-51b3-4b3e-a7fd-fa666ac6b1f6",
+      "court_number": 4,
+      "status": "overtime",
+      "session_id": "d0c47570-0492-4015-824b-59a351788402",
+      "started_at": "2025-12-28T03:53:03.817+00:00",
+      "scheduled_end_at": "2025-12-28T04:53:03.817+00:00",
+      "session_type": "singles",
+      "minutes_remaining": 0,
+      "participants": [
+        {
+          "member_id": "c0000000-0000-0000-0000-000000000037",
+          "display_name": "Alexei Popyrin",
+          "participant_type": "member"
+        },
+        {
+          "member_id": "c0000000-0000-0000-0000-000000000019",
+          "display_name": "Sebastian Baez",
+          "participant_type": "member"
+        }
+      ],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "29f56154-5006-4c5f-b172-78c6445ac49b",
+      "court_number": 5,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "d0254197-25b1-4385-9f75-492689eb21e7",
+      "court_number": 6,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "e8b65da9-dc87-4dde-ad5c-d893d48a196c",
+      "court_number": 7,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "a925f815-4eae-4073-88be-9c75c84a6a5b",
+      "court_number": 8,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "e2c89e85-c3b0-480e-991b-f0ed4cd087cf",
+      "court_number": 9,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "54e6d5cb-090f-4801-80cd-9f45788904ad",
+      "court_number": 10,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "b6b63db9-65e0-4781-b755-84d1ec7f30f6",
+      "court_number": 11,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c89f26a4-c982-45a6-884d-dc61fef7b117",
+      "court_number": 12,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    }
+  ],
+  "waitlist": [],
+  "operatingHours": [
+    {
+      "id": "a4120f49-d36f-4c02-9850-10b80a2a73c0",
+      "day_of_week": 0,
+      "opens_at": "05:00:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-25T12:02:16.438219+00:00"
+    },
+    {
+      "id": "0f1200d4-6600-4128-b197-4453a7b9a7d5",
+      "day_of_week": 1,
+      "opens_at": "06:30:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-20T02:13:35.519022+00:00"
+    },
+    {
+      "id": "adff69a0-d466-4117-b4b6-3e1cd418ed4d",
+      "day_of_week": 2,
+      "opens_at": "06:30:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-20T02:13:35.519022+00:00"
+    },
+    {
+      "id": "9c3eaae8-d984-4636-9b45-2cb51fec5bbc",
+      "day_of_week": 3,
+      "opens_at": "06:30:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-20T02:13:35.519022+00:00"
+    },
+    {
+      "id": "19c5a16d-cb46-4f03-b4a1-5fa2543cf318",
+      "day_of_week": 4,
+      "opens_at": "05:00:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-20T02:13:35.519022+00:00"
+    },
+    {
+      "id": "a1b54a15-eaf6-432d-91da-a75bc33b4d1a",
+      "day_of_week": 5,
+      "opens_at": "05:00:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-20T02:13:35.519022+00:00"
+    },
+    {
+      "id": "e9630ce6-0999-470a-8af1-05e59e9f0d43",
+      "day_of_week": 6,
+      "opens_at": "05:00:00",
+      "closes_at": "23:00:00",
+      "is_closed": false,
+      "updated_at": "2025-12-20T02:13:35.519022+00:00"
+    }
+  ]
+}

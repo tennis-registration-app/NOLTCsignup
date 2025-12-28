@@ -1,0 +1,212 @@
+{
+  "_meta": {
+    "capturedAt": "2025-12-28T14:00:00.000Z",
+    "description": "Synthetic: busy state with occupied, blocked, overtime courts and waitlist",
+    "synthetic": true
+  },
+  "ok": true,
+  "serverNow": "2025-12-28T14:00:00.000Z",
+  "courts": [
+    {
+      "court_id": "c0001",
+      "court_number": 1,
+      "status": "occupied",
+      "session_id": "s0001",
+      "started_at": "2025-12-28T13:30:00.000Z",
+      "scheduled_end_at": "2025-12-28T14:30:00.000Z",
+      "session_type": "doubles",
+      "minutes_remaining": 30,
+      "participants": [
+        {"member_id": "m0001", "display_name": "Anna Sinner", "participant_type": "host"},
+        {"member_id": "m0002", "display_name": "Iga Swiatek", "participant_type": "member"}
+      ],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0002",
+      "court_number": 2,
+      "status": "overtime",
+      "session_id": "s0002",
+      "started_at": "2025-12-28T12:00:00.000Z",
+      "scheduled_end_at": "2025-12-28T13:00:00.000Z",
+      "session_type": "singles",
+      "minutes_remaining": 0,
+      "participants": [
+        {"member_id": "m0003", "display_name": "Carlos Alcaraz", "participant_type": "member"}
+      ],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0003",
+      "court_number": 3,
+      "status": "blocked",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": "b0001",
+      "block_title": "Maintenance",
+      "block_ends_at": "2025-12-28T15:00:00.000Z"
+    },
+    {
+      "court_id": "c0004",
+      "court_number": 4,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0005",
+      "court_number": 5,
+      "status": "occupied",
+      "session_id": "s0003",
+      "started_at": "2025-12-28T13:45:00.000Z",
+      "scheduled_end_at": "2025-12-28T14:45:00.000Z",
+      "session_type": "foursome",
+      "minutes_remaining": 45,
+      "participants": [
+        {"member_id": "m0004", "display_name": "Novak Djokovic", "participant_type": "host"},
+        {"member_id": "m0005", "display_name": "Rafael Nadal", "participant_type": "member"},
+        {"member_id": "m0006", "display_name": "Roger Federer", "participant_type": "member"},
+        {"member_id": "m0007", "display_name": "Andy Murray", "participant_type": "member"}
+      ],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0006",
+      "court_number": 6,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0007",
+      "court_number": 7,
+      "status": "blocked",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": "b0002",
+      "block_title": "Wet Courts",
+      "block_ends_at": "2025-12-28T16:00:00.000Z"
+    },
+    {
+      "court_id": "c0008",
+      "court_number": 8,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0009",
+      "court_number": 9,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0010",
+      "court_number": 10,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0011",
+      "court_number": 11,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    },
+    {
+      "court_id": "c0012",
+      "court_number": 12,
+      "status": "available",
+      "session_id": null,
+      "started_at": null,
+      "scheduled_end_at": null,
+      "session_type": null,
+      "minutes_remaining": null,
+      "participants": [],
+      "block_id": null,
+      "block_title": null,
+      "block_ends_at": null
+    }
+  ],
+  "waitlist": [
+    {
+      "id": "w0001",
+      "position": 1,
+      "group_type": "doubles",
+      "joined_at": "2025-12-28T13:50:00.000Z",
+      "minutes_waiting": 10,
+      "participants": [
+        {"member_id": "m0010", "display_name": "Borna Coric", "participant_type": "host"},
+        {"member_id": "m0011", "display_name": "Holger Rune", "participant_type": "member"}
+      ]
+    },
+    {
+      "id": "w0002",
+      "position": 2,
+      "group_type": "singles",
+      "joined_at": "2025-12-28T13:55:00.000Z",
+      "minutes_waiting": 5,
+      "participants": [
+        {"member_id": "m0012", "display_name": "Coco Gauff", "participant_type": "host"}
+      ]
+    }
+  ]
+}

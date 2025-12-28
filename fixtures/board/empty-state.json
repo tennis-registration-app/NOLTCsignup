@@ -1,0 +1,24 @@
+{
+  "_meta": {
+    "capturedAt": "2025-12-28T13:20:00.000Z",
+    "description": "Synthetic: all courts empty, no waitlist",
+    "synthetic": true
+  },
+  "ok": true,
+  "serverNow": "2025-12-28T13:20:00.000Z",
+  "courts": [
+    {"court_id": "c0001", "court_number": 1, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0002", "court_number": 2, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0003", "court_number": 3, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0004", "court_number": 4, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0005", "court_number": 5, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0006", "court_number": 6, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0007", "court_number": 7, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0008", "court_number": 8, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0009", "court_number": 9, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0010", "court_number": 10, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0011", "court_number": 11, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null},
+    {"court_id": "c0012", "court_number": 12, "status": "available", "session_id": null, "started_at": null, "scheduled_end_at": null, "session_type": null, "minutes_remaining": null, "participants": [], "block_id": null, "block_title": null, "block_ends_at": null}
+  ],
+  "waitlist": []
+}
