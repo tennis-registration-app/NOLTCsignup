@@ -1511,10 +1511,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const isPlayerNextInWaitlist = (playerId) => {
     const data = getCourtData();
     if (data.waitlist.length > 0) {
-      const firstGroup = data.waitlist[0];
-      // API returns 'participants' with 'memberId'
-      const participants = firstGroup.participants || firstGroup.players || [];
-      return participants.some((p) => (p.memberId || p.member_id || p.id) === playerId);
+      const firstEntry = data.waitlist[0];
+      // Domain: entry.group.players with memberId
+      const players = firstEntry.group?.players || [];
+      return players.some((p) => p.memberId === playerId);
     }
     return false;
   };
@@ -2543,13 +2543,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Player is in first waiting group and courts are available
         const firstWaitlistEntry = data.waitlist[0];
 
-        // Load the entire waiting group - API returns 'participants' with 'displayName'
-        const participants = firstWaitlistEntry.participants || firstWaitlistEntry.players || [];
+        // Load the entire waiting group - Domain: entry.group.players
+        const players = firstWaitlistEntry.group?.players || [];
         setCurrentGroup(
-          participants.map((p) => ({
-            id: p.memberId || p.member_id || p.id,
-            name: p.displayName || p.display_name || p.name || 'Unknown',
-            memberNumber: findMemberNumber(p.memberId || p.member_id || p.id),
+          players.map((p) => ({
+            id: p.memberId,
+            name: p.displayName || 'Unknown',
+            memberNumber: findMemberNumber(p.memberId),
           }))
         );
 
@@ -2587,13 +2587,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Player is in second waiting group and there are at least 2 courts
         const secondWaitlistEntry = data.waitlist[1];
 
-        // Load the entire waiting group - API returns 'participants' with 'displayName'
-        const participants = secondWaitlistEntry.participants || secondWaitlistEntry.players || [];
+        // Load the entire waiting group - Domain: entry.group.players
+        const players = secondWaitlistEntry.group?.players || [];
         setCurrentGroup(
-          participants.map((p) => ({
-            id: p.memberId || p.member_id || p.id,
-            name: p.displayName || p.display_name || p.name || 'Unknown',
-            memberNumber: findMemberNumber(p.memberId || p.member_id || p.id),
+          players.map((p) => ({
+            id: p.memberId,
+            name: p.displayName || 'Unknown',
+            memberNumber: findMemberNumber(p.memberId),
           }))
         );
 
@@ -3561,13 +3561,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                     <div className="flex-1">
                       <p className="text-white font-medium text-sm sm:text-base">
                         Position {index + 1}:{' '}
-                        {(group.participants || group.players || [])
-                          .map((p) => p.displayName || p.display_name || p.name || 'Unknown')
+                        {(group.group?.players || [])
+                          .map((p) => p.displayName || 'Unknown')
                           .join(', ')}
                       </p>
                       <p className="text-gray-400 text-xs sm:text-sm">
-                        {(group.participants || group.players || []).length} player
-                        {(group.participants || group.players || []).length > 1 ? 's' : ''}
+                        {(group.group?.players || []).length} player
+                        {(group.group?.players || []).length > 1 ? 's' : ''}
                       </p>
                     </div>
                     <div className="flex gap-2 w-full sm:w-auto">
@@ -4040,18 +4040,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
                                 if (availableCourts.length > 0) {
                                   const firstWaitlistEntry = data.waitlist[0];
-                                  // API returns 'participants' with 'displayName'
-                                  const participants =
-                                    firstWaitlistEntry.participants ||
-                                    firstWaitlistEntry.players ||
-                                    [];
+                                  // Domain: entry.group.players
+                                  const players = firstWaitlistEntry.group?.players || [];
                                   setCurrentGroup(
-                                    participants.map((p) => ({
-                                      id: p.memberId || p.member_id || p.id,
-                                      name: p.displayName || p.display_name || p.name || 'Unknown',
-                                      memberNumber: findMemberNumber(
-                                        p.memberId || p.member_id || p.id
-                                      ),
+                                    players.map((p) => ({
+                                      id: p.memberId,
+                                      name: p.displayName || 'Unknown',
+                                      memberNumber: findMemberNumber(p.memberId),
                                     }))
                                   );
 
