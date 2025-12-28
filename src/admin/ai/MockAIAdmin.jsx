@@ -11,15 +11,28 @@ const Storage = window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } };
 const Events = window.Events || { emitDom: () => {} };
 const BL = window.BL || {
   applyTemplate: () => [],
-  overlaps: () => false
+  overlaps: () => false,
 };
 
-const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAllCourts, moveCourt, settings, updateBallPrice, waitingGroups, refreshData }) => {
+const MockAIAdmin = ({
+  onClose,
+  dataStore,
+  courts,
+  loadData,
+  clearCourt,
+  clearAllCourts,
+  moveCourt,
+  settings,
+  updateBallPrice,
+  waitingGroups,
+  refreshData,
+}) => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hi! I can help you manage the courts. Try commands like:\n• "Block court 5 for maintenance"\n• "Who\'s playing right now?"\n• "Clear court 3"\n• "Move players from court 12 to court 6"\n• "Show waitlist"\n• "Set ball price to $6.50"'
-    }
+      content:
+        'Hi! I can help you manage the courts. Try commands like:\n• "Block court 5 for maintenance"\n• "Who\'s playing right now?"\n• "Clear court 3"\n• "Move players from court 12 to court 6"\n• "Show waitlist"\n• "Set ball price to $6.50"',
+    },
   ]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -27,7 +40,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -49,7 +62,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
       if (courtMatch) {
         // Parse court numbers (handles "1", "1,2", "1 and 2", "1, 3, and 5")
         const courtsText = courtMatch[1];
-        const courtNumbers = courtsText.match(/\d+/g).map(n => parseInt(n));
+        const courtNumbers = courtsText.match(/\d+/g).map((n) => parseInt(n));
 
         // Determine reason
         let reason = 'BLOCKED';
@@ -86,7 +99,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
           startTime: startTime,
           endTime: endTime,
           date: tomorrowMatch ? 'tomorrow' : 'today',
-          confirmMessage: `Block court${courtNumbers.length > 1 ? 's' : ''} ${courtNumbers.join(', ')} ${tomorrowMatch ? 'tomorrow' : 'today'} from ${startTime} to ${endTime} for ${reason.toLowerCase()}`
+          confirmMessage: `Block court${courtNumbers.length > 1 ? 's' : ''} ${courtNumbers.join(', ')} ${tomorrowMatch ? 'tomorrow' : 'today'} from ${startTime} to ${endTime} for ${reason.toLowerCase()}`,
         };
       }
     }
@@ -96,13 +109,13 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
       if (lower.includes('all')) {
         return {
           action: 'clearAllCourts',
-          confirmMessage: 'Clear all courts (this will make all courts immediately available)'
+          confirmMessage: 'Clear all courts (this will make all courts immediately available)',
         };
       }
       if (lower.includes('waitlist')) {
         return {
           action: 'clearWaitlist',
-          confirmMessage: 'Remove all groups from the waitlist'
+          confirmMessage: 'Remove all groups from the waitlist',
         };
       }
       const courtMatch = lower.match(/court\s+(\d+)/);
@@ -110,7 +123,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
         return {
           action: 'clearCourt',
           courtNumber: parseInt(courtMatch[1]),
-          confirmMessage: `Clear court ${courtMatch[1]}`
+          confirmMessage: `Clear court ${courtMatch[1]}`,
         };
       }
     }
@@ -125,7 +138,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
           action: 'movePlayers',
           fromCourt: parseInt(fromMatch[1]),
           toCourt: parseInt(toMatch[1]),
-          confirmMessage: `Move players from court ${fromMatch[1]} to court ${toMatch[1]}`
+          confirmMessage: `Move players from court ${fromMatch[1]} to court ${toMatch[1]}`,
         };
       }
     }
@@ -146,7 +159,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
         return {
           action: 'setBallPrice',
           price: parseFloat(priceMatch[1]),
-          confirmMessage: `Set tennis ball price to $${parseFloat(priceMatch[1]).toFixed(2)}`
+          confirmMessage: `Set tennis ball price to $${parseFloat(priceMatch[1]).toFixed(2)}`,
         };
       }
     }
@@ -162,7 +175,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
   // Execute mock commands
   const executeCommand = async (action) => {
     // Get current data from dataStore
-    const data = await dataStore.get('tennisClubData') || { courts: [], waitingGroups: [] };
+    const data = (await dataStore.get('tennisClubData')) || { courts: [], waitingGroups: [] };
 
     switch (action.action) {
       case 'blockCourts':
@@ -189,19 +202,33 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
         const selectedCourts = action.courts;
 
         // validate minimally
-        if (!name || !reason || !Number.isFinite(durationMinutes) || durationMinutes <= 0 || !Array.isArray(selectedCourts) || selectedCourts.length === 0) {
+        if (
+          !name ||
+          !reason ||
+          !Number.isFinite(durationMinutes) ||
+          durationMinutes <= 0 ||
+          !Array.isArray(selectedCourts) ||
+          selectedCourts.length === 0
+        ) {
           alert('Please provide name, reason, positive duration, and at least one court.');
           return;
         }
 
-        const template = { name, reason, duration: Number(durationMinutes), courts: selectedCourts };
+        const template = {
+          name,
+          reason,
+          duration: Number(durationMinutes),
+          courts: selectedCourts,
+        };
 
         // domain: build blocks (one per court)
         const newBlocks = BL.applyTemplate({ template, now });
 
         // load/persist using existing key
         const key = Storage.STORAGE.BLOCKS;
-        const existing = Storage.readJSON ? Storage.readJSON(key) || [] : JSON.parse(localStorage.getItem(key) || '[]');
+        const existing = Storage.readJSON
+          ? Storage.readJSON(key) || []
+          : JSON.parse(localStorage.getItem(key) || '[]');
 
         // Prevent conflicts: if any new block overlaps an existing block on the same court, abort with a clear message.
         const conflicts = [];
@@ -214,7 +241,9 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
           }
         }
         if (conflicts.length) {
-          alert(`Cannot add blocks. Overlaps on courts: ${[...new Set(conflicts)].sort((a,b)=>a-b).join(', ')}`);
+          alert(
+            `Cannot add blocks. Overlaps on courts: ${[...new Set(conflicts)].sort((a, b) => a - b).join(', ')}`
+          );
           return;
         }
 
@@ -239,7 +268,9 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
 
       case 'clearCourt':
         const result = await clearCourt(action.courtNumber);
-        return result.success ? `✓ Cleared court ${action.courtNumber}` : `✗ ${result.error || 'Failed to clear court'}`;
+        return result.success
+          ? `✓ Cleared court ${action.courtNumber}`
+          : `✗ ${result.error || 'Failed to clear court'}`;
 
       case 'clearAllCourts':
         await clearAllCourts();
@@ -247,7 +278,8 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
 
       case 'clearWaitlist':
         // Clear waitlist via service
-        const TD = window.TennisDataService || window.Tennis?.DataService || window.Tennis?.Services?.Data;
+        const TD =
+          window.TennisDataService || window.Tennis?.DataService || window.Tennis?.Services?.Data;
         if (typeof TD?.clearWaitlist === 'function') {
           await TD.clearWaitlist({ source: 'admin' });
         } else {
@@ -258,9 +290,9 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
 
       case 'movePlayers':
         const moveResult = await moveCourt(action.fromCourt, action.toCourt);
-        return moveResult.success ?
-          `✓ Moved players from court ${action.fromCourt} to court ${action.toCourt}` :
-          `✗ ${moveResult.error || 'Failed to move players'}`;
+        return moveResult.success
+          ? `✓ Moved players from court ${action.fromCourt} to court ${action.toCourt}`
+          : `✗ ${moveResult.error || 'Failed to move players'}`;
 
       case 'setBallPrice':
         try {
@@ -273,11 +305,13 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
       case 'showStatus':
         const occupied = [];
         data.courts.forEach((court, idx) => {
-          if (court && (court.players?.length > 0 || court.current?.players?.length > 0)) {
-            const players = court.current?.players || court.players || [];
+          // Domain format: court.session.group.players
+          const sessionPlayers = court?.session?.group?.players;
+          if (court && (court.players?.length > 0 || sessionPlayers?.length > 0)) {
+            const players = sessionPlayers || court.players || [];
             occupied.push({
               court: idx + 1,
-              players: players.map(p => p.name.split(' ').pop()).join(', ')
+              players: players.map((p) => p.name.split(' ').pop()).join(', '),
             });
           }
         });
@@ -286,28 +320,35 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
           return 'All courts are currently available.';
         }
 
-        return `Currently ${occupied.length} courts occupied:\n` +
-          occupied.map(c => `• Court ${c.court}: ${c.players}`).join('\n') +
-          `\n\n${courts.length - occupied.length} courts available.`;
+        return (
+          `Currently ${occupied.length} courts occupied:\n` +
+          occupied.map((c) => `• Court ${c.court}: ${c.players}`).join('\n') +
+          `\n\n${courts.length - occupied.length} courts available.`
+        );
 
       case 'showWaitlist':
         if (waitingGroups.length === 0) {
           return 'No groups currently waiting.';
         }
 
-        return `${waitingGroups.length} groups waiting:\n` +
-          waitingGroups.map((g, i) =>
-            `${i + 1}. ${g.players.map(p => p.name.split(' ').pop()).join(', ')}`
-          ).join('\n');
+        return (
+          `${waitingGroups.length} groups waiting:\n` +
+          waitingGroups
+            .map((g, i) => `${i + 1}. ${g.players.map((p) => p.name.split(' ').pop()).join(', ')}`)
+            .join('\n')
+        );
 
       case 'showBallSales':
         let sales = [];
-        try { sales = JSON.parse(localStorage.getItem('tennisBallPurchases') || '[]'); }
-        catch { /* transient partial write; use empty array */ }
+        try {
+          sales = JSON.parse(localStorage.getItem('tennisBallPurchases') || '[]');
+        } catch {
+          /* transient partial write; use empty array */
+        }
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const todaySales = sales.filter(s => new Date(s.timestamp) >= today);
+        const todaySales = sales.filter((s) => new Date(s.timestamp) >= today);
         const total = todaySales.reduce((sum, s) => sum + s.totalAmount, 0);
 
         return `Ball sales today:\n• ${todaySales.length} purchases\n• Total: $${total.toFixed(2)}`;
@@ -321,7 +362,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
     if (!input.trim() || isProcessing) return;
 
     // Add user message
-    setMessages(prev => [...prev, { role: 'user', content: input }]);
+    setMessages((prev) => [...prev, { role: 'user', content: input }]);
     setInput('');
     setIsProcessing(true);
 
@@ -330,26 +371,35 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
       const parsed = parseCommand(input);
 
       if (parsed.action === 'unknown') {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `I didn't understand that command. Try:\n• "Block court 5 from 2-4pm"\n• "Who's playing?"\n• "Clear court 3"\n• "Move court 12 to court 6"\n• "Set ball price to $6.50"`,
-          error: true
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `I didn't understand that command. Try:\n• "Block court 5 from 2-4pm"\n• "Who's playing?"\n• "Clear court 3"\n• "Move court 12 to court 6"\n• "Set ball price to $6.50"`,
+            error: true,
+          },
+        ]);
       } else if (parsed.confirmMessage) {
         // Needs confirmation
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: parsed.confirmMessage + '?',
-          warning: parsed.action.includes('clear')
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: parsed.confirmMessage + '?',
+            warning: parsed.action.includes('clear'),
+          },
+        ]);
         setPendingAction(parsed);
       } else {
         // Execute immediately (status queries)
         const result = await executeCommand(parsed);
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: result
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: result,
+          },
+        ]);
       }
 
       setIsProcessing(false);
@@ -359,10 +409,13 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
   const handleConfirm = async () => {
     if (pendingAction) {
       const result = await executeCommand(pendingAction);
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: result
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'system',
+          content: result,
+        },
+      ]);
       setPendingAction(null);
     }
   };
@@ -376,10 +429,7 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
             <h2 className="text-xl font-bold text-white">AI Admin Assistant</h2>
             <p className="text-sm text-gray-400">Natural language court management</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X size={24} />
           </button>
         </div>
@@ -396,12 +446,12 @@ const MockAIAdmin = ({ onClose, dataStore, courts, loadData, clearCourt, clearAl
                   message.role === 'user'
                     ? 'bg-blue-600 text-white'
                     : message.role === 'system'
-                    ? 'bg-green-800 text-green-100'
-                    : message.warning
-                    ? 'bg-orange-800 text-orange-100'
-                    : message.error
-                    ? 'bg-red-800 text-red-100'
-                    : 'bg-gray-700 text-gray-100'
+                      ? 'bg-green-800 text-green-100'
+                      : message.warning
+                        ? 'bg-orange-800 text-orange-100'
+                        : message.error
+                          ? 'bg-red-800 text-red-100'
+                          : 'bg-gray-700 text-gray-100'
                 }`}
               >
                 <div className="whitespace-pre-wrap">{message.content}</div>

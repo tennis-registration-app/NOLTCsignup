@@ -5,24 +5,24 @@
  * Handles wet courts, blocks, games, and player movements.
  */
 import React, { useState, useEffect } from 'react';
-import {
-  Edit2,
-  X,
-  RefreshCw,
-  Droplets
-} from '../components';
+import { Edit2, X, RefreshCw, Droplets } from '../components';
 import { EditGameModal } from '../components';
 import { EditBlockModal } from '../blocks';
 
 // Get dependencies from window
-const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || { STORAGE: { UPDATE_EVENT: 'tennisDataUpdate' } };
+const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || {
+  STORAGE: { UPDATE_EVENT: 'tennisDataUpdate' },
+};
 
 // Get dataStore reference
 const getDataStore = () => window.Tennis?.DataStore || window.DataStore;
 
 // Timer registry for cleanup
 const _timers = [];
-const addTimer = (id) => { _timers.push(id); return id; };
+const addTimer = (id) => {
+  _timers.push(id);
+  return id;
+};
 
 const CourtStatusGrid = ({
   courts,
@@ -40,7 +40,7 @@ const CourtStatusGrid = ({
   deactivateWetCourts,
   wetCourts,
   onClearWetCourt,
-  onClearAllWetCourts
+  onClearAllWetCourts,
 }) => {
   const [movingFrom, setMovingFrom] = useState(null);
   const [selectedCourt, setSelectedCourt] = useState(null);
@@ -54,7 +54,7 @@ const CourtStatusGrid = ({
   const dataStore = getDataStore();
 
   React.useEffect(() => {
-    const onUpdate = () => setRefreshTick(t => t + 1);
+    const onUpdate = () => setRefreshTick((t) => t + 1);
     // Listen on both document and window for compatibility
     document.addEventListener('DATA_UPDATED', onUpdate);
     document.addEventListener('tennisDataUpdate', onUpdate);
@@ -71,11 +71,11 @@ const CourtStatusGrid = ({
   // Load wet court status on mount and poll for updates
   useEffect(() => {
     const checkWetCourts = async () => {
-      const blocks = await dataStore?.get('courtBlocks') || [];
+      const blocks = (await dataStore?.get('courtBlocks')) || [];
       const wetCourtNumbers = new Set(
         blocks
-          .filter(block => block.isWetCourt && new Date(block.endTime) > currentTime)
-          .map(block => block.courtNumber)
+          .filter((block) => block.isWetCourt && new Date(block.endTime) > currentTime)
+          .map((block) => block.courtNumber)
       );
       setLocalWetCourts(wetCourtNumbers);
     };
@@ -84,7 +84,11 @@ const CourtStatusGrid = ({
     if (!wetCourts && dataStore) {
       checkWetCourts();
       const interval = addTimer(setInterval(checkWetCourts, 1000));
-      return () => { try { clearInterval(interval); } catch {} };
+      return () => {
+        try {
+          clearInterval(interval);
+        } catch {}
+      };
     }
   }, [currentTime, refreshKey, wetCourts, dataStore]);
 
@@ -98,13 +102,13 @@ const CourtStatusGrid = ({
         status: 'wet',
         info: {
           reason: 'WET COURT',
-          type: 'wet'
-        }
+          type: 'wet',
+        },
       };
     }
 
     // Then check for blocks on the selected date
-    const activeBlock = courtBlocks.find(block => {
+    const activeBlock = courtBlocks.find((block) => {
       if (block.courtNumber !== courtNumber || block.isWetCourt) return false;
       const blockStart = new Date(block.startTime);
       const blockEnd = new Date(block.endTime);
@@ -116,7 +120,8 @@ const CourtStatusGrid = ({
       selectedDateEnd.setHours(23, 59, 59, 999);
 
       // Check if block overlaps with selected date
-      const blockOverlapsSelectedDate = blockStart < selectedDateEnd && blockEnd > selectedDateStart;
+      const blockOverlapsSelectedDate =
+        blockStart < selectedDateEnd && blockEnd > selectedDateStart;
       if (!blockOverlapsSelectedDate) return false;
 
       // For today, show only currently active blocks
@@ -137,8 +142,8 @@ const CourtStatusGrid = ({
           startTime: activeBlock.startTime,
           endTime: activeBlock.endTime,
           type: 'block',
-          courtNumber: courtNumber
-        }
+          courtNumber: courtNumber,
+        },
       };
     }
 
@@ -155,26 +160,27 @@ const CourtStatusGrid = ({
           endTime: court.endTime,
           duration: court.duration,
           type: 'game',
-          courtNumber: courtNumber
-        }
+          courtNumber: courtNumber,
+        },
       };
     }
 
-    // Check for current session
-    if (court && court.current && court.current.players && court.current.players.length > 0) {
-      const endTime = new Date(court.current.endTime);
+    // Check for current session (Domain format: court.session.group.players)
+    const sessionPlayers = court?.session?.group?.players;
+    if (sessionPlayers && sessionPlayers.length > 0) {
+      const endTime = new Date(court.session.scheduledEndAt);
       const isOvertime = currentTime > endTime;
 
       return {
         status: isOvertime ? 'overtime' : 'occupied',
         info: {
-          players: court.current.players,
-          startTime: court.current.startTime,
-          endTime: court.current.endTime,
-          duration: court.current.duration,
+          players: sessionPlayers,
+          startTime: court.session.startedAt,
+          endTime: court.session.scheduledEndAt,
+          duration: court.session.duration,
           type: 'game',
-          courtNumber: courtNumber
-        }
+          courtNumber: courtNumber,
+        },
       };
     }
 
@@ -183,12 +189,18 @@ const CourtStatusGrid = ({
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'available': return 'bg-green-100 border-green-300';
-      case 'occupied': return 'bg-blue-100 border-blue-300';
-      case 'overtime': return 'bg-gray-100 border-gray-300';
-      case 'blocked': return 'bg-amber-50 border-amber-300';
-      case 'wet': return 'bg-gray-200 border-gray-400';
-      default: return 'bg-gray-100 border-gray-300';
+      case 'available':
+        return 'bg-green-100 border-green-300';
+      case 'occupied':
+        return 'bg-blue-100 border-blue-300';
+      case 'overtime':
+        return 'bg-gray-100 border-gray-300';
+      case 'blocked':
+        return 'bg-amber-50 border-amber-300';
+      case 'wet':
+        return 'bg-gray-200 border-gray-400';
+      default:
+        return 'bg-gray-100 border-gray-300';
     }
   };
 
@@ -203,13 +215,13 @@ const CourtStatusGrid = ({
     if (!dataStore) return;
 
     try {
-      const blocks = await dataStore.get('courtBlocks') || [];
+      const blocks = (await dataStore.get('courtBlocks')) || [];
       const activeWetCourts = wetCourts || localWetCourts;
 
       if (activeWetCourts.has(courtNum)) {
         // Remove wet court block
-        const updatedBlocks = blocks.filter(block =>
-          !(block.isWetCourt && block.courtNumber === courtNum)
+        const updatedBlocks = blocks.filter(
+          (block) => !(block.isWetCourt && block.courtNumber === courtNum)
         );
         await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
         window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
@@ -223,14 +235,14 @@ const CourtStatusGrid = ({
           endTime: new Date(new Date().setHours(22, 0, 0, 0)).toISOString(),
           isEvent: false,
           isWetCourt: true,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
         blocks.push(wetBlock);
         await dataStore.set('courtBlocks', blocks, { immediate: true });
       }
 
       window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error('Error toggling wet court:', error);
     }
@@ -249,10 +261,12 @@ const CourtStatusGrid = ({
 
   const getPlayerNames = (players) => {
     if (!players || players.length === 0) return 'No players';
-    return players.map(p => {
-      const name = p.name || p.playerName || 'Unknown';
-      return name.split(' ').pop();
-    }).join(' & ');
+    return players
+      .map((p) => {
+        const name = p.name || p.playerName || 'Unknown';
+        return name.split(' ').pop();
+      })
+      .join(' & ');
   };
 
   const handleClearCourt = async (courtNum) => {
@@ -260,9 +274,9 @@ const CourtStatusGrid = ({
 
     // Only clear ACTIVE blocks, preserve historical ones
     const currentTimeNow = new Date();
-    const existingBlocks = await dataStore.get('courtBlocks') || [];
+    const existingBlocks = (await dataStore.get('courtBlocks')) || [];
 
-    const updatedBlocks = existingBlocks.map(block => {
+    const updatedBlocks = existingBlocks.map((block) => {
       if (block.courtNumber === courtNum) {
         const blockStart = new Date(block.startTime);
         const blockEnd = new Date(block.endTime);
@@ -273,7 +287,7 @@ const CourtStatusGrid = ({
             ...block,
             endTime: currentTimeNow.toISOString(),
             actualEndTime: currentTimeNow.toISOString(),
-            endReason: 'admin_cleared'
+            endReason: 'admin_cleared',
           };
         }
       }
@@ -293,8 +307,8 @@ const CourtStatusGrid = ({
     document.dispatchEvent(new Event('tennisDataUpdate'));
 
     // Force local refresh
-    setRefreshTick(t => t + 1);
-    setRefreshKey(k => k + 1);
+    setRefreshTick((t) => t + 1);
+    setRefreshKey((k) => k + 1);
 
     // Call parent's clear handler which triggers loadData
     onClearCourt(courtNum);
@@ -303,7 +317,7 @@ const CourtStatusGrid = ({
 
   const handleEditClick = (courtNum, info) => {
     if (info.type === 'block') {
-      const block = courtBlocks.find(b => b.id === info.id);
+      const block = courtBlocks.find((b) => b.id === info.id);
       if (block) {
         setEditingBlock({ ...block, courtNumber: courtNum });
       }
@@ -317,13 +331,13 @@ const CourtStatusGrid = ({
     if (!dataStore) return;
 
     try {
-      const blocks = await dataStore.get('courtBlocks') || [];
-      const updatedBlocks = blocks.map(block =>
+      const blocks = (await dataStore.get('courtBlocks')) || [];
+      const updatedBlocks = blocks.map((block) =>
         block.id === updatedBlock.id ? updatedBlock : block
       );
       await dataStore.set('courtBlocks', updatedBlocks);
       setEditingBlock(null);
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error('Error saving block:', error);
     }
@@ -351,13 +365,14 @@ const CourtStatusGrid = ({
       const data = S?.readDataClone ? S.readDataClone() : structuredClone(S.readDataSafe());
 
       const courtIndex = updatedGame.courtNumber - 1;
-      if (data.courts && data.courts[courtIndex] && data.courts[courtIndex].current) {
-        data.courts[courtIndex].current = {
-          ...data.courts[courtIndex].current,
-          players: updatedGame.players,
-          startTime: updatedGame.startTime,
-          endTime: updatedGame.endTime,
-          duration: updatedGame.duration
+      // Update session using Domain format
+      if (data.courts && data.courts[courtIndex] && data.courts[courtIndex].session) {
+        data.courts[courtIndex].session = {
+          ...data.courts[courtIndex].session,
+          group: { players: updatedGame.players },
+          startedAt: updatedGame.startTime,
+          scheduledEndAt: updatedGame.endTime,
+          duration: updatedGame.duration,
         };
 
         const DS = window.Tennis?.DataStore || window.DataStore;
@@ -372,7 +387,7 @@ const CourtStatusGrid = ({
       }
 
       setEditingGame(null);
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error('Error saving game:', error);
       window.Tennis?.UI?.toast?.('Failed to save game', { type: 'error' });
@@ -388,12 +403,12 @@ const CourtStatusGrid = ({
     if (!dataStore) return;
 
     try {
-      const existingBlocks = await dataStore.get('courtBlocks') || [];
-      const updatedBlocks = existingBlocks.filter(block => !block.isWetCourt);
+      const existingBlocks = (await dataStore.get('courtBlocks')) || [];
+      const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
       await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
       window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
       console.log('✅ All courts marked as dry');
-      setRefreshKey(prev => prev + 1);
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error('Error removing all wet court blocks:', error);
     }
@@ -402,15 +417,22 @@ const CourtStatusGrid = ({
   // Get data for grid rendering - use courts prop from TennisBackend API
   // Create a lookup map by court number for efficient access
   const courtsByNumber = {};
-  (courts || []).forEach(c => {
+  (courts || []).forEach((c) => {
     courtsByNumber[c.number] = c;
   });
 
   const now = new Date();
   const blocks = courtBlocks || [];
-  const wetSet = new Set((blocks || [])
-    .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
-    .map(b => b.courtNumber));
+  const wetSet = new Set(
+    (blocks || [])
+      .filter(
+        (b) =>
+          b?.isWetCourt &&
+          new Date(b.startTime ?? b.start) <= now &&
+          now < new Date(b.endTime ?? b.end)
+      )
+      .map((b) => b.courtNumber)
+  );
 
   return (
     <>
@@ -446,11 +468,17 @@ const CourtStatusGrid = ({
                 } ${canReceiveMove ? 'cursor-pointer hover:bg-green-200' : ''}
                 ${status === 'wet' ? 'cursor-pointer hover:bg-gray-300' : ''}
                 min-h-[120px] h-[120px] flex flex-col justify-between relative`}
-                onClick={canReceiveMove ? () => {
-                  handleMoveCourt(Number(movingFrom), Number(courtNum));
-                } : status === 'wet' ? () => {
-                  handleWetCourtToggle(courtNum);
-                } : undefined}
+                onClick={
+                  canReceiveMove
+                    ? () => {
+                        handleMoveCourt(Number(movingFrom), Number(courtNum));
+                      }
+                    : status === 'wet'
+                      ? () => {
+                          handleWetCourtToggle(courtNum);
+                        }
+                      : undefined
+                }
               >
                 <div>
                   <div className="flex justify-between items-start">
@@ -470,9 +498,11 @@ const CourtStatusGrid = ({
                   </div>
 
                   {(status === 'occupied' || status === 'overtime') && info && (
-                    <div className={`text-xs font-medium ${
-                      status === 'overtime' ? 'text-red-600' : 'text-blue-600'
-                    }`}>
+                    <div
+                      className={`text-xs font-medium ${
+                        status === 'overtime' ? 'text-red-600' : 'text-blue-600'
+                      }`}
+                    >
                       {formatTimeRemaining(info.endTime)}
                     </div>
                   )}
@@ -489,9 +519,10 @@ const CourtStatusGrid = ({
                         <>
                           <p className="font-medium text-sm truncate">{info.reason}</p>
                           <p className="text-xs text-gray-600">
-                            Until {new Date(info.endTime).toLocaleTimeString([], {
+                            Until{' '}
+                            {new Date(info.endTime).toLocaleTimeString([], {
                               hour: '2-digit',
-                              minute: '2-digit'
+                              minute: '2-digit',
                             })}
                           </p>
                         </>
@@ -502,9 +533,10 @@ const CourtStatusGrid = ({
                             {getPlayerNames(info.players)}
                           </p>
                           <p className="text-xs text-gray-600">
-                            Since {new Date(info.startTime).toLocaleTimeString([], {
+                            Since{' '}
+                            {new Date(info.startTime).toLocaleTimeString([], {
                               hour: '2-digit',
-                              minute: '2-digit'
+                              minute: '2-digit',
                             })}
                           </p>
                         </>
@@ -514,9 +546,7 @@ const CourtStatusGrid = ({
 
                   {canReceiveMove && (
                     <div className="mt-2 text-center">
-                      <p className="text-sm font-medium text-green-700">
-                        Click to move here
-                      </p>
+                      <p className="text-sm font-medium text-green-700">Click to move here</p>
                     </div>
                   )}
                 </div>

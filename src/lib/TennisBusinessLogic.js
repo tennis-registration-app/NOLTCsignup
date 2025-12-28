@@ -16,9 +16,10 @@ import { getCourtBlockStatus as _getCourtBlockStatus } from './court-blocks.js';
 // Get court block status - prefer shared, fallback to window
 const getCourtBlockStatus = (courtNumber) => {
   try {
-    const fn = _getCourtBlockStatus ||
-               window.Tennis?.Domain?.blocks?.getCourtBlockStatus ||
-               window.getCourtBlockStatus;
+    const fn =
+      _getCourtBlockStatus ||
+      window.Tennis?.Domain?.blocks?.getCourtBlockStatus ||
+      window.getCourtBlockStatus;
     return fn ? fn(courtNumber) : null;
   } catch (e) {
     return null;
@@ -51,9 +52,7 @@ export const TennisBusinessLogic = {
     const nameParts = name.trim().split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts[nameParts.length - 1] || firstName;
-    return nameParts.length > 1
-      ? `${firstName.charAt(0)}. ${lastName}`
-      : firstName;
+    return nameParts.length > 1 ? `${firstName.charAt(0)}. ${lastName}` : firstName;
   },
 
   /**
@@ -68,12 +67,12 @@ export const TennisBusinessLogic = {
     if (!courts || !Array.isArray(courts) || position < 1) return 0;
 
     const courtEndTimes = courts
-      .map(court => {
+      .map((court) => {
         if (!court) return null;
 
-        // Prefer end time of current game if available
-        if (court.current?.endTime) {
-          return new Date(court.current.endTime).getTime();
+        // Prefer end time of current session if available (Domain format)
+        if (court.session?.scheduledEndAt) {
+          return new Date(court.session.scheduledEndAt).getTime();
         }
 
         // Check for blocks using new system
@@ -85,7 +84,7 @@ export const TennisBusinessLogic = {
 
         return null;
       })
-      .filter(time => time && time > currentTime.getTime())
+      .filter((time) => time && time > currentTime.getTime())
       .sort((a, b) => a - b);
 
     // No courts ending soon, and you're first in line
@@ -126,24 +125,25 @@ export const TennisBusinessLogic = {
       const court = courts[i];
 
       // Check old structure
-      if (court && court.players && court.players.some(player => player.id === playerId)) {
-        const player = court.players.find(p => p.id === playerId);
+      if (court && court.players && court.players.some((player) => player.id === playerId)) {
+        const player = court.players.find((p) => p.id === playerId);
         return {
           isPlaying: true,
           location: 'court',
           courtNumber: i + 1,
-          playerName: player ? player.name : 'Player'
+          playerName: player ? player.name : 'Player',
         };
       }
 
-      // Check new structure
-      if (court && court.current && court.current.players && court.current.players.some(player => player.id === playerId)) {
-        const player = court.current.players.find(p => p.id === playerId);
+      // Check Domain format: court.session.group.players
+      const sessionPlayers = court?.session?.group?.players;
+      if (sessionPlayers && sessionPlayers.some((player) => player.id === playerId)) {
+        const player = sessionPlayers.find((p) => p.id === playerId);
         return {
           isPlaying: true,
           location: 'court',
           courtNumber: i + 1,
-          playerName: player ? player.name : 'Player'
+          playerName: player ? player.name : 'Player',
         };
       }
     }
@@ -152,24 +152,24 @@ export const TennisBusinessLogic = {
     const waitingGroups = data.waitingGroups || [];
     for (let i = 0; i < waitingGroups.length; i++) {
       const group = waitingGroups[i];
-      if (group && group.players && group.players.some(player => player.id === playerId)) {
-        const player = group.players.find(p => p.id === playerId);
+      if (group && group.players && group.players.some((player) => player.id === playerId)) {
+        const player = group.players.find((p) => p.id === playerId);
         return {
           isPlaying: true,
           location: 'waiting',
           position: i + 1,
-          playerName: player ? player.name : 'Player'
+          playerName: player ? player.name : 'Player',
         };
       }
     }
 
     // Check current group
-    if (currentGroup && currentGroup.some(player => player.id === playerId)) {
-      const player = currentGroup.find(p => p.id === playerId);
+    if (currentGroup && currentGroup.some((player) => player.id === playerId)) {
+      const player = currentGroup.find((p) => p.id === playerId);
       return {
         isPlaying: true,
         location: 'current',
-        playerName: player ? player.name : 'Player'
+        playerName: player ? player.name : 'Player',
       };
     }
 
@@ -204,11 +204,11 @@ export const TennisBusinessLogic = {
       return { hasOverlap: false, overlappingPlayers: [], isSubset: false, isSuperset: false };
     }
 
-    const ids1 = group1.map(p => p.id);
-    const ids2 = group2.map(p => p.id);
+    const ids1 = group1.map((p) => p.id);
+    const ids2 = group2.map((p) => p.id);
 
-    const overlappingIds = ids1.filter(id => ids2.includes(id));
-    const overlappingPlayers = group1.filter(p => overlappingIds.includes(p.id));
+    const overlappingIds = ids1.filter((id) => ids2.includes(id));
+    const overlappingPlayers = group1.filter((p) => overlappingIds.includes(p.id));
 
     const result = {
       hasOverlap: overlappingIds.length > 0,
@@ -218,7 +218,7 @@ export const TennisBusinessLogic = {
       isSubset: overlappingIds.length === ids2.length && ids1.length > ids2.length,
       isSuperset: overlappingIds.length === ids1.length && ids2.length > ids1.length,
       group1Size: ids1.length,
-      group2Size: ids2.length
+      group2Size: ids2.length,
     };
 
     return result;
@@ -259,7 +259,7 @@ export const TennisBusinessLogic = {
   },
 
   // Expose sameGroup for external use
-  sameGroup
+  sameGroup,
 };
 
 // Export singleton for backward compatibility

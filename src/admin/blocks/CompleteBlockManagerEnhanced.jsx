@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Wrench,
   GraduationCap,
-  Users
+  Users,
 } from '../components';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
@@ -26,7 +26,14 @@ const Events = window.Events;
 const WC = window.WC;
 
 // Conflict Detection Component
-const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selectedDate, editingBlock }) => {
+const ConflictDetector = ({
+  courts,
+  selectedCourts,
+  startTime,
+  endTime,
+  selectedDate,
+  editingBlock,
+}) => {
   const [conflicts, setConflicts] = useState([]);
 
   useEffect(() => {
@@ -37,7 +44,7 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
 
     const detectedConflicts = [];
 
-    selectedCourts.forEach(courtNum => {
+    selectedCourts.forEach((courtNum) => {
       const court = courts[courtNum - 1];
       if (!court) return;
 
@@ -63,7 +70,7 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
       try {
         const courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
 
-        courtBlocks.forEach(block => {
+        courtBlocks.forEach((block) => {
           if (block.courtNumber === courtNum && (!editingBlock || block.id !== editingBlock.id)) {
             const existingStart = new Date(block.startTime);
             const existingEnd = new Date(block.endTime);
@@ -77,7 +84,7 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
                 courtNumber: courtNum,
                 type: 'block',
                 reason: block.reason,
-                time: `${existingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${existingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                time: `${existingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${existingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
               });
             }
           }
@@ -86,9 +93,11 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
         console.error('Error checking block conflicts:', error);
       }
 
-      if (court.current && court.current.players) {
-        const bookingStart = new Date(court.current.startTime);
-        const bookingEnd = new Date(court.current.endTime);
+      // Check session using Domain format: court.session.group.players
+      const sessionPlayers = court?.session?.group?.players;
+      if (sessionPlayers) {
+        const bookingStart = new Date(court.session.startedAt);
+        const bookingEnd = new Date(court.session.scheduledEndAt);
 
         if (
           (blockStart >= bookingStart && blockStart < bookingEnd) ||
@@ -98,8 +107,8 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
           detectedConflicts.push({
             courtNumber: courtNum,
             type: 'booking',
-            players: court.current.players.map(p => p.name),
-            time: `${bookingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${bookingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+            players: sessionPlayers.map((p) => p.name),
+            time: `${bookingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${bookingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           });
         }
       }
@@ -121,9 +130,13 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
               <div key={idx} className="text-sm text-yellow-800">
                 <span className="font-medium">Court {conflict.courtNumber}</span>
                 {conflict.type === 'block' ? (
-                  <span>: Already blocked ({conflict.reason}) at {conflict.time}</span>
+                  <span>
+                    : Already blocked ({conflict.reason}) at {conflict.time}
+                  </span>
                 ) : (
-                  <span>: Booked by {conflict.players.join(', ')} at {conflict.time}</span>
+                  <span>
+                    : Booked by {conflict.players.join(', ')} at {conflict.time}
+                  </span>
                 )}
               </div>
             ))}
@@ -139,9 +152,17 @@ const ConflictDetector = ({ courts, selectedCourts, startTime, endTime, selected
 
 // Complete Block Manager Component (Enhanced with Interactive Event Calendar)
 const CompleteBlockManagerEnhanced = ({
-  courts, onApplyBlocks, existingBlocks,
-  wetCourtsActive, setWetCourtsActive, wetCourts, setWetCourts,
-  suspendedBlocks, setSuspendedBlocks, ENABLE_WET_COURTS, onNotification,
+  courts,
+  onApplyBlocks,
+  existingBlocks,
+  wetCourtsActive,
+  setWetCourtsActive,
+  wetCourts,
+  setWetCourts,
+  suspendedBlocks,
+  setSuspendedBlocks,
+  ENABLE_WET_COURTS,
+  onNotification,
   defaultView = 'timeline',
   // These components are passed from parent
   VisualTimeEntry,
@@ -152,7 +173,7 @@ const CompleteBlockManagerEnhanced = ({
   EventSummary,
   HoverCard,
   QuickActionsMenu,
-  Tennis
+  Tennis,
 }) => {
   const [activeView, setActiveView] = useState(defaultView);
   const [selectedCourts, setSelectedCourts] = useState([]);
@@ -186,7 +207,7 @@ const CompleteBlockManagerEnhanced = ({
 
     // Set all courts as wet
     const allCourts = new Set();
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].forEach(courtNum => {
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].forEach((courtNum) => {
       WC.markWet(allCourts, courtNum);
     });
     setWetCourts(allCourts);
@@ -200,11 +221,14 @@ const CompleteBlockManagerEnhanced = ({
     try {
       const now = new Date().toISOString();
       let existingBlocks = [];
-      try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
-      catch { /* transient partial write; use empty array */ }
+      try {
+        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+      } catch {
+        /* transient partial write; use empty array */
+      }
 
       // Create wet court blocks for all courts (1-12)
-      const wetCourtBlocks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(courtNum => ({
+      const wetCourtBlocks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((courtNum) => ({
         id: `wet-court-${courtNum}-${Date.now()}`,
         courtNumber: courtNum,
         reason: 'WET COURT',
@@ -223,7 +247,7 @@ const CompleteBlockManagerEnhanced = ({
         })(),
         isEvent: false,
         isWetCourt: true,
-        createdAt: now
+        createdAt: now,
       }));
 
       // Add to storage
@@ -231,8 +255,7 @@ const CompleteBlockManagerEnhanced = ({
       await Tennis.BlocksService.saveBlocks(updatedBlocks);
 
       console.log(`📦 Created ${wetCourtBlocks.length} wet court blocks directly`);
-      setRefreshTrigger(prev => prev + 1);
-
+      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error('Error creating wet court blocks:', error);
     }
@@ -243,19 +266,21 @@ const CompleteBlockManagerEnhanced = ({
 
     try {
       let existingBlocks = [];
-      try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
-      catch { /* transient partial write; use empty array */ }
+      try {
+        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+      } catch {
+        /* transient partial write; use empty array */
+      }
 
       // Remove wet court blocks for this court
-      const updatedBlocks = existingBlocks.filter(block =>
-        !(block.isWetCourt && block.courtNumber === courtNumber)
+      const updatedBlocks = existingBlocks.filter(
+        (block) => !(block.isWetCourt && block.courtNumber === courtNumber)
       );
 
       await Tennis.BlocksService.saveBlocks(updatedBlocks);
 
       console.log(`🗑️ Removed wet court block for court ${courtNumber}`);
-      setRefreshTrigger(prev => prev + 1); // Refresh timeline
-
+      setRefreshTrigger((prev) => prev + 1); // Refresh timeline
     } catch (error) {
       console.error('Error removing wet court block:', error);
     }
@@ -266,17 +291,19 @@ const CompleteBlockManagerEnhanced = ({
 
     try {
       let existingBlocks = [];
-      try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
-      catch { /* transient partial write; use empty array */ }
+      try {
+        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+      } catch {
+        /* transient partial write; use empty array */
+      }
 
       // Remove all wet court blocks
-      const updatedBlocks = existingBlocks.filter(block => !block.isWetCourt);
+      const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
 
       await Tennis.BlocksService.saveBlocks(updatedBlocks);
 
       console.log('🧹 Removed all wet court blocks');
-      setRefreshTrigger(prev => prev + 1); // Refresh timeline
-
+      setRefreshTrigger((prev) => prev + 1); // Refresh timeline
     } catch (error) {
       console.error('Error removing all wet court blocks:', error);
     }
@@ -318,16 +345,24 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const quickReasons = [
-    { label: 'COURT WORK', icon: Wrench, color: 'bg-orange-100 hover:bg-orange-200 text-orange-700' },
-    { label: 'LESSON', icon: GraduationCap, color: 'bg-green-100 hover:bg-green-200 text-green-700' },
-    { label: 'CLINIC', icon: Users, color: 'bg-purple-100 hover:bg-purple-200 text-purple-700' }
+    {
+      label: 'COURT WORK',
+      icon: Wrench,
+      color: 'bg-orange-100 hover:bg-orange-200 text-orange-700',
+    },
+    {
+      label: 'LESSON',
+      icon: GraduationCap,
+      color: 'bg-green-100 hover:bg-green-200 text-green-700',
+    },
+    { label: 'CLINIC', icon: Users, color: 'bg-purple-100 hover:bg-purple-200 text-purple-700' },
   ];
 
   const blockTemplates = [
     { name: 'Wet Courts (2 hours)', reason: 'WET COURT', duration: 120 },
     { name: 'Maintenance (4 hours)', reason: 'COURT WORK', duration: 240 },
     { name: 'Morning Lesson', reason: 'LESSON', startTime: '09:00', endTime: '10:00' },
-    { name: 'Evening Clinic', reason: 'CLINIC', startTime: '18:00', endTime: '20:00' }
+    { name: 'Evening Clinic', reason: 'CLINIC', startTime: '18:00', endTime: '20:00' },
   ];
 
   useEffect(() => {
@@ -393,7 +428,7 @@ const CompleteBlockManagerEnhanced = ({
         if (recurrence.pattern === 'daily') {
           currentDate.setDate(currentDate.getDate() + recurrence.frequency);
         } else if (recurrence.pattern === 'weekly') {
-          currentDate.setDate(currentDate.getDate() + (7 * recurrence.frequency));
+          currentDate.setDate(currentDate.getDate() + 7 * recurrence.frequency);
         } else if (recurrence.pattern === 'monthly') {
           currentDate.setMonth(currentDate.getMonth() + recurrence.frequency);
         }
@@ -404,8 +439,8 @@ const CompleteBlockManagerEnhanced = ({
 
     const appliedBlocks = [];
 
-    blocks.forEach(blockInfo => {
-      selectedCourts.forEach(courtNum => {
+    blocks.forEach((blockInfo) => {
+      selectedCourts.forEach((courtNum) => {
         let actualStartTime;
         if (startTime === 'now') {
           actualStartTime = now;
@@ -431,12 +466,14 @@ const CompleteBlockManagerEnhanced = ({
           startTime: actualStartTime.toISOString(),
           endTime: actualEndTime.toISOString(),
           isEvent: isEvent,
-          eventDetails: isEvent ? {
-            title: eventTitle || blockReason,
-            type: eventType,
-            courts: selectedCourts
-          } : null,
-          createdAt: new Date().toISOString()
+          eventDetails: isEvent
+            ? {
+                title: eventTitle || blockReason,
+                type: eventType,
+                courts: selectedCourts,
+              }
+            : null,
+          createdAt: new Date().toISOString(),
         });
       });
     });
@@ -466,31 +503,37 @@ const CompleteBlockManagerEnhanced = ({
     console.log('🗑️ Trying to delete block with ID:', blockId);
     try {
       let existingBlocks = [];
-      try { existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]'); }
-      catch { /* transient partial write; use empty array */ }
+      try {
+        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+      } catch {
+        /* transient partial write; use empty array */
+      }
       console.log('📋 All blocks before deletion:', existingBlocks);
       console.log('🔍 Looking for block with ID:', blockId);
 
-      const foundBlock = existingBlocks.find(block => block.id === blockId);
+      const foundBlock = existingBlocks.find((block) => block.id === blockId);
       console.log('✅ Found block?', foundBlock);
 
-      const updatedBlocks = existingBlocks.filter(block => block.id !== blockId);
+      const updatedBlocks = existingBlocks.filter((block) => block.id !== blockId);
       console.log('📋 Blocks after filter:', updatedBlocks);
-      console.log('📊 Length before:', existingBlocks.length, 'Length after:', updatedBlocks.length);
+      console.log(
+        '📊 Length before:',
+        existingBlocks.length,
+        'Length after:',
+        updatedBlocks.length
+      );
 
       await Tennis.BlocksService.saveBlocks(updatedBlocks);
       console.log('✅ Delete operation completed');
-      setRefreshTrigger(prev => prev + 1);
+      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error('Error removing block:', error);
     }
   };
 
   const toggleCourtSelection = (courtNum) => {
-    setSelectedCourts(prev =>
-      prev.includes(courtNum)
-        ? prev.filter(c => c !== courtNum)
-        : [...prev, courtNum]
+    setSelectedCourts((prev) =>
+      prev.includes(courtNum) ? prev.filter((c) => c !== courtNum) : [...prev, courtNum]
     );
   };
 
@@ -539,7 +582,7 @@ const CompleteBlockManagerEnhanced = ({
       setIsEvent(true); // Default to showing on calendar
       // Auto-generate event title
       if (!eventTitle || eventTitle.includes('(Copy)')) {
-        setEventTitle(reason.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()));
+        setEventTitle(reason.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase()));
       }
     } else {
       // Only WET COURT and similar should be hidden by default
@@ -589,7 +632,7 @@ const CompleteBlockManagerEnhanced = ({
           courts={courts}
           currentTime={currentTime}
           refreshTrigger={refreshTrigger}
-          onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+          onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
           MonthView={MonthView}
           EventSummary={EventSummary}
           HoverCard={HoverCard}
@@ -651,7 +694,10 @@ const CompleteBlockManagerEnhanced = ({
 
       {activeView === 'create' && (
         <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div
+            className="col-span-2"
+            style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+          >
             <div style={{ order: 4 }}>
               <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                 <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
@@ -661,9 +707,7 @@ const CompleteBlockManagerEnhanced = ({
                     className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                   >
                     <span>{showTemplates ? 'Hide' : 'Show'}</span>
-                    <span className="text-xs">
-                      {showTemplates ? '△' : '▽'}
-                    </span>
+                    <span className="text-xs">{showTemplates ? '△' : '▽'}</span>
                   </button>
                 </div>
 
@@ -686,7 +730,12 @@ const CompleteBlockManagerEnhanced = ({
 
             <div style={{ order: 1 }}>
               <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2" style={{ marginTop: '0', lineHeight: '1.75rem' }}>Select Courts to Block</h3>
+                <h3
+                  className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2"
+                  style={{ marginTop: '0', lineHeight: '1.75rem' }}
+                >
+                  Select Courts to Block
+                </h3>
                 <div className="grid grid-cols-6 gap-2">
                   {[...Array(12)].map((_, idx) => {
                     const courtNum = idx + 1;
@@ -697,12 +746,13 @@ const CompleteBlockManagerEnhanced = ({
                         key={courtNum}
                         onClick={() => toggleCourtSelection(courtNum)}
                         disabled={editingBlock && editingBlock.courtNumber !== courtNum}
-                        className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${isSelected
-                          ? 'bg-blue-600 text-white border-blue-700 shadow-md'
-                          : editingBlock && editingBlock.courtNumber !== courtNum
-                            ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
-                            : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
-                          }`}
+                        className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-700 shadow-md'
+                            : editingBlock && editingBlock.courtNumber !== courtNum
+                              ? 'bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200'
+                              : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
+                        }`}
                       >
                         Court {courtNum}
                       </button>
@@ -730,7 +780,9 @@ const CompleteBlockManagerEnhanced = ({
 
             <div style={{ order: 2 }}>
               <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2">Block Reason</h3>
+                <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2">
+                  Block Reason
+                </h3>
 
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2">
@@ -743,10 +795,9 @@ const CompleteBlockManagerEnhanced = ({
                             handleQuickReason(reason.label);
                             setShowCustomReason(false);
                           }}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${blockReason === reason.label
-                            ? 'bg-blue-600 text-white'
-                            : reason.color
-                            }`}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                            blockReason === reason.label ? 'bg-blue-600 text-white' : reason.color
+                          }`}
                         >
                           <Icon size={18} />
                           {reason.label}
@@ -759,10 +810,11 @@ const CompleteBlockManagerEnhanced = ({
                         setShowCustomReason(true);
                         setBlockReason('');
                       }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm border ${showCustomReason
-                        ? 'bg-blue-600 text-white border-blue-700'
-                        : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
-                        }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm border ${
+                        showCustomReason
+                          ? 'bg-blue-600 text-white border-blue-700'
+                          : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
+                      }`}
                     >
                       <Plus size={18} />
                       Other
@@ -815,13 +867,15 @@ const CompleteBlockManagerEnhanced = ({
 
           <div className="space-y-6">
             <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2" style={{ marginTop: '0', lineHeight: '1.75rem' }}>Select Date</h3>
+              <h3
+                className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2"
+                style={{ marginTop: '0', lineHeight: '1.75rem' }}
+              >
+                Select Date
+              </h3>
 
               {MiniCalendar && (
-                <MiniCalendar
-                  selectedDate={selectedDate}
-                  onDateSelect={setSelectedDate}
-                />
+                <MiniCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
               )}
 
               <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -832,7 +886,7 @@ const CompleteBlockManagerEnhanced = ({
                       weekday: 'long',
                       month: 'long',
                       day: 'numeric',
-                      year: 'numeric'
+                      year: 'numeric',
                     })}
                   </span>
                 </div>
@@ -855,21 +909,20 @@ const CompleteBlockManagerEnhanced = ({
 
                 {/* Court Grid */}
                 <div className="grid grid-cols-4 gap-2 mb-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(courtNum => {
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((courtNum) => {
                     const isWet = wetCourts.has(courtNum);
                     return (
                       <button
                         key={courtNum}
                         onClick={() => clearWetCourt(courtNum)}
-                        className={`p-2 rounded text-sm font-medium transition-all ${isWet
-                          ? 'bg-blue-500 text-white hover:bg-blue-600'
-                          : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                          }`}
+                        className={`p-2 rounded text-sm font-medium transition-all ${
+                          isWet
+                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                        }`}
                       >
                         Court {courtNum}
-                        <div className="text-xs mt-1">
-                          {isWet ? '💧 Wet' : '☀️ Dry'}
-                        </div>
+                        <div className="text-xs mt-1">{isWet ? '💧 Wet' : '☀️ Dry'}</div>
                       </button>
                     );
                   })}
@@ -895,7 +948,8 @@ const CompleteBlockManagerEnhanced = ({
                 <div className="space-y-2 text-sm text-blue-800">
                   {selectedCourts.length > 0 && (
                     <div>
-                      <span className="font-medium">Courts:</span> {selectedCourts.sort((a, b) => a - b).join(', ')}
+                      <span className="font-medium">Courts:</span>{' '}
+                      {selectedCourts.sort((a, b) => a - b).join(', ')}
                     </div>
                   )}
                   {blockReason && (
@@ -905,18 +959,16 @@ const CompleteBlockManagerEnhanced = ({
                   )}
                   {startTime && endTime && (
                     <div>
-                      <span className="font-medium">Time:</span> {
-                        startTime === 'now' ? 'Now' : startTime
-                      } - {endTime}
+                      <span className="font-medium">Time:</span>{' '}
+                      {startTime === 'now' ? 'Now' : startTime} - {endTime}
                     </div>
                   )}
                   {recurrence && (
                     <div>
-                      <span className="font-medium">Repeats:</span> {recurrence.pattern}ly for {
-                        recurrence.endType === 'after'
-                          ? `${recurrence.occurrences} times`
-                          : `until ${recurrence.endDate}`
-                      }
+                      <span className="font-medium">Repeats:</span> {recurrence.pattern}ly for{' '}
+                      {recurrence.endType === 'after'
+                        ? `${recurrence.occurrences} times`
+                        : `until ${recurrence.endDate}`}
                     </div>
                   )}
                   {isEvent && (
@@ -956,43 +1008,39 @@ const CompleteBlockManagerEnhanced = ({
               >
                 <div className="flex items-center gap-2">
                   <span>Repeat</span>
-                  <span className="text-sm text-blue-600">
-                    {showRecurrence ? '△' : '▽'}
-                  </span>
+                  <span className="text-sm text-blue-600">{showRecurrence ? '△' : '▽'}</span>
                 </div>
               </button>
             </div>
 
             {showRecurrence && (
-              <RecurrenceConfig
-                recurrence={recurrence}
-                onRecurrenceChange={setRecurrence}
-              />
+              <RecurrenceConfig recurrence={recurrence} onRecurrenceChange={setRecurrence} />
             )}
 
             <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
               <button
                 onClick={handleBlockCourts}
                 disabled={!isValid}
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${isValid
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                  isValid
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
               >
-                {editingBlock ? 'Update' : 'Apply'} Block to {
-                  selectedCourts.length <= 3
-                    ? `Court${selectedCourts.length !== 1 ? 's' : ''} ${selectedCourts.sort((a, b) => a - b).join(', ')}`
-                    : `${selectedCourts.length} Courts`
-                }
+                {editingBlock ? 'Update' : 'Apply'} Block to{' '}
+                {selectedCourts.length <= 3
+                  ? `Court${selectedCourts.length !== 1 ? 's' : ''} ${selectedCourts.sort((a, b) => a - b).join(', ')}`
+                  : `${selectedCourts.length} Courts`}
                 {recurrence && ` (${recurrence.pattern}ly)`}
               </button>
 
               <button
                 onClick={wetCourtsActive ? deactivateWetCourts : handleEmergencyWetCourt}
-                className={`w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium transition-all border ${wetCourtsActive
-                  ? 'bg-gray-600 text-white border-blue-400 ring-1 ring-blue-400 shadow-md'
-                  : 'bg-blue-50 hover:bg-blue-100 text-gray-700 border-blue-300 hover:border-blue-400'
-                  }`}
+                className={`w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium transition-all border ${
+                  wetCourtsActive
+                    ? 'bg-gray-600 text-white border-blue-400 ring-1 ring-blue-400 shadow-md'
+                    : 'bg-blue-50 hover:bg-blue-100 text-gray-700 border-blue-300 hover:border-blue-400'
+                }`}
               >
                 <Droplets size={16} />
                 WET COURTS

@@ -10,14 +10,18 @@ const DEBUG = false;
 
 // Minimal logger for validation module
 const log = {
-  debug: (...a) => { if (DEBUG) console.debug('[DataValidation]', ...a); },
+  debug: (...a) => {
+    if (DEBUG) console.debug('[DataValidation]', ...a);
+  },
 };
 
 export const DataValidation = {
   isValidCourtNumber(courtNumber) {
-    return Number.isInteger(courtNumber) &&
-           courtNumber >= 1 &&
-           courtNumber <= TENNIS_CONFIG.COURTS.TOTAL_COUNT;
+    return (
+      Number.isInteger(courtNumber) &&
+      courtNumber >= 1 &&
+      courtNumber <= TENNIS_CONFIG.COURTS.TOTAL_COUNT
+    );
   },
 
   isValidPlayer(player) {
@@ -25,21 +29,25 @@ export const DataValidation = {
     // - A number (legacy hardcoded data)
     // - A numeric string like "1021" (legacy)
     // - A UUID string like "4f3a4213-4c17-44e1-aeea-1ac0276bcfa2" (API backend)
-    const hasValidId = typeof player.id === 'number' ||
-                       (typeof player.id === 'string' && player.id.length > 0);
+    const hasValidId =
+      typeof player.id === 'number' || (typeof player.id === 'string' && player.id.length > 0);
 
-    return player &&
-           typeof player === 'object' &&
-           hasValidId &&
-           typeof player.name === 'string' &&
-           player.name.trim().length > 0;
+    return (
+      player &&
+      typeof player === 'object' &&
+      hasValidId &&
+      typeof player.name === 'string' &&
+      player.name.trim().length > 0
+    );
   },
 
   isValidGroup(group) {
-    return Array.isArray(group) &&
-           group.length >= 0 && // Changed from MIN_PER_GROUP to allow empty arrays for blocked courts
-           group.length <= TENNIS_CONFIG.PLAYERS.MAX_PER_GROUP &&
-           group.every(player => this.isValidPlayer(player));
+    return (
+      Array.isArray(group) &&
+      group.length >= 0 && // Changed from MIN_PER_GROUP to allow empty arrays for blocked courts
+      group.length <= TENNIS_CONFIG.PLAYERS.MAX_PER_GROUP &&
+      group.every((player) => this.isValidPlayer(player))
+    );
   },
 
   isValidDuration(duration) {
@@ -55,38 +63,42 @@ export const DataValidation = {
 
     // Special case for cleared courts
     if (court.wasCleared) {
-      return court &&
-             typeof court === 'object' &&
-             this.isValidGroup(court.players) &&
-             this.isValidDate(new Date(court.startTime)) &&
-             this.isValidDate(new Date(court.endTime));
+      return (
+        court &&
+        typeof court === 'object' &&
+        this.isValidGroup(court.players) &&
+        this.isValidDate(new Date(court.startTime)) &&
+        this.isValidDate(new Date(court.endTime))
+      );
     }
 
-    // Special case for NEW STRUCTURE with current and history
-    if (court.current || court.history) {
-      // Validate the new structure
+    // Domain format validation: court.session.group.players
+    if (court.session || court.history) {
+      // Validate the Domain structure
       const hasValidHistory = !court.history || Array.isArray(court.history);
-      const hasValidCurrent = !court.current || (
-        court.current &&
-        typeof court.current === 'object' &&
-        this.isValidGroup(court.current.players) &&
-        this.isValidDate(new Date(court.current.startTime)) &&
-        this.isValidDate(new Date(court.current.endTime))
-      );
+      const hasValidSession =
+        !court.session ||
+        (court.session &&
+          typeof court.session === 'object' &&
+          this.isValidGroup(court.session.group?.players) &&
+          this.isValidDate(new Date(court.session.startedAt)) &&
+          this.isValidDate(new Date(court.session.scheduledEndAt)));
 
-      return hasValidHistory && hasValidCurrent;
+      return hasValidHistory && hasValidSession;
     }
 
     // Remove old block validation - blocks are now handled via courtBlocks localStorage
     // Old court.blocked properties are no longer used
 
     // Regular court validation
-    return court &&
-           typeof court === 'object' &&
-           this.isValidGroup(court.players) &&
-           this.isValidDate(new Date(court.startTime)) &&
-           this.isValidDate(new Date(court.endTime)) &&
-           new Date(court.endTime) > new Date(court.startTime);
+    return (
+      court &&
+      typeof court === 'object' &&
+      this.isValidGroup(court.players) &&
+      this.isValidDate(new Date(court.startTime)) &&
+      this.isValidDate(new Date(court.endTime)) &&
+      new Date(court.endTime) > new Date(court.startTime)
+    );
   },
 
   sanitizeStorageData(data) {
@@ -94,7 +106,7 @@ export const DataValidation = {
     const sanitized = {
       courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
       waitingGroups: [],
-      recentlyCleared: [] // Include in sanitized structure
+      recentlyCleared: [], // Include in sanitized structure
     };
 
     // Validate and copy courts
@@ -110,33 +122,40 @@ export const DataValidation = {
 
     // Validate and copy waiting groups
     if (Array.isArray(data.waitingGroups)) {
-      sanitized.waitingGroups = data.waitingGroups.filter(group => {
-        return group &&
-               typeof group === 'object' &&
-               this.isValidGroup(group.players) &&
-               this.isValidDate(new Date(group.timestamp || new Date()));
+      sanitized.waitingGroups = data.waitingGroups.filter((group) => {
+        return (
+          group &&
+          typeof group === 'object' &&
+          this.isValidGroup(group.players) &&
+          this.isValidDate(new Date(group.timestamp || new Date()))
+        );
       });
     }
 
     // Validate and copy recently cleared sessions
     if (Array.isArray(data.recentlyCleared)) {
       const now = new Date();
-      sanitized.recentlyCleared = data.recentlyCleared.filter(session => {
-        const isValid = session &&
-               typeof session === 'object' &&
-               this.isValidGroup(session.players) &&
-               session.originalEndTime &&
-               this.isValidDate(new Date(session.originalEndTime)) &&
-               new Date(session.originalEndTime) > now; // Only keep future end times
+      sanitized.recentlyCleared = data.recentlyCleared.filter((session) => {
+        const isValid =
+          session &&
+          typeof session === 'object' &&
+          this.isValidGroup(session.players) &&
+          session.originalEndTime &&
+          this.isValidDate(new Date(session.originalEndTime)) &&
+          new Date(session.originalEndTime) > now; // Only keep future end times
 
         if (!isValid && session) {
           if (DEBUG) {
-            log.debug("Filtered out session:", {
+            log.debug('Filtered out session:', {
               session,
               hasValidGroup: session.players ? this.isValidGroup(session.players) : false,
               hasOriginalEndTime: !!session.originalEndTime,
-              isValidDate: session.originalEndTime ? this.isValidDate(new Date(session.originalEndTime)) : false,
-              isFutureEndTime: session.originalEndTime ? new Date(session.originalEndTime) > now : false
+              isValidDate: session.originalEndTime
+                ? this.isValidDate(new Date(session.originalEndTime))
+                : false,
+              isFutureEndTime: session.originalEndTime
+                ? new Date(session.originalEndTime) > now
+                : false,
             });
           }
         }
@@ -146,7 +165,7 @@ export const DataValidation = {
     }
 
     return sanitized;
-  }
+  },
 };
 
 export default DataValidation;

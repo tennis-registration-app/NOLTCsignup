@@ -920,8 +920,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
     const clearableCourts = courts
       .filter((c) => {
-        // Court has a session (is occupied)
-        if (c.session || c.current || c.isOccupied) {
+        // Court has a session (is occupied) - Domain format
+        if (c.session || c.isOccupied) {
           // Not blocked
           if (c.isBlocked) return false;
           return true;
@@ -954,24 +954,32 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   function __findEngagementFor(name, data) {
     const norm = __normalizeName(name);
-    // 1) playing: scan courts
+    // 1) playing: scan courts (Domain format: session.group.players)
     const courts = Array.isArray(data?.courts) ? data.courts : [];
     for (let i = 0; i < courts.length; i++) {
-      const cur = courts[i]?.current;
-      if (!cur) continue;
-      const players = Array.isArray(cur.players) ? cur.players : [];
+      const session = courts[i]?.session;
+      if (!session) continue;
+      const players = Array.isArray(session.group?.players) ? session.group.players : [];
       for (const p of players) {
-        if (__normalizeName(p) === norm || __normalizeName(p?.name) === norm) {
+        if (
+          __normalizeName(p) === norm ||
+          __normalizeName(p?.name) === norm ||
+          __normalizeName(p?.displayName) === norm
+        ) {
           return { type: 'playing', court: i + 1 };
         }
       }
     }
-    // 2) waitlist: scan waitlist
+    // 2) waitlist: scan waitlist (Domain format: group.players)
     const wg = Array.isArray(data?.waitlist) ? data.waitlist : [];
     for (let i = 0; i < wg.length; i++) {
-      const players = Array.isArray(wg[i]?.players) ? wg[i].players : [];
+      const players = Array.isArray(wg[i]?.group?.players) ? wg[i].group.players : [];
       for (const p of players) {
-        if (__normalizeName(p) === norm || __normalizeName(p?.name) === norm) {
+        if (
+          __normalizeName(p) === norm ||
+          __normalizeName(p?.name) === norm ||
+          __normalizeName(p?.displayName) === norm
+        ) {
           return { type: 'waitlist', position: i + 1 };
         }
       }

@@ -1,7 +1,7 @@
 // Sync Waitlist Promotions for CourtBoard
-(function(){
-  const Avail   = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-  const U       = window.APP_UTILS;
+(function () {
+  const Avail = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+  const U = window.APP_UTILS;
 
   /**
    * Get Courtboard state from React (via window bridge).
@@ -19,16 +19,16 @@
       }
     } catch {}
     const free = [];
-    const activeBlocks = (Array.isArray(blocks) ? blocks : []).filter(b => {
+    const activeBlocks = (Array.isArray(blocks) ? blocks : []).filter((b) => {
       return new Date(b.startTime) <= now && now < new Date(b.endTime);
     });
     const courts = data?.courts || [];
     const n = courts.length || 12;
     for (let i = 1; i <= n; i++) {
-      const c = courts[i-1];
-      // Check for occupation using API format (isOccupied) or legacy format (current)
-      const occ = !!(c && (c.isOccupied || c.current));
-      const blk = activeBlocks.some(b => b.courtNumber === i);
+      const c = courts[i - 1];
+      // Check for occupation using Domain format: court.session indicates active session
+      const occ = !!(c && (c.isOccupied || c.session));
+      const blk = activeBlocks.some((b) => b.courtNumber === i);
       if (!occ && !blk) free.push(i);
     }
     return free;
@@ -52,25 +52,42 @@
       const up = waiting.slice(0, k);
 
       const TTL_MIN = 4;
-      const expiresAt = new Date(now.getTime() + TTL_MIN*60*1000).toISOString();
+      const expiresAt = new Date(now.getTime() + TTL_MIN * 60 * 1000).toISOString();
       const desired = up.map((g, idx) => {
         const sig = U.waitlistSignature(g);
-        const cn = free[idx] ? [ free[idx] ] : [];
-        return { id: `${sig}-${Date.now()}`, groupSig: sig, courtNumbers: cn, promotedAt: now.toISOString(), expiresAt, version: 1 };
+        const cn = free[idx] ? [free[idx]] : [];
+        return {
+          id: `${sig}-${Date.now()}`,
+          groupSig: sig,
+          courtNumbers: cn,
+          promotedAt: now.toISOString(),
+          expiresAt,
+          version: 1,
+        };
       });
 
       const prev = Array.isArray(data.waitlistPromotions) ? data.waitlistPromotions : [];
-      const live = prev.filter(p => new Date(p.expiresAt) > now);
-      const bySig = new Map(live.map(p => [p.groupSig, p]));
-      desired.forEach(d => {
+      const live = prev.filter((p) => new Date(p.expiresAt) > now);
+      const bySig = new Map(live.map((p) => [p.groupSig, p]));
+      desired.forEach((d) => {
         const e = bySig.get(d.groupSig);
-        if (e) { e.courtNumbers = d.courtNumbers; e.expiresAt = d.expiresAt; }
-        else   { bySig.set(d.groupSig, d); }
+        if (e) {
+          e.courtNumbers = d.courtNumbers;
+          e.expiresAt = d.expiresAt;
+        } else {
+          bySig.set(d.groupSig, d);
+        }
       });
       const nextPromos = Array.from(bySig.values());
 
-      const same = nextPromos.length === prev.length &&
-                   nextPromos.every((p,i)=> prev[i] && prev[i].groupSig===p.groupSig && String(prev[i].courtNumbers)===String(p.courtNumbers));
+      const same =
+        nextPromos.length === prev.length &&
+        nextPromos.every(
+          (p, i) =>
+            prev[i] &&
+            prev[i].groupSig === p.groupSig &&
+            String(prev[i].courtNumbers) === String(p.courtNumbers)
+        );
       if (same) return;
 
       // NOTE: Promotions are now computed by backend. This localStorage write is for
@@ -90,10 +107,24 @@
     }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(syncWaitlistPromotions, 0), { once: true });
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', () => setTimeout(syncWaitlistPromotions, 0), {
+      once: true,
+    });
   else setTimeout(syncWaitlistPromotions, 0);
 
-  window.addEventListener('tennisDataUpdate', ()=> setTimeout(syncWaitlistPromotions,0), { passive:true });
-  window.addEventListener('DATA_UPDATED',      ()=> setTimeout(syncWaitlistPromotions,0), { passive:true });
-  window.addEventListener('storage', (e)=>{ if (e.key === ((Storage?.STORAGE?.DATA)||'tennisClubData')) setTimeout(syncWaitlistPromotions,0); }, { passive:true });
+  window.addEventListener('tennisDataUpdate', () => setTimeout(syncWaitlistPromotions, 0), {
+    passive: true,
+  });
+  window.addEventListener('DATA_UPDATED', () => setTimeout(syncWaitlistPromotions, 0), {
+    passive: true,
+  });
+  window.addEventListener(
+    'storage',
+    (e) => {
+      if (e.key === (Storage?.STORAGE?.DATA || 'tennisClubData'))
+        setTimeout(syncWaitlistPromotions, 0);
+    },
+    { passive: true }
+  );
 })();

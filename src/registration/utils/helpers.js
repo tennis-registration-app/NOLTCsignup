@@ -24,31 +24,39 @@ export function normalizeName(n) {
  * Find if a player is already engaged (playing or on waitlist)
  *
  * @param {string|object} name - Player name or object
- * @param {object} data - Court data with courts and waitingGroups arrays
+ * @param {object} data - Court data with courts and waitlist arrays (Domain format)
  * @returns {object|null} - { type: 'playing', court: n } or { type: 'waitlist', position: n } or null
  */
 export function findEngagementFor(name, data) {
   const norm = normalizeName(name);
 
-  // 1) Check courts for playing players
+  // 1) Check courts for playing players (Domain format: court.session.group.players)
   const courts = Array.isArray(data?.courts) ? data.courts : [];
   for (let i = 0; i < courts.length; i++) {
-    const cur = courts[i]?.current;
-    if (!cur) continue;
-    const players = Array.isArray(cur.players) ? cur.players : [];
+    const session = courts[i]?.session;
+    if (!session) continue;
+    const players = Array.isArray(session.group?.players) ? session.group.players : [];
     for (const p of players) {
-      if (normalizeName(p) === norm || normalizeName(p?.name) === norm) {
+      if (
+        normalizeName(p) === norm ||
+        normalizeName(p?.name) === norm ||
+        normalizeName(p?.displayName) === norm
+      ) {
         return { type: 'playing', court: i + 1 };
       }
     }
   }
 
-  // 2) Check waitlist
-  const wg = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+  // 2) Check waitlist (Domain format: waitlist[].group.players)
+  const wg = Array.isArray(data?.waitlist) ? data.waitlist : [];
   for (let i = 0; i < wg.length; i++) {
-    const players = Array.isArray(wg[i]?.players) ? wg[i].players : [];
+    const players = Array.isArray(wg[i]?.group?.players) ? wg[i].group.players : [];
     for (const p of players) {
-      if (normalizeName(p) === norm || normalizeName(p?.name) === norm) {
+      if (
+        normalizeName(p) === norm ||
+        normalizeName(p?.name) === norm ||
+        normalizeName(p?.displayName) === norm
+      ) {
         return { type: 'waitlist', position: i + 1 };
       }
     }
@@ -67,7 +75,7 @@ export function validateGuestName(name) {
   if (!name || typeof name !== 'string') return false;
   const trimmed = name.trim();
   // Must have at least two words (first and last name)
-  const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+  const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
   return words.length >= 2;
 }
 
@@ -84,11 +92,16 @@ export function computeOccupiedCourts() {
   const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
   const wetSet = new Set(
     (blocks || [])
-      .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
-      .map(b => b.courtNumber)
+      .filter(
+        (b) =>
+          b?.isWetCourt &&
+          new Date(b.startTime ?? b.start) <= now &&
+          now < new Date(b.endTime ?? b.end)
+      )
+      .map((b) => b.courtNumber)
   );
   const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
-  const occupied = statuses.filter(s => s.status === 'occupied').map(s => s.courtNumber);
+  const occupied = statuses.filter((s) => s.status === 'occupied').map((s) => s.courtNumber);
   return { occupied, data };
 }
 
@@ -105,14 +118,19 @@ export function getCourtsOccupiedForClearing() {
   const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
   const wetSet = new Set(
     blocks
-      .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
-      .map(b => b.courtNumber)
+      .filter(
+        (b) =>
+          b?.isWetCourt &&
+          new Date(b.startTime ?? b.start) <= now &&
+          now < new Date(b.endTime ?? b.end)
+      )
+      .map((b) => b.courtNumber)
   );
 
   const statuses = Av.getCourtStatuses({ data, now, blocks, wetSet });
   const clearableCourts = statuses
-    .filter(s => (s.isOccupied || s.isOvertime) && !s.isBlocked)
-    .map(s => s.courtNumber)
+    .filter((s) => (s.isOccupied || s.isOvertime) && !s.isBlocked)
+    .map((s) => s.courtNumber)
     .sort((a, b) => a - b);
   return clearableCourts;
 }
