@@ -261,7 +261,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Initialize data state
   const [data, setData] = useState(() => ({
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
-    waitingGroups: [],
+    waitlist: [],
     recentlyCleared: [],
   }));
 
@@ -294,11 +294,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       // Transform API data to legacy format
       const courts = initialData.courts || [];
-      const waitingGroups = initialData.waitlist || [];
+      const waitlist = initialData.waitlist || [];
 
       const updatedData = {
         courts: courts,
-        waitingGroups: waitingGroups,
+        waitlist: waitlist,
         recentlyCleared: data.recentlyCleared || [],
       };
 
@@ -437,7 +437,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setData((prev) => ({
         ...prev,
         courts: board.courts || [],
-        waitingGroups: board.waitlist || [],
+        waitlist: board.waitlist || [],
       }));
 
       // Update operating hours
@@ -743,18 +743,18 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log('🎯 setCanFirstGroupPlay:', val, 'stack:', new Error().stack.split('\n')[2]);
     _setCanFirstGroupPlay(val);
   };
-  const [firstWaitingGroup, setFirstWaitingGroup] = useState(null);
+  const [firstWaitlistEntry, setFirstWaitingGroup] = useState(null);
   const [waitingGroupDisplay, setWaitingGroupDisplay] = useState('');
   const [canSecondGroupPlay, _setCanSecondGroupPlay] = useState(false);
   const setCanSecondGroupPlay = (val) => {
     console.log('🎯 setCanSecondGroupPlay:', val, 'stack:', new Error().stack.split('\n')[2]);
     _setCanSecondGroupPlay(val);
   };
-  const [secondWaitingGroup, setSecondWaitingGroup] = useState(null);
-  const [secondWaitingGroupDisplay, setSecondWaitingGroupDisplay] = useState('');
+  const [secondWaitlistEntry, setSecondWaitingGroup] = useState(null);
+  const [secondWaitlistEntryDisplay, setSecondWaitingGroupDisplay] = useState('');
   // State for CTA data from global recompute
-  const [firstWaitingGroupData, setFirstWaitingGroupData] = useState(null);
-  const [secondWaitingGroupData, setSecondWaitingGroupData] = useState(null);
+  const [firstWaitlistEntryData, setFirstWaitingGroupData] = useState(null);
+  const [secondWaitlistEntryData, setSecondWaitingGroupData] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
@@ -966,8 +966,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         }
       }
     }
-    // 2) waitlist: scan waitingGroups
-    const wg = Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+    // 2) waitlist: scan waitlist
+    const wg = Array.isArray(data?.waitlist) ? data.waitlist : [];
     for (let i = 0; i < wg.length; i++) {
       const players = Array.isArray(wg[i]?.players) ? wg[i].players : [];
       for (const p of players) {
@@ -1510,8 +1510,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Check if player is next in waitlist
   const isPlayerNextInWaitlist = (playerId) => {
     const data = getCourtData();
-    if (data.waitingGroups.length > 0) {
-      const firstGroup = data.waitingGroups[0];
+    if (data.waitlist.length > 0) {
+      const firstGroup = data.waitlist[0];
       // API returns 'participants' with 'memberId'
       const participants = firstGroup.participants || firstGroup.players || [];
       return participants.some((p) => (p.memberId || p.member_id || p.id) === playerId);
@@ -2540,10 +2540,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       if (availableCourts.length > 0) {
         // Player is in first waiting group and courts are available
-        const firstWaitingGroup = data.waitingGroups[0];
+        const firstWaitlistEntry = data.waitlist[0];
 
         // Load the entire waiting group - API returns 'participants' with 'displayName'
-        const participants = firstWaitingGroup.participants || firstWaitingGroup.players || [];
+        const participants = firstWaitlistEntry.participants || firstWaitlistEntry.players || [];
         setCurrentGroup(
           participants.map((p) => ({
             id: p.memberId || p.member_id || p.id,
@@ -2553,7 +2553,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         );
 
         // Remove the group from waitlist
-        data.waitingGroups.shift();
+        data.waitlist.shift();
         const key = 'tennisClubData';
         const prev = Tennis.Storage?.readDataSafe
           ? Tennis.Storage.readDataSafe()
@@ -2584,10 +2584,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       if (availableCourts.length >= 2) {
         // Player is in second waiting group and there are at least 2 courts
-        const secondWaitingGroup = data.waitingGroups[1];
+        const secondWaitlistEntry = data.waitlist[1];
 
         // Load the entire waiting group - API returns 'participants' with 'displayName'
-        const participants = secondWaitingGroup.participants || secondWaitingGroup.players || [];
+        const participants = secondWaitlistEntry.participants || secondWaitlistEntry.players || [];
         setCurrentGroup(
           participants.map((p) => ({
             id: p.memberId || p.member_id || p.id,
@@ -2597,7 +2597,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         );
 
         // Remove the group from waitlist
-        data.waitingGroups.splice(1, 1); // Remove second group
+        data.waitlist.splice(1, 1); // Remove second entry
         const key = 'tennisClubData';
         const prev = Tennis.Storage?.readDataSafe
           ? Tennis.Storage.readDataSafe()
@@ -2653,7 +2653,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     let position = 0;
     if (!isCourtAssignment) {
       // Position in queue - use API position if available
-      position = waitlistPosition > 0 ? waitlistPosition : data.waitingGroups.length;
+      position = waitlistPosition > 0 ? waitlistPosition : data.waitlist.length;
 
       // Calculate estimated wait time based on court end times
       try {
@@ -3446,10 +3446,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 Waitlist Management
                 <span className="text-sm sm:text-lg font-normal text-gray-400 block sm:inline sm:ml-3">
-                  ({data.waitingGroups.length} groups waiting)
+                  ({data.waitlist.length} groups waiting)
                 </span>
               </h2>
-              {data.waitingGroups.length > 0 && (
+              {data.waitlist.length > 0 && (
                 <button
                   onClick={async () => {
                     const confirmClear = window.confirm(
@@ -3460,7 +3460,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                       let successCount = 0;
                       let failCount = 0;
 
-                      for (const group of data.waitingGroups) {
+                      for (const group of data.waitlist) {
                         if (!group.id) {
                           failCount++;
                           continue;
@@ -3494,7 +3494,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                 </button>
               )}
             </div>
-            {data.waitingGroups.length === 0 ? (
+            {data.waitlist.length === 0 ? (
               <p className="text-gray-500 text-center py-8 text-sm sm:text-base">
                 No groups in waitlist
               </p>
@@ -3506,7 +3506,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                       Moving group from position {waitlistMoveFrom + 1} to:
                     </p>
                     <div className="flex gap-2 flex-wrap mb-3">
-                      {data.waitingGroups.map((_, index) => {
+                      {data.waitlist.map((_, index) => {
                         const position = index + 1;
                         const isCurrentPosition = index === waitlistMoveFrom;
 
@@ -3516,13 +3516,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                             disabled={isCurrentPosition}
                             onClick={async () => {
                               // Reorder the waitlist
-                              const newWaitlist = [...data.waitingGroups];
+                              const newWaitlist = [...data.waitlist];
                               const [movedGroup] = newWaitlist.splice(waitlistMoveFrom, 1);
                               newWaitlist.splice(index, 0, movedGroup);
 
                               const result = await TennisDataService.saveData({
                                 ...data,
-                                waitingGroups: newWaitlist,
+                                waitlist: newWaitlist,
                               });
 
                               if (result.success) {
@@ -3552,7 +3552,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                     </button>
                   </div>
                 )}
-                {data.waitingGroups.map((group, index) => (
+                {data.waitlist.map((group, index) => (
                   <div
                     key={index}
                     className="bg-gray-700 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
@@ -3700,10 +3700,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         findMemberNumber={findMemberNumber}
         canFirstGroupPlay={canFirstGroupPlay}
         canSecondGroupPlay={canSecondGroupPlay}
-        firstWaitingGroup={firstWaitingGroup}
-        secondWaitingGroup={secondWaitingGroup}
-        firstWaitingGroupData={firstWaitingGroupData}
-        secondWaitingGroupData={secondWaitingGroupData}
+        firstWaitlistEntry={firstWaitlistEntry}
+        secondWaitlistEntry={secondWaitlistEntry}
+        firstWaitlistEntryData={firstWaitlistEntryData}
+        secondWaitlistEntryData={secondWaitlistEntryData}
         data={data}
         showAlert={showAlert}
         alertMessage={alertMessage}
@@ -4038,11 +4038,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                                 const availableCourts = getAvailableCourts(false);
 
                                 if (availableCourts.length > 0) {
-                                  const firstWaitingGroup = data.waitingGroups[0];
+                                  const firstWaitlistEntry = data.waitlist[0];
                                   // API returns 'participants' with 'displayName'
                                   const participants =
-                                    firstWaitingGroup.participants ||
-                                    firstWaitingGroup.players ||
+                                    firstWaitlistEntry.participants ||
+                                    firstWaitlistEntry.players ||
                                     [];
                                   setCurrentGroup(
                                     participants.map((p) => ({
@@ -4056,7 +4056,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
                                   setHasWaitlistPriority(true);
 
-                                  data.waitingGroups.shift();
+                                  data.waitlist.shift();
                                   saveCourtData(data);
 
                                   setAddPlayerSearch('');
@@ -4425,13 +4425,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               <div className={isMobileView ? 'flex-1 flex justify-center' : ''}>
                 {(() => {
                   // Check if there's a waitlist and if this group is not the first waiting group
-                  const waitingGroups = data?.waitingGroups || [];
-                  const hasWaitlist = waitingGroups.length > 0;
+                  const waitlistEntries = data?.waitlist || [];
+                  const hasWaitlist = waitlistEntries.length > 0;
 
                   // Check if current group is in the allowed positions (1st or 2nd when 2+ courts)
                   let groupWaitlistPosition = 0;
-                  for (let i = 0; i < waitingGroups.length; i++) {
-                    if (sameGroup(waitingGroups[i]?.players || [], currentGroup)) {
+                  for (let i = 0; i < waitlistEntries.length; i++) {
+                    if (sameGroup(waitlistEntries[i]?.players || [], currentGroup)) {
                       groupWaitlistPosition = i + 1; // 1-based position
                       break;
                     }
@@ -4551,7 +4551,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       selectable = overtimeCourts.map((c) => c.number);
     }
 
-    const hasWaiters = (data.waitingGroups?.length || 0) > 0;
+    const hasWaiters = (data.waitlist?.length || 0) > 0;
 
     // If user has waitlist priority, they should ONLY see FREE courts (not overtime)
     // Otherwise, only show courts when no one is waiting
@@ -4581,7 +4581,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       availableCourtsLength: availableCourts.length,
     });
 
-    const hasWaitingGroups = data.waitingGroups.length > 0;
+    const hasWaitlistEntries = data.waitlist.length > 0;
     const isFirstInWaitlist = currentGroup.some((player) => isPlayerNextInWaitlist(player.id));
 
     // Check if showing overtime courts
@@ -4668,8 +4668,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         <CourtSelectionScreen
           availableCourts={availableCourts}
           showingOvertimeCourts={showingOvertimeCourts}
-          hasWaitingGroups={hasWaitingGroups}
-          waitingGroupsCount={data.waitingGroups.length}
+          hasWaitingGroups={hasWaitlistEntries}
+          waitingGroupsCount={data.waitlist.length}
           currentGroup={currentGroup}
           isMobileView={isMobileView}
           getUpcomingBlockWarning={getUpcomingBlockWarning}
