@@ -35,7 +35,7 @@ const ClearCourtScreen = ({
   getCourtsOccupiedForClearing,
   courtData,
   CONSTANTS,
-  TennisBusinessLogic
+  TennisBusinessLogic,
 }) => {
   const clearableCourts = getCourtsOccupiedForClearing();
   const hasAny = clearableCourts.length > 0;
@@ -45,7 +45,7 @@ const ClearCourtScreen = ({
 
   // Auto-reset timer for success screens (step 3 and 4)
   const timerRef = useRef(null);
-  const timerStepRef = useRef(null);  // Track which step the timer was set for
+  const timerStepRef = useRef(null); // Track which step the timer was set for
 
   useEffect(() => {
     // Only set timer when on success screens (step 3 or 4)
@@ -56,13 +56,13 @@ const ClearCourtScreen = ({
         clearTimeout(timerRef.current);
       }
 
-      timerStepRef.current = clearCourtStep;  // Mark that we've set timer for this step
+      timerStepRef.current = clearCourtStep; // Mark that we've set timer for this step
       const timeoutMs = CONSTANTS?.AUTO_RESET_CLEAR_MS || 2000;
       console.log(`[ClearCourtScreen] Starting ${timeoutMs}ms timer for step ${clearCourtStep}`);
 
       timerRef.current = setTimeout(() => {
         console.log('[ClearCourtScreen] Auto-reset timer fired');
-        timerStepRef.current = null;  // Reset so we can set timer again if needed
+        timerStepRef.current = null; // Reset so we can set timer again if needed
         resetForm();
       }, timeoutMs);
     }
@@ -76,11 +76,14 @@ const ClearCourtScreen = ({
         timerStepRef.current = null;
       }
     };
-  }, [clearCourtStep]);  // Remove resetForm and CONSTANTS from deps - they cause re-renders
-  const occupiedCourts = clearableCourts.map(courtNumber => ({
+  }, [clearCourtStep]); // Remove resetForm and CONSTANTS from deps - they cause re-renders
+  const occupiedCourts = clearableCourts.map((courtNumber) => ({
     courtNumber,
-    players: data?.courts?.[courtNumber - 1]?.current?.players || data?.courts?.[courtNumber - 1]?.players || [],
-    isBlocked: false
+    players:
+      data?.courts?.[courtNumber - 1]?.session?.group?.players ||
+      data?.courts?.[courtNumber - 1]?.players ||
+      [],
+    isBlocked: false,
   }));
 
   // Step 1: Choose court to clear
@@ -90,7 +93,9 @@ const ClearCourtScreen = ({
         <ToastHost />
         <AlertDisplay show={showAlert} message={alertMessage} />
         <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-4xl">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">Choose a court to clear</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">
+            Choose a court to clear
+          </h2>
 
           {hasAny ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
@@ -108,7 +113,9 @@ const ClearCourtScreen = ({
               ))}
             </div>
           ) : (
-            <p className="text-center text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">No courts are currently in use.</p>
+            <p className="text-center text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">
+              No courts are currently in use.
+            </p>
           )}
 
           <div className="flex justify-center">
@@ -134,9 +141,10 @@ const ClearCourtScreen = ({
   if (clearCourtStep === 2) {
     // Find court by number (API may return courts in different order than array index)
     const courts = data.courts || [];
-    const court = courts.find(c => c.number === selectedCourtToClear) || courts[selectedCourtToClear - 1];
-    // Get players from session.players (API format), current.players (legacy), or top-level players
-    const players = court?.session?.players || court?.current?.players || court?.players || [];
+    const court =
+      courts.find((c) => c.number === selectedCourtToClear) || courts[selectedCourtToClear - 1];
+    // Get players from session.group.players (Domain format) or top-level players (fallback)
+    const players = court?.session?.group?.players || court?.players || [];
 
     // Debug logging
     console.log('🔍 ClearCourt Step 2 - selectedCourtToClear:', selectedCourtToClear);
@@ -144,10 +152,14 @@ const ClearCourtScreen = ({
     console.log('🔍 ClearCourt Step 2 - players array:', JSON.stringify(players, null, 2));
 
     // Handle players as array of strings or objects with name/displayName property
-    const displayNames = players.map(p => {
-      const name = typeof p === 'string' ? p : (p.name || p.displayName || p.display_name || 'Unknown');
-      return TennisBusinessLogic.formatPlayerDisplayName(name);
-    }).filter(Boolean).join(" and ");
+    const displayNames = players
+      .map((p) => {
+        const name =
+          typeof p === 'string' ? p : p.name || p.displayName || p.display_name || 'Unknown';
+        return TennisBusinessLogic.formatPlayerDisplayName(name);
+      })
+      .filter(Boolean)
+      .join(' and ');
 
     return (
       <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
@@ -167,7 +179,7 @@ const ClearCourtScreen = ({
                 setClearCourtStep(3);
 
                 // API call in background
-                clearCourt(selectedCourtToClear, 'Cleared').catch(error => {
+                clearCourt(selectedCourtToClear, 'Cleared').catch((error) => {
                   console.error('[ClearCourt] API error:', error);
                   // Error will be logged; Thank You screen auto-dismisses anyway
                 });
@@ -184,7 +196,7 @@ const ClearCourtScreen = ({
                 setClearCourtStep(4);
 
                 // API call in background
-                clearCourt(selectedCourtToClear, 'Observed-Cleared').catch(error => {
+                clearCourt(selectedCourtToClear, 'Observed-Cleared').catch((error) => {
                   console.error('[ClearCourt] API error:', error);
                   // Error will be logged; Thank You screen auto-dismisses anyway
                 });
@@ -231,7 +243,9 @@ const ClearCourtScreen = ({
             <Check size={48} className="text-white sm:w-16 sm:h-16" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thanks, have a great day!</h1>
-          <p className="text-lg sm:text-xl text-gray-600">Court {selectedCourtToClear} is now available</p>
+          <p className="text-lg sm:text-xl text-gray-600">
+            Court {selectedCourtToClear} is now available
+          </p>
         </div>
       </div>
     );
@@ -248,7 +262,9 @@ const ClearCourtScreen = ({
             <Check size={48} className="text-white sm:w-16 sm:h-16" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thank you!</h1>
-          <p className="text-lg sm:text-xl text-gray-600">Court {selectedCourtToClear} is now available</p>
+          <p className="text-lg sm:text-xl text-gray-600">
+            Court {selectedCourtToClear} is now available
+          </p>
         </div>
       </div>
     );

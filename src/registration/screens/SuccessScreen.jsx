@@ -35,15 +35,11 @@ const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
   <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] h-auto md:h-[550px]">
     {/* Fixed header area - only render if headerContent exists */}
     {headerContent && (
-      <div className="h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4">
-        {headerContent}
-      </div>
+      <div className="h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4">{headerContent}</div>
     )}
 
     {/* Fixed main content area - auto height on mobile, 310px on desktop */}
-    <div className="h-auto md:h-[310px] p-6 sm:p-8 flex flex-col justify-center">
-      {mainContent}
-    </div>
+    <div className="h-auto md:h-[310px] p-6 sm:p-8 flex flex-col justify-center">{mainContent}</div>
 
     {/* Fixed footer area - auto height on mobile, 160px on desktop */}
     <div className="h-auto md:h-[160px] px-6 sm:px-8 pb-6 sm:pb-8">
@@ -72,7 +68,7 @@ const SuccessScreen = ({
   onPurchaseBalls,
   onLookupMemberAccount,
   TENNIS_CONFIG,
-  getCourtBlockStatus
+  getCourtBlockStatus,
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
@@ -97,7 +93,7 @@ const SuccessScreen = ({
     loadBallPrice();
   }, [dataStore, TENNIS_CONFIG]);
 
-  const nonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
+  const nonGuestPlayers = currentGroup.filter((p) => !p.isGuest).length;
   const splitPrice = nonGuestPlayers > 0 ? ballPrice / nonGuestPlayers : ballPrice;
 
   // Get member's last 4 digits
@@ -109,10 +105,14 @@ const SuccessScreen = ({
 
   const handleBallPurchase = useCallback(async () => {
     try {
-      console.log('[handleBallPurchase] Starting purchase process:', { ballPurchaseOption, ballPrice, currentGroup });
+      console.log('[handleBallPurchase] Starting purchase process:', {
+        ballPurchaseOption,
+        ballPrice,
+        currentGroup,
+      });
 
       // Calculate nonGuestPlayers fresh in the callback
-      const currentNonGuestPlayers = currentGroup.filter(p => !p.isGuest).length;
+      const currentNonGuestPlayers = currentGroup.filter((p) => !p.isGuest).length;
       const isSplit = ballPurchaseOption === 'split';
 
       // Set purchase details for UI
@@ -120,13 +120,15 @@ const SuccessScreen = ({
         setPurchaseDetails({
           type: 'single',
           amount: ballPrice,
-          accounts: [getLastFourDigits(currentGroup[0]?.memberNumber)]
+          accounts: [getLastFourDigits(currentGroup[0]?.memberNumber)],
         });
       } else {
         setPurchaseDetails({
           type: 'split',
           amount: splitPrice,
-          accounts: currentGroup.filter(p => !p.isGuest).map(p => getLastFourDigits(p.memberNumber))
+          accounts: currentGroup
+            .filter((p) => !p.isGuest)
+            .map((p) => getLastFourDigits(p.memberNumber)),
         });
       }
 
@@ -142,9 +144,9 @@ const SuccessScreen = ({
       if (!primaryAccountId && onLookupMemberAccount && currentGroup[0]?.memberNumber) {
         try {
           const memberNumber = currentGroup[0].memberNumber;
-          const members = await onLookupMemberAccount(memberNumber) || [];
+          const members = (await onLookupMemberAccount(memberNumber)) || [];
           if (members.length > 0) {
-            const member = members.find(m => m.is_primary || m.isPrimary) || members[0];
+            const member = members.find((m) => m.is_primary || m.isPrimary) || members[0];
             primaryAccountId = member.account_id || member.accountId;
             console.log('[handleBallPurchase] Found accountId by member lookup:', primaryAccountId);
           }
@@ -154,7 +156,10 @@ const SuccessScreen = ({
       }
 
       if (onPurchaseBalls && sessionId && primaryAccountId) {
-        console.log('[handleBallPurchase] Using TennisBackend for purchase', { sessionId, primaryAccountId });
+        console.log('[handleBallPurchase] Using TennisBackend for purchase', {
+          sessionId,
+          primaryAccountId,
+        });
 
         // Get account IDs for split purchase
         let splitAccountIds = null;
@@ -180,7 +185,7 @@ const SuccessScreen = ({
         console.log('[handleBallPurchase] Cannot purchase balls - missing data:', {
           hasOnPurchaseBalls: !!onPurchaseBalls,
           sessionId,
-          primaryAccountId
+          primaryAccountId,
         });
       }
 
@@ -193,8 +198,10 @@ const SuccessScreen = ({
         if (!n) return '';
         const s = String(n);
         if (/^\*+/.test(s)) {
-          if (p.memberNumberRaw && !/^\*+/.test(String(p.memberNumberRaw))) return String(p.memberNumberRaw);
-          if (p.originalMemberNumber && !/^\*+/.test(String(p.originalMemberNumber))) return String(p.originalMemberNumber);
+          if (p.memberNumberRaw && !/^\*+/.test(String(p.memberNumberRaw)))
+            return String(p.memberNumberRaw);
+          if (p.originalMemberNumber && !/^\*+/.test(String(p.originalMemberNumber)))
+            return String(p.originalMemberNumber);
           return '';
         }
         return s;
@@ -206,16 +213,18 @@ const SuccessScreen = ({
         timestamp: new Date().toISOString(),
         type: ballPurchaseOption,
         amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice,
-        totalAmount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice * currentNonGuestPlayers,
+        totalAmount:
+          ballPurchaseOption === 'charge' ? ballPrice : splitPrice * currentNonGuestPlayers,
         players: (ballPurchaseOption === 'charge'
           ? [currentGroup[0]]
-          : currentGroup.filter(p => !p.isGuest)).map(p => ({
-            name: p?.name ?? '',
-            memberId: p?.memberId ?? p?.id ?? null,
-            memberNumber: getRawMemberNumber(p),
-            amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice
-          })),
-        courtNumber: justAssignedCourt
+          : currentGroup.filter((p) => !p.isGuest)
+        ).map((p) => ({
+          name: p?.name ?? '',
+          memberId: p?.memberId ?? p?.id ?? null,
+          memberNumber: getRawMemberNumber(p),
+          amount: ballPurchaseOption === 'charge' ? ballPrice : splitPrice,
+        })),
+        courtNumber: justAssignedCourt,
       };
 
       console.log('[handleBallPurchase] Purchase object:', purchase);
@@ -223,9 +232,11 @@ const SuccessScreen = ({
       // Get existing purchases and save
       let existingPurchases = [];
       if (window.Tennis?.DataStore) {
-        existingPurchases = await window.Tennis.DataStore.get('tennisBallPurchases') || [];
+        existingPurchases = (await window.Tennis.DataStore.get('tennisBallPurchases')) || [];
         existingPurchases.push(purchase);
-        await window.Tennis.DataStore.set('tennisBallPurchases', existingPurchases, { immediate: true });
+        await window.Tennis.DataStore.set('tennisBallPurchases', existingPurchases, {
+          immediate: true,
+        });
       } else {
         try {
           const stored = localStorage.getItem('tennisBallPurchases');
@@ -244,11 +255,30 @@ const SuccessScreen = ({
     } catch (error) {
       console.error('[handleBallPurchase] Error processing purchase:', error);
     }
-  }, [ballPurchaseOption, ballPrice, currentGroup, justAssignedCourt, splitPrice, getLastFourDigits, assignedCourt, onPurchaseBalls, onLookupMemberAccount]);
+  }, [
+    ballPurchaseOption,
+    ballPrice,
+    currentGroup,
+    justAssignedCourt,
+    splitPrice,
+    getLastFourDigits,
+    assignedCourt,
+    onPurchaseBalls,
+    onLookupMemberAccount,
+  ]);
 
   // Header content for both success types - hide for mobile flow
-  const isMobileFlow = window.__mobileFlow || window.__wasMobileFlow || (window.top !== window.self);
-  console.log('SUCCESS SCREEN DEBUG - Mobile Flow:', window.__mobileFlow, 'Was Mobile:', window.__wasMobileFlow, 'Is Embedded:', (window.top !== window.self), 'Final:', isMobileFlow);
+  const isMobileFlow = window.__mobileFlow || window.__wasMobileFlow || window.top !== window.self;
+  console.log(
+    'SUCCESS SCREEN DEBUG - Mobile Flow:',
+    window.__mobileFlow,
+    'Was Mobile:',
+    window.__wasMobileFlow,
+    'Is Embedded:',
+    window.top !== window.self,
+    'Final:',
+    isMobileFlow
+  );
 
   const headerContent = isMobileFlow ? null : (
     <div className="flex justify-between items-center h-full">
@@ -288,25 +318,28 @@ const SuccessScreen = ({
           {assignedCourt && (
             <>
               <p className="text-base sm:text-lg text-gray-600 mt-3">
-                Priority until{" "}
+                Priority until{' '}
                 <strong>
-                  {new Date(assignedCourt.current?.endTime || assignedCourt.endTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit"
+                  {new Date(
+                    assignedCourt.session?.scheduledEndAt || assignedCourt.endTime
+                  ).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
                   })}
                 </strong>
               </p>
               {isTimeLimited && (
-                <p className="text-sm text-gray-500 mt-1">
-                  (Remaining time from previous session)
-                </p>
+                <p className="text-sm text-gray-500 mt-1">(Remaining time from previous session)</p>
               )}
 
               {(() => {
                 const courtBlockStatus = getCourtBlockStatus(justAssignedCourt);
-                const sessionEndTime = new Date(assignedCourt.current?.endTime || assignedCourt.endTime);
+                const sessionEndTime = new Date(
+                  assignedCourt.session?.scheduledEndAt || assignedCourt.endTime
+                );
 
-                return courtBlockStatus && courtBlockStatus.isBlocked &&
+                return courtBlockStatus &&
+                  courtBlockStatus.isBlocked &&
                   new Date(courtBlockStatus.startTime) <= sessionEndTime ? (
                   <span className="text-orange-600 ml-2 block sm:inline">
                     (Limited due to {courtBlockStatus.reason})
@@ -315,7 +348,8 @@ const SuccessScreen = ({
               })()}
               {replacedGroup && replacedGroup.players && replacedGroup.players.length > 0 && (
                 <p className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
-                  Please courteously request {replacedGroup.players[0].name} and partners conclude their play
+                  Please courteously request {replacedGroup.players[0].name} and partners conclude
+                  their play
                 </p>
               )}
             </>
@@ -351,11 +385,15 @@ const SuccessScreen = ({
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-1">
             <Check size={16} className="text-green-600 sm:w-5 sm:h-5" />
             <p className="text-sm sm:text-base font-medium text-green-800">
-              Balls Added: ${purchaseDetails.type === 'single' ? ballPrice.toFixed(2) : `${splitPrice.toFixed(2)} each`}
+              Balls Added: $
+              {purchaseDetails.type === 'single'
+                ? ballPrice.toFixed(2)
+                : `${splitPrice.toFixed(2)} each`}
             </p>
           </div>
           <p className="text-xs sm:text-sm text-gray-600 text-center">
-            Charged to account{purchaseDetails.accounts.length > 1 ? 's' : ''}: {purchaseDetails.accounts.join(', ')}
+            Charged to account{purchaseDetails.accounts.length > 1 ? 's' : ''}:{' '}
+            {purchaseDetails.accounts.join(', ')}
           </p>
         </div>
       </div>
@@ -404,7 +442,7 @@ const SuccessScreen = ({
                   </div>
                 </label>
 
-                {currentGroup.filter(p => !p.isGuest).length > 1 && (
+                {currentGroup.filter((p) => !p.isGuest).length > 1 && (
                   <label
                     className={`block p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${
                       ballPurchaseOption === 'split'
@@ -424,7 +462,8 @@ const SuccessScreen = ({
                       <div>
                         <p className="font-medium text-sm sm:text-base">Split the balls</p>
                         <p className="text-xs sm:text-sm text-gray-600">
-                          ${splitPrice.toFixed(2)} per player ({currentGroup.filter(p => !p.isGuest).length} players)
+                          ${splitPrice.toFixed(2)} per player (
+                          {currentGroup.filter((p) => !p.isGuest).length} players)
                         </p>
                       </div>
                       <p className="text-lg sm:text-xl font-bold">${splitPrice.toFixed(2)} each</p>
@@ -478,7 +517,9 @@ const SuccessScreen = ({
       </div>
 
       <div className="bg-blue-50 rounded-2xl p-4 sm:p-6 text-center mb-4 sm:mb-6">
-        <p className="text-base sm:text-lg text-gray-600 mb-2 sm:mb-3">Your group has been registered</p>
+        <p className="text-base sm:text-lg text-gray-600 mb-2 sm:mb-3">
+          Your group has been registered
+        </p>
         {position > 2 ? (
           <p className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">
             There are <span className="text-blue-600">{position - 1} groups</span> ahead of you
@@ -500,7 +541,9 @@ const SuccessScreen = ({
         )}
       </div>
 
-      <p className="text-sm sm:text-base text-gray-500 text-center">Check the monitor for court updates</p>
+      <p className="text-sm sm:text-base text-gray-500 text-center">
+        Check the monitor for court updates
+      </p>
     </>
   );
 
