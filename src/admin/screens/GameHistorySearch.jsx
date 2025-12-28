@@ -6,6 +6,8 @@
  */
 import React, { useState } from 'react';
 import { FileText } from '../components';
+// TODO: Migrate to use TennisBackend pattern (see docs/LEGACY_MIGRATION.md)
+// eslint-disable-next-line no-restricted-imports
 import { ApiAdapter } from '../../lib/ApiAdapter.js';
 
 // Direct API adapter for session history queries
@@ -17,7 +19,7 @@ const GameHistorySearch = () => {
     playerName: '',
     startDate: '',
     endDate: '',
-    clearReason: ''
+    clearReason: '',
   });
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -46,21 +48,21 @@ const GameHistorySearch = () => {
 
       if (response.ok && response.sessions) {
         // Transform API response to component format
-        let results = response.sessions.map(session => ({
+        let results = response.sessions.map((session) => ({
           id: session.id,
           courtNumber: session.court_number,
           startTime: session.started_at,
           endTime: session.ended_at,
-          players: (session.participants || []).map(p => ({
+          players: (session.participants || []).map((p) => ({
             name: p.name || 'Unknown',
-            type: p.type
+            type: p.type,
           })),
-          clearReason: session.end_reason || 'Cleared'
+          clearReason: session.end_reason || 'Cleared',
         }));
 
         // Client-side filter by clearReason if specified
         if (searchFilters.clearReason) {
-          results = results.filter(r => r.clearReason === searchFilters.clearReason);
+          results = results.filter((r) => r.clearReason === searchFilters.clearReason);
         }
 
         setSearchResults(results);
@@ -83,7 +85,7 @@ const GameHistorySearch = () => {
       playerName: '',
       startDate: '',
       endDate: '',
-      clearReason: ''
+      clearReason: '',
     });
     setSearchResults([]);
     setHasSearched(false);
@@ -93,7 +95,7 @@ const GameHistorySearch = () => {
     return new Date(dateString).toLocaleTimeString([], {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
@@ -101,7 +103,7 @@ const GameHistorySearch = () => {
     return new Date(dateString).toLocaleDateString([], {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -115,12 +117,14 @@ const GameHistorySearch = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Court Number</label>
           <select
             value={searchFilters.courtNumber}
-            onChange={(e) => setSearchFilters(prev => ({ ...prev, courtNumber: e.target.value }))}
+            onChange={(e) => setSearchFilters((prev) => ({ ...prev, courtNumber: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Courts</option>
             {[...Array(12)].map((_, i) => (
-              <option key={i + 1} value={i + 1}>Court {i + 1}</option>
+              <option key={i + 1} value={i + 1}>
+                Court {i + 1}
+              </option>
             ))}
           </select>
         </div>
@@ -131,7 +135,7 @@ const GameHistorySearch = () => {
             type="text"
             placeholder="Search by player name..."
             value={searchFilters.playerName}
-            onChange={(e) => setSearchFilters(prev => ({ ...prev, playerName: e.target.value }))}
+            onChange={(e) => setSearchFilters((prev) => ({ ...prev, playerName: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -141,7 +145,7 @@ const GameHistorySearch = () => {
           <input
             type="date"
             value={searchFilters.startDate}
-            onChange={(e) => setSearchFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            onChange={(e) => setSearchFilters((prev) => ({ ...prev, startDate: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -151,7 +155,7 @@ const GameHistorySearch = () => {
           <input
             type="date"
             value={searchFilters.endDate}
-            onChange={(e) => setSearchFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            onChange={(e) => setSearchFilters((prev) => ({ ...prev, endDate: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -160,7 +164,7 @@ const GameHistorySearch = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Clear Reason</label>
           <select
             value={searchFilters.clearReason}
-            onChange={(e) => setSearchFilters(prev => ({ ...prev, clearReason: e.target.value }))}
+            onChange={(e) => setSearchFilters((prev) => ({ ...prev, clearReason: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Types</option>
@@ -257,19 +261,28 @@ const GameHistorySearch = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {(() => {
-                          const duration = Math.round((new Date(game.endTime) - new Date(game.startTime)) / (1000 * 60));
+                          const duration = Math.round(
+                            (new Date(game.endTime) - new Date(game.startTime)) / (1000 * 60)
+                          );
                           return `${duration} min`;
                         })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          game.clearReason === 'Auto-Cleared' ? 'bg-red-100 text-red-800' :
-                          game.clearReason === 'Bumped' ? 'bg-yellow-100 text-yellow-800' :
-                          game.clearReason === 'Observed-Cleared' ? 'bg-orange-100 text-orange-800' :
-                          game.clearReason === 'Cleared' ? 'bg-green-100 text-green-800' :
-                          game.clearReason === 'Admin-Cleared' ? 'bg-gray-100 text-gray-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                            game.clearReason === 'Auto-Cleared'
+                              ? 'bg-red-100 text-red-800'
+                              : game.clearReason === 'Bumped'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : game.clearReason === 'Observed-Cleared'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : game.clearReason === 'Cleared'
+                                    ? 'bg-green-100 text-green-800'
+                                    : game.clearReason === 'Admin-Cleared'
+                                      ? 'bg-gray-100 text-gray-800'
+                                      : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
                           {game.clearReason || 'Cleared'}
                         </span>
                       </td>

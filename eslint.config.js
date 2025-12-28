@@ -57,6 +57,26 @@ export default [
       'react-hooks/use-effect-event': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/immutability': 'off',
+
+    },
+  },
+  // Architecture boundary: UI components should use @lib/api, not raw ApiAdapter
+  // Only applies to .jsx files (React components), not .js services
+  {
+    files: ['**/*.jsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/ApiAdapter*'],
+              message:
+                'UI components should use @lib/api instead of ApiAdapter directly.',
+            },
+          ],
+        },
+      ],
     },
   },
   prettier,
