@@ -52,17 +52,16 @@ export function useTennisService(options = {}) {
 
           // Refresh the relevant data
           if (change.type === 'courts' || change.type === 'sessions' || change.type === 'blocks') {
-            service.getAllCourts().then(courts => {
+            service.getAllCourts().then((courts) => {
               if (mountedRef.current) setCourts(courts);
             });
           }
           if (change.type === 'waitlist') {
-            service.getWaitlist().then(waitlist => {
+            service.getWaitlist().then((waitlist) => {
               if (mountedRef.current) setWaitlist(waitlist);
             });
           }
         });
-
       } catch (err) {
         console.error('Failed to initialize tennis service:', err);
         if (mountedRef.current) {
@@ -83,9 +82,9 @@ export function useTennisService(options = {}) {
   // Computed Values
   // ===========================================
 
-  const availableCourts = courts.filter(c => c.isAvailable);
-  const occupiedCourts = courts.filter(c => c.isOccupied);
-  const blockedCourts = courts.filter(c => c.isBlocked);
+  const availableCourts = courts.filter((c) => c.isAvailable);
+  const occupiedCourts = courts.filter((c) => c.isOccupied);
+  const blockedCourts = courts.filter((c) => c.isBlocked);
 
   // ===========================================
   // Court Operations
@@ -225,7 +224,6 @@ export function useTennisService(options = {}) {
 
     // Utilities
     refresh,
-    service: serviceRef.current,
   };
 }
 
