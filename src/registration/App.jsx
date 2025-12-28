@@ -635,17 +635,17 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Create backup of all court history
       for (let index = 0; index < data.courts.length; index++) {
         const court = data.courts[index];
-        if (court && ((court.current && court.current.players) || court.players)) {
+        if (court && (court.session?.group?.players || court.players)) {
           const courtNumber = index + 1;
           const backupKey = `courtHistory_${courtNumber}`;
 
           // Get existing backup
           let courtBackup = (await dataStore.get(backupKey)) || [];
 
-          // Get current game data
-          const players = court.current?.players || court.players;
-          const startTime = court.current?.startTime || court.startTime;
-          const endTime = court.current?.endTime || court.endTime;
+          // Get current game data (Domain: session.group.players, session.startedAt, session.scheduledEndAt)
+          const players = court.session?.group?.players || court.players;
+          const startTime = court.session?.startedAt || court.startTime;
+          const endTime = court.session?.scheduledEndAt || court.endTime;
 
           if (players && players.length > 0 && startTime) {
             // Check if this game is already backed up
@@ -1439,8 +1439,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         const blockStatus = getCourtBlockStatus(index + 1);
         const isCurrentlyBlocked = blockStatus && blockStatus.isCurrent;
 
-        // Get start time from either structure (new or old)
-        const startTime = court.current?.startTime || court.startTime;
+        // Get start time (Domain: session.startedAt)
+        const startTime = court.session?.startedAt || court.startTime;
 
         // Check for overtime courts (only if not blocked and has start time)
         if (startTime && !isCurrentlyBlocked) {
@@ -1454,14 +1454,14 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             );
             hasChanges = true;
 
-            // Handle both structures when clearing
-            if (court.current) {
-              // New structure - preserve history
-              court.current = null;
+            // Handle Domain structure when clearing
+            if (court.session) {
+              // Domain structure - clear session
+              court.session = null;
               if (!court.history) court.history = [];
               // Could add to history here if needed
             } else {
-              // Old structure - mark as cleared
+              // Legacy structure - mark as cleared
               court.endTime = new Date().toISOString();
               court.wasCleared = true;
             }
@@ -1581,7 +1581,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       // Check if court is fully occupied or blocked right now
       const court = courts[i];
-      const isOccupied = court?.current && new Date(court.current.endTime) > new Date();
+      // Domain: use session.scheduledEndAt instead of current.endTime
+      const isOccupied = court?.session && new Date(court.session.scheduledEndAt) > new Date();
       const isBlocked = court?.blocked && new Date(court.blocked.startTime) <= new Date();
 
       if (!isOccupied && !isBlocked) {
@@ -4599,12 +4600,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Add wet court check if needed
 
       // Only count as unoccupied if it's truly free AND selectable
+      // Domain: use session instead of current, session.group.players instead of current.players
       const isTrulyFree =
         !court ||
         court.wasCleared ||
-        (court.current === null && court.history) ||
+        (!court.session && court.history) ||
         ((!court.players || court.players.length === 0) &&
-          (!court.current || !court.current.players || court.current.players.length === 0));
+          (!court.session?.group?.players || court.session.group.players.length === 0));
 
       // Additional check: must also be in the selectable courts list
       const isSelectable = availableCourts.includes(courtNumber);
