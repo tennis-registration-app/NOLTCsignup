@@ -1,5 +1,5 @@
 // Plain-JS fallback bar (emergency restoration)
-(function mountFallbackBar(){
+(function mountFallbackBar() {
   if (!window.IS_MOBILE_VIEW) return;
 
   const el = document.getElementById('mobile-bottom-bar-fallback');
@@ -7,7 +7,7 @@
 
   // Style & show
   el.hidden = false;
-  el.setAttribute('role','toolbar');
+  el.setAttribute('role', 'toolbar');
   el.className = 'mbb-fallback';
 
   /**
@@ -31,36 +31,40 @@
         if (!block) return null;
         const start = new Date(block.startTime || block.start);
         const end = new Date(block.endTime || block.end);
-        const courts = Array.isArray(block.courts) ? block.courts : [block.courtNumber].filter(Boolean);
+        const courts = Array.isArray(block.courts)
+          ? block.courts
+          : [block.courtNumber].filter(Boolean);
         const reason = block.reason || block.templateName || 'Reserved';
         if (!start || !end || courts.length === 0) return null;
         return { courts, start, end, reason };
       }
 
-      const startOfToday = new Date(now); startOfToday.setHours(0,0,0,0);
-      const endOfToday = new Date(now);   endOfToday.setHours(23,59,59,999);
+      const startOfToday = new Date(now);
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOfToday = new Date(now);
+      endOfToday.setHours(23, 59, 59, 999);
 
       const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
       const todayFuture = normalized
-        .filter(b => b.end > now && b.start <= endOfToday)
-        .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
-        .sort((a,b) => a.start - b.start);
+        .filter((b) => b.end > now && b.start <= endOfToday)
+        .map((b) => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
+        .sort((a, b) => a.start - b.start);
 
       const byKey = new Map();
       for (const b of todayFuture) {
         const k = `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
         if (!byKey.has(k)) byKey.set(k, { ...b, courts: new Set(b.courts) });
-        else b.courts.forEach(c => byKey.get(k).courts.add(c));
+        else b.courts.forEach((c) => byKey.get(k).courts.add(c));
       }
 
-      return Array.from(byKey.values()).map(v => ({
+      return Array.from(byKey.values()).map((v) => ({
         key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
-        courts: Array.from(v.courts).sort((a,b)=>a-b),
+        courts: Array.from(v.courts).sort((a, b) => a - b),
         start: v.start,
         end: v.end,
-        reason: v.reason
+        reason: v.reason,
       }));
-    } catch(e) {
+    } catch (e) {
       console.warn('Error in selectReservedSafe:', e);
       return [];
     }
@@ -125,7 +129,7 @@
       openModal('waitlist', {
         waitlistData: readWaitlistSafe(),
         courts: state.courts || [],
-        courtBlocks: state.courtBlocks || []
+        courtBlocks: state.courtBlocks || [],
       });
       return;
     }
@@ -153,7 +157,7 @@
 
   // Optional: listen for app events to toggle Join/Waitlist count
   const joinBtn = el.querySelector('button[data-action="join"]');
-  const wlBtn   = el.querySelector('button[data-action="waitlist"] .lbl');
+  const wlBtn = el.querySelector('button[data-action="waitlist"] .lbl');
 
   // Function to update Join/Clear button based on mobile registration status
   window.updateJoinButtonForMobile = function updateJoinButtonForMobile() {
@@ -173,17 +177,17 @@
         const court = courts[courtIndex];
 
         // Verify the user is actually on THIS specific court
-        // API returns court objects with session/players data
-        isActuallyOnCourt = court && (
-          court.isOccupied ||
-          (court.session && court.session.participants && court.session.participants.length > 0) ||
-          (court.players && court.players.length > 0)
-        );
+        // Domain format: session.group.players
+        isActuallyOnCourt =
+          court &&
+          (court.isOccupied ||
+            court.session?.group?.players?.length > 0 ||
+            court.session?.participants?.length > 0); // API wire format fallback
 
         console.debug(`[Mobile Clear Court Check] Court ${registeredCourt}:`, {
           hasCourts: courts.length > 0,
           court: court,
-          isActuallyOnCourt: isActuallyOnCourt
+          isActuallyOnCourt: isActuallyOnCourt,
         });
       } catch (e) {
         console.error('Error checking court occupation:', e);
@@ -194,7 +198,8 @@
     if (registeredCourt && isActuallyOnCourt) {
       // Change to Clear Court button - blue square like occupied courts, no emoji
       joinBtn.setAttribute('data-action', 'clear-court');
-      joinBtn.innerHTML = '<span class="lbl" style="font-size: 0.9em; line-height: 1.2;">Clear<br/>Court</span>';
+      joinBtn.innerHTML =
+        '<span class="lbl" style="font-size: 0.9em; line-height: 1.2;">Clear<br/>Court</span>';
       joinBtn.disabled = false;
       joinBtn.setAttribute('aria-disabled', 'false');
       joinBtn.style.background = 'rgb(147, 197, 253)'; // same blue as occupied courts
@@ -212,7 +217,7 @@
       // Let updateJoinButtonState handle the disabled state
       updateJoinButtonState();
     }
-  }
+  };
 
   // Function to check if waitlist join should be allowed
   function updateJoinButtonState() {
@@ -224,7 +229,8 @@
       const blocks = state.courtBlocks || [];
 
       // Check if there are available courts using availability domain
-      const Availability = window.Tennis?.Domain?.Availability || window.Tennis?.Domain?.availability;
+      const Availability =
+        window.Tennis?.Domain?.Availability || window.Tennis?.Domain?.availability;
       if (Availability && Availability.shouldAllowWaitlistJoin) {
         const wetSet = new Set(); // Assume no wet courts for now
         const hasWaitlist = waitingGroups.length > 0;
@@ -237,7 +243,7 @@
           data: data,
           now: new Date(),
           blocks: blocks,
-          wetSet: wetSet
+          wetSet: wetSet,
         });
 
         // New logic: enable when waitlist exists OR no courts available
@@ -247,7 +253,7 @@
         joinBtn.setAttribute('aria-disabled', String(!shouldAllow));
       } else {
         // Fallback: simple check based on occupied courts vs waiting groups
-        const occupiedCourts = courts.filter(c => c && c.isOccupied).length;
+        const occupiedCourts = courts.filter((c) => c && c.isOccupied).length;
         const totalCourts = 12;
 
         // Enable join if all courts occupied OR there are waiting groups

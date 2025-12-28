@@ -2796,16 +2796,16 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   if (currentScreen === 'admin') {
     const data = getCourtData();
     const now = new Date();
+    // Domain format: court.session.group.players, court.session.scheduledEndAt
     const occupiedCourts = data.courts.filter(
-      (court) => court !== null && court.players && court.players.length > 0 && !court.wasCleared
+      (court) => court !== null && court.session?.group?.players?.length > 0 && !court.wasCleared
     );
     const overtimeCourts = data.courts.filter(
       (court) =>
         court &&
-        court.players &&
-        court.players.length > 0 &&
+        court.session?.group?.players?.length > 0 &&
         !court.wasCleared &&
-        new Date(court.endTime) <= currentTime
+        new Date(court.session?.scheduledEndAt) <= currentTime
     );
 
     // Count only currently blocked courts
@@ -3313,19 +3313,22 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                 const isBlocked = blockStatus === 'current';
                 const isFutureBlock = blockStatus === 'future';
                 const isCleared = court && court.wasCleared;
-                const isOccupied = court && court.players && court.players.length > 0 && !isCleared;
+                // Domain format: court.session.group.players, court.session.scheduledEndAt
+                const sessionPlayers = court?.session?.group?.players;
+                const sessionEndTime = court?.session?.scheduledEndAt;
+                const isOccupied = court && sessionPlayers?.length > 0 && !isCleared;
                 const isOvertime =
                   court &&
-                  court.endTime &&
+                  sessionEndTime &&
                   !isBlocked &&
                   !isCleared &&
-                  new Date(court.endTime) <= currentTime;
+                  new Date(sessionEndTime) <= currentTime;
                 const timeRemaining =
-                  court && court.endTime && !isBlocked && !isCleared
+                  court && sessionEndTime && !isBlocked && !isCleared
                     ? Math.max(
                         0,
                         Math.floor(
-                          (new Date(court.endTime).getTime() - currentTime.getTime()) / 60000
+                          (new Date(sessionEndTime).getTime() - currentTime.getTime()) / 60000
                         )
                       )
                     : 0;
@@ -3389,9 +3392,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                         ) : isOccupied ? (
                           <div>
                             <div className="flex flex-col">
-                              {court.players.map((player, idx) => (
+                              {sessionPlayers.map((player, idx) => (
                                 <span key={idx} className="text-gray-300 text-xs sm:text-sm">
-                                  {player.name.split(' ').pop()}
+                                  {player.name?.split(' ').pop() ||
+                                    player.displayName?.split(' ').pop() ||
+                                    'Unknown'}
                                 </span>
                               ))}
                             </div>
@@ -4603,13 +4608,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Add wet court check if needed
 
       // Only count as unoccupied if it's truly free AND selectable
-      // Domain: use session instead of current, session.group.players instead of current.players
+      // Domain format: court.session.group.players
       const isTrulyFree =
         !court ||
         court.wasCleared ||
         (!court.session && court.history) ||
-        ((!court.players || court.players.length === 0) &&
-          (!court.session?.group?.players || court.session.group.players.length === 0));
+        !court.session?.group?.players?.length;
 
       // Additional check: must also be in the selectable courts list
       const isSelectable = availableCourts.includes(courtNumber);

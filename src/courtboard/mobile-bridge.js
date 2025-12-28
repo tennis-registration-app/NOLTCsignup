@@ -1,7 +1,7 @@
 // Mobile Bridge Script for CourtBoard
-(function boardMobileBridge(){
+(function boardMobileBridge() {
   // Mobile-only: only active when embedded
-  const MOBILE = (window.top !== window.self);
+  const MOBILE = window.top !== window.self;
 
   /**
    * Get Courtboard state from React (via window bridge).
@@ -12,7 +12,7 @@
   }
 
   // call this when an available court is tapped
-  window.mobileTapToRegister = function(courtNumber){
+  window.mobileTapToRegister = function (courtNumber) {
     if (!MOBILE) return false; // do nothing on desktop/iPad standalone
 
     // Check if user is already registered - show toast instead of registration
@@ -26,12 +26,12 @@
         const courtIndex = parseInt(registeredCourt, 10) - 1;
         const court = courts[courtIndex];
 
-        // Check if court is actually occupied (API returns isOccupied flag)
-        const isActuallyOnCourt = court && (
-          court.isOccupied ||
-          (court.session && court.session.participants && court.session.participants.length > 0) ||
-          (court.players && court.players.length > 0)
-        );
+        // Check if court is actually occupied (Domain format: session.group.players)
+        const isActuallyOnCourt =
+          court &&
+          (court.isOccupied ||
+            court.session?.group?.players?.length > 0 ||
+            court.session?.participants?.length > 0); // API wire format fallback
 
         if (!isActuallyOnCourt) {
           // Registration is stale - clear it and allow new registration
@@ -50,7 +50,10 @@
 
       // Only show toast if registration is still valid
       if (window.Tennis?.UI?.toast) {
-        window.Tennis.UI.toast(`You are currently registered for play on Court ${registeredCourt}`, { type: 'warning' });
+        window.Tennis.UI.toast(
+          `You are currently registered for play on Court ${registeredCourt}`,
+          { type: 'warning' }
+        );
       }
       return false; // Don't proceed with registration
     }
@@ -63,7 +66,9 @@
 
       if (waitingGroups.length > 0) {
         // Redirect to waitlist join instead of court selection
-        try { window.parent.postMessage({ type:'register', courtNumber: null }, '*'); } catch {}
+        try {
+          window.parent.postMessage({ type: 'register', courtNumber: null }, '*');
+        } catch {}
         return true;
       }
     } catch (e) {
@@ -71,12 +76,14 @@
     }
 
     // Normal behavior: select the court
-    try { window.parent.postMessage({ type:'register', courtNumber:Number(courtNumber) }, '*'); } catch {}
+    try {
+      window.parent.postMessage({ type: 'register', courtNumber: Number(courtNumber) }, '*');
+    } catch {}
     return true;
   };
 
   // Optional: highlight after success and handle mobile registration
-  window.addEventListener('message', e => {
+  window.addEventListener('message', (e) => {
     const d = e?.data;
     if (!d) return;
 
@@ -85,13 +92,15 @@
       const el = document.querySelector(`[data-court="${n}"]`);
       if (!el) return;
       el.classList.add('court-highlight');
-      setTimeout(()=> el.classList.remove('court-highlight'), 3000);
+      setTimeout(() => el.classList.remove('court-highlight'), 3000);
     } else if (d.type === 'mobile:registrationSuccess') {
       console.log('CourtBoard received mobile registration success for court:', d.courtNumber);
       // Fire DOM event for mobile bottom bar to listen to
-      document.dispatchEvent(new CustomEvent('mobile:registrationSuccess', {
-        detail: { courtNumber: Number(d.courtNumber) }
-      }));
+      document.dispatchEvent(
+        new CustomEvent('mobile:registrationSuccess', {
+          detail: { courtNumber: Number(d.courtNumber) },
+        })
+      );
     }
   });
 
@@ -123,7 +132,9 @@
       }
     } else {
       // Fallback to direct message if mobileTapToRegister not available
-      try { window.parent.postMessage({ type:'register', courtNumber: n }, '*'); } catch {}
+      try {
+        window.parent.postMessage({ type: 'register', courtNumber: n }, '*');
+      } catch {}
       ev.preventDefault();
     }
   });

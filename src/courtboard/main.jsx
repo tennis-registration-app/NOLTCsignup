@@ -1336,9 +1336,8 @@ function NextAvailablePanel({ courts, currentTime, waitlist = [], courtBlocks = 
         // Check if this is an overtime court (game has exceeded scheduled duration)
         if (endTime) {
           const parsedEndTime = new Date(endTime);
-          const hasPlayers =
-            (court.session?.group?.players && court.session.group.players.length > 0) ||
-            (court.players && court.players.length > 0);
+          // Domain format: session.group.players
+          const hasPlayers = court.session?.group?.players?.length > 0;
 
           if (hasPlayers && parsedEndTime <= currentTime) {
             overtimeCourts.push({
