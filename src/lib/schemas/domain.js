@@ -46,6 +46,7 @@ export const BlockSchema = z.object({
 
 // Court schema
 export const CourtSchema = z.object({
+  id: z.string(), // Court UUID (for API commands)
   number: z.number().refine((n) => COURT_NUMBERS.includes(n), {
     message: 'Invalid court number',
   }),

@@ -34,8 +34,7 @@ import { API_CONFIG } from '../lib/apiConfig.js';
 // Import shared waitlist normalization
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 
-// Import legacy adapter for Phase 1 migration
-import { toLegacyBoard } from '../lib/api/legacyAdapter.js';
+// toLegacyBoard removed - now using pure Domain Board directly
 
 // Import extracted UI components
 import {
@@ -423,9 +422,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log('[TennisBackend] Setting up board subscription...');
 
     const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
-      // Convert Domain Board to legacy shape for unmigrated components
-      // TODO: Migrate components to use Domain fields directly, then remove toLegacyBoard()
-      const board = toLegacyBoard(domainBoard, domainBoard._raw);
+      // PHASE2: Using pure Domain Board directly - toLegacyBoard removed
+      const board = domainBoard;
 
       console.log('[TennisBackend] Board update received:', {
         serverNow: board.serverNow,

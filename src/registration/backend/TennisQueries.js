@@ -33,7 +33,7 @@ export class TennisQueries {
 
   /**
    * Get current board state (courts, waitlist, operating hours)
-   * Returns pure Domain Board. Use toLegacyBoard() at UI entry points for legacy components.
+   * Returns pure Domain Board. UI components consume Domain objects directly.
    *
    * @returns {Promise<import('../../lib/types/domain.js').Board>}
    */

@@ -84,7 +84,11 @@ export function normalizeCourt(raw, serverNow) {
   const isOvertime = status === 'overtime' || (session?.isOvertime ?? false);
   const isAvailable = status === 'available' || (!isOccupied && !isBlocked);
 
+  // Get court UUID (required for API commands like assign-court)
+  const id = raw.court_id || raw.id || `court-${number}`;
+
   return {
+    id,
     number,
     isOccupied,
     isBlocked,

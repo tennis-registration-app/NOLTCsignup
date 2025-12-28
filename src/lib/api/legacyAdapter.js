@@ -1,22 +1,15 @@
 /**
- * Legacy Adapter — TEMPORARY BRIDGE
+ * Legacy Adapter — READY FOR DELETION
  *
- * @deprecated This adapter exists only to support legacy localStorage data.
+ * @deprecated This adapter is no longer used by App.jsx or main.jsx.
  *
- * REMOVAL CRITERIA (all must be true):
- * 1. All data flows through API (no localStorage reads for court/session data)
- * 2. TennisDataService.js is deleted (currently deprecated, not imported)
- * 3. All fallback chains removed from App.jsx and main.jsx
- * 4. Zero usages of: court.current, court.isUnoccupied, entry.participants, court.players
+ * MIGRATION COMPLETE:
+ * - App.jsx: Now uses pure Domain Board directly ✓
+ * - main.jsx: Now uses pure Domain Board directly ✓
+ * - court.id: Added to Domain normalization layer ✓
  *
- * CURRENT STATUS (as of Batch 2 migration):
- * - court.current: 0 usages ✓
- * - court.isUnoccupied: 0 usages ✓
- * - entry.participants: 0 usages ✓
- * - court.players: 0 usages ✓
- * - court.endTime: 4 fallback usages (acceptable)
- *
- * MIGRATION DEADLINE: Before Phase 2
+ * This file can be deleted once confirmed that no admin components need it.
+ * The toLegacyBoard function is still exported but has zero active callers.
  */
 
 import { logger } from '../logger.js';

@@ -20,7 +20,6 @@ import {
 // TennisBackend for real-time board subscription
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
-import { toLegacyBoard } from '../lib/api/legacyAdapter.js';
 const backend = createBackend();
 
 // Access shared utils from window for backward compatibility
@@ -614,9 +613,8 @@ function TennisCourtDisplay() {
     console.log('[Courtboard] Setting up TennisBackend subscription...');
 
     const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
-      // Convert Domain Board to legacy shape for unmigrated components
-      // TODO: Migrate components to use Domain fields directly, then remove toLegacyBoard()
-      const board = toLegacyBoard(domainBoard, domainBoard._raw);
+      // Use pure Domain Board directly (legacy adapter removed)
+      const board = domainBoard;
 
       console.log('[Courtboard] Board update received:', {
         serverNow: board.serverNow,

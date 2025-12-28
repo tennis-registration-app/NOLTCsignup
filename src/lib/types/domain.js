@@ -54,6 +54,7 @@
 /**
  * A court with its current state
  * @typedef {Object} Court
+ * @property {string} id - Court UUID (for API commands)
  * @property {number} number - Court number (1-12)
  * @property {boolean} isOccupied - True if has active session
  * @property {boolean} isBlocked - True if has active block
