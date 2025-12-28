@@ -316,7 +316,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       // Compute court categories using new availability flags
       // Exclude blocked courts from all selectable categories
-      const unoccupiedCourts = courts.filter((c) => c.isUnoccupied && !c.isBlocked);
+      const unoccupiedCourts = courts.filter((c) => c.isAvailable && !c.isBlocked);
       const overtimeCourts = courts.filter((c) => c.isOvertime && !c.isBlocked);
 
       // Selectable courts: unoccupied first, then overtime if no unoccupied
@@ -448,7 +448,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Update available courts (for court selection UI)
       // Exclude blocked courts from selectable list
       const selectable = (board.courts || [])
-        .filter((c) => (c.isUnoccupied || c.isOvertime) && !c.isBlocked)
+        .filter((c) => (c.isAvailable || c.isOvertime) && !c.isBlocked)
         .map((c) => c.number);
       setAvailableCourts(selectable);
 
@@ -458,7 +458,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         board.courts?.map((c) => ({
           num: c.number,
           isBlocked: c.isBlocked,
-          isUnoccupied: c.isUnoccupied,
+          isAvailable: c.isAvailable,
           isOvertime: c.isOvertime,
           block: c.block ? { id: c.block.id, reason: c.block.reason } : null,
         }))
@@ -1011,7 +1011,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     } else if (engagement.type === 'waitlist') {
       // Check if waitlist member can register based on available courts
       const courts = Array.isArray(data?.courts) ? data.courts : [];
-      const unoccupiedCount = courts.filter((c) => c.isUnoccupied).length;
+      const unoccupiedCount = courts.filter((c) => c.isAvailable).length;
       const overtimeCount = courts.filter((c) => c.isOvertime).length;
       const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
       const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
@@ -4541,7 +4541,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const courts = data.courts || [];
 
     // Compute court categories using availability flags
-    const unoccupiedCourts = courts.filter((c) => c.isUnoccupied);
+    const unoccupiedCourts = courts.filter((c) => c.isAvailable);
     const overtimeCourts = courts.filter((c) => c.isOvertime);
 
     // Selectable: unoccupied first, then overtime if no unoccupied
