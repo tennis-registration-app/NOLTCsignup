@@ -120,8 +120,8 @@ const _timers = [];
 
 // ---- Helpers for domain-based tile text ----
 function namesFor(courtObj) {
-  if (Array.isArray(courtObj?.current?.players)) {
-    return courtObj.current.players
+  if (Array.isArray(courtObj?.session?.group?.players)) {
+    return courtObj.session.group.players
       .map((p) => p?.name)
       .filter(Boolean)
       .join(', ');
@@ -155,7 +155,9 @@ function formatTime(dt) {
 
 function labelFor(status, courtObj) {
   if (status === 'occupied') {
-    const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
+    const end = courtObj?.session?.scheduledEndAt
+      ? new Date(courtObj.session.scheduledEndAt)
+      : null;
     const until = end
       ? `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
       : '';
@@ -189,7 +191,9 @@ function labelFor(status, courtObj) {
 
 function computeClock(status, courtObj, now) {
   if (status === 'occupied') {
-    const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
+    const end = courtObj?.session?.scheduledEndAt
+      ? new Date(courtObj.session.scheduledEndAt)
+      : null;
     if (end && end > now) {
       const mins = Math.max(0, Math.ceil((end - now) / 60000));
       return {
@@ -200,7 +204,7 @@ function computeClock(status, courtObj, now) {
     return { primary: 'Overtime', secondary: '' };
   }
   if (status === 'overtime') {
-    const start = courtObj?.current?.startTime ? new Date(courtObj.current.startTime) : null;
+    const start = courtObj?.session?.startedAt ? new Date(courtObj.session.startedAt) : null;
     if (start) {
       const minutesPlaying = Math.floor((now - start) / 60000);
       if (minutesPlaying >= 150) {
@@ -620,10 +624,13 @@ function TennisCourtDisplay() {
         waitlist: board.waitlist?.length,
       });
 
+      // Debug: log first 2 courts to see raw data
+      console.log('[Courtboard Debug] Raw board courts (first 2):', board.courts?.slice(0, 2));
+
       // Update courts state
       if (board.courts) {
-        // Transform API courts to legacy format for Courtboard rendering
-        // Legacy expects: courts[courtNumber-1] = { current: { players: [{name}], endTime, startTime } }
+        // Transform API courts to Domain format for Courtboard rendering
+        // Domain format: court.session = { group: { players }, scheduledEndAt, startedAt }
         const transformedCourts = Array(12)
           .fill(null)
           .map((_, idx) => {
@@ -635,18 +642,31 @@ function TennisCourtDisplay() {
             if (!apiCourt.session && !apiCourt.block) {
               return null; // No session or block
             }
+
+            const players = (
+              apiCourt.session?.participants ||
+              apiCourt.session?.group?.players ||
+              []
+            ).map((p) => ({
+              name: p.displayName || p.name || 'Unknown',
+            }));
+
             return {
-              current: apiCourt.session
+              session: apiCourt.session
                 ? {
-                    players: (apiCourt.session.participants || []).map((p) => ({
-                      name: p.displayName || p.name || 'Unknown',
-                    })),
-                    endTime: apiCourt.session.scheduledEndAt,
-                    startTime: apiCourt.session.startedAt,
+                    group: { players },
+                    scheduledEndAt: apiCourt.session.scheduledEndAt,
+                    startedAt: apiCourt.session.startedAt,
                   }
                 : null,
             };
           });
+
+        // Debug: log first 2 transformed courts
+        console.log(
+          '[Courtboard Debug] Transformed courts (first 2):',
+          transformedCourts.slice(0, 2)
+        );
         setCourts(transformedCourts);
 
         // Extract blocks from API response and update courtBlocks state
@@ -1051,9 +1071,9 @@ function CourtCard({
                 ) : (
                   <div className="flex-1"></div>
                 )}
-                {status === 'occupied' && cObj?.current?.endTime && (
+                {status === 'occupied' && cObj?.session?.scheduledEndAt && (
                   <div className="mt-auto text-sm opacity-90 text-center">
-                    Until {formatTime(cObj.current.endTime)}
+                    Until {formatTime(cObj.session.scheduledEndAt)}
                   </div>
                 )}
                 {status === 'overtime' && secondary && (
@@ -1292,8 +1312,8 @@ function NextAvailablePanel({ courts, currentTime, waitlist = [], courtBlocks = 
         blockingUntil = activeBlock.endTime;
       } else if (court) {
         // Court has players - check for overtime or regular game
-        if (court.current && court.current.endTime) {
-          endTime = court.current.endTime;
+        if (court.session && court.session.scheduledEndAt) {
+          endTime = court.session.scheduledEndAt;
         } else if (court.endTime) {
           endTime = court.endTime;
         }
@@ -1317,7 +1337,7 @@ function NextAvailablePanel({ courts, currentTime, waitlist = [], courtBlocks = 
         if (endTime) {
           const parsedEndTime = new Date(endTime);
           const hasPlayers =
-            (court.current && court.current.players && court.current.players.length > 0) ||
+            (court.session?.group?.players && court.session.group.players.length > 0) ||
             (court.players && court.players.length > 0);
 
           if (hasPlayers && parsedEndTime <= currentTime) {

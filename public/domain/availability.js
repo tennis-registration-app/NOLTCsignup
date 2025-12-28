@@ -14,8 +14,9 @@
   }
 
   function isOvertime(session, now) {
-    if (!session?.endTime) return false;
-    return coerceDate(session.endTime) <= now;   // strict "ended before or at now"
+    // Domain format: session.scheduledEndAt
+    if (!session?.scheduledEndAt) return false;
+    return coerceDate(session.scheduledEndAt) <= now;   // strict "ended before or at now"
   }
 
   function normalizeBlocks(arr) {
@@ -46,17 +47,13 @@
           continue;
         }
         
-        // Check if court is occupied (has any current session, regardless of timing)
+        // Check if court is occupied (has any active session, regardless of timing)
         let isOccupied = false;
         if (court) {
-          // Check new structure (court.current) - if it exists, court is not truly free
-          if (court.current) {
-            // Any current session means the court is not free for new assignment
+          // Domain format: court.session indicates an active session
+          if (court.session) {
+            // Any active session means the court is not free for new assignment
             // This includes both active sessions and overtime sessions
-            isOccupied = true;
-          }
-          // Check old structure (court.players) - fallback for legacy data
-          else if (court.players && court.players.length > 0) {
             isOccupied = true;
           }
         }
@@ -125,7 +122,7 @@
    * Rules:
    *  - Coerce any stored times with new Date(...)
    *  - Start base = now
-   *  - If the court is occupied and current.endTime > base, set base = current.endTime
+   *  - If the court is occupied and session.scheduledEndAt > base, set base = session.scheduledEndAt
    *  - While there exists a block for this court where block.startTime <= base < block.endTime,
    *    set base = block.endTime (and re-check; blocks can be adjacent/stacked)
    *  - Result for court n is that base
@@ -141,8 +138,9 @@
     for (let n = 1; n <= total; n++) {
       let base = new Date(now);
       const c = data?.courts?.[n - 1];
-      if (c?.current?.endTime) {
-        const end = new Date(c.current.endTime);
+      // Domain format: session.scheduledEndAt
+      if (c?.session?.scheduledEndAt) {
+        const end = new Date(c.session.scheduledEndAt);
         if (end > base) base = end;
       }
       // advance through overlapping blocks
@@ -184,8 +182,8 @@
       isUndefined: data === undefined,
       hasCourts: !!data?.courts,
       courtsLength: Array.isArray(data?.courts) ? data.courts.length : 'NOT_ARRAY',
-      courtsWithCurrent: Array.isArray(data?.courts) ? data.courts.filter(c => c?.current).length : 0,
-      firstCourtCurrent: data?.courts?.[0]?.current || null
+      courtsWithSession: Array.isArray(data?.courts) ? data.courts.filter(c => c?.session).length : 0,
+      firstCourtSession: data?.courts?.[0]?.session || null
     };
 
     // Process each court individually for deterministic classification
@@ -201,21 +199,22 @@
         const end = coerceDate(b.endTime || b.end);
         return start <= now && now < end;
       });
-      
+
       if (isWet || isBlocked) continue;
 
       const court = data.courts[i];
-      const current = court?.current;
-      
-      if (!current) { 
-        free.push(n); 
-        continue; 
+      // Domain format: court.session
+      const session = court?.session;
+
+      if (!session) {
+        free.push(n);
+        continue;
       }
 
-      if (isOvertime(current, now)) {
+      if (isOvertime(session, now)) {
         overtime.push(n);
       }
-      // If not overtime and has current session, it's occupied (not free or overtime)
+      // If not overtime and has session, it's occupied (not free or overtime)
     }
 
     // DEBUG: Log when we get suspicious results
@@ -395,29 +394,30 @@
     const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
     const free = info.free || [];
     const overtime = info.overtime || [];
-    
+
     // DEBUG: Log what we're returning to catch inappropriate selections
     const courtDetails = data?.courts?.map((c, i) => {
       const courtNum = i + 1;
-      const current = c?.current;
-      const endTime = current?.endTime;
+      // Domain format: court.session
+      const session = c?.session;
+      const endTime = session?.scheduledEndAt;
       const endDate = endTime ? new Date(endTime) : null;
       const isActive = endDate ? endDate > now : false;
-      
+
       return {
         court: courtNum,
-        hasCurrent: !!current,
+        hasSession: !!session,
         endTime: endTime ? endDate.toLocaleTimeString() : null,
         isActive,
-        players: current?.players?.length || 0,
+        players: session?.group?.players?.length || 0,
         inFreeList: free.includes(courtNum),
         inOvertimeList: overtime.includes(courtNum)
       };
     });
-    
+
     // Only log when something suspicious happens (all courts free or occupied courts in free list)
     const suspiciousLog = free.length >= 11 || courtDetails.some(c => c.isActive && c.inFreeList);
-    
+
     if (suspiciousLog) {
       console.log('🚨 [getSelectableCourtsStrict] SUSPICIOUS - ALL COURTS FREE!', {
         now: now.toLocaleTimeString(),
@@ -425,7 +425,7 @@
         overtime,
         courtDetails: courtDetails.map(c => ({
           court: c.court,
-          hasCurrent: c.hasCurrent,
+          hasSession: c.hasSession,
           endTime: c.endTime,
           isActive: c.isActive,
           players: c.players
@@ -440,7 +440,7 @@
         occupiedCourts: courtDetails.filter(c => c.isActive).map(c => `Court ${c.court} (until ${c.endTime})`)
       });
     }
-    
+
     return free.length > 0 ? free : overtime;
   }
 
