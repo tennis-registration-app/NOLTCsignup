@@ -9,6 +9,7 @@
  * - toPayload (convert to API format)
  */
 
+// Core commands
 export {
   AssignCourtCommandSchema,
   buildAssignCourtCommand,
@@ -29,3 +30,25 @@ export {
   preflightJoinWaitlist,
   toJoinWaitlistPayload,
 } from './joinWaitlist.js';
+
+// Admin commands
+export {
+  RemoveFromWaitlistCommandSchema,
+  buildRemoveFromWaitlistCommand,
+  preflightRemoveFromWaitlist,
+  toRemoveFromWaitlistPayload,
+} from './removeFromWaitlist.js';
+
+export {
+  CreateBlockCommandSchema,
+  buildCreateBlockCommand,
+  preflightCreateBlock,
+  toCreateBlockPayload,
+} from './createBlock.js';
+
+export {
+  DeleteBlockCommandSchema,
+  buildDeleteBlockCommand,
+  preflightDeleteBlock,
+  toDeleteBlockPayload,
+} from './deleteBlock.js';
