@@ -1,4 +1,7 @@
 /**
+ * @deprecated Use src/lib/normalize/normalizeBoard.js instead.
+ * This file is kept for backwards compatibility only.
+ *
  * Normalize waitlist entries from API to consistent internal shape.
  * Handles variations in field names and JSONB string parsing.
  *
@@ -27,8 +30,8 @@ export function normalizeWaitlist(waitlist) {
     }
 
     // Extract names with fallback chain
-    const names = participants.map(p =>
-      p?.displayName || p?.display_name || p?.name || p?.member_name || 'Unknown'
+    const names = participants.map(
+      (p) => p?.displayName || p?.display_name || p?.name || p?.member_name || 'Unknown'
     );
 
     // Extract player objects for CTA usage
@@ -36,8 +39,9 @@ export function normalizeWaitlist(waitlist) {
       id: `wl-${entry?.id || idx}-${i}`,
       name: p?.displayName || p?.display_name || p?.name || p?.member_name || 'Unknown',
       memberId: p?.memberId || p?.member_id || p?.id,
-      memberNumber: p?.memberId || p?.member_id || p?.member_number || String(entry?.position || idx),
-      isGuest: p?.isGuest || p?.is_guest || false
+      memberNumber:
+        p?.memberId || p?.member_id || p?.member_number || String(entry?.position || idx),
+      isGuest: p?.isGuest || p?.is_guest || false,
     }));
 
     return {
@@ -48,7 +52,7 @@ export function normalizeWaitlist(waitlist) {
       minutesWaiting: entry?.minutes_waiting || entry?.minutesWaiting,
       names,
       players,
-      raw: entry // Keep raw for debugging
+      raw: entry, // Keep raw for debugging
     };
   });
 }
