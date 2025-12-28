@@ -52,3 +52,10 @@ export {
   preflightDeleteBlock,
   toDeleteBlockPayload,
 } from './deleteBlock.js';
+
+export {
+  MoveCourtCommandSchema,
+  buildMoveCourtCommand,
+  preflightMoveCourt,
+  toMoveCourtPayload,
+} from './moveCourt.js';

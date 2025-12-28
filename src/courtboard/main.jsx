@@ -1989,40 +1989,35 @@ function MobileModalSheet({ type, payload, onClose }) {
             <button
               type="button"
               className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium"
-              onClick={() => {
-                // Use proper TennisDataService to clear court
-                if (window.TennisDataService && window.TennisDataService.clearCourt) {
-                  try {
-                    window.TennisDataService.clearCourt(Number(courtNumber));
-                    sessionStorage.removeItem('mobile-registered-court');
-                    window.parent.postMessage({ type: 'resetRegistration' }, '*');
-                    if (window.updateJoinButtonForMobile) {
-                      window.updateJoinButtonForMobile();
-                    }
-                    onClose();
-                  } catch (e) {
-                    console.error('Error clearing court:', e);
+              onClick={async () => {
+                try {
+                  // Get court ID from current board state
+                  const board = await backend.queries.getBoard();
+                  const court = board?.courts?.find((c) => c.number === Number(courtNumber));
+
+                  if (court?.id) {
+                    // Use API to end session
+                    await backend.commands.endSession({
+                      courtId: court.id,
+                      reason: 'completed',
+                    });
+                    console.log(`[Courtboard] Court ${courtNumber} cleared via API`);
+                  } else {
+                    console.warn(`[Courtboard] No court ID found for court ${courtNumber}`);
                   }
-                } else {
-                  // Fallback to manual clearing
-                  try {
-                    const key = 'tennisClubData';
-                    const data = JSON.parse(localStorage.getItem(key) || '{}');
-                    if (data.courts && data.courts[courtNumber - 1]) {
-                      data.courts[courtNumber - 1] = null;
-                      localStorage.setItem(key, JSON.stringify(data));
-                      window.dispatchEvent(new Event('tennisDataUpdate'));
-                      window.dispatchEvent(new Event('DATA_UPDATED'));
-                      sessionStorage.removeItem('mobile-registered-court');
-                      window.parent.postMessage({ type: 'resetRegistration' }, '*');
-                      if (window.updateJoinButtonForMobile) {
-                        window.updateJoinButtonForMobile();
-                      }
-                      onClose();
-                    }
-                  } catch (fallbackError) {
-                    console.error('Fallback clearing failed:', fallbackError);
+
+                  // Post-clear cleanup (mobile UI state)
+                  sessionStorage.removeItem('mobile-registered-court');
+                  window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                  if (window.updateJoinButtonForMobile) {
+                    window.updateJoinButtonForMobile();
                   }
+                  onClose();
+                } catch (e) {
+                  console.error('Error clearing court:', e);
+                  // Still close modal and update UI state on error
+                  sessionStorage.removeItem('mobile-registered-court');
+                  onClose();
                 }
               }}
             >

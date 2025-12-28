@@ -625,86 +625,18 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // return () => clearInterval(interval); /* disabled per policy */
   }, []); // Empty dependency array so it only sets up once
 
-  // Historical Data Protection System
-  // This backs up court game data for analytics and reporting purposes in Admin.html
-  // It does NOT restore data automatically - it only saves historical records
-  useEffect(() => {
-    const protectCourtHistory = async () => {
-      const data = await TennisDataService.loadData();
-      const now = new Date();
-
-      // Create backup of all court history
-      for (let index = 0; index < data.courts.length; index++) {
-        const court = data.courts[index];
-        if (court && (court.session?.group?.players || court.players)) {
-          const courtNumber = index + 1;
-          const backupKey = `courtHistory_${courtNumber}`;
-
-          // Get existing backup
-          let courtBackup = (await dataStore.get(backupKey)) || [];
-
-          // Get current game data (Domain: session.group.players, session.startedAt, session.scheduledEndAt)
-          const players = court.session?.group?.players || court.players;
-          const startTime = court.session?.startedAt || court.startTime;
-          const endTime = court.session?.scheduledEndAt || court.endTime;
-
-          if (players && players.length > 0 && startTime) {
-            // Check if this game is already backed up
-            const gameId = `${startTime}_${players.map((p) => p.id).join('_')}`;
-            const alreadyBacked = courtBackup.some((backup) => backup.gameId === gameId);
-
-            if (!alreadyBacked) {
-              // Add to backup
-              courtBackup.push({
-                gameId: gameId,
-                players: players,
-                startTime: startTime,
-                endTime: endTime,
-                backedUpAt: now.toISOString(),
-                courtNumber: courtNumber,
-              });
-
-              // Save backup
-              await dataStore.set(backupKey, courtBackup, { immediate: true });
-              console.log(`Backed up game history for court ${courtNumber}`);
-            }
-          }
-        }
-      }
-    };
-
-    // Run backup every 10 seconds
-    // DISABLED: protectCourtHistory is redundant now that StorageGuard prevents clobbering
-    // protectCourtHistory();
-    // const backupInterval = setInterval(protectCourtHistory, 10000);
-
-    // return () => clearInterval(backupInterval);
-  }, []);
+  // Historical Data Protection System - REMOVED
+  // Previously backed up court game data to localStorage for analytics.
+  // Now handled server-side via API session history.
 
   // REMOVED: Historical Data Restoration System
   // This was causing issues where cleared data would be automatically restored every 15 seconds.
   // We keep the Historical Data Protection System above for analytics purposes,
   // but we don't want to automatically restore cleared courts.
 
-  // Auto-cleanup expired blocks weekly
-  useEffect(() => {
-    const runBlockCleanup = () => {
-      const removed = TennisDataService.cleanupExpiredBlocks();
-      if (removed > 0) {
-        console.log(
-          `🧹 Weekly cleanup removed ${removed} expired blocks at ${new Date().toLocaleDateString()}`
-        );
-      }
-    };
-
-    // Run cleanup on app startup
-    runBlockCleanup();
-
-    // Run cleanup once a week (every 7 days)
-    const interval = setInterval(runBlockCleanup, 7 * 24 * 60 * 60 * 1000); // 7 days
-
-    return () => clearInterval(interval);
-  }, []);
+  // Block cleanup - REMOVED
+  // Previously cleaned up expired blocks from localStorage weekly.
+  // Now handled server-side — backend is authoritative for block state.
 
   // Constants
   const CONSTANTS = {
@@ -1490,23 +1422,19 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       }
     }
 
-    // Save changes if any courts were auto-cleared or sessions expired
-    if (hasChanges) {
-      TennisDataService.saveData(data);
-    }
+    // NOTE: saveData removed — auto-expire cleanup now handled by API/server
+    // hasChanges flag preserved for potential future use or logging
 
     return data;
   };
 
   // Save court data using the data service
-  const saveCourtData = async (data) => {
-    const result = await TennisDataService.saveData(data);
-
-    if (!result.success) {
-      showAlertMessage(result.error || 'Failed to save data');
-    }
-
-    return result.success;
+  // @deprecated — localStorage persistence removed; API commands handle state
+  const saveCourtData = async (_data) => {
+    // TennisDataService.saveData removed — API is source of truth
+    // Callers should migrate to TennisCommands for write operations
+    console.warn('[saveCourtData] DEPRECATED: localStorage persistence removed. Use API commands.');
+    return true; // Return success to avoid breaking callers during migration
   };
 
   // Check if player is next in waitlist
@@ -1564,38 +1492,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
   };
 
-  // ✅ NEW WRAPPER FUNCTION
-  const tryAssignCourtToGroup = () => {
-    const groupId = currentGroup
-      .map((p) => p.id)
-      .sort()
-      .join('-');
-    const data = TennisDataService.loadData();
-    const courts = data.courts;
-
-    for (let i = 0; i < courts.length; i++) {
-      const courtNumber = i + 1;
-
-      // Skip if group declined this court
-      if (declinedCourts[groupId]?.includes(courtNumber)) {
-        continue;
-      }
-
-      // Check if court is fully occupied or blocked right now
-      const court = courts[i];
-      // Domain: use session.scheduledEndAt instead of current.endTime
-      const isOccupied = court?.session && new Date(court.session.scheduledEndAt) > new Date();
-      const isBlocked = court?.blocked && new Date(court.blocked.startTime) <= new Date();
-
-      if (!isOccupied && !isBlocked) {
-        // Found an available court - assign it to the group
-        assignCourtToGroup(courtNumber);
-        return;
-      }
-    }
-
-    showAlertMessage('No suitable courts available at this time.');
-  };
+  // tryAssignCourtToGroup - REMOVED (was unused, contained localStorage read)
+  // Auto-assignment logic now handled via API-based court availability
 
   const assignCourtToGroup = async (courtNumber) => {
     // Prevent double-submit
@@ -3253,17 +3151,48 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                         key={targetCourtNum}
                         disabled={isOccupied || isCurrent}
                         onClick={async () => {
-                          const result = await TennisDataService.moveCourt(
-                            courtToMove,
-                            targetCourtNum
-                          );
+                          try {
+                            // Get court IDs from court numbers
+                            const fromCourt = data.courts[courtToMove - 1];
+                            const toCourt = data.courts[targetCourtNum - 1];
 
-                          if (result.success) {
-                            showAlertMessage(
-                              `Court ${courtToMove} moved to Court ${targetCourtNum}`
-                            );
-                          } else {
-                            showAlertMessage(result.error || 'Failed to move court');
+                            if (!fromCourt?.id) {
+                              showAlertMessage('Source court not found');
+                              setCourtToMove(null);
+                              return;
+                            }
+
+                            // For empty courts, get ID from API board
+                            let toCourtId = toCourt?.id;
+                            if (!toCourtId) {
+                              const board = await backend.queries.getBoard();
+                              const targetCourt = board?.courts?.find(
+                                (c) => c.number === targetCourtNum
+                              );
+                              toCourtId = targetCourt?.id;
+                            }
+
+                            if (!toCourtId) {
+                              showAlertMessage('Destination court not found');
+                              setCourtToMove(null);
+                              return;
+                            }
+
+                            const result = await backend.commands.moveCourt({
+                              fromCourtId: fromCourt.id,
+                              toCourtId: toCourtId,
+                            });
+
+                            if (result.ok) {
+                              showAlertMessage(
+                                `Court ${courtToMove} moved to Court ${targetCourtNum}`
+                              );
+                            } else {
+                              showAlertMessage(result.message || 'Failed to move court');
+                            }
+                          } catch (err) {
+                            console.error('[moveCourt] Error:', err);
+                            showAlertMessage(err.message || 'Failed to move court');
                           }
 
                           setCourtToMove(null);
@@ -3524,19 +3453,28 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                             disabled={isCurrentPosition}
                             onClick={async () => {
                               // Reorder the waitlist
-                              const newWaitlist = [...data.waitlist];
-                              const [movedGroup] = newWaitlist.splice(waitlistMoveFrom, 1);
-                              newWaitlist.splice(index, 0, movedGroup);
+                              // TODO: Replace with TennisCommands.reorderWaitlist({ entryId, newPosition })
+                              const movedGroup = data.waitlist[waitlistMoveFrom];
+                              const entryId = movedGroup?.id || movedGroup?.group?.id;
 
-                              const result = await TennisDataService.saveData({
-                                ...data,
-                                waitlist: newWaitlist,
-                              });
-
-                              if (result.success) {
-                                showAlertMessage(`Group moved to position ${position}`);
+                              if (entryId && window.Tennis?.Commands?.reorderWaitlist) {
+                                try {
+                                  await window.Tennis.Commands.reorderWaitlist({
+                                    entryId,
+                                    newPosition: index,
+                                  });
+                                  showAlertMessage(`Group moved to position ${position}`);
+                                } catch (err) {
+                                  showAlertMessage(err.message || 'Failed to move group');
+                                }
                               } else {
-                                showAlertMessage(result.error || 'Failed to move group');
+                                // Fallback: localStorage persistence removed
+                                console.warn(
+                                  '[Waitlist Reorder] API not available, action skipped'
+                                );
+                                showAlertMessage(
+                                  'Waitlist reorder requires API — feature temporarily unavailable'
+                                );
                               }
 
                               setWaitlistMoveFrom(null);
@@ -4710,24 +4648,42 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           }}
           onAssignNext={async () => {
             console.log('[ASSIGN NEXT] Button clicked');
-            const TD = window.TennisDataService || Tennis?.DataService;
-            console.log('[ASSIGN NEXT] TD service:', !!TD);
-            console.log(
-              '[ASSIGN NEXT] assignNextFromWaitlist method:',
-              !!TD?.assignNextFromWaitlist
-            );
-            if (!TD?.assignNextFromWaitlist) {
-              console.error('[ASSIGN NEXT] assignNextFromWaitlist method not found');
-              return;
-            }
-            const res = await TD.assignNextFromWaitlist();
-            console.log('[ASSIGN NEXT] Result:', res);
-            if (!res?.success) {
-              Tennis?.UI?.toast?.(res?.error || 'Failed assigning next', { type: 'error' });
-              showAlertMessage(res?.error || 'Failed assigning next');
-            } else {
-              Tennis?.UI?.toast?.(`Assigned next to Court ${res.court}`, { type: 'success' });
-              showAlertMessage(`Assigned next to Court ${res.court}`);
+            try {
+              // Get current board state
+              const board = await backend.queries.getBoard();
+
+              // Find first waiting entry
+              const firstWaiting = board?.waitlist?.find((e) => e.status === 'waiting');
+              if (!firstWaiting) {
+                showAlertMessage('No entries waiting in queue');
+                return;
+              }
+
+              // Find first available court
+              const availableCourt = board?.courts?.find((c) => c.isAvailable && !c.isBlocked);
+              if (!availableCourt) {
+                showAlertMessage('No courts available');
+                return;
+              }
+
+              // Assign using API
+              const res = await backend.commands.assignFromWaitlist({
+                waitlistEntryId: firstWaiting.id,
+                courtId: availableCourt.id,
+              });
+
+              if (res?.ok) {
+                Tennis?.UI?.toast?.(`Assigned to Court ${availableCourt.number}`, {
+                  type: 'success',
+                });
+                showAlertMessage(`Assigned to Court ${availableCourt.number}`);
+              } else {
+                Tennis?.UI?.toast?.(res?.message || 'Failed assigning next', { type: 'error' });
+                showAlertMessage(res?.message || 'Failed assigning next');
+              }
+            } catch (err) {
+              console.error('[ASSIGN NEXT] Error:', err);
+              showAlertMessage(err.message || 'Failed assigning next');
             }
           }}
           onGoBack={() => {

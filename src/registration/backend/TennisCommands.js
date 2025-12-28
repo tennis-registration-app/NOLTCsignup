@@ -22,6 +22,8 @@ import {
   buildAssignCourtCommand,
   buildEndSessionCommand,
   buildJoinWaitlistCommand,
+  buildMoveCourtCommand,
+  toMoveCourtPayload,
 } from '../../lib/commands/index.js';
 
 export class TennisCommands {
@@ -152,6 +154,25 @@ export class TennisCommands {
   async purchaseBalls(input) {
     const payload = toPurchaseBallsPayload(input);
     const response = await this.api.post('/purchase-balls', payload);
+    return response;
+  }
+
+  /**
+   * Move a session from one court to another
+   * @param {import('./types').MoveCourtInput} input
+   * @returns {Promise<import('./types').CommandResponse & { sessionId?: string, fromCourtId?: string, toCourtId?: string }>}
+   */
+  async moveCourt(input) {
+    // Validate command structure (fail-fast)
+    const command = buildMoveCourtCommand({
+      fromCourtId: input.fromCourtId,
+      toCourtId: input.toCourtId,
+    });
+
+    // Build payload using DTO mapper
+    const payload = toMoveCourtPayload(command);
+
+    const response = await this.api.post('/move-court', payload);
     return response;
   }
 

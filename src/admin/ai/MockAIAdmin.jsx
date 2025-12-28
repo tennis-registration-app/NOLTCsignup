@@ -26,6 +26,7 @@ const MockAIAdmin = ({
   updateBallPrice,
   waitingGroups,
   refreshData,
+  clearWaitlist,
 }) => {
   const [messages, setMessages] = useState([
     {
@@ -277,16 +278,17 @@ const MockAIAdmin = ({
         return '✓ All courts cleared';
 
       case 'clearWaitlist':
-        // Clear waitlist via service
-        const TD =
-          window.TennisDataService || window.Tennis?.DataService || window.Tennis?.Services?.Data;
-        if (typeof TD?.clearWaitlist === 'function') {
-          await TD.clearWaitlist({ source: 'admin' });
+        // Clear waitlist via API
+        if (typeof clearWaitlist === 'function') {
+          const result = await clearWaitlist();
+          if (!result?.ok) {
+            throw new Error(result?.message || 'Failed to clear waitlist');
+          }
+          refreshData();
+          return `✓ Waitlist cleared (${result.cancelledCount || 0} entries)`;
         } else {
-          throw new Error('No clearWaitlist service available');
+          throw new Error('clearWaitlist function not available');
         }
-        refreshData();
-        return '✓ Waitlist cleared';
 
       case 'movePlayers':
         const moveResult = await moveCourt(action.fromCourt, action.toCourt);
