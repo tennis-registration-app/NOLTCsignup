@@ -1,10 +1,10 @@
 /**
  * @fileoverview Wire format mappers for Edge Function payloads
- * 
+ *
  * This module translates TennisBackend canonical inputs to the current
  * Edge Function expected payloads. This isolates legacy compatibility
  * in one place.
- * 
+ *
  * TODO: Remove this module when Edge Functions are updated to target API.
  * Target API uses: courtNumber, billingMemberId, groupType (camelCase in JS, snake_case over wire)
  * Current API uses: court_number, billing_member_id, group_type, session_type, etc.
@@ -17,9 +17,9 @@
  */
 export function toAssignCourtPayload(input) {
   const payload = {
-    court_id: input.courtId,  // UUID of the court
-    session_type: input.groupType,  // 'singles' | 'doubles'
-    participants: input.participants.map(p => {
+    court_id: input.courtId, // UUID of the court
+    session_type: input.groupType, // 'singles' | 'doubles'
+    participants: input.participants.map((p) => {
       if (p.kind === 'member') {
         return {
           type: 'member',
@@ -58,14 +58,41 @@ export function toAssignCourtPayload(input) {
 }
 
 /**
+ * Map UI clear reasons to valid API end_reason values
+ * Valid API values: 'completed', 'cleared_early', 'admin_override'
+ * @param {string} reason - UI reason string
+ * @returns {string} Valid API end_reason
+ */
+function mapEndReason(reason) {
+  if (!reason) return 'completed';
+
+  // If already a valid value, pass through
+  if (['completed', 'cleared_early', 'admin_override'].includes(reason)) {
+    return reason;
+  }
+
+  const r = reason.toLowerCase();
+  if (['early', 'left', 'done', 'cleared'].some((k) => r.includes(k))) {
+    return 'cleared_early';
+  }
+  if (['observed', 'empty'].some((k) => r.includes(k))) {
+    return 'completed';
+  }
+  if (['admin', 'override', 'force'].some((k) => r.includes(k))) {
+    return 'admin_override';
+  }
+  return 'completed';
+}
+
+/**
  * Map EndSessionInput to current end-session payload
  * @param {import('./types').EndSessionInput} input
  * @returns {Object} Wire payload for /end-session
  */
 export function toEndSessionPayload(input) {
   return {
-    court_id: input.courtId,  // UUID of the court
-    end_reason: input.reason || 'completed',
+    court_id: input.courtId, // UUID of the court
+    end_reason: mapEndReason(input.reason || input.endReason),
   };
 }
 
@@ -76,8 +103,8 @@ export function toEndSessionPayload(input) {
  */
 export function toJoinWaitlistPayload(input) {
   const payload = {
-    group_type: input.groupType,  // 'singles' | 'doubles'
-    participants: input.participants.map(p => {
+    group_type: input.groupType, // 'singles' | 'doubles'
+    participants: input.participants.map((p) => {
       if (p.kind === 'member') {
         return {
           type: 'member',
@@ -131,7 +158,7 @@ export function toCancelWaitlistPayload(input) {
 export function toAssignFromWaitlistPayload(input) {
   const payload = {
     waitlist_id: input.waitlistEntryId,
-    court_id: input.courtId,  // UUID of the court
+    court_id: input.courtId, // UUID of the court
   };
 
   // Add geolocation for mobile device (required by backend for geofence validation)
@@ -159,7 +186,7 @@ export function toAssignFromWaitlistPayload(input) {
  */
 export function toCreateBlockPayload(input) {
   return {
-    court_id: input.courtId,  // UUID of the court
+    court_id: input.courtId, // UUID of the court
     block_type: input.blockType || 'maintenance',
     title: input.reason,
     starts_at: input.startTime,

@@ -287,7 +287,7 @@ const CourtStatusGrid = ({
             ...block,
             endTime: currentTimeNow.toISOString(),
             actualEndTime: currentTimeNow.toISOString(),
-            endReason: 'admin_cleared',
+            endReason: 'admin_override',
           };
         }
       }
