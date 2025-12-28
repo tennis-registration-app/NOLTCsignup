@@ -45,11 +45,11 @@ const APP = {
 };
 
 // --- Waiting selectors (CourtBoard) ---
-function selectWaitingGroups(data) {
-  return Array.isArray(data?.waitingGroups) ? data.waitingGroups : [];
+function selectWaitlist(data) {
+  return Array.isArray(data?.waitlist) ? data.waitlist : [];
 }
 function selectWaitingCount(data) {
-  return selectWaitingGroups(data).length;
+  return selectWaitlist(data).length;
 }
 
 // ---- Read-only guard (prevent accidental writes in this view) ----
@@ -545,7 +545,7 @@ function TennisCourtDisplay() {
   const isMobileView = window.IS_MOBILE_VIEW || false;
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courts, setCourts] = useState(Array(12).fill(null));
-  const [waitingGroups, setWaitingGroups] = useState([]);
+  const [waitlist, setWaitlist] = useState([]);
   const [courtBlocks, setCourtBlocks] = useState([]);
 
   // Time update
@@ -572,7 +572,7 @@ function TennisCourtDisplay() {
         setCourts(storedData.courts || Array(12).fill(null));
 
         // Normalize waitlist
-        const raw = Array.isArray(storedData?.waitingGroups) ? storedData.waitingGroups : [];
+        const raw = Array.isArray(storedData?.waitlist) ? storedData.waitlist : [];
         const normalized = raw
           .map((g, idx) => {
             const players = Array.isArray(g?.players) ? g.players : [];
@@ -580,7 +580,7 @@ function TennisCourtDisplay() {
             return names.length ? { id: g.id || `wg_${idx}`, names } : null;
           })
           .filter(Boolean);
-        setWaitingGroups(normalized);
+        setWaitlist(normalized);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -668,7 +668,7 @@ function TennisCourtDisplay() {
       console.log('[Courtboard] Raw waitlist from API:', board.waitlist);
       const normalized = normalizeWaitlist(board.waitlist);
       console.log('[Courtboard] Normalized waitlist:', normalized);
-      setWaitingGroups(normalized);
+      setWaitlist(normalized);
     });
 
     console.log('[Courtboard] TennisBackend subscription active');
@@ -695,10 +695,10 @@ function TennisCourtDisplay() {
     window.CourtboardState = {
       courts: courts,
       courtBlocks: courtBlocks,
-      waitingGroups: waitingGroups,
+      waitlist: waitlist,
       timestamp: Date.now(),
     };
-  }, [courts, courtBlocks, waitingGroups]);
+  }, [courts, courtBlocks, waitlist]);
 
   window.refreshBoard = loadData;
 
@@ -709,7 +709,7 @@ function TennisCourtDisplay() {
   // Build data object from React courts state for status computation
   const data = {
     courts: courts,
-    waitingGroups: waitingGroups.map((g) => ({
+    waitlist: waitlist.map((g) => ({
       id: g.id,
       players: g.names.map((n) => ({ name: n })),
     })),
@@ -740,7 +740,7 @@ function TennisCourtDisplay() {
     console.warn('Error building status map:', e);
   }
 
-  const hasWaiting = waitingGroups.length > 0;
+  const hasWaiting = waitlist.length > 0;
 
   return (
     <div className="h-screen min-h-screen bg-gradient-to-br from-slate-700 to-slate-600 p-4 text-white flex flex-col">
@@ -817,7 +817,7 @@ function TennisCourtDisplay() {
             {/* Bottom section */}
             <div className="bottom-section min-h-0 overflow-auto">
               <WaitingList
-                waitingGroups={waitingGroups}
+                waitlist={waitlist}
                 courts={courts}
                 currentTime={currentTime}
                 courtBlocks={courtBlocks}
@@ -859,7 +859,7 @@ function TennisCourtDisplay() {
               {hasWaiting && (
                 <div className="mobile-waiting-section">
                   <WaitingList
-                    waitingGroups={waitingGroups}
+                    waitlist={waitlist}
                     courts={courts}
                     currentTime={currentTime}
                     courtBlocks={courtBlocks}
@@ -875,7 +875,7 @@ function TennisCourtDisplay() {
           <NextAvailablePanel
             courts={courts}
             currentTime={currentTime}
-            waitingGroups={waitingGroups}
+            waitlist={waitlist}
             courtBlocks={courtBlocks}
           />
         </div>
@@ -1071,8 +1071,8 @@ function CourtCard({
 }
 
 // WaitingList Component (with proper wait time calculations)
-function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
-  console.log('[WaitingList] Received waitingGroups:', waitingGroups, 'courtBlocks:', courtBlocks);
+function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
+  console.log('[WaitingList] Received waitlist:', waitlist, 'courtBlocks:', courtBlocks);
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
 
@@ -1160,80 +1160,78 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
     <div className="bg-slate-700/50 p-4 rounded-xl backdrop-blur h-full overflow-hidden flex flex-col">
       <h3
         className={`font-bold mb-3 flex items-center justify-between ${
-          waitingGroups.length === 0 ? 'text-gray-400' : 'text-yellow-400'
+          waitlist.length === 0 ? 'text-gray-400' : 'text-yellow-400'
         }`}
       >
         <div className="flex items-center courtboard-text-xl">
-          <Users className={`mr-5 ${waitingGroups.length === 0 ? 'icon-grey' : ''}`} size={24} />
+          <Users className={`mr-5 ${waitlist.length === 0 ? 'icon-grey' : ''}`} size={24} />
           Waiting
         </div>
-        {waitingGroups.length > 0 && (
+        {waitlist.length > 0 && (
           <span className="courtboard-text-sm text-emerald-400 font-normal">Estimated Time</span>
         )}
       </h3>
 
-      {waitingGroups.length === 0 ? (
+      {waitlist.length === 0 ? (
         <div className="text-center flex-1 flex flex-col justify-start pt-8">
           <p className="text-gray-400 courtboard-text-base">No groups waiting</p>
           <p className="text-gray-500 courtboard-text-sm mt-4">Register at the iPad station</p>
         </div>
       ) : (
         <div className="space-y-2 overflow-y-auto mt-4">
-          {waitingGroups
-            .slice(0, TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4)
-            .map((group, idx) => {
-              // Check if this group can actually register now
-              const canRegisterNow = canGroupRegisterNow(idx);
+          {waitlist.slice(0, TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4).map((group, idx) => {
+            // Check if this group can actually register now
+            const canRegisterNow = canGroupRegisterNow(idx);
 
-              // Calculate proper estimated wait time
-              let estimatedWait = 0;
-              if (!canRegisterNow) {
-                estimatedWait = calculateEstimatedWaitTime(idx + 1);
-              }
+            // Calculate proper estimated wait time
+            let estimatedWait = 0;
+            if (!canRegisterNow) {
+              estimatedWait = calculateEstimatedWaitTime(idx + 1);
+            }
 
-              // Show "You're Up!" only if they can actually register now
-              const showAlert = canRegisterNow;
+            // Show "You're Up!" only if they can actually register now
+            const showAlert = canRegisterNow;
 
-              return (
-                <div
-                  key={idx}
-                  className={`flex items-center justify-between p-2 rounded-lg courtboard-text-sm ${
-                    idx === 0 && estimatedWait < 5
-                      ? 'bg-gradient-to-r from-green-600/30 to-green-500/30 border-2 border-green-400'
-                      : 'bg-slate-600/50'
-                  }`}
-                >
-                  <div className="flex items-center flex-1">
-                    <span className="courtboard-waiting-number font-bold mr-2 text-green-400">
-                      {idx + 1}.
+            return (
+              <div
+                key={idx}
+                className={`flex items-center justify-between p-2 rounded-lg courtboard-text-sm ${
+                  idx === 0 && estimatedWait < 5
+                    ? 'bg-gradient-to-r from-green-600/30 to-green-500/30 border-2 border-green-400'
+                    : 'bg-slate-600/50'
+                }`}
+              >
+                <div className="flex items-center flex-1">
+                  <span className="courtboard-waiting-number font-bold mr-2 text-green-400">
+                    {idx + 1}.
+                  </span>
+                  <div className="flex-1">
+                    <span className="courtboard-text-sm font-medium player-name">
+                      {(group.names || [])
+                        .map((name) => {
+                          const names = name.split(' ');
+                          return names[names.length - 1];
+                        })
+                        .join(' / ')}
                     </span>
-                    <div className="flex-1">
-                      <span className="courtboard-text-sm font-medium player-name">
-                        {(group.names || [])
-                          .map((name) => {
-                            const names = name.split(' ');
-                            return names[names.length - 1];
-                          })
-                          .join(' / ')}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {showAlert && (
-                      <div className="flex items-center text-yellow-400 animate-pulse">
-                        <AlertCircle className="mr-1" size={16} />
-                        <span className="courtboard-text-xs font-bold">You're Up!</span>
-                      </div>
-                    )}
-                    {!showAlert && (
-                      <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
-                        {estimatedWait} min
-                      </div>
-                    )}
                   </div>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-2">
+                  {showAlert && (
+                    <div className="flex items-center text-yellow-400 animate-pulse">
+                      <AlertCircle className="mr-1" size={16} />
+                      <span className="courtboard-text-xs font-bold">You're Up!</span>
+                    </div>
+                  )}
+                  {!showAlert && (
+                    <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
+                      {estimatedWait} min
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -1241,14 +1239,14 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
 }
 
 // NextAvailablePanel Component (full implementation from legacy)
-function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBlocks = [] }) {
+function NextAvailablePanel({ courts, currentTime, waitlist = [], courtBlocks = [] }) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
 
   // Convert React courts state to the data format expected by availability functions
   const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
 
   // Calculate court availability timeline
-  const getCourtAvailabilityTimeline = (waitingGroups = []) => {
+  const getCourtAvailabilityTimeline = (waitlist = []) => {
     if (!courts || !Array.isArray(courts)) {
       return [];
     }
@@ -1372,7 +1370,7 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
         );
         const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
         const emptyCount = info.free ? info.free.length : 0;
-        const waitingCount = waitingGroups.length;
+        const waitingCount = waitlist.length;
 
         // If there are surplus empty courts, overtime courts aren't truly "available now"
         if (emptyCount > waitingCount) {
@@ -1387,7 +1385,7 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
     return [...filteredOvertimeCourts, ...courtAvailability];
   };
 
-  const timeline = getCourtAvailabilityTimeline(waitingGroups);
+  const timeline = getCourtAvailabilityTimeline(waitlist);
 
   // Calculate if courts are available after serving the waitlist
   let emptyCourtCount = 0;
@@ -1408,7 +1406,7 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
   }
 
   // Modified logic: Show "available now" if more empty courts than waiting groups
-  const surplusCourts = emptyCourtCount - waitingGroups.length;
+  const surplusCourts = emptyCourtCount - waitlist.length;
   const hasAvailableNow = surplusCourts > 0;
 
   // Check club hours for closed message
