@@ -1,11 +1,22 @@
 /**
  * Legacy Adapter — TEMPORARY BRIDGE
  *
- * @deprecated This adapter exists only to support legacy components.
- * DO NOT use in new code. Migrate components to use Domain fields directly.
+ * @deprecated This adapter exists only to support legacy localStorage data.
  *
- * MIGRATION DEADLINE: End of Phase 1
- * MIGRATION CHECKLIST: See docs/LEGACY_MIGRATION.md
+ * REMOVAL CRITERIA (all must be true):
+ * 1. All data flows through API (no localStorage reads for court/session data)
+ * 2. TennisDataService.js is deleted (currently deprecated, not imported)
+ * 3. All fallback chains removed from App.jsx and main.jsx
+ * 4. Zero usages of: court.current, court.isUnoccupied, entry.participants, court.players
+ *
+ * CURRENT STATUS (as of Batch 2 migration):
+ * - court.current: 0 usages ✓
+ * - court.isUnoccupied: 0 usages ✓
+ * - entry.participants: 0 usages ✓
+ * - court.players: 0 usages ✓
+ * - court.endTime: 4 fallback usages (acceptable)
+ *
+ * MIGRATION DEADLINE: Before Phase 2
  */
 
 import { logger } from '../logger.js';
