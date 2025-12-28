@@ -1,6 +1,6 @@
 /**
  * @fileoverview TennisCommands - Mutation operations
- * 
+ *
  * All mutations go through Edge Functions.
  * Uses wire.js mappers to translate canonical inputs to current API payloads.
  * Returns { ok, ...data } or { ok: false, code, message, serverNow }
@@ -16,6 +16,13 @@ import {
   toCancelBlockPayload,
   toPurchaseBallsPayload,
 } from './wire.js';
+
+// Command DTO validation (fail-fast before API call)
+import {
+  buildAssignCourtCommand,
+  buildEndSessionCommand,
+  buildJoinWaitlistCommand,
+} from '../../lib/commands/index.js';
 
 export class TennisCommands {
   constructor(apiAdapter, directory = null) {
@@ -48,6 +55,16 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse>}
    */
   async endSession(input) {
+    // Validate command structure (fail-fast)
+    // Note: EndSessionCommand uses sessionId, but wire.js uses courtId
+    // The backend finds the session by court
+    if (input.sessionId) {
+      buildEndSessionCommand({
+        sessionId: input.sessionId,
+        endReason: input.reason || 'completed',
+      });
+    }
+
     const payload = toEndSessionPayload(input);
     const response = await this.api.post('/end-session', payload);
     return response;
@@ -210,7 +227,7 @@ export class TennisCommands {
       }
     } else {
       // All guests, no members - error
-      const hasGuest = participants.some(p => p.accountId === '__NEEDS_ACCOUNT__');
+      const hasGuest = participants.some((p) => p.accountId === '__NEEDS_ACCOUNT__');
       if (hasGuest) {
         throw new Error('Cannot register guests without a member');
       }
@@ -233,9 +250,33 @@ export class TennisCommands {
    * @param {number} [params.longitude] - For mobile geofence validation
    * @returns {Promise<import('./types').CommandResponse & { session?: Object }>}
    */
-  async assignCourtWithPlayers({ courtId, players, groupType, addBalls = false, splitBalls = false, latitude, longitude }) {
+  async assignCourtWithPlayers({
+    courtId,
+    players,
+    groupType,
+    addBalls = false,
+    splitBalls = false,
+    latitude,
+    longitude,
+  }) {
+    // 1. Validate command structure (fail-fast)
+    const validPlayers = players.map((p) => ({
+      memberId: p.memberId || p.member_id || p.id || '',
+      displayName: p.displayName || p.display_name || p.name || '',
+      isGuest: p.isGuest ?? p.is_guest ?? false,
+    }));
+
+    buildAssignCourtCommand({
+      courtId,
+      players: validPlayers,
+      groupType,
+      durationMinutes: 60, // Default duration for validation
+    });
+
+    // 2. Resolve players to participants (member lookup)
     const participants = await this.resolvePlayersToParticipants(players);
 
+    // 3. Send to API
     return this.assignCourt({
       courtId,
       participants,
@@ -259,8 +300,22 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse & { entry?: Object, position?: number }>}
    */
   async joinWaitlistWithPlayers({ players, groupType, latitude, longitude }) {
+    // 1. Validate command structure (fail-fast)
+    const validPlayers = players.map((p) => ({
+      memberId: p.memberId || p.member_id || p.id || '',
+      displayName: p.displayName || p.display_name || p.name || '',
+      isGuest: p.isGuest ?? p.is_guest ?? false,
+    }));
+
+    buildJoinWaitlistCommand({
+      players: validPlayers,
+      groupType,
+    });
+
+    // 2. Resolve players to participants (member lookup)
     const participants = await this.resolvePlayersToParticipants(players);
 
+    // 3. Send to API
     return this.joinWaitlist({
       participants,
       groupType,

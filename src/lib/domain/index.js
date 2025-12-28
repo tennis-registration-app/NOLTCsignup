@@ -21,3 +21,9 @@ export {
   findWaitlistEntryByMember,
   getGroupTypeLabel,
 } from './waitlistHelpers.js';
+
+export {
+  findEngagementByMemberId,
+  buildEngagementIndex,
+  getEngagementMessage,
+} from './engagement.js';
