@@ -34,6 +34,9 @@ import { API_CONFIG } from '../lib/apiConfig.js';
 // Import shared waitlist normalization
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 
+// Import Domain engagement helpers
+import { findEngagementByMemberId, getEngagementMessage } from '../lib/domain/engagement.js';
+
 // toLegacyBoard removed - now using pure Domain Board directly
 
 // Import extracted UI components
@@ -986,49 +989,42 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   }
 
   function guardAddPlayerEarly(player) {
-    const R = window.Tennis?.Domain?.roster;
+    // Get memberId from player (API members have id = memberId)
+    const memberId = player?.memberId || player?.id;
 
-    // Use API data from React state
-    const data = window.__registrationData || {};
-
-    // Enrich the player with memberId if possible
-    const enriched = R?.enrichPlayersWithIds
-      ? R.enrichPlayersWithIds([player], window.__memberRoster)[0]
-      : player;
-
-    // Use hybrid detection
-    const engagement = R?.findEngagementFor
-      ? R.findEngagementFor(enriched, data)
-      : __findEngagementFor(player, data);
+    // Use current board state from React
+    const board = window.__registrationData || {};
 
     if (DEBUG) {
       console.log('[guardAddPlayerEarly] Checking player:', player);
-      console.log('[guardAddPlayerEarly] Enriched player:', enriched);
-      console.log('[guardAddPlayerEarly] Data:', data);
+      console.log('[guardAddPlayerEarly] memberId:', memberId);
+      console.log('[guardAddPlayerEarly] Board courts:', board.courts?.length);
+    }
+
+    // Use Domain engagement lookup (memberId-based, not name-based)
+    const engagement = findEngagementByMemberId(board, memberId);
+
+    if (DEBUG) {
       console.log('[guardAddPlayerEarly] Engagement found:', engagement);
     }
 
     if (!engagement) return true;
 
-    const display = (enriched?.name || player?.name || player || '').toString().trim();
-    if (engagement.type === 'playing') {
-      Tennis.UI.toast(`${display} is already playing on Court ${engagement.court}`);
-      return false;
-    } else if (engagement.type === 'waitlist') {
-      // Check if waitlist member can register based on available courts
-      const courts = Array.isArray(data?.courts) ? data.courts : [];
+    // Check if waitlist member can register based on available courts
+    if (engagement.kind === 'waitlist') {
+      const courts = Array.isArray(board?.courts) ? board.courts : [];
       const unoccupiedCount = courts.filter((c) => c.isAvailable).length;
       const overtimeCount = courts.filter((c) => c.isOvertime).length;
       const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
       const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
 
-      if (engagement.position <= maxAllowedPosition) {
+      if (engagement.waitlistPosition <= maxAllowedPosition) {
         return true; // Allow this waitlist member to register
       }
-
-      Tennis.UI.toast(`${display} is already on the waitlist (position ${engagement.position})`);
-      return false;
     }
+
+    // Show toast with engagement message and block
+    Tennis.UI.toast(getEngagementMessage(engagement));
     return false;
   }
 

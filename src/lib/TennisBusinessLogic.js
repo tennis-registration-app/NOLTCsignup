@@ -119,57 +119,50 @@ export const TennisBusinessLogic = {
     // Defensive: if data is missing or malformed, player is not playing
     if (!data) return { isPlaying: false };
 
-    // Check courts
+    // Check courts (Domain format: court.session.group.players)
     const courts = data.courts || [];
-    for (let i = 0; i < courts.length; i++) {
-      const court = courts[i];
-
-      // Check old structure
-      if (court && court.players && court.players.some((player) => player.id === playerId)) {
-        const player = court.players.find((p) => p.id === playerId);
-        return {
-          isPlaying: true,
-          location: 'court',
-          courtNumber: i + 1,
-          playerName: player ? player.name : 'Player',
-        };
-      }
-
-      // Check Domain format: court.session.group.players
+    for (const court of courts) {
       const sessionPlayers = court?.session?.group?.players;
-      if (sessionPlayers && sessionPlayers.some((player) => player.id === playerId)) {
-        const player = sessionPlayers.find((p) => p.id === playerId);
-        return {
-          isPlaying: true,
-          location: 'court',
-          courtNumber: i + 1,
-          playerName: player ? player.name : 'Player',
-        };
+      if (sessionPlayers) {
+        // Domain uses memberId, not id
+        const player = sessionPlayers.find((p) => p.memberId === playerId);
+        if (player) {
+          return {
+            isPlaying: true,
+            location: 'court',
+            courtNumber: court.number,
+            playerName: player.displayName || 'Player',
+          };
+        }
       }
     }
 
-    // Check waiting groups
-    const waitingGroups = data.waitingGroups || [];
-    for (let i = 0; i < waitingGroups.length; i++) {
-      const group = waitingGroups[i];
-      if (group && group.players && group.players.some((player) => player.id === playerId)) {
-        const player = group.players.find((p) => p.id === playerId);
-        return {
-          isPlaying: true,
-          location: 'waiting',
-          position: i + 1,
-          playerName: player ? player.name : 'Player',
-        };
+    // Check waitlist (Domain format: data.waitlist[].group.players)
+    const waitlist = data.waitlist || [];
+    for (let i = 0; i < waitlist.length; i++) {
+      const entry = waitlist[i];
+      const players = entry?.group?.players;
+      if (players) {
+        // Domain uses memberId, not id
+        const player = players.find((p) => p.memberId === playerId);
+        if (player) {
+          return {
+            isPlaying: true,
+            location: 'waiting',
+            position: entry.position || i + 1,
+            playerName: player.displayName || 'Player',
+          };
+        }
       }
     }
 
-    // Check current group
+    // Check current group (uses id from UI layer)
     if (currentGroup && currentGroup.some((player) => player.id === playerId)) {
       const player = currentGroup.find((p) => p.id === playerId);
       return {
         isPlaying: true,
         location: 'current',
-        playerName: player ? player.name : 'Player',
+        playerName: player?.name || player?.displayName || 'Player',
       };
     }
 
