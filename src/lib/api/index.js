@@ -6,3 +6,6 @@
  */
 
 export { getBoard, transformBoardUpdate, setApiAdapter } from './boardApi.js';
+
+// Legacy adapter — TEMPORARY, remove after migration
+export { toLegacyBoard, getLegacyAccessCount, resetLegacyAccessCount } from './legacyAdapter.js';

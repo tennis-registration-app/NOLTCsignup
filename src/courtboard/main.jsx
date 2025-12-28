@@ -14,12 +14,13 @@ import {
   COURT_COUNT,
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
   getUpcomingBlockWarning as _sharedGetUpcomingBlockWarning,
-  TENNIS_CONFIG as _sharedTennisConfig
+  TENNIS_CONFIG as _sharedTennisConfig,
 } from '@lib';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
+import { toLegacyBoard } from '../lib/api/legacyAdapter.js';
 const backend = createBackend();
 
 // Access shared utils from window for backward compatibility
@@ -33,13 +34,14 @@ const USE_SHARED_DOMAIN = true;
 let Config, Storage, Events, A, W, T, DataStore, Av, Tm, TimeFmt;
 
 // Local readDataSafe wraps the shared version for backward compatibility
-const readDataSafe = () => _sharedReadDataSafe ? _sharedReadDataSafe() : (readJSON(STORAGE.DATA) || getEmptyData());
+const readDataSafe = () =>
+  _sharedReadDataSafe ? _sharedReadDataSafe() : readJSON(STORAGE.DATA) || getEmptyData();
 
 // ---- Core constants (declared only; not replacing existing usages) ----
 const APP = {
   COURT_COUNT: 12,
   PLAYERS: { MIN: 1, MAX: 4 },
-  DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 }
+  DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 },
 };
 
 // --- Waiting selectors (CourtBoard) ---
@@ -84,19 +86,33 @@ function classForStatus(statusObj) {
 
 // Unified status source for the board UI
 // ---- Dev flag & assert (no UI change) ----
-const DEV = (typeof location !== 'undefined') && /localhost|127\.0\.0\.1/.test(location.host);
-const assert = (cond, msg, obj) => { if (DEV && !cond) console.warn('ASSERT:', msg, obj || ''); };
+const DEV = typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.host);
+const assert = (cond, msg, obj) => {
+  if (DEV && !cond) console.warn('ASSERT:', msg, obj || '');
+};
 
 // ---- Debounce helper (no UI change) ----
-const debounce = (fn, ms = 150) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const debounce = (fn, ms = 150) => {
+  let t;
+  return (...a) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...a), ms);
+  };
+};
 
 // ---- Logger (no UI change) ----
-const LOG_LEVEL = (DEV ? 'debug' : 'warn');
+const LOG_LEVEL = DEV ? 'debug' : 'warn';
 const _PREFIX = '[CourtBoard]';
 const log = {
-  debug: (...a) => { if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a); },
-  info: (...a) => { if (['debug', 'info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a); },
-  warn: (...a) => { if (['debug', 'info', 'warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a); },
+  debug: (...a) => {
+    if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a);
+  },
+  info: (...a) => {
+    if (['debug', 'info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a);
+  },
+  warn: (...a) => {
+    if (['debug', 'info', 'warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a);
+  },
 };
 
 // central registry for timers in this view
@@ -105,19 +121,27 @@ const _timers = [];
 // ---- Helpers for domain-based tile text ----
 function namesFor(courtObj) {
   if (Array.isArray(courtObj?.current?.players)) {
-    return courtObj.current.players.map(p => p?.name).filter(Boolean).join(', ');
+    return courtObj.current.players
+      .map((p) => p?.name)
+      .filter(Boolean)
+      .join(', ');
   }
-  const last = Array.isArray(courtObj?.history) && courtObj.history.length
-    ? courtObj.history[courtObj.history.length - 1] : null;
+  const last =
+    Array.isArray(courtObj?.history) && courtObj.history.length
+      ? courtObj.history[courtObj.history.length - 1]
+      : null;
   if (Array.isArray(last?.players)) {
-    return last.players.map(p => p?.name).filter(Boolean).join(', ');
+    return last.players
+      .map((p) => p?.name)
+      .filter(Boolean)
+      .join(', ');
   }
   return '';
 }
 
 function formatUntilTime(dt) {
   if (!dt) return null;
-  const d = (dt instanceof Date) ? dt : new Date(dt);
+  const d = dt instanceof Date ? dt : new Date(dt);
   if (isNaN(+d)) return null;
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
@@ -132,7 +156,9 @@ function formatTime(dt) {
 function labelFor(status, courtObj) {
   if (status === 'occupied') {
     const end = courtObj?.current?.endTime ? new Date(courtObj.current.endTime) : null;
-    const until = end ? `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '';
+    const until = end
+      ? `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+      : '';
     const nm = namesFor(courtObj);
     return nm ? `${nm}${until ? '\n' + until : ''}` : until || '';
   }
@@ -217,13 +243,16 @@ function computeClock(status, courtObj, now) {
   return { primary: '', secondary: '' };
 }
 
-const addTimer = (id, type = 'interval') => { _timers.push({ id, type }); return id; };
+const addTimer = (id, type = 'interval') => {
+  _timers.push({ id, type });
+  return id;
+};
 const clearAllTimers = () => {
   _timers.forEach(({ id, type }) => {
     try {
       if (type === 'interval') clearInterval(id);
       else clearTimeout(id);
-    } catch { }
+    } catch {}
   });
   _timers.length = 0;
 };
@@ -235,19 +264,19 @@ function scheduleBoardRefresh() {
   __boardRefreshPending = true;
   setTimeout(() => {
     __boardRefreshPending = false;
-    const fn =
-      (typeof window.refreshBoard === 'function' && window.refreshBoard) ||
-      null;
+    const fn = (typeof window.refreshBoard === 'function' && window.refreshBoard) || null;
     if (fn) fn();
   }, 0);
 }
 
 // --- One-time guard helper (no UI change)
-const _one = (key) => (window[key] ? true : (window[key] = true, false));
+const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 
 // Global cleanup on page unload
 window.addEventListener('beforeunload', () => {
-  try { clearAllTimers(); } catch { }
+  try {
+    clearAllTimers();
+  } catch {}
 });
 
 // ---- TENNIS_CONFIG: Override POLL_INTERVAL_MS for CourtBoard (faster updates) ----
@@ -260,14 +289,46 @@ const TENNIS_CONFIG = {
 };
 
 // Icon components
-const Clock = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>⏱️</span>;
-const Users = ({ size = 34, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>👥</span>;
-const TennisBall = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>🎾</span>;
-const Calendar = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>🏛️</span>;
-const AlertCircle = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>🔔</span>;
-const Check = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>✅</span>;
-const Plus = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>🏸</span>;
-const Weather = ({ size = 24, className = '' }) => <span style={{ fontSize: `${size}px` }} className={className}>🌦️</span>;
+const Clock = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    ⏱️
+  </span>
+);
+const Users = ({ size = 34, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    👥
+  </span>
+);
+const TennisBall = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    🎾
+  </span>
+);
+const Calendar = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    🏛️
+  </span>
+);
+const AlertCircle = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    🔔
+  </span>
+);
+const Check = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    ✅
+  </span>
+);
+const Plus = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    🏸
+  </span>
+);
+const Weather = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    🌦️
+  </span>
+);
 
 // Use imported functions
 const getCourtBlockStatus = _sharedGetCourtBlockStatus;
@@ -281,8 +342,11 @@ const dataStore = {
       const cached = localStorage.getItem(key);
       let data = null;
       if (cached) {
-        try { data = JSON.parse(cached); }
-        catch { return null; }
+        try {
+          data = JSON.parse(cached);
+        } catch {
+          return null;
+        }
       }
       this.updateMetrics(performance.now() - startTime, true);
       return data;
@@ -290,8 +354,11 @@ const dataStore = {
       const data = localStorage.getItem(key);
       let result = null;
       if (data) {
-        try { result = JSON.parse(data); }
-        catch { return null; }
+        try {
+          result = JSON.parse(data);
+        } catch {
+          return null;
+        }
       }
       this.updateMetrics(performance.now() - startTime, false);
       return result;
@@ -323,7 +390,7 @@ const dataStore = {
   emit(eventType, data) {
     const subscribers = this.subscribers.get(eventType);
     if (subscribers) {
-      subscribers.forEach(callback => {
+      subscribers.forEach((callback) => {
         try {
           callback({ type: eventType, data });
         } catch (error) {
@@ -337,7 +404,7 @@ const dataStore = {
     cacheHits: 0,
     totalOperations: 0,
     totalResponseTime: 0,
-    operationsSaved: 0
+    operationsSaved: 0,
   },
 
   updateMetrics(responseTime, wasCacheHit) {
@@ -357,9 +424,9 @@ const dataStore = {
       operationsPerformed: total,
       operationsSaved: this.metrics.operationsSaved,
       pollingLevel: 'CRITICAL',
-      batchEfficiency: Math.min(85, total > 10 ? (this.metrics.operationsSaved / total) * 100 : 0)
+      batchEfficiency: Math.min(85, total > 10 ? (this.metrics.operationsSaved / total) * 100 : 0),
     };
-  }
+  },
 };
 
 // Due to the size constraint, importing full component implementations
@@ -373,7 +440,7 @@ function ToastHost() {
     const onToast = (e) => {
       const t = { id: Date.now() + Math.random(), duration: 3000, type: 'warning', ...e.detail };
       setToasts((xs) => [...xs, t]);
-      setTimeout(() => setToasts((xs) => xs.filter(x => x.id !== t.id)), t.duration);
+      setTimeout(() => setToasts((xs) => xs.filter((x) => x.id !== t.id)), t.duration);
     };
     window.addEventListener('UI_TOAST', onToast);
     return () => window.removeEventListener('UI_TOAST', onToast);
@@ -382,13 +449,16 @@ function ToastHost() {
   return (
     <div className="fixed top-4 inset-x-0 z-[1000] flex justify-center pointer-events-none">
       <div className="w-full max-w-lg px-4 space-y-2">
-        {toasts.map(t => (
+        {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto rounded-xl px-4 py-3 shadow-lg ring-1 ${t.type === 'error' ? 'bg-red-50 ring-red-200 text-red-800' :
-                t.type === 'success' ? 'bg-green-50 ring-green-200 text-green-800' :
-                  'bg-yellow-50 ring-yellow-200 text-yellow-800'
-              }`}
+            className={`pointer-events-auto rounded-xl px-4 py-3 shadow-lg ring-1 ${
+              t.type === 'error'
+                ? 'bg-red-50 ring-red-200 text-red-800'
+                : t.type === 'success'
+                  ? 'bg-green-50 ring-green-200 text-green-800'
+                  : 'bg-yellow-50 ring-yellow-200 text-yellow-800'
+            }`}
           >
             {t.msg || t.message}
           </div>
@@ -506,7 +576,7 @@ function TennisCourtDisplay() {
         const normalized = raw
           .map((g, idx) => {
             const players = Array.isArray(g?.players) ? g.players : [];
-            const names = players.map(p => p?.name || p?.id).filter(Boolean);
+            const names = players.map((p) => p?.name || p?.id).filter(Boolean);
             return names.length ? { id: g.id || `wg_${idx}`, names } : null;
           })
           .filter(Boolean);
@@ -539,7 +609,11 @@ function TennisCourtDisplay() {
   useEffect(() => {
     console.log('[Courtboard] Setting up TennisBackend subscription...');
 
-    const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
+    const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
+      // Convert Domain Board to legacy shape for unmigrated components
+      // TODO: Migrate components to use Domain fields directly, then remove toLegacyBoard()
+      const board = toLegacyBoard(domainBoard, domainBoard._raw);
+
       console.log('[Courtboard] Board update received:', {
         serverNow: board.serverNow,
         courts: board.courts?.length,
@@ -548,42 +622,46 @@ function TennisCourtDisplay() {
 
       // Update courts state
       if (board.courts) {
-      // Transform API courts to legacy format for Courtboard rendering
-      // Legacy expects: courts[courtNumber-1] = { current: { players: [{name}], endTime, startTime } }
-      const transformedCourts = Array(12).fill(null).map((_, idx) => {
-        const courtNumber = idx + 1;
-        const apiCourt = board.courts.find(c => c.number === courtNumber);
-        if (!apiCourt) {
-          return null; // Empty court
-        }
-        if (!apiCourt.session && !apiCourt.block) {
-          return null; // No session or block
-        }
-        return {
-          current: apiCourt.session ? {
-            players: (apiCourt.session.participants || []).map(p => ({
-              name: p.displayName || p.name || 'Unknown'
-            })),
-            endTime: apiCourt.session.scheduledEndAt,
-            startTime: apiCourt.session.startedAt,
-          } : null
-        };
-      });
-      setCourts(transformedCourts);
+        // Transform API courts to legacy format for Courtboard rendering
+        // Legacy expects: courts[courtNumber-1] = { current: { players: [{name}], endTime, startTime } }
+        const transformedCourts = Array(12)
+          .fill(null)
+          .map((_, idx) => {
+            const courtNumber = idx + 1;
+            const apiCourt = board.courts.find((c) => c.number === courtNumber);
+            if (!apiCourt) {
+              return null; // Empty court
+            }
+            if (!apiCourt.session && !apiCourt.block) {
+              return null; // No session or block
+            }
+            return {
+              current: apiCourt.session
+                ? {
+                    players: (apiCourt.session.participants || []).map((p) => ({
+                      name: p.displayName || p.name || 'Unknown',
+                    })),
+                    endTime: apiCourt.session.scheduledEndAt,
+                    startTime: apiCourt.session.startedAt,
+                  }
+                : null,
+            };
+          });
+        setCourts(transformedCourts);
 
-      // Extract blocks from API response and update courtBlocks state
-      const apiBlocks = board.courts
-        .filter(c => c.block)
-        .map(c => ({
-          id: c.block.id,
-          courtNumber: c.number,
-          reason: c.block.reason || c.block.title || 'Blocked',
-          startTime: c.block.startTime || new Date().toISOString(),
-          endTime: c.block.endTime,
-          isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
-        }));
-      console.log('[Courtboard] Blocks from API:', apiBlocks);
-      setCourtBlocks(apiBlocks);
+        // Extract blocks from API response and update courtBlocks state
+        const apiBlocks = board.courts
+          .filter((c) => c.block)
+          .map((c) => ({
+            id: c.block.id,
+            courtNumber: c.number,
+            reason: c.block.reason || c.block.title || 'Blocked',
+            startTime: c.block.startTime || new Date().toISOString(),
+            endTime: c.block.endTime,
+            isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
+          }));
+        console.log('[Courtboard] Blocks from API:', apiBlocks);
+        setCourtBlocks(apiBlocks);
       }
 
       // Normalize waitlist using shared helper
@@ -618,7 +696,7 @@ function TennisCourtDisplay() {
       courts: courts,
       courtBlocks: courtBlocks,
       waitingGroups: waitingGroups,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }, [courts, courtBlocks, waitingGroups]);
 
@@ -629,7 +707,13 @@ function TennisCourtDisplay() {
   let selectableByCourt = {};
   let statusObjectByCourt = {};
   // Build data object from React courts state for status computation
-  const data = { courts: courts, waitingGroups: waitingGroups.map(g => ({ id: g.id, players: g.names.map(n => ({ name: n })) })) };
+  const data = {
+    courts: courts,
+    waitingGroups: waitingGroups.map((g) => ({
+      id: g.id,
+      players: g.names.map((n) => ({ name: n })),
+    })),
+  };
 
   try {
     const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
@@ -637,14 +721,20 @@ function TennisCourtDisplay() {
       const now = new Date();
       // Use courtBlocks from React state instead of localStorage
       const blocks = courtBlocks || [];
-      const wetSet = new Set((blocks || [])
-        .filter(b => b?.isWetCourt && new Date(b.startTime ?? b.start) <= now && now < new Date(b.endTime ?? b.end))
-        .map(b => b.courtNumber)
+      const wetSet = new Set(
+        (blocks || [])
+          .filter(
+            (b) =>
+              b?.isWetCourt &&
+              new Date(b.startTime ?? b.start) <= now &&
+              now < new Date(b.endTime ?? b.end)
+          )
+          .map((b) => b.courtNumber)
       );
       const _statuses = A.getCourtStatuses({ data, now, blocks, wetSet }) || [];
-      statusByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s.status]));
-      selectableByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s.selectable]));
-      statusObjectByCourt = Object.fromEntries(_statuses.map(s => [s.courtNumber, s]));
+      statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
+      selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));
+      statusObjectByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s]));
     }
   } catch (e) {
     console.warn('Error building status map:', e);
@@ -660,18 +750,41 @@ function TennisCourtDisplay() {
           <div className="flex items-center relative">
             {hasWaiting && (
               <div className="absolute left-[-140px] lg:left-[-100px] xl:left-[-140px]">
-                <svg width="40" height="40" className="lg:w-20 lg:h-20 xl:w-32 xl:h-32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg
+                  width="40"
+                  height="40"
+                  className="lg:w-20 lg:h-20 xl:w-32 xl:h-32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
                   <path d="M5 20V4" stroke="#D4D4D8" strokeWidth="1.5" strokeLinecap="round" />
                   <path d="M5 4L17 7L5 10V4Z" fill="#FB923C" stroke="#EA580C" strokeWidth="1" />
                 </svg>
               </div>
             )}
             <div className="text-center">
-              <div className="time-header font-light text-white mb-1" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                {currentTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+              <div
+                className="time-header font-light text-white mb-1"
+                style={{
+                  fontFamily:
+                    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
+              >
+                {currentTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
               </div>
-              <div className="date-header text-gray-300 -mt-1" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
-                {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+              <div
+                className="date-header text-gray-300 -mt-1"
+                style={{
+                  fontFamily:
+                    'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
+              >
+                {currentTime.toLocaleDateString([], {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
               </div>
             </div>
           </div>
@@ -759,7 +872,12 @@ function TennisCourtDisplay() {
 
         {/* RIGHT column wrapper */}
         <div className="right-column flex flex-col h-full min-h-0" data-right-col>
-          <NextAvailablePanel courts={courts} currentTime={currentTime} waitingGroups={waitingGroups} courtBlocks={courtBlocks} />
+          <NextAvailablePanel
+            courts={courts}
+            currentTime={currentTime}
+            waitingGroups={waitingGroups}
+            courtBlocks={courtBlocks}
+          />
         </div>
       </div>
     </div>
@@ -767,7 +885,15 @@ function TennisCourtDisplay() {
 }
 
 // CourtCard Component
-function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt, statusObjectByCourt, data, isMobileView }) {
+function CourtCard({
+  courtNumber,
+  currentTime,
+  statusByCourt,
+  selectableByCourt,
+  statusObjectByCourt,
+  data,
+  isMobileView,
+}) {
   const status = statusByCourt[courtNumber] || 'free';
   const selectable = selectableByCourt[courtNumber] || false;
   const statusObj = statusObjectByCourt?.[courtNumber] || {};
@@ -777,20 +903,24 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
   const { primary, secondary } = computeClock(status, status === 'blocked' ? statusObj : cObj, now);
   const nm = namesFor(cObj);
 
-  const base = 'court-card border-4 rounded-xl flex flex-col items-center justify-start p-2 court-transition';
+  const base =
+    'court-card border-4 rounded-xl flex flex-col items-center justify-start p-2 court-transition';
   const courtClass = base + ' ' + classForStatus(statusObj);
 
   // Mobile name formatting
   function formatMobileNames(input) {
-    if (!input) return "";
+    if (!input) return '';
     const names = Array.isArray(input)
       ? input
-      : String(input).split(/,\s*/).map(s => s.trim()).filter(Boolean);
-    if (!names.length) return "";
+      : String(input)
+          .split(/,\s*/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+    if (!names.length) return '';
 
-    const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV"]);
+    const SUFFIXES = new Set(['Jr.', 'Sr.', 'II', 'III', 'IV']);
     const formatOne = (full) => {
-      const tokens = full.replace(/\s+/g, " ").trim().split(" ");
+      const tokens = full.replace(/\s+/g, ' ').trim().split(' ');
       if (tokens.length === 1) {
         const t = tokens[0];
         return t.length <= 3 ? t : `${t[0]}. ${t.slice(1)}`;
@@ -805,8 +935,8 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
         lastName = last;
         remainder = tokens.slice(0, -1);
       }
-      const first = remainder[0] || "";
-      const firstInitial = first ? `${first[0]}.` : "";
+      const first = remainder[0] || '';
+      const firstInitial = first ? `${first[0]}.` : '';
       return `${firstInitial} ${lastName}`.trim();
     };
 
@@ -819,20 +949,26 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
       className={courtClass}
       data-court={courtNumber}
       data-available={status === 'free'}
-      role={status === 'free' ? "button" : undefined}
+      role={status === 'free' ? 'button' : undefined}
       tabIndex={status === 'free' ? 0 : undefined}
       onClick={status === 'free' ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
       style={{ cursor: status === 'free' && isMobileView ? 'pointer' : 'default' }}
     >
-      <h3 className={`court-text-lg font-bold ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} mb-1`}
-        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+      <h3
+        className={`court-text-lg font-bold ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} mb-1`}
+        style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}
+      >
         Court {courtNumber}
       </h3>
-      <div className={`court-text-sm w-full ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}>
+      <div
+        className={`court-text-sm w-full ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} flex flex-col h-full`}
+      >
         <div className="flex flex-col h-full w-full">
           {status === 'free' ? (
             <>
-              <div className={`${isMobileView ? 'mt-1 court-text-base font-medium leading-tight text-sm font-normal' : 'mt-1 court-text-base font-medium leading-tight'} text-center flex-1 flex items-center justify-center`}>
+              <div
+                className={`${isMobileView ? 'mt-1 court-text-base font-medium leading-tight text-sm font-normal' : 'mt-1 court-text-base font-medium leading-tight'} text-center flex-1 flex items-center justify-center`}
+              >
                 {isMobileView ? 'Tap to Select' : primary}
               </div>
 
@@ -842,7 +978,10 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
                 if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
 
                 return (
-                  <div className="mt-auto text-xs text-center" style={{ color: 'yellow', fontWeight: 'normal' }}>
+                  <div
+                    className="mt-auto text-xs text-center"
+                    style={{ color: 'yellow', fontWeight: 'normal' }}
+                  >
                     {blockWarning.reason} begins in {blockWarning.minutesUntilBlock}m
                   </div>
                 );
@@ -861,7 +1000,11 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
                 {(() => {
                   let blockReason = statusObj.blockedLabel || statusObj.reason || 'Blocked';
                   const upperReason = blockReason.toUpperCase();
-                  if (upperReason.includes('SHORT') || upperReason.includes('COURT WORK') || upperReason.includes('MAINTENANCE')) {
+                  if (
+                    upperReason.includes('SHORT') ||
+                    upperReason.includes('COURT WORK') ||
+                    upperReason.includes('MAINTENANCE')
+                  ) {
                     return 'Court work';
                   }
                   if (upperReason.includes('LESSON')) return 'Lesson';
@@ -880,8 +1023,10 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
             isMobileView ? (
               <>
                 {nm ? (
-                  <div className="mt-1 court-text-sm font-medium text-center flex-1 flex items-center justify-center"
-                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                  <div
+                    className="mt-1 court-text-sm font-medium text-center flex-1 flex items-center justify-center"
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}
+                  >
                     <div className="truncate text-sm leading-tight px-1" title={nm}>
                       {formatMobileNames(nm)}
                     </div>
@@ -889,16 +1034,18 @@ function CourtCard({ courtNumber, currentTime, statusByCourt, selectableByCourt,
                 ) : (
                   <div className="flex-1"></div>
                 )}
-                <div className="mt-auto text-sm opacity-90 text-center">
-                  {primary}
-                </div>
+                <div className="mt-auto text-sm opacity-90 text-center">{primary}</div>
               </>
             ) : (
               <>
-                <div className="mt-1 court-text-base font-bold leading-tight text-center">{primary}</div>
+                <div className="mt-1 court-text-base font-bold leading-tight text-center">
+                  {primary}
+                </div>
                 {nm ? (
-                  <div className="mt-1 court-text-sm font-medium text-center flex-1 flex items-center justify-center"
-                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+                  <div
+                    className="mt-1 court-text-sm font-medium text-center flex-1 flex items-center justify-center"
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}
+                  >
                     {nm}
                   </div>
                 ) : (
@@ -941,14 +1088,14 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
       }
 
       const now = new Date();
-      const data = courtsToData(courts);  // Use React state instead of localStorage
-      const blocks = courtBlocks || [];  // Use prop instead of localStorage
+      const data = courtsToData(courts); // Use React state instead of localStorage
+      const blocks = courtBlocks || []; // Use prop instead of localStorage
 
       // Derive wetSet for current moment
       const wetSet = new Set(
         blocks
-          .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-          .map(b => b.courtNumber)
+          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+          .map((b) => b.courtNumber)
       );
 
       // Get availability info
@@ -962,7 +1109,7 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
           positions: [position],
           currentFreeCount: info.free?.length || 0,
           nextFreeTimes: nextTimes,
-          avgGameMinutes: avgGame
+          avgGameMinutes: avgGame,
         });
         return etas[0] || 0;
       }
@@ -980,12 +1127,12 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
       if (!A) return false;
 
       const now = new Date();
-      const data = courtsToData(courts);  // Use React state instead of localStorage
-      const blocks = courtBlocks || [];  // Use prop instead of localStorage
+      const data = courtsToData(courts); // Use React state instead of localStorage
+      const blocks = courtBlocks || []; // Use prop instead of localStorage
       const wetSet = new Set(
         blocks
-          .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-          .map(b => b.courtNumber)
+          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+          .map((b) => b.courtNumber)
       );
 
       if (A.getFreeCourtsInfo) {
@@ -1011,8 +1158,11 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
 
   return (
     <div className="bg-slate-700/50 p-4 rounded-xl backdrop-blur h-full overflow-hidden flex flex-col">
-      <h3 className={`font-bold mb-3 flex items-center justify-between ${waitingGroups.length === 0 ? "text-gray-400" : "text-yellow-400"
-        }`}>
+      <h3
+        className={`font-bold mb-3 flex items-center justify-between ${
+          waitingGroups.length === 0 ? 'text-gray-400' : 'text-yellow-400'
+        }`}
+      >
         <div className="flex items-center courtboard-text-xl">
           <Users className={`mr-5 ${waitingGroups.length === 0 ? 'icon-grey' : ''}`} size={24} />
           Waiting
@@ -1029,57 +1179,61 @@ function WaitingList({ waitingGroups, courts, currentTime, courtBlocks = [] }) {
         </div>
       ) : (
         <div className="space-y-2 overflow-y-auto mt-4">
-          {waitingGroups.slice(0, TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4).map((group, idx) => {
-            // Check if this group can actually register now
-            const canRegisterNow = canGroupRegisterNow(idx);
+          {waitingGroups
+            .slice(0, TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4)
+            .map((group, idx) => {
+              // Check if this group can actually register now
+              const canRegisterNow = canGroupRegisterNow(idx);
 
-            // Calculate proper estimated wait time
-            let estimatedWait = 0;
-            if (!canRegisterNow) {
-              estimatedWait = calculateEstimatedWaitTime(idx + 1);
-            }
+              // Calculate proper estimated wait time
+              let estimatedWait = 0;
+              if (!canRegisterNow) {
+                estimatedWait = calculateEstimatedWaitTime(idx + 1);
+              }
 
-            // Show "You're Up!" only if they can actually register now
-            const showAlert = canRegisterNow;
+              // Show "You're Up!" only if they can actually register now
+              const showAlert = canRegisterNow;
 
-            return (
-              <div
-                key={idx}
-                className={`flex items-center justify-between p-2 rounded-lg courtboard-text-sm ${
-                  idx === 0 && estimatedWait < 5
-                    ? "bg-gradient-to-r from-green-600/30 to-green-500/30 border-2 border-green-400"
-                    : "bg-slate-600/50"
-                }`}
-              >
-                <div className="flex items-center flex-1">
-                  <span className="courtboard-waiting-number font-bold mr-2 text-green-400">{idx + 1}.</span>
-                  <div className="flex-1">
-                    <span className="courtboard-text-sm font-medium player-name">
-                      {(group.names || [])
-                        .map((name) => {
-                          const names = name.split(" ");
-                          return names[names.length - 1];
-                        })
-                        .join(" / ")}
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-center justify-between p-2 rounded-lg courtboard-text-sm ${
+                    idx === 0 && estimatedWait < 5
+                      ? 'bg-gradient-to-r from-green-600/30 to-green-500/30 border-2 border-green-400'
+                      : 'bg-slate-600/50'
+                  }`}
+                >
+                  <div className="flex items-center flex-1">
+                    <span className="courtboard-waiting-number font-bold mr-2 text-green-400">
+                      {idx + 1}.
                     </span>
+                    <div className="flex-1">
+                      <span className="courtboard-text-sm font-medium player-name">
+                        {(group.names || [])
+                          .map((name) => {
+                            const names = name.split(' ');
+                            return names[names.length - 1];
+                          })
+                          .join(' / ')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {showAlert && (
+                      <div className="flex items-center text-yellow-400 animate-pulse">
+                        <AlertCircle className="mr-1" size={16} />
+                        <span className="courtboard-text-xs font-bold">You're Up!</span>
+                      </div>
+                    )}
+                    {!showAlert && (
+                      <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
+                        {estimatedWait} min
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {showAlert && (
-                    <div className="flex items-center text-yellow-400 animate-pulse">
-                      <AlertCircle className="mr-1" size={16} />
-                      <span className="courtboard-text-xs font-bold">You're Up!</span>
-                    </div>
-                  )}
-                  {!showAlert && (
-                    <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
-                      {estimatedWait} min
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
     </div>
@@ -1106,12 +1260,13 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
     const blocks = courtBlocks || [];
 
     // Check if ALL courts are currently wet
-    const activeWetBlocks = blocks.filter(block =>
-      block.isWetCourt === true &&
-      new Date(block.startTime) <= currentTime &&
-      new Date(block.endTime) > currentTime
+    const activeWetBlocks = blocks.filter(
+      (block) =>
+        block.isWetCourt === true &&
+        new Date(block.startTime) <= currentTime &&
+        new Date(block.endTime) > currentTime
     );
-    const wetCourtNumbers = new Set(activeWetBlocks.map(block => block.courtNumber));
+    const wetCourtNumbers = new Set(activeWetBlocks.map((block) => block.courtNumber));
 
     // If all courts are wet, return special marker
     const totalCourts = courts.length;
@@ -1128,10 +1283,11 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
       let blockingUntil = null;
 
       // First check currently active blocks
-      const activeBlock = blocks.find(block =>
-        block.courtNumber === courtNumber &&
-        new Date(block.startTime) <= currentTime &&
-        new Date(block.endTime) > currentTime
+      const activeBlock = blocks.find(
+        (block) =>
+          block.courtNumber === courtNumber &&
+          new Date(block.startTime) <= currentTime &&
+          new Date(block.endTime) > currentTime
       );
 
       if (activeBlock) {
@@ -1147,10 +1303,11 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
         // Check for future blocks that would overlap with game availability
         if (endTime) {
           const gameEndTime = new Date(endTime).getTime();
-          const futureBlock = blocks.find(block =>
-            block.courtNumber === courtNumber &&
-            new Date(block.startTime).getTime() < gameEndTime &&
-            new Date(block.endTime).getTime() > currentTime.getTime()
+          const futureBlock = blocks.find(
+            (block) =>
+              block.courtNumber === courtNumber &&
+              new Date(block.startTime).getTime() < gameEndTime &&
+              new Date(block.endTime).getTime() > currentTime.getTime()
           );
 
           if (futureBlock) {
@@ -1161,14 +1318,15 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
         // Check if this is an overtime court (game has exceeded scheduled duration)
         if (endTime) {
           const parsedEndTime = new Date(endTime);
-          const hasPlayers = (court.current && court.current.players && court.current.players.length > 0) ||
+          const hasPlayers =
+            (court.current && court.current.players && court.current.players.length > 0) ||
             (court.players && court.players.length > 0);
 
           if (hasPlayers && parsedEndTime <= currentTime) {
             overtimeCourts.push({
               courtNumber,
               endTime: null, // Special marker for "Now"
-              isOvertime: true
+              isOvertime: true,
             });
             return; // Don't add to regular availability
           }
@@ -1185,7 +1343,7 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
           if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
             courtAvailability.push({
               courtNumber,
-              endTime: parsedEndTime
+              endTime: parsedEndTime,
             });
           }
         } catch (error) {
@@ -1204,10 +1362,13 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
     try {
       if (A && A.getFreeCourtsInfo) {
         const now = new Date();
-        const data = courtsToData(courts);  // Use React state instead of localStorage
+        const data = courtsToData(courts); // Use React state instead of localStorage
         const wetSet = new Set(
-          blocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-            .map(b => b.courtNumber)
+          blocks
+            .filter(
+              (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+            )
+            .map((b) => b.courtNumber)
         );
         const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
         const emptyCount = info.free ? info.free.length : 0;
@@ -1233,10 +1394,11 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
   try {
     if (A && A.getFreeCourtsInfo) {
       const now = new Date();
-      const data = courtsToData(courts);  // Use React state instead of localStorage
+      const data = courtsToData(courts); // Use React state instead of localStorage
       const wetSet = new Set(
-        courtBlocks.filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-          .map(b => b.courtNumber)
+        courtBlocks
+          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+          .map((b) => b.courtNumber)
       );
       const info = A.getFreeCourtsInfo({ data, now, blocks: courtBlocks, wetSet });
       emptyCourtCount = info.free ? info.free.length : 0;
@@ -1252,11 +1414,11 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
   // Check club hours for closed message
   const currentHour = currentTime.getHours();
   const currentMinutes = currentTime.getMinutes();
-  const currentTimeDecimal = currentHour + (currentMinutes / 60);
+  const currentTimeDecimal = currentHour + currentMinutes / 60;
   const dayOfWeek = currentTime.getDay();
-  const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
   const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
-  const openingTimeString = isWeekend ? "7:00 AM" : "6:30 AM";
+  const openingTimeString = isWeekend ? '7:00 AM' : '6:30 AM';
 
   // Show opening message when courts are available but club is closed
   const isInEarlyHours = currentTimeDecimal >= 4 && currentTimeDecimal < openingTime;
@@ -1276,7 +1438,9 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
             </h2>
             <div className="text-center mt-12">
               <p className="text-gray-400 courtboard-text-base">
-                {shouldShowOpeningMessage ? `Courts open at ${openingTimeString}` : 'Courts available now'}
+                {shouldShowOpeningMessage
+                  ? `Courts open at ${openingTimeString}`
+                  : 'Courts available now'}
               </p>
             </div>
           </>
@@ -1291,7 +1455,9 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
               {timeline.length > 0 ? (
                 timeline[0]?.allCourtsWet ? (
                   <div className="text-center mt-8">
-                    <p className="text-yellow-400 courtboard-text-lg">Courts will become available as they dry</p>
+                    <p className="text-yellow-400 courtboard-text-lg">
+                      Courts will become available as they dry
+                    </p>
                   </div>
                 ) : (
                   timeline.slice(0, maxDisplay).map((availability, idx) => (
@@ -1307,11 +1473,11 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
                             <span className="text-white font-bold">Now</span>
                           ) : availability.endTime ? (
                             availability.endTime.toLocaleTimeString([], {
-                              hour: "numeric",
-                              minute: "2-digit",
+                              hour: 'numeric',
+                              minute: '2-digit',
                             })
                           ) : (
-                            "Time TBD"
+                            'Time TBD'
                           )}
                         </div>
                       </div>
@@ -1339,18 +1505,21 @@ function NextAvailablePanel({ courts, currentTime, waitingGroups = [], courtBloc
 }
 
 // Reserved Courts Panel
-function ReservedCourtsPanel({ items, className, title = "Reserved Courts" }) {
-  const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function ReservedCourtsPanel({ items, className, title = 'Reserved Courts' }) {
+  const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   return (
     <section id="reserved-courts-root" className={className}>
-      <h3 className={`courtboard-text-xl font-bold mb-3 flex items-center ${(!items || items.length === 0) ? "text-gray-400" : "text-blue-300"
-        }`}>
-        <Calendar className={`mr-3 ${(!items || items.length === 0) ? 'icon-grey' : ''}`} size={24} />
+      <h3
+        className={`courtboard-text-xl font-bold mb-3 flex items-center ${
+          !items || items.length === 0 ? 'text-gray-400' : 'text-blue-300'
+        }`}
+      >
+        <Calendar className={`mr-3 ${!items || items.length === 0 ? 'icon-grey' : ''}`} size={24} />
         {title}
       </h3>
 
-      {(!items || items.length === 0) ? (
+      {!items || items.length === 0 ? (
         <div className="text-center mt-8">
           <p className="text-gray-400 reserved-courts-empty">No scheduled blocks today</p>
         </div>
@@ -1359,10 +1528,10 @@ function ReservedCourtsPanel({ items, className, title = "Reserved Courts" }) {
           {items.slice(0, 8).map((it, i) => (
             <li key={`${it.key || i}`} className="flex justify-between">
               <span className="font-medium text-gray-200">
-                {it.courts.length > 1 ? `Courts ${it.courts.join(", ")}` : `Court ${it.courts[0]}`}
+                {it.courts.length > 1 ? `Courts ${it.courts.join(', ')}` : `Court ${it.courts[0]}`}
               </span>
               <span className="ml-2 whitespace-nowrap text-gray-400">
-                {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? " ⚠️" : ""}
+                {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? ' ⚠️' : ''}
               </span>
             </li>
           ))}
@@ -1377,7 +1546,11 @@ function ReservedCourtsPanel({ items, className, title = "Reserved Courts" }) {
 
 // Helper function for reserved items
 function normalizeBlock(raw) {
-  const reasonRaw = raw.reason || raw.title || (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) || "";
+  const reasonRaw =
+    raw.reason ||
+    raw.title ||
+    (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) ||
+    '';
   const reason = String(reasonRaw).trim().toUpperCase();
 
   const start = raw.startTime ? new Date(raw.startTime) : null;
@@ -1389,7 +1562,8 @@ function normalizeBlock(raw) {
 
   let courts = [];
   if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
-  if (raw.eventDetails && Array.isArray(raw.eventDetails.courts)) courts = courts.concat(raw.eventDetails.courts);
+  if (raw.eventDetails && Array.isArray(raw.eventDetails.courts))
+    courts = courts.concat(raw.eventDetails.courts);
   if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
 
   courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a, b) => a - b);
@@ -1398,29 +1572,32 @@ function normalizeBlock(raw) {
 }
 
 function selectReservedItemsFromBlocks(blocks, now = new Date()) {
-  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
-  const endOfToday = new Date(now); endOfToday.setHours(23, 59, 59, 999);
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
 
   const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
   const todayFuture = normalized
-    .filter(b => b.end > now && b.start <= endOfToday)
-    .map(b => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
+    .filter((b) => b.end > now && b.start <= endOfToday)
+    .map((b) => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
     .sort((a, b) => a.start - b.start);
 
   const byKey = new Map();
   for (const b of todayFuture) {
     const k = `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
     if (!byKey.has(k)) byKey.set(k, { ...b, courts: new Set(b.courts) });
-    else b.courts.forEach(c => byKey.get(k).courts.add(c));
+    else b.courts.forEach((c) => byKey.get(k).courts.add(c));
   }
 
-  return Array.from(byKey.values()).map(v => ({
+  return Array.from(byKey.values()).map((v) => ({
     key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
     courts: Array.from(v.courts).sort((a, b) => a - b),
     start: v.start,
     end: v.end,
-    label: v.reason || "RESERVED",
-    warning: (v.start.getTime() - now.getTime()) <= (60 * 60 * 1000) && (v.start.getTime() - now.getTime()) > 0
+    label: v.reason || 'RESERVED',
+    warning:
+      v.start.getTime() - now.getTime() <= 60 * 60 * 1000 && v.start.getTime() - now.getTime() > 0,
   }));
 }
 
@@ -1447,12 +1624,14 @@ function MobileModalSheet({ type, payload, onClose }) {
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prevOverflow; };
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
   }, []);
 
   // Keyboard handlers (scoped to modal only)
   useEffect(() => {
-    const esc = e => {
+    const esc = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
@@ -1465,12 +1644,18 @@ function MobileModalSheet({ type, payload, onClose }) {
 
   const getTitle = () => {
     switch (type) {
-      case 'court-conditions': return 'Court Conditions';
-      case 'roster': return 'Member Roster';
-      case 'reserved': return 'Reserved Courts';
-      case 'waitlist': return 'Waitlist';
-      case 'clear-court-confirm': return `Clear Court ${payload?.courtNumber || ''}?`;
-      default: return '';
+      case 'court-conditions':
+        return 'Court Conditions';
+      case 'roster':
+        return 'Member Roster';
+      case 'reserved':
+        return 'Reserved Courts';
+      case 'waitlist':
+        return 'Waitlist';
+      case 'clear-court-confirm':
+        return `Clear Court ${payload?.courtNumber || ''}?`;
+      default:
+        return '';
     }
   };
 
@@ -1491,7 +1676,9 @@ function MobileModalSheet({ type, payload, onClose }) {
               onClick={onClose}
               aria-label="Close"
               type="button"
-            >✕</button>
+            >
+              ✕
+            </button>
           </div>
         );
 
@@ -1500,27 +1687,43 @@ function MobileModalSheet({ type, payload, onClose }) {
         let rosterData = [];
         try {
           const S = window.Tennis?.Storage;
-          rosterData = (window.__memberRoster) ||
-                      (S?.readJSON ? S.readJSON('tennisMembers') : null) ||
-                      (S?.readJSON ? S.readJSON('members') : null) ||
-                      JSON.parse(localStorage.getItem('tennisMembers') || 'null') ||
-                      JSON.parse(localStorage.getItem('members') || 'null') ||
-                      [];
+          rosterData =
+            window.__memberRoster ||
+            (S?.readJSON ? S.readJSON('tennisMembers') : null) ||
+            (S?.readJSON ? S.readJSON('members') : null) ||
+            JSON.parse(localStorage.getItem('tennisMembers') || 'null') ||
+            JSON.parse(localStorage.getItem('members') || 'null') ||
+            [];
 
           // If no data found, use test data
           if (!rosterData || rosterData.length === 0) {
             const names = [
-              "Novak Djokovic", "Carlos Alcaraz", "Jannik Sinner", "Daniil Medvedev",
-              "Alexander Zverev", "Andrey Rublev", "Casper Ruud", "Hubert Hurkacz",
-              "Taylor Fritz", "Alex de Minaur", "Iga Swiatek", "Aryna Sabalenka",
-              "Coco Gauff", "Elena Rybakina", "Jessica Pegula", "Ons Jabeur",
-              "Marketa Vondrousova", "Karolina Muchova", "Beatriz Haddad Maia", "Petra Kvitova"
+              'Novak Djokovic',
+              'Carlos Alcaraz',
+              'Jannik Sinner',
+              'Daniil Medvedev',
+              'Alexander Zverev',
+              'Andrey Rublev',
+              'Casper Ruud',
+              'Hubert Hurkacz',
+              'Taylor Fritz',
+              'Alex de Minaur',
+              'Iga Swiatek',
+              'Aryna Sabalenka',
+              'Coco Gauff',
+              'Elena Rybakina',
+              'Jessica Pegula',
+              'Ons Jabeur',
+              'Marketa Vondrousova',
+              'Karolina Muchova',
+              'Beatriz Haddad Maia',
+              'Petra Kvitova',
             ];
             rosterData = names.map((name, i) => ({
               id: 1000 + i + 1,
               name: name,
               memberNumber: String(1000 + i + 1),
-              memberId: `m_${1000 + i + 1}`
+              memberId: `m_${1000 + i + 1}`,
             }));
           }
         } catch (e) {
@@ -1559,7 +1762,8 @@ function MobileModalSheet({ type, payload, onClose }) {
                 <div className="space-y-2">
                   {sortedRoster.map((member, idx) => {
                     const memberName = member.name || member.fullName || 'Unknown Member';
-                    const memberNumber = member.memberNumber || member.clubNumber || member.memberId || 'N/A';
+                    const memberNumber =
+                      member.memberNumber || member.clubNumber || member.memberId || 'N/A';
                     return (
                       <div
                         key={member.memberId || member.memberNumber || idx}
@@ -1579,7 +1783,8 @@ function MobileModalSheet({ type, payload, onClose }) {
       case 'reserved':
         // Reserved courts list
         const reservedItems = payload?.reservedData || [];
-        const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        const fmt = (d) =>
+          new Date(d).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         return (
           <div className="modal-reserved-courts">
             {reservedItems.length === 0 ? (
@@ -1591,7 +1796,9 @@ function MobileModalSheet({ type, payload, onClose }) {
                 {reservedItems.map((item, idx) => (
                   <li key={item.key || idx} className="flex justify-between py-1">
                     <span className="font-medium text-gray-200">
-                      {item.courts?.length > 1 ? `Courts ${item.courts.join(", ")}` : `Court ${item.courts?.[0] || 'N/A'}`}
+                      {item.courts?.length > 1
+                        ? `Courts ${item.courts.join(', ')}`
+                        : `Court ${item.courts?.[0] || 'N/A'}`}
                     </span>
                     <span className="ml-2 whitespace-nowrap text-gray-400">
                       {fmt(item.start)} – {fmt(item.end)} ({item.reason || 'Reserved'})
@@ -1614,10 +1821,10 @@ function MobileModalSheet({ type, payload, onClose }) {
 
         // Mobile name formatting
         const formatMobileNamesModal = (nameArray) => {
-          if (!nameArray || !nameArray.length) return "Group";
-          const SUFFIXES = new Set(["Jr.", "Sr.", "II", "III", "IV"]);
+          if (!nameArray || !nameArray.length) return 'Group';
+          const SUFFIXES = new Set(['Jr.', 'Sr.', 'II', 'III', 'IV']);
           const formatOne = (full) => {
-            const tokens = full.replace(/\s+/g, " ").trim().split(" ");
+            const tokens = full.replace(/\s+/g, ' ').trim().split(' ');
             if (tokens.length === 1) {
               const t = tokens[0];
               return t.length <= 3 ? t : `${t[0]}. ${t.slice(1)}`;
@@ -1632,7 +1839,7 @@ function MobileModalSheet({ type, payload, onClose }) {
               lastName = last;
               remainder = tokens.slice(0, -1);
             }
-            const first = remainder[0] || "";
+            const first = remainder[0] || '';
             return first ? `${first[0]}. ${lastName}` : lastName;
           };
           const primary = formatOne(nameArray[0]);
@@ -1650,12 +1857,14 @@ function MobileModalSheet({ type, payload, onClose }) {
             }
 
             const now = new Date();
-            const data = courtsToDataModal(modalCourts);  // Use payload data
-            const blocks = modalCourtBlocks;  // Use payload data
+            const data = courtsToDataModal(modalCourts); // Use payload data
+            const blocks = modalCourtBlocks; // Use payload data
             const wetSet = new Set(
               blocks
-                .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-                .map(b => b.courtNumber)
+                .filter(
+                  (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+                )
+                .map((b) => b.courtNumber)
             );
 
             const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
@@ -1667,7 +1876,7 @@ function MobileModalSheet({ type, payload, onClose }) {
                 positions: [position],
                 currentFreeCount: info.free?.length || 0,
                 nextFreeTimes: nextTimes,
-                avgGameMinutes: avgGame
+                avgGameMinutes: avgGame,
               });
               return etas[0] || 0;
             }
@@ -1685,19 +1894,21 @@ function MobileModalSheet({ type, payload, onClose }) {
             if (!A) return false;
 
             const now = new Date();
-            const data = courtsToDataModal(modalCourts);  // Use payload data
-            const blocks = modalCourtBlocks;  // Use payload data
+            const data = courtsToDataModal(modalCourts); // Use payload data
+            const blocks = modalCourtBlocks; // Use payload data
             const wetSet = new Set(
               blocks
-                .filter(b => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-                .map(b => b.courtNumber)
+                .filter(
+                  (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+                )
+                .map((b) => b.courtNumber)
             );
 
             if (A.getFreeCourtsInfo) {
               const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
               const freeCount = info.free?.length || 0;
               const overtimeCount = info.overtime?.length || 0;
-              return (freeCount > 0 || overtimeCount > 0);
+              return freeCount > 0 || overtimeCount > 0;
             }
             return false;
           } catch (error) {
@@ -1721,7 +1932,7 @@ function MobileModalSheet({ type, payload, onClose }) {
                   {waitlistData.map((group, idx) => {
                     let names = [];
                     if (Array.isArray(group.players)) {
-                      names = group.players.map(p => p.name || p.id || 'Player');
+                      names = group.players.map((p) => p.name || p.id || 'Player');
                     } else if (group.names) {
                       names = Array.isArray(group.names) ? group.names : [group.names];
                     } else if (group.name) {
@@ -1834,13 +2045,17 @@ function MobileModalSheet({ type, payload, onClose }) {
     >
       <div className="mobile-modal-content">
         <div className="mobile-modal-header">
-          <h3 id={titleId} className="mobile-modal-title">{getTitle()}</h3>
+          <h3 id={titleId} className="mobile-modal-title">
+            {getTitle()}
+          </h3>
           <button
             type="button"
             className="mobile-modal-close"
             onClick={onClose}
             aria-label="Close modal"
-          >✕</button>
+          >
+            ✕
+          </button>
         </div>
         <div className="mobile-modal-body">{getBodyContent()}</div>
       </div>
@@ -1855,7 +2070,7 @@ function MobileModalApp() {
   useEffect(() => {
     if (!window.IS_MOBILE_VIEW) return;
 
-    const onOpen = e => {
+    const onOpen = (e) => {
       setState({ open: true, type: e.detail.type, payload: e.detail.payload || null });
       document.getElementById('mobile-modal-root')?.classList.add('modal-open');
     };
@@ -1892,7 +2107,9 @@ if (window.IS_MOBILE_VIEW) {
     console.debug('Mobile modal system mounted');
 
     // Debug listener
-    document.addEventListener('mm:open', e => console.debug('[ModalRoot] mm:open seen', e.detail));
+    document.addEventListener('mm:open', (e) =>
+      console.debug('[ModalRoot] mm:open seen', e.detail)
+    );
     document.addEventListener('mm:close', () => console.debug('[ModalRoot] mm:close seen'));
   }
 }

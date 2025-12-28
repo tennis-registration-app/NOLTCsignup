@@ -21,6 +21,8 @@ export function normalizeMember(raw) {
     'isGuest',
     'is_guest',
     'id',
+    'participant_type', // From get_court_board RPC
+    'guest_name', // From get_court_board RPC
   ];
   const unexpectedKeys = Object.keys(raw).filter((k) => !expectedKeys.includes(k));
   if (unexpectedKeys.length > 0) {

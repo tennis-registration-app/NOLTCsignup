@@ -1,12 +1,17 @@
 /**
  * @fileoverview TennisQueries - Read operations and subscriptions
- * 
+ *
  * All reads go through the /get-board Edge Function.
  * Realtime uses board_change_signals as a trigger to refresh.
+ *
+ * Uses the normalize layer for consistent Domain objects.
  */
 
 import { createClient } from '@supabase/supabase-js';
 import { API_CONFIG } from '../../lib/apiConfig.js';
+import { normalizeBoard } from '../../lib/normalize/index.js';
+import { validateBoardResponse, validateBoard } from '../../lib/schemas/index.js';
+import { logger } from '../../lib/logger.js';
 
 // Feature flag: set to true to test broadcast-only mode (simulates postgres_changes disabled)
 const BROADCAST_ONLY_MODE = false;
@@ -28,30 +33,40 @@ export class TennisQueries {
 
   /**
    * Get current board state (courts, waitlist, operating hours)
-   * @returns {Promise<import('./types').BoardState>}
+   * Returns pure Domain Board. Use toLegacyBoard() at UI entry points for legacy components.
+   *
+   * @returns {Promise<import('../../lib/types/domain.js').Board>}
    */
   async getBoard() {
-    console.log('[TennisQueries] getBoard() called');
+    logger.debug('TennisQueries', 'getBoard() called');
     const response = await this.api.get('/get-board');
-    console.log('[TennisQueries] getBoard response ok:', response.ok, 'courts:', response.courts?.length);
+    logger.debug('TennisQueries', 'getBoard response', {
+      ok: response.ok,
+      courts: response.courts?.length,
+    });
 
     if (!response.ok) {
       throw new Error(response.message || 'Failed to load board');
     }
-    
-    // Normalize the response to BoardState
-    const board = {
-      serverNow: response.serverNow,
-      courts: (response.courts || []).map(c => this._normalizeCourt(c)),
-      waitlist: (response.waitlist || []).map(w => this._normalizeWaitlistEntry(w)),
-      operatingHours: (response.operatingHours || []).map(h => ({
-        dayOfWeek: h.day_of_week,
-        opensAt: h.opens_at,
-        closesAt: h.closes_at,
-        isClosed: h.is_closed,
-      })),
-    };
-    
+
+    // Validate API envelope
+    const envelopeResult = validateBoardResponse(response);
+    if (!envelopeResult.success) {
+      logger.warn('TennisQueries', 'Invalid API envelope', envelopeResult.error);
+    }
+
+    // Normalize to Domain using the normalize layer
+    const board = normalizeBoard(response);
+
+    // Validate Domain (log errors but don't throw)
+    const domainResult = validateBoard(board);
+    if (!domainResult.success) {
+      logger.warn('TennisQueries', 'Domain validation issues', domainResult.error);
+    }
+
+    // Store raw response for legacy adapter (temporary)
+    board._raw = response;
+
     this._lastBoard = board;
     return board;
   }
@@ -69,7 +84,12 @@ export class TennisQueries {
     console.log('[TennisQueries] Starting initial fetch...');
     this.getBoard()
       .then((board) => {
-        console.log('[TennisQueries] Initial fetch resolved:', board?.serverNow, 'courts:', board?.courts?.length);
+        console.log(
+          '[TennisQueries] Initial fetch resolved:',
+          board?.serverNow,
+          'courts:',
+          board?.courts?.length
+        );
         return callback?.(board);
       })
       .catch((e) => console.error('[TennisQueries] Initial fetch failed:', e));
@@ -77,7 +97,10 @@ export class TennisQueries {
     // Subscribe to signals using TWO methods for reliability:
     // 1. postgres_changes - requires database replication to be enabled
     // 2. broadcast - always works, doesn't need database replication
-    console.log('📡 Setting up Realtime subscriptions...', BROADCAST_ONLY_MODE ? '(BROADCAST_ONLY_MODE)' : '');
+    console.log(
+      '📡 Setting up Realtime subscriptions...',
+      BROADCAST_ONLY_MODE ? '(BROADCAST_ONLY_MODE)' : ''
+    );
 
     // Method 1: postgres_changes (database replication) - skip if BROADCAST_ONLY_MODE
     if (!BROADCAST_ONLY_MODE) {
@@ -96,7 +119,9 @@ export class TennisQueries {
           if (status === 'SUBSCRIBED') {
             console.log('📡 [postgres_changes] Connected');
           } else if (status === 'CHANNEL_ERROR') {
-            console.warn('📡 [postgres_changes] Error - may need to enable Replication in Supabase Dashboard');
+            console.warn(
+              '📡 [postgres_changes] Error - may need to enable Replication in Supabase Dashboard'
+            );
           }
         });
     } else {
@@ -166,7 +191,9 @@ export class TennisQueries {
 
     // Debounce rapid signals
     if (this._refreshTimeout) {
-      console.log(`📡 [debounce] Signal #${signalId} from ${source} - SUPPRESSED (pending refresh)`);
+      console.log(
+        `📡 [debounce] Signal #${signalId} from ${source} - SUPPRESSED (pending refresh)`
+      );
       clearTimeout(this._refreshTimeout);
     } else {
       console.log(`📡 [debounce] Signal #${signalId} from ${source} - scheduling refresh`);
@@ -179,11 +206,15 @@ export class TennisQueries {
 
       // Regression guard: warn if refresh happens within 500ms of last refresh
       if (this._lastRefreshTime > 0 && timeSinceLastRefresh < 500) {
-        console.warn(`⚠️ [regression] Double refresh detected! Only ${timeSinceLastRefresh}ms since last refresh. Signals: ${this._signalCount}, Refreshes: ${this._refreshCount}`);
+        console.warn(
+          `⚠️ [regression] Double refresh detected! Only ${timeSinceLastRefresh}ms since last refresh. Signals: ${this._signalCount}, Refreshes: ${this._refreshCount}`
+        );
       }
 
       this._lastRefreshTime = now;
-      console.log(`📡 [refresh] Executing refresh #${this._refreshCount} (signals received: ${this._signalCount})`);
+      console.log(
+        `📡 [refresh] Executing refresh #${this._refreshCount} (signals received: ${this._signalCount})`
+      );
 
       try {
         const board = await this.getBoard();
@@ -208,105 +239,6 @@ export class TennisQueries {
    */
   getLastBoard() {
     return this._lastBoard;
-  }
-
-  /**
-   * Normalize court data from API to CourtState
-   * @private
-   * @param {Object} c - Raw court from API
-   * @returns {import('./types').CourtState}
-   */
-  _normalizeCourt(c) {
-    const hasSession = !!c.session_id;
-    const hasBlock = !!c.block_id;
-    const minutesRemaining = c.minutes_remaining ?? null;
-
-    // Compute availability flags for UI compatibility
-    const isUnoccupied = !hasSession && !hasBlock;
-    const isOvertime = hasSession && minutesRemaining !== null && minutesRemaining <= 0;
-    const isActive = hasSession && minutesRemaining !== null && minutesRemaining > 0;
-    const isBlocked = hasBlock;
-    const isOccupied = hasSession;
-
-    return {
-      id: c.court_id,  // UUID for commands
-      number: c.court_number,
-      status: c.status,
-      // Availability flags for UI
-      isUnoccupied,
-      isOvertime,
-      isActive,
-      isBlocked,
-      isOccupied,
-      // Session data
-      session: hasSession ? {
-        id: c.session_id,
-        courtNumber: c.court_number,
-        participants: (c.participants || []).map(p => ({
-          memberId: p.member_id,
-          displayName: p.display_name,
-          isGuest: p.is_guest || false,
-        })),
-        groupType: c.session_type || c.group_type,
-        startedAt: c.started_at,
-        scheduledEndAt: c.scheduled_end_at,
-        minutesRemaining: minutesRemaining,
-      } : null,
-      // Block data
-      block: hasBlock ? {
-        id: c.block_id,
-        courtNumber: c.court_number,
-        reason: c.block_title || c.block_reason,
-        endTime: c.block_ends_at || c.block_end_time,
-      } : null,
-      // Legacy compatibility: add players array and timing at top level
-      players: hasSession
-        ? (c.participants || []).map(p => ({
-            id: p.member_id,
-            name: p.display_name || 'Unknown',
-            member_id: p.member_id,
-          }))
-        : [],
-      // Top-level timing for Admin CourtStatusGrid compatibility
-      endTime: c.scheduled_end_at,
-      startTime: c.started_at,
-      current: hasSession
-        ? {
-            players: (c.participants || []).map(p => ({
-              id: p.member_id,
-              name: p.display_name || 'Unknown',
-              member_id: p.member_id,
-            })),
-            endTime: c.scheduled_end_at,
-            startTime: c.started_at,
-          }
-        : null,
-    };
-  }
-
-  /**
-   * Normalize waitlist entry from API to WaitlistEntry
-   * @private
-   * @param {Object} w - Raw waitlist entry from API
-   * @returns {import('./types').WaitlistEntry}
-   */
-  _normalizeWaitlistEntry(w) {
-    return {
-      id: w.id,
-      position: w.position,
-      participants: (w.participants || []).map(p => 
-        typeof p === 'string' 
-          ? { displayName: p, memberId: null, isGuest: false }
-          : {
-              memberId: p.member_id,
-              displayName: p.display_name || p.guest_name,
-              isGuest: p.is_guest || false,
-            }
-      ),
-      groupType: w.group_type,
-      joinedAt: w.joined_at,
-      minutesWaiting: w.minutes_waiting,
-    };
   }
 }
 
