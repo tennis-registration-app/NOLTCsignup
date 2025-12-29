@@ -19,28 +19,17 @@ export { DataValidation } from '@lib';
 // Storage adapter for localStorage (future: API adapter)
 export { LocalStorageAdapter, storageAdapter } from '@lib';
 
-// Main data service for courts, waitlist, blocks (legacy localStorage)
-export {
-  TennisDataService,
-  tennisDataService,
-  setTennisBusinessLogic
-} from '@lib';
+// Legacy localStorage service removed - all mutations now go through API
 
 // Business logic and calculations
-export {
-  TennisBusinessLogic,
-  tennisBusinessLogic
-} from '@lib';
+export { TennisBusinessLogic, tennisBusinessLogic } from '@lib';
 
 // ============================================================
 // Registration-specific services (kept local)
 // ============================================================
 
 // Geolocation verification
-export {
-  GeolocationService,
-  geolocationService
-} from './GeolocationService.js';
+export { GeolocationService, geolocationService } from './GeolocationService.js';
 
 // API-backed tennis service (backend integration)
 import { ApiTennisService } from './ApiTennisService.js';

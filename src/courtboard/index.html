@@ -927,9 +927,7 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/events.js"></script>
   <script src="../../shared/datastore.js"></script>
-  <script src="../../shared/dataservice.js"></script>
   <script src="../../shared/blocks.js"></script>
-  <script src="../../shared/maintenance.js"></script>
 
   <!-- Sync waitlist promotions -->
   <script src="./sync-promotions.js"></script>
@@ -959,19 +957,14 @@
   <script src="../../domain/availability.js"></script>
   <script src="../../domain/waitlist.js"></script>
   <script src="../../shared/domain/roster.js"></script>
-  <script src="../../shared/selftest.js"></script>
 
-  <!-- Auto-clear overdue sessions -->
+  <!-- Auto-clear overdue sessions (now handled by backend) -->
   <script>
   (function(){
-    // Delegate to shared maintenance functions
-    window.__autoClearOverdueSessions = async (when) => {
-      const cleared = await window.Tennis?.Maintenance?.autoClearOverdueSessions?.(when) || 0;
-      const bumped = await window.Tennis?.Maintenance?.autoClearBlockConflicts?.(when) || 0;
-      return cleared + bumped;
-    };
+    // Legacy maintenance functions removed - backend handles session expiry
+    window.__autoClearOverdueSessions = async () => 0;
 
-    // Run once on boot, then every 5 minutes
+    // Keep interval for compatibility but it's now a no-op
     document.addEventListener('DOMContentLoaded', () => {
       window.__autoClearOverdueSessions();
       if (!window.__autoClearInterval) {

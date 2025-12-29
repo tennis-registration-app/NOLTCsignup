@@ -18,9 +18,6 @@ import {
   TENNIS_CONFIG as _sharedTennisConfig,
   // Services (also from @lib)
   DataValidation,
-  TennisDataService,
-  tennisDataService,
-  setTennisBusinessLogic,
   TennisBusinessLogic,
   tennisBusinessLogic,
 } from '@lib';
@@ -86,14 +83,8 @@ import {
 
 // Global service aliases for backward compatibility with other scripts
 window.Tennis = window.Tennis || {};
-window.Tennis.DataService = window.Tennis.DataService || TennisDataService;
-window.TennisDataService = window.TennisDataService || window.Tennis.DataService;
-window.WaitlistDataService = window.WaitlistDataService || window.TennisDataService;
 window.TennisBusinessLogic = window.TennisBusinessLogic || TennisBusinessLogic;
 window.GeolocationService = window.GeolocationService || GeolocationService;
-
-// Wire up TennisBusinessLogic to TennisDataService for circular dependency
-setTennisBusinessLogic(TennisBusinessLogic);
 
 // Access window.APP_UTILS for backward compatibility
 const U = window.APP_UTILS || {};
