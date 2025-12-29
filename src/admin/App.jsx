@@ -1350,8 +1350,8 @@ const AdminPanelV2 = ({ onExit }) => {
             id: c.block.id,
             courtNumber: c.number,
             reason: c.block.reason,
-            startTime: c.block.startTime || new Date().toISOString(),
-            endTime: c.block.endTime,
+            startTime: c.block?.startsAt || c.block?.startTime || new Date().toISOString(),
+            endTime: c.block?.endsAt || c.block?.endTime,
           }));
 
         // Merge with localStorage blocks (for templates/scheduled)

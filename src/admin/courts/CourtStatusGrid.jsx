@@ -263,7 +263,7 @@ const CourtStatusGrid = ({
     if (!players || players.length === 0) return 'No players';
     return players
       .map((p) => {
-        const name = p.name || p.playerName || 'Unknown';
+        const name = p.displayName || p.name || p.playerName || 'Unknown';
         return name.split(' ').pop();
       })
       .join(' & ');

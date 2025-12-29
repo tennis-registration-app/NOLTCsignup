@@ -66,9 +66,8 @@ export function normalizeCourt(raw, serverNow) {
       court_number: number,
       title: raw.block_title,
       reason: raw.block_title, // block_title is used as reason
+      starts_at: raw.block_starts_at,
       ends_at: raw.block_ends_at,
-      // starts_at not returned by API, but block is active if present
-      starts_at: serverNow, // Use serverNow as proxy since it's already active
     };
   }
   const block = blockInput ? normalizeBlock(blockInput, serverNow) : null;
