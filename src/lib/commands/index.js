@@ -73,3 +73,9 @@ export {
   preflightAssignFromWaitlist,
   toAssignFromWaitlistPayload,
 } from './assignFromWaitlist.js';
+
+export {
+  PurchaseBallsCommandSchema,
+  buildPurchaseBallsCommand,
+  toPurchaseBallsPayload,
+} from './purchaseBalls.js';

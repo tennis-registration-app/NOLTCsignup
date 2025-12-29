@@ -14,7 +14,6 @@ import {
   toAssignFromWaitlistPayload,
   toCreateBlockPayload,
   toCancelBlockPayload,
-  toPurchaseBallsPayload,
 } from './wire.js';
 
 // Command DTO validation (fail-fast before API call)
@@ -30,6 +29,8 @@ import {
   buildDeleteBlockCommand,
   buildRemoveFromWaitlistCommand,
   buildAssignFromWaitlistCommand,
+  buildPurchaseBallsCommand,
+  toPurchaseBallsPayload,
 } from '../../lib/commands/index.js';
 
 export class TennisCommands {
@@ -183,7 +184,18 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse & { transaction?: Object }>}
    */
   async purchaseBalls(input) {
-    const payload = toPurchaseBallsPayload(input);
+    // Validate command structure (fail-fast) and get idempotency key
+    const command = buildPurchaseBallsCommand({
+      sessionId: input.sessionId,
+      accountId: input.accountId,
+      splitBalls: input.splitBalls || false,
+      splitAccountIds: input.splitAccountIds || null,
+      idempotencyKey: input.idempotencyKey,
+    });
+
+    // Build payload using DTO mapper
+    const payload = toPurchaseBallsPayload(command);
+
     const response = await this.api.post('/purchase-balls', payload);
     return response;
   }
