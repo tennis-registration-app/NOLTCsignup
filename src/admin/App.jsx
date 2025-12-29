@@ -2239,7 +2239,7 @@ const AdminPanelV2 = ({ onExit }) => {
                 setRefreshTrigger((prev) => prev + 1);
               }}
               clearWaitlist={async () => {
-                const res = await backend.api.post('/clear-waitlist', {});
+                const res = await backend.commands.clearWaitlist();
                 return res;
               }}
             />

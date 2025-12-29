@@ -24,6 +24,12 @@ import {
   buildJoinWaitlistCommand,
   buildMoveCourtCommand,
   toMoveCourtPayload,
+  buildClearWaitlistCommand,
+  toClearWaitlistPayload,
+  buildCreateBlockCommand,
+  buildDeleteBlockCommand,
+  buildRemoveFromWaitlistCommand,
+  buildAssignFromWaitlistCommand,
 } from '../../lib/commands/index.js';
 
 export class TennisCommands {
@@ -89,6 +95,12 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse>}
    */
   async cancelWaitlist(input) {
+    // Validate command structure (fail-fast)
+    buildRemoveFromWaitlistCommand({
+      waitlistEntryId: input.entryId,
+      reason: input.reason || 'cancelled',
+    });
+
     const payload = toCancelWaitlistPayload(input);
     const response = await this.api.post('/cancel-waitlist', payload);
     return response;
@@ -100,6 +112,12 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse & { session?: Object }>}
    */
   async assignFromWaitlist(input) {
+    // Validate command structure (fail-fast)
+    buildAssignFromWaitlistCommand({
+      waitlistEntryId: input.waitlistEntryId,
+      courtId: input.courtId,
+    });
+
     const payload = toAssignFromWaitlistPayload(input);
     const response = await this.api.post('/assign-from-waitlist', payload);
     return response;
@@ -130,6 +148,14 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse & { block?: Object }>}
    */
   async createBlock(input) {
+    // Validate command structure (fail-fast)
+    buildCreateBlockCommand({
+      courtId: input.courtId,
+      startsAt: input.startTime,
+      endsAt: input.endTime,
+      reason: input.reason,
+    });
+
     const payload = toCreateBlockPayload(input);
     const response = await this.api.post('/create-block', payload);
     return response;
@@ -141,6 +167,11 @@ export class TennisCommands {
    * @returns {Promise<import('./types').CommandResponse>}
    */
   async cancelBlock(input) {
+    // Validate command structure (fail-fast)
+    buildDeleteBlockCommand({
+      blockId: input.blockId,
+    });
+
     const payload = toCancelBlockPayload(input);
     const response = await this.api.post('/cancel-block', payload);
     return response;
@@ -173,6 +204,21 @@ export class TennisCommands {
     const payload = toMoveCourtPayload(command);
 
     const response = await this.api.post('/move-court', payload);
+    return response;
+  }
+
+  /**
+   * Clear the entire waitlist (admin action)
+   * @returns {Promise<import('./types').CommandResponse & { cancelledCount?: number }>}
+   */
+  async clearWaitlist() {
+    // Validate command structure (fail-fast)
+    const command = buildClearWaitlistCommand({});
+
+    // Build payload using DTO mapper
+    const payload = toClearWaitlistPayload(command);
+
+    const response = await this.api.post('/clear-waitlist', payload);
     return response;
   }
 

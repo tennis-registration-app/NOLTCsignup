@@ -59,3 +59,17 @@ export {
   preflightMoveCourt,
   toMoveCourtPayload,
 } from './moveCourt.js';
+
+export {
+  ClearWaitlistCommandSchema,
+  buildClearWaitlistCommand,
+  preflightClearWaitlist,
+  toClearWaitlistPayload,
+} from './clearWaitlist.js';
+
+export {
+  AssignFromWaitlistCommandSchema,
+  buildAssignFromWaitlistCommand,
+  preflightAssignFromWaitlist,
+  toAssignFromWaitlistPayload,
+} from './assignFromWaitlist.js';
