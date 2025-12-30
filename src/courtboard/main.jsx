@@ -668,6 +668,21 @@ function TennisCourtDisplay() {
         setCourts(transformedCourts);
 
         // Extract blocks from API response and update courtBlocks state
+        // DEBUG: Log raw block data from normalized courts
+        console.log(
+          '[DEBUG] Courts with blocks:',
+          board.courts
+            .filter((c) => c.block)
+            .map((c) => ({
+              number: c.number,
+              blockId: c.block?.id,
+              reason: c.block?.reason,
+              title: c.block?.title,
+              startsAt: c.block?.startsAt,
+              endsAt: c.block?.endsAt,
+            }))
+        );
+
         const apiBlocks = board.courts
           .filter((c) => c.block)
           .map((c) => ({
@@ -679,6 +694,14 @@ function TennisCourtDisplay() {
             isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
           }));
         console.log('[Courtboard] Blocks from API:', apiBlocks);
+        console.log(
+          '[DEBUG] isWetCourt flags:',
+          apiBlocks.map((b) => ({
+            court: b.courtNumber,
+            isWetCourt: b.isWetCourt,
+            reason: b.reason,
+          }))
+        );
         setCourtBlocks(apiBlocks);
       }
 
@@ -739,6 +762,18 @@ function TennisCourtDisplay() {
       const now = new Date();
       // Use courtBlocks from React state instead of localStorage
       const blocks = courtBlocks || [];
+      // DEBUG: Log courtBlocks state
+      console.log(
+        '[DEBUG] courtBlocks for wetSet:',
+        blocks.length,
+        blocks.map((b) => ({
+          court: b.courtNumber,
+          isWetCourt: b.isWetCourt,
+          startTime: b.startTime,
+          endTime: b.endTime,
+        }))
+      );
+
       const wetSet = new Set(
         (blocks || [])
           .filter(
@@ -749,6 +784,8 @@ function TennisCourtDisplay() {
           )
           .map((b) => b.courtNumber)
       );
+      // DEBUG: Log wetSet
+      console.log('[DEBUG] wetSet:', [...wetSet]);
       const _statuses = A.getCourtStatuses({ data, now, blocks, wetSet }) || [];
       statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
       selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));
