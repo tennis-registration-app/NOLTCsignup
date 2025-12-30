@@ -12,6 +12,11 @@ import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 // TennisBackend singleton for API operations
 const backend = createBackend();
 
+// Get device ID for API calls
+const getDeviceId = () => {
+  return window.Tennis?.deviceId || localStorage.getItem('deviceId') || 'admin-device';
+};
+
 // Import extracted components
 import {
   // Icons
@@ -1063,54 +1068,30 @@ const AdminPanelV2 = ({ onExit }) => {
   const ENABLE_WET_COURTS = true;
 
   const handleEmergencyWetCourt = async () => {
-    console.log('🌧️ Emergency wet court activated');
-
-    // Set all courts as wet in state immediately
-    const allCourts = new Set();
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].forEach((courtNum) => {
-      WC.markWet(allCourts, courtNum);
-    });
-    setWetCourts(allCourts);
-    setWetCourtsActive(true);
-
-    // Notify (preserve legacy event name for other pages)
-    const nextWet = Array.from(allCourts).sort((a, b) => a - b);
-    Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: nextWet });
+    console.log('🌧️ Emergency wet court activated - calling API');
 
     try {
-      const now = new Date().toISOString();
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
-      }
-
-      // Create wet court blocks for all courts (1-12)
-      const wetCourtBlocks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((courtNum) => ({
-        id: `wet-court-${courtNum}-${Date.now()}`,
-        courtNumber: courtNum,
+      const result = await backend.admin.markWetCourts({
+        deviceId: getDeviceId(),
+        durationMinutes: 720, // 12 hours
         reason: 'WET COURT',
-        startTime: now,
-        endTime: (() => {
-          const today = new Date();
-          const endTime = new Date(today);
-          endTime.setHours(22, 0, 0, 0); // 10:00 PM today
+        idempotencyKey: `wet-all-${new Date().toISOString().split('T')[0]}`,
+      });
 
-          if (today.getHours() >= 22) {
-            endTime.setDate(endTime.getDate() + 1);
-          }
+      if (result.ok) {
+        console.log(`✅ Marked ${result.courtsMarked} courts as wet until ${result.endsAt}`);
 
-          return endTime.toISOString();
-        })(),
-        isEvent: false,
-        isWetCourt: true,
-        createdAt: now,
-      }));
+        // Update local state
+        const allCourts = new Set(result.courtNumbers || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        setWetCourts(allCourts);
+        setWetCourtsActive(true);
 
-      const updatedBlocks = [...existingBlocks, ...wetCourtBlocks];
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-      setRefreshTrigger((prev) => prev + 1);
+        // Notify legacy components
+        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) });
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        console.error('Failed to mark wet courts:', result.message);
+      }
     } catch (error) {
       console.error('Error creating wet court blocks:', error);
     }
@@ -1131,71 +1112,79 @@ const AdminPanelV2 = ({ onExit }) => {
   const removeAllWetCourtBlocks = async () => {
     if (!ENABLE_WET_COURTS) return;
 
+    console.log('🧹 Clearing all wet court blocks via API');
+
     try {
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
+      const result = await backend.admin.clearWetCourts({
+        deviceId: getDeviceId(),
+      });
+
+      if (result.ok) {
+        console.log(`✅ Cleared ${result.blocksCleared} wet court blocks`);
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        console.error('Failed to clear wet courts:', result.message);
       }
-
-      // Remove all wet court blocks
-      const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
-
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-      setRefreshTrigger((prev) => prev + 1);
-
-      console.log('🧹 Removed all wet court blocks');
     } catch (error) {
       console.error('Error removing wet court blocks:', error);
     }
   };
 
   const clearWetCourt = async (courtNumber) => {
-    console.log(`☀️ Clearing wet court ${courtNumber}`);
+    console.log(`☀️ Clearing wet court ${courtNumber} via API`);
 
-    const newWetCourts = new Set(wetCourts);
-    WC.clearWet(newWetCourts, courtNumber);
-    setWetCourts(newWetCourts);
+    // Get court ID from boardState
+    const court = boardState?.courts?.find((c) => c.number === courtNumber);
+    if (!court?.id) {
+      console.warn(`Court ${courtNumber} not found in board state`);
+      return;
+    }
 
-    // Notify (preserve legacy event name for other pages)
-    const nextWet = Array.from(newWetCourts).sort((a, b) => a - b);
-    Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: nextWet });
-
-    // Remove wet court block for this court
     try {
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
+      const result = await backend.admin.clearWetCourts({
+        deviceId: getDeviceId(),
+        courtIds: [court.id],
+      });
+
+      if (result.ok) {
+        console.log(`✅ Cleared wet court ${courtNumber}`);
+
+        // Update local state
+        const newWetCourts = new Set(wetCourts);
+        newWetCourts.delete(courtNumber);
+        setWetCourts(newWetCourts);
+
+        // Notify legacy components
+        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
+        setRefreshTrigger((prev) => prev + 1);
+
+        // If all courts are dry, deactivate system
+        if (newWetCourts.size === 0) {
+          setWetCourtsActive(false);
+          console.log('✅ All courts dry - wet court system deactivated');
+        }
+      } else {
+        console.error('Failed to clear wet court:', result.message);
       }
-      const updatedBlocks = existingBlocks.filter(
-        (block) => !(block.isWetCourt && block.courtNumber === courtNumber)
-      );
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error('Error removing wet court block:', error);
     }
-
-    // If all courts are dry, deactivate system
-    if (newWetCourts.size === 0) {
-      setWetCourtsActive(false);
-      console.log('✅ All courts dry - wet court system deactivated');
-    }
   };
 
-  const deactivateWetCourts = () => {
+  const deactivateWetCourts = async () => {
     if (!ENABLE_WET_COURTS) return;
 
-    console.log('🔄 Manually deactivating wet court system');
-    setWetCourtsActive(false);
-    setWetCourts(new Set());
-    setSuspendedBlocks([]);
+    console.log('🔄 Manually deactivating wet court system via API');
 
-    // Remove all wet court blocks
-    removeAllWetCourtBlocks();
+    try {
+      await removeAllWetCourtBlocks();
+      setWetCourtsActive(false);
+      setWetCourts(new Set());
+      setSuspendedBlocks([]);
+      Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] });
+    } catch (error) {
+      console.error('Error deactivating wet courts:', error);
+    }
   };
 
   // Load data from localStorage
