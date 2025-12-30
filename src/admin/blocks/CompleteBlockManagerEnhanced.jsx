@@ -174,6 +174,7 @@ const CompleteBlockManagerEnhanced = ({
   HoverCard,
   QuickActionsMenu,
   Tennis,
+  backend, // TennisBackend for API calls
 }) => {
   const [activeView, setActiveView] = useState(defaultView);
   const [selectedCourts, setSelectedCourts] = useState([]);
@@ -199,149 +200,110 @@ const CompleteBlockManagerEnhanced = ({
 
   const currentTime = new Date();
 
-  // Wet Court Helper Functions
+  // Get device ID from window.Tennis or fallback
+  const getDeviceId = () => {
+    return window.Tennis?.deviceId || localStorage.getItem('deviceId') || 'admin-device';
+  };
+
+  // Wet Court Helper Functions - Using API
   const handleEmergencyWetCourt = async () => {
     if (!ENABLE_WET_COURTS) return;
+    if (!backend) {
+      console.error('Backend not available');
+      onNotification?.('Backend not available', 'error');
+      return;
+    }
 
-    console.log('🌧️ Emergency wet court activated');
+    console.log('🌧️ Emergency wet court - calling API');
 
-    // Set all courts as wet
-    const allCourts = new Set();
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].forEach((courtNum) => {
-      WC.markWet(allCourts, courtNum);
-    });
-    setWetCourts(allCourts);
-    setWetCourtsActive(true);
-
-    // Notify (preserve legacy event name for other pages)
-    const nextWet = Array.from(allCourts).sort((a, b) => a - b);
-    Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: nextWet });
-
-    // Create wet court blocks immediately with explicit court list
     try {
-      const now = new Date().toISOString();
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
-      }
-
-      // Create wet court blocks for all courts (1-12)
-      const wetCourtBlocks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((courtNum) => ({
-        id: `wet-court-${courtNum}-${Date.now()}`,
-        courtNumber: courtNum,
+      const result = await backend.admin.markWetCourts({
+        deviceId: getDeviceId(),
+        durationMinutes: 720, // 12 hours
         reason: 'WET COURT',
-        startTime: now,
-        endTime: (() => {
-          const today = new Date();
-          const endTime = new Date(today);
-          endTime.setHours(22, 0, 0, 0); // 10:00 PM today
+        idempotencyKey: `wet-all-${new Date().toISOString().split('T')[0]}`,
+      });
 
-          // If it's already past 10pm, set for 10pm tomorrow
-          if (today.getHours() >= 22) {
-            endTime.setDate(endTime.getDate() + 1);
-          }
+      if (result.ok) {
+        console.log(`✅ Marked ${result.courtsMarked} courts as wet until ${result.endsAt}`);
+        onNotification?.(`All ${result.courtsMarked} courts marked wet`, 'success');
 
-          return endTime.toISOString();
-        })(),
-        isEvent: false,
-        isWetCourt: true,
-        createdAt: now,
-      }));
+        // Update local state for UI
+        const allCourts = new Set(result.courtNumbers || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+        setWetCourts(allCourts);
+        setWetCourtsActive(true);
 
-      // Add to storage
-      const updatedBlocks = [...existingBlocks, ...wetCourtBlocks];
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-
-      console.log(`📦 Created ${wetCourtBlocks.length} wet court blocks directly`);
-      setRefreshTrigger((prev) => prev + 1);
+        // Emit event for legacy components
+        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) });
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        console.error('Failed to mark wet courts:', result.message);
+        onNotification?.(result.message || 'Failed to mark wet courts', 'error');
+      }
     } catch (error) {
-      console.error('Error creating wet court blocks:', error);
+      console.error('Error marking wet courts:', error);
+      onNotification?.('Error marking wet courts', 'error');
     }
   };
 
-  const removeWetCourtBlock = async (courtNumber) => {
+  const deactivateWetCourts = async () => {
     if (!ENABLE_WET_COURTS) return;
+    if (!backend) {
+      console.error('Backend not available');
+      onNotification?.('Backend not available', 'error');
+      return;
+    }
+
+    console.log('🔄 Clearing all wet courts - calling API');
 
     try {
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
+      const result = await backend.admin.clearWetCourts({
+        deviceId: getDeviceId(),
+      });
+
+      if (result.ok) {
+        console.log(`✅ Cleared ${result.blocksCleared} wet court blocks`);
+        onNotification?.(`Cleared ${result.blocksCleared} wet courts`, 'success');
+
+        // Update local state
+        setWetCourtsActive(false);
+        setWetCourts(new Set());
+        setSuspendedBlocks([]);
+
+        // Emit event for legacy components
+        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] });
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        console.error('Failed to clear wet courts:', result.message);
+        onNotification?.(result.message || 'Failed to clear wet courts', 'error');
       }
-
-      // Remove wet court blocks for this court
-      const updatedBlocks = existingBlocks.filter(
-        (block) => !(block.isWetCourt && block.courtNumber === courtNumber)
-      );
-
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-
-      console.log(`🗑️ Removed wet court block for court ${courtNumber}`);
-      setRefreshTrigger((prev) => prev + 1); // Refresh timeline
     } catch (error) {
-      console.error('Error removing wet court block:', error);
+      console.error('Error clearing wet courts:', error);
+      onNotification?.('Error clearing wet courts', 'error');
     }
   };
 
-  const removeAllWetCourtBlocks = async () => {
-    if (!ENABLE_WET_COURTS) return;
-
-    try {
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
-      }
-
-      // Remove all wet court blocks
-      const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
-
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-
-      console.log('🧹 Removed all wet court blocks');
-      setRefreshTrigger((prev) => prev + 1); // Refresh timeline
-    } catch (error) {
-      console.error('Error removing all wet court blocks:', error);
-    }
-  };
-
+  // Clear individual wet court - for now, clearing all is the primary operation
+  // Individual court clearing would require court ID lookup
   const clearWetCourt = (courtNumber) => {
     if (!ENABLE_WET_COURTS) return;
 
     console.log(`☀️ Clearing wet court ${courtNumber}`);
 
+    // Update local UI state immediately
     const newWetCourts = new Set(wetCourts);
     WC.clearWet(newWetCourts, courtNumber);
     setWetCourts(newWetCourts);
 
-    // Notify (preserve legacy event name for other pages)
-    const nextWet = Array.from(newWetCourts).sort((a, b) => a - b);
-    Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: nextWet });
+    // Emit event for legacy components
+    Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
 
-    // Remove wet court block for this court
-    removeWetCourtBlock(courtNumber);
-
-    // If all courts are dry, deactivate system
+    // If all courts are dry, deactivate system via API
     if (newWetCourts.size === 0) {
-      setWetCourtsActive(false);
-      console.log('✅ All courts dry - wet court system deactivated');
+      deactivateWetCourts();
     }
-  };
-
-  const deactivateWetCourts = () => {
-    if (!ENABLE_WET_COURTS) return;
-
-    console.log('🔄 Manually deactivating wet court system');
-    setWetCourtsActive(false);
-    setWetCourts(new Set());
-    setSuspendedBlocks([]);
-
-    // Remove all wet court blocks
-    removeAllWetCourtBlocks();
+    // Note: Individual court clear via API would need court_id mapping
+    // For now, the realtime subscription will update state when blocks change
   };
 
   const quickReasons = [

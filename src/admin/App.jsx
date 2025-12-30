@@ -2022,6 +2022,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   HoverCard={HoverCard}
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
+                  backend={backend}
                 />
               )}
 
@@ -2047,6 +2048,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   HoverCard={HoverCard}
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
+                  backend={backend}
                 />
               )}
 
@@ -2072,6 +2074,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   HoverCard={HoverCard}
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
+                  backend={backend}
                 />
               )}
             </div>

@@ -1,6 +1,6 @@
 /**
  * AdminCommands - Admin-only mutations via TennisBackend
- * 
+ *
  * All methods require admin device authorization.
  * All mutations emit board_change_signals for realtime updates.
  * All responses follow { ok, code, message, serverNow } pattern.
@@ -32,7 +32,7 @@ export class AdminCommands {
       device_id: input.deviceId,
       device_type: input.deviceType || 'admin',
     };
-    
+
     const response = await this.api.post('/create-block', payload);
     return {
       ok: response.ok,
@@ -56,7 +56,7 @@ export class AdminCommands {
       device_id: input.deviceId,
       device_type: input.deviceType || 'admin',
     };
-    
+
     const response = await this.api.post('/cancel-block', payload);
     return {
       ok: response.ok,
@@ -81,7 +81,7 @@ export class AdminCommands {
       reason: input.reason || 'admin_force_end',
       device_id: input.deviceId,
     };
-    
+
     const response = await this.api.post('/admin-end-session', payload);
     return {
       ok: response.ok,
@@ -103,7 +103,7 @@ export class AdminCommands {
       reason: input.reason || 'admin_clear_all',
       device_id: input.deviceId,
     };
-    
+
     const response = await this.api.post('/clear-all-courts', payload);
     return {
       ok: response.ok,
@@ -127,7 +127,7 @@ export class AdminCommands {
       reason: input.reason || 'admin_removed',
       device_id: input.deviceId,
     };
-    
+
     const response = await this.api.post('/remove-from-waitlist', payload);
     return {
       ok: response.ok,
@@ -146,7 +146,7 @@ export class AdminCommands {
     const payload = {
       device_id: input.deviceId,
     };
-    
+
     const response = await this.api.post('/cleanup-sessions', payload);
     return {
       ok: response.ok,
@@ -154,6 +154,64 @@ export class AdminCommands {
       message: response.message || response.error,
       serverNow: response.serverNow,
       sessionsEnded: response.endedIds?.length || 0,
+    };
+  }
+
+  /**
+   * Mark courts as wet (batch operation)
+   * @param {Object} input
+   * @param {string} input.deviceId - Admin device ID
+   * @param {number} [input.durationMinutes] - Duration in minutes (default: 720 = 12 hours)
+   * @param {string[]} [input.courtIds] - Specific court UUIDs (default: all courts)
+   * @param {string} [input.reason] - Reason (default: 'WET COURT')
+   * @param {string} [input.idempotencyKey] - Prevent duplicate operations
+   */
+  async markWetCourts(input) {
+    const payload = {
+      device_id: input.deviceId,
+      duration_minutes: input.durationMinutes,
+      court_ids: input.courtIds,
+      reason: input.reason,
+      idempotency_key: input.idempotencyKey,
+    };
+
+    const response = await this.api.post('/mark-wet-courts', payload);
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      courtsMarked: response.courts_marked,
+      courtNumbers: response.court_numbers,
+      blocksCreated: response.blocks_created,
+      blocksCancelled: response.blocks_cancelled,
+      endsAt: response.ends_at,
+      idempotent: response.idempotent,
+    };
+  }
+
+  /**
+   * Clear wet court blocks (batch operation)
+   * @param {Object} input
+   * @param {string} input.deviceId - Admin device ID
+   * @param {string[]} [input.courtIds] - Specific court UUIDs (default: all courts)
+   * @param {string} [input.idempotencyKey] - Prevent duplicate operations
+   */
+  async clearWetCourts(input) {
+    const payload = {
+      device_id: input.deviceId,
+      court_ids: input.courtIds,
+      idempotency_key: input.idempotencyKey,
+    };
+
+    const response = await this.api.post('/clear-wet-courts', payload);
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      blocksCleared: response.blocks_cleared,
+      courtNumbers: response.court_numbers,
     };
   }
 }
