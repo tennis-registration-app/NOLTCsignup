@@ -283,27 +283,53 @@ const CompleteBlockManagerEnhanced = ({
     }
   };
 
-  // Clear individual wet court - for now, clearing all is the primary operation
-  // Individual court clearing would require court ID lookup
-  const clearWetCourt = (courtNumber) => {
+  // Clear individual wet court via API
+  const clearWetCourt = async (courtNumber) => {
     if (!ENABLE_WET_COURTS) return;
+    if (!backend) {
+      onNotification?.('Backend not available', 'error');
+      return;
+    }
 
     console.log(`☀️ Clearing wet court ${courtNumber}`);
 
-    // Update local UI state immediately
-    const newWetCourts = new Set(wetCourts);
-    WC.clearWet(newWetCourts, courtNumber);
-    setWetCourts(newWetCourts);
-
-    // Emit event for legacy components
-    Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
-
-    // If all courts are dry, deactivate system via API
-    if (newWetCourts.size === 0) {
-      deactivateWetCourts();
+    // Get court ID from courts array
+    const court = courts[courtNumber - 1];
+    if (!court?.id) {
+      console.error(`Court ${courtNumber} not found`);
+      onNotification?.(`Court ${courtNumber} not found`, 'error');
+      return;
     }
-    // Note: Individual court clear via API would need court_id mapping
-    // For now, the realtime subscription will update state when blocks change
+
+    try {
+      const result = await backend.admin.clearWetCourts({
+        deviceId: getDeviceId(),
+        courtIds: [court.id],
+      });
+
+      if (result.ok) {
+        // Update local UI state
+        const newWetCourts = new Set(wetCourts);
+        newWetCourts.delete(courtNumber);
+        setWetCourts(newWetCourts);
+
+        // Emit event for legacy components
+        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
+
+        // If all courts are dry, update active state
+        if (newWetCourts.size === 0) {
+          setWetCourtsActive(false);
+        }
+
+        onNotification?.(`Court ${courtNumber} cleared`, 'success');
+      } else {
+        console.error('Failed to clear wet court:', result.message);
+        onNotification?.(result.message || 'Failed to clear wet court', 'error');
+      }
+    } catch (error) {
+      console.error('Error clearing wet court:', error);
+      onNotification?.('Error clearing wet court', 'error');
+    }
   };
 
   const quickReasons = [
