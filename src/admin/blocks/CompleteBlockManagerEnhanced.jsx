@@ -893,9 +893,7 @@ const CompleteBlockManagerEnhanced = ({
                 {/* Quick Action */}
                 <button
                   onClick={() => {
-                    setWetCourts(new Set());
-                    setWetCourtsActive(false);
-                    removeAllWetCourtBlocks();
+                    deactivateWetCourts();
                   }}
                   className="w-full py-2 px-3 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-medium"
                 >
