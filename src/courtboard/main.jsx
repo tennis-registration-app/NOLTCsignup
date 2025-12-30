@@ -674,8 +674,8 @@ function TennisCourtDisplay() {
             id: c.block.id,
             courtNumber: c.number,
             reason: c.block.reason || c.block.title || 'Blocked',
-            startTime: c.block.startTime || new Date().toISOString(),
-            endTime: c.block.endTime,
+            startTime: c.block.startsAt,
+            endTime: c.block.endsAt,
             isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
           }));
         console.log('[Courtboard] Blocks from API:', apiBlocks);
