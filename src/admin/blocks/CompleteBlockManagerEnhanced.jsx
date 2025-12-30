@@ -247,19 +247,24 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const deactivateWetCourts = async () => {
-    if (!ENABLE_WET_COURTS) return;
+    console.log('[DEBUG] deactivateWetCourts called');
+    if (!ENABLE_WET_COURTS) {
+      console.log('[DEBUG] ENABLE_WET_COURTS is false, returning');
+      return;
+    }
     if (!backend) {
-      console.error('Backend not available');
+      console.error('[DEBUG] Backend not available');
       onNotification?.('Backend not available', 'error');
       return;
     }
 
-    console.log('🔄 Clearing all wet courts - calling API');
+    console.log('[DEBUG] Calling clearWetCourts API with deviceId:', getDeviceId());
 
     try {
       const result = await backend.admin.clearWetCourts({
         deviceId: getDeviceId(),
       });
+      console.log('[DEBUG] clearWetCourts response:', result);
 
       if (result.ok) {
         console.log(`✅ Cleared ${result.blocksCleared} wet court blocks`);
