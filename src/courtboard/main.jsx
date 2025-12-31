@@ -559,40 +559,16 @@ function TennisCourtDisplay() {
     return () => clearInterval(timer);
   }, []);
 
-  // Data loading
+  // Data loading - no longer reads from localStorage
+  // All state now comes from API via TennisBackend subscription
   const loadData = useCallback(async () => {
-    try {
-      // Load court blocks
-      try {
-        const blocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-        setCourtBlocks(blocks);
-      } catch {
-        setCourtBlocks([]);
-      }
-
-      const storedData = await dataStore.get(TENNIS_CONFIG.STORAGE.KEY);
-      if (storedData) {
-        setCourts(storedData.courts || Array(12).fill(null));
-
-        // Normalize waitlist
-        const raw = Array.isArray(storedData?.waitlist) ? storedData.waitlist : [];
-        const normalized = raw
-          .map((g, idx) => {
-            const players = Array.isArray(g?.players) ? g.players : [];
-            const names = players.map((p) => p?.name || p?.id).filter(Boolean);
-            return names.length ? { id: g.id || `wg_${idx}`, names } : null;
-          })
-          .filter(Boolean);
-        setWaitlist(normalized);
-      }
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    }
+    // No-op: courts, waitlist, and courtBlocks now populate from API only
+    // Initial state is empty arrays, TennisBackend subscription fills them
   }, []);
 
-  // DOM event listeners for cross-component updates (e.g., court blocks from localStorage)
+  // DOM event listeners for cross-component updates
   useEffect(() => {
-    // Initial load for court blocks (not yet from API)
+    // Legacy loadData call (now no-op, API subscription handles state)
     loadData();
 
     const handleUpdate = debounce(() => loadData(), 150);
