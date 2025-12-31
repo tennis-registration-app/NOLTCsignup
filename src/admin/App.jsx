@@ -1196,16 +1196,8 @@ const AdminPanelV2 = ({ onExit }) => {
         dataStore.cache.delete('courtBlocks');
       }
 
-      // Load court data
-      const courtData = await dataStore.get(TENNIS_CONFIG.STORAGE.KEY);
-      if (courtData) {
-        setCourts(courtData.courts || []);
-        // Normalize waitlist using shared helper
-        setWaitingGroups(normalizeWaitlist(courtData.waitingGroups));
-      }
-
-      // courtBlocks now derived from API via TennisBackend subscription
-      // No localStorage load needed
+      // Courts, waitlist, and courtBlocks now derived from API via TennisBackend subscription
+      // No localStorage load needed - initial state is empty, API populates it
 
       // Load templates
       const templates = await dataStore.get(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY);
