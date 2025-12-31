@@ -111,7 +111,6 @@ export class TennisQueries {
           { event: 'INSERT', schema: 'public', table: 'board_change_signals' },
           (payload) => {
             console.log('📡 [postgres_changes] Signal received:', payload.new?.change_type);
-            console.log('[DEBUG] postgres_changes full payload:', payload);
             this._handleSignal(callback, 'postgres_changes');
           }
         )
@@ -134,7 +133,6 @@ export class TennisQueries {
       .channel('board-updates')
       .on('broadcast', { event: 'board_changed' }, (payload) => {
         console.log('📡 [broadcast] Signal received:', payload.payload?.change_type);
-        console.log('[DEBUG] broadcast full payload:', payload);
         this._handleSignal(callback, 'broadcast');
       })
       .subscribe((status, err) => {
@@ -220,12 +218,6 @@ export class TennisQueries {
 
       try {
         const board = await this.getBoard();
-        console.log('[DEBUG] Refetched board after signal:', {
-          serverNow: board?.serverNow,
-          courtsWithBlocks: board?.courts?.filter((c) => c.block).length,
-          wetBlocks: board?.courts?.filter((c) => c.block?.reason?.toLowerCase().includes('wet'))
-            .length,
-        });
         callback(board);
       } catch (error) {
         console.error('Failed to refresh board:', error);

@@ -21,10 +21,10 @@
  * - findMemberNumber: (id: number) => string - Find member number by ID
  * - canFirstGroupPlay: boolean - Whether first waitlist group can play
  * - canSecondGroupPlay: boolean - Whether second waitlist group can play
- * - firstWaitingGroup: object - First waiting group
- * - secondWaitingGroup: object - Second waiting group
- * - firstWaitingGroupData: object - First waiting group data
- * - secondWaitingGroupData: object - Second waiting group data
+ * - firstWaitlistEntry: object - First waitlist entry
+ * - secondWaitlistEntry: object - Second waitlist entry
+ * - firstWaitlistEntryData: object - First waitlist entry data
+ * - secondWaitlistEntryData: object - Second waitlist entry data
  * - data: object - Court data
  * - showAlert: boolean - Whether to show alert
  * - alertMessage: string - Alert message
@@ -52,24 +52,27 @@ const SearchScreen = ({
   findMemberNumber,
   canFirstGroupPlay,
   canSecondGroupPlay,
-  firstWaitingGroup,
-  secondWaitingGroup,
-  firstWaitingGroupData,
-  secondWaitingGroupData,
+  firstWaitlistEntry,
+  secondWaitlistEntry,
+  firstWaitlistEntryData,
+  secondWaitlistEntryData,
   data,
   showAlert,
   alertMessage,
   isMobileView,
-  CONSTANTS
+  CONSTANTS,
 }) => {
-  console.log('🎯 SearchScreen props:', { canFirstGroupPlay, canSecondGroupPlay, firstWaitingGroup, secondWaitingGroup });
   return (
     <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
       <ToastHost />
       <AlertDisplay show={showAlert} message={alertMessage} />
-      <div className={`bg-white rounded-2xl shadow-2xl ${isMobileView ? 'p-4' : 'p-6 sm:p-12'} w-full max-w-2xl ${isMobileView ? 'reg-modal--mobile' : ''}`}>
+      <div
+        className={`bg-white rounded-2xl shadow-2xl ${isMobileView ? 'p-4' : 'p-6 sm:p-12'} w-full max-w-2xl ${isMobileView ? 'reg-modal--mobile' : ''}`}
+      >
         <div className={`${isMobileView ? 'mb-4' : 'mb-6 sm:mb-8'} relative`}>
-          <label className={`block ${isMobileView ? 'text-base' : 'text-xl sm:text-2xl'} font-medium ${isMobileView ? 'mb-2' : 'mb-3 sm:mb-4'}`}>
+          <label
+            className={`block ${isMobileView ? 'text-base' : 'text-xl sm:text-2xl'} font-medium ${isMobileView ? 'mb-2' : 'mb-3 sm:mb-4'}`}
+          >
             {isMobileView ? 'Register Group' : 'Enter your name or member number'}
           </label>
           <div className="relative">
@@ -78,13 +81,13 @@ const SearchScreen = ({
               value={searchInput}
               onChange={(e) => {
                 markUserTyping();
-                const value = e.target.value || "";
+                const value = e.target.value || '';
                 setSearchInput(value);
 
                 // Check for admin code (immediate, no debounce)
                 if (value === CONSTANTS.ADMIN_CODE) {
-                  setCurrentScreen("admin");
-                  setSearchInput("");
+                  setCurrentScreen('admin');
+                  setSearchInput('');
                   return;
                 }
 
@@ -113,7 +116,10 @@ const SearchScreen = ({
           </div>
 
           {showSuggestions && getAutocompleteSuggestions(effectiveSearchInput).length > 0 && (
-            <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-y-auto" style={{ maxHeight: '400px' }}>
+            <div
+              className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-y-auto"
+              style={{ maxHeight: '400px' }}
+            >
               {getAutocompleteSuggestions(effectiveSearchInput).map((suggestion, idx) => (
                 <button
                   key={idx}
@@ -121,7 +127,9 @@ const SearchScreen = ({
                   className="w-full p-3 sm:p-4 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
                 >
                   <div className="font-medium text-lg sm:text-xl">{suggestion.member.name}</div>
-                  <div className="text-sm sm:text-base text-gray-600">Member #{suggestion.memberNumber}</div>
+                  <div className="text-sm sm:text-base text-gray-600">
+                    Member #{suggestion.memberNumber}
+                  </div>
                 </button>
               ))}
             </div>
@@ -132,32 +140,40 @@ const SearchScreen = ({
         {canFirstGroupPlay && (
           <button
             onClick={() => {
-              // Load the waiting group
-              setCurrentGroup(firstWaitingGroup.players.map(player => ({
+              // Guard: ensure waitlist entry has players
+              if (!firstWaitlistEntry?.players?.length) {
+                console.warn('[CTA] No waitlist entry or players available');
+                return;
+              }
+
+              // Load the waiting group (use memberId, not id)
+              const mappedPlayers = firstWaitlistEntry.players.map((player) => ({
                 ...player,
-                memberNumber: findMemberNumber(player.id)
-              })));
+                memberNumber: findMemberNumber(player.memberId),
+              }));
+              setCurrentGroup(mappedPlayers);
 
               // Set member number to first player
-              const firstPlayerMemberNum = findMemberNumber(firstWaitingGroup.players[0].id);
+              const firstPlayerMemberNum = findMemberNumber(firstWaitlistEntry.players[0].memberId);
               setMemberNumber(firstPlayerMemberNum);
 
               // Set waitlist priority flag and store entry ID for assignFromWaitlist
-              console.log('[COURT AVAILABLE BUTTON] Setting waitlist priority, entryId:', firstWaitingGroup?.id);
               setHasWaitlistPriority(true);
-              if (setCurrentWaitlistEntryId && firstWaitingGroup?.id) {
-                setCurrentWaitlistEntryId(firstWaitingGroup.id);
+              if (setCurrentWaitlistEntryId && firstWaitlistEntry?.id) {
+                setCurrentWaitlistEntryId(firstWaitlistEntry.id);
               }
 
               // Navigate to court selection
-              setCurrentScreen("court");
+              setCurrentScreen('court');
             }}
             className="pulse-cta cta-primary w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
             aria-live="polite"
           >
             {(() => {
-              const g = firstWaitingGroupData;
-              const names = Array.isArray(g?.players) ? g.players.map(p => p?.name).filter(Boolean) : [];
+              const g = firstWaitlistEntryData;
+              const names = Array.isArray(g?.players)
+                ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
+                : [];
               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
             })()}
           </button>
@@ -167,39 +183,50 @@ const SearchScreen = ({
         {canSecondGroupPlay && (
           <button
             onClick={() => {
-              // Load the second waiting group
-              setCurrentGroup(secondWaitingGroup.players.map(player => ({
-                ...player,
-                memberNumber: findMemberNumber(player.id)
-              })));
+              // Guard: ensure waitlist entry has players
+              if (!secondWaitlistEntry?.players?.length) {
+                console.warn('[CTA] No second waitlist entry or players available');
+                return;
+              }
+
+              // Load the second waiting group (use memberId, not id)
+              setCurrentGroup(
+                secondWaitlistEntry.players.map((player) => ({
+                  ...player,
+                  memberNumber: findMemberNumber(player.memberId),
+                }))
+              );
 
               // Set member number to first player in second group
-              const firstPlayerMemberNum = findMemberNumber(secondWaitingGroup.players[0].id);
+              const firstPlayerMemberNum = findMemberNumber(
+                secondWaitlistEntry.players[0].memberId
+              );
               setMemberNumber(firstPlayerMemberNum);
 
               // Set waitlist priority flag and store entry ID for assignFromWaitlist
-              console.log('[SECOND GROUP COURT AVAILABLE BUTTON] Setting waitlist priority, entryId:', secondWaitingGroup?.id);
               setHasWaitlistPriority(true);
-              if (setCurrentWaitlistEntryId && secondWaitingGroup?.id) {
-                setCurrentWaitlistEntryId(secondWaitingGroup.id);
+              if (setCurrentWaitlistEntryId && secondWaitlistEntry?.id) {
+                setCurrentWaitlistEntryId(secondWaitlistEntry.id);
               }
 
               // Navigate to court selection
-              setCurrentScreen("court");
+              setCurrentScreen('court');
             }}
             className="pulse-cta cta-secondary w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-4 animate-pulse"
             aria-live="polite"
           >
             {(() => {
-              const g = secondWaitingGroupData;
-              const names = Array.isArray(g?.players) ? g.players.map(p => p?.name).filter(Boolean) : [];
+              const g = secondWaitlistEntryData;
+              const names = Array.isArray(g?.players)
+                ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
+                : [];
               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
             })()}
           </button>
         )}
 
         <button
-          onClick={() => setCurrentScreen("welcome")}
+          onClick={() => setCurrentScreen('welcome')}
           className="w-full bg-gray-200 text-gray-700 py-3 sm:py-4 px-6 rounded-xl text-lg sm:text-xl hover:bg-gray-300 transition-colors"
         >
           Go Back

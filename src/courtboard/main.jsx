@@ -19,7 +19,6 @@ import {
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../registration/backend/index.js';
-import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 const backend = createBackend();
 
 // Access shared utils from window for backward compatibility
@@ -644,21 +643,6 @@ function TennisCourtDisplay() {
         setCourts(transformedCourts);
 
         // Extract blocks from API response and update courtBlocks state
-        // DEBUG: Log raw block data from normalized courts
-        console.log(
-          '[DEBUG] Courts with blocks:',
-          board.courts
-            .filter((c) => c.block)
-            .map((c) => ({
-              number: c.number,
-              blockId: c.block?.id,
-              reason: c.block?.reason,
-              title: c.block?.title,
-              startsAt: c.block?.startsAt,
-              endsAt: c.block?.endsAt,
-            }))
-        );
-
         const apiBlocks = board.courts
           .filter((c) => c.block)
           .map((c) => ({
@@ -669,22 +653,22 @@ function TennisCourtDisplay() {
             endTime: c.block.endsAt,
             isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
           }));
-        console.log('[Courtboard] Blocks from API:', apiBlocks);
-        console.log(
-          '[DEBUG] isWetCourt flags:',
-          apiBlocks.map((b) => ({
-            court: b.courtNumber,
-            isWetCourt: b.isWetCourt,
-            reason: b.reason,
-          }))
-        );
         setCourtBlocks(apiBlocks);
       }
 
-      // Normalize waitlist using shared helper
-      console.log('[Courtboard] Raw waitlist from API:', board.waitlist);
-      const normalized = normalizeWaitlist(board.waitlist);
-      console.log('[Courtboard] Normalized waitlist:', normalized);
+      // Transform already-normalized waitlist from TennisQueries
+      // TennisQueries returns { group: { players } } format, we need { names } for rendering
+      console.log('[Courtboard] Waitlist from API (already normalized):', board.waitlist);
+      const normalized = (board.waitlist || []).map((entry) => ({
+        id: entry.id,
+        position: entry.position,
+        groupType: entry.group?.type,
+        joinedAt: entry.joinedAt,
+        minutesWaiting: entry.minutesWaiting,
+        names: (entry.group?.players || []).map((p) => p.displayName || p.name || 'Unknown'),
+        players: entry.group?.players || [],
+      }));
+      console.log('[Courtboard] Transformed waitlist:', normalized);
       setWaitlist(normalized);
     });
 
@@ -738,17 +722,6 @@ function TennisCourtDisplay() {
       const now = new Date();
       // Use courtBlocks from React state instead of localStorage
       const blocks = courtBlocks || [];
-      // DEBUG: Log courtBlocks state
-      console.log(
-        '[DEBUG] courtBlocks for wetSet:',
-        blocks.length,
-        blocks.map((b) => ({
-          court: b.courtNumber,
-          isWetCourt: b.isWetCourt,
-          startTime: b.startTime,
-          endTime: b.endTime,
-        }))
-      );
 
       const wetSet = new Set(
         (blocks || [])
@@ -760,8 +733,6 @@ function TennisCourtDisplay() {
           )
           .map((b) => b.courtNumber)
       );
-      // DEBUG: Log wetSet
-      console.log('[DEBUG] wetSet:', [...wetSet]);
       const _statuses = A.getCourtStatuses({ data, now, blocks, wetSet }) || [];
       statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
       selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));

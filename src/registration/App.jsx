@@ -28,9 +28,6 @@ import { GeolocationService, geolocationService } from './services';
 // Import API config for mobile detection
 import { API_CONFIG } from '../lib/apiConfig.js';
 
-// Import shared waitlist normalization
-import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
-
 // Import Domain engagement helpers
 import { findEngagementByMemberId, getEngagementMessage } from '../lib/domain/engagement.js';
 
@@ -326,46 +323,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setAvailableCourts(selectableNumbers);
       setApiError(null);
 
-      // Emit CTA state using shared normalization
-      console.log('[Registration] Raw waitlist from API:', initialData.waitlist);
-      const normalizedWaitlist = normalizeWaitlist(initialData.waitlist);
-      console.log('[Registration] Normalized waitlist:', normalizedWaitlist);
-      const firstGroup = normalizedWaitlist[0] || null;
-      const secondGroup = normalizedWaitlist[1] || null;
-
-      const gateCount = selectableCourts.length;
-      const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
-      const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
+      // CTA state is now derived via useMemo from data.waitlist and availableCourts
+      // No cta:state event dispatch needed - React's reactivity handles updates
       console.log(
-        '[Registration] gateCount:',
-        gateCount,
-        'canFirstGroupPlay:',
-        canFirstGroupPlay,
-        'canSecondGroupPlay:',
-        canSecondGroupPlay
+        '[Registration] Initial load complete, waitlist length:',
+        initialData.waitlist?.length
       );
-
-      const ctaDetail = {
-        live1: canFirstGroupPlay,
-        live2: canSecondGroupPlay,
-        first: firstGroup
-          ? {
-              players: firstGroup.players,
-              id: firstGroup.id,
-              position: firstGroup.position,
-            }
-          : null,
-        second: secondGroup
-          ? {
-              players: secondGroup.players,
-              id: secondGroup.id,
-              position: secondGroup.position,
-            }
-          : null,
-        selectable: selectableCourts.map((c) => c.number),
-      };
-      console.log('[Registration] Dispatching CTA event with detail:', ctaDetail);
-      window.dispatchEvent(new CustomEvent('cta:state', { detail: ctaDetail }));
 
       return updatedData;
     } catch (error) {
@@ -455,56 +418,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           block: c.block ? { id: c.block.id, reason: c.block.reason } : null,
         }))
       );
-      console.log('[Registration CTA Debug] Selectable courts:', selectable);
-
-      // Emit cta:state event for external components using shared normalization
-      const normalizedWaitlist = normalizeWaitlist(board.waitlist);
-      const firstGroup = normalizedWaitlist[0] || null;
-      const secondGroup = normalizedWaitlist[1] || null;
-      const gateCount = selectable.length;
-      const canFirstGroupPlay = gateCount >= 1 && firstGroup !== null;
-      const canSecondGroupPlay = gateCount >= 2 && secondGroup !== null;
-
-      console.log(
-        '[Registration CTA Debug] gateCount:',
-        gateCount,
-        'waitlist:',
-        normalizedWaitlist.length
-      );
-      console.log(
-        '[Registration CTA Debug] canFirstGroupPlay:',
-        canFirstGroupPlay,
-        'canSecondGroupPlay:',
-        canSecondGroupPlay
-      );
-
-      window.dispatchEvent(
-        new CustomEvent('cta:state', {
-          detail: {
-            courts: board.courts || [],
-            waitlist: board.waitlist || [],
-            serverNow: board.serverNow,
-            // CTA-specific fields
-            live1: canFirstGroupPlay,
-            live2: canSecondGroupPlay,
-            first: firstGroup
-              ? {
-                  players: firstGroup.players,
-                  id: firstGroup.id,
-                  position: firstGroup.position,
-                }
-              : null,
-            second: secondGroup
-              ? {
-                  players: secondGroup.players,
-                  id: secondGroup.id,
-                  position: secondGroup.position,
-                }
-              : null,
-            selectable: selectable,
-          },
-        })
-      );
+      // CTA state is now derived via useMemo from data.waitlist and availableCourts
+      // No cta:state event dispatch needed - React's reactivity handles updates
     });
 
     console.log('[TennisBackend] Board subscription active');
@@ -662,23 +577,71 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   // NOTE: availableCourts moved to top of component (line ~236) to avoid TDZ errors
-  const [canFirstGroupPlay, _setCanFirstGroupPlay] = useState(false);
-  const setCanFirstGroupPlay = (val) => {
-    console.log('🎯 setCanFirstGroupPlay:', val, 'stack:', new Error().stack.split('\n')[2]);
-    _setCanFirstGroupPlay(val);
-  };
-  const [firstWaitlistEntry, setFirstWaitingGroup] = useState(null);
-  const [waitingGroupDisplay, setWaitingGroupDisplay] = useState('');
-  const [canSecondGroupPlay, _setCanSecondGroupPlay] = useState(false);
-  const setCanSecondGroupPlay = (val) => {
-    console.log('🎯 setCanSecondGroupPlay:', val, 'stack:', new Error().stack.split('\n')[2]);
-    _setCanSecondGroupPlay(val);
-  };
-  const [secondWaitlistEntry, setSecondWaitingGroup] = useState(null);
-  const [secondWaitlistEntryDisplay, setSecondWaitingGroupDisplay] = useState('');
-  // State for CTA data from global recompute
-  const [firstWaitlistEntryData, setFirstWaitingGroupData] = useState(null);
-  const [secondWaitlistEntryData, setSecondWaitingGroupData] = useState(null);
+
+  // Derive CTA state from data.waitlist and availableCourts using useMemo
+  // This replaces the cta:state event-based approach with direct derivation
+  const {
+    firstWaitlistEntry,
+    secondWaitlistEntry,
+    canFirstGroupPlay,
+    canSecondGroupPlay,
+    waitingGroupDisplay,
+    secondWaitlistEntryDisplay,
+    firstWaitlistEntryData,
+    secondWaitlistEntryData,
+  } = useMemo(() => {
+    // Transform waitlist entries to CTA format
+    const normalizedWaitlist = (data.waitlist || []).map((entry) => ({
+      id: entry.id,
+      position: entry.position,
+      groupType: entry.group?.type,
+      joinedAt: entry.joinedAt,
+      minutesWaiting: entry.minutesWaiting,
+      names: (entry.group?.players || []).map((p) => p.displayName || p.name || 'Unknown'),
+      players: entry.group?.players || [],
+    }));
+
+    const firstGroup = normalizedWaitlist[0] || null;
+    const secondGroup = normalizedWaitlist[1] || null;
+    const gateCount = availableCourts.length;
+
+    const live1 = gateCount >= 1 && firstGroup !== null;
+    const live2 = gateCount >= 2 && secondGroup !== null;
+
+    // Compute display names
+    let display1 = '';
+    if (live1 && firstGroup?.players?.length) {
+      const names = firstGroup.players.map((p) => (p.displayName || p.name || '').split(' ').pop());
+      display1 = names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')}, etc`;
+    }
+
+    let display2 = '';
+    if (live2 && secondGroup?.players?.length) {
+      const names = secondGroup.players.map((p) =>
+        (p.displayName || p.name || '').split(' ').pop()
+      );
+      display2 = names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')}, etc`;
+    }
+
+    // Build entry objects for SearchScreen
+    const first = firstGroup
+      ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
+      : null;
+    const second = secondGroup
+      ? { id: secondGroup.id, position: secondGroup.position ?? 2, players: secondGroup.players }
+      : null;
+
+    return {
+      firstWaitlistEntry: first,
+      secondWaitlistEntry: second,
+      canFirstGroupPlay: !!live1,
+      canSecondGroupPlay: !!live2,
+      waitingGroupDisplay: display1,
+      secondWaitlistEntryDisplay: display2,
+      firstWaitlistEntryData: first,
+      secondWaitlistEntryData: second,
+    };
+  }, [data.waitlist, availableCourts]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
@@ -752,62 +715,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const shouldDebounceMainSearch = !/^\d+$/.test(searchInput);
   const effectiveSearchInput = shouldDebounceMainSearch ? debouncedSearchInput : searchInput;
 
-  // Subscribe to CTA state updates from global recompute
-  useEffect(() => {
-    const onCta = (e) => {
-      try {
-        const d = e?.detail || {};
-
-        console.log('🎯 CTA event received:', d);
-        // API mode uses: live1/live2/first/second
-        const live1 = d.live1 ?? false;
-        const live2 = d.live2 ?? false;
-        const firstGroup = d.first ?? null;
-        const secondGroup = d.second ?? null;
-
-        console.log('🎯 CTA state parsed:', { live1, live2, firstGroup, secondGroup });
-        console.log('🎯 Setting CTA button state:', {
-          canFirstGroupPlay: !!live1,
-          canSecondGroupPlay: !!live2,
-        });
-
-        setCanFirstGroupPlay(!!live1);
-        setCanSecondGroupPlay(!!live2);
-        setFirstWaitingGroupData(firstGroup);
-        setSecondWaitingGroupData(secondGroup);
-
-        // Update display names based on the new data
-        if (live1 && firstGroup?.players) {
-          const names = firstGroup.players.map((p) => p.name.split(' ').pop());
-          if (names.length <= 3) {
-            setWaitingGroupDisplay(names.join(', '));
-          } else {
-            setWaitingGroupDisplay(`${names.slice(0, 3).join(', ')}, etc`);
-          }
-        } else {
-          setWaitingGroupDisplay('');
-        }
-
-        if (live2 && secondGroup?.players) {
-          const names = secondGroup.players.map((p) => p.name.split(' ').pop());
-          if (names.length <= 3) {
-            setSecondWaitingGroupDisplay(names.join(', '));
-          } else {
-            setSecondWaitingGroupDisplay(`${names.slice(0, 3).join(', ')}, etc`);
-          }
-        } else {
-          setSecondWaitingGroupDisplay('');
-        }
-
-        // Also sync the legacy state variables for compatibility
-        setFirstWaitingGroup(firstGroup);
-        setSecondWaitingGroup(secondGroup);
-      } catch {}
-    };
-    window.addEventListener('cta:state', onCta, { passive: true });
-
-    return () => window.removeEventListener('cta:state', onCta);
-  }, []);
+  // CTA state is now derived via useMemo from data.waitlist and availableCourts
+  // The cta:state event listener has been removed in favor of direct derivation
 
   const shouldDebounceAddPlayer = !/^\d+$/.test(addPlayerSearch);
   const effectiveAddPlayerSearch = shouldDebounceAddPlayer
@@ -1509,12 +1418,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     let openingTime;
     let openingTimeString;
 
-    console.log('[DEBUG] operatingHours:', operatingHours, 'dayOfWeek:', dayOfWeek);
     if (operatingHours && Array.isArray(operatingHours)) {
       // Find today's operating hours from API
       // TennisQueries normalizes to camelCase (dayOfWeek, opensAt, closesAt, isClosed)
       const todayHours = operatingHours.find((h) => h.dayOfWeek === dayOfWeek);
-      console.log('[DEBUG] todayHours:', todayHours);
       if (todayHours && !todayHours.isClosed) {
         // Parse opensAt (format: "HH:MM:SS")
         const [hours, minutes] = todayHours.opensAt.split(':').map(Number);
@@ -1563,18 +1470,19 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Create arrays for validation and assignment
+    // Handle both field name formats: id/name (legacy) and memberId/displayName (API)
     const players = currentGroup
       .filter((p) => !p.isGuest) // Non-guests for validation
       .map((p) => ({
-        id: String(p.id || '').trim(),
-        name: String(p.name || '').trim(),
+        id: String(p.id || p.memberId || '').trim(),
+        name: String(p.name || p.displayName || '').trim(),
       }))
       .filter((p) => p && p.id && p.name);
 
     const allPlayers = currentGroup // ALL players including guests for court assignment
       .map((p) => ({
-        id: String(p.id || '').trim(),
-        name: String(p.name || '').trim(),
+        id: String(p.id || p.memberId || '').trim(),
+        name: String(p.name || p.displayName || '').trim(),
         ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
         ...(p.sponsor && { sponsor: p.sponsor }),
         ...(p.memberNumber && { memberNumber: p.memberNumber }),
@@ -1693,13 +1601,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       // Get geolocation for mobile (required by backend for geofence validation)
       const waitlistMobileLocation = await getMobileGeolocation();
-
-      console.log('🎯 Using backend.commands.assignFromWaitlist:', {
-        waitlistEntryId: currentWaitlistEntryId,
-        courtId: waitlistCourt.id,
-        courtNumber,
-        ...(waitlistMobileLocation || {}),
-      });
 
       try {
         const result = await backend.commands.assignFromWaitlist({
