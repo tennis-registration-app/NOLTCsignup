@@ -69,16 +69,8 @@ export function normalizeCourt(raw, serverNow) {
       starts_at: raw.block_starts_at,
       ends_at: raw.block_ends_at,
     };
-    // DEBUG: Log block data for wet court tracing
-    if (raw.block_title?.toLowerCase().includes('wet')) {
-      console.log('[DEBUG] normalizeCourt wet block input:', { number, blockInput });
-    }
   }
   const block = blockInput ? normalizeBlock(blockInput, serverNow) : null;
-  // DEBUG: Log normalized block for wet courts
-  if (block?.reason?.toLowerCase().includes('wet')) {
-    console.log('[DEBUG] normalizeCourt wet block output:', { number, block });
-  }
 
   // Determine states from API status field or derive from session/block
   const status = raw.status; // 'available', 'occupied', 'overtime', 'blocked'

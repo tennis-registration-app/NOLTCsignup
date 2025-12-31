@@ -1075,7 +1075,7 @@ const AdminPanelV2 = ({ onExit }) => {
         deviceId: getDeviceId(),
         durationMinutes: 720, // 12 hours
         reason: 'WET COURT',
-        idempotencyKey: `wet-all-${new Date().toISOString().split('T')[0]}`,
+        idempotencyKey: `wet-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       });
 
       if (result.ok) {
@@ -1133,8 +1133,8 @@ const AdminPanelV2 = ({ onExit }) => {
   const clearWetCourt = async (courtNumber) => {
     console.log(`☀️ Clearing wet court ${courtNumber} via API`);
 
-    // Get court ID from boardState
-    const court = boardState?.courts?.find((c) => c.number === courtNumber);
+    // Get court ID from courts state
+    const court = courts?.find((c) => c.number === courtNumber);
     if (!court?.id) {
       console.warn(`Court ${courtNumber} not found in board state`);
       return;
@@ -1204,9 +1204,8 @@ const AdminPanelV2 = ({ onExit }) => {
         setWaitingGroups(normalizeWaitlist(courtData.waitingGroups));
       }
 
-      // Load court blocks (important for Court Status tab)
-      const blocks = (await dataStore.get('courtBlocks')) || [];
-      setCourtBlocks(blocks);
+      // courtBlocks now derived from API via TennisBackend subscription
+      // No localStorage load needed
 
       // Load templates
       const templates = await dataStore.get(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY);
@@ -1333,6 +1332,7 @@ const AdminPanelV2 = ({ onExit }) => {
         setWaitingGroups(normalizeWaitlist(board.waitlist));
 
         // Extract block data from courts for UI compatibility
+        // API-only: derive courtBlocks entirely from board.courts
         const apiBlocks = (board.courts || [])
           .filter((c) => c.block)
           .map((c) => ({
@@ -1343,12 +1343,7 @@ const AdminPanelV2 = ({ onExit }) => {
             endTime: c.block?.endsAt || c.block?.endTime,
           }));
 
-        // Merge with localStorage blocks (for templates/scheduled)
-        // API blocks take precedence for active blocks
-        setCourtBlocks((prev) => {
-          const localOnlyBlocks = prev.filter((b) => !apiBlocks.some((ab) => ab.id === b.id));
-          return [...apiBlocks, ...localOnlyBlocks];
-        });
+        setCourtBlocks(apiBlocks);
       }
     });
 

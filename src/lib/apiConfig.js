@@ -3,10 +3,10 @@
 import { DEVICES } from './config.js';
 
 /**
- * Detect if running in mobile context
+ * Detect if running in mobile context (evaluated per-call)
  * Mobile context = embedded in Mobile.html or view=mobile query param
  */
-function detectMobileContext() {
+export function getIsMobile() {
   if (typeof window === 'undefined') return false;
 
   // Check if running inside Mobile.html iframe
@@ -29,16 +29,35 @@ function detectMobileContext() {
 }
 
 /**
- * Detect if running in admin context
+ * Detect if running in admin context (evaluated per-call)
  * Admin context = URL contains /admin/
  */
-function detectAdminContext() {
+export function getIsAdmin() {
   if (typeof window === 'undefined') return false;
   return window.location.pathname.includes('/admin/');
 }
 
-const IS_MOBILE = detectMobileContext();
-const IS_ADMIN = detectAdminContext();
+/**
+ * Get device context at request time
+ * Priority: Admin > Mobile > Kiosk (default)
+ * @returns {{ deviceId: string, deviceType: string }}
+ */
+export function getDeviceContext() {
+  const isAdmin = getIsAdmin();
+  const isMobile = getIsMobile();
+
+  if (isAdmin) {
+    return { deviceId: DEVICES.ADMIN_ID, deviceType: 'admin' };
+  }
+  if (isMobile) {
+    return { deviceId: DEVICES.MOBILE_ID, deviceType: 'mobile' };
+  }
+  return { deviceId: DEVICES.KIOSK_ID, deviceType: 'kiosk' };
+}
+
+// Legacy: evaluate once at module load for backward compatibility
+const IS_MOBILE = getIsMobile();
+const IS_ADMIN = getIsAdmin();
 
 export const API_CONFIG = {
   // Supabase project URL (for Realtime connections)
@@ -48,12 +67,13 @@ export const API_CONFIG = {
   BASE_URL: 'https://dncjloqewjubodkoruou.supabase.co/functions/v1',
 
   // Anonymous key for public access
-  ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
+  ANON_KEY:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
 
   // Device configuration - auto-detected based on context
   // Priority: Admin > Mobile > Kiosk (default)
-  DEVICE_ID: IS_ADMIN ? DEVICES.ADMIN_ID : (IS_MOBILE ? DEVICES.MOBILE_ID : DEVICES.KIOSK_ID),
-  DEVICE_TYPE: IS_ADMIN ? 'admin' : (IS_MOBILE ? 'mobile' : 'kiosk'),
+  DEVICE_ID: IS_ADMIN ? DEVICES.ADMIN_ID : IS_MOBILE ? DEVICES.MOBILE_ID : DEVICES.KIOSK_ID,
+  DEVICE_TYPE: IS_ADMIN ? 'admin' : IS_MOBILE ? 'mobile' : 'kiosk',
 
   // Expose detection flags for other modules
   IS_MOBILE,
@@ -77,9 +97,9 @@ export const ENDPOINTS = {
   PURCHASE_BALLS: '/purchase-balls',
 
   // Read-only
-  GET_BOARD: '/get-board',  // Unified court + waitlist endpoint
-  GET_COURT_STATUS: '/get-court-status',  // Legacy, use GET_BOARD instead
-  GET_WAITLIST: '/get-waitlist',  // Legacy, use GET_BOARD instead
+  GET_BOARD: '/get-board', // Unified court + waitlist endpoint
+  GET_COURT_STATUS: '/get-court-status', // Legacy, use GET_BOARD instead
+  GET_WAITLIST: '/get-waitlist', // Legacy, use GET_BOARD instead
   GET_MEMBERS: '/get-members',
   GET_SETTINGS: '/get-settings',
   GET_SESSION_HISTORY: '/get-session-history',

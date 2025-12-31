@@ -47,7 +47,6 @@ const CourtStatusGrid = ({
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
-  const [localWetCourts, setLocalWetCourts] = useState(new Set());
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
 
@@ -68,40 +67,20 @@ const CourtStatusGrid = ({
     };
   }, []);
 
-  // Load wet court status on mount and poll for updates
-  useEffect(() => {
-    const checkWetCourts = async () => {
-      const blocks = (await dataStore?.get('courtBlocks')) || [];
-      const wetCourtNumbers = new Set(
-        blocks
-          .filter((block) => block.isWetCourt && new Date(block.endTime) > currentTime)
-          .map((block) => block.courtNumber)
-      );
-      setLocalWetCourts(wetCourtNumbers);
-    };
-
-    // Only use local polling if wetCourts prop is not provided
-    if (!wetCourts && dataStore) {
-      checkWetCourts();
-      const interval = addTimer(setInterval(checkWetCourts, 1000));
-      return () => {
-        try {
-          clearInterval(interval);
-        } catch {}
-      };
-    }
-  }, [currentTime, refreshKey, wetCourts, dataStore]);
-
   const getCourtStatus = (court, courtNumber) => {
-    // Use prop wetCourts if available, otherwise use local state
-    const activeWetCourts = wetCourts || localWetCourts;
+    // Check if court has a wet block from API data
+    // Data structure: court.block.reason contains the block title/reason
+    const hasWetBlock = court?.block?.id && court.block.reason?.toLowerCase().includes('wet');
 
-    // Check if court is wet first
-    if (activeWetCourts.has(courtNumber)) {
+    // Also check wetCourts prop (from parent state) as fallback
+    const isWetFromProp = wetCourts?.has(courtNumber);
+
+    if (hasWetBlock || isWetFromProp) {
       return {
         status: 'wet',
         info: {
-          reason: 'WET COURT',
+          id: court?.block?.id,
+          reason: court?.block?.reason || 'WET COURT',
           type: 'wet',
         },
       };

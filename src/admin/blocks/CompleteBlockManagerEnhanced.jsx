@@ -221,7 +221,7 @@ const CompleteBlockManagerEnhanced = ({
         deviceId: getDeviceId(),
         durationMinutes: 720, // 12 hours
         reason: 'WET COURT',
-        idempotencyKey: `wet-all-${new Date().toISOString().split('T')[0]}`,
+        idempotencyKey: `wet-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       });
 
       if (result.ok) {
@@ -233,8 +233,8 @@ const CompleteBlockManagerEnhanced = ({
         setWetCourts(allCourts);
         setWetCourtsActive(true);
 
-        // Emit event for legacy components
-        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) });
+        // Emit event for legacy components (if available)
+        Events?.emitDom?.('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) });
         setRefreshTrigger((prev) => prev + 1);
       } else {
         console.error('Failed to mark wet courts:', result.message);
@@ -247,24 +247,16 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const deactivateWetCourts = async () => {
-    console.log('[DEBUG] deactivateWetCourts called');
-    if (!ENABLE_WET_COURTS) {
-      console.log('[DEBUG] ENABLE_WET_COURTS is false, returning');
-      return;
-    }
+    if (!ENABLE_WET_COURTS) return;
     if (!backend) {
-      console.error('[DEBUG] Backend not available');
       onNotification?.('Backend not available', 'error');
       return;
     }
-
-    console.log('[DEBUG] Calling clearWetCourts API with deviceId:', getDeviceId());
 
     try {
       const result = await backend.admin.clearWetCourts({
         deviceId: getDeviceId(),
       });
-      console.log('[DEBUG] clearWetCourts response:', result);
 
       if (result.ok) {
         console.log(`✅ Cleared ${result.blocksCleared} wet court blocks`);
@@ -275,8 +267,8 @@ const CompleteBlockManagerEnhanced = ({
         setWetCourts(new Set());
         setSuspendedBlocks([]);
 
-        // Emit event for legacy components
-        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] });
+        // Emit event for legacy components (if available)
+        Events?.emitDom?.('tennisDataUpdate', { key: 'wetCourts', data: [] });
         setRefreshTrigger((prev) => prev + 1);
       } else {
         console.error('Failed to clear wet courts:', result.message);
@@ -318,8 +310,8 @@ const CompleteBlockManagerEnhanced = ({
         newWetCourts.delete(courtNumber);
         setWetCourts(newWetCourts);
 
-        // Emit event for legacy components
-        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
+        // Emit event for legacy components (if available)
+        Events?.emitDom?.('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
 
         // If all courts are dry, update active state
         if (newWetCourts.size === 0) {

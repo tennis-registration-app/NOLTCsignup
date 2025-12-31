@@ -5,7 +5,7 @@
  * All data operations go through the Supabase Edge Functions.
  */
 
-import { API_CONFIG, ENDPOINTS } from './apiConfig.js';
+import { API_CONFIG, ENDPOINTS, getDeviceContext } from './apiConfig.js';
 
 export class ApiAdapter {
   constructor(options = {}) {
@@ -25,7 +25,7 @@ export class ApiAdapter {
     };
 
     // Cache TTL in milliseconds
-    this.cacheTTL = options.cacheTTL || 5000;  // 5 seconds default
+    this.cacheTTL = options.cacheTTL || 5000; // 5 seconds default
   }
 
   // ===========================================
@@ -36,7 +36,7 @@ export class ApiAdapter {
     const url = `${this.baseUrl}${endpoint}`;
 
     const headers = {
-      'Authorization': `Bearer ${this.anonKey}`,
+      Authorization: `Bearer ${this.anonKey}`,
       'Content-Type': 'application/json',
       ...options.headers,
     };
@@ -95,7 +95,7 @@ export class ApiAdapter {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${this.anonKey}`,
+        Authorization: `Bearer ${this.anonKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -112,16 +112,18 @@ export class ApiAdapter {
    */
   async post(endpoint, body = {}) {
     const url = `${this.baseUrl}${endpoint}`;
+    // Evaluate device context at request time (not module load time)
+    const { deviceId, deviceType } = getDeviceContext();
     const bodyWithDevice = {
       ...body,
-      device_id: this.deviceId,
-      device_type: this.deviceType,
+      device_id: deviceId,
+      device_type: deviceType,
     };
-    console.log(`[ApiAdapter] POST ${endpoint}`, bodyWithDevice);
+    console.log(`[ApiAdapter] POST ${endpoint}`);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.anonKey}`,
+        Authorization: `Bearer ${this.anonKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(bodyWithDevice),
@@ -139,7 +141,7 @@ export class ApiAdapter {
 
   _isCacheValid(cacheKey) {
     const time = this._cache[`${cacheKey}Time`];
-    return time && (Date.now() - time) < this.cacheTTL;
+    return time && Date.now() - time < this.cacheTTL;
   }
 
   _setCache(cacheKey, data) {
@@ -237,7 +239,7 @@ export class ApiAdapter {
     }
 
     const result = await this._post(ENDPOINTS.ASSIGN_COURT, body);
-    this.clearCache();  // Invalidate cache after mutation
+    this.clearCache(); // Invalidate cache after mutation
     return result;
   }
 
@@ -338,7 +340,7 @@ export class ApiAdapter {
     const result = await this._post(ENDPOINTS.UPDATE_SETTINGS, {
       settings: settings,
     });
-    this._cache.settings = null;  // Invalidate settings cache
+    this._cache.settings = null; // Invalidate settings cache
     return result;
   }
 
@@ -419,29 +421,33 @@ export class ApiAdapter {
     ]);
 
     // Transform to match legacy tennisData structure
-    const courts = courtStatus.courts?.map(court => ({
-      number: court.court_number,
-      id: court.court_id,
-      status: court.status,
-      session: court.session ? {
-        id: court.session.id,
-        type: court.session.type,
-        players: court.session.participants,
-        startTime: court.session.started_at,
-        endTime: court.session.scheduled_end_at,
-        timeRemaining: court.session.minutes_remaining * 60 * 1000,
-      } : null,
-      block: court.block,
-    })) || [];
+    const courts =
+      courtStatus.courts?.map((court) => ({
+        number: court.court_number,
+        id: court.court_id,
+        status: court.status,
+        session: court.session
+          ? {
+              id: court.session.id,
+              type: court.session.type,
+              players: court.session.participants,
+              startTime: court.session.started_at,
+              endTime: court.session.scheduled_end_at,
+              timeRemaining: court.session.minutes_remaining * 60 * 1000,
+            }
+          : null,
+        block: court.block,
+      })) || [];
 
-    const waitlistEntries = waitlist.waitlist?.map(entry => ({
-      id: entry.id,
-      position: entry.position,
-      type: entry.group_type,
-      players: entry.participants,
-      joinedAt: entry.joined_at,
-      waitTime: entry.minutes_waiting * 60 * 1000,
-    })) || [];
+    const waitlistEntries =
+      waitlist.waitlist?.map((entry) => ({
+        id: entry.id,
+        position: entry.position,
+        type: entry.group_type,
+        players: entry.participants,
+        joinedAt: entry.joined_at,
+        waitTime: entry.minutes_waiting * 60 * 1000,
+      })) || [];
 
     return {
       courts,
