@@ -144,6 +144,38 @@ export class TennisCommands {
   }
 
   /**
+   * Restore a displaced session (undo overtime takeover)
+   * @param {Object} params
+   * @param {string} params.displacedSessionId - UUID of the session to restore
+   * @param {string} params.takeoverSessionId - UUID of the session that caused displacement
+   * @returns {Promise<import('./types').CommandResponse & { restoredSessionId?: string }>}
+   */
+  async restoreSession({ displacedSessionId, takeoverSessionId }) {
+    const response = await this.api.post('/restore-session', {
+      displaced_session_id: displacedSessionId,
+      takeover_session_id: takeoverSessionId,
+    });
+    return response;
+  }
+
+  /**
+   * Undo an overtime takeover atomically
+   * Ends the takeover session and restores the displaced session in one operation
+   *
+   * @param {Object} params
+   * @param {string} params.takeoverSessionId - UUID of the session that took over the court
+   * @param {string} params.displacedSessionId - UUID of the session that was displaced
+   * @returns {Promise<import('./types').CommandResponse & { endedSessionId?: string, restoredSessionId?: string }>}
+   */
+  async undoOvertimeTakeover({ takeoverSessionId, displacedSessionId }) {
+    const response = await this.api.post('/undo-overtime-takeover', {
+      takeover_session_id: takeoverSessionId,
+      displaced_session_id: displacedSessionId,
+    });
+    return response;
+  }
+
+  /**
    * Create a block on a court
    * @param {import('./types').CreateBlockInput} input
    * @returns {Promise<import('./types').CommandResponse & { block?: Object }>}

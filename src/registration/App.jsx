@@ -646,6 +646,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
   const [replacedGroup, setReplacedGroup] = useState(null);
+  const [displacement, setDisplacement] = useState(null);
+  // Shape: { displacedSessionId, displacedCourtId, takeoverSessionId, restoreUntil } | null
   const [originalCourtData, setOriginalCourtData] = useState(null);
   const [canChangeCourt, setCanChangeCourt] = useState(false);
   const [changeTimeRemaining, setChangeTimeRemaining] = useState(
@@ -1200,6 +1202,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setMemberNumber('');
         setJustAssignedCourt(null);
         setReplacedGroup(null);
+        setDisplacement(null);
         setOriginalCourtData(null);
         setCanChangeCourt(false);
         setIsTimeLimited(false);
@@ -1640,6 +1643,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Update UI state
         setJustAssignedCourt(courtNumber);
         setReplacedGroup(null);
+        setDisplacement(null);
         setOriginalCourtData(null);
         setIsChangingCourt(false);
         setWasOvertimeCourt(false);
@@ -1756,8 +1760,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const allowCourtChange = availableAtAssignment.length > 0;
 
     // Update UI state based on result
+    console.log('[Displacement] API response displacement:', result.displacement);
     setJustAssignedCourt(courtNumber);
     setReplacedGroup(result.replacedGroup);
+    console.log('[Displacement] Setting displacement state:', result.displacement);
+    setDisplacement(result.displacement); // Will be null if no overtime was displaced
     setOriginalCourtData(null);
     setIsChangingCourt(false);
     setWasOvertimeCourt(false);
@@ -2015,6 +2022,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setMemberNumber('');
     setJustAssignedCourt(null);
     setReplacedGroup(null);
+    setDisplacement(null);
     setOriginalCourtData(null);
     setCanChangeCourt(false);
     setIsTimeLimited(false);
@@ -4507,14 +4515,54 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           isMobileView={isMobileView}
           getUpcomingBlockWarning={getUpcomingBlockWarning}
           onCourtSelect={async (courtNum) => {
-            const DEBUG_SELECT = false;
-            if (DEBUG_SELECT) console.log('[SelectCourt] clicked', { courtNumber: courtNum });
+            console.log('[Displacement] onCourtSelect fired:', {
+              courtNum,
+              isChangingCourt,
+              displacement,
+              justAssignedCourt,
+            });
 
-            // If changing courts, clear the original court first but skip adding to recentlyCleared
+            // If changing courts, handle the court change
             if (isChangingCourt && justAssignedCourt) {
-              await clearCourt(justAssignedCourt, 'Bumped');
+              console.log('[Displacement] Change court path - displacement:', displacement);
+              // If we have displacement info, use atomic undo which ends takeover + restores displaced
+              if (
+                displacement &&
+                displacement.displacedSessionId &&
+                displacement.takeoverSessionId
+              ) {
+                try {
+                  console.log('[Displacement] Attempting undo takeover:', {
+                    takeoverSessionId: displacement.takeoverSessionId,
+                    displacedSessionId: displacement.displacedSessionId,
+                  });
+                  const undoResult = await backend.commands.undoOvertimeTakeover({
+                    takeoverSessionId: displacement.takeoverSessionId,
+                    displacedSessionId: displacement.displacedSessionId,
+                  });
+                  console.log('[Displacement] Undo takeover result:', undoResult);
+                  // If undo failed with conflict, fall back to clearCourt
+                  if (!undoResult.ok) {
+                    console.warn(
+                      '[Displacement] Undo returned conflict, falling back to clearCourt:',
+                      undoResult
+                    );
+                    await clearCourt(justAssignedCourt, 'Bumped');
+                  }
+                  // If ok: true, the undo endpoint already ended the takeover session - no clearCourt needed
+                } catch (err) {
+                  console.error('[Displacement] Undo takeover failed:', err);
+                  // Fallback: just clear the court if undo fails
+                  await clearCourt(justAssignedCourt, 'Bumped');
+                }
+              } else {
+                // No displacement - just clear the court normally
+                await clearCourt(justAssignedCourt, 'Bumped');
+              }
+              setDisplacement(null); // Clear ONLY after court change is complete
             }
             await assignCourtToGroup(courtNum);
+            // setDisplacement(null) removed from here - it was clearing the state prematurely
             setIsChangingCourt(false);
             setWasOvertimeCourt(false);
           }}
