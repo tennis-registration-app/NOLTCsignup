@@ -74,7 +74,6 @@ import {
   normalizeName as _utilNormalizeName,
   findEngagementFor as _utilFindEngagementFor,
   validateGuestName,
-  computeOccupiedCourts as _utilComputeOccupiedCourts,
   getCourtsOccupiedForClearing as _utilGetCourtsOccupiedForClearing,
 } from './utils';
 
@@ -725,29 +724,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     ? debouncedAddPlayerSearch
     : addPlayerSearch;
 
-  // Helper function to get occupied courts from domain status
-  function computeOccupiedCourts() {
-    const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-    const S = window.Tennis?.Storage;
-    const now = new Date();
-    const data = S.readDataSafe();
-    const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
-    const wetSet = new Set(
-      (blocks || [])
-        .filter(
-          (b) =>
-            b?.isWetCourt &&
-            new Date(b.startTime ?? b.start) <= now &&
-            now < new Date(b.endTime ?? b.end)
-        )
-        .map((b) => b.courtNumber)
-    );
-    const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
-    // Only true in-use courts
-    const occupied = statuses.filter((s) => s.status === 'occupied').map((s) => s.courtNumber);
-    return { occupied, data };
-  }
-
   // Helper function to get courts that can be cleared (occupied or overtime)
   function getCourtsOccupiedForClearing() {
     const reactData = getCourtData();
@@ -1356,7 +1332,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const getAvailableCourts = (
     checkWaitlistPriority = true,
     includeOvertimeIfChanging = false,
-    excludeCourtNumber = null
+    excludeCourtNumber = null,
+    dataOverride = null
   ) => {
     const Av = Tennis.Domain.availability || Tennis.Domain.Availability;
     if (!Av?.getSelectableCourtsStrict || !Av?.getFreeCourtsInfo) {
@@ -1365,9 +1342,14 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     try {
-      const data = Tennis.Storage.readDataSafe();
+      // Use API state by default, fall back to localStorage only if state not available
+      const courtData = dataOverride || getCourtData();
+      const data = courtData?.courts?.length > 0 ? courtData : Tennis.Storage.readDataSafe();
       const now = new Date();
-      const blocks = Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
+
+      // Get blocks from the board data if available, otherwise localStorage
+      const blocks =
+        courtData?.blocks || Tennis.Storage.readJSON(Tennis.Storage.STORAGE.BLOCKS) || [];
       const wetSet = new Set();
 
       let selectable = [];
