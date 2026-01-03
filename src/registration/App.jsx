@@ -1382,7 +1382,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // tryAssignCourtToGroup - REMOVED (was unused, contained localStorage read)
   // Auto-assignment logic now handled via API-based court availability
 
-  const assignCourtToGroup = async (courtNumber) => {
+  const assignCourtToGroup = async (courtNumber, selectableCountAtSelection = null) => {
     // Prevent double-submit
     if (isAssigning) {
       console.log('⚠️ Assignment already in progress, ignoring duplicate request');
@@ -1756,11 +1756,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const otherFreeCourts = (courtInfo.free || []).filter((n) => n !== courtNumber);
     const otherOvertimeCourts = (courtInfo.overtime || []).filter((n) => n !== courtNumber);
 
-    // Allow change if:
-    // 1. There are other free courts available, OR
-    // 2. User took an overtime court AND there are other overtime courts to switch to
+    // If only one court was selectable when user chose, no change option
     const allowCourtChange =
-      otherFreeCourts.length > 0 || (tookOvertimeCourt && otherOvertimeCourts.length > 0);
+      selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
 
     // Update UI state based on result
     console.log('[Displacement] API response displacement:', result.displacement);
@@ -4573,7 +4571,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               }
               setDisplacement(null); // Clear ONLY after court change is complete
             }
-            await assignCourtToGroup(courtNum);
+            await assignCourtToGroup(courtNum, availableCourts.length);
             // setDisplacement(null) removed from here - it was clearing the state prematurely
             setIsChangingCourt(false);
             setWasOvertimeCourt(false);
