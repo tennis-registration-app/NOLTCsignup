@@ -1761,7 +1761,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
 
     // Update UI state based on result
-    console.log('[Displacement] API response displacement:', result.displacement);
     setJustAssignedCourt(courtNumber);
 
     // Construct replacedGroup from displacement.participants for SuccessScreen messaging
@@ -1773,7 +1772,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           }
         : null;
     setReplacedGroup(replacedGroupFromDisplacement);
-    console.log('[Displacement] Setting displacement state:', result.displacement);
     setDisplacement(result.displacement); // Will be null if no overtime was displaced
     setOriginalCourtData(null);
     setIsChangingCourt(false);
@@ -4525,16 +4523,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           isMobileView={isMobileView}
           getUpcomingBlockWarning={getUpcomingBlockWarning}
           onCourtSelect={async (courtNum) => {
-            console.log('[Displacement] onCourtSelect fired:', {
-              courtNum,
-              isChangingCourt,
-              displacement,
-              justAssignedCourt,
-            });
-
             // If changing courts, handle the court change
             if (isChangingCourt && justAssignedCourt) {
-              console.log('[Displacement] Change court path - displacement:', displacement);
               // If we have displacement info, use atomic undo which ends takeover + restores displaced
               if (
                 displacement &&
@@ -4542,15 +4532,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                 displacement.takeoverSessionId
               ) {
                 try {
-                  console.log('[Displacement] Attempting undo takeover:', {
-                    takeoverSessionId: displacement.takeoverSessionId,
-                    displacedSessionId: displacement.displacedSessionId,
-                  });
                   const undoResult = await backend.commands.undoOvertimeTakeover({
                     takeoverSessionId: displacement.takeoverSessionId,
                     displacedSessionId: displacement.displacedSessionId,
                   });
-                  console.log('[Displacement] Undo takeover result:', undoResult);
                   // If undo failed with conflict, fall back to clearCourt
                   if (!undoResult.ok) {
                     console.warn(
