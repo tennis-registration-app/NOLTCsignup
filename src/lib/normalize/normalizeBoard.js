@@ -56,10 +56,14 @@ export function normalizeBoard(raw) {
       isActive: c.block.isActive,
     }));
 
+  // Pass through operating hours from API (already in correct format)
+  const operatingHours = raw.operatingHours || [];
+
   return {
     serverNow,
     courts,
     waitlist,
     blocks,
+    operatingHours,
   };
 }

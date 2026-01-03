@@ -1405,30 +1405,32 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     let openingTime;
     let openingTimeString;
 
-    if (operatingHours && Array.isArray(operatingHours)) {
+    if (operatingHours && Array.isArray(operatingHours) && operatingHours.length > 0) {
       // Find today's operating hours from API
-      // TennisQueries normalizes to camelCase (dayOfWeek, opensAt, closesAt, isClosed)
-      const todayHours = operatingHours.find((h) => h.dayOfWeek === dayOfWeek);
-      if (todayHours && !todayHours.isClosed) {
-        // Parse opensAt (format: "HH:MM:SS")
-        const [hours, minutes] = todayHours.opensAt.split(':').map(Number);
+      // Handle both snake_case (from API) and camelCase formats
+      const todayHours = operatingHours.find((h) => (h.dayOfWeek ?? h.day_of_week) === dayOfWeek);
+      const isClosed = todayHours?.isClosed ?? todayHours?.is_closed;
+      if (todayHours && !isClosed) {
+        // Parse opensAt (format: "HH:MM:SS") - handle both camelCase and snake_case
+        const opensAtValue = todayHours.opensAt ?? todayHours.opens_at;
+        const [hours, minutes] = opensAtValue.split(':').map(Number);
         openingTime = hours + minutes / 60;
         // Format for display (e.g., "5:00 AM")
         const hour12 = hours % 12 || 12;
         const ampm = hours < 12 ? 'AM' : 'PM';
         openingTimeString = `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-      } else if (todayHours && todayHours.isClosed) {
+      } else if (todayHours && isClosed) {
         Tennis.UI.toast('The club is closed today.', { type: 'warning' });
         return;
       } else {
-        // Fallback if no hours found
-        openingTime = 7;
-        openingTimeString = '7:00 AM';
+        // Fallback if no hours found for today
+        openingTime = 0; // Allow registration if no hours configured
+        openingTimeString = 'N/A';
       }
     } else {
-      // Fallback: default to 7 AM
-      openingTime = 7;
-      openingTimeString = '7:00 AM';
+      // No operating hours data - allow registration (API may not be returning hours)
+      openingTime = 0;
+      openingTimeString = 'N/A';
     }
 
     const currentTime = currentHour + currentMinutes / 60;
@@ -1763,7 +1765,16 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // Update UI state based on result
     console.log('[Displacement] API response displacement:', result.displacement);
     setJustAssignedCourt(courtNumber);
-    setReplacedGroup(result.replacedGroup);
+
+    // Construct replacedGroup from displacement.participants for SuccessScreen messaging
+    const replacedGroupFromDisplacement =
+      result.displacement?.participants?.length > 0
+        ? {
+            players: result.displacement.participants.map((name) => ({ name })),
+            endTime: result.displacement.restoreUntil,
+          }
+        : null;
+    setReplacedGroup(replacedGroupFromDisplacement);
     console.log('[Displacement] Setting displacement state:', result.displacement);
     setDisplacement(result.displacement); // Will be null if no overtime was displaced
     setOriginalCourtData(null);
