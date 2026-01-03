@@ -164,8 +164,38 @@ const SuccessScreen = ({
         // Get account IDs for split purchase
         let splitAccountIds = null;
         if (isSplit && currentNonGuestPlayers > 1) {
-          // TODO: Implement split account lookup
-          splitAccountIds = null;
+          const nonGuestPlayers = currentGroup.filter((p) => !p.isGuest);
+          splitAccountIds = [];
+
+          for (const player of nonGuestPlayers) {
+            // Check if player already has accountId
+            let accountId = player.accountId || player.account_id;
+
+            // If not, look it up
+            if (!accountId && onLookupMemberAccount && player.memberNumber) {
+              try {
+                const members = await onLookupMemberAccount(player.memberNumber);
+                if (members.length > 0) {
+                  const member = members.find((m) => m.is_primary || m.isPrimary) || members[0];
+                  accountId = member.account_id || member.accountId;
+                }
+              } catch (err) {
+                console.error('Failed to lookup account for split:', player.memberNumber, err);
+              }
+            }
+
+            if (accountId) {
+              splitAccountIds.push(accountId);
+            }
+          }
+
+          // If we couldn't get all account IDs, fall back to non-split
+          if (splitAccountIds.length < 2) {
+            console.warn(
+              'Could not get enough account IDs for split, falling back to single charge'
+            );
+            splitAccountIds = null;
+          }
         }
 
         const result = await onPurchaseBalls(sessionId, primaryAccountId, {

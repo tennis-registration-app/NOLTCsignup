@@ -13,7 +13,7 @@ const formatDateTime = (timestamp) => {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 };
 
@@ -26,16 +26,18 @@ const downloadCSV = (data, filename) => {
 
   const headers = Object.keys(data[0]);
   const csvHeaders = headers.join(',');
-  const csvRows = data.map(row =>
-    headers.map(header => {
-      const value = row[header];
-      // Escape quotes and wrap in quotes if contains comma or quote
-      const stringValue = String(value ?? '');
-      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    }).join(',')
+  const csvRows = data.map((row) =>
+    headers
+      .map((header) => {
+        const value = row[header];
+        // Escape quotes and wrap in quotes if contains comma or quote
+        const stringValue = String(value ?? '');
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      })
+      .join(',')
   );
 
   const csv = [csvHeaders, ...csvRows].join('\n');
@@ -55,10 +57,24 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
   const [sortOrder, setSortOrder] = useState('desc');
 
   const filteredPurchases = useMemo(() => {
-    return purchases.filter(purchase => {
-      const purchaseDate = new Date(purchase.timestamp);
-      return purchaseDate >= dateRange.start && purchaseDate <= dateRange.end;
+    console.log('📊 BallPurchaseLog filtering:', {
+      totalPurchases: purchases?.length,
+      dateRangeStart: dateRange.start,
+      dateRangeEnd: dateRange.end,
+      firstPurchaseTimestamp: purchases?.[0]?.timestamp,
     });
+
+    const result = purchases.filter((purchase) => {
+      const purchaseDate = new Date(purchase.timestamp);
+      const passes = purchaseDate >= dateRange.start && purchaseDate <= dateRange.end;
+      if (!passes) {
+        console.log('📊 Filtered out:', purchase.timestamp, purchaseDate.toISOString());
+      }
+      return passes;
+    });
+
+    console.log('📊 After filter:', result.length, 'of', purchases?.length);
+    return result;
   }, [purchases, dateRange]);
 
   const sortedPurchases = useMemo(() => {
@@ -89,23 +105,23 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
   };
 
   const handleExport = () => {
-    const exportData = sortedPurchases.flatMap(purchase => {
+    const exportData = sortedPurchases.flatMap((purchase) => {
       // Handle old format (single memberNumber/memberName fields)
       if (!purchase.players || purchase.players.length === 0) {
         return {
           'Date/Time': formatDateTime(purchase.timestamp),
           'Member Number': purchase.memberNumber || '****',
           'Member Name': purchase.memberName || 'Unknown',
-          'Amount': `$${(purchase.amount || 0).toFixed(2)}`
+          Amount: `$${(purchase.amount || 0).toFixed(2)}`,
         };
       }
 
       // For new format with players array, create a row for each player
-      return purchase.players.map(player => ({
+      return purchase.players.map((player) => ({
         'Date/Time': formatDateTime(purchase.timestamp),
         'Member Number': player.memberNumber || '****',
         'Member Name': player.name || 'Unknown',
-        'Amount': `$${(purchase.amount || 0).toFixed(2)}`
+        Amount: `$${(purchase.amount || 0).toFixed(2)}`,
       }));
     });
 
@@ -179,7 +195,10 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
 
                 // For new format with players array, create a row for each player
                 return purchase.players.map((player, playerIndex) => (
-                  <tr key={`${purchase.id || purchaseIndex}-${playerIndex}`} className="border-b hover:bg-gray-50">
+                  <tr
+                    key={`${purchase.id || purchaseIndex}-${playerIndex}`}
+                    className="border-b hover:bg-gray-50"
+                  >
                     <td className="p-2">{formatDateTime(purchase.timestamp)}</td>
                     <td className="p-2">{player.memberNumber || '****'}</td>
                     <td className="p-2">{player.name || 'Unknown'}</td>
@@ -193,12 +212,14 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
       </div>
 
       <div className="mt-4 text-sm text-gray-600">
-        Showing {sortedPurchases.reduce((count, purchase) => {
+        Showing{' '}
+        {sortedPurchases.reduce((count, purchase) => {
           if (purchase.players && purchase.players.length > 0) {
             return count + purchase.players.length;
           }
           return count + 1;
-        }, 0)} charges from {sortedPurchases.length} purchase{sortedPurchases.length !== 1 ? 's' : ''}
+        }, 0)}{' '}
+        charges from {sortedPurchases.length} purchase{sortedPurchases.length !== 1 ? 's' : ''}
       </div>
     </div>
   );

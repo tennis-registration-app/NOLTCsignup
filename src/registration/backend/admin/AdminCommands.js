@@ -238,4 +238,34 @@ export class AdminCommands {
       blocks: response.blocks || [],
     };
   }
+
+  /**
+   * Get transactions with optional filters
+   * @param {Object} input
+   * @param {string} [input.type] - Transaction type filter ('ball_purchase', 'guest_fee', 'reversal')
+   * @param {string} [input.dateStart] - Start date (YYYY-MM-DD)
+   * @param {string} [input.dateEnd] - End date (YYYY-MM-DD)
+   * @param {string} [input.memberNumber] - Filter by member number
+   * @param {number} [input.limit] - Max results (default: 100)
+   * @returns {Promise<{ok: boolean, summary: Object, transactions: Array}>}
+   */
+  async getTransactions({
+    type = null,
+    dateStart = null,
+    dateEnd = null,
+    memberNumber = null,
+    limit = 100,
+  } = {}) {
+    const params = new URLSearchParams();
+    if (type) params.append('type', type);
+    if (dateStart) params.append('date_start', dateStart);
+    if (dateEnd) params.append('date_end', dateEnd);
+    if (memberNumber) params.append('member_number', memberNumber);
+    if (limit) params.append('limit', limit.toString());
+
+    const queryString = params.toString();
+    const url = queryString ? `/get-transactions?${queryString}` : '/get-transactions';
+    const response = await this.api.get(url);
+    return response;
+  }
 }

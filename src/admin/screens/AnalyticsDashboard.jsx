@@ -9,18 +9,19 @@ import {
   UtilizationChart,
   WaitTimeAnalysis,
   BallPurchaseLog,
-  GuestChargeLog
+  GuestChargeLog,
 } from '../analytics';
 
 // Access global dependencies
-const TENNIS_CONFIG = window.TENNIS_CONFIG || window.APP_UTILS?.TENNIS_CONFIG || {
-  STORAGE: {
-    ANALYTICS_KEY: 'tennisAnalytics',
-    BALL_SALES_KEY: 'tennisBallPurchases',
-    GUEST_CHARGES_KEY: 'tennisGuestCharges',
-    UPDATE_EVENT: 'tennisDataUpdate'
-  }
-};
+const TENNIS_CONFIG = window.TENNIS_CONFIG ||
+  window.APP_UTILS?.TENNIS_CONFIG || {
+    STORAGE: {
+      ANALYTICS_KEY: 'tennisAnalytics',
+      BALL_SALES_KEY: 'tennisBallPurchases',
+      GUEST_CHARGES_KEY: 'tennisGuestCharges',
+      UPDATE_EVENT: 'tennisDataUpdate',
+    },
+  };
 const EVENTS = window.APP_UTILS?.EVENTS || { UPDATE: 'tennisDataUpdate' };
 const dataStore = window.TennisCourtDataStore ? new window.TennisCourtDataStore() : null;
 
@@ -40,11 +41,18 @@ const addTimer = (id) => {
   return id;
 };
 
-const AnalyticsDashboard = ({ onClose }) => {
+const AnalyticsDashboard = ({ onClose, backend }) => {
+  // Helper to set time to end of day (23:59:59.999)
+  const endOfDay = (date) => {
+    const d = new Date(date);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
+
   const [activeTab, setActiveTab] = useState('usage');
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().setDate(new Date().getDate() - 7)),
-    end: new Date()
+    end: endOfDay(new Date()),
   });
   const [analyticsData, setAnalyticsData] = useState([]);
   const [waitlistData, setWaitlistData] = useState([]);
@@ -60,29 +68,52 @@ const AnalyticsDashboard = ({ onClose }) => {
         if (storedAnalytics) {
           setAnalyticsData(storedAnalytics);
         }
-
       }
 
-      // Load ball purchases - use localStorage as source of truth for real-time updates
+      // Load ball purchases from API
       console.log('📊 Loading ball purchases...');
-      const localStoragePurchases = localStorage.getItem(TENNIS_CONFIG.STORAGE.BALL_SALES_KEY);
       let ballPurchasesData = [];
-      if (localStoragePurchases) {
-        try { ballPurchasesData = JSON.parse(localStoragePurchases); }
-        catch { /* transient partial write; use empty array */ }
+      if (backend) {
+        try {
+          const result = await backend.admin.getTransactions({ type: 'ball_purchase', limit: 500 });
+          if (result.ok && result.transactions) {
+            // Transform API response to match expected shape
+            ballPurchasesData = result.transactions.map((t) => ({
+              id: t.id,
+              timestamp: t.date + 'T' + (t.time || '00:00:00'),
+              memberNumber: t.member_number,
+              memberName: t.account_name || 'Unknown',
+              amount: parseFloat(t.amount_dollars) || t.amount_cents / 100,
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to fetch ball purchases:', err);
+        }
       }
       console.log('📊 Ball purchases found:', ballPurchasesData.length);
       setBallPurchases(ballPurchasesData);
 
-      // Load guest charges - use localStorage as source of truth for real-time updates
+      // Load guest charges from API
       console.log('📊 Loading guest charges...');
-      const localStorageCharges = localStorage.getItem(TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY);
       let guestChargesData = [];
-      if (localStorageCharges) {
-        try { guestChargesData = JSON.parse(localStorageCharges); }
-        catch { /* transient partial write; use empty array */ }
+      if (backend) {
+        try {
+          const result = await backend.admin.getTransactions({ type: 'guest_fee', limit: 500 });
+          if (result.ok && result.transactions) {
+            // Transform API response to match expected shape
+            guestChargesData = result.transactions.map((t) => ({
+              id: t.id,
+              timestamp: t.date + 'T' + (t.time || '00:00:00'),
+              sponsorNumber: t.member_number,
+              sponsorName: t.account_name || 'Unknown',
+              amount: parseFloat(t.amount_dollars) || t.amount_cents / 100,
+              guestName: t.description || 'Guest',
+            }));
+          }
+        } catch (err) {
+          console.error('Failed to fetch guest charges:', err);
+        }
       }
-
       console.log('📊 Guest charges found:', guestChargesData.length);
       setGuestCharges(guestChargesData);
 
@@ -111,7 +142,9 @@ const AnalyticsDashboard = ({ onClose }) => {
     const refreshInterval = addTimer(setInterval(loadAnalyticsData, 30000));
 
     return () => {
-      try { clearInterval(refreshInterval); } catch {}
+      try {
+        clearInterval(refreshInterval);
+      } catch {}
       window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
       window.removeEventListener('tennisDataUpdate', handleDataUpdate);
     };
@@ -141,7 +174,7 @@ const AnalyticsDashboard = ({ onClose }) => {
           duration: 60 + Math.floor(Math.random() * 60), // 60-120 minutes
           playerCount: Math.floor(Math.random() * 3) + 2, // 2-4 players
           dayOfWeek: startTime.getDay(),
-          hourOfDay: startTime.getHours()
+          hourOfDay: startTime.getHours(),
         });
       }
     }
@@ -154,14 +187,14 @@ const AnalyticsDashboard = ({ onClose }) => {
 
   // Filter data by date range
   const filteredAnalytics = useMemo(() => {
-    return analyticsData.filter(entry => {
+    return analyticsData.filter((entry) => {
       const entryDate = new Date(entry.startTime);
       return entryDate >= dateRange.start && entryDate <= dateRange.end;
     });
   }, [analyticsData, dateRange]);
 
   const handleDateRangeChange = (preset) => {
-    const end = new Date();
+    const end = endOfDay(new Date());
     let start = new Date();
 
     switch (preset) {
@@ -209,7 +242,7 @@ const AnalyticsDashboard = ({ onClose }) => {
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium">Date Range:</span>
             <div className="flex gap-2">
-              {['today', 'week', 'month', 'year'].map(preset => (
+              {['today', 'week', 'month', 'year'].map((preset) => (
                 <button
                   key={preset}
                   onClick={() => handleDateRangeChange(preset)}
@@ -230,7 +263,9 @@ const AnalyticsDashboard = ({ onClose }) => {
               <input
                 type="date"
                 value={dateRange.end.toISOString().split('T')[0]}
-                onChange={(e) => setDateRange({ ...dateRange, end: new Date(e.target.value) })}
+                onChange={(e) =>
+                  setDateRange({ ...dateRange, end: endOfDay(new Date(e.target.value)) })
+                }
                 className="px-2 py-1 border rounded text-sm"
               />
             </div>
@@ -292,9 +327,7 @@ const AnalyticsDashboard = ({ onClose }) => {
           <BallPurchaseLog purchases={ballPurchases} dateRange={dateRange} />
         )}
 
-        {activeTab === 'guests' && (
-          <GuestChargeLog charges={guestCharges} dateRange={dateRange} />
-        )}
+        {activeTab === 'guests' && <GuestChargeLog charges={guestCharges} dateRange={dateRange} />}
       </div>
     </div>
   );

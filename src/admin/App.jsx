@@ -2112,7 +2112,7 @@ const AdminPanelV2 = ({ onExit }) => {
           )}
           {activeTab === 'analytics' &&
             (typeof AnalyticsDashboard !== 'undefined' ? (
-              <AnalyticsDashboard onClose={null} />
+              <AnalyticsDashboard onClose={null} backend={backend} />
             ) : (
               <div className="p-8 text-center">
                 <h3 className="text-lg font-semibold text-gray-600">Analytics Dashboard</h3>
@@ -2348,7 +2348,7 @@ export default function App() {
   }
 
   if (view === 'analytics' && typeof AnalyticsDashboard !== 'undefined') {
-    return <AnalyticsDashboard onClose={() => setView('menu')} />;
+    return <AnalyticsDashboard onClose={() => setView('menu')} backend={backend} />;
   }
 
   // Fallback if components aren't available
