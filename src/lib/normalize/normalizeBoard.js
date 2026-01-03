@@ -44,8 +44,9 @@ export function normalizeBoard(raw) {
   // Sort waitlist by position
   waitlist.sort((a, b) => a.position - b.position);
 
-  // Extract blocks from courts for availability calculations
+  // Extract active blocks from courts for availability calculations
   // The availability module (getFreeCourtsInfo) expects a top-level blocks array
+  // This ONLY contains currently active blocks (for availability logic)
   const blocks = courts
     .filter((c) => c.block !== null)
     .map((c) => ({
@@ -56,6 +57,20 @@ export function normalizeBoard(raw) {
       isActive: c.block.isActive,
     }));
 
+  // Normalize upcoming blocks from API (future blocks for today)
+  // This is SEPARATE from blocks - for display only, not availability calculations
+  const upcomingBlocks = Array.isArray(raw.upcomingBlocks)
+    ? raw.upcomingBlocks.map((b) => ({
+        id: b.id,
+        courtNumber: b.courtNumber,
+        startTime: b.startsAt,
+        endTime: b.endsAt,
+        title: b.title,
+        reason: b.blockType,
+        isActive: false,
+      }))
+    : [];
+
   // Pass through operating hours from API (already in correct format)
   const operatingHours = raw.operatingHours || [];
 
@@ -63,7 +78,8 @@ export function normalizeBoard(raw) {
     serverNow,
     courts,
     waitlist,
-    blocks,
+    blocks, // Active blocks only (for availability)
+    upcomingBlocks, // Future blocks today (for display)
     operatingHours,
   };
 }

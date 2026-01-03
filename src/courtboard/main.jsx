@@ -548,7 +548,8 @@ function TennisCourtDisplay() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courts, setCourts] = useState(Array(12).fill(null));
   const [waitlist, setWaitlist] = useState([]);
-  const [courtBlocks, setCourtBlocks] = useState([]);
+  const [courtBlocks, setCourtBlocks] = useState([]); // Active blocks only (for availability)
+  const [upcomingBlocks, setUpcomingBlocks] = useState([]); // Future blocks today (for display)
 
   // Time update
   useEffect(() => {
@@ -642,8 +643,8 @@ function TennisCourtDisplay() {
         );
         setCourts(transformedCourts);
 
-        // Extract blocks from API response and update courtBlocks state
-        const apiBlocks = board.courts
+        // Extract active blocks from courts (for availability calculations)
+        const activeBlocks = board.courts
           .filter((c) => c.block)
           .map((c) => ({
             id: c.block.id,
@@ -653,7 +654,18 @@ function TennisCourtDisplay() {
             endTime: c.block.endsAt,
             isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
           }));
-        setCourtBlocks(apiBlocks);
+        setCourtBlocks(activeBlocks);
+
+        // Extract upcoming blocks from API (future blocks for today, display only)
+        const futureBlocks = (board.upcomingBlocks || []).map((b) => ({
+          id: b.id,
+          courtNumber: b.courtNumber,
+          reason: b.title || b.reason || 'Blocked',
+          startTime: b.startTime,
+          endTime: b.endTime,
+          isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
+        }));
+        setUpcomingBlocks(futureBlocks);
       }
 
       // Transform already-normalized waitlist from TennisQueries
@@ -879,6 +891,7 @@ function TennisCourtDisplay() {
             currentTime={currentTime}
             waitlist={waitlist}
             courtBlocks={courtBlocks}
+            upcomingBlocks={upcomingBlocks}
           />
         </div>
       </div>
@@ -1241,7 +1254,13 @@ function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
 }
 
 // NextAvailablePanel Component (full implementation from legacy)
-function NextAvailablePanel({ courts, currentTime, waitlist = [], courtBlocks = [] }) {
+function NextAvailablePanel({
+  courts,
+  currentTime,
+  waitlist = [],
+  courtBlocks = [],
+  upcomingBlocks = [],
+}) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
 
   // Convert React courts state to the data format expected by availability functions
@@ -1496,7 +1515,7 @@ function NextAvailablePanel({ courts, currentTime, waitlist = [], courtBlocks = 
       <div className="mt-auto pt-4">
         <ReservedCourtsPanel
           className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur"
-          items={selectReservedItemsFromBlocks(courtBlocks, currentTime)}
+          items={selectReservedItemsFromBlocks([...courtBlocks, ...upcomingBlocks], currentTime)}
         />
       </div>
     </div>
