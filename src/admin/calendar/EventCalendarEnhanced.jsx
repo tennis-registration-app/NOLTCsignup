@@ -133,7 +133,7 @@ const EventCalendarEnhanced = ({
     // Process API-sourced blocks
     blocks.forEach((block) => {
       if (block.isEvent) {
-        const eventKey = `${block.title || block.reason}-${block.startTime}`;
+        const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
         if (!processedEvents.has(eventKey)) {
           processedEvents.set(eventKey, {
