@@ -44,9 +44,22 @@ export function normalizeBoard(raw) {
   // Sort waitlist by position
   waitlist.sort((a, b) => a.position - b.position);
 
+  // Extract blocks from courts for availability calculations
+  // The availability module (getFreeCourtsInfo) expects a top-level blocks array
+  const blocks = courts
+    .filter((c) => c.block !== null)
+    .map((c) => ({
+      courtNumber: c.number,
+      startTime: c.block.startsAt,
+      endTime: c.block.endsAt,
+      title: c.block.reason,
+      isActive: c.block.isActive,
+    }));
+
   return {
     serverNow,
     courts,
     waitlist,
+    blocks,
   };
 }

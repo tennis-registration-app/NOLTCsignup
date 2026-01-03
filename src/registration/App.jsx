@@ -251,6 +251,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [data, setData] = useState(() => ({
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
     waitlist: [],
+    blocks: [],
     recentlyCleared: [],
   }));
 
@@ -387,11 +388,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         waitlist: board.waitlist?.length,
       });
 
-      // Update courts and waitlist state
+      // Update courts and waitlist state (including blocks for availability calculations)
       setData((prev) => ({
         ...prev,
         courts: board.courts || [],
         waitlist: board.waitlist || [],
+        blocks: board.blocks || [],
       }));
 
       // Update operating hours
@@ -1731,15 +1733,32 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const successTime = Math.round(performance.now() - assignStartTime);
     console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI state...`);
 
-    // Check if there were other courts available at time of assignment
-    const availableAtAssignment = getAvailableCourts(
-      !isChangingCourt,
-      false,
-      courtNumber // Exclude the court we're about to assign
-    );
+    // Determine if court change should be allowed
+    // Rule: Can change if there are other free courts, OR if user took an overtime court and there are other overtime courts
+    const tookOvertimeCourt = result.displacement !== null;
 
-    // Only allow court changes if there were other options
-    const allowCourtChange = availableAtAssignment.length > 0;
+    // Get court availability from API-sourced state
+    const courtData = getCourtData();
+    const Av = Tennis.Domain.availability || Tennis.Domain.Availability;
+    const currentTimestamp = new Date();
+
+    // Get free and overtime courts from the normalized board data
+    const courtInfo = Av.getFreeCourtsInfo({
+      data: courtData,
+      now: currentTimestamp,
+      blocks: courtData?.blocks || [],
+      wetSet: new Set(),
+    });
+
+    // Exclude the just-assigned court from both lists
+    const otherFreeCourts = (courtInfo.free || []).filter((n) => n !== courtNumber);
+    const otherOvertimeCourts = (courtInfo.overtime || []).filter((n) => n !== courtNumber);
+
+    // Allow change if:
+    // 1. There are other free courts available, OR
+    // 2. User took an overtime court AND there are other overtime courts to switch to
+    const allowCourtChange =
+      otherFreeCourts.length > 0 || (tookOvertimeCourt && otherOvertimeCourts.length > 0);
 
     // Update UI state based on result
     console.log('[Displacement] API response displacement:', result.displacement);
