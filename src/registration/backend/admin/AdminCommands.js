@@ -214,4 +214,28 @@ export class AdminCommands {
       courtNumbers: response.court_numbers,
     };
   }
+
+  /**
+   * Get blocks within a date range (admin only)
+   * @param {Object} input
+   * @param {string} [input.courtId] - Optional: filter by court UUID
+   * @param {string} [input.fromDate] - Optional: ISO date, defaults to now
+   * @param {string} [input.toDate] - Optional: ISO date, defaults to fromDate + 90 days
+   * @returns {Promise<{ok: boolean, blocks: Array, serverNow: string}>}
+   */
+  async getBlocks({ courtId = null, fromDate = null, toDate = null } = {}) {
+    const payload = {};
+    if (courtId) payload.court_id = courtId;
+    if (fromDate) payload.from_date = fromDate;
+    if (toDate) payload.to_date = toDate;
+
+    const response = await this.api.post('/get-blocks', payload);
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      blocks: response.blocks || [],
+    };
+  }
 }

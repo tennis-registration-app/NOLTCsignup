@@ -3,6 +3,7 @@
  *
  * Main calendar component with day/week/month views and event management.
  * Coordinates all calendar views and handles event interactions.
+ * Fetches block data from API via TennisBackend.
  */
 import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from '../components';
@@ -20,12 +21,13 @@ const EventCalendarEnhanced = ({
   onDuplicateEvent,
   defaultView = 'week',
   disableEventClick = false,
+  backend,
   // These components are passed from parent until they're extracted
   MonthView,
   EventSummary,
   HoverCard,
   QuickActionsMenu,
-  Tennis
+  Tennis,
 }) => {
   const [viewMode, setViewMode] = useState(defaultView);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -35,71 +37,151 @@ const EventCalendarEnhanced = ({
   const [quickActionEvent, setQuickActionEvent] = useState(null);
   const [quickActionPosition, setQuickActionPosition] = useState({ top: 0, left: 0 });
 
+  // API-sourced block state
+  const [blocks, setBlocks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     setViewMode(defaultView);
   }, [defaultView]);
+
+  // Fetch blocks from API when date range or view changes
+  useEffect(() => {
+    const fetchBlocks = async () => {
+      if (!backend) {
+        console.warn('[EventCalendar] No backend provided, cannot fetch blocks');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Calculate date range based on viewMode
+        // Fetch a broader range to allow smooth navigation
+        let fromDate, toDate;
+
+        if (viewMode === 'month') {
+          // For month view: fetch 1 month before and 2 months after
+          fromDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1);
+          toDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 3, 0);
+        } else if (viewMode === 'week') {
+          // For week view: fetch 2 weeks before and 4 weeks after
+          fromDate = new Date(selectedDate);
+          fromDate.setDate(fromDate.getDate() - 14);
+          fromDate.setHours(0, 0, 0, 0);
+          toDate = new Date(selectedDate);
+          toDate.setDate(toDate.getDate() + 28);
+          toDate.setHours(23, 59, 59, 999);
+        } else {
+          // Day view: fetch 7 days before and 14 days after
+          fromDate = new Date(selectedDate);
+          fromDate.setDate(fromDate.getDate() - 7);
+          fromDate.setHours(0, 0, 0, 0);
+          toDate = new Date(selectedDate);
+          toDate.setDate(toDate.getDate() + 14);
+          toDate.setHours(23, 59, 59, 999);
+        }
+
+        const result = await backend.admin.getBlocks({
+          fromDate: fromDate.toISOString(),
+          toDate: toDate.toISOString(),
+        });
+
+        if (result.ok) {
+          // Transform API response to calendar event format
+          const transformedBlocks = result.blocks.map((b) => ({
+            id: b.id,
+            courtId: b.courtId,
+            courtNumber: b.courtNumber,
+            courtNumbers: [b.courtNumber], // Calendar expects array
+            title: b.title,
+            startTime: b.startsAt,
+            endTime: b.endsAt,
+            reason: b.blockType,
+            blockType: b.blockType,
+            eventType: getEventTypeFromReason(b.blockType),
+            isRecurring: b.isRecurring,
+            recurrenceRule: b.recurrenceRule,
+            isBlock: true,
+            isEvent:
+              b.blockType === 'event' || b.blockType === 'clinic' || b.blockType === 'lesson',
+            isWetCourt: b.blockType === 'wet' || b.title?.toLowerCase().includes('wet'),
+          }));
+          setBlocks(transformedBlocks);
+        } else {
+          console.error('[EventCalendar] API error:', result.message);
+          setError(result.message || 'Failed to fetch blocks');
+        }
+      } catch (err) {
+        console.error('[EventCalendar] Fetch error:', err);
+        setError('Failed to fetch blocks');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBlocks();
+  }, [backend, viewMode, selectedDate, refreshTrigger]);
 
   // Memoized event extraction and processing
   const events = useMemo(() => {
     const processedEvents = new Map();
 
-    // Get events from localStorage
-    try {
-      const courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      courtBlocks.forEach(block => {
-        if (block.isEvent) {
-          const eventKey = `${block.eventDetails?.title || block.reason}-${block.startTime}`;
+    // Process API-sourced blocks
+    blocks.forEach((block) => {
+      if (block.isEvent) {
+        const eventKey = `${block.title || block.reason}-${block.startTime}`;
 
-          if (!processedEvents.has(eventKey)) {
-            processedEvents.set(eventKey, {
-              ...block,
-              courtNumbers: block.eventDetails?.courts || [block.courtNumber],
-              id: eventKey
-            });
-          }
+        if (!processedEvents.has(eventKey)) {
+          processedEvents.set(eventKey, {
+            ...block,
+            courtNumbers: block.courtNumbers || [block.courtNumber],
+            id: block.id || eventKey,
+          });
         }
-      });
+      }
+    });
 
-      courtBlocks.forEach(block => {
-        if (!block.isEvent) {
-          const eventKey = `${block.eventDetails?.title || block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
+    // Process non-event blocks
+    blocks.forEach((block) => {
+      if (!block.isEvent) {
+        const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
-          if (!processedEvents.has(eventKey)) {
-            processedEvents.set(eventKey, {
-              id: block.id,
-              title: block.eventDetails?.title || block.title || block.reason,
-              startTime: block.startTime,
-              endTime: block.endTime,
-              eventType: getEventTypeFromReason(block.reason),
-              courtNumbers: [block.courtNumber],
-              isBlock: true,
-              reason: block.reason
-            });
-          }
+        if (!processedEvents.has(eventKey)) {
+          processedEvents.set(eventKey, {
+            id: block.id,
+            title: block.title || block.reason,
+            startTime: block.startTime,
+            endTime: block.endTime,
+            eventType: block.eventType || getEventTypeFromReason(block.reason),
+            courtNumbers: [block.courtNumber],
+            isBlock: true,
+            reason: block.reason,
+          });
         }
-      });
+      }
+    });
 
-    } catch (error) {
-      console.error('Error loading events:', error);
-    }
-
-    // Also check courts data for backward compatibility
+    // Also check courts data for backward compatibility with active blocks
     courts.forEach((court, idx) => {
       if (court && court.blocked && court.blocked.isEvent) {
-        const eventKey = `${court.blocked.eventDetails.title}-${court.blocked.startTime}`;
+        const eventKey = `${court.blocked.eventDetails?.title || court.blocked.title}-${court.blocked.startTime}`;
 
         if (!processedEvents.has(eventKey)) {
           processedEvents.set(eventKey, {
             ...court.blocked,
-            courtNumbers: court.blocked.eventDetails.courts || [idx + 1],
-            id: eventKey
+            courtNumbers: court.blocked.eventDetails?.courts || [idx + 1],
+            id: eventKey,
           });
         }
       }
     });
 
     return Array.from(processedEvents.values());
-  }, [courts, refreshTrigger]);
+  }, [blocks, courts, refreshTrigger]);
 
   // Memoized filtered events based on view and date range
   const filteredEvents = useMemo(() => {
@@ -107,7 +189,15 @@ const EventCalendarEnhanced = ({
 
     if (viewMode === 'month') {
       startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999);
+      endDate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+        999
+      );
     } else if (viewMode === 'week') {
       startDate = new Date(selectedDate);
       startDate.setDate(startDate.getDate() - startDate.getDay());
@@ -122,55 +212,63 @@ const EventCalendarEnhanced = ({
       endDate.setHours(23, 59, 59, 999);
     }
 
-    return events.filter(event => {
+    return events.filter((event) => {
       const eventStart = new Date(event.startTime);
       const eventEnd = new Date(event.endTime);
-      return (eventStart >= startDate && eventStart <= endDate) ||
-             (eventEnd >= startDate && eventEnd <= endDate) ||
-             (eventStart <= startDate && eventEnd >= endDate);
+      return (
+        (eventStart >= startDate && eventStart <= endDate) ||
+        (eventEnd >= startDate && eventEnd <= endDate) ||
+        (eventStart <= startDate && eventEnd >= endDate)
+      );
     });
   }, [events, viewMode, selectedDate]);
 
   // Event handlers
-  const handleEventClick = useCallback((event) => {
-    if (!disableEventClick) {
-      setSelectedEvent(event);
-    }
-    setHoveredEvent(null);
-  }, [disableEventClick]);
-
-  const handleEventHover = useCallback((event, element) => {
-    if (!quickActionEvent && element) {
-      const rect = element.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const cardWidth = 320; // HoverCard width (w-80 = 20rem = 320px)
-
-      // Calculate optimal position
-      let leftPosition;
-
-      // Try positioning to the right first
-      if (rect.right + 10 + cardWidth <= viewportWidth) {
-        leftPosition = rect.right + 10;
+  const handleEventClick = useCallback(
+    (event) => {
+      if (!disableEventClick) {
+        setSelectedEvent(event);
       }
-      // If right doesn't fit, try left
-      else if (rect.left - cardWidth - 10 >= 0) {
-        leftPosition = rect.left - cardWidth - 10;
-      }
-      // If neither fits well, center it with some margin
-      else {
-        leftPosition = Math.max(10, Math.min(
-          viewportWidth - cardWidth - 10,
-          rect.left + (rect.width / 2) - (cardWidth / 2)
-        ));
-      }
+      setHoveredEvent(null);
+    },
+    [disableEventClick]
+  );
 
-      setHoveredEvent(event);
-      setHoverPosition({
-        top: rect.top + rect.height / 2,
-        left: leftPosition
-      });
-    }
-  }, [quickActionEvent]);
+  const handleEventHover = useCallback(
+    (event, element) => {
+      if (!quickActionEvent && element) {
+        const rect = element.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const cardWidth = 320; // HoverCard width (w-80 = 20rem = 320px)
+
+        // Calculate optimal position
+        let leftPosition;
+
+        // Try positioning to the right first
+        if (rect.right + 10 + cardWidth <= viewportWidth) {
+          leftPosition = rect.right + 10;
+        }
+        // If right doesn't fit, try left
+        else if (rect.left - cardWidth - 10 >= 0) {
+          leftPosition = rect.left - cardWidth - 10;
+        }
+        // If neither fits well, center it with some margin
+        else {
+          leftPosition = Math.max(
+            10,
+            Math.min(viewportWidth - cardWidth - 10, rect.left + rect.width / 2 - cardWidth / 2)
+          );
+        }
+
+        setHoveredEvent(event);
+        setHoverPosition({
+          top: rect.top + rect.height / 2,
+          left: leftPosition,
+        });
+      }
+    },
+    [quickActionEvent]
+  );
 
   const handleEventLeave = useCallback(() => {
     setHoveredEvent(null);
@@ -182,80 +280,88 @@ const EventCalendarEnhanced = ({
     setHoveredEvent(null);
   }, []);
 
-  const handleEdit = useCallback((event) => {
-    console.log('Edit event:', event);
-
-    try {
-      const courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      const blockToEdit = courtBlocks.find(block => {
-        if (event.eventDetails?.title && block.eventDetails?.title) {
-          return block.eventDetails.title === event.eventDetails.title &&
-                 block.startTime === event.startTime;
+  const handleEdit = useCallback(
+    (event) => {
+      // Find the block in our API-sourced data
+      const blockToEdit = blocks.find((block) => {
+        if (event.id && block.id) {
+          return block.id === event.id;
         }
-        return block.id === event.id;
+        return block.title === event.title && block.startTime === event.startTime;
       });
 
       if (blockToEdit) {
         setSelectedEvent(null); // Close modal
         if (typeof onEditEvent === 'function') {
-          onEditEvent(blockToEdit); // Let parent handle the edit
+          onEditEvent(blockToEdit);
         } else {
-          // Default behavior: simulate what the blocking tab does
           console.log('Opening edit for block:', blockToEdit);
-          alert('Edit functionality needs to be properly connected. Please use the Court Blocking tab for editing blocks.');
+          alert(
+            'Edit functionality needs to be properly connected. Please use the Court Blocking tab for editing blocks.'
+          );
         }
       }
-    } catch (error) {
-      console.error('Error finding block to edit:', error);
-    }
-  }, [onEditEvent]);
+    },
+    [blocks, onEditEvent]
+  );
 
-  const handleDelete = useCallback(async (event) => {
-    console.log('Delete event:', event);
-    try {
-      const courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+  const handleDelete = useCallback(
+    async (event) => {
+      if (!backend) {
+        console.error('No backend available for delete');
+        return;
+      }
 
-      // Remove all blocks that match this event
-      const updatedBlocks = courtBlocks.filter(block => {
-        // Remove blocks with matching event details
-        if (event.eventDetails?.title && block.eventDetails?.title) {
-          return !(block.eventDetails.title === event.eventDetails.title &&
-                  block.startTime === event.startTime);
+      try {
+        // Call API to cancel the block
+        const result = await backend.admin.cancelBlock({
+          blockId: event.id,
+        });
+
+        if (result.ok) {
+          console.log('Block deleted successfully');
+          setSelectedEvent(null);
+          onRefresh();
+        } else {
+          console.error('Failed to delete block:', result.message);
+          alert(`Failed to delete block: ${result.message}`);
         }
-        // Fallback: remove by ID if available
-        return block.id !== event.id;
-      });
+      } catch (error) {
+        console.error('Error deleting block:', error);
+        alert('Error deleting block. Please try again.');
+      }
+    },
+    [backend, onRefresh]
+  );
 
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-      console.log('Event deleted successfully');
-      onRefresh();
-    } catch (error) {
-      console.error('Error deleting event:', error);
-    }
-  }, [onRefresh, Tennis]);
-
-  const handleDuplicate = useCallback((event) => {
-    console.log('Duplicate event:', event);
-    setSelectedEvent(null); // Close modal
-    onDuplicateEvent(event); // Let parent handle the duplication
-  }, [onDuplicateEvent]);
+  const handleDuplicate = useCallback(
+    (event) => {
+      console.log('Duplicate event:', event);
+      setSelectedEvent(null); // Close modal
+      onDuplicateEvent(event); // Let parent handle the duplication
+    },
+    [onDuplicateEvent]
+  );
 
   // Memoized callbacks
-  const navigateDate = useCallback((direction) => {
-    setSelectedDate(prevDate => {
-      const newDate = new Date(prevDate);
+  const navigateDate = useCallback(
+    (direction) => {
+      setSelectedDate((prevDate) => {
+        const newDate = new Date(prevDate);
 
-      if (viewMode === 'month') {
-        newDate.setMonth(newDate.getMonth() + direction);
-      } else if (viewMode === 'week') {
-        newDate.setDate(newDate.getDate() + (direction * 7));
-      } else {
-        newDate.setDate(newDate.getDate() + direction);
-      }
+        if (viewMode === 'month') {
+          newDate.setMonth(newDate.getMonth() + direction);
+        } else if (viewMode === 'week') {
+          newDate.setDate(newDate.getDate() + direction * 7);
+        } else {
+          newDate.setDate(newDate.getDate() + direction);
+        }
 
-      return newDate;
-    });
-  }, [viewMode]);
+        return newDate;
+      });
+    },
+    [viewMode]
+  );
 
   const handleToday = useCallback(() => {
     setSelectedDate(new Date());
@@ -276,7 +382,12 @@ const EventCalendarEnhanced = ({
       end.setDate(end.getDate() + 6);
       return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     } else {
-      return selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      return selectedDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
     }
   }, [viewMode, selectedDate]);
 
@@ -326,10 +437,7 @@ const EventCalendarEnhanced = ({
 
         {/* Navigation arrows and Today button in center */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigateDate(-1)}
-            className="p-2 hover:bg-gray-100 rounded"
-          >
+          <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-gray-100 rounded">
             <ChevronLeft size={32} />
           </button>
 
@@ -339,10 +447,7 @@ const EventCalendarEnhanced = ({
           >
             Today
           </button>
-          <button
-            onClick={() => navigateDate(1)}
-            className="p-2 hover:bg-gray-100 rounded"
-          >
+          <button onClick={() => navigateDate(1)} className="p-2 hover:bg-gray-100 rounded">
             <ChevronRight size={32} />
           </button>
         </div>
@@ -351,46 +456,64 @@ const EventCalendarEnhanced = ({
         <h2 className="text-lg font-semibold w-64 text-right">{headerText}</h2>
       </div>
 
-      {/* Calendar View */}
-      <div className="bg-white rounded-lg shadow-sm p-2">
-        <div className="border-t border-gray-300">
-          {viewMode === 'month' && MonthView && (
-            <MonthView
-              selectedDate={selectedDate}
-              events={filteredEvents}
-              currentTime={currentTime}
-              onEventClick={handleEventClick}
-            />
-          )}
-          {viewMode === 'week' && (
-            <div className="h-[600px] overflow-auto">
-              <WeekView
-                selectedDate={selectedDate}
-                events={filteredEvents}
-                currentTime={currentTime}
-                onEventClick={handleEventClick}
-                onEventHover={handleEventHover}
-                onEventLeave={handleEventLeave}
-                onQuickAction={handleQuickAction}
-              />
-            </div>
-          )}
-
-          {viewMode === 'day' && (
-            <div className="h-[600px] overflow-auto">
-              <DayViewEnhanced
-                selectedDate={selectedDate}
-                events={filteredEvents}
-                currentTime={currentTime}
-                onEventClick={handleEventClick}
-                onEventHover={handleEventHover}
-                onEventLeave={handleEventLeave}
-                onQuickAction={handleQuickAction}
-              />
-            </div>
-          )}
+      {/* Loading state */}
+      {isLoading && (
+        <div className="text-center py-8 text-gray-500">
+          <div className="animate-spin inline-block w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full mb-2"></div>
+          <p>Loading events...</p>
         </div>
-      </div>
+      )}
+
+      {/* Error state */}
+      {error && !isLoading && (
+        <div className="text-center py-8 text-red-500 bg-red-50 rounded-lg">
+          <p className="font-medium">Error loading events</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Calendar View */}
+      {!isLoading && !error && (
+        <div className="bg-white rounded-lg shadow-sm p-2">
+          <div className="border-t border-gray-300">
+            {viewMode === 'month' && MonthView && (
+              <MonthView
+                selectedDate={selectedDate}
+                events={filteredEvents}
+                currentTime={currentTime}
+                onEventClick={handleEventClick}
+              />
+            )}
+            {viewMode === 'week' && (
+              <div className="h-[600px] overflow-auto">
+                <WeekView
+                  selectedDate={selectedDate}
+                  events={filteredEvents}
+                  currentTime={currentTime}
+                  onEventClick={handleEventClick}
+                  onEventHover={handleEventHover}
+                  onEventLeave={handleEventLeave}
+                  onQuickAction={handleQuickAction}
+                />
+              </div>
+            )}
+
+            {viewMode === 'day' && (
+              <div className="h-[600px] overflow-auto">
+                <DayViewEnhanced
+                  selectedDate={selectedDate}
+                  events={filteredEvents}
+                  currentTime={currentTime}
+                  onEventClick={handleEventClick}
+                  onEventHover={handleEventHover}
+                  onEventLeave={handleEventLeave}
+                  onQuickAction={handleQuickAction}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Event Summary */}
       {EventSummary && (

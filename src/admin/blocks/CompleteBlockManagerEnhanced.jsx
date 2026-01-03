@@ -609,6 +609,7 @@ const CompleteBlockManagerEnhanced = ({
           onRemoveBlock={handleRemoveBlock}
           onDuplicateBlock={handleDuplicateBlock}
           refreshTrigger={refreshTrigger}
+          backend={backend}
         />
       )}
 
@@ -618,6 +619,7 @@ const CompleteBlockManagerEnhanced = ({
           currentTime={currentTime}
           refreshTrigger={refreshTrigger}
           onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
+          backend={backend}
           MonthView={MonthView}
           EventSummary={EventSummary}
           HoverCard={HoverCard}

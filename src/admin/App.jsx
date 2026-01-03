@@ -1966,6 +1966,7 @@ const AdminPanelV2 = ({ onExit }) => {
               refreshTrigger={refreshTrigger}
               defaultView={calendarView}
               disableEventClick={true}
+              backend={backend}
               MonthView={MonthView}
               EventSummary={EventSummary}
               HoverCard={HoverCard}
