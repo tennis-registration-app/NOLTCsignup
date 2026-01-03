@@ -59,29 +59,46 @@ export function toAssignCourtPayload(input) {
 
 /**
  * Map UI clear reasons to valid API end_reason values
- * Valid API values: 'completed', 'cleared_early', 'admin_override'
+ * Valid API values: 'cleared', 'observed_cleared', 'admin_override', 'overtime_takeover', 'auto_cleared'
  * @param {string} reason - UI reason string
  * @returns {string} Valid API end_reason
  */
 function mapEndReason(reason) {
-  if (!reason) return 'completed';
+  if (!reason) return 'cleared';
 
-  // If already a valid value, pass through
-  if (['completed', 'cleared_early', 'admin_override'].includes(reason)) {
+  // If already a valid new value, pass through
+  if (
+    ['cleared', 'observed_cleared', 'admin_override', 'overtime_takeover', 'auto_cleared'].includes(
+      reason
+    )
+  ) {
     return reason;
   }
 
   const r = reason.toLowerCase();
-  if (['early', 'left', 'done', 'cleared'].some((k) => r.includes(k))) {
-    return 'cleared_early';
+
+  // Player self-clear: "We finished and are leaving our court"
+  if (['early', 'left', 'done', 'cleared'].some((k) => r.includes(k)) && !r.includes('observed')) {
+    return 'cleared';
   }
+
+  // Observer clear: "The players have left the court, I'm sure!"
   if (['observed', 'empty'].some((k) => r.includes(k))) {
-    return 'completed';
+    return 'observed_cleared';
   }
+
+  // Admin clear
   if (['admin', 'override', 'force'].some((k) => r.includes(k))) {
     return 'admin_override';
   }
-  return 'completed';
+
+  // Bumped by overtime takeover
+  if (['bump', 'takeover', 'overtime'].some((k) => r.includes(k))) {
+    return 'overtime_takeover';
+  }
+
+  // Default to cleared (normal end of play)
+  return 'cleared';
 }
 
 /**

@@ -13,6 +13,21 @@ import { ApiAdapter } from '../../lib/ApiAdapter.js';
 // Direct API adapter for session history queries
 const api = new ApiAdapter();
 
+// Map database end_reason to display-friendly values
+const mapEndReason = (dbReason) => {
+  const map = {
+    cleared: 'Cleared',
+    observed_cleared: 'Observed-Cleared',
+    admin_override: 'Admin-Cleared',
+    overtime_takeover: 'Bumped',
+    auto_cleared: 'Auto-Cleared',
+    // Legacy values (for historical data before migration)
+    completed: 'Auto-Cleared',
+    cleared_early: 'Cleared',
+  };
+  return map[dbReason] || dbReason || 'Cleared';
+};
+
 const GameHistorySearch = () => {
   const [searchFilters, setSearchFilters] = useState({
     courtNumber: '',
@@ -40,11 +55,8 @@ const GameHistorySearch = () => {
       if (searchFilters.endDate) params.append('date_end', searchFilters.endDate);
       params.append('limit', '100');
 
-      console.log('[GameHistory] Search params:', params.toString());
-
       // Call the backend API
       const response = await api.get(`/get-session-history?${params.toString()}`);
-      console.log('[GameHistory] API response:', response);
 
       if (response.ok && response.sessions) {
         // Transform API response to component format
@@ -57,7 +69,7 @@ const GameHistorySearch = () => {
             name: p.name || 'Unknown',
             type: p.type,
           })),
-          clearReason: session.end_reason || 'Cleared',
+          clearReason: mapEndReason(session.end_reason),
         }));
 
         // Client-side filter by clearReason if specified
