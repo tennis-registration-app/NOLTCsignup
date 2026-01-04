@@ -3360,8 +3360,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
                             key={position}
                             disabled={isCurrentPosition}
                             onClick={async () => {
-                              // Reorder the waitlist
-                              // TODO: Replace with TennisCommands.reorderWaitlist({ entryId, newPosition })
+                              // Reorder the waitlist via backend API
                               const movedGroup = data.waitlist[waitlistMoveFrom];
                               const entryId = movedGroup?.id || movedGroup?.group?.id;
 
