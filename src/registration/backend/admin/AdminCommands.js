@@ -309,4 +309,25 @@ export class AdminCommands {
       new_position: newPosition,
     });
   }
+
+  /**
+   * Get session history with filters
+   * @param {Object} params
+   * @param {number} [params.courtNumber] - Filter by court number
+   * @param {string} [params.memberName] - Filter by member name (partial match)
+   * @param {string} [params.dateStart] - Start date (YYYY-MM-DD)
+   * @param {string} [params.dateEnd] - End date (YYYY-MM-DD)
+   * @param {number} [params.limit=50] - Max results
+   * @returns {Promise<{ok: boolean, sessions: Array}>}
+   */
+  async getSessionHistory({ courtNumber, memberName, dateStart, dateEnd, limit = 50 } = {}) {
+    const params = new URLSearchParams();
+    if (courtNumber) params.append('court_number', courtNumber);
+    if (memberName) params.append('member_name', memberName);
+    if (dateStart) params.append('date_start', dateStart);
+    if (dateEnd) params.append('date_end', dateEnd);
+    params.append('limit', limit.toString());
+
+    return this.api.get(`/get-session-history?${params.toString()}`);
+  }
 }

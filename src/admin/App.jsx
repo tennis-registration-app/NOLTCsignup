@@ -2216,7 +2216,7 @@ const AdminPanelV2 = ({ onExit }) => {
                 <p className="text-gray-500 mt-2">Analytics component not available</p>
               </div>
             ))}
-          {activeTab === 'history' && <GameHistorySearch />}
+          {activeTab === 'history' && <GameHistorySearch backend={backend} />}
           {activeTab === 'system' && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">System Settings</h3>

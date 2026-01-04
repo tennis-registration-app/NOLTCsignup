@@ -2,16 +2,10 @@
  * GameHistorySearch Component
  *
  * Search interface for historical game records.
- * Uses the get-session-history backend API.
+ * Uses the TennisBackend pattern via backend.admin.getSessionHistory().
  */
 import React, { useState } from 'react';
 import { FileText } from '../components';
-// TODO: Migrate to use TennisBackend pattern (see docs/LEGACY_MIGRATION.md)
-// eslint-disable-next-line no-restricted-imports
-import { ApiAdapter } from '../../lib/ApiAdapter.js';
-
-// Direct API adapter for session history queries
-const api = new ApiAdapter();
 
 // Map database end_reason to display-friendly values
 const mapEndReason = (dbReason) => {
@@ -28,7 +22,7 @@ const mapEndReason = (dbReason) => {
   return map[dbReason] || dbReason || 'Cleared';
 };
 
-const GameHistorySearch = () => {
+const GameHistorySearch = ({ backend }) => {
   const [searchFilters, setSearchFilters] = useState({
     courtNumber: '',
     playerName: '',
@@ -47,16 +41,14 @@ const GameHistorySearch = () => {
     setError(null);
 
     try {
-      // Build query params for API
-      const params = new URLSearchParams();
-      if (searchFilters.courtNumber) params.append('court_number', searchFilters.courtNumber);
-      if (searchFilters.playerName) params.append('member_name', searchFilters.playerName);
-      if (searchFilters.startDate) params.append('date_start', searchFilters.startDate);
-      if (searchFilters.endDate) params.append('date_end', searchFilters.endDate);
-      params.append('limit', '100');
-
-      // Call the backend API
-      const response = await api.get(`/get-session-history?${params.toString()}`);
+      // Call the backend API via TennisBackend pattern
+      const response = await backend.admin.getSessionHistory({
+        courtNumber: searchFilters.courtNumber || undefined,
+        memberName: searchFilters.playerName || undefined,
+        dateStart: searchFilters.startDate || undefined,
+        dateEnd: searchFilters.endDate || undefined,
+        limit: 100,
+      });
 
       if (response.ok && response.sessions) {
         // Transform API response to component format
