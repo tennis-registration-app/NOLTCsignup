@@ -1208,6 +1208,9 @@ const AdminPanelV2 = ({ onExit }) => {
       }
 
       // Load system settings from API
+      // NOTE: Response includes settings_updated_at timestamp for concurrency detection.
+      // If multiple admins editing settings becomes an issue, compare this timestamp
+      // before saving to warn users about stale state / concurrent edits.
       const settingsResult = await backend.admin.getSettings();
       if (settingsResult.ok) {
         const s = settingsResult.settings;
