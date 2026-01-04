@@ -1064,6 +1064,7 @@ const AdminPanelV2 = ({ onExit }) => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [blockingView, setBlockingView] = useState('create');
   const [courtBlocks, setCourtBlocks] = useState([]);
+  const [blockToEdit, setBlockToEdit] = useState(null);
   const [calendarView, setCalendarView] = useState('day');
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -1100,15 +1101,9 @@ const AdminPanelV2 = ({ onExit }) => {
   };
 
   const handleEditBlockFromStatus = (block) => {
-    // Switch to Court Blocking tab and edit mode
+    setBlockToEdit(block);
     setActiveTab('blocking');
     setBlockingView('create');
-
-    // TODO: Pass the block to CompleteBlockManagerEnhanced
-    setTimeout(() => {
-      console.log('Edit block:', block);
-      // You'll need to implement passing this to CompleteBlockManagerEnhanced
-    }, 100);
   };
 
   const removeAllWetCourtBlocks = async () => {
@@ -2094,6 +2089,8 @@ const AdminPanelV2 = ({ onExit }) => {
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
                   backend={backend}
+                  initialEditingBlock={blockToEdit}
+                  onEditingBlockConsumed={() => setBlockToEdit(null)}
                 />
               )}
 

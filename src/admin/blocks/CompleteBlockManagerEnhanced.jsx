@@ -175,6 +175,8 @@ const CompleteBlockManagerEnhanced = ({
   QuickActionsMenu,
   Tennis,
   backend, // TennisBackend for API calls
+  initialEditingBlock = null,
+  onEditingBlockConsumed = null,
 }) => {
   const [activeView, setActiveView] = useState(defaultView);
   const [selectedCourts, setSelectedCourts] = useState([]);
@@ -197,6 +199,35 @@ const CompleteBlockManagerEnhanced = ({
   useEffect(() => {
     setActiveView(defaultView);
   }, [defaultView]);
+
+  // Pre-fill form when initialEditingBlock is provided (from Court Status edit)
+  useEffect(() => {
+    if (initialEditingBlock) {
+      setEditingBlock(initialEditingBlock);
+      setSelectedCourts(initialEditingBlock.courtNumber ? [initialEditingBlock.courtNumber] : []);
+      setBlockReason(initialEditingBlock.reason || '');
+      setEventTitle(initialEditingBlock.title || initialEditingBlock.reason || '');
+      setEventType(initialEditingBlock.blockType || 'maintenance');
+
+      const startDateTime = initialEditingBlock.startTime || initialEditingBlock.startsAt;
+      const endDateTime = initialEditingBlock.endTime || initialEditingBlock.endsAt;
+
+      if (startDateTime) {
+        const startDate = new Date(startDateTime);
+        setSelectedDate(startDate);
+        setStartTime(startDate.toTimeString().slice(0, 5));
+      }
+      if (endDateTime) {
+        const endDate = new Date(endDateTime);
+        setEndTime(endDate.toTimeString().slice(0, 5));
+      }
+
+      // Clear after consuming so effect doesn't re-run
+      if (onEditingBlockConsumed) {
+        onEditingBlockConsumed();
+      }
+    }
+  }, [initialEditingBlock, onEditingBlockConsumed]);
 
   const currentTime = new Date();
 
