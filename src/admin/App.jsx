@@ -1341,10 +1341,7 @@ const AdminPanelV2 = ({ onExit }) => {
         // Update courts from API
         setCourts(board.courts || []);
         // Normalize waitlist using shared helper
-        console.log('🔥 Raw board.waitlist:', JSON.stringify(board.waitlist, null, 2));
-        const normalized = normalizeWaitlist(board.waitlist);
-        console.log('🔥 Normalized waitlist:', JSON.stringify(normalized, null, 2));
-        setWaitingGroups(normalized);
+        setWaitingGroups(normalizeWaitlist(board.waitlist));
 
         // Extract block data from courts for UI compatibility
         // API-only: derive courtBlocks entirely from board.courts
