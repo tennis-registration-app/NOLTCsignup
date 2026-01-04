@@ -1,13 +1,15 @@
 /**
  * @fileoverview Wire format mappers for Edge Function payloads
  *
- * This module translates TennisBackend canonical inputs to the current
- * Edge Function expected payloads. This isolates legacy compatibility
- * in one place.
+ * This module translates TennisBackend canonical inputs to API wire payloads.
+ * Single place to map Command DTOs → API payloads. This is intentional architecture,
+ * not technical debt - it decouples frontend from backend wire format.
  *
- * TODO: Remove this module when Edge Functions are updated to target API.
- * Target API uses: courtNumber, billingMemberId, groupType (camelCase in JS, snake_case over wire)
- * Current API uses: court_number, billing_member_id, group_type, session_type, etc.
+ * If API wire format changes, update mappings here only.
+ *
+ * Conventions:
+ * - Frontend uses camelCase (courtNumber, billingMemberId, groupType)
+ * - API wire uses snake_case (court_number, billing_member_id, group_type)
  */
 
 /**

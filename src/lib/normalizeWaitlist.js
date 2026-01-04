@@ -13,7 +13,8 @@ export function normalizeWaitlist(waitlist) {
 
   return waitlist.map((entry, idx) => {
     // Handle participants - might be string (JSONB) or array
-    let participants = entry?.participants || entry?.players || entry?.members || [];
+    let participants =
+      entry?.participants || entry?.players || entry?.members || entry?.group?.players || [];
 
     if (typeof participants === 'string') {
       try {

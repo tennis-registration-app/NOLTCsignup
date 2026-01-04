@@ -1341,7 +1341,10 @@ const AdminPanelV2 = ({ onExit }) => {
         // Update courts from API
         setCourts(board.courts || []);
         // Normalize waitlist using shared helper
-        setWaitingGroups(normalizeWaitlist(board.waitlist));
+        console.log('🔥 Raw board.waitlist:', JSON.stringify(board.waitlist, null, 2));
+        const normalized = normalizeWaitlist(board.waitlist);
+        console.log('🔥 Normalized waitlist:', JSON.stringify(normalized, null, 2));
+        setWaitingGroups(normalized);
 
         // Extract block data from courts for UI compatibility
         // API-only: derive courtBlocks entirely from board.courts
@@ -1672,11 +1675,24 @@ const AdminPanelV2 = ({ onExit }) => {
     }
   };
 
-  const moveInWaitlist = (from, to) => {
-    const newWaitingGroups = [...waitingGroups];
-    const [group] = newWaitingGroups.splice(from, 1);
-    newWaitingGroups.splice(to, 0, group);
-    saveData(courts, newWaitingGroups);
+  const moveInWaitlist = async (from, to) => {
+    const entry = waitingGroups[from];
+    if (!entry) return;
+
+    // Convert from 0-based index to 1-based position
+    const newPosition = to + 1;
+
+    const result = await backend.admin.reorderWaitlist({
+      entryId: entry.id,
+      newPosition,
+    });
+
+    if (result.ok) {
+      showNotification(`Moved to position ${newPosition}`, 'success');
+      // Board will refresh via realtime subscription
+    } else {
+      showNotification(result.error || 'Failed to reorder waitlist', 'error');
+    }
   };
 
   // Settings operations

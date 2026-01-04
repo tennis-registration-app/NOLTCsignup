@@ -295,4 +295,18 @@ export class AdminCommands {
 
     return this.api.post('/update-system-settings', payload);
   }
+
+  /**
+   * Reorder a waitlist entry to a new position
+   * @param {Object} params
+   * @param {string} params.entryId - Waitlist entry ID
+   * @param {number} params.newPosition - Target position (1-based)
+   * @returns {Promise<{ok: boolean, old_position?: number, new_position?: number}>}
+   */
+  async reorderWaitlist({ entryId, newPosition }) {
+    return this.api.post('/reorder-waitlist', {
+      entry_id: entryId,
+      new_position: newPosition,
+    });
+  }
 }
