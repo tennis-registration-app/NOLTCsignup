@@ -1229,7 +1229,7 @@ const AdminPanelV2 = ({ onExit }) => {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      onNotification('Failed to load data', 'error');
+      showNotification('Failed to load data', 'error');
     }
   }, []);
 
@@ -1615,7 +1615,7 @@ const AdminPanelV2 = ({ onExit }) => {
     await dataStore.set(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY, newTemplates, {
       immediate: true,
     });
-    onNotification('Template saved', 'success');
+    showNotification('Template saved', 'success');
   };
 
   const deleteTemplate = async (id) => {
@@ -1624,7 +1624,7 @@ const AdminPanelV2 = ({ onExit }) => {
     await dataStore.set(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY, newTemplates, {
       immediate: true,
     });
-    onNotification('Template deleted', 'success');
+    showNotification('Template deleted', 'success');
   };
 
   const applyTemplate = (template) => {
@@ -1683,9 +1683,9 @@ const AdminPanelV2 = ({ onExit }) => {
     });
     if (result.ok) {
       setSettings((prev) => ({ ...prev, tennisBallPrice: price }));
-      onNotification('Ball price updated', 'success');
+      showNotification('Ball price updated', 'success');
     } else {
-      onNotification('Failed to update ball price', 'error');
+      showNotification('Failed to update ball price', 'error');
     }
   };
 
@@ -1698,9 +1698,9 @@ const AdminPanelV2 = ({ onExit }) => {
         ...prev,
         guestFees: { ...prev.guestFees, weekday: fee },
       }));
-      onNotification('Weekday guest fee updated', 'success');
+      showNotification('Weekday guest fee updated', 'success');
     } else {
-      onNotification('Failed to update weekday guest fee', 'error');
+      showNotification('Failed to update weekday guest fee', 'error');
     }
   };
 
@@ -1713,9 +1713,9 @@ const AdminPanelV2 = ({ onExit }) => {
         ...prev,
         guestFees: { ...prev.guestFees, weekend: fee },
       }));
-      onNotification('Weekend guest fee updated', 'success');
+      showNotification('Weekend guest fee updated', 'success');
     } else {
-      onNotification('Failed to update weekend guest fee', 'error');
+      showNotification('Failed to update weekend guest fee', 'error');
     }
   };
 
@@ -1735,9 +1735,9 @@ const AdminPanelV2 = ({ onExit }) => {
 
     if (result.ok) {
       setOperatingHours(updatedHours);
-      onNotification('Operating hours updated', 'success');
+      showNotification('Operating hours updated', 'success');
     } else {
-      onNotification('Failed to update operating hours', 'error');
+      showNotification('Failed to update operating hours', 'error');
     }
   };
 
@@ -1752,9 +1752,9 @@ const AdminPanelV2 = ({ onExit }) => {
       if (settingsResult.ok && settingsResult.upcoming_overrides) {
         setHoursOverrides(settingsResult.upcoming_overrides);
       }
-      onNotification('Hours override added', 'success');
+      showNotification('Hours override added', 'success');
     } else {
-      onNotification('Failed to add hours override', 'error');
+      showNotification(result.error || 'Failed to add hours override', 'error');
     }
   };
 
@@ -1765,9 +1765,9 @@ const AdminPanelV2 = ({ onExit }) => {
 
     if (result.ok) {
       setHoursOverrides((prev) => prev.filter((o) => o.date !== date));
-      onNotification('Hours override deleted', 'success');
+      showNotification('Hours override deleted', 'success');
     } else {
-      onNotification('Failed to delete hours override', 'error');
+      showNotification('Failed to delete hours override', 'error');
     }
   };
   // AdminPanelV2 rendering complete
