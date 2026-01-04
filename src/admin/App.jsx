@@ -1205,10 +1205,19 @@ const AdminPanelV2 = ({ onExit }) => {
         setBlockTemplates(templates);
       }
 
-      // Load settings
-      const settingsData = await dataStore.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY);
-      if (settingsData) {
-        setSettings(settingsData);
+      // Load system settings from API
+      const settingsResult = await backend.admin.getSettings();
+      if (settingsResult.ok) {
+        const s = settingsResult.settings;
+        setSettings({
+          tennisBallPrice: s.ball_price_cents
+            ? s.ball_price_cents / 100
+            : TENNIS_CONFIG.PRICING.TENNIS_BALLS,
+          guestFees: {
+            weekday: s.guest_fee_weekday_cents ? s.guest_fee_weekday_cents / 100 : 15.0,
+            weekend: s.guest_fee_weekend_cents ? s.guest_fee_weekend_cents / 100 : 20.0,
+          },
+        });
       }
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -1661,36 +1670,45 @@ const AdminPanelV2 = ({ onExit }) => {
 
   // Settings operations
   const updateBallPrice = async (price) => {
-    const newSettings = { ...settings, tennisBallPrice: parseFloat(price) };
-    setSettings(newSettings);
-    await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, newSettings, { immediate: true });
-    onNotification('Ball price updated', 'success');
+    const result = await backend.admin.updateSettings({
+      settings: { ball_price_cents: Math.round(price * 100) },
+    });
+    if (result.ok) {
+      setSettings((prev) => ({ ...prev, tennisBallPrice: price }));
+      onNotification('Ball price updated', 'success');
+    } else {
+      onNotification('Failed to update ball price', 'error');
+    }
   };
 
   const updateWeekdayGuestFee = async (fee) => {
-    const newSettings = {
-      ...settings,
-      guestFees: {
-        ...(settings.guestFees || {}),
-        weekday: parseFloat(fee),
-      },
-    };
-    setSettings(newSettings);
-    await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, newSettings, { immediate: true });
-    onNotification('Weekday guest fee updated', 'success');
+    const result = await backend.admin.updateSettings({
+      settings: { guest_fee_weekday_cents: Math.round(fee * 100) },
+    });
+    if (result.ok) {
+      setSettings((prev) => ({
+        ...prev,
+        guestFees: { ...prev.guestFees, weekday: fee },
+      }));
+      onNotification('Weekday guest fee updated', 'success');
+    } else {
+      onNotification('Failed to update weekday guest fee', 'error');
+    }
   };
 
   const updateWeekendGuestFee = async (fee) => {
-    const newSettings = {
-      ...settings,
-      guestFees: {
-        ...(settings.guestFees || {}),
-        weekend: parseFloat(fee),
-      },
-    };
-    setSettings(newSettings);
-    await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, newSettings, { immediate: true });
-    onNotification('Weekend guest fee updated', 'success');
+    const result = await backend.admin.updateSettings({
+      settings: { guest_fee_weekend_cents: Math.round(fee * 100) },
+    });
+    if (result.ok) {
+      setSettings((prev) => ({
+        ...prev,
+        guestFees: { ...prev.guestFees, weekend: fee },
+      }));
+      onNotification('Weekend guest fee updated', 'success');
+    } else {
+      onNotification('Failed to update weekend guest fee', 'error');
+    }
   };
   // AdminPanelV2 rendering complete
   return (

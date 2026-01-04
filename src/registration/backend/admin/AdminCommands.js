@@ -268,4 +268,31 @@ export class AdminCommands {
     const response = await this.api.get(url);
     return response;
   }
+
+  /**
+   * Get system settings
+   * @returns {Promise<{ok: boolean, settings: Object, operatingHours: Array, upcomingOverrides: Array}>}
+   */
+  async getSettings() {
+    return this.api.get('/get-settings');
+  }
+
+  /**
+   * Update system settings
+   * @param {Object} params
+   * @param {Object} [params.settings] - Key-value pairs (ball_price_cents, guest_fee_weekday_cents, etc.)
+   * @param {Array} [params.operatingHours] - Weekly schedule
+   * @param {Object} [params.operatingHoursOverride] - Single date override
+   * @param {string} [params.deleteOverride] - Date to delete override for
+   * @returns {Promise<{ok: boolean, updated: Array}>}
+   */
+  async updateSettings({ settings, operatingHours, operatingHoursOverride, deleteOverride }) {
+    const payload = {};
+    if (settings) payload.settings = settings;
+    if (operatingHours) payload.operating_hours = operatingHours;
+    if (operatingHoursOverride) payload.operating_hours_override = operatingHoursOverride;
+    if (deleteOverride) payload.delete_override = deleteOverride;
+
+    return this.api.post('/update-system-settings', payload);
+  }
 }
