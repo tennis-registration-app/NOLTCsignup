@@ -272,7 +272,7 @@ const GroupScreen = ({
                       className="w-full p-2.5 sm:p-3 text-left hover:bg-blue-50 transition-colors block"
                     >
                       <div className="font-medium text-base sm:text-lg text-blue-600">
-                        Add "{addPlayerSearch}" as guest?
+                        Add &quot;{addPlayerSearch}&quot; as guest?
                       </div>
                       <div className="text-xs sm:text-sm text-gray-600">
                         No member found with this name
@@ -300,7 +300,7 @@ const GroupScreen = ({
                 />
                 {showGuestNameError && (
                   <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    Please enter your guest's full name
+                    Please enter your guest&apos;s full name
                   </p>
                 )}
               </div>

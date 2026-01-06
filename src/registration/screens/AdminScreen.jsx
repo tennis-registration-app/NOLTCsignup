@@ -59,7 +59,7 @@ const AdminScreen = ({
   // Utilities
   getCourtBlockStatus,
   CONSTANTS,
-  TENNIS_CONFIG,
+  // TENNIS_CONFIG available if needed
 }) => {
   const now = new Date();
 

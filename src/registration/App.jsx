@@ -1,29 +1,24 @@
 // Registration App - Vite-bundled React
 // Converted from inline Babel to ES module JSX
+/* global Tennis */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 // Import shared utilities from @lib
 // IMPORTANT: Import all @lib items in one import to avoid rollup circular dependency issues
 import {
   STORAGE as STORAGE_SHARED,
-  EVENTS as EVENTS_SHARED,
   readJSON as _sharedReadJSON,
-  writeJSON as _sharedWriteJSON,
   getEmptyData as _sharedGetEmptyData,
-  readDataSafe as _sharedReadDataSafe,
-  COURT_COUNT,
-  TennisCourtDataStore,
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
   getUpcomingBlockWarning as _sharedGetUpcomingBlockWarning,
   TENNIS_CONFIG as _sharedTennisConfig,
   // Services (also from @lib)
   DataValidation,
   TennisBusinessLogic,
-  tennisBusinessLogic,
 } from '@lib';
 
 // Import registration-specific services
-import { GeolocationService, geolocationService } from './services';
+import { GeolocationService } from './services';
 
 // Import API config for mobile detection
 import { API_CONFIG } from '../lib/apiConfig.js';
@@ -34,17 +29,7 @@ import { findEngagementByMemberId, getEngagementMessage } from '../lib/domain/en
 // toLegacyBoard removed - now using pure Domain Board directly
 
 // Import extracted UI components
-import {
-  Users,
-  Bell,
-  Clock,
-  UserPlus,
-  ChevronRight,
-  Check,
-  AlertDisplay,
-  ToastHost,
-  QRScanner,
-} from './components';
+import { AlertDisplay, ToastHost, QRScanner } from './components';
 
 // Import extracted screens and modals
 import {
@@ -56,28 +41,24 @@ import {
   AdminScreen,
   GroupScreen,
 } from './screens';
-import { BlockWarningModal } from './modals';
+// BlockWarningModal available in ./modals if needed
 
 // Import custom hooks
 import { useDebounce } from './hooks';
 
 // API Backend Integration
 import { getTennisService } from './services/index.js';
-import { getRealtimeClient } from '@lib/RealtimeClient.js';
+// getRealtimeClient available in @lib/RealtimeClient.js if needed
 
 // TennisBackend interface layer
-import { createBackend, DenialCodes } from './backend/index.js';
+import { createBackend } from './backend/index.js';
+// DenialCodes available in ./backend/index.js if needed
 
 // TennisBackend singleton instance
 const backend = createBackend();
 
-// Import utility functions
-import {
-  normalizeName as _utilNormalizeName,
-  findEngagementFor as _utilFindEngagementFor,
-  validateGuestName,
-  getCourtsOccupiedForClearing as _utilGetCourtsOccupiedForClearing,
-} from './utils';
+// Utility functions available in ./utils if needed:
+// normalizeName, findEngagementFor, validateGuestName, getCourtsOccupiedForClearing
 
 // Global service aliases for backward compatibility with other scripts
 window.Tennis = window.Tennis || {};
@@ -89,47 +70,20 @@ const U = window.APP_UTILS || {};
 
 // === Shared Core Integration Flag ===
 const USE_SHARED_CORE = true;
-const USE_SHARED_DOMAIN = true;
-const USE_DOMAIN_ETA_PREVIEW = true;
 const DEBUG = false; // Gate noisy logs
 const dbg = (...args) => {
   if (DEBUG) console.log(...args);
 };
 
-// Coalesce multiple update events into a single refresh
-let __refreshPending = false;
-function scheduleAvailabilityRefresh() {
-  if (__refreshPending) return;
-  __refreshPending = true;
-  setTimeout(() => {
-    __refreshPending = false;
-    const fn = (typeof window.loadData === 'function' && window.loadData) || null;
-    if (fn) fn();
-  }, 0);
-}
-
 // These will be populated from window.Tennis after modules load
-const Config = window.Tennis?.Config || null;
 const Storage = window.Tennis?.Storage;
 const Events = window.Tennis?.Events;
-const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-const USE_DOMAIN_SELECTABLE = true;
 let dataStore = window.Tennis?.DataStore || null;
-
-// Domain module handles
-const Time = window.Tennis?.Domain?.time || window.Tennis?.Domain?.Time;
-const Avail = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-const Wait = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
-const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
 
 // Storage helpers from shared module
 const readJSON = _sharedReadJSON;
-const writeJSON = _sharedWriteJSON;
 const getEmptyData = _sharedGetEmptyData;
-const readDataSafe = () =>
-  _sharedReadDataSafe ? _sharedReadDataSafe() : readJSON(STORAGE_SHARED?.DATA) || getEmptyData();
 const STORAGE = Storage?.KEYS || STORAGE_SHARED;
-const EVENTS = EVENTS_SHARED || { UPDATE: 'tennisDataUpdate' };
 
 // --- Robust validation wrapper: always returns { ok, errors[] }
 function validateGroupCompat(players, guests) {
@@ -147,7 +101,8 @@ function validateGroupCompat(players, guests) {
         return norm(out.ok, out.errors);
       }
     }
-  } catch (e) {
+    // eslint-disable-next-line no-unused-vars
+  } catch (_e) {
     // fall through to local rules
   }
 
@@ -190,32 +145,10 @@ function validateGroupCompat(players, guests) {
 // ---- Storage & Event keys: NOW IMPORTED FROM window.APP_UTILS ----
 // REMOVED: STORAGE_ORIGINAL constant (no longer needed since USE_SHARED_CORE is always true)
 
-// ---- Core constants (declared only; not replacing existing usages) ----
-const APP = {
-  COURT_COUNT: 12,
-  PLAYERS: { MIN: 1, MAX: 4 },
-  DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 },
-};
-
 // ---- Dev flag & assert (no UI change) ----
 const DEV = typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.host);
 const assert = (cond, msg, obj) => {
   if (DEV && !cond) console.warn('ASSERT:', msg, obj || '');
-};
-
-// ---- Logger (no UI change) ----
-const LOG_LEVEL = DEV ? 'debug' : 'warn'; // 'debug'|'info'|'warn'|'silent'
-const _PREFIX = '[Registration]';
-const log = {
-  debug: (...a) => {
-    if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a);
-  },
-  info: (...a) => {
-    if (['debug', 'info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a);
-  },
-  warn: (...a) => {
-    if (['debug', 'info', 'warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a);
-  },
 };
 
 // ============================================================
@@ -337,6 +270,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       console.error('Failed to load data:', error);
       setApiError(error.message);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally using stale recentlyCleared to preserve state across refreshes
   }, [getDataService]);
   window.loadData = loadData; // expose for coalescer/tests
 
@@ -518,21 +452,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // PHASE1D: Court availability now handled by TennisBackend subscription
 
-  // Auto-clear expired courts function
-  useEffect(() => {
-    // function autoClearExpiredCourts() { /* disabled per policy */ }
-    const autoClearExpiredCourts = async () => {
-      /* disabled per policy - players remain on-court until manual clear or bump */
-    };
-
-    // Run immediately on mount
-    // autoClearExpiredCourts(); /* disabled per policy */
-
-    // Then run every 30 seconds
-    // const interval = setInterval(autoClearExpiredCourts, 30000); /* disabled per policy */
-
-    // return () => clearInterval(interval); /* disabled per policy */
-  }, []); // Empty dependency array so it only sets up once
+  // Auto-clear expired courts - disabled per policy
+  // Players remain on-court until manual clear or bump
+  // Auto-clear now handled server-side via API
 
   // Historical Data Protection System - REMOVED
   // Previously backed up court game data to localStorage for analytics.
@@ -767,41 +689,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       .toLowerCase();
   }
 
-  function __findEngagementFor(name, data) {
-    const norm = __normalizeName(name);
-    // 1) playing: scan courts (Domain format: session.group.players)
-    const courts = Array.isArray(data?.courts) ? data.courts : [];
-    for (let i = 0; i < courts.length; i++) {
-      const session = courts[i]?.session;
-      if (!session) continue;
-      const players = Array.isArray(session.group?.players) ? session.group.players : [];
-      for (const p of players) {
-        if (
-          __normalizeName(p) === norm ||
-          __normalizeName(p?.name) === norm ||
-          __normalizeName(p?.displayName) === norm
-        ) {
-          return { type: 'playing', court: i + 1 };
-        }
-      }
-    }
-    // 2) waitlist: scan waitlist (Domain format: group.players)
-    const wg = Array.isArray(data?.waitlist) ? data.waitlist : [];
-    for (let i = 0; i < wg.length; i++) {
-      const players = Array.isArray(wg[i]?.group?.players) ? wg[i].group.players : [];
-      for (const p of players) {
-        if (
-          __normalizeName(p) === norm ||
-          __normalizeName(p?.name) === norm ||
-          __normalizeName(p?.displayName) === norm
-        ) {
-          return { type: 'waitlist', position: i + 1 };
-        }
-      }
-    }
-    return null;
-  }
-
   function guardAddPlayerEarly(player) {
     // Get memberId from player (API members have id = memberId)
     const memberId = player?.memberId || player?.id;
@@ -969,7 +856,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           } else {
             setBallPriceInput(TENNIS_CONFIG.PRICING.TENNIS_BALLS.toFixed(2));
           }
-        } catch (error) {
+        } catch (_error) {
           setBallPriceInput(TENNIS_CONFIG.PRICING.TENNIS_BALLS.toFixed(2));
         }
       }
@@ -978,6 +865,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   }, [currentScreen]);
 
   // Simplified member database
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- memberDatabase is static data, recreated each render for simplicity (performance optimization deferred)
   const memberDatabase = {};
   for (let i = 1; i <= CONSTANTS.MEMBER_COUNT; i++) {
     const id = CONSTANTS.MEMBER_ID_START + i;
@@ -1102,11 +990,14 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             try {
               const v = input.value || '';
               input.setSelectionRange(v.length, v.length);
-            } catch {}
+            } catch {
+              /* setSelectionRange not supported */
+            }
           }
         });
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setCurrentScreen is a logging wrapper, intentionally not memoized
   }, []);
 
   // Expose React state for mobile guards
@@ -1226,7 +1117,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       if (timeoutTimerRef.current) clearTimeout(timeoutTimerRef.current);
       if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
     }
-  }, [currentScreen]); // Only depend on currentScreen, not lastActivity
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only depend on currentScreen, not updateActivity
+  }, [currentScreen]);
 
   // Show alert message helper
   const showAlertMessage = (message) => {
@@ -1236,78 +1128,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   // Get court data using the data service (synchronous for React renders)
+  // NOTE: Auto-timeout and cleanup now handled by API/server
   const getCourtData = () => {
-    // For synchronous usage, use cached data from state
-    return data;
-
-    // Check for auto-timeout courts and expired blocks
-    const maxDuration = CONSTANTS.MAX_PLAY_DURATION_MS;
-    const now = new Date().getTime();
-    let hasChanges = false;
-
-    data.courts = data.courts.map((court, index) => {
-      if (court) {
-        // Skip already cleared courts
-        if (court.wasCleared) {
-          return court;
-        }
-
-        // Check if court is currently blocked using new system
-        const blockStatus = getCourtBlockStatus(index + 1);
-        const isCurrentlyBlocked = blockStatus && blockStatus.isCurrent;
-
-        // Get start time (Domain: session.startedAt)
-        const startTime = court.session?.startedAt || court.startTime;
-
-        // Check for overtime courts (only if not blocked and has start time)
-        if (startTime && !isCurrentlyBlocked) {
-          const startTimeMs = new Date(startTime).getTime();
-          const timePlayed = now - startTimeMs;
-
-          if (timePlayed > maxDuration) {
-            // Auto-clear this court using the same logic as manual clear
-            console.log(
-              `Auto-clearing court ${index + 1} after ${CONSTANTS.MAX_PLAY_DURATION_MIN / 60} hours`
-            );
-            hasChanges = true;
-
-            // Handle Domain structure when clearing
-            if (court.session) {
-              // Domain structure - clear session
-              court.session = null;
-              if (!court.history) court.history = [];
-              // Could add to history here if needed
-            } else {
-              // Legacy structure - mark as cleared
-              court.endTime = new Date().toISOString();
-              court.wasCleared = true;
-            }
-
-            return court;
-          }
-        }
-      }
-      return court;
-    });
-
-    // Clean up expired recentlyCleared sessions (keep for 4 hours after clearing)
-    if (data.recentlyCleared && data.recentlyCleared.length > 0) {
-      const originalLength = data.recentlyCleared.length;
-      const fourHoursAgo = new Date(now - 4 * 60 * 60 * 1000); // 4 hours ago
-
-      data.recentlyCleared = data.recentlyCleared.filter((session) => {
-        // Keep sessions that were cleared less than 4 hours ago
-        return new Date(session.clearedAt).getTime() > fourHoursAgo.getTime();
-      });
-
-      if (data.recentlyCleared.length !== originalLength) {
-        hasChanges = true;
-      }
-    }
-
-    // NOTE: saveData removed — auto-expire cleanup now handled by API/server
-    // hasChanges flag preserved for potential future use or logging
-
     return data;
   };
 
@@ -1485,64 +1307,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // Domain validation (reuse the same error UI as submit)
     const { ok, errors } = validateGroupCompat(players, guests);
     if (!ok) {
-      try {
-        // Try to infer the variables you use in this scope:
-        const playersVar =
-          typeof selectedPlayers !== 'undefined'
-            ? selectedPlayers
-            : typeof groupPlayers !== 'undefined'
-              ? groupPlayers
-              : typeof players !== 'undefined'
-                ? players
-                : [];
-
-        const hasGuestFlag =
-          typeof hasGuest !== 'undefined'
-            ? hasGuest
-            : typeof includeGuest !== 'undefined'
-              ? includeGuest
-              : typeof guest !== 'undefined'
-                ? guest
-                : false;
-
-        // Heuristics to detect a guest row in the list
-        const playersArr = Array.isArray(playersVar) ? playersVar.filter(Boolean) : [];
-        const guestRows = playersArr.filter(
-          (p) =>
-            p?.isGuest === true ||
-            (typeof p?.type === 'string' && p.type.toLowerCase() === 'guest') ||
-            (typeof p?.name === 'string' && p.name.trim().toLowerCase() === 'guest')
-        );
-
-        // What the current code thinks the size is (best guess: try common expressions)
-        let sizeRaw = NaN;
-        try {
-          if (typeof size !== 'undefined') sizeRaw = size;
-        } catch {}
-        if (Number.isNaN(sizeRaw)) {
-          try {
-            sizeRaw = playersArr.length + (hasGuestFlag ? 1 : 0);
-          } catch {}
-        }
-
-        console.warn('[GroupSizeDiag] about to show MAX SIZE error — details:', {
-          playersCount: playersArr.length,
-          guestRowsCount: guestRows.length,
-          hasGuestFlag: !!hasGuestFlag,
-          sizeRaw,
-        });
-        console.warn(
-          '[GroupSizeDiag] players snapshot:',
-          playersArr.map((p) => ({
-            name: p?.name ?? null,
-            isGuest: !!p?.isGuest,
-            type: p?.type ?? null,
-            memberNumber: p?.memberNumber ?? null,
-          }))
-        );
-      } catch (e) {
-        console.warn('[GroupSizeDiag] logging failed:', e);
-      }
       showAlertMessage(errors.join('\n'));
       return;
     }
@@ -1948,7 +1712,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       if (!validation.ok) {
         try {
           Tennis.UI.toast(validation.errors.join(' '), { type: 'error' });
-        } catch {}
+        } catch {
+          /* Tennis.UI not available */
+        }
         showAlertMessage(validation.errors.join('\n'));
         return;
       }
@@ -2060,17 +1826,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setShowSponsorError(false);
   };
 
-  // Get all members
-  const getAllMembers = () => {
-    const allMembers = {};
-    Object.values(memberDatabase).forEach((member) => {
-      member.familyMembers.forEach((player) => {
-        allMembers[player.id] = player;
-      });
-    });
-    return allMembers;
-  };
-
   // Get frequent partners (uses API members)
   const getFrequentPartners = (memberNumber) => {
     if (apiMembers.length === 0) {
@@ -2131,22 +1886,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const isPlayerAlreadyPlaying = (playerId) => {
     const data = getCourtData();
     return TennisBusinessLogic.isPlayerAlreadyPlaying(playerId, data, currentGroup);
-  };
-
-  // Generate player status message
-  const getPlayerStatusMessage = (playerStatus) => {
-    if (!playerStatus.isPlaying) return null;
-
-    switch (playerStatus.location) {
-      case 'court':
-        return `${playerStatus.playerName} is already playing on Court ${playerStatus.courtNumber}`;
-      case 'waiting':
-        return `${playerStatus.playerName} is already in a group waiting for a court`;
-      case 'current':
-        return `${playerStatus.playerName} is already in your group`;
-      default:
-        return `${playerStatus.playerName} is already registered`;
-    }
   };
 
   // Validate guest name (2+ words with 2+ letters each)
@@ -2729,7 +2468,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setShowPriceSuccess(true);
       setPriceError('');
       setTimeout(() => setShowPriceSuccess(false), 3000);
-    } catch (error) {
+      // eslint-disable-next-line no-unused-vars
+    } catch (_error) {
       setPriceError('Failed to save price');
     }
   };
@@ -3253,7 +2993,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             const members = await backend.directory.getMembersByAccount(memberNumber);
             return members;
           }}
-          TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
         />
       </>
@@ -3336,7 +3075,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Utilities
         getCourtBlockStatus={getCourtBlockStatus}
         CONSTANTS={CONSTANTS}
-        TENNIS_CONFIG={TENNIS_CONFIG}
       />
     );
   }
@@ -3557,8 +3295,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             <div className="bg-white rounded-lg p-6 max-w-sm w-full">
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Location Required</h3>
               <p className="text-gray-600 mb-4">
-                We couldn't detect your location. Please scan the QR code on the kiosk screen to
-                verify you're at the club.
+                We couldn&apos;t detect your location. Please scan the QR code on the kiosk screen
+                to verify you&apos;re at the club.
               </p>
               <div className="flex gap-3">
                 <button
