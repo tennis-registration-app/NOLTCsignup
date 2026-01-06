@@ -53,6 +53,8 @@ import {
   CourtSelectionScreen,
   SearchScreen,
   ClearCourtScreen,
+  AdminScreen,
+  GroupScreen,
 } from './screens';
 import { BlockWarningModal } from './modals';
 
@@ -2448,6 +2450,697 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setCurrentScreen('group', 'handleSuggestionClick');
   };
 
+  // ============================================
+  // Admin Screen Handlers
+  // ============================================
+
+  const handleClearAllCourts = async () => {
+    const confirmClear = window.confirm(
+      'Clear all courts? This will make all courts immediately available.'
+    );
+    if (confirmClear) {
+      const result = await backend.admin.clearAllCourts({
+        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+        reason: 'admin_clear_all',
+      });
+      if (result.ok) {
+        showAlertMessage(
+          `All courts cleared successfully (${result.sessionsEnded || 0} sessions ended)`
+        );
+      } else {
+        showAlertMessage(result.message || 'Failed to clear courts');
+      }
+    }
+  };
+
+  const handleBlockCreate = async () => {
+    if (selectedCourtsToBlock.length === 0) {
+      showAlertMessage('Please select at least one court to block');
+      return;
+    }
+    if (!blockMessage) {
+      showAlertMessage('Please enter a block reason');
+      return;
+    }
+    if (!blockEndTime) {
+      showAlertMessage('Please select an end time');
+      return;
+    }
+
+    setBlockingInProgress(true);
+
+    const boardData = getCourtData();
+    const currentTimeNow = new Date();
+
+    // Calculate start time
+    let startTime;
+    if (blockStartTime === 'now') {
+      startTime = new Date();
+    } else {
+      startTime = new Date();
+      const [hours, minutes] = blockStartTime.split(':');
+      startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    }
+
+    // Calculate end time based on the selected time
+    const [endHours, endMinutes] = blockEndTime.split(':');
+    let endTime = new Date(startTime);
+    endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
+
+    // If end time is before start time, assume next day
+    if (endTime <= startTime) {
+      endTime.setDate(endTime.getDate() + 1);
+    }
+
+    console.log('Block times calculated:', {
+      blockStartTimeInput: blockStartTime,
+      currentTime: currentTimeNow.toLocaleString(),
+      startTime: startTime.toLocaleString(),
+      endTime: endTime.toLocaleString(),
+    });
+
+    // Map block message to block type
+    const blockTypeMap = {
+      'WET COURT': 'wet',
+      'COURT WORK': 'maintenance',
+      LESSON: 'lesson',
+    };
+    const blockType = blockTypeMap[blockMessage.toUpperCase()] || 'other';
+
+    // Block selected courts via backend API
+    let successCount = 0;
+    let failedCourts = [];
+
+    for (const courtNum of selectedCourtsToBlock) {
+      const court = boardData.courts[courtNum - 1];
+      if (!court || !court.id) {
+        failedCourts.push(courtNum);
+        continue;
+      }
+
+      const result = await backend.admin.createBlock({
+        courtId: court.id,
+        blockType: blockType,
+        title: blockMessage,
+        startsAt: startTime.toISOString(),
+        endsAt: endTime.toISOString(),
+        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+      });
+
+      if (result.ok) {
+        successCount++;
+      } else {
+        failedCourts.push(courtNum);
+        console.error(`Failed to block court ${courtNum}:`, result.message);
+      }
+    }
+
+    if (failedCourts.length === 0) {
+      showAlertMessage(`${successCount} court(s) blocked successfully`);
+    } else if (successCount > 0) {
+      showAlertMessage(
+        `${successCount} court(s) blocked. Failed: courts ${failedCourts.join(', ')}`
+      );
+    } else {
+      showAlertMessage(`Failed to block courts: ${failedCourts.join(', ')}`);
+    }
+  };
+
+  const handleCancelBlock = async (blockId, courtNum) => {
+    const result = await backend.admin.cancelBlock({
+      blockId: blockId,
+      deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+    });
+    if (result.ok) {
+      showAlertMessage(`Court ${courtNum} unblocked`);
+    } else {
+      showAlertMessage(result.message || 'Failed to unblock court');
+    }
+  };
+
+  const handleAdminClearCourt = async (courtNum) => {
+    await clearCourt(courtNum);
+    showAlertMessage(`Court ${courtNum} cleared`);
+  };
+
+  const handleMoveCourt = async (fromCourtNum, toCourtNum) => {
+    try {
+      const data = getCourtData();
+      const fromCourt = data.courts[fromCourtNum - 1];
+      const toCourt = data.courts[toCourtNum - 1];
+
+      if (!fromCourt?.id) {
+        showAlertMessage('Source court not found');
+        setCourtToMove(null);
+        return;
+      }
+
+      // For empty courts, get ID from API board
+      let toCourtId = toCourt?.id;
+      if (!toCourtId) {
+        const board = await backend.queries.getBoard();
+        const targetCourt = board?.courts?.find((c) => c.number === toCourtNum);
+        toCourtId = targetCourt?.id;
+      }
+
+      if (!toCourtId) {
+        showAlertMessage('Destination court not found');
+        setCourtToMove(null);
+        return;
+      }
+
+      const result = await backend.commands.moveCourt({
+        fromCourtId: fromCourt.id,
+        toCourtId: toCourtId,
+      });
+
+      if (result.ok) {
+        showAlertMessage(`Court ${fromCourtNum} moved to Court ${toCourtNum}`);
+      } else {
+        showAlertMessage(result.message || 'Failed to move court');
+      }
+    } catch (err) {
+      console.error('[moveCourt] Error:', err);
+      showAlertMessage(err.message || 'Failed to move court');
+    }
+
+    setCourtToMove(null);
+  };
+
+  const handleClearWaitlist = async () => {
+    const data = getCourtData();
+    const confirmClear = window.confirm('Clear the waitlist? This will remove all waiting groups.');
+    if (confirmClear) {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const group of data.waitlist) {
+        if (!group.id) {
+          failCount++;
+          continue;
+        }
+
+        const result = await backend.admin.removeFromWaitlist({
+          waitlistEntryId: group.id,
+          reason: 'admin_clear_all',
+          deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+        });
+
+        if (result.ok) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+
+      if (failCount === 0) {
+        showAlertMessage(`Waitlist cleared (${successCount} groups removed)`);
+      } else if (successCount > 0) {
+        showAlertMessage(`Removed ${successCount} groups, ${failCount} failed`);
+      } else {
+        showAlertMessage('Failed to clear waitlist');
+      }
+    }
+  };
+
+  const handleRemoveFromWaitlist = async (group) => {
+    if (!group.id) {
+      showAlertMessage('Cannot remove: group ID not found');
+      return;
+    }
+
+    const result = await backend.admin.removeFromWaitlist({
+      waitlistEntryId: group.id,
+      reason: 'admin_removed',
+      deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
+    });
+
+    if (result.ok) {
+      showAlertMessage('Group removed from waitlist');
+    } else {
+      showAlertMessage(result.message || 'Failed to remove group');
+    }
+  };
+
+  const handleReorderWaitlist = async (fromIndex, toIndex) => {
+    const data = getCourtData();
+    const movedGroup = data.waitlist[fromIndex];
+    const entryId = movedGroup?.id || movedGroup?.group?.id;
+
+    if (entryId && window.Tennis?.Commands?.reorderWaitlist) {
+      try {
+        await window.Tennis.Commands.reorderWaitlist({
+          entryId,
+          newPosition: toIndex,
+        });
+        showAlertMessage(`Group moved to position ${toIndex + 1}`);
+      } catch (err) {
+        showAlertMessage(err.message || 'Failed to move group');
+      }
+    } else {
+      console.warn('[Waitlist Reorder] API not available, action skipped');
+      showAlertMessage('Waitlist reorder requires API — feature temporarily unavailable');
+    }
+
+    setWaitlistMoveFrom(null);
+  };
+
+  const handlePriceUpdate = async () => {
+    const price = parseFloat(ballPriceInput);
+
+    // Validation
+    if (isNaN(price)) {
+      setPriceError('Please enter a valid number');
+      return;
+    }
+
+    if (price < 0.5 || price > 50.0) {
+      setPriceError('Price must be between $0.50 and $50.00');
+      return;
+    }
+
+    // Save to localStorage
+    try {
+      const parsed = (await dataStore.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY)) || {};
+      parsed.tennisBallPrice = price;
+      await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, parsed, { immediate: true });
+
+      // Show success message
+      setShowPriceSuccess(true);
+      setPriceError('');
+      setTimeout(() => setShowPriceSuccess(false), 3000);
+    } catch (error) {
+      setPriceError('Failed to save price');
+    }
+  };
+
+  const handleExitAdmin = () => {
+    setCurrentScreen('welcome', 'exitAdminPanel');
+    setSearchInput('');
+  };
+
+  // ============================================================
+  // GroupScreen Handlers
+  // ============================================================
+
+  const handleGroupSearchChange = (e) => {
+    markUserTyping();
+    const value = e.target.value || '';
+    setSearchInput(value);
+
+    // Check for admin code (immediate, no debounce)
+    if (value === CONSTANTS.ADMIN_CODE) {
+      setCurrentScreen('admin', 'adminCodeEntered');
+      setSearchInput('');
+      return;
+    }
+
+    setShowSuggestions(value.length > 0);
+  };
+
+  const handleGroupSearchFocus = () => {
+    markUserTyping();
+    setShowSuggestions(searchInput.length > 0);
+  };
+
+  const handleGroupSuggestionClick = async (suggestion) => {
+    await handleSuggestionClick(suggestion);
+    // For mobile flow, clear search after adding first player
+    if (window.__mobileFlow) {
+      setSearchInput('');
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleAddPlayerSearchChange = (e) => {
+    markUserTyping();
+    setAddPlayerSearch(e.target.value || '');
+    setShowAddPlayerSuggestions((e.target.value || '').length > 0);
+  };
+
+  const handleAddPlayerSearchFocus = () => {
+    markUserTyping();
+    setShowAddPlayerSuggestions(addPlayerSearch.length > 0);
+  };
+
+  const handleAddPlayerSuggestionClick = async (suggestion) => {
+    // Validate suggestion
+    if (!suggestion || !suggestion.member || !suggestion.member.id) {
+      showAlertMessage('Invalid player selection. Please try again.');
+      return;
+    }
+
+    // API member already has correct data
+    const enrichedMember = {
+      id: suggestion.member.id,
+      name: suggestion.member.name,
+      memberNumber: suggestion.memberNumber,
+      accountId: suggestion.member.accountId,
+      memberId: suggestion.member.id,
+    };
+
+    // Early duplicate guard
+    if (!guardAddPlayerEarly(enrichedMember)) {
+      setAddPlayerSearch('');
+      setShowAddPlayer(false);
+      setShowAddPlayerSuggestions(false);
+      return;
+    }
+
+    // Check for duplicate in current group
+    if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
+      Tennis.UI.toast(`${enrichedMember.name} is already in this group`);
+      setAddPlayerSearch('');
+      setShowAddPlayer(false);
+      setShowAddPlayerSuggestions(false);
+      return;
+    }
+
+    // Check if player is already playing or on waitlist
+    if (!guardAddPlayerEarly(enrichedMember)) {
+      setAddPlayerSearch('');
+      setShowAddPlayer(false);
+      setShowAddPlayerSuggestions(false);
+      return; // Toast message already shown by guardAddPlayerEarly
+    }
+
+    const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
+
+    if (
+      playerStatus.isPlaying &&
+      playerStatus.location === 'waiting' &&
+      playerStatus.position === 1
+    ) {
+      const data = getCourtData();
+      const availCourts = getAvailableCourts(false);
+
+      if (availCourts.length > 0) {
+        const firstWaitlistEntry = data.waitlist[0];
+        // Domain: entry.group.players
+        const players = firstWaitlistEntry.group?.players || [];
+        setCurrentGroup(
+          players.map((p) => ({
+            id: p.memberId,
+            name: p.displayName || 'Unknown',
+            memberNumber: findMemberNumber(p.memberId),
+          }))
+        );
+
+        setHasWaitlistPriority(true);
+
+        data.waitlist.shift();
+        saveCourtData(data);
+
+        setAddPlayerSearch('');
+        setShowAddPlayer(false);
+        setShowAddPlayerSuggestions(false);
+        return;
+      }
+    }
+
+    if (!playerStatus.isPlaying) {
+      // Validate we're not exceeding max players
+      if (currentGroup.length >= CONSTANTS.MAX_PLAYERS) {
+        showAlertMessage(`Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`);
+        setAddPlayerSearch('');
+        setShowAddPlayer(false);
+        setShowAddPlayerSuggestions(false);
+        return;
+      }
+
+      const newPlayer = {
+        name: enrichedMember.name,
+        memberNumber: suggestion.memberNumber,
+        id: enrichedMember.id,
+        memberId: enrichedMember.memberId || enrichedMember.id,
+        phone: enrichedMember.phone || '',
+        ranking: enrichedMember.ranking || null,
+        winRate: enrichedMember.winRate || 0.5,
+        accountId: enrichedMember.accountId,
+      };
+      console.log('🔵 Adding player to group (add player flow):', newPlayer);
+      setCurrentGroup([...currentGroup, newPlayer]);
+      setAddPlayerSearch('');
+      setShowAddPlayer(false);
+      setShowAddPlayerSuggestions(false);
+    } else {
+      let message = '';
+      if (playerStatus.location === 'court') {
+        message = `${playerStatus.playerName} is already playing on Court ${playerStatus.courtNumber}`;
+      } else if (playerStatus.location === 'waiting') {
+        message = `${playerStatus.playerName} is already in a group waiting for a court`;
+      } else if (playerStatus.location === 'current') {
+        message = `${playerStatus.playerName} is already in your group`;
+      }
+      setAlertMessage(message);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
+    }
+  };
+
+  const handleToggleAddPlayer = () => {
+    if (showGuestForm) {
+      // If guest form is showing, close it and reset
+      setShowGuestForm(false);
+      setGuestName('');
+      setGuestSponsor('');
+      setShowGuestNameError(false);
+      setShowSponsorError(false);
+      setShowAddPlayer(false);
+    } else {
+      // Normal toggle behavior
+      setShowAddPlayer(!showAddPlayer);
+    }
+  };
+
+  const handleToggleGuestForm = (prefillName) => {
+    if (showGuestForm) {
+      // If guest form is already showing, close it
+      setShowGuestForm(false);
+      setGuestName('');
+      setGuestSponsor('');
+      setShowGuestNameError(false);
+      setShowSponsorError(false);
+      setShowAddPlayer(false);
+    } else {
+      // Open guest form
+      setShowGuestForm(true);
+      setShowAddPlayer(true);
+      setShowAddPlayerSuggestions(false);
+      setAddPlayerSearch('');
+      // Prefill name if provided (from "Add as guest?" button)
+      if (typeof prefillName === 'string') {
+        setGuestName(prefillName);
+      }
+      // Set default sponsor if only one member in group
+      if (currentGroup.length === 1 && !currentGroup[0].isGuest) {
+        setGuestSponsor(currentGroup[0].memberNumber);
+      }
+    }
+  };
+
+  const handleRemovePlayer = (idx) => {
+    setCurrentGroup(currentGroup.filter((_, i) => i !== idx));
+  };
+
+  const handleSelectSponsor = (memberNum) => {
+    setGuestSponsor(memberNum);
+    setShowSponsorError(false);
+  };
+
+  const handleGuestNameChange = (e) => {
+    markUserTyping();
+    setGuestName(e.target.value);
+    setShowGuestNameError(false);
+  };
+
+  const handleAddGuest = async () => {
+    if (!validateGuestName(guestName)) {
+      setShowGuestNameError(true);
+      return;
+    }
+
+    // Check if sponsor is selected when multiple members exist
+    if (currentGroup.filter((p) => !p.isGuest).length > 1 && !guestSponsor) {
+      setShowSponsorError(true);
+      return;
+    }
+
+    // Early duplicate guard for guest
+    if (!guardAddPlayerEarly(guestName.trim())) {
+      setShowGuestForm(false);
+      setShowAddPlayer(false);
+      setGuestName('');
+      setGuestSponsor('');
+      return;
+    }
+
+    // Check for duplicate in current group
+    if (!guardAgainstGroupDuplicate(guestName.trim(), currentGroup)) {
+      Tennis.UI.toast(`${guestName.trim()} is already in this group`);
+      setShowGuestForm(false);
+      setShowAddPlayer(false);
+      setGuestName('');
+      setGuestSponsor('');
+      return;
+    }
+
+    // Add guest to group
+    const guestId = -guestCounter;
+    setGuestCounter(guestCounter + 1);
+
+    const sponsorMember =
+      guestSponsor || currentGroup.filter((p) => !p.isGuest)[0]?.memberNumber || memberNumber;
+
+    // Find the sponsor's details
+    const sponsorPlayer =
+      currentGroup.find((p) => p.memberNumber === sponsorMember) ||
+      memberDatabase[sponsorMember]?.familyMembers[0];
+
+    setCurrentGroup([
+      ...currentGroup,
+      {
+        name: guestName.trim(),
+        memberNumber: 'GUEST',
+        id: guestId,
+        phone: '',
+        ranking: null,
+        winRate: 0.5,
+        isGuest: true,
+        sponsor: sponsorMember,
+      },
+    ]);
+
+    // Track guest charge
+    const guestCharge = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      guestName: guestName.trim(),
+      sponsorName: sponsorPlayer?.name || 'Unknown',
+      sponsorNumber: sponsorMember,
+      amount: 15.0,
+    };
+
+    console.log('🎾 Creating guest charge:', guestCharge);
+
+    try {
+      // Get existing charges from localStorage
+      const existingChargesFromStorage = localStorage.getItem(
+        TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY
+      );
+      const existingCharges = existingChargesFromStorage
+        ? JSON.parse(existingChargesFromStorage)
+        : [];
+      console.log('📋 Existing charges before save:', existingCharges.length);
+
+      // Add new charge
+      existingCharges.push(guestCharge);
+      console.log('📋 Charges after adding new one:', existingCharges.length);
+
+      // Save to localStorage
+      localStorage.setItem(
+        TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY,
+        JSON.stringify(existingCharges)
+      );
+      console.log('💾 Guest charge saved to localStorage');
+
+      // Dispatch event for real-time updates
+      (function deferUpdateAfterSuccess() {
+        const isOnSuccess = window.__regScreen === 'success';
+        const DISPATCH_DELAY_MS = 1500; // small delay so Success screen is stable
+
+        const doDispatch = () => {
+          window.dispatchEvent(
+            new CustomEvent('tennisDataUpdate', {
+              detail: { source: 'guest-charge' },
+            })
+          );
+          console.log('📡 Dispatched update event (source=guest-charge)');
+        };
+
+        if (isOnSuccess) {
+          setTimeout(doDispatch, DISPATCH_DELAY_MS);
+          console.log('[SuccessHold-lite] Deferred tennisDataUpdate by', DISPATCH_DELAY_MS, 'ms');
+        } else {
+          doDispatch();
+        }
+      })();
+    } catch (error) {
+      console.error('❌ Error saving guest charge:', error);
+    }
+
+    // Reset form
+    setGuestName('');
+    setGuestSponsor('');
+    setShowGuestForm(false);
+    setShowAddPlayer(false);
+    setShowGuestNameError(false);
+    setShowSponsorError(false);
+  };
+
+  const handleCancelGuest = () => {
+    setShowGuestForm(false);
+    setGuestName('');
+    setGuestSponsor('');
+    setShowGuestNameError(false);
+    setShowSponsorError(false);
+  };
+
+  const handleGroupSelectCourt = () => {
+    // Mobile: Skip court selection if we have a preselected court
+    if (window.__mobileFlow && window.__preselectedCourt) {
+      assignCourtToGroup(window.__preselectedCourt);
+    } else {
+      setCurrentScreen('court', 'selectCourtButton');
+    }
+  };
+
+  const handleGroupJoinWaitlist = async () => {
+    console.log('[REG DEBUG] Join Waitlist clicked');
+    await sendGroupToWaitlist(currentGroup);
+    setShowSuccess(true);
+    // Mobile: notify parent on success
+    if (window.__mobileSuccessHandler) {
+      window.__mobileSuccessHandler(null); // waitlist doesn't have court
+    }
+    // Mobile: trigger success signal
+    if (window.UI?.__mobileSendSuccess__) {
+      window.UI.__mobileSendSuccess__();
+    }
+
+    // Don't auto-reset in mobile flow - let the overlay handle timing
+    if (!window.__mobileFlow) {
+      clearSuccessResetTimer();
+      successResetTimerRef.current = setTimeout(() => {
+        successResetTimerRef.current = null;
+        resetForm();
+      }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+    }
+  };
+
+  const handleGroupGoBack = () => {
+    if (window.__mobileFlow) {
+      // Check if we're in Clear Court workflow - handle navigation properly
+      if (currentScreen === 'clearCourt') {
+        // In Clear Court, Back should go to previous step or exit
+        if (clearCourtStep > 1) {
+          setClearCourtStep(clearCourtStep - 1);
+        } else {
+          // Exit Clear Court workflow
+          window.parent.postMessage({ type: 'resetRegistration' }, '*');
+        }
+      } else {
+        // For other screens, close the registration overlay
+        window.parent.postMessage({ type: 'resetRegistration' }, '*');
+      }
+    } else {
+      // Desktop behavior - go back to search
+      setCurrentGroup([]);
+      setMemberNumber('');
+      setCurrentScreen('search', 'groupGoBack');
+    }
+  };
+
   // Success screen
   if (showSuccess) {
     const isCourtAssignment = justAssignedCourt !== null;
@@ -2595,940 +3288,56 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Admin screen
   if (currentScreen === 'admin') {
     const data = getCourtData();
-    const now = new Date();
-    // Domain format: court.session.group.players, court.session.scheduledEndAt
-    const occupiedCourts = data.courts.filter(
-      (court) => court !== null && court.session?.group?.players?.length > 0 && !court.wasCleared
-    );
-    const overtimeCourts = data.courts.filter(
-      (court) =>
-        court &&
-        court.session?.group?.players?.length > 0 &&
-        !court.wasCleared &&
-        new Date(court.session?.scheduledEndAt) <= currentTime
-    );
-
-    // Count only currently blocked courts
-    const blockedCourts = data.courts.filter((court) => {
-      if (!court || !court.blocked || !court.blocked.startTime || !court.blocked.endTime)
-        return false;
-      const blockStartTime = new Date(court.blocked.startTime);
-      const blockEndTime = new Date(court.blocked.endTime);
-      return now >= blockStartTime && now < blockEndTime;
-    });
-
-    // Handle price update
-    const handlePriceUpdate = async () => {
-      const price = parseFloat(ballPriceInput);
-
-      // Validation
-      if (isNaN(price)) {
-        setPriceError('Please enter a valid number');
-        return;
-      }
-
-      if (price < 0.5 || price > 50.0) {
-        setPriceError('Price must be between $0.50 and $50.00');
-        return;
-      }
-
-      // Save to localStorage
-      try {
-        const parsed = (await dataStore.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY)) || {};
-        parsed.tennisBallPrice = price;
-        await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, parsed, { immediate: true });
-
-        // Show success message
-        setShowPriceSuccess(true);
-        setPriceError('');
-        setTimeout(() => setShowPriceSuccess(false), 3000);
-      } catch (error) {
-        setPriceError('Failed to save price');
-      }
-    };
-
-    console.log('Admin data loaded:', {
-      totalCourts: data.courts.length,
-      occupied: occupiedCourts.length,
-      blocked: blockedCourts.length,
-      blockedDetails: blockedCourts,
-    });
-
     return (
-      <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800 p-4 sm:p-8 flex items-center justify-center">
-        <ToastHost />
-        <AlertDisplay show={showAlert} message={alertMessage} />
-        <div className="bg-gray-900 rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-6xl h-full max-h-[95vh] overflow-y-auto scrollbar-hide">
-          <div className="mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2">Admin Panel</h1>
-            <p className="text-gray-400 text-sm sm:text-base">System management and controls</p>
-          </div>
-
-          {/* Court Management */}
-          <div className="mb-6 sm:mb-8 bg-gray-800 rounded-xl p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">
-                Court Management
-                <span className="text-sm sm:text-lg font-normal text-gray-400 block sm:inline sm:ml-3">
-                  ({occupiedCourts.length} occupied, {overtimeCourts.length} overtime)
-                </span>
-              </h2>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => {
-                    setShowBlockModal(true);
-                    setSelectedCourtsToBlock([]);
-                    setBlockMessage('');
-                    setBlockStartTime('');
-                    setBlockEndTime('');
-                    setBlockingInProgress(false);
-                  }}
-                  className="bg-yellow-700 text-white py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold hover:bg-yellow-800 transition-colors flex-1 sm:flex-initial"
-                >
-                  Block Courts
-                </button>
-                <button
-                  onClick={async () => {
-                    const confirmClear = window.confirm(
-                      'Clear all courts? This will make all courts immediately available.'
-                    );
-                    if (confirmClear) {
-                      const result = await backend.admin.clearAllCourts({
-                        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-                        reason: 'admin_clear_all',
-                      });
-                      if (result.ok) {
-                        showAlertMessage(
-                          `All courts cleared successfully (${result.sessionsEnded || 0} sessions ended)`
-                        );
-                      } else {
-                        showAlertMessage(result.message || 'Failed to clear courts');
-                      }
-                    }
-                  }}
-                  className="bg-orange-600 text-white py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-700 transition-colors flex-1 sm:flex-initial"
-                >
-                  Clear All Courts
-                </button>
-              </div>
-            </div>
-            {/* Block Courts Modal */}
-            {showBlockModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div className="bg-gray-800 rounded-xl p-4 sm:p-6 max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto modal-mobile-full">
-                  <h3 className="text-lg sm:text-xl font-bold text-white mb-4">Block Courts</h3>
-
-                  {/* Court Selection */}
-                  <div className="mb-4">
-                    <label className="block text-white mb-2 text-sm sm:text-base">
-                      Select Courts to Block
-                    </label>
-                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-2">
-                      {[...Array(CONSTANTS.COURT_COUNT)].map((_, index) => {
-                        const courtNum = index + 1;
-                        const isSelected = selectedCourtsToBlock.includes(courtNum);
-
-                        return (
-                          <button
-                            key={courtNum}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedCourtsToBlock(
-                                  selectedCourtsToBlock.filter((c) => c !== courtNum)
-                                );
-                              } else {
-                                setSelectedCourtsToBlock([...selectedCourtsToBlock, courtNum]);
-                              }
-                              setBlockingInProgress(false); // Reset when courts change
-                            }}
-                            className={`py-2 px-2 sm:px-3 rounded text-xs sm:text-sm font-medium transition-colors ${
-                              isSelected
-                                ? 'bg-yellow-600 text-white'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                            }`}
-                          >
-                            Court {courtNum}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (selectedCourtsToBlock.length === CONSTANTS.COURT_COUNT) {
-                          setSelectedCourtsToBlock([]);
-                        } else {
-                          setSelectedCourtsToBlock(
-                            [...Array(CONSTANTS.COURT_COUNT)].map((_, i) => i + 1)
-                          );
-                        }
-                        setBlockingInProgress(false); // Reset when selection changes
-                      }}
-                      className="text-yellow-400 text-xs sm:text-sm hover:text-yellow-300"
-                    >
-                      {selectedCourtsToBlock.length === CONSTANTS.COURT_COUNT
-                        ? 'Deselect All'
-                        : 'Select All'}
-                    </button>
-                  </div>
-
-                  {/* Message Selection */}
-                  <div className="mb-4">
-                    <label className="block text-white mb-2 text-sm sm:text-base">
-                      Block Reason
-                    </label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      <button
-                        onClick={() => {
-                          setBlockMessage('WET COURT');
-                          setBlockingInProgress(false);
-                        }}
-                        className={`px-3 sm:px-4 py-2 rounded text-xs sm:text-sm ${
-                          blockMessage === 'WET COURT'
-                            ? 'bg-yellow-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        WET COURT
-                      </button>
-                      <button
-                        onClick={() => {
-                          setBlockMessage('COURT WORK');
-                          setBlockingInProgress(false);
-                        }}
-                        className={`px-3 sm:px-4 py-2 rounded text-xs sm:text-sm ${
-                          blockMessage === 'COURT WORK'
-                            ? 'bg-yellow-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        COURT WORK
-                      </button>
-                      <button
-                        onClick={() => {
-                          setBlockMessage('LESSON');
-                          setBlockingInProgress(false);
-                        }}
-                        className={`px-3 sm:px-4 py-2 rounded text-xs sm:text-sm ${
-                          blockMessage === 'LESSON'
-                            ? 'bg-yellow-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        LESSON
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={blockMessage}
-                      onChange={(e) => {
-                        setBlockMessage(e.target.value);
-                        setBlockingInProgress(false);
-                      }}
-                      placeholder="Or enter custom message..."
-                      className="w-full p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-yellow-500 focus:outline-none text-sm sm:text-base"
-                    />
-                  </div>
-
-                  {/* Time Selection */}
-                  <div className="mb-4">
-                    <label className="block text-white mb-2 text-sm sm:text-base">Start Time</label>
-                    <div className="flex gap-2 mb-2">
-                      <button
-                        onClick={() => {
-                          setBlockStartTime('now');
-                          setBlockingInProgress(false);
-                        }}
-                        className={`px-3 sm:px-4 py-2 rounded text-xs sm:text-sm ${
-                          blockStartTime === 'now'
-                            ? 'bg-yellow-600 text-white'
-                            : 'bg-gray-600 text-white hover:bg-gray-700'
-                        }`}
-                      >
-                        Now
-                      </button>
-                      <input
-                        type="time"
-                        value={blockStartTime === 'now' ? '' : blockStartTime}
-                        onChange={(e) => {
-                          setBlockStartTime(e.target.value);
-                          setBlockingInProgress(false);
-                        }}
-                        className="p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-yellow-500 focus:outline-none text-sm sm:text-base"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-4 sm:mb-6">
-                    <label className="block text-white mb-2 text-sm sm:text-base">End Time</label>
-                    <div className="flex gap-2 mb-2 flex-wrap">
-                      <button
-                        onClick={() => {
-                          const end = new Date();
-                          if (blockStartTime && blockStartTime !== 'now') {
-                            const [hours, minutes] = blockStartTime.split(':');
-                            end.setHours(parseInt(hours), parseInt(minutes));
-                          }
-                          end.setHours(end.getHours() + 1);
-                          const endHours = end.getHours().toString().padStart(2, '0');
-                          const endMinutes = end.getMinutes().toString().padStart(2, '0');
-                          setBlockEndTime(`${endHours}:${endMinutes}`);
-                          setBlockingInProgress(false);
-                        }}
-                        className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-gray-700 text-xs sm:text-sm"
-                      >
-                        +1 hour
-                      </button>
-                      <button
-                        onClick={() => {
-                          const end = new Date();
-                          if (blockStartTime && blockStartTime !== 'now') {
-                            const [hours, minutes] = blockStartTime.split(':');
-                            end.setHours(parseInt(hours), parseInt(minutes));
-                          }
-                          end.setHours(end.getHours() + 2);
-                          const endHours = end.getHours().toString().padStart(2, '0');
-                          const endMinutes = end.getMinutes().toString().padStart(2, '0');
-                          setBlockEndTime(`${endHours}:${endMinutes}`);
-                        }}
-                        className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-gray-700 text-xs sm:text-sm"
-                      >
-                        +2 hours
-                      </button>
-                      <button
-                        onClick={() => {
-                          const end = new Date();
-                          if (blockStartTime && blockStartTime !== 'now') {
-                            const [hours, minutes] = blockStartTime.split(':');
-                            end.setHours(parseInt(hours), parseInt(minutes));
-                          }
-                          end.setHours(end.getHours() + 4);
-                          const endHours = end.getHours().toString().padStart(2, '0');
-                          const endMinutes = end.getMinutes().toString().padStart(2, '0');
-                          setBlockEndTime(`${endHours}:${endMinutes}`);
-                        }}
-                        className="px-3 py-1 rounded bg-gray-600 text-white hover:bg-gray-700 text-xs sm:text-sm"
-                      >
-                        +4 hours
-                      </button>
-                    </div>
-                    <input
-                      type="time"
-                      value={blockEndTime}
-                      onChange={(e) => {
-                        setBlockEndTime(e.target.value);
-                        setBlockingInProgress(false);
-                      }}
-                      required
-                      className="p-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-yellow-500 focus:outline-none w-full text-sm sm:text-base"
-                    />
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setShowBlockModal(false)}
-                      className="px-4 sm:px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm sm:text-base"
-                    >
-                      Close
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (selectedCourtsToBlock.length === 0) {
-                          showAlertMessage('Please select at least one court to block');
-                          return;
-                        }
-                        if (!blockMessage) {
-                          showAlertMessage('Please enter a block reason');
-                          return;
-                        }
-                        if (!blockEndTime) {
-                          showAlertMessage('Please select an end time');
-                          return;
-                        }
-
-                        // Set blocking in progress
-                        setBlockingInProgress(true);
-
-                        const boardData = getCourtData();
-                        const currentTime = new Date(); // Use different name to avoid scope conflict
-
-                        // Calculate start time
-                        let startTime;
-                        if (blockStartTime === 'now') {
-                          startTime = new Date();
-                        } else {
-                          // Create a date with today's date and the selected time
-                          startTime = new Date();
-                          const [hours, minutes] = blockStartTime.split(':');
-                          startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-                          // Don't automatically adjust to tomorrow - let admin set past times if needed
-                        }
-
-                        // Calculate end time based on the selected time
-                        const [endHours, endMinutes] = blockEndTime.split(':');
-                        let endTime = new Date(startTime); // Start from the same date as start time
-                        endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
-
-                        // If end time is before start time, assume next day
-                        if (endTime <= startTime) {
-                          endTime.setDate(endTime.getDate() + 1);
-                        }
-
-                        console.log('Block times calculated:', {
-                          blockStartTimeInput: blockStartTime,
-                          currentTime: currentTime.toLocaleString(),
-                          startTime: startTime.toLocaleString(),
-                          endTime: endTime.toLocaleString(),
-                        });
-
-                        // Map block message to block type
-                        const blockTypeMap = {
-                          'WET COURT': 'wet',
-                          'COURT WORK': 'maintenance',
-                          LESSON: 'lesson',
-                        };
-                        const blockType = blockTypeMap[blockMessage.toUpperCase()] || 'other';
-
-                        // Block selected courts via backend API
-                        let successCount = 0;
-                        let failedCourts = [];
-
-                        for (const courtNum of selectedCourtsToBlock) {
-                          const court = boardData.courts[courtNum - 1];
-                          if (!court || !court.id) {
-                            failedCourts.push(courtNum);
-                            continue;
-                          }
-
-                          const result = await backend.admin.createBlock({
-                            courtId: court.id,
-                            blockType: blockType,
-                            title: blockMessage,
-                            startsAt: startTime.toISOString(),
-                            endsAt: endTime.toISOString(),
-                            deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-                          });
-
-                          if (result.ok) {
-                            successCount++;
-                          } else {
-                            failedCourts.push(courtNum);
-                            console.error(`Failed to block court ${courtNum}:`, result.message);
-                          }
-                        }
-
-                        if (failedCourts.length === 0) {
-                          showAlertMessage(`${successCount} court(s) blocked successfully`);
-                        } else if (successCount > 0) {
-                          showAlertMessage(
-                            `${successCount} court(s) blocked. Failed: courts ${failedCourts.join(', ')}`
-                          );
-                        } else {
-                          showAlertMessage(`Failed to block courts: ${failedCourts.join(', ')}`);
-                        }
-                      }}
-                      disabled={blockingInProgress}
-                      className={`px-4 sm:px-6 py-2 rounded transition-colors text-sm sm:text-base ${
-                        blockingInProgress
-                          ? 'bg-yellow-400 text-white cursor-not-allowed'
-                          : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                      }`}
-                    >
-                      {blockingInProgress ? 'Applied' : 'Apply Blocks'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Move Court UI */}
-            {courtToMove && (
-              <div className="mb-4 p-3 sm:p-4 bg-blue-900/30 border-2 border-blue-600 rounded-lg">
-                <p className="text-white font-medium mb-3 text-sm sm:text-base">
-                  Moving players from Court {courtToMove} to:
-                </p>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-3">
-                  {[...Array(CONSTANTS.COURT_COUNT)].map((_, index) => {
-                    const targetCourtNum = index + 1;
-                    const isOccupied = data.courts[index] !== null;
-                    const isCurrent = targetCourtNum === courtToMove;
-
-                    return (
-                      <button
-                        key={targetCourtNum}
-                        disabled={isOccupied || isCurrent}
-                        onClick={async () => {
-                          try {
-                            // Get court IDs from court numbers
-                            const fromCourt = data.courts[courtToMove - 1];
-                            const toCourt = data.courts[targetCourtNum - 1];
-
-                            if (!fromCourt?.id) {
-                              showAlertMessage('Source court not found');
-                              setCourtToMove(null);
-                              return;
-                            }
-
-                            // For empty courts, get ID from API board
-                            let toCourtId = toCourt?.id;
-                            if (!toCourtId) {
-                              const board = await backend.queries.getBoard();
-                              const targetCourt = board?.courts?.find(
-                                (c) => c.number === targetCourtNum
-                              );
-                              toCourtId = targetCourt?.id;
-                            }
-
-                            if (!toCourtId) {
-                              showAlertMessage('Destination court not found');
-                              setCourtToMove(null);
-                              return;
-                            }
-
-                            const result = await backend.commands.moveCourt({
-                              fromCourtId: fromCourt.id,
-                              toCourtId: toCourtId,
-                            });
-
-                            if (result.ok) {
-                              showAlertMessage(
-                                `Court ${courtToMove} moved to Court ${targetCourtNum}`
-                              );
-                            } else {
-                              showAlertMessage(result.message || 'Failed to move court');
-                            }
-                          } catch (err) {
-                            console.error('[moveCourt] Error:', err);
-                            showAlertMessage(err.message || 'Failed to move court');
-                          }
-
-                          setCourtToMove(null);
-                        }}
-                        className={`py-2 px-2 sm:px-3 rounded text-xs sm:text-sm font-medium transition-colors ${
-                          isCurrent
-                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                            : isOccupied
-                              ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                              : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                      >
-                        Court {targetCourtNum}
-                      </button>
-                    );
-                  })}
-                </div>
-                <button
-                  onClick={() => setCourtToMove(null)}
-                  className="bg-gray-600 text-white px-4 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[...Array(12)].map((_, index) => {
-                const court = data.courts[index];
-                const courtNum = index + 1;
-                const now = new Date();
-
-                // Check block status using unified system only
-                let blockStatus = null;
-                const blockStatusResult = getCourtBlockStatus(courtNum);
-
-                if (blockStatusResult && blockStatusResult.isBlocked) {
-                  blockStatus = blockStatusResult.isCurrent ? 'current' : 'future';
-                }
-
-                const isBlocked = blockStatus === 'current';
-                const isFutureBlock = blockStatus === 'future';
-                const isCleared = court && court.wasCleared;
-                // Domain format: court.session.group.players, court.session.scheduledEndAt
-                const sessionPlayers = court?.session?.group?.players;
-                const sessionEndTime = court?.session?.scheduledEndAt;
-                const isOccupied = court && sessionPlayers?.length > 0 && !isCleared;
-                const isOvertime =
-                  court &&
-                  sessionEndTime &&
-                  !isBlocked &&
-                  !isCleared &&
-                  new Date(sessionEndTime) <= currentTime;
-                const timeRemaining =
-                  court && sessionEndTime && !isBlocked && !isCleared
-                    ? Math.max(
-                        0,
-                        Math.floor(
-                          (new Date(sessionEndTime).getTime() - currentTime.getTime()) / 60000
-                        )
-                      )
-                    : 0;
-
-                return (
-                  <div
-                    key={courtNum}
-                    className={`p-3 sm:p-4 rounded-lg border-2 ${
-                      isBlocked
-                        ? 'bg-red-900 border-red-700'
-                        : isFutureBlock
-                          ? 'bg-yellow-900 border-yellow-700'
-                          : !court
-                            ? 'bg-gray-700 border-gray-600'
-                            : 'bg-gray-700 border-gray-600'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 sm:gap-4 mb-2">
-                          <h3 className="text-base sm:text-lg font-bold text-white">
-                            Court {courtNum}
-                          </h3>
-                          {isOccupied && !isBlocked && (
-                            <span className={`text-xs sm:text-sm font-medium text-gray-400`}>
-                              {isOvertime ? 'Overtime' : `${timeRemaining} min remaining`}
-                            </span>
-                          )}
-                        </div>
-                        {isBlocked ? (
-                          <div>
-                            <p className="text-red-400 font-medium text-sm sm:text-base">
-                              🚫 {blockStatusResult ? blockStatusResult.reason : 'BLOCKED'}
-                            </p>
-
-                            <p className="text-gray-400 text-xs sm:text-sm">
-                              Until{' '}
-                              {new Date(blockStatusResult.endTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        ) : isFutureBlock ? (
-                          <div>
-                            <p className="text-yellow-400 font-medium text-sm sm:text-base">
-                              Future: {blockStatusResult.reason}
-                            </p>
-                            <p className="text-gray-400 text-xs sm:text-sm">
-                              {new Date(blockStatusResult.startTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}{' '}
-                              -{' '}
-                              {new Date(blockStatusResult.endTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        ) : isOccupied ? (
-                          <div>
-                            <div className="flex flex-col">
-                              {sessionPlayers.map((player, idx) => (
-                                <span key={idx} className="text-gray-300 text-xs sm:text-sm">
-                                  {player.name?.split(' ').pop() ||
-                                    player.displayName?.split(' ').pop() ||
-                                    'Unknown'}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : isCleared ? (
-                          <p className="text-gray-500 text-xs sm:text-sm">
-                            Available (History Preserved)
-                          </p>
-                        ) : (
-                          <p className="text-gray-500 text-xs sm:text-sm">Available</p>
-                        )}
-                      </div>
-                      {(isOccupied || isBlocked || isFutureBlock) && (
-                        <div className="flex flex-col gap-1 ml-2">
-                          {!isBlocked && !isFutureBlock && isOccupied && (
-                            <button
-                              onClick={() => setCourtToMove(courtNum)}
-                              className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm hover:bg-blue-700 transition-colors"
-                            >
-                              Move
-                            </button>
-                          )}
-                          <button
-                            onClick={async () => {
-                              // Check if court has an active block from API data
-                              if (court && court.block && court.block.id) {
-                                // Cancel the block via backend
-                                const result = await backend.admin.cancelBlock({
-                                  blockId: court.block.id,
-                                  deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-                                });
-                                if (result.ok) {
-                                  showAlertMessage(`Court ${courtNum} unblocked`);
-                                } else {
-                                  showAlertMessage(result.message || 'Failed to unblock court');
-                                }
-                              } else if (isOccupied) {
-                                // Clear the session
-                                await clearCourt(courtNum);
-                                showAlertMessage(`Court ${courtNum} cleared`);
-                              } else {
-                                showAlertMessage(`Court ${courtNum} has nothing to clear`);
-                              }
-                            }}
-                            className="bg-orange-600 text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm hover:bg-orange-700 transition-colors"
-                          >
-                            {court && court.block ? 'Unblock' : 'Clear'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Waitlist Management */}
-          <div className="mb-6 sm:mb-8 bg-gray-800 rounded-xl p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">
-                Waitlist Management
-                <span className="text-sm sm:text-lg font-normal text-gray-400 block sm:inline sm:ml-3">
-                  ({data.waitlist.length} groups waiting)
-                </span>
-              </h2>
-              {data.waitlist.length > 0 && (
-                <button
-                  onClick={async () => {
-                    const confirmClear = window.confirm(
-                      'Clear the waitlist? This will remove all waiting groups.'
-                    );
-                    if (confirmClear) {
-                      // Remove all waitlist entries via backend
-                      let successCount = 0;
-                      let failCount = 0;
-
-                      for (const group of data.waitlist) {
-                        if (!group.id) {
-                          failCount++;
-                          continue;
-                        }
-
-                        const result = await backend.admin.removeFromWaitlist({
-                          waitlistEntryId: group.id,
-                          reason: 'admin_clear_all',
-                          deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-                        });
-
-                        if (result.ok) {
-                          successCount++;
-                        } else {
-                          failCount++;
-                        }
-                      }
-
-                      if (failCount === 0) {
-                        showAlertMessage(`Waitlist cleared (${successCount} groups removed)`);
-                      } else if (successCount > 0) {
-                        showAlertMessage(`Removed ${successCount} groups, ${failCount} failed`);
-                      } else {
-                        showAlertMessage('Failed to clear waitlist');
-                      }
-                    }
-                  }}
-                  className="bg-orange-600 text-white py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-700 transition-colors w-full sm:w-auto"
-                >
-                  Clear Waitlist
-                </button>
-              )}
-            </div>
-            {data.waitlist.length === 0 ? (
-              <p className="text-gray-500 text-center py-8 text-sm sm:text-base">
-                No groups in waitlist
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {waitlistMoveFrom !== null && (
-                  <div className="mb-4 p-3 sm:p-4 bg-blue-900/30 border-2 border-blue-600 rounded-lg">
-                    <p className="text-white font-medium mb-3 text-sm sm:text-base">
-                      Moving group from position {waitlistMoveFrom + 1} to:
-                    </p>
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      {data.waitlist.map((_, index) => {
-                        const position = index + 1;
-                        const isCurrentPosition = index === waitlistMoveFrom;
-
-                        return (
-                          <button
-                            key={position}
-                            disabled={isCurrentPosition}
-                            onClick={async () => {
-                              // Reorder the waitlist via backend API
-                              const movedGroup = data.waitlist[waitlistMoveFrom];
-                              const entryId = movedGroup?.id || movedGroup?.group?.id;
-
-                              if (entryId && window.Tennis?.Commands?.reorderWaitlist) {
-                                try {
-                                  await window.Tennis.Commands.reorderWaitlist({
-                                    entryId,
-                                    newPosition: index,
-                                  });
-                                  showAlertMessage(`Group moved to position ${position}`);
-                                } catch (err) {
-                                  showAlertMessage(err.message || 'Failed to move group');
-                                }
-                              } else {
-                                // Fallback: localStorage persistence removed
-                                console.warn(
-                                  '[Waitlist Reorder] API not available, action skipped'
-                                );
-                                showAlertMessage(
-                                  'Waitlist reorder requires API — feature temporarily unavailable'
-                                );
-                              }
-
-                              setWaitlistMoveFrom(null);
-                            }}
-                            className={`py-2 px-3 rounded text-xs sm:text-sm font-medium transition-colors ${
-                              isCurrentPosition
-                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                            }`}
-                          >
-                            Position {position}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <button
-                      onClick={() => setWaitlistMoveFrom(null)}
-                      className="bg-gray-600 text-white px-4 py-1 rounded text-sm hover:bg-gray-700 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                {data.waitlist.map((group, index) => (
-                  <div
-                    key={index}
-                    className="bg-gray-700 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
-                  >
-                    <div className="flex-1">
-                      <p className="text-white font-medium text-sm sm:text-base">
-                        Position {index + 1}:{' '}
-                        {(group.group?.players || [])
-                          .map((p) => p.displayName || 'Unknown')
-                          .join(', ')}
-                      </p>
-                      <p className="text-gray-400 text-xs sm:text-sm">
-                        {(group.group?.players || []).length} player
-                        {(group.group?.players || []).length > 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                      <button
-                        onClick={() => setWaitlistMoveFrom(index)}
-                        className="bg-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded hover:bg-blue-700 transition-colors text-xs sm:text-sm flex-1 sm:flex-initial"
-                      >
-                        Move
-                      </button>
-                      <button
-                        onClick={async () => {
-                          // Use waitlist entry ID from API data
-                          if (!group.id) {
-                            showAlertMessage('Cannot remove: group ID not found');
-                            return;
-                          }
-
-                          const result = await backend.admin.removeFromWaitlist({
-                            waitlistEntryId: group.id,
-                            reason: 'admin_removed',
-                            deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-                          });
-
-                          if (result.ok) {
-                            showAlertMessage('Group removed from waitlist');
-                          } else {
-                            showAlertMessage(result.message || 'Failed to remove group');
-                          }
-                        }}
-                        className="bg-orange-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded hover:bg-orange-700 transition-colors text-xs sm:text-sm flex-1 sm:flex-initial"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* System Settings */}
-          <div className="mb-6 sm:mb-8 bg-gray-800 rounded-xl p-4 sm:p-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">System Settings</h2>
-
-            <div className="bg-gray-700 rounded-lg p-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-base sm:text-lg font-medium text-white">Tennis Ball Price</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">
-                    Set the price for tennis ball purchases
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:flex-initial">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.50"
-                      max="50.00"
-                      value={ballPriceInput}
-                      onChange={(e) => {
-                        setBallPriceInput(e.target.value);
-                        setPriceError('');
-                        setShowPriceSuccess(false);
-                      }}
-                      className="pl-8 pr-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-500 focus:outline-none w-full sm:w-24"
-                    />
-                  </div>
-
-                  <button
-                    onClick={handlePriceUpdate}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors text-sm sm:text-base"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-
-              {showPriceSuccess && (
-                <div className="mt-2 text-green-400 text-xs sm:text-sm flex items-center gap-2">
-                  <Check size={14} className="sm:w-4 sm:h-4" />
-                  Price updated successfully
-                </div>
-              )}
-
-              {priceError && (
-                <div className="mt-2 text-red-400 text-xs sm:text-sm">{priceError}</div>
-              )}
-            </div>
-          </div>
-
-          {/* Exit Admin */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => {
-                setCurrentScreen('welcome', 'exitAdminPanel');
-                setSearchInput('');
-              }}
-              className="bg-gray-600 text-white py-2 sm:py-3 px-6 sm:px-8 rounded-xl text-base sm:text-lg font-semibold hover:bg-gray-700 transition-colors"
-            >
-              Exit Admin Panel
-            </button>
-          </div>
-        </div>
-      </div>
+      <AdminScreen
+        // Data
+        data={data}
+        currentTime={currentTime}
+        // Alert state (read only)
+        showAlert={showAlert}
+        alertMessage={alertMessage}
+        // Block modal state
+        showBlockModal={showBlockModal}
+        setShowBlockModal={setShowBlockModal}
+        selectedCourtsToBlock={selectedCourtsToBlock}
+        setSelectedCourtsToBlock={setSelectedCourtsToBlock}
+        blockMessage={blockMessage}
+        setBlockMessage={setBlockMessage}
+        blockStartTime={blockStartTime}
+        setBlockStartTime={setBlockStartTime}
+        blockEndTime={blockEndTime}
+        setBlockEndTime={setBlockEndTime}
+        blockingInProgress={blockingInProgress}
+        setBlockingInProgress={setBlockingInProgress}
+        // Move state
+        courtToMove={courtToMove}
+        setCourtToMove={setCourtToMove}
+        waitlistMoveFrom={waitlistMoveFrom}
+        setWaitlistMoveFrom={setWaitlistMoveFrom}
+        // Price state
+        ballPriceInput={ballPriceInput}
+        setBallPriceInput={setBallPriceInput}
+        priceError={priceError}
+        setPriceError={setPriceError}
+        showPriceSuccess={showPriceSuccess}
+        setShowPriceSuccess={setShowPriceSuccess}
+        // Callbacks
+        onClearAllCourts={handleClearAllCourts}
+        onClearCourt={handleAdminClearCourt}
+        onCancelBlock={handleCancelBlock}
+        onBlockCreate={handleBlockCreate}
+        onMoveCourt={handleMoveCourt}
+        onClearWaitlist={handleClearWaitlist}
+        onRemoveFromWaitlist={handleRemoveFromWaitlist}
+        onReorderWaitlist={handleReorderWaitlist}
+        onPriceUpdate={handlePriceUpdate}
+        onExit={handleExitAdmin}
+        showAlertMessage={showAlertMessage}
+        // Utilities
+        getCourtBlockStatus={getCourtBlockStatus}
+        CONSTANTS={CONSTANTS}
+        TENNIS_CONFIG={TENNIS_CONFIG}
+      />
     );
   }
 
@@ -3578,802 +3387,58 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     return (
-      <div
-        className={`w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex ${window.__mobileFlow ? 'items-start pt-[15vh]' : 'items-center justify-center'}`}
-      >
-        <ToastHost />
-        <AlertDisplay show={showAlert} message={alertMessage} />
-        {showTimeoutWarning && (
-          <div className="fixed top-4 sm:top-8 left-1/2 transform -translate-x-1/2 bg-orange-500 text-white p-3 sm:p-4 rounded-xl shadow-lg z-50 text-base sm:text-lg animate-pulse">
-            Session will expire in 30 seconds due to inactivity
-          </div>
-        )}
-        <div
-          className={`bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl h-full ${window.__mobileFlow ? 'max-h-[70vh]' : 'max-h-[95vh]'} flex flex-col relative overflow-hidden`}
-        >
-          {/* Mobile-specific UI when no player added yet */}
-          {window.__mobileFlow && currentGroup.length === 0 ? (
-            <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-green-50 rounded-xl text-center">
-              <p className="text-lg sm:text-2xl text-green-800 font-semibold">
-                Court {window.__preselectedCourt} Selected
-              </p>
-            </div>
-          ) : (
-            /* Normal UI for desktop or when player exists */
-            <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-blue-50 rounded-xl text-center">
-              <p className="text-lg sm:text-2xl text-blue-800">
-                Welcome
-                {currentGroup[0]?.name ? (
-                  <>
-                    , <strong>{currentGroup[0]?.name}</strong>
-                  </>
-                ) : (
-                  ''
-                )}
-                !
-              </p>
-              <p className="text-base sm:text-lg text-gray-600 mt-1 sm:mt-2">
-                {currentGroup.length === 0
-                  ? 'Search for players to add to your group'
-                  : currentGroup.length === 1
-                    ? isMobileView
-                      ? ''
-                      : 'Add more players to your group or select a court'
-                    : `${currentGroup.length} players in your group`}
-              </p>
-            </div>
-          )}
-          <div
-            className="flex-1 overflow-y-auto pb-24 sm:pb-32"
-            style={{ maxHeight: 'calc(100vh - 280px)' }}
-          >
-            {/* Only show Current Group section if there are players or not in mobile flow */}
-            {(currentGroup.length > 0 || !window.__mobileFlow) && (
-              <>
-                {!window.__mobileFlow && (
-                  <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
-                )}
-                <div className={`space-y-2 ${!window.__mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
-                  {currentGroup.map((player, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between bg-gray-50 p-2.5 sm:p-3 rounded-xl"
-                    >
-                      <div>
-                        <span className="font-medium text-base sm:text-lg">{player.name}</span>
-                        {player.isGuest && (
-                          <span className="text-xs sm:text-sm text-blue-600 ml-2 sm:ml-3 font-medium">
-                            (Guest{player.sponsor ? ` of ${player.sponsor}` : ''})
-                          </span>
-                        )}
-                        {!player.isGuest && player.ranking && (
-                          <span className="text-xs sm:text-sm text-blue-600 ml-2 sm:ml-3">
-                            Rank #{player.ranking}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => {
-                          setCurrentGroup(currentGroup.filter((_, i) => i !== idx));
-                        }}
-                        className="text-red-500 hover:bg-red-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-sm sm:text-base"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Mobile flow: Show search input when no players, otherwise show Add Another Player button */}
-            {window.__mobileFlow && currentGroup.length === 0 ? (
-              <div className="mb-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchInput}
-                    onChange={(e) => {
-                      markUserTyping();
-                      const value = e.target.value || '';
-                      setSearchInput(value);
-
-                      // Check for admin code (immediate, no debounce)
-                      if (value === CONSTANTS.ADMIN_CODE) {
-                        setCurrentScreen('admin', 'adminCodeEntered');
-                        setSearchInput('');
-                        return;
-                      }
-
-                      setShowSuggestions(value.length > 0);
-                    }}
-                    onFocus={() => {
-                      markUserTyping();
-                      setShowSuggestions(searchInput.length > 0);
-                    }}
-                    placeholder={
-                      isMobileView ? 'Enter Name or Number' : 'Enter your name or Member #'
-                    }
-                    className={`w-full ${isMobileView ? 'p-3 text-base input--compact' : 'p-4 sm:p-5 text-xl sm:text-2xl'} border-2 rounded-xl focus:border-green-500 focus:outline-none`}
-                    id="mobile-group-search-input"
-                    autoFocus
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="words"
-                    spellCheck="false"
-                  />
-                </div>
-
-                {/* Search suggestions dropdown */}
-                {showSuggestions && (
-                  <div
-                    className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-hidden"
-                    style={{ maxHeight: '400px', overflowY: 'auto' }}
-                  >
-                    {getAutocompleteSuggestions(effectiveSearchInput).length > 0 ? (
-                      getAutocompleteSuggestions(effectiveSearchInput).map((suggestion, idx) => (
-                        <button
-                          key={idx}
-                          onClick={async () => {
-                            await handleSuggestionClick(suggestion);
-                            // For mobile flow, clear search after adding first player
-                            if (window.__mobileFlow) {
-                              setSearchInput('');
-                              setShowSuggestions(false);
-                            }
-                          }}
-                          className="w-full p-4 text-left hover:bg-blue-50 flex items-center border-b border-gray-100"
-                        >
-                          <div className="flex-1">
-                            <div className="font-medium text-lg">
-                              {suggestion.member.name}
-                              {suggestion.member.isGuest && (
-                                <span className="text-sm text-blue-600 ml-2">(Guest)</span>
-                              )}
-                            </div>
-                            {suggestion.type === 'member' && (
-                              <div className="text-sm text-gray-600">
-                                Member #{suggestion.member.id}
-                              </div>
-                            )}
-                          </div>
-                          {suggestion.type === 'member' && suggestion.member.ranking && (
-                            <div className="text-sm text-blue-600 font-medium">
-                              Rank #{suggestion.member.ranking}
-                            </div>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-gray-500">
-                        {searchInput.length < 2 ? 'Keep typing...' : 'No members found'}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              currentGroup.length < CONSTANTS.MAX_PLAYERS && (
-                <div className="flex gap-2 sm:gap-3 mb-3">
-                  <button
-                    onClick={() => {
-                      if (showGuestForm) {
-                        // If guest form is showing, close it and reset
-                        setShowGuestForm(false);
-                        setGuestName('');
-                        setGuestSponsor('');
-                        setShowGuestNameError(false);
-                        setShowSponsorError(false);
-                        setShowAddPlayer(false);
-                      } else {
-                        // Normal toggle behavior
-                        setShowAddPlayer(!showAddPlayer);
-                      }
-                    }}
-                    className="flex-1 bg-green-500 text-white py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl hover:bg-green-600 transition-colors"
-                  >
-                    Add Another Player
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (showGuestForm) {
-                        // If guest form is already showing, close it
-                        setShowGuestForm(false);
-                        setGuestName('');
-                        setGuestSponsor('');
-                        setShowGuestNameError(false);
-                        setShowSponsorError(false);
-                        setShowAddPlayer(false);
-                      } else {
-                        // Open guest form
-                        setShowGuestForm(true);
-                        setShowAddPlayer(true);
-                        setShowAddPlayerSuggestions(false);
-                        setAddPlayerSearch('');
-                        // Set default sponsor if only one member in group
-                        if (currentGroup.length === 1 && !currentGroup[0].isGuest) {
-                          setGuestSponsor(currentGroup[0].memberNumber);
-                        }
-                      }
-                    }}
-                    className="bg-blue-50 text-blue-600 border border-blue-600 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl hover:bg-blue-100 transition-colors"
-                  >
-                    + Guest
-                  </button>
-                </div>
-              )
-            )}
-
-            {showAddPlayer && !showGuestForm && (
-              <div className="mb-4 relative">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={addPlayerSearch}
-                    onChange={(e) => {
-                      markUserTyping();
-                      setAddPlayerSearch(e.target.value || '');
-                      setShowAddPlayerSuggestions((e.target.value || '').length > 0);
-                    }}
-                    onFocus={() => {
-                      markUserTyping();
-                      setShowAddPlayerSuggestions(addPlayerSearch.length > 0);
-                    }}
-                    placeholder="Enter name or member number..."
-                    className="w-full p-2.5 sm:p-3 text-lg sm:text-xl border-2 rounded-xl focus:border-green-500 focus:outline-none"
-                    autoFocus
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="words"
-                    spellCheck="false"
-                  />
-                </div>
-
-                {showAddPlayerSuggestions && (
-                  <div
-                    className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg"
-                    style={{ maxHeight: '200px', overflowY: 'auto' }}
-                  >
-                    {getAutocompleteSuggestions(effectiveAddPlayerSearch).length > 0 ? (
-                      getAutocompleteSuggestions(effectiveAddPlayerSearch).map(
-                        (suggestion, idx) => (
-                          <button
-                            key={idx}
-                            onClick={async () => {
-                              // Validate suggestion
-                              if (!suggestion || !suggestion.member || !suggestion.member.id) {
-                                showAlertMessage('Invalid player selection. Please try again.');
-                                return;
-                              }
-
-                              // API member already has correct data
-                              const enrichedMember = {
-                                id: suggestion.member.id,
-                                name: suggestion.member.name,
-                                memberNumber: suggestion.memberNumber,
-                                accountId: suggestion.member.accountId,
-                                memberId: suggestion.member.id,
-                              };
-
-                              // Early duplicate guard
-                              if (!guardAddPlayerEarly(enrichedMember)) {
-                                setAddPlayerSearch('');
-                                setShowAddPlayer(false);
-                                setShowAddPlayerSuggestions(false);
-                                return;
-                              }
-
-                              // Check for duplicate in current group
-                              if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
-                                Tennis.UI.toast(`${enrichedMember.name} is already in this group`);
-                                setAddPlayerSearch('');
-                                setShowAddPlayer(false);
-                                setShowAddPlayerSuggestions(false);
-                                return;
-                              }
-
-                              // Check if player is already playing or on waitlist
-                              if (!guardAddPlayerEarly(enrichedMember)) {
-                                setAddPlayerSearch('');
-                                setShowAddPlayer(false);
-                                setShowAddPlayerSuggestions(false);
-                                return; // Toast message already shown by guardAddPlayerEarly
-                              }
-
-                              const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
-
-                              if (
-                                playerStatus.isPlaying &&
-                                playerStatus.location === 'waiting' &&
-                                playerStatus.position === 1
-                              ) {
-                                const data = getCourtData();
-                                const availableCourts = getAvailableCourts(false);
-
-                                if (availableCourts.length > 0) {
-                                  const firstWaitlistEntry = data.waitlist[0];
-                                  // Domain: entry.group.players
-                                  const players = firstWaitlistEntry.group?.players || [];
-                                  setCurrentGroup(
-                                    players.map((p) => ({
-                                      id: p.memberId,
-                                      name: p.displayName || 'Unknown',
-                                      memberNumber: findMemberNumber(p.memberId),
-                                    }))
-                                  );
-
-                                  setHasWaitlistPriority(true);
-
-                                  data.waitlist.shift();
-                                  saveCourtData(data);
-
-                                  setAddPlayerSearch('');
-                                  setShowAddPlayer(false);
-                                  setShowAddPlayerSuggestions(false);
-                                  return;
-                                }
-                              }
-
-                              if (!playerStatus.isPlaying) {
-                                // Validate we're not exceeding max players
-                                if (currentGroup.length >= CONSTANTS.MAX_PLAYERS) {
-                                  showAlertMessage(
-                                    `Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`
-                                  );
-                                  setAddPlayerSearch('');
-                                  setShowAddPlayer(false);
-                                  setShowAddPlayerSuggestions(false);
-                                  return;
-                                }
-
-                                const newPlayer = {
-                                  name: enrichedMember.name,
-                                  memberNumber: suggestion.memberNumber,
-                                  id: enrichedMember.id,
-                                  memberId: enrichedMember.memberId || enrichedMember.id,
-                                  phone: enrichedMember.phone || '',
-                                  ranking: enrichedMember.ranking || null,
-                                  winRate: enrichedMember.winRate || 0.5,
-                                  accountId: enrichedMember.accountId,
-                                };
-                                console.log(
-                                  '🔵 Adding player to group (add player flow):',
-                                  newPlayer
-                                );
-                                setCurrentGroup([...currentGroup, newPlayer]);
-                                setAddPlayerSearch('');
-                                setShowAddPlayer(false);
-                                setShowAddPlayerSuggestions(false);
-                              } else {
-                                let message = '';
-                                if (playerStatus.location === 'court') {
-                                  message = `${playerStatus.playerName} is already playing on Court ${playerStatus.courtNumber}`;
-                                } else if (playerStatus.location === 'waiting') {
-                                  message = `${playerStatus.playerName} is already in a group waiting for a court`;
-                                } else if (playerStatus.location === 'current') {
-                                  message = `${playerStatus.playerName} is already in your group`;
-                                }
-                                setAlertMessage(message);
-                                setShowAlert(true);
-                                setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
-                              }
-                            }}
-                            className="w-full p-2.5 sm:p-3 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
-                          >
-                            <div className="font-medium text-base sm:text-lg">
-                              {suggestion.member.name}
-                            </div>
-                            <div className="text-xs sm:text-sm text-gray-600">
-                              Member #{suggestion.memberNumber}
-                            </div>
-                          </button>
-                        )
-                      )
-                    ) : addPlayerSearch.length >= 2 ? (
-                      <button
-                        onClick={() => {
-                          setGuestName(addPlayerSearch);
-                          setShowGuestForm(true);
-                          setShowAddPlayerSuggestions(false);
-                          setAddPlayerSearch('');
-                          // Set default sponsor if only one member in group
-                          if (currentGroup.length === 1 && !currentGroup[0].isGuest) {
-                            setGuestSponsor(currentGroup[0].memberNumber);
-                          }
-                        }}
-                        className="w-full p-2.5 sm:p-3 text-left hover:bg-blue-50 transition-colors block"
-                      >
-                        <div className="font-medium text-base sm:text-lg text-blue-600">
-                          Add "{addPlayerSearch}" as guest?
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-600">
-                          No member found with this name
-                        </div>
-                      </button>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Guest Form */}
-            {showAddPlayer && showGuestForm && (
-              <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-xl">
-                <h4 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">Add Guest Player</h4>
-
-                <div className="mb-2 sm:mb-3">
-                  <input
-                    type="text"
-                    value={guestName}
-                    onChange={(e) => {
-                      markUserTyping();
-                      setGuestName(e.target.value);
-                      setShowGuestNameError(false);
-                    }}
-                    placeholder="Enter first and last name"
-                    className="w-full p-2 text-base sm:text-lg border-2 rounded-lg focus:border-blue-500 focus:outline-none"
-                    autoFocus
-                  />
-                  {showGuestNameError && (
-                    <p className="text-red-500 text-xs sm:text-sm mt-1">
-                      Please enter your guest's full name
-                    </p>
-                  )}
-                </div>
-
-                {/* Only show sponsor selection if there are multiple members */}
-                {currentGroup.filter((p) => !p.isGuest).length > 1 && (
-                  <div className="mb-2 sm:mb-3">
-                    <label
-                      className={`block text-xs sm:text-sm font-medium mb-1 ${
-                        showSponsorError ? 'text-red-500' : 'text-gray-700'
-                      }`}
-                    >
-                      {showSponsorError
-                        ? "Please choose your guest's sponsoring member"
-                        : 'Sponsoring Member'}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {currentGroup
-                        .filter((p) => !p.isGuest)
-                        .map((member) => (
-                          <button
-                            key={member.id}
-                            onClick={() => {
-                              setGuestSponsor(member.memberNumber);
-                              setShowSponsorError(false);
-                            }}
-                            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border-2 transition-colors text-xs sm:text-sm ${
-                              guestSponsor === member.memberNumber
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                            }`}
-                          >
-                            {member.memberNumber === memberNumber ? 'My Guest' : member.name}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={async () => {
-                      if (!validateGuestName(guestName)) {
-                        setShowGuestNameError(true);
-                        return;
-                      }
-
-                      // Check if sponsor is selected when multiple members exist
-                      if (currentGroup.filter((p) => !p.isGuest).length > 1 && !guestSponsor) {
-                        setShowSponsorError(true);
-                        return;
-                      }
-
-                      // Early duplicate guard for guest
-                      if (!guardAddPlayerEarly(guestName.trim())) {
-                        setShowGuestForm(false);
-                        setShowAddPlayer(false);
-                        setGuestName('');
-                        setGuestSponsor('');
-                        return;
-                      }
-
-                      // Check for duplicate in current group
-                      if (!guardAgainstGroupDuplicate(guestName.trim(), currentGroup)) {
-                        Tennis.UI.toast(`${guestName.trim()} is already in this group`);
-                        setShowGuestForm(false);
-                        setShowAddPlayer(false);
-                        setGuestName('');
-                        setGuestSponsor('');
-                        return;
-                      }
-
-                      // Add guest to group
-                      const guestId = -guestCounter;
-                      setGuestCounter(guestCounter + 1);
-
-                      const sponsorMember =
-                        guestSponsor ||
-                        currentGroup.filter((p) => !p.isGuest)[0]?.memberNumber ||
-                        memberNumber;
-
-                      // Find the sponsor's details
-                      const sponsorPlayer =
-                        currentGroup.find((p) => p.memberNumber === sponsorMember) ||
-                        memberDatabase[sponsorMember]?.familyMembers[0];
-
-                      setCurrentGroup([
-                        ...currentGroup,
-                        {
-                          name: guestName.trim(),
-                          memberNumber: 'GUEST',
-                          id: guestId,
-                          phone: '',
-                          ranking: null,
-                          winRate: 0.5,
-                          isGuest: true,
-                          sponsor: sponsorMember,
-                        },
-                      ]);
-
-                      // Track guest charge
-                      const guestCharge = {
-                        id: Date.now(),
-                        timestamp: new Date().toISOString(),
-                        guestName: guestName.trim(),
-                        sponsorName: sponsorPlayer?.name || 'Unknown',
-                        sponsorNumber: sponsorMember,
-                        amount: 15.0,
-                      };
-
-                      console.log('🎾 Creating guest charge:', guestCharge);
-
-                      try {
-                        // Get existing charges from localStorage
-                        const existingChargesFromStorage = localStorage.getItem(
-                          TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY
-                        );
-                        const existingCharges = existingChargesFromStorage
-                          ? JSON.parse(existingChargesFromStorage)
-                          : [];
-                        console.log('📋 Existing charges before save:', existingCharges.length);
-
-                        // Add new charge
-                        existingCharges.push(guestCharge);
-                        console.log('📋 Charges after adding new one:', existingCharges.length);
-
-                        // Save to localStorage
-                        localStorage.setItem(
-                          TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY,
-                          JSON.stringify(existingCharges)
-                        );
-                        console.log('💾 Guest charge saved to localStorage');
-
-                        // Dispatch event for real-time updates
-                        (function deferUpdateAfterSuccess() {
-                          const isOnSuccess = window.__regScreen === 'success';
-                          const DISPATCH_DELAY_MS = 1500; // small delay so Success screen is stable
-
-                          const doDispatch = () => {
-                            window.dispatchEvent(
-                              new CustomEvent('tennisDataUpdate', {
-                                detail: { source: 'guest-charge' },
-                              })
-                            );
-                            console.log('📡 Dispatched update event (source=guest-charge)');
-                          };
-
-                          if (isOnSuccess) {
-                            setTimeout(doDispatch, DISPATCH_DELAY_MS);
-                            console.log(
-                              '[SuccessHold-lite] Deferred tennisDataUpdate by',
-                              DISPATCH_DELAY_MS,
-                              'ms'
-                            );
-                          } else {
-                            doDispatch();
-                          }
-                        })();
-                      } catch (error) {
-                        console.error('❌ Error saving guest charge:', error);
-                      }
-
-                      // Reset form
-                      setGuestName('');
-                      setGuestSponsor('');
-                      setShowGuestForm(false);
-                      setShowAddPlayer(false);
-                      setShowGuestNameError(false);
-                      setShowSponsorError(false);
-                    }}
-                    className="bg-blue-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
-                  >
-                    Add Guest
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowGuestForm(false);
-                      setGuestName('');
-                      setGuestSponsor('');
-                      setShowGuestNameError(false);
-                      setShowSponsorError(false);
-                    }}
-                    className="bg-gray-300 text-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-gray-400 transition-colors text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Frequent partners */}
-            {memberNumber &&
-              frequentPartners &&
-              frequentPartners.length > 0 &&
-              currentGroup.length < CONSTANTS.MAX_PLAYERS && (
-                <div className="p-3 sm:p-4 bg-yellow-50 rounded-xl">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                    {frequentPartners
-                      .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
-                      .map((partner, idx) => {
-                        const names = partner.player.name.split(' ');
-                        const displayName =
-                          names.join(' ').length > 15
-                            ? `${names[0].charAt(0)}. ${names[1] || names[0]}`
-                            : partner.player.name;
-
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => addFrequentPartner(partner.player)}
-                            disabled={isPlayerAlreadyPlaying(partner.player.id).isPlaying}
-                            className="bg-white p-2 sm:p-3 rounded-lg hover:bg-yellow-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <div className="font-medium text-xs sm:text-sm">{displayName}</div>
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
-          </div>
-          <div
-            className={`absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex ${isMobileView ? 'justify-between' : 'justify-between gap-2'} items-end bottom-nav-buttons`}
-          >
-            <button
-              onClick={() => {
-                if (window.__mobileFlow) {
-                  // Check if we're in Clear Court workflow - handle navigation properly
-                  if (currentScreen === 'clearCourt') {
-                    // In Clear Court, Back should go to previous step or exit
-                    if (clearCourtStep > 1) {
-                      setClearCourtStep(clearCourtStep - 1);
-                    } else {
-                      // Exit Clear Court workflow
-                      window.parent.postMessage({ type: 'resetRegistration' }, '*');
-                    }
-                  } else {
-                    // For other screens, close the registration overlay
-                    window.parent.postMessage({ type: 'resetRegistration' }, '*');
-                  }
-                } else {
-                  // Desktop behavior - go back to search
-                  setCurrentGroup([]);
-                  setMemberNumber('');
-                  setCurrentScreen('search', 'groupGoBack');
-                }
-              }}
-              className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors relative z-10"
-            >
-              {isMobileView ? 'Back' : 'Go Back'}
-            </button>
-
-            {currentGroup.length >= 1 && (
-              <div className={isMobileView ? 'flex-1 flex justify-center' : ''}>
-                {(() => {
-                  // Check if there's a waitlist and if this group is not the first waiting group
-                  const waitlistEntries = data?.waitlist || [];
-                  const hasWaitlist = waitlistEntries.length > 0;
-
-                  // Check if current group is in the allowed positions (1st or 2nd when 2+ courts)
-                  let groupWaitlistPosition = 0;
-                  for (let i = 0; i < waitlistEntries.length; i++) {
-                    if (sameGroup(waitlistEntries[i]?.players || [], currentGroup)) {
-                      groupWaitlistPosition = i + 1; // 1-based position
-                      break;
-                    }
-                  }
-
-                  // Use availableCourts state (already set from API data)
-                  const courtsToCheck = availableCourts;
-
-                  // Check if there are actually any courts available to select
-                  const hasAvailableCourts = courtsToCheck && courtsToCheck.length > 0;
-                  const availableCourtCount = courtsToCheck?.length || 0;
-
-                  // Show "Select a Court" if:
-                  // 1. No waitlist and courts available OR
-                  // 2. Group is position 1 and courts available OR
-                  // 3. Group is position 2 and 2+ courts available
-                  const showSelectCourt =
-                    hasAvailableCourts &&
-                    (!hasWaitlist ||
-                      groupWaitlistPosition === 1 ||
-                      (groupWaitlistPosition === 2 && availableCourtCount >= 2));
-
-                  return showSelectCourt;
-                })() ? (
-                  <button
-                    onClick={() => {
-                      // Mobile: Skip court selection if we have a preselected court
-                      if (window.__mobileFlow && window.__preselectedCourt) {
-                        assignCourtToGroup(window.__preselectedCourt);
-                      } else {
-                        setCurrentScreen('court', 'selectCourtButton');
-                      }
-                    }}
-                    className={`${isMobileView ? 'px-6' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
-                  >
-                    {isMobileView
-                      ? window.__mobileFlow && window.__preselectedCourt
-                        ? `Take Court ${window.__preselectedCourt}`
-                        : 'Continue'
-                      : window.__mobileFlow && window.__preselectedCourt
-                        ? `Register for Court ${window.__preselectedCourt}`
-                        : 'Select a Court'}
-                  </button>
-                ) : (
-                  <button
-                    onClick={async () => {
-                      console.log('[REG DEBUG] Join Waitlist clicked');
-                      await sendGroupToWaitlist(currentGroup);
-                      setShowSuccess(true);
-                      // Mobile: notify parent on success
-                      if (window.__mobileSuccessHandler) {
-                        window.__mobileSuccessHandler(null); // waitlist doesn't have court
-                      }
-                      // Mobile: trigger success signal
-                      if (window.UI?.__mobileSendSuccess__) {
-                        window.UI.__mobileSendSuccess__();
-                      }
-
-                      // Don't auto-reset in mobile flow - let the overlay handle timing
-                      if (!window.__mobileFlow) {
-                        clearSuccessResetTimer();
-                        successResetTimerRef.current = setTimeout(() => {
-                          successResetTimerRef.current = null;
-                          resetForm();
-                        }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
-                      }
-                    }}
-                    className={`${isMobileView ? 'px-6' : ''} bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors`}
-                  >
-                    Join Waitlist
-                  </button>
-                )}
-              </div>
-            )}
-
-            {!isMobileView && (
-              <button
-                onClick={resetForm}
-                className="bg-red-500 text-white py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-red-600 transition-colors"
-              >
-                Start Over
-              </button>
-            )}
-          </div>
-
-          {!showSuccess && (
-            <div
-              id="etaPreview"
-              aria-live="polite"
-              style={{ marginTop: '8px', fontSize: '0.95rem', opacity: '0.9' }}
-            ></div>
-          )}
-        </div>
-      </div>
+      <GroupScreen
+        // Data
+        data={data}
+        currentGroup={currentGroup}
+        memberNumber={memberNumber}
+        availableCourts={availableCourts}
+        frequentPartners={frequentPartners}
+        // UI state
+        showAlert={showAlert}
+        alertMessage={alertMessage}
+        showTimeoutWarning={showTimeoutWarning}
+        isMobileView={isMobileView}
+        // Search state
+        searchInput={searchInput}
+        showSuggestions={showSuggestions}
+        effectiveSearchInput={effectiveSearchInput}
+        // Add player state
+        showAddPlayer={showAddPlayer}
+        addPlayerSearch={addPlayerSearch}
+        showAddPlayerSuggestions={showAddPlayerSuggestions}
+        effectiveAddPlayerSearch={effectiveAddPlayerSearch}
+        // Guest form state
+        showGuestForm={showGuestForm}
+        guestName={guestName}
+        guestSponsor={guestSponsor}
+        showGuestNameError={showGuestNameError}
+        showSponsorError={showSponsorError}
+        // Callbacks
+        onSearchChange={handleGroupSearchChange}
+        onSearchFocus={handleGroupSearchFocus}
+        onSuggestionClick={handleGroupSuggestionClick}
+        onAddPlayerSearchChange={handleAddPlayerSearchChange}
+        onAddPlayerSearchFocus={handleAddPlayerSearchFocus}
+        onAddPlayerSuggestionClick={handleAddPlayerSuggestionClick}
+        onToggleAddPlayer={handleToggleAddPlayer}
+        onToggleGuestForm={handleToggleGuestForm}
+        onRemovePlayer={handleRemovePlayer}
+        onSelectSponsor={handleSelectSponsor}
+        onGuestNameChange={handleGuestNameChange}
+        onAddGuest={handleAddGuest}
+        onCancelGuest={handleCancelGuest}
+        onAddFrequentPartner={addFrequentPartner}
+        onSelectCourt={handleGroupSelectCourt}
+        onJoinWaitlist={handleGroupJoinWaitlist}
+        onGoBack={handleGroupGoBack}
+        onStartOver={resetForm}
+        // Utilities
+        getAutocompleteSuggestions={getAutocompleteSuggestions}
+        isPlayerAlreadyPlaying={isPlayerAlreadyPlaying}
+        sameGroup={sameGroup}
+        CONSTANTS={CONSTANTS}
+      />
     );
   }
 
