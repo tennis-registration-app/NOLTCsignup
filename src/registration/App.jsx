@@ -33,10 +33,9 @@ import { AlertDisplay, ToastHost, QRScanner } from './components';
 
 // Import extracted screens and modals
 import {
-  WelcomeScreen,
+  HomeScreen,
   SuccessScreen,
   CourtSelectionScreen,
-  SearchScreen,
   ClearCourtScreen,
   AdminScreen,
   GroupScreen,
@@ -192,7 +191,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // IMPORTANT: These state variables must be declared BEFORE any useEffect that references them
   // to avoid TDZ (Temporal Dead Zone) errors when the code is minified
-  const [currentScreen, _setCurrentScreen] = useState('welcome');
+  const [currentScreen, _setCurrentScreen] = useState('home');
   const setCurrentScreen = (screen, source = 'unknown') => {
     console.log(`[NAV] ${currentScreen} → ${screen} (from: ${source})`);
     console.trace('[NAV] Stack trace');
@@ -1077,7 +1076,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setOriginalCourtData(null);
         setCanChangeCourt(false);
         setIsTimeLimited(false);
-        setCurrentScreen('welcome', 'sessionTimeout');
+        setCurrentScreen('home', 'sessionTimeout');
         setSearchInput('');
         setShowSuggestions(false);
         setShowAddPlayer(false);
@@ -1802,7 +1801,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setOriginalCourtData(null);
     setCanChangeCourt(false);
     setIsTimeLimited(false);
-    setCurrentScreen('welcome', 'resetForm');
+    setCurrentScreen('home', 'resetForm');
     setSearchInput('');
     setShowSuggestions(false);
     setShowAddPlayer(false);
@@ -2475,7 +2474,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   const handleExitAdmin = () => {
-    setCurrentScreen('welcome', 'exitAdminPanel');
+    setCurrentScreen('home', 'exitAdminPanel');
     setSearchInput('');
   };
 
@@ -2874,10 +2873,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         window.parent.postMessage({ type: 'resetRegistration' }, '*');
       }
     } else {
-      // Desktop behavior - go back to search
+      // Desktop behavior - go back to home
       setCurrentGroup([]);
       setMemberNumber('');
-      setCurrentScreen('search', 'groupGoBack');
+      setCurrentScreen('home', 'groupGoBack');
     }
   };
 
@@ -2977,7 +2976,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
-            setCurrentScreen('search', 'successNewRegistration');
+            setCurrentScreen('home', 'successNewRegistration');
           }}
           onHome={resetForm}
           dataStore={dataStore}
@@ -2999,12 +2998,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     );
   }
 
-  // Welcome screen
-  if (currentScreen === 'welcome') {
+  // Home screen (combined Welcome + Search)
+  if (currentScreen === 'home') {
     return (
       <>
-        <ToastHost />
-        <AlertDisplay show={showAlert} message={alertMessage} />
         {checkingLocation && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 shadow-xl">
@@ -3012,12 +3009,39 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             </div>
           </div>
         )}
-        <WelcomeScreen
-          onRegisterClick={() => {
-            checkLocationAndProceed(() => setCurrentScreen('search', 'welcomeRegisterClick'));
-          }}
+        <HomeScreen
+          // Search functionality
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+          showSuggestions={showSuggestions}
+          setShowSuggestions={setShowSuggestions}
+          isSearching={isSearching}
+          effectiveSearchInput={effectiveSearchInput}
+          getAutocompleteSuggestions={getAutocompleteSuggestions}
+          handleSuggestionClick={handleSuggestionClick}
+          markUserTyping={markUserTyping}
+          // Navigation
+          setCurrentScreen={setCurrentScreen}
+          setCurrentGroup={setCurrentGroup}
+          setMemberNumber={setMemberNumber}
+          setHasWaitlistPriority={setHasWaitlistPriority}
+          setCurrentWaitlistEntryId={setCurrentWaitlistEntryId}
+          findMemberNumber={findMemberNumber}
+          // CTA state
+          canFirstGroupPlay={canFirstGroupPlay}
+          canSecondGroupPlay={canSecondGroupPlay}
+          firstWaitlistEntry={firstWaitlistEntry}
+          secondWaitlistEntry={secondWaitlistEntry}
+          firstWaitlistEntryData={firstWaitlistEntryData}
+          secondWaitlistEntryData={secondWaitlistEntryData}
+          // UI state
+          showAlert={showAlert}
+          alertMessage={alertMessage}
+          isMobileView={isMobileView}
+          CONSTANTS={CONSTANTS}
+          // Clear court
           onClearCourtClick={() => {
-            checkLocationAndProceed(() => setCurrentScreen('clearCourt', 'welcomeClearCourtClick'));
+            checkLocationAndProceed(() => setCurrentScreen('clearCourt', 'homeClearCourtClick'));
           }}
         />
       </>
@@ -3074,40 +3098,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         showAlertMessage={showAlertMessage}
         // Utilities
         getCourtBlockStatus={getCourtBlockStatus}
-        CONSTANTS={CONSTANTS}
-      />
-    );
-  }
-
-  // Search screen
-  if (currentScreen === 'search') {
-    return (
-      <SearchScreen
-        searchInput={searchInput}
-        setSearchInput={setSearchInput}
-        showSuggestions={showSuggestions}
-        setShowSuggestions={setShowSuggestions}
-        isSearching={isSearching}
-        effectiveSearchInput={effectiveSearchInput}
-        getAutocompleteSuggestions={getAutocompleteSuggestions}
-        handleSuggestionClick={handleSuggestionClick}
-        markUserTyping={markUserTyping}
-        setCurrentScreen={setCurrentScreen}
-        setCurrentGroup={setCurrentGroup}
-        setMemberNumber={setMemberNumber}
-        setHasWaitlistPriority={setHasWaitlistPriority}
-        setCurrentWaitlistEntryId={setCurrentWaitlistEntryId}
-        findMemberNumber={findMemberNumber}
-        canFirstGroupPlay={canFirstGroupPlay}
-        canSecondGroupPlay={canSecondGroupPlay}
-        firstWaitlistEntry={firstWaitlistEntry}
-        secondWaitlistEntry={secondWaitlistEntry}
-        firstWaitlistEntryData={firstWaitlistEntryData}
-        secondWaitlistEntryData={secondWaitlistEntryData}
-        data={data}
-        showAlert={showAlert}
-        alertMessage={alertMessage}
-        isMobileView={isMobileView}
         CONSTANTS={CONSTANTS}
       />
     );
