@@ -246,7 +246,7 @@ const GroupScreen = ({
                   <input
                     ref={addPlayerInputRef}
                     type="text"
-                    placeholder={showGuestForm ? 'Add Player' : 'Enter name or member number...'}
+                    placeholder={showGuestForm ? 'Add Player' : 'Enter name or member number'}
                     value={showGuestForm ? '' : addPlayerSearch}
                     onChange={onAddPlayerSearchChange}
                     onFocus={onAddPlayerSearchFocus}
@@ -270,7 +270,7 @@ const GroupScreen = ({
                     <input
                       ref={guestInputRef}
                       type="text"
-                      placeholder="Enter guest name..."
+                      placeholder="Enter first and last name"
                       value={guestName}
                       onChange={onGuestNameChange}
                       className="flex-[4] bg-white text-blue-800 placeholder-gray-400 border border-blue-300
