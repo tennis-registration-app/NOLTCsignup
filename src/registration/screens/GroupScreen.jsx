@@ -246,7 +246,7 @@ const GroupScreen = ({
                   <input
                     ref={addPlayerInputRef}
                     type="text"
-                    placeholder={showGuestForm ? 'Add Player' : 'Enter name or member number'}
+                    placeholder={showGuestForm ? 'Add Member' : 'Enter name or member number'}
                     value={showGuestForm ? '' : addPlayerSearch}
                     onChange={onAddPlayerSearchChange}
                     onFocus={onAddPlayerSearchFocus}
