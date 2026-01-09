@@ -75,7 +75,7 @@ export const DEVICES = {
  */
 export const PRICING = {
   /** Tennis ball can price in dollars */
-  TENNIS_BALLS: 5.00,
+  TENNIS_BALLS: 5.0,
 };
 
 // ============================================================
@@ -98,7 +98,8 @@ export const GEOLOCATION = {
   /** Message shown while checking location */
   CHECKING_MESSAGE: 'Checking your location...',
   /** Message shown when user is not at club */
-  DENIAL_MESSAGE: 'You must be at the club to register for courts. Please register on the tablet at the sign in desk.',
+  DENIAL_MESSAGE:
+    'You must be at the club to register for courts. Please register on the tablet at the sign in desk.',
   /** Message shown on location error */
   ERROR_MESSAGE: 'Location services required. Please register on the tablet at the sign in desk',
   /** Geolocation timeout in milliseconds */
@@ -114,7 +115,7 @@ export const GEOLOCATION = {
  */
 export const CLUB_HOURS = {
   /** Opening hour */
-  OPEN: 4,
+  OPEN: 5,
   /** Closing hour */
   CLOSE: 22,
 };

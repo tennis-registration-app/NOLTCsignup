@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ToastHost, AlertDisplay } from '../components';
 
 const GroupScreen = ({
@@ -59,6 +59,23 @@ const GroupScreen = ({
   sameGroup,
   CONSTANTS,
 }) => {
+  const addPlayerInputRef = useRef(null);
+  const guestInputRef = useRef(null);
+
+  // Focus on mount and after player count changes (player added)
+  useEffect(() => {
+    if (!showGuestForm) {
+      addPlayerInputRef.current?.focus();
+    }
+  }, [currentGroup.length, showGuestForm]);
+
+  // Focus guest input when guest mode activates
+  useEffect(() => {
+    if (showGuestForm) {
+      guestInputRef.current?.focus();
+    }
+  }, [showGuestForm]);
+
   return (
     <div
       className={`w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex ${window.__mobileFlow ? 'items-start pt-[15vh]' : 'items-center justify-center'}`}
@@ -211,147 +228,174 @@ const GroupScreen = ({
             </div>
           ) : (
             currentGroup.length < CONSTANTS.MAX_PLAYERS && (
-              <div className="flex gap-2 sm:gap-3 mb-3">
-                <button
-                  onClick={onToggleAddPlayer}
-                  className="flex-1 bg-green-500 text-white py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl hover:bg-green-600 transition-colors"
-                >
-                  Add Another Player
-                </button>
-                <button
-                  onClick={onToggleGuestForm}
-                  className="bg-blue-50 text-blue-600 border border-blue-600 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl hover:bg-blue-100 transition-colors"
-                >
-                  + Guest
-                </button>
-              </div>
-            )
-          )}
+              <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-4 relative">
+                <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  {showGuestForm ? (
+                    <>
+                      <div className="flex-1 min-w-0"></div>
+                      <h4 className="flex-[4] font-medium text-sm sm:text-base text-center">
+                        Add Guest Player
+                      </h4>
+                    </>
+                  ) : (
+                    <h4 className="font-medium text-sm sm:text-base">Add Another Player</h4>
+                  )}
+                </div>
 
-          {showAddPlayer && !showGuestForm && (
-            <div className="mb-4 relative">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={addPlayerSearch}
-                  onChange={onAddPlayerSearchChange}
-                  onFocus={onAddPlayerSearchFocus}
-                  placeholder="Enter name or member number..."
-                  className="w-full p-2.5 sm:p-3 text-lg sm:text-xl border-2 rounded-xl focus:border-green-500 focus:outline-none"
-                  autoFocus
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="words"
-                  spellCheck="false"
-                />
-              </div>
+                <div className="flex gap-2 sm:gap-3 overflow-hidden">
+                  <input
+                    ref={addPlayerInputRef}
+                    type="text"
+                    placeholder={showGuestForm ? 'Add Player' : 'Enter name or member number...'}
+                    value={showGuestForm ? '' : addPlayerSearch}
+                    onChange={onAddPlayerSearchChange}
+                    onFocus={onAddPlayerSearchFocus}
+                    onClick={() => {
+                      if (showGuestForm) {
+                        onCancelGuest();
+                      }
+                    }}
+                    readOnly={showGuestForm}
+                    className={`${showGuestForm ? 'flex-1 bg-gray-100 cursor-pointer placeholder-green-600' : 'flex-[4] bg-white placeholder-gray-400'}
+                      min-w-0 text-green-800 border-2 border-green-500
+                      py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
+                      focus:outline-none focus:ring-2 focus:ring-green-500
+                      transition-all duration-[1400ms] ease-in-out`}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    spellCheck="false"
+                  />
+                  {showGuestForm ? (
+                    <input
+                      ref={guestInputRef}
+                      type="text"
+                      placeholder="Enter guest name..."
+                      value={guestName}
+                      onChange={onGuestNameChange}
+                      className="flex-[4] bg-white text-blue-800 placeholder-gray-400 border border-blue-300
+                        py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        transition-all duration-[1400ms] ease-in-out"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="words"
+                      spellCheck="false"
+                    />
+                  ) : (
+                    <button
+                      onClick={onToggleGuestForm}
+                      className="flex-1 bg-blue-50 text-blue-600 border border-blue-600
+                        py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
+                        hover:bg-blue-100 transition-all duration-[1400ms] ease-in-out whitespace-nowrap"
+                    >
+                      + Guest
+                    </button>
+                  )}
+                </div>
 
-              {showAddPlayerSuggestions && (
-                <div
-                  className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg"
-                  style={{ maxHeight: '200px', overflowY: 'auto' }}
-                >
-                  {getAutocompleteSuggestions(effectiveAddPlayerSearch).length > 0 ? (
-                    getAutocompleteSuggestions(effectiveAddPlayerSearch).map((suggestion, idx) => (
+                {/* Autocomplete suggestions dropdown - only when not in guest mode */}
+                {!showGuestForm && showAddPlayerSuggestions && (
+                  <div
+                    className="absolute z-10 left-4 right-4 mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg"
+                    style={{ maxHeight: '200px', overflowY: 'auto' }}
+                  >
+                    {getAutocompleteSuggestions(effectiveAddPlayerSearch).length > 0 ? (
+                      getAutocompleteSuggestions(effectiveAddPlayerSearch).map(
+                        (suggestion, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => onAddPlayerSuggestionClick(suggestion)}
+                            className="w-full p-2.5 sm:p-3 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
+                          >
+                            <div className="font-medium text-base sm:text-lg">
+                              {suggestion.member.name}
+                            </div>
+                            <div className="text-xs sm:text-sm text-gray-600">
+                              Member #{suggestion.memberNumber}
+                            </div>
+                          </button>
+                        )
+                      )
+                    ) : addPlayerSearch.length >= 2 ? (
                       <button
-                        key={idx}
-                        onClick={() => onAddPlayerSuggestionClick(suggestion)}
-                        className="w-full p-2.5 sm:p-3 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
+                        onClick={() => onToggleGuestForm(addPlayerSearch)}
+                        className="w-full p-2.5 sm:p-3 text-left hover:bg-blue-50 transition-colors block"
                       >
-                        <div className="font-medium text-base sm:text-lg">
-                          {suggestion.member.name}
+                        <div className="font-medium text-base sm:text-lg text-blue-600">
+                          Add &quot;{addPlayerSearch}&quot; as guest?
                         </div>
                         <div className="text-xs sm:text-sm text-gray-600">
-                          Member #{suggestion.memberNumber}
+                          No member found with this name
                         </div>
                       </button>
-                    ))
-                  ) : addPlayerSearch.length >= 2 ? (
-                    <button
-                      onClick={() => onToggleGuestForm(addPlayerSearch)}
-                      className="w-full p-2.5 sm:p-3 text-left hover:bg-blue-50 transition-colors block"
-                    >
-                      <div className="font-medium text-base sm:text-lg text-blue-600">
-                        Add &quot;{addPlayerSearch}&quot; as guest?
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-600">
-                        No member found with this name
-                      </div>
-                    </button>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Guest Form */}
-          {showAddPlayer && showGuestForm && (
-            <div className="mb-4 p-3 sm:p-4 bg-blue-50 rounded-xl">
-              <h4 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">Add Guest Player</h4>
-
-              <div className="mb-2 sm:mb-3">
-                <input
-                  type="text"
-                  value={guestName}
-                  onChange={onGuestNameChange}
-                  placeholder="Enter first and last name"
-                  className="w-full p-2 text-base sm:text-lg border-2 rounded-lg focus:border-blue-500 focus:outline-none"
-                  autoFocus
-                />
-                {showGuestNameError && (
-                  <p className="text-red-500 text-xs sm:text-sm mt-1">
-                    Please enter your guest&apos;s full name
-                  </p>
+                    ) : null}
+                  </div>
                 )}
-              </div>
 
-              {/* Only show sponsor selection if there are multiple members */}
-              {currentGroup.filter((p) => !p.isGuest).length > 1 && (
-                <div className="mb-2 sm:mb-3">
-                  <label
-                    className={`block text-xs sm:text-sm font-medium mb-1 ${
-                      showSponsorError ? 'text-red-500' : 'text-gray-700'
-                    }`}
-                  >
-                    {showSponsorError
-                      ? "Please choose your guest's sponsoring member"
-                      : 'Sponsoring Member'}
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {currentGroup
-                      .filter((p) => !p.isGuest)
-                      .map((member) => (
+                {/* Guest Form - grid animated */}
+                <div
+                  className={`grid transition-all duration-1000 delay-300 ease-in-out ${
+                    showGuestForm
+                      ? 'grid-rows-[1fr] opacity-100 mt-3'
+                      : 'grid-rows-[0fr] opacity-0 mt-0'
+                  }`}
+                >
+                  <div className="overflow-hidden">
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
+                      {/* Left side - Sponsoring Member (only if multiple non-guest members) */}
+                      {currentGroup.filter((p) => !p.isGuest).length > 1 && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`text-sm ${showSponsorError ? 'text-red-500' : 'text-gray-600'}`}
+                          >
+                            Sponsor:
+                          </span>
+                          {currentGroup
+                            .filter((p) => !p.isGuest)
+                            .map((member) => (
+                              <button
+                                key={member.id}
+                                onClick={() => onSelectSponsor(member.memberNumber)}
+                                className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+                                  guestSponsor === member.memberNumber
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-white border border-blue-300 text-blue-600 hover:bg-blue-50'
+                                }`}
+                              >
+                                {member.memberNumber === memberNumber ? 'My Guest' : member.name}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Right side - Add Guest / Cancel */}
+                      <div className="flex gap-2 ml-auto">
                         <button
-                          key={member.id}
-                          onClick={() => onSelectSponsor(member.memberNumber)}
-                          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border-2 transition-colors text-xs sm:text-sm ${
-                            guestSponsor === member.memberNumber
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                          }`}
+                          onClick={onAddGuest}
+                          className="px-4 py-1 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
                         >
-                          {member.memberNumber === memberNumber ? 'My Guest' : member.name}
+                          Add Guest
                         </button>
-                      ))}
+                        <button
+                          onClick={onCancelGuest}
+                          className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Error message below */}
+                    {showGuestNameError && (
+                      <p className="text-red-500 text-sm mt-2">
+                        Please enter your guest&apos;s full name
+                      </p>
+                    )}
                   </div>
                 </div>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={onAddGuest}
-                  className="bg-blue-500 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
-                >
-                  Add Guest
-                </button>
-                <button
-                  onClick={onCancelGuest}
-                  className="bg-gray-300 text-gray-700 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-gray-400 transition-colors text-sm sm:text-base"
-                >
-                  Cancel
-                </button>
               </div>
-            </div>
+            )
           )}
 
           {/* Frequent partners */}

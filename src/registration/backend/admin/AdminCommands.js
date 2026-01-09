@@ -271,10 +271,14 @@ export class AdminCommands {
 
   /**
    * Get system settings
-   * @returns {Promise<{ok: boolean, settings: Object, operatingHours: Array, upcomingOverrides: Array}>}
+   * @returns {Promise<{ok: boolean, settings: Object, operating_hours: Array, upcoming_overrides: Array}>}
    */
   async getSettings() {
-    return this.api.get('/get-settings');
+    const response = await this.api.get('/get-settings');
+    if (response.ok && response.data) {
+      return { ok: true, ...response.data };
+    }
+    return response;
   }
 
   /**

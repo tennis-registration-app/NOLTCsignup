@@ -2660,33 +2660,16 @@ export default function App() {
   if (view === 'menu') {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-          <h1 className="text-2xl font-bold mb-6">Tennis Admin Test</h1>
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+          <h1 className="text-2xl font-bold mb-2">NOLTC Admin</h1>
+          <p className="text-gray-500 mb-8">Staff access only</p>
 
-          <div className="space-y-4">
-            <button
-              onClick={() => setView('admin')}
-              className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            >
-              Open Admin Panel
-            </button>
-
-            <button
-              onClick={() => setView('analytics')}
-              className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
-            >
-              Open Analytics
-            </button>
-          </div>
-          <div className="mt-6 p-4 bg-gray-100 rounded">
-            <p className="text-sm text-gray-600">
-              Status: {dataStore?.cache?.has('tennisClubData') ? '✓ Data Loaded' : '✗ No Data'}
-            </p>
-            <div className="mt-2 text-xs text-blue-600">
-              📊 DataStore: {dataStore?.getMetrics?.().cacheHitRate || 0}% cache hit rate |{' '}
-              {dataStore?.getMetrics?.().totalOperations || 0} ops
-            </div>
-          </div>
+          <button
+            onClick={() => setView('admin')}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          >
+            Sign In
+          </button>
         </div>
       </div>
     );

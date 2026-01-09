@@ -309,6 +309,21 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   //   loadData();
   // }, []);
 
+  // Fetch ball price from API on mount (for SuccessScreen)
+  useEffect(() => {
+    const fetchBallPrice = async () => {
+      try {
+        const result = await backend.admin.getSettings();
+        if (result.ok && result.settings?.ball_price_cents) {
+          setBallPriceCents(result.settings.ball_price_cents);
+        }
+      } catch (error) {
+        console.error('Failed to load ball price from API:', error);
+      }
+    };
+    fetchBallPrice();
+  }, []);
+
   // TennisBackend Real-time subscription
   useEffect(() => {
     console.log('[TennisBackend] Setting up board subscription...');
@@ -624,6 +639,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [ballPriceInput, setBallPriceInput] = useState('');
   const [showPriceSuccess, setShowPriceSuccess] = useState(false);
   const [priceError, setPriceError] = useState('');
+
+  // Ball price from API (in cents) - used by SuccessScreen
+  const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
   const [checkingLocation, setCheckingLocation] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
@@ -2671,8 +2689,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       if (typeof prefillName === 'string') {
         setGuestName(prefillName);
       }
-      // Set default sponsor if only one member in group
-      if (currentGroup.length === 1 && !currentGroup[0].isGuest) {
+      // Set default sponsor to current user ("My Guest")
+      // This works for both single member and multiple members in group
+      if (memberNumber) {
+        setGuestSponsor(memberNumber);
+      } else if (currentGroup.length >= 1 && !currentGroup[0].isGuest) {
         setGuestSponsor(currentGroup[0].memberNumber);
       }
     }
@@ -2979,7 +3000,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             setCurrentScreen('home', 'successNewRegistration');
           }}
           onHome={resetForm}
-          dataStore={dataStore}
+          ballPriceCents={ballPriceCents}
           onPurchaseBalls={async (sessionId, accountId, options) => {
             return backend.commands.purchaseBalls({
               sessionId,
@@ -2992,6 +3013,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             const members = await backend.directory.getMembersByAccount(memberNumber);
             return members;
           }}
+          TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
         />
       </>

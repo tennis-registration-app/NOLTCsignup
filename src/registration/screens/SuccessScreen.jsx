@@ -21,13 +21,13 @@
  * - mobileCountdown: number | null - Mobile auto-close countdown
  * - isMobile: boolean - Whether in mobile mode
  * - isTimeLimited: boolean - Whether time was limited due to block
- * - dataStore: object - Data store for settings/purchases
+ * - ballPriceCents: number - Ball price in cents from API
  * - onPurchaseBalls: (sessionId, accountId, options) => Promise - Ball purchase handler
  * - onLookupMemberAccount: (memberNumber) => Promise<Member[]> - Member lookup handler
  * - TENNIS_CONFIG: object - Tennis configuration constants
  * - getCourtBlockStatus: (courtNumber) => BlockStatus - Court block status checker
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Check } from '../components';
 
 // Fixed layout card component (internal)
@@ -64,7 +64,7 @@ const SuccessScreen = ({
   mobileCountdown,
   isMobile = false,
   isTimeLimited = false,
-  dataStore,
+  ballPriceCents,
   onPurchaseBalls,
   onLookupMemberAccount,
   TENNIS_CONFIG,
@@ -75,23 +75,8 @@ const SuccessScreen = ({
   const [ballsPurchased, setBallsPurchased] = useState(false);
   const [purchaseDetails, setPurchaseDetails] = useState(null);
 
-  // Get tennis ball price from settings (with fallback to default)
-  const [ballPrice, setBallPrice] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS);
-
-  useEffect(() => {
-    const loadBallPrice = async () => {
-      try {
-        const settings = await dataStore.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY);
-        if (settings) {
-          const parsed = settings || {};
-          setBallPrice(parsed.tennisBallPrice || TENNIS_CONFIG.PRICING.TENNIS_BALLS);
-        }
-      } catch (error) {
-        console.error('Failed to load ball price:', error);
-      }
-    };
-    loadBallPrice();
-  }, [dataStore, TENNIS_CONFIG]);
+  // Ball price from API (passed as prop in cents, converted to dollars)
+  const ballPrice = ballPriceCents ? ballPriceCents / 100 : TENNIS_CONFIG.PRICING.TENNIS_BALLS;
 
   const nonGuestPlayers = currentGroup.filter((p) => !p.isGuest).length;
   const splitPrice = nonGuestPlayers > 0 ? ballPrice / nonGuestPlayers : ballPrice;
