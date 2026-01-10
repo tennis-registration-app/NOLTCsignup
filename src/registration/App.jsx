@@ -612,6 +612,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const successResetTimerRef = useRef(null);
   const frequentPartnersCacheRef = useRef({});
   const [frequentPartners, setFrequentPartners] = useState([]);
+  const [frequentPartnersLoading, setFrequentPartnersLoading] = useState(false);
+  const [currentMemberId, setCurrentMemberId] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courtToMove, setCourtToMove] = useState(null);
   const [moveToCourtNum, setMoveToCourtNum] = useState(null);
@@ -1089,6 +1091,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setCurrentGroup([]);
         setShowSuccess(false);
         setMemberNumber('');
+        setCurrentMemberId(null);
         setJustAssignedCourt(null);
         setReplacedGroup(null);
         setDisplacement(null);
@@ -1814,6 +1817,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setCurrentGroup([]);
     setShowSuccess(false);
     setMemberNumber('');
+    setCurrentMemberId(null);
     setJustAssignedCourt(null);
     setReplacedGroup(null);
     setDisplacement(null);
@@ -1846,53 +1850,64 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Fetch frequent partners from API
   const fetchFrequentPartners = useCallback(
-    async (memberNum) => {
-      if (!memberNum || !backend?.queries) return;
+    async (memberId) => {
+      if (!memberId || !backend?.queries) return;
 
-      // Check cache first
-      if (frequentPartnersCacheRef.current[memberNum]) {
-        setFrequentPartners(frequentPartnersCacheRef.current[memberNum]);
-        return;
+      // Check cache status - don't refetch if loading or ready
+      const cached = frequentPartnersCacheRef.current[memberId];
+      if (cached?.status === 'loading') {
+        return; // Already in flight
+      }
+      if (cached?.status === 'ready') {
+        setFrequentPartners(cached.data);
+        return; // Use cached data
       }
 
-      try {
-        const result = await backend.queries.getFrequentPartners(memberNum);
-        if (result.ok && result.partners) {
-          // Transform API response to expected format and filter out unavailable players
-          const partners = result.partners
-            .filter((p) => {
-              // Check if player is currently playing
-              const playerStatus = isPlayerAlreadyPlaying(p.member_id);
-              return !playerStatus.isPlaying;
-            })
-            .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
-            .map((p) => ({
-              player: {
-                id: p.member_id,
-                name: p.display_name,
-                memberNumber: p.member_number,
-                memberId: p.member_id,
-              },
-              count: p.play_count,
-            }));
+      // Mark as loading before fetch starts
+      frequentPartnersCacheRef.current[memberId] = { status: 'loading', ts: Date.now() };
+      setFrequentPartnersLoading(true);
 
-          frequentPartnersCacheRef.current[memberNum] = partners;
+      try {
+        const result = await backend.queries.getFrequentPartners(memberId);
+        if (result.ok && result.partners) {
+          // Transform API response to expected format
+          const partners = result.partners.slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS).map((p) => ({
+            player: {
+              id: p.member_id,
+              name: p.display_name,
+              memberNumber: p.member_number,
+              memberId: p.member_id,
+            },
+            count: p.play_count,
+          }));
+
+          frequentPartnersCacheRef.current[memberId] = {
+            status: 'ready',
+            data: partners,
+            ts: Date.now(),
+          };
           setFrequentPartners(partners);
+          setFrequentPartnersLoading(false);
+        } else {
+          frequentPartnersCacheRef.current[memberId] = { status: 'error', ts: Date.now() };
+          setFrequentPartnersLoading(false);
         }
       } catch (error) {
         console.error('Failed to fetch frequent partners:', error);
+        frequentPartnersCacheRef.current[memberId] = { status: 'error', ts: Date.now() };
         setFrequentPartners([]);
+        setFrequentPartnersLoading(false);
       }
     },
     [backend]
   );
 
-  // Fetch frequent partners when member number changes or entering group screen
+  // Fetch frequent partners when entering group screen (fallback if pre-fetch missed)
   useEffect(() => {
-    if (currentScreen === 'group' && memberNumber) {
-      fetchFrequentPartners(memberNumber);
+    if (currentScreen === 'group' && currentMemberId) {
+      fetchFrequentPartners(currentMemberId);
     }
-  }, [currentScreen, memberNumber, fetchFrequentPartners]);
+  }, [currentScreen, currentMemberId, fetchFrequentPartners]);
 
   // Check if player is already playing with detailed info
   const isPlayerAlreadyPlaying = (playerId) => {
@@ -2088,8 +2103,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // Don't set member number if player is engaged elsewhere
     // This prevents navigation to group screen
 
-    // Set member number now that we know player can proceed
+    // Set member number and member ID now that we know player can proceed
     setMemberNumber(suggestion.memberNumber);
+    setCurrentMemberId(suggestion.member.id);
+
+    // Pre-fetch frequent partners (fire-and-forget)
+    fetchFrequentPartners(suggestion.member.id);
 
     // Check if this player is in the first waiting group and courts are available
     if (
@@ -2892,6 +2911,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Desktop behavior - go back to home
       setCurrentGroup([]);
       setMemberNumber('');
+      setCurrentMemberId(null);
       setCurrentScreen('home', 'groupGoBack');
     }
   };
@@ -3130,6 +3150,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         memberNumber={memberNumber}
         availableCourts={availableCourts}
         frequentPartners={frequentPartners}
+        frequentPartnersLoading={frequentPartnersLoading}
         // UI state
         showAlert={showAlert}
         alertMessage={alertMessage}

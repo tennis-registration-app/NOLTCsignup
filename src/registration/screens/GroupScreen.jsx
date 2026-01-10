@@ -8,6 +8,7 @@ const GroupScreen = ({
   memberNumber,
   availableCourts,
   frequentPartners,
+  frequentPartnersLoading,
 
   // UI state
   showAlert,
@@ -398,36 +399,59 @@ const GroupScreen = ({
             )
           )}
 
-          {/* Frequent partners */}
+          {/* Frequent partners - always show section when member selected and room in group */}
           {memberNumber &&
-            frequentPartners &&
-            frequentPartners.length > 0 &&
-            currentGroup.length < CONSTANTS.MAX_PLAYERS && (
-              <div className="p-3 sm:p-4 bg-yellow-50 rounded-xl">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                  {frequentPartners
-                    .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
-                    .map((partner, idx) => {
-                      const names = partner.player.name.split(' ');
-                      const displayName =
-                        names.join(' ').length > 15
-                          ? `${names[0].charAt(0)}. ${names[1] || names[0]}`
-                          : partner.player.name;
+            currentGroup.length < CONSTANTS.MAX_PLAYERS &&
+            (() => {
+              const availablePartners = (frequentPartners || []).filter(
+                (partner) =>
+                  !isPlayerAlreadyPlaying(partner.player?.id || partner.player?.memberId).isPlaying
+              );
 
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => onAddFrequentPartner(partner.player)}
-                          disabled={isPlayerAlreadyPlaying(partner.player.id).isPlaying}
-                          className="bg-white p-2 sm:p-3 rounded-lg hover:bg-yellow-100 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <div className="font-medium text-xs sm:text-sm">{displayName}</div>
-                        </button>
-                      );
-                    })}
+              // Show section if loading OR has available partners
+              if (!frequentPartnersLoading && availablePartners.length === 0) {
+                return null;
+              }
+
+              return (
+                <div className="p-3 sm:p-4 bg-yellow-50 rounded-xl">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                    {frequentPartnersLoading ? (
+                      // Skeleton loading state
+                      <>
+                        {[...Array(6)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-10 sm:h-12 bg-yellow-200/60 rounded-lg animate-pulse"
+                          />
+                        ))}
+                      </>
+                    ) : (
+                      // Ready with data
+                      availablePartners
+                        .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
+                        .map((partner, idx) => {
+                          const names = partner.player.name.split(' ');
+                          const displayName =
+                            names.join(' ').length > 15
+                              ? `${names[0].charAt(0)}. ${names[1] || names[0]}`
+                              : partner.player.name;
+
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => onAddFrequentPartner(partner.player)}
+                              className="bg-white p-2 sm:p-3 rounded-lg hover:bg-yellow-100 transition-colors text-left"
+                            >
+                              <div className="font-medium text-xs sm:text-sm">{displayName}</div>
+                            </button>
+                          );
+                        })
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
         </div>
         <div
           className={`absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex ${isMobileView ? 'justify-between' : 'justify-between gap-2'} items-end bottom-nav-buttons`}

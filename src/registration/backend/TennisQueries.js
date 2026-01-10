@@ -246,10 +246,10 @@ export class TennisQueries {
    * @param {string} memberNumber - The member number to get partners for
    * @returns {Promise<{ok: boolean, partners: Array<{member_id: string, display_name: string, member_number: string, play_count: number}>}>}
    */
-  async getFrequentPartners(memberNumber) {
-    logger.debug('TennisQueries', 'getFrequentPartners called', { memberNumber });
+  async getFrequentPartners(memberId) {
+    logger.debug('TennisQueries', 'getFrequentPartners called', { memberId });
     const response = await this.api.post('/get-frequent-partners', {
-      member_number: memberNumber,
+      member_id: memberId,
     });
     logger.debug('TennisQueries', 'getFrequentPartners response', {
       ok: response.ok,
