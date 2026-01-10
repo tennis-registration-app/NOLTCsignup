@@ -2098,6 +2098,23 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       return;
     }
 
+    // Block selection if player is already on a court or waitlist
+    const memberId = suggestion.member?.id;
+    if (memberId) {
+      const playerStatus = isPlayerAlreadyPlaying(memberId);
+      if (playerStatus.isPlaying) {
+        const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
+        const locationMsg =
+          playerStatus.location === 'court'
+            ? `on Court ${playerStatus.courtNumber}`
+            : `on the waitlist (position ${playerStatus.position})`;
+        showToast(`${playerName} is already ${locationMsg}`, 'error');
+        setSearchInput('');
+        setShowSuggestions(false);
+        return; // Don't proceed to GroupScreen
+      }
+    }
+
     // API member already has correct id (UUID) and accountId
     const enrichedMember = {
       id: suggestion.member.id, // UUID from API
