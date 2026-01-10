@@ -611,6 +611,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const warningTimerRef = useRef(null);
   const successResetTimerRef = useRef(null);
   const frequentPartnersCacheRef = useRef({});
+  const [frequentPartners, setFrequentPartners] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courtToMove, setCourtToMove] = useState(null);
   const [moveToCourtNum, setMoveToCourtNum] = useState(null);
@@ -1843,61 +1844,55 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setShowSponsorError(false);
   };
 
-  // Get frequent partners (uses API members)
-  const getFrequentPartners = (memberNumber) => {
-    if (apiMembers.length === 0) {
-      return [];
-    }
+  // Fetch frequent partners from API
+  const fetchFrequentPartners = useCallback(
+    async (memberNum) => {
+      if (!memberNum || !backend?.queries) return;
 
-    // Find the current member to exclude them
-    const currentMember = apiMembers.find((m) => m.member_number === memberNumber);
-    if (!currentMember) {
-      return [];
-    }
-
-    // Use member_number as seed for consistent random generation
-    const seed = parseInt(memberNumber) || 0;
-
-    // Get all potential partners (excluding self and family members on same account)
-    const potentialPartners = [];
-
-    apiMembers.forEach((apiMember) => {
-      // Skip self and family members (same account_id)
-      if (apiMember.id === currentMember.id || apiMember.account_id === currentMember.account_id) {
+      // Check cache first
+      if (frequentPartnersCacheRef.current[memberNum]) {
+        setFrequentPartners(frequentPartnersCacheRef.current[memberNum]);
         return;
       }
 
-      // Check if this player is currently playing (use UUID)
-      const playerStatus = isPlayerAlreadyPlaying(apiMember.id);
-      if (!playerStatus.isPlaying) {
-        // Generate a consistent "play count" based on both member numbers
-        const partnerSeed = parseInt(apiMember.member_number) || 0;
-        const combinedSeed = seed + partnerSeed;
-        const playCount = (combinedSeed * 9301 + 49297) % 233280;
-        const normalizedCount = (playCount % 10) + 1;
+      try {
+        const result = await backend.queries.getFrequentPartners(memberNum);
+        if (result.ok && result.partners) {
+          // Transform API response to expected format and filter out unavailable players
+          const partners = result.partners
+            .filter((p) => {
+              // Check if player is currently playing
+              const playerStatus = isPlayerAlreadyPlaying(p.member_id);
+              return !playerStatus.isPlaying;
+            })
+            .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
+            .map((p) => ({
+              player: {
+                id: p.member_id,
+                name: p.display_name,
+                memberNumber: p.member_number,
+                memberId: p.member_id,
+              },
+              count: p.play_count,
+            }));
 
-        // Build player object with API data
-        const player = {
-          id: apiMember.id, // UUID from API
-          name: apiMember.display_name || apiMember.name || '',
-          memberNumber: apiMember.member_number,
-          accountId: apiMember.account_id,
-          memberId: apiMember.id,
-          isPrimary: apiMember.is_primary,
-        };
-
-        potentialPartners.push({
-          player: player,
-          count: normalizedCount,
-        });
+          frequentPartnersCacheRef.current[memberNum] = partners;
+          setFrequentPartners(partners);
+        }
+      } catch (error) {
+        console.error('Failed to fetch frequent partners:', error);
+        setFrequentPartners([]);
       }
-    });
+    },
+    [backend]
+  );
 
-    // Sort by play count and return top 6
-    return potentialPartners
-      .sort((a, b) => b.count - a.count)
-      .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS);
-  };
+  // Fetch frequent partners when member number changes or entering group screen
+  useEffect(() => {
+    if (currentScreen === 'group' && memberNumber) {
+      fetchFrequentPartners(memberNumber);
+    }
+  }, [currentScreen, memberNumber, fetchFrequentPartners]);
 
   // Check if player is already playing with detailed info
   const isPlayerAlreadyPlaying = (playerId) => {
@@ -3127,15 +3122,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Group management screen
   if (currentScreen === 'group') {
-    // Get frequent partners with caching using ref
-    let frequentPartners = [];
-    if (memberNumber) {
-      if (!frequentPartnersCacheRef.current[memberNumber]) {
-        frequentPartnersCacheRef.current[memberNumber] = getFrequentPartners(memberNumber);
-      }
-      frequentPartners = frequentPartnersCacheRef.current[memberNumber] || [];
-    }
-
     return (
       <GroupScreen
         // Data
