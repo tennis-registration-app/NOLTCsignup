@@ -1853,21 +1853,33 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   const fetchFrequentPartners = useCallback(
     async (memberId) => {
-      if (!memberId || !backend?.queries) return;
+      console.log('[FP] fetchFrequentPartners called', {
+        memberId,
+        cacheState: frequentPartnersCacheRef.current[memberId],
+        timestamp: Date.now(),
+      });
+
+      if (!memberId || !backend?.queries) {
+        console.log('[FP] No memberId or backend, returning');
+        return;
+      }
 
       // Check cache status - don't refetch if loading or still fresh
       const cached = frequentPartnersCacheRef.current[memberId];
       const now = Date.now();
 
       if (cached?.status === 'loading') {
+        console.log('[FP] Already loading, skipping');
         return; // Already in flight
       }
       if (cached?.status === 'ready' && now - cached.ts < FREQUENT_PARTNERS_CACHE_TTL_MS) {
+        console.log('[FP] Cache hit, using cached data');
         setFrequentPartners(cached.data);
         return; // Use cached data (still fresh)
       }
 
       // Mark as loading before fetch starts
+      console.log('[FP] Starting fetch, marking as loading');
       frequentPartnersCacheRef.current[memberId] = { status: 'loading', ts: Date.now() };
       setFrequentPartnersLoading(true);
 
