@@ -2098,31 +2098,18 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       return;
     }
 
-    // Block selection if player is already on a court or waitlist
+    // Block selection if player is already on a court
     const memberId = suggestion.member?.id;
     if (memberId) {
       const playerStatus = isPlayerAlreadyPlaying(memberId);
-      if (playerStatus.isPlaying) {
+      if (playerStatus.isPlaying && playerStatus.location === 'court') {
         const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-
-        // Check if this player has a "You're Up" CTA (court available for them)
-        const isInFirstGroup = firstWaitlistEntry?.players?.some((p) => p.memberId === memberId);
-        const isInSecondGroup = secondWaitlistEntry?.players?.some((p) => p.memberId === memberId);
-        const hasCourtReady =
-          (isInFirstGroup && canFirstGroupPlay) || (isInSecondGroup && canSecondGroupPlay);
-
-        if (hasCourtReady && playerStatus.location === 'waiting') {
-          showToast(`A court is ready for you! Tap the green button below.`, 'info');
-        } else {
-          const locationMsg =
-            playerStatus.location === 'court'
-              ? `on Court ${playerStatus.courtNumber}`
-              : `on the waitlist (position ${playerStatus.position})`;
-          showToast(`${playerName} is already ${locationMsg}`, 'error');
-        }
+        Tennis.UI.toast(`${playerName} is already on Court ${playerStatus.courtNumber}`, {
+          type: 'error',
+        });
         setSearchInput('');
         setShowSuggestions(false);
-        return; // Don't proceed to GroupScreen
+        return;
       }
     }
 
@@ -2144,6 +2131,29 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
     const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
 
+    // Check if this player is on waitlist - show helpful message and block
+    if (playerStatus.isPlaying && playerStatus.location === 'waiting') {
+      const availableCourts = getAvailableCourts(false);
+      const hasCourtReady =
+        (playerStatus.position === 1 && availableCourts.length > 0) ||
+        (playerStatus.position === 2 && availableCourts.length >= 2);
+
+      if (hasCourtReady) {
+        // Court is available for this waitlist player - direct them to use the CTA button
+        Tennis.UI.toast(`A court is ready for you! Tap the green button below.`, { type: 'info' });
+      } else {
+        // Player is on waitlist but no court available yet
+        const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
+        Tennis.UI.toast(
+          `${playerName} is already on the waitlist (position ${playerStatus.position})`,
+          { type: 'error' }
+        );
+      }
+      setSearchInput('');
+      setShowSuggestions(false);
+      return;
+    }
+
     // Don't set member number if player is engaged elsewhere
     // This prevents navigation to group screen
 
@@ -2153,94 +2163,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
     // Pre-fetch frequent partners (fire-and-forget)
     fetchFrequentPartners(suggestion.member.id);
-
-    // Check if this player is in the first waiting group and courts are available
-    if (
-      playerStatus.isPlaying &&
-      playerStatus.location === 'waiting' &&
-      playerStatus.position === 1
-    ) {
-      const data = getCourtData();
-      const availableCourts = getAvailableCourts(false);
-
-      if (availableCourts.length > 0) {
-        // Player is in first waiting group and courts are available
-        const firstWaitlistEntry = data.waitlist[0];
-
-        // Load the entire waiting group - Domain: entry.group.players
-        const players = firstWaitlistEntry.group?.players || [];
-        setCurrentGroup(
-          players.map((p) => ({
-            id: p.memberId,
-            name: p.displayName || 'Unknown',
-            memberNumber: findMemberNumber(p.memberId),
-          }))
-        );
-
-        // Remove the group from waitlist
-        data.waitlist.shift();
-        const key = 'tennisClubData';
-        const prev = Tennis.Storage?.readDataSafe
-          ? Tennis.Storage.readDataSafe()
-          : JSON.parse(localStorage.getItem(key) || 'null') || {};
-        const merged = window.APP_UTILS.preservePromotions(prev, data);
-        await dataStore.set(key, merged, { immediate: true });
-        if (USE_SHARED_CORE && Events) {
-          Events.emitDom('tennisDataUpdate', {});
-        } else {
-          window.dispatchEvent(new Event('tennisDataUpdate'));
-        }
-
-        setSearchInput('');
-        setShowSuggestions(false);
-        setCurrentScreen('court', 'waitlistPos1FastTrack'); // Go directly to court selection since group is already complete
-        return;
-      }
-    }
-
-    // Check if player is in position 2 and there are 2+ courts available
-    if (
-      playerStatus.isPlaying &&
-      playerStatus.location === 'waiting' &&
-      playerStatus.position === 2
-    ) {
-      const data = getCourtData();
-      const availableCourts = getAvailableCourts(false);
-
-      if (availableCourts.length >= 2) {
-        // Player is in second waiting group and there are at least 2 courts
-        const secondWaitlistEntry = data.waitlist[1];
-
-        // Load the entire waiting group - Domain: entry.group.players
-        const players = secondWaitlistEntry.group?.players || [];
-        setCurrentGroup(
-          players.map((p) => ({
-            id: p.memberId,
-            name: p.displayName || 'Unknown',
-            memberNumber: findMemberNumber(p.memberId),
-          }))
-        );
-
-        // Remove the group from waitlist
-        data.waitlist.splice(1, 1); // Remove second entry
-        const key = 'tennisClubData';
-        const prev = Tennis.Storage?.readDataSafe
-          ? Tennis.Storage.readDataSafe()
-          : JSON.parse(localStorage.getItem(key) || 'null') || {};
-        const merged = window.APP_UTILS.preservePromotions(prev, data);
-        await dataStore.set(key, merged, { immediate: true });
-        if (USE_SHARED_CORE && Events) {
-          Events.emitDom('tennisDataUpdate', {});
-        } else {
-          window.dispatchEvent(new Event('tennisDataUpdate'));
-        }
-
-        setSearchInput('');
-        setShowSuggestions(false);
-        setCurrentScreen('court', 'waitlistPos2FastTrack'); // Go directly to court selection since group is already complete
-        return;
-      }
-    }
 
     // Normal flow for new players - we already checked conflicts above
     setSearchInput('');
