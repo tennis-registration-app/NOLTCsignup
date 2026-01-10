@@ -2104,11 +2104,22 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       const playerStatus = isPlayerAlreadyPlaying(memberId);
       if (playerStatus.isPlaying) {
         const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-        const locationMsg =
-          playerStatus.location === 'court'
-            ? `on Court ${playerStatus.courtNumber}`
-            : `on the waitlist (position ${playerStatus.position})`;
-        showToast(`${playerName} is already ${locationMsg}`, 'error');
+
+        // Check if this player has a "You're Up" CTA (court available for them)
+        const isInFirstGroup = firstWaitlistEntry?.players?.some((p) => p.memberId === memberId);
+        const isInSecondGroup = secondWaitlistEntry?.players?.some((p) => p.memberId === memberId);
+        const hasCourtReady =
+          (isInFirstGroup && canFirstGroupPlay) || (isInSecondGroup && canSecondGroupPlay);
+
+        if (hasCourtReady && playerStatus.location === 'waiting') {
+          showToast(`A court is ready for you! Tap the green button below.`, 'info');
+        } else {
+          const locationMsg =
+            playerStatus.location === 'court'
+              ? `on Court ${playerStatus.courtNumber}`
+              : `on the waitlist (position ${playerStatus.position})`;
+          showToast(`${playerName} is already ${locationMsg}`, 'error');
+        }
         setSearchInput('');
         setShowSuggestions(false);
         return; // Don't proceed to GroupScreen
