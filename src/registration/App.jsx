@@ -1849,18 +1849,22 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   // Fetch frequent partners from API
+  const FREQUENT_PARTNERS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
   const fetchFrequentPartners = useCallback(
     async (memberId) => {
       if (!memberId || !backend?.queries) return;
 
-      // Check cache status - don't refetch if loading or ready
+      // Check cache status - don't refetch if loading or still fresh
       const cached = frequentPartnersCacheRef.current[memberId];
+      const now = Date.now();
+
       if (cached?.status === 'loading') {
         return; // Already in flight
       }
-      if (cached?.status === 'ready') {
+      if (cached?.status === 'ready' && now - cached.ts < FREQUENT_PARTNERS_CACHE_TTL_MS) {
         setFrequentPartners(cached.data);
-        return; // Use cached data
+        return; // Use cached data (still fresh)
       }
 
       // Mark as loading before fetch starts
