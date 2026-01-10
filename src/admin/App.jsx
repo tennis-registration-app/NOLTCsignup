@@ -1106,6 +1106,14 @@ const AdminPanelV2 = ({ onExit }) => {
   const [weekdayFeeInput, setWeekdayFeeInput] = useState('');
   const [weekendFeeInput, setWeekendFeeInput] = useState('');
 
+  // Override form state (controlled inputs)
+  const [overrideDate, setOverrideDate] = useState('');
+  const [overrideOpens, setOverrideOpens] = useState('06:00');
+  const [overrideCloses, setOverrideCloses] = useState('21:00');
+  const [overrideReason, setOverrideReason] = useState('');
+  const [overrideClosed, setOverrideClosed] = useState(false);
+  const [overrideError, setOverrideError] = useState('');
+
   const ENABLE_WET_COURTS = true;
 
   const handleEmergencyWetCourt = async () => {
@@ -2266,18 +2274,19 @@ const AdminPanelV2 = ({ onExit }) => {
               </div>
             ))}
           {activeTab === 'history' && <GameHistorySearch backend={backend} />}
-          {activeTab === 'system' && (
+        </div>
+        {/* System tab - outside the white wrapper so cards have visible separation */}
+        {activeTab === 'system' && (
+          <div className="space-y-8">
+            {/* Card 1: Pricing */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">System Settings</h3>
-
-              <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Pricing</h3>
+              <div className="flex flex-wrap items-center gap-8">
                 {/* Tennis Ball Price */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tennis Ball Price
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-500">$</span>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Tennis Ball Price</label>
+                  <div className="flex items-center">
+                    <span className="text-gray-500 mr-1">$</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -2291,352 +2300,244 @@ const AdminPanelV2 = ({ onExit }) => {
                           setBallPriceInput(settings.tennisBallPrice?.toFixed(2) || '5.00');
                         }
                       }}
-                      className="w-32 p-2 border rounded"
+                      className="w-20 p-2 border rounded"
                     />
                   </div>
                 </div>
 
-                {/* Guest Fees Section */}
-                <div className="border-t pt-6">
-                  <h4 className="text-md font-medium text-gray-800 mb-4">Guest Fees</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Weekday Guest Fee */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Weekday Guest Fee (Mon-Fri)
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">$</span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={weekdayFeeInput}
-                          onChange={(e) => setWeekdayFeeInput(e.target.value)}
-                          onBlur={() => {
-                            const parsed = parseFloat(weekdayFeeInput);
-                            if (!isNaN(parsed) && parsed >= 0) {
-                              updateWeekdayGuestFee(parsed);
-                            } else {
-                              setWeekdayFeeInput(
-                                settings.guestFees?.weekday?.toFixed(2) || '15.00'
-                              );
-                            }
-                          }}
-                          className="w-32 p-2 border rounded"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Weekend Guest Fee */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Weekend Guest Fee (Sat-Sun)
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500">$</span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={weekendFeeInput}
-                          onChange={(e) => setWeekendFeeInput(e.target.value)}
-                          onBlur={() => {
-                            const parsed = parseFloat(weekendFeeInput);
-                            if (!isNaN(parsed) && parsed >= 0) {
-                              updateWeekendGuestFee(parsed);
-                            } else {
-                              setWeekendFeeInput(
-                                settings.guestFees?.weekend?.toFixed(2) || '20.00'
-                              );
-                            }
-                          }}
-                          className="w-32 p-2 border rounded"
-                        />
-                      </div>
-                    </div>
+                {/* Weekday Guest Fee */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Weekday Guest Fee</label>
+                  <div className="flex items-center">
+                    <span className="text-gray-500 mr-1">$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={weekdayFeeInput}
+                      onChange={(e) => setWeekdayFeeInput(e.target.value)}
+                      onBlur={() => {
+                        const parsed = parseFloat(weekdayFeeInput);
+                        if (!isNaN(parsed) && parsed >= 0) {
+                          updateWeekdayGuestFee(parsed);
+                        } else {
+                          setWeekdayFeeInput(settings.guestFees?.weekday?.toFixed(2) || '15.00');
+                        }
+                      }}
+                      className="w-20 p-2 border rounded"
+                    />
                   </div>
                 </div>
 
-                {/* Club Hours */}
-                <div
-                  style={{
-                    marginTop: '2rem',
-                    borderTop: '1px solid #e5e7eb',
-                    paddingTop: '1.5rem',
-                  }}
-                >
-                  <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '1rem' }}>
-                    Club Hours
-                  </h3>
-
-                  {/* Regular Hours */}
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <h4
-                      style={{
-                        fontSize: '0.95rem',
-                        fontWeight: '500',
-                        marginBottom: '0.75rem',
-                        color: '#374151',
+                {/* Weekend Guest Fee */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Weekend Guest Fee</label>
+                  <div className="flex items-center">
+                    <span className="text-gray-500 mr-1">$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={weekendFeeInput}
+                      onChange={(e) => setWeekendFeeInput(e.target.value)}
+                      onBlur={() => {
+                        const parsed = parseFloat(weekendFeeInput);
+                        if (!isNaN(parsed) && parsed >= 0) {
+                          updateWeekendGuestFee(parsed);
+                        } else {
+                          setWeekendFeeInput(settings.guestFees?.weekend?.toFixed(2) || '20.00');
+                        }
                       }}
-                    >
-                      Regular Weekly Hours
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      {operatingHours.map((day) => (
-                        <div
-                          key={day.day_of_week}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            padding: '0.5rem',
-                            backgroundColor: day.is_closed ? '#fef2f2' : '#f9fafb',
-                            borderRadius: '0.375rem',
-                          }}
-                        >
-                          <span style={{ width: '100px', fontWeight: '500' }}>{day.day_name}</span>
-                          <label
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={day.is_closed}
-                              onChange={(e) =>
-                                updateOperatingHours(
-                                  day.day_of_week,
-                                  day.opens_at,
-                                  day.closes_at,
-                                  e.target.checked
-                                )
-                              }
-                            />
-                            Closed
-                          </label>
-                          {!day.is_closed && (
-                            <>
-                              <input
-                                type="time"
-                                value={day.opens_at?.slice(0, 5) || '06:00'}
-                                onChange={(e) =>
-                                  e.target.value &&
-                                  updateOperatingHours(
-                                    day.day_of_week,
-                                    e.target.value + ':00',
-                                    day.closes_at,
-                                    false
-                                  )
-                                }
-                                style={{
-                                  padding: '0.25rem 0.5rem',
-                                  borderRadius: '0.25rem',
-                                  border: '1px solid #d1d5db',
-                                }}
-                              />
-                              <span>to</span>
-                              <input
-                                type="time"
-                                value={day.closes_at?.slice(0, 5) || '21:00'}
-                                onChange={(e) =>
-                                  e.target.value &&
-                                  updateOperatingHours(
-                                    day.day_of_week,
-                                    day.opens_at,
-                                    e.target.value + ':00',
-                                    false
-                                  )
-                                }
-                                style={{
-                                  padding: '0.25rem 0.5rem',
-                                  borderRadius: '0.25rem',
-                                  border: '1px solid #d1d5db',
-                                }}
-                              />
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Holiday Overrides */}
-                  <div>
-                    <h4
-                      style={{
-                        fontSize: '0.95rem',
-                        fontWeight: '500',
-                        marginBottom: '0.75rem',
-                        color: '#374151',
-                      }}
-                    >
-                      Holiday & Special Hours
-                    </h4>
-
-                    {/* Add Override Form */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '0.5rem',
-                        marginBottom: '1rem',
-                        padding: '0.75rem',
-                        backgroundColor: '#f0f9ff',
-                        borderRadius: '0.375rem',
-                      }}
-                    >
-                      <input
-                        type="date"
-                        id="override-date"
-                        min={new Date().toISOString().split('T')[0]}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '0.25rem',
-                          border: '1px solid #d1d5db',
-                        }}
-                      />
-                      <input
-                        type="time"
-                        id="override-opens"
-                        defaultValue="06:00"
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '0.25rem',
-                          border: '1px solid #d1d5db',
-                        }}
-                      />
-                      <span style={{ alignSelf: 'center' }}>to</span>
-                      <input
-                        type="time"
-                        id="override-closes"
-                        defaultValue="21:00"
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '0.25rem',
-                          border: '1px solid #d1d5db',
-                        }}
-                      />
-                      <input
-                        type="text"
-                        id="override-reason"
-                        placeholder="Reason (e.g., Holiday)"
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '0.25rem',
-                          border: '1px solid #d1d5db',
-                          flex: '1',
-                          minWidth: '150px',
-                        }}
-                      />
-                      <label
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        <input type="checkbox" id="override-closed" />
-                        Closed
-                      </label>
-                      <button
-                        onClick={() => {
-                          const date = document.getElementById('override-date').value;
-                          const opens = document.getElementById('override-opens').value;
-                          const closes = document.getElementById('override-closes').value;
-                          const reason = document.getElementById('override-reason').value;
-                          const isClosed = document.getElementById('override-closed').checked;
-                          if (date) {
-                            addHoursOverride(
-                              date,
-                              isClosed ? null : opens + ':00',
-                              isClosed ? null : closes + ':00',
-                              isClosed,
-                              reason || null
-                            );
-                          }
-                        }}
-                        style={{
-                          padding: '0.25rem 0.75rem',
-                          backgroundColor: '#2563eb',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '0.25rem',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Add
-                      </button>
-                    </div>
-
-                    {/* Existing Overrides */}
-                    {hoursOverrides.length > 0 ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {hoursOverrides.map((override) => (
-                          <div
-                            key={override.date}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              padding: '0.5rem 0.75rem',
-                              backgroundColor: override.is_closed ? '#fef2f2' : '#f0fdf4',
-                              borderRadius: '0.375rem',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            <span>
-                              <strong>
-                                {new Date(override.date + 'T12:00:00').toLocaleDateString('en-US', {
-                                  weekday: 'short',
-                                  month: 'short',
-                                  day: 'numeric',
-                                })}
-                              </strong>
-                              {override.reason && (
-                                <span style={{ color: '#6b7280' }}> — {override.reason}</span>
-                              )}
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              {override.is_closed ? (
-                                <span style={{ color: '#dc2626', fontWeight: '500' }}>Closed</span>
-                              ) : (
-                                <span>
-                                  {override.opens_at?.slice(0, 5)} -{' '}
-                                  {override.closes_at?.slice(0, 5)}
-                                </span>
-                              )}
-                              <button
-                                onClick={() => deleteHoursOverride(override.date)}
-                                style={{
-                                  padding: '0.125rem 0.5rem',
-                                  backgroundColor: '#fee2e2',
-                                  color: '#dc2626',
-                                  border: 'none',
-                                  borderRadius: '0.25rem',
-                                  cursor: 'pointer',
-                                  fontSize: '0.75rem',
-                                }}
-                              >
-                                Delete
-                              </button>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p style={{ color: '#6b7280', fontSize: '0.875rem', fontStyle: 'italic' }}>
-                        No upcoming schedule overrides
-                      </p>
-                    )}
+                      className="w-20 p-2 border rounded"
+                    />
                   </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Card 2: Regular Tennis Court Hours */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Regular Tennis Court Hours
+              </h3>
+              <div className="flex flex-col gap-2">
+                {operatingHours.map((day) => (
+                  <div
+                    key={day.day_of_week}
+                    className={`flex items-center gap-4 p-2 rounded-md ${
+                      day.is_closed ? 'bg-red-50' : 'bg-gray-50'
+                    }`}
+                  >
+                    <span className="w-24 font-medium">{day.day_name}</span>
+                    <label className="flex items-center gap-1 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={day.is_closed}
+                        onChange={(e) =>
+                          updateOperatingHours(
+                            day.day_of_week,
+                            day.opens_at,
+                            day.closes_at,
+                            e.target.checked
+                          )
+                        }
+                      />
+                      Closed
+                    </label>
+                    {!day.is_closed && (
+                      <>
+                        <input
+                          type="time"
+                          value={day.opens_at?.slice(0, 5) || '06:00'}
+                          onChange={(e) =>
+                            e.target.value &&
+                            updateOperatingHours(
+                              day.day_of_week,
+                              e.target.value + ':00',
+                              day.closes_at,
+                              false
+                            )
+                          }
+                          className="px-2 py-1 rounded border border-gray-300"
+                        />
+                        <span className="text-gray-500">to</span>
+                        <input
+                          type="time"
+                          value={day.closes_at?.slice(0, 5) || '21:00'}
+                          onChange={(e) =>
+                            e.target.value &&
+                            updateOperatingHours(
+                              day.day_of_week,
+                              day.opens_at,
+                              e.target.value + ':00',
+                              false
+                            )
+                          }
+                          className="px-2 py-1 rounded border border-gray-300"
+                        />
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Card 3: Holiday & Special Hours */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Holiday & Special Hours</h3>
+
+              {/* Add Override Form */}
+              <div className="flex flex-wrap gap-2 mb-4 p-3 bg-blue-50 rounded-md">
+                <input
+                  type="date"
+                  value={overrideDate}
+                  onChange={(e) => {
+                    setOverrideDate(e.target.value);
+                    setOverrideError('');
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={`px-2 py-1 rounded border ${overrideError && !overrideDate ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                <input
+                  type="time"
+                  value={overrideOpens}
+                  onChange={(e) => setOverrideOpens(e.target.value)}
+                  className="px-2 py-1 rounded border border-gray-300"
+                />
+                <span className="self-center text-gray-500">to</span>
+                <input
+                  type="time"
+                  value={overrideCloses}
+                  onChange={(e) => setOverrideCloses(e.target.value)}
+                  className="px-2 py-1 rounded border border-gray-300"
+                />
+                <input
+                  type="text"
+                  value={overrideReason}
+                  onChange={(e) => setOverrideReason(e.target.value)}
+                  placeholder="Reason (e.g., Holiday)"
+                  className="px-2 py-1 rounded border border-gray-300 flex-1 min-w-[150px]"
+                />
+                <label className="flex items-center gap-1 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={overrideClosed}
+                    onChange={(e) => setOverrideClosed(e.target.checked)}
+                  />
+                  Closed
+                </label>
+                <button
+                  onClick={() => {
+                    if (!overrideDate) {
+                      setOverrideError('Date is required');
+                      return;
+                    }
+                    addHoursOverride(
+                      overrideDate,
+                      overrideClosed ? null : overrideOpens + ':00',
+                      overrideClosed ? null : overrideCloses + ':00',
+                      overrideClosed,
+                      overrideReason || null
+                    );
+                    // Reset form after successful add
+                    setOverrideDate('');
+                    setOverrideOpens('06:00');
+                    setOverrideCloses('21:00');
+                    setOverrideReason('');
+                    setOverrideClosed(false);
+                    setOverrideError('');
+                  }}
+                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              {overrideError && <p className="text-red-600 text-sm mb-4 -mt-2">{overrideError}</p>}
+
+              {/* Existing Overrides */}
+              {hoursOverrides.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {hoursOverrides.map((override) => (
+                    <div
+                      key={override.date}
+                      className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
+                        override.is_closed ? 'bg-red-50' : 'bg-green-50'
+                      }`}
+                    >
+                      <span>
+                        <strong>
+                          {new Date(override.date + 'T12:00:00').toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </strong>
+                        {override.reason && (
+                          <span className="text-gray-500"> — {override.reason}</span>
+                        )}
+                      </span>
+                      <span className="flex items-center gap-3">
+                        {override.is_closed ? (
+                          <span className="text-red-600 font-medium">Closed</span>
+                        ) : (
+                          <span>
+                            {override.opens_at?.slice(0, 5)} - {override.closes_at?.slice(0, 5)}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => deleteHoursOverride(override.date)}
+                          className="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm italic">No upcoming schedule overrides</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* AI Assistant Button and Modal */}
