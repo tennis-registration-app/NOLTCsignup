@@ -175,6 +175,7 @@ const CompleteBlockManagerEnhanced = ({
   QuickActionsMenu,
   Tennis,
   backend, // TennisBackend for API calls
+  hoursOverrides = [], // Holiday/special hours for calendar indicators
   initialEditingBlock = null,
   onEditingBlockConsumed = null,
 }) => {
@@ -651,6 +652,7 @@ const CompleteBlockManagerEnhanced = ({
           refreshTrigger={refreshTrigger}
           onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
           backend={backend}
+          hoursOverrides={hoursOverrides}
           MonthView={MonthView}
           EventSummary={EventSummary}
           HoverCard={HoverCard}

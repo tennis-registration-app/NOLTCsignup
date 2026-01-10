@@ -22,6 +22,7 @@ const EventCalendarEnhanced = ({
   defaultView = 'week',
   disableEventClick = false,
   backend,
+  hoursOverrides = [],
   // These components are passed from parent until they're extracted
   MonthView,
   EventSummary,
@@ -481,6 +482,7 @@ const EventCalendarEnhanced = ({
                 selectedDate={selectedDate}
                 events={filteredEvents}
                 currentTime={currentTime}
+                hoursOverrides={hoursOverrides}
                 onEventClick={handleEventClick}
               />
             )}
@@ -490,6 +492,7 @@ const EventCalendarEnhanced = ({
                   selectedDate={selectedDate}
                   events={filteredEvents}
                   currentTime={currentTime}
+                  hoursOverrides={hoursOverrides}
                   onEventClick={handleEventClick}
                   onEventHover={handleEventHover}
                   onEventLeave={handleEventLeave}
@@ -504,6 +507,7 @@ const EventCalendarEnhanced = ({
                   selectedDate={selectedDate}
                   events={filteredEvents}
                   currentTime={currentTime}
+                  hoursOverrides={hoursOverrides}
                   onEventClick={handleEventClick}
                   onEventHover={handleEventHover}
                   onEventLeave={handleEventLeave}

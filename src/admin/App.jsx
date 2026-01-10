@@ -895,103 +895,135 @@ const DayView = memo(
 // Note: DayViewEnhanced moved to ./calendar/DayViewEnhanced.jsx
 
 // Month View Component with memoization
-const MonthView = memo(({ selectedDate, events, currentTime, onEventClick }) => {
-  const { start, end, calendarDays, eventsByDate } = useMemo(() => {
-    const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-    const startingDayOfWeek = firstDay.getDay();
-    const daysInMonth = new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth() + 1,
-      0
-    ).getDate();
+const MonthView = memo(
+  ({ selectedDate, events, currentTime, hoursOverrides = [], onEventClick }) => {
+    // Create a map for quick lookup of overrides by date
+    const overridesByDate = useMemo(() => {
+      const map = {};
+      hoursOverrides.forEach((o) => {
+        map[o.date] = o;
+      });
+      return map;
+    }, [hoursOverrides]);
 
-    const days = [];
-    // Add empty cells for days before month starts
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-    // Add days of month
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i));
-    }
+    const { start, end, calendarDays, eventsByDate } = useMemo(() => {
+      const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+      const startingDayOfWeek = firstDay.getDay();
+      const daysInMonth = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1,
+        0
+      ).getDate();
 
-    // Group events by date
-    const evtsByDate = {};
-    events.forEach((event) => {
-      const dateKey = new Date(event.startTime).toDateString();
-      if (!evtsByDate[dateKey]) {
-        evtsByDate[dateKey] = [];
+      const days = [];
+      // Add empty cells for days before month starts
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        days.push(null);
       }
-      evtsByDate[dateKey].push(event);
-    });
+      // Add days of month
+      for (let i = 1; i <= daysInMonth; i++) {
+        days.push(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i));
+      }
 
-    return {
-      start: firstDay,
-      end: new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999),
-      calendarDays: days,
-      eventsByDate: evtsByDate,
-    };
-  }, [selectedDate, events]);
+      // Group events by date
+      const evtsByDate = {};
+      events.forEach((event) => {
+        const dateKey = new Date(event.startTime).toDateString();
+        if (!evtsByDate[dateKey]) {
+          evtsByDate[dateKey] = [];
+        }
+        evtsByDate[dateKey].push(event);
+      });
 
-  return (
-    <div>
-      <div className="grid grid-cols-7 gap-px bg-gray-200">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="bg-gray-50 p-2 text-center text-sm font-medium">
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-px bg-gray-200 mt-px">
-        {calendarDays.map((date, index) => {
-          const isToday = date && date.toDateString() === currentTime.toDateString();
-          const dateEvents = date ? eventsByDate[date.toDateString()] || [] : [];
+      return {
+        start: firstDay,
+        end: new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999),
+        calendarDays: days,
+        eventsByDate: evtsByDate,
+      };
+    }, [selectedDate, events]);
 
-          return (
-            <div
-              key={index}
-              className={`bg-white p-2 min-h-[100px] ${
-                !date ? 'bg-gray-50' : ''
-              } ${isToday ? 'bg-blue-50' : ''}`}
-            >
-              {date && (
-                <>
-                  <div
-                    className={`text-sm font-medium mb-1 ${
-                      isToday ? 'text-blue-600' : 'text-gray-900'
-                    }`}
-                  >
-                    {date.getDate()}
-                  </div>
-                  <div className="space-y-1">
-                    {dateEvents.slice(0, 2).map((event, idx) => {
-                      const Icon = getEventIcon(event.eventDetails?.type);
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => onEventClick(event)}
-                          className={`text-xs p-1 rounded flex items-center gap-1 cursor-pointer hover:opacity-80 ${getEventColor(event)}`}
-                        >
-                          <Icon size={10} />
-                          <span className="truncate">
-                            {event.eventDetails?.title || event.reason}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {dateEvents.length > 2 && (
-                      <div className="text-xs text-gray-500">+{dateEvents.length - 2} more</div>
-                    )}
-                  </div>
-                </>
-              )}
+    return (
+      <div>
+        <div className="grid grid-cols-7 gap-px bg-gray-200">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            <div key={day} className="bg-gray-50 p-2 text-center text-sm font-medium">
+              {day}
             </div>
-          );
-        })}
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-px bg-gray-200 mt-px">
+          {calendarDays.map((date, index) => {
+            const isToday = date && date.toDateString() === currentTime.toDateString();
+            const dateEvents = date ? eventsByDate[date.toDateString()] || [] : [];
+            // Check for holiday/override on this day
+            const dateStr = date ? date.toISOString().slice(0, 10) : null;
+            const override = dateStr ? overridesByDate[dateStr] : null;
+
+            return (
+              <div
+                key={index}
+                className={`relative group bg-white p-2 min-h-[100px] ${
+                  !date ? 'bg-gray-50' : ''
+                } ${override?.is_closed ? 'bg-red-50' : override ? 'bg-orange-50' : isToday ? 'bg-blue-50' : ''}`}
+              >
+                {date && (
+                  <>
+                    <div
+                      className={`text-sm font-medium mb-1 flex items-center gap-1 ${
+                        override?.is_closed
+                          ? 'text-red-600'
+                          : isToday
+                            ? 'text-blue-600'
+                            : 'text-gray-900'
+                      }`}
+                    >
+                      {date.getDate()}
+                      {override && (
+                        <span
+                          className={`w-2 h-2 rounded-full ${override.is_closed ? 'bg-red-500' : 'bg-orange-400'}`}
+                        />
+                      )}
+                    </div>
+                    {/* Hover tooltip for holiday/override */}
+                    {override && (
+                      <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 top-1 right-1 whitespace-nowrap z-50 shadow-lg">
+                        {override.reason || 'Special Hours'}
+                        {override.is_closed
+                          ? ' (CLOSED)'
+                          : `: ${override.opens_at?.slice(0, 5)} - ${override.closes_at?.slice(0, 5)}`}
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      {dateEvents.slice(0, 2).map((event, idx) => {
+                        const Icon = getEventIcon(event.eventDetails?.type);
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => onEventClick(event)}
+                            className={`text-xs p-1 rounded flex items-center gap-1 cursor-pointer hover:opacity-80 ${getEventColor(event)}`}
+                          >
+                            <Icon size={10} />
+                            <span className="truncate">
+                              {event.eventDetails?.title || event.reason}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {dateEvents.length > 2 && (
+                        <div className="text-xs text-gray-500">+{dateEvents.length - 2} more</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 // Event Summary Component
 const EventSummary = memo(({ events, currentTime, onEventClick }) => {
@@ -1068,6 +1100,12 @@ const AdminPanelV2 = ({ onExit }) => {
   const [calendarView, setCalendarView] = useState('day');
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Local state for price inputs (allows typing before blur-save)
+  const [ballPriceInput, setBallPriceInput] = useState('');
+  const [weekdayFeeInput, setWeekdayFeeInput] = useState('');
+  const [weekendFeeInput, setWeekendFeeInput] = useState('');
+
   const ENABLE_WET_COURTS = true;
 
   const handleEmergencyWetCourt = async () => {
@@ -1241,6 +1279,19 @@ const AdminPanelV2 = ({ onExit }) => {
     window.addEventListener('ADMIN_REFRESH', onAdminRefresh);
     return () => window.removeEventListener('ADMIN_REFRESH', onAdminRefresh);
   }, []);
+
+  // Sync local price inputs when settings load
+  useEffect(() => {
+    if (settings.tennisBallPrice !== undefined) {
+      setBallPriceInput(settings.tennisBallPrice.toFixed(2));
+    }
+    if (settings.guestFees?.weekday !== undefined) {
+      setWeekdayFeeInput(settings.guestFees.weekday.toFixed(2));
+    }
+    if (settings.guestFees?.weekend !== undefined) {
+      setWeekendFeeInput(settings.guestFees.weekend.toFixed(2));
+    }
+  }, [settings.tennisBallPrice, settings.guestFees?.weekday, settings.guestFees?.weekend]);
 
   // Save data to localStorage
   const saveData = useCallback(
@@ -2056,6 +2107,7 @@ const AdminPanelV2 = ({ onExit }) => {
               defaultView={calendarView}
               disableEventClick={true}
               backend={backend}
+              hoursOverrides={hoursOverrides}
               MonthView={MonthView}
               EventSummary={EventSummary}
               HoverCard={HoverCard}
@@ -2089,6 +2141,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
                   backend={backend}
+                  hoursOverrides={hoursOverrides}
                   initialEditingBlock={blockToEdit}
                   onEditingBlockConsumed={() => setBlockToEdit(null)}
                 />
@@ -2117,6 +2170,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
                   backend={backend}
+                  hoursOverrides={hoursOverrides}
                 />
               )}
 
@@ -2143,6 +2197,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   QuickActionsMenu={QuickActionsMenu}
                   Tennis={window.Tennis}
                   backend={backend}
+                  hoursOverrides={hoursOverrides}
                 />
               )}
             </div>
@@ -2224,10 +2279,18 @@ const AdminPanelV2 = ({ onExit }) => {
                   <div className="flex items-center gap-2">
                     <span className="text-gray-500">$</span>
                     <input
-                      type="number"
-                      step="0.01"
-                      value={settings.tennisBallPrice || TENNIS_CONFIG.PRICING.TENNIS_BALLS}
-                      onChange={(e) => updateBallPrice(e.target.value)}
+                      type="text"
+                      inputMode="decimal"
+                      value={ballPriceInput}
+                      onChange={(e) => setBallPriceInput(e.target.value)}
+                      onBlur={() => {
+                        const parsed = parseFloat(ballPriceInput);
+                        if (!isNaN(parsed) && parsed >= 0) {
+                          updateBallPrice(parsed);
+                        } else {
+                          setBallPriceInput(settings.tennisBallPrice?.toFixed(2) || '5.00');
+                        }
+                      }}
                       className="w-32 p-2 border rounded"
                     />
                   </div>
@@ -2245,10 +2308,20 @@ const AdminPanelV2 = ({ onExit }) => {
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500">$</span>
                         <input
-                          type="number"
-                          step="0.01"
-                          value={settings.guestFees?.weekday || 15.0}
-                          onChange={(e) => updateWeekdayGuestFee(e.target.value)}
+                          type="text"
+                          inputMode="decimal"
+                          value={weekdayFeeInput}
+                          onChange={(e) => setWeekdayFeeInput(e.target.value)}
+                          onBlur={() => {
+                            const parsed = parseFloat(weekdayFeeInput);
+                            if (!isNaN(parsed) && parsed >= 0) {
+                              updateWeekdayGuestFee(parsed);
+                            } else {
+                              setWeekdayFeeInput(
+                                settings.guestFees?.weekday?.toFixed(2) || '15.00'
+                              );
+                            }
+                          }}
                           className="w-32 p-2 border rounded"
                         />
                       </div>
@@ -2262,10 +2335,20 @@ const AdminPanelV2 = ({ onExit }) => {
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500">$</span>
                         <input
-                          type="number"
-                          step="0.01"
-                          value={settings.guestFees?.weekend || 20.0}
-                          onChange={(e) => updateWeekendGuestFee(e.target.value)}
+                          type="text"
+                          inputMode="decimal"
+                          value={weekendFeeInput}
+                          onChange={(e) => setWeekendFeeInput(e.target.value)}
+                          onBlur={() => {
+                            const parsed = parseFloat(weekendFeeInput);
+                            if (!isNaN(parsed) && parsed >= 0) {
+                              updateWeekendGuestFee(parsed);
+                            } else {
+                              setWeekendFeeInput(
+                                settings.guestFees?.weekend?.toFixed(2) || '20.00'
+                              );
+                            }
+                          }}
                           className="w-32 p-2 border rounded"
                         />
                       </div>
