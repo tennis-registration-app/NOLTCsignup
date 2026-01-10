@@ -837,7 +837,7 @@ function TennisCourtDisplay() {
                 courtBlocks={courtBlocks}
               />
               <div className="courts-grid-bottom">
-                {[9, 10, 11, 12].map((num) => (
+                {[12, 11, 10, 9].map((num) => (
                   <div key={num} className="flex justify-center">
                     <CourtCard
                       courtNumber={num}
