@@ -76,6 +76,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
       if (backend) {
         try {
           const result = await backend.admin.getTransactions({ type: 'ball_purchase', limit: 500 });
+          console.log('[Analytics] Ball purchases result:', result);
           if (result.ok && result.transactions) {
             // Transform API response to match expected shape
             ballPurchasesData = result.transactions.map((t) => ({

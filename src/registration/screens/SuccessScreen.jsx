@@ -8,7 +8,8 @@
  * Props:
  * - isCourtAssignment: boolean - Whether this is a court assignment (vs waitlist)
  * - justAssignedCourt: number - Court number just assigned
- * - assignedCourt: object - Court assignment details (includes session.id for API)
+ * - assignedCourt: object - Court assignment details (from state, may not have session.id immediately)
+ * - sessionId: string - Session ID from assignment result (preferred for ball purchases)
  * - replacedGroup: object - Previous group that was replaced (if any)
  * - canChangeCourt: boolean - Whether court can be changed
  * - changeTimeRemaining: number - Seconds remaining to change court
@@ -52,6 +53,7 @@ const SuccessScreen = ({
   isCourtAssignment,
   justAssignedCourt,
   assignedCourt,
+  sessionId: sessionIdProp, // Direct session ID from assignment (preferred)
   replacedGroup,
   canChangeCourt,
   changeTimeRemaining,
@@ -90,6 +92,12 @@ const SuccessScreen = ({
 
   const handleBallPurchase = useCallback(async () => {
     try {
+      // Debug: Log all session ID sources at start
+      console.log('[Ball Purchase] Handler called', {
+        sessionIdProp,
+        assignedCourtSessionId: assignedCourt?.session?.id,
+        primaryAccountId: currentGroup[0]?.accountId,
+      });
       console.log('[handleBallPurchase] Starting purchase process:', {
         ballPurchaseOption,
         ballPrice,
@@ -118,7 +126,8 @@ const SuccessScreen = ({
       }
 
       // Use TennisBackend for ball purchase
-      const sessionId = assignedCourt?.session?.id;
+      // Prefer direct sessionId prop (from assignment result), fallback to assignedCourt.session.id (from state)
+      const sessionId = sessionIdProp || assignedCourt?.session?.id;
 
       // Get account ID from multiple sources:
       // 1. currentGroup player's accountId (if enriched)
@@ -183,10 +192,16 @@ const SuccessScreen = ({
           }
         }
 
+        console.log('[Ball Purchase] Calling onPurchaseBalls', {
+          sessionId,
+          primaryAccountId,
+          options: { splitBalls: isSplit, splitAccountIds },
+        });
         const result = await onPurchaseBalls(sessionId, primaryAccountId, {
           splitBalls: isSplit,
           splitAccountIds: splitAccountIds,
         });
+        console.log('[Ball Purchase] API result', result);
 
         if (result.ok) {
           console.log('[handleBallPurchase] Ball purchase successful:', result);
@@ -205,6 +220,7 @@ const SuccessScreen = ({
       }
 
       // Fallback to localStorage if API not available or failed
+      console.log('[Ball Purchase] FALLBACK to localStorage - API not available');
       console.log('[handleBallPurchase] Using localStorage fallback');
 
       /** Return the raw member number for a player (never masked). */
@@ -278,6 +294,7 @@ const SuccessScreen = ({
     splitPrice,
     getLastFourDigits,
     assignedCourt,
+    sessionIdProp,
     onPurchaseBalls,
     onLookupMemberAccount,
   ]);

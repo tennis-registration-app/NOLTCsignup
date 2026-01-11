@@ -584,6 +584,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [justAssignedCourt, setJustAssignedCourt] = useState(null);
+  const [assignedSessionId, setAssignedSessionId] = useState(null); // Session ID from assignment (for ball purchases)
   const [replacedGroup, setReplacedGroup] = useState(null);
   const [displacement, setDisplacement] = useState(null);
   // Shape: { displacedSessionId, displacedCourtId, takeoverSessionId, restoreUntil } | null
@@ -1415,6 +1416,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         // Update UI state
         setJustAssignedCourt(courtNumber);
+        setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
         setReplacedGroup(null);
         setDisplacement(null);
         setOriginalCourtData(null);
@@ -1549,6 +1551,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
     // Update UI state based on result
     setJustAssignedCourt(courtNumber);
+    setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
 
     // Construct replacedGroup from displacement.participants for SuccessScreen messaging
     const replacedGroupFromDisplacement =
@@ -1819,6 +1822,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setMemberNumber('');
     setCurrentMemberId(null);
     setJustAssignedCourt(null);
+    setAssignedSessionId(null); // Clear session ID from previous assignment
     setReplacedGroup(null);
     setDisplacement(null);
     setOriginalCourtData(null);
@@ -2966,6 +2970,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           isCourtAssignment={isCourtAssignment}
           justAssignedCourt={justAssignedCourt}
           assignedCourt={assignedCourt}
+          sessionId={assignedSessionId}
           replacedGroup={replacedGroup}
           canChangeCourt={canChangeCourt}
           changeTimeRemaining={changeTimeRemaining}
@@ -2983,12 +2988,19 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           onHome={resetForm}
           ballPriceCents={ballPriceCents}
           onPurchaseBalls={async (sessionId, accountId, options) => {
-            return backend.commands.purchaseBalls({
+            console.log('[Ball Purchase] App.jsx handler called', {
+              sessionId,
+              accountId,
+              options,
+            });
+            const result = await backend.commands.purchaseBalls({
               sessionId,
               accountId,
               splitBalls: options?.splitBalls || false,
               splitAccountIds: options?.splitAccountIds || null,
             });
+            console.log('[Ball Purchase] API result from backend.commands.purchaseBalls', result);
+            return result;
           }}
           onLookupMemberAccount={async (memberNumber) => {
             const members = await backend.directory.getMembersByAccount(memberNumber);
