@@ -57,24 +57,10 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
   const [sortOrder, setSortOrder] = useState('desc');
 
   const filteredPurchases = useMemo(() => {
-    console.log('📊 BallPurchaseLog filtering:', {
-      totalPurchases: purchases?.length,
-      dateRangeStart: dateRange.start,
-      dateRangeEnd: dateRange.end,
-      firstPurchaseTimestamp: purchases?.[0]?.timestamp,
-    });
-
-    const result = purchases.filter((purchase) => {
+    return purchases.filter((purchase) => {
       const purchaseDate = new Date(purchase.timestamp);
-      const passes = purchaseDate >= dateRange.start && purchaseDate <= dateRange.end;
-      if (!passes) {
-        console.log('📊 Filtered out:', purchase.timestamp, purchaseDate.toISOString());
-      }
-      return passes;
+      return purchaseDate >= dateRange.start && purchaseDate <= dateRange.end;
     });
-
-    console.log('📊 After filter:', result.length, 'of', purchases?.length);
-    return result;
   }, [purchases, dateRange]);
 
   const sortedPurchases = useMemo(() => {
