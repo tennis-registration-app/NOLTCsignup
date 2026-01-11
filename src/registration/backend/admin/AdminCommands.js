@@ -354,4 +354,30 @@ export class AdminCommands {
   async getAnalytics({ start, end }) {
     return this.api.post('/get-analytics', { start, end });
   }
+
+  /**
+   * Get usage comparison data for bar chart
+   * @param {Object} params
+   * @param {string} params.metric - 'usage' (Phase 2: 'waittime')
+   * @param {string} params.primaryStart - ISO date YYYY-MM-DD
+   * @param {string} params.primaryEnd - ISO date YYYY-MM-DD
+   * @param {string} params.granularity - 'auto' | 'day' | 'week' | 'month'
+   * @param {string|null} params.comparisonStart - ISO date or null
+   * @returns {Promise<{metric: string, unit: string, granularity: string, primary: Object, comparison: Object|null}>}
+   */
+  async getUsageComparison({
+    metric = 'usage',
+    primaryStart,
+    primaryEnd,
+    granularity = 'auto',
+    comparisonStart = null,
+  }) {
+    return this.api.post('/get-usage-comparison', {
+      metric,
+      primaryStart,
+      primaryEnd,
+      granularity,
+      comparisonStart,
+    });
+  }
 }

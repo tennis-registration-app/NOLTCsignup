@@ -3,7 +3,7 @@
  *
  * Main analytics dashboard with court usage, ball purchases, and guest charges.
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   UsageHeatmap,
   UtilizationChart,
@@ -12,6 +12,9 @@ import {
   GuestChargeLog,
   WaitlistHeatmap,
   useAnalyticsQuery,
+  useUsageComparisonQuery,
+  UsageComparisonControls,
+  UsageComparisonChart,
 } from '../analytics';
 
 // Access global dependencies
@@ -55,6 +58,25 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
   const [ballPurchases, setBallPurchases] = useState([]);
   const [guestCharges, setGuestCharges] = useState([]);
 
+  // Usage Comparison state
+  const [usageMetric, setUsageMetric] = useState('usage');
+  const [usagePrimaryStart, setUsagePrimaryStart] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [usagePrimaryEnd, setUsagePrimaryEnd] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+  const [usageGranularity, setUsageGranularity] = useState('auto');
+  const [usageComparisonEnabled, setUsageComparisonEnabled] = useState(false);
+  const [usageComparisonStart, setUsageComparisonStart] = useState(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split('T')[0];
+  });
+
   // Unified analytics data via hook
   const getAnalyticsFn = useCallback(
     (params) => backend?.admin?.getAnalytics(params) || Promise.resolve({ ok: false }),
@@ -65,6 +87,38 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
     loading: analyticsLoading,
     error: analyticsError,
   } = useAnalyticsQuery(getAnalyticsFn, dateRange);
+
+  // Usage Comparison data
+  const {
+    data: usageComparisonData,
+    loading: usageComparisonLoading,
+    error: usageComparisonError,
+    effectiveGranularity,
+  } = useUsageComparisonQuery({
+    metric: usageMetric,
+    primaryStart: usagePrimaryStart,
+    primaryEnd: usagePrimaryEnd,
+    granularity: usageGranularity,
+    comparisonStart: usageComparisonEnabled ? usageComparisonStart : null,
+  });
+
+  // Calculate comparison end date for display
+  const comparisonEnd = useMemo(() => {
+    if (
+      !usageComparisonEnabled ||
+      !usageComparisonStart ||
+      !usagePrimaryStart ||
+      !usagePrimaryEnd
+    ) {
+      return null;
+    }
+    const primaryDays = Math.ceil(
+      (new Date(usagePrimaryEnd) - new Date(usagePrimaryStart)) / (1000 * 60 * 60 * 24)
+    );
+    const endDate = new Date(usageComparisonStart);
+    endDate.setDate(endDate.getDate() + primaryDays);
+    return endDate.toISOString().split('T')[0];
+  }, [usageComparisonEnabled, usageComparisonStart, usagePrimaryStart, usagePrimaryEnd]);
 
   // Load transactions data
   useEffect(() => {
@@ -288,6 +342,33 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="text-lg font-semibold mb-4">Waitlist Congestion</h3>
                 <WaitlistHeatmap heatmapData={analyticsResult?.waitlistHeatmap || []} />
+              </div>
+            </div>
+
+            {/* Usage Comparison Section */}
+            <div className="mt-8">
+              <UsageComparisonControls
+                metric={usageMetric}
+                onMetricChange={setUsageMetric}
+                primaryStart={usagePrimaryStart}
+                primaryEnd={usagePrimaryEnd}
+                onPrimaryStartChange={setUsagePrimaryStart}
+                onPrimaryEndChange={setUsagePrimaryEnd}
+                granularity={usageGranularity}
+                onGranularityChange={setUsageGranularity}
+                comparisonEnabled={usageComparisonEnabled}
+                onComparisonEnabledChange={setUsageComparisonEnabled}
+                comparisonStart={usageComparisonStart}
+                onComparisonStartChange={setUsageComparisonStart}
+                effectiveGranularity={effectiveGranularity}
+                comparisonEnd={comparisonEnd}
+              />
+              <div className="mt-4">
+                <UsageComparisonChart
+                  data={usageComparisonData}
+                  loading={usageComparisonLoading}
+                  error={usageComparisonError}
+                />
               </div>
             </div>
           </div>
