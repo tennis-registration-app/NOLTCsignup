@@ -47,9 +47,7 @@ export function UsageComparisonControls({
             className="rounded-md border-gray-300 shadow-sm text-sm focus:border-blue-500 focus:ring-blue-500"
           >
             <option value="usage">Court Usage</option>
-            <option value="waittime" disabled>
-              Wait Time (coming soon)
-            </option>
+            <option value="waittime">Wait Time</option>
           </select>
         </div>
 
