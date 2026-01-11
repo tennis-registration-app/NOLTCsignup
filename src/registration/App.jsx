@@ -3343,6 +3343,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               }
               setDisplacement(null); // Clear ONLY after court change is complete
             }
+            console.log(
+              '[Change Court Debug] availableCourts at selection:',
+              availableCourts,
+              'length:',
+              availableCourts.length
+            );
             await assignCourtToGroup(courtNum, availableCourts.length);
             // setDisplacement(null) removed from here - it was clearing the state prematurely
             setIsChangingCourt(false);
