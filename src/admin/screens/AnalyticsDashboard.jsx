@@ -58,6 +58,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
   const [waitlistData, setWaitlistData] = useState([]);
   const [ballPurchases, setBallPurchases] = useState([]);
   const [guestCharges, setGuestCharges] = useState([]);
+  const [heatmapData, setHeatmapData] = useState([]);
 
   // Load data from localStorage with auto-refresh
   useEffect(() => {
@@ -118,11 +119,17 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
       console.log('📊 Guest charges found:', guestChargesData.length);
       setGuestCharges(guestChargesData);
 
-      // Generate sample data if none exists (for testing)
-      if (dataStore && !analyticsData.length) {
-        const storedAnalytics = await dataStore.get(TENNIS_CONFIG.STORAGE.ANALYTICS_KEY);
-        if (!storedAnalytics) {
-          generateSampleAnalytics();
+      // Load usage heatmap data from API
+      console.log('📊 Loading usage heatmap...');
+      if (backend) {
+        try {
+          const result = await backend.admin.getUsageAnalytics(90);
+          console.log('[Analytics] Heatmap result:', result);
+          if (result.ok && result.heatmap) {
+            setHeatmapData(result.heatmap);
+          }
+        } catch (err) {
+          console.error('Failed to fetch usage heatmap:', err);
         }
       }
     };
@@ -150,41 +157,6 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
       window.removeEventListener('tennisDataUpdate', handleDataUpdate);
     };
   }, []);
-
-  // Generate sample analytics data for testing
-  const generateSampleAnalytics = () => {
-    const sampleData = [];
-    const now = new Date();
-
-    for (let days = 0; days < 30; days++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - days);
-
-      // Generate 20-40 sessions per day
-      const sessionsPerDay = 20 + Math.floor(Math.random() * 20);
-
-      for (let i = 0; i < sessionsPerDay; i++) {
-        const hour = 7 + Math.floor(Math.random() * 14); // 7 AM to 9 PM
-        const startTime = new Date(date);
-        startTime.setHours(hour, Math.floor(Math.random() * 60), 0, 0);
-
-        sampleData.push({
-          id: `session_${days}_${i}`,
-          courtNumber: Math.floor(Math.random() * 12) + 1,
-          startTime: startTime.toISOString(),
-          duration: 60 + Math.floor(Math.random() * 60), // 60-120 minutes
-          playerCount: Math.floor(Math.random() * 3) + 2, // 2-4 players
-          dayOfWeek: startTime.getDay(),
-          hourOfDay: startTime.getHours(),
-        });
-      }
-    }
-
-    if (dataStore) {
-      dataStore.set(TENNIS_CONFIG.STORAGE.ANALYTICS_KEY, sampleData, { immediate: true });
-    }
-    setAnalyticsData(sampleData);
-  };
 
   // Filter data by date range
   const filteredAnalytics = useMemo(() => {
@@ -320,7 +292,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
               <UtilizationChart analyticsData={filteredAnalytics} dateRange={dateRange} />
               <WaitTimeAnalysis waitlistData={waitlistData} />
             </div>
-            <UsageHeatmap analyticsData={filteredAnalytics} />
+            <UsageHeatmap heatmapData={heatmapData} />
           </div>
         )}
 

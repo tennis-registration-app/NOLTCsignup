@@ -334,4 +334,13 @@ export class AdminCommands {
 
     return this.api.get(`/get-session-history?${params.toString()}`);
   }
+
+  /**
+   * Get usage analytics heatmap data
+   * @param {number} [days=90] - Number of days to analyze (7-365)
+   * @returns {Promise<{ok: boolean, heatmap: Array<{day_of_week: number, hour: number, session_count: number}>, daysAnalyzed: number}>}
+   */
+  async getUsageAnalytics(days = 90) {
+    return this.api.post('/get-usage-analytics', { days });
+  }
 }
