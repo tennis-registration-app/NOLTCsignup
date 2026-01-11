@@ -2,6 +2,7 @@
  * UsageHeatmap Component
  *
  * Displays court usage patterns as a heatmap by day and hour.
+ * Horizontal orientation: hours on x-axis, days on y-axis.
  * Accepts pre-aggregated data from the backend.
  */
 import React, { useMemo } from 'react';
@@ -42,34 +43,34 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
   };
 
   const formatHour = (hour) => {
-    if (hour === 12) return '12pm';
-    if (hour > 12) return `${hour - 12}pm`;
-    return `${hour}am`;
+    if (hour === 12) return '12p';
+    if (hour > 12) return `${hour - 12}p`;
+    return `${hour}a`;
   };
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <h3 className="text-lg font-semibold mb-4">Peak Usage Times</h3>
       <div className="overflow-x-auto">
-        <div className="inline-grid gap-1" style={{ gridTemplateColumns: `auto repeat(7, 1fr)` }}>
-          {/* Header row */}
+        <div className="inline-grid gap-1" style={{ gridTemplateColumns: `auto repeat(15, 1fr)` }}>
+          {/* Header row - hours */}
           <div></div>
-          {days.map((day) => (
-            <div key={day} className="text-center text-xs font-medium text-gray-600 px-2">
-              {day}
+          {hours.map((hour) => (
+            <div key={hour} className="text-center text-xs font-medium text-gray-600 px-1">
+              {formatHour(hour)}
             </div>
           ))}
 
-          {/* Data rows */}
-          {hours.map((hour) => (
-            <React.Fragment key={`row-${hour}`}>
+          {/* Data rows - days */}
+          {days.map((dayName, dayIndex) => (
+            <React.Fragment key={`row-${dayIndex}`}>
               <div className="text-xs text-gray-600 pr-2 text-right whitespace-nowrap">
-                {formatHour(hour)}
+                {dayName}
               </div>
-              {days.map((_, dayIndex) => (
+              {hours.map((hour) => (
                 <div
                   key={`${dayIndex}-${hour}`}
-                  className={`w-8 h-6 rounded ${getColor(dayIndex, hour)} transition-colors relative`}
+                  className={`w-6 h-6 rounded ${getColor(dayIndex, hour)} transition-colors relative`}
                 >
                   {getCount(dayIndex, hour) > 0 && (
                     <div className="absolute inset-0 flex items-center justify-center text-xs font-medium text-gray-800">

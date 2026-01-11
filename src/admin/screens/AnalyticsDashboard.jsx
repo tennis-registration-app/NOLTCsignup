@@ -10,6 +10,7 @@ import {
   WaitTimeAnalysis,
   BallPurchaseLog,
   GuestChargeLog,
+  WaitlistHeatmap,
   useAnalyticsQuery,
 } from '../analytics';
 
@@ -51,7 +52,6 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
     start: new Date(new Date().setDate(new Date().getDate() - 7)),
     end: endOfDay(new Date()),
   });
-  const [waitlistData] = useState([]);
   const [ballPurchases, setBallPurchases] = useState([]);
   const [guestCharges, setGuestCharges] = useState([]);
 
@@ -277,9 +277,19 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
                 loading={analyticsLoading}
                 dateRange={dateRange}
               />
-              <WaitTimeAnalysis waitlistData={waitlistData} />
+              <WaitTimeAnalysis
+                waitlistData={analyticsResult?.waitlist || []}
+                loading={analyticsLoading}
+              />
             </div>
-            <UsageHeatmap heatmapData={analyticsResult?.heatmap || []} />
+            {/* Heatmaps row - side by side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <UsageHeatmap heatmapData={analyticsResult?.heatmap || []} />
+              <div className="bg-white rounded-lg shadow p-4">
+                <h3 className="text-lg font-semibold mb-4">Waitlist Congestion</h3>
+                <WaitlistHeatmap heatmapData={analyticsResult?.waitlistHeatmap || []} />
+              </div>
+            </div>
           </div>
         )}
 
