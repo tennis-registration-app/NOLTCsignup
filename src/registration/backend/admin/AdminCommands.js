@@ -343,4 +343,15 @@ export class AdminCommands {
   async getUsageAnalytics(days = 90) {
     return this.api.post('/get-usage-analytics', { days });
   }
+
+  /**
+   * Get unified analytics data (summary + heatmap)
+   * @param {Object} params
+   * @param {string} params.start - Start date (YYYY-MM-DD)
+   * @param {string} params.end - End date (YYYY-MM-DD, inclusive)
+   * @returns {Promise<{ok: boolean, summary: Object, heatmap: Array}>}
+   */
+  async getAnalytics({ start, end }) {
+    return this.api.post('/get-analytics', { start, end });
+  }
 }

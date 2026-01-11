@@ -3,27 +3,24 @@
  *
  * Main analytics dashboard with court usage, ball purchases, and guest charges.
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   UsageHeatmap,
   UtilizationChart,
   WaitTimeAnalysis,
   BallPurchaseLog,
   GuestChargeLog,
+  useAnalyticsQuery,
 } from '../analytics';
 
 // Access global dependencies
 const TENNIS_CONFIG = window.TENNIS_CONFIG ||
   window.APP_UTILS?.TENNIS_CONFIG || {
     STORAGE: {
-      ANALYTICS_KEY: 'tennisAnalytics',
-      BALL_SALES_KEY: 'tennisBallPurchases',
-      GUEST_CHARGES_KEY: 'tennisGuestCharges',
       UPDATE_EVENT: 'tennisDataUpdate',
     },
   };
 const EVENTS = window.APP_UTILS?.EVENTS || { UPDATE: 'tennisDataUpdate' };
-const dataStore = window.TennisCourtDataStore ? new window.TennisCourtDataStore() : null;
 
 // Debounce helper
 const debounce = (fn, ms = 150) => {
@@ -54,23 +51,24 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
     start: new Date(new Date().setDate(new Date().getDate() - 7)),
     end: endOfDay(new Date()),
   });
-  const [analyticsData, setAnalyticsData] = useState([]);
-  const [waitlistData, setWaitlistData] = useState([]);
+  const [waitlistData] = useState([]);
   const [ballPurchases, setBallPurchases] = useState([]);
   const [guestCharges, setGuestCharges] = useState([]);
-  const [heatmapData, setHeatmapData] = useState([]);
 
-  // Load data from localStorage with auto-refresh
+  // Unified analytics data via hook
+  const getAnalyticsFn = useCallback(
+    (params) => backend?.admin?.getAnalytics(params) || Promise.resolve({ ok: false }),
+    [backend]
+  );
+  const {
+    data: analyticsResult,
+    loading: analyticsLoading,
+    error: analyticsError,
+  } = useAnalyticsQuery(getAnalyticsFn, dateRange);
+
+  // Load transactions data
   useEffect(() => {
-    const loadAnalyticsData = async () => {
-      // Load analytics data
-      if (dataStore) {
-        const storedAnalytics = await dataStore.get(TENNIS_CONFIG.STORAGE.ANALYTICS_KEY);
-        if (storedAnalytics) {
-          setAnalyticsData(storedAnalytics);
-        }
-      }
-
+    const loadTransactionsData = async () => {
       // Load ball purchases from API
       console.log('📊 Loading ball purchases...');
       let ballPurchasesData = [];
@@ -118,53 +116,33 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
       }
       console.log('📊 Guest charges found:', guestChargesData.length);
       setGuestCharges(guestChargesData);
-
-      // Load usage heatmap data from API
-      console.log('📊 Loading usage heatmap...');
-      if (backend) {
-        try {
-          const result = await backend.admin.getUsageAnalytics(90);
-          console.log('[Analytics] Heatmap result:', result);
-          if (result.ok && result.heatmap) {
-            setHeatmapData(result.heatmap);
-          }
-        } catch (err) {
-          console.error('Failed to fetch usage heatmap:', err);
-        }
-      }
     };
 
     // Initial load
-    loadAnalyticsData();
+    loadTransactionsData();
 
     // Set up event listener for real-time updates
     const handleDataUpdate = debounce(() => {
       console.log('📡 Analytics received data update event, reloading...');
-      loadAnalyticsData();
+      loadTransactionsData();
     }, 150);
 
     window.addEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
     window.addEventListener(EVENTS.UPDATE, handleDataUpdate);
 
     // Set up auto-refresh every 30 seconds as backup
-    const refreshInterval = addTimer(setInterval(loadAnalyticsData, 30000));
+    const refreshInterval = addTimer(setInterval(loadTransactionsData, 30000));
 
     return () => {
       try {
         clearInterval(refreshInterval);
-      } catch {}
+      } catch {
+        // Interval may already be cleared
+      }
       window.removeEventListener(TENNIS_CONFIG.STORAGE.UPDATE_EVENT, handleDataUpdate);
       window.removeEventListener('tennisDataUpdate', handleDataUpdate);
     };
-  }, []);
-
-  // Filter data by date range
-  const filteredAnalytics = useMemo(() => {
-    return analyticsData.filter((entry) => {
-      const entryDate = new Date(entry.startTime);
-      return entryDate >= dateRange.start && entryDate <= dateRange.end;
-    });
-  }, [analyticsData, dateRange]);
+  }, [backend]);
 
   const handleDateRangeChange = (preset) => {
     const end = endOfDay(new Date());
@@ -288,11 +266,20 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'usage' && (
           <div className="space-y-6">
+            {analyticsError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                Error loading analytics: {analyticsError}
+              </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UtilizationChart analyticsData={filteredAnalytics} dateRange={dateRange} />
+              <UtilizationChart
+                summary={analyticsResult?.summary}
+                loading={analyticsLoading}
+                dateRange={dateRange}
+              />
               <WaitTimeAnalysis waitlistData={waitlistData} />
             </div>
-            <UsageHeatmap heatmapData={heatmapData} />
+            <UsageHeatmap heatmapData={analyticsResult?.heatmap || []} />
           </div>
         )}
 

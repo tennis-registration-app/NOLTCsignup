@@ -9,3 +9,4 @@ export { default as UtilizationChart } from './UtilizationChart.jsx';
 export { default as WaitTimeAnalysis } from './WaitTimeAnalysis.jsx';
 export { default as BallPurchaseLog } from './BallPurchaseLog.jsx';
 export { default as GuestChargeLog } from './GuestChargeLog.jsx';
+export { default as useAnalyticsQuery } from './useAnalyticsQuery.js';

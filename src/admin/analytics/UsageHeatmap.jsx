@@ -10,11 +10,13 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Build lookup from pre-aggregated data
+  // Build lookup from pre-aggregated data (supports both old and new API formats)
   const heatmapLookup = useMemo(() => {
     const lookup = {};
-    heatmapData.forEach(({ day_of_week, hour, session_count }) => {
-      lookup[`${day_of_week}-${hour}`] = session_count;
+    heatmapData.forEach((d) => {
+      const dayOfWeek = d.dow ?? d.day_of_week;
+      const count = d.count ?? d.session_count;
+      lookup[`${dayOfWeek}-${d.hour}`] = count;
     });
     return lookup;
   }, [heatmapData]);
@@ -22,7 +24,7 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
   // Find max for color scaling
   const maxCount = useMemo(() => {
     if (heatmapData.length === 0) return 1;
-    return Math.max(1, ...heatmapData.map((d) => d.session_count));
+    return Math.max(1, ...heatmapData.map((d) => d.count ?? d.session_count));
   }, [heatmapData]);
 
   const getColor = (dayIndex, hour) => {
