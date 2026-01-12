@@ -15,9 +15,11 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const [ballPriceInput, setBallPriceInput] = useState('5.00');
   const [weekdayFeeInput, setWeekdayFeeInput] = useState('15.00');
   const [weekendFeeInput, setWeekendFeeInput] = useState('20.00');
+  const [pricingChanged, setPricingChanged] = useState(false);
 
   // Operating hours state
   const [operatingHours, setOperatingHours] = useState([]);
+  const [hoursChanged, setHoursChanged] = useState(false);
 
   // Hours overrides state
   const [hoursOverrides, setHoursOverrides] = useState([]);
@@ -28,10 +30,15 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const [overrideCloses, setOverrideCloses] = useState('21:00');
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideClosed, setOverrideClosed] = useState(false);
-  const [overrideError, setOverrideError] = useState('');
+  const [overrideErrors, setOverrideErrors] = useState({});
 
   // Loading state
   const [loading, setLoading] = useState(true);
+
+  // Save status state for each card
+  const [pricingSaveStatus, setPricingSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
+  const [hoursSaveStatus, setHoursSaveStatus] = useState(null);
+  const [overrideSaveStatus, setOverrideSaveStatus] = useState(null);
 
   // Day names for operating hours
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -81,76 +88,95 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     loadSettings();
   }, [loadSettings]);
 
-  // Update ball price
-  const updateBallPrice = async (price) => {
-    if (!backend?.admin?.updateSettings) return;
-
-    try {
-      const result = await backend.admin.updateSettings({
-        settings: { ball_price_cents: Math.round(price * 100) },
-      });
-      if (result.ok) {
-        setSettings((prev) => ({ ...prev, tennisBallPrice: price }));
-        if (onSettingsChanged) onSettingsChanged();
-      }
-    } catch (err) {
-      console.error('Failed to update ball price:', err);
+  // Clear override error for a specific field
+  const clearOverrideError = (field) => {
+    if (overrideErrors[field]) {
+      setOverrideErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
-  // Update weekday guest fee
-  const updateWeekdayGuestFee = async (fee) => {
+  // Validate override form
+  const validateOverrideForm = () => {
+    const errors = {};
+
+    if (!overrideDate) {
+      errors.date = 'Date is required';
+    }
+
+    if (!overrideReason.trim()) {
+      errors.reason = 'Reason is required';
+    }
+
+    if (!overrideClosed && overrideOpens && overrideCloses && overrideOpens >= overrideCloses) {
+      errors.times = 'Opening time must be before closing time';
+    }
+
+    setOverrideErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle pricing input changes (local state only)
+  const handlePricingChange = (field, value) => {
+    if (field === 'ballPrice') setBallPriceInput(value);
+    if (field === 'weekdayFee') setWeekdayFeeInput(value);
+    if (field === 'weekendFee') setWeekendFeeInput(value);
+    setPricingChanged(true);
+  };
+
+  // Save all pricing settings
+  const savePricing = async () => {
     if (!backend?.admin?.updateSettings) return;
 
+    setPricingSaveStatus('saving');
     try {
+      const ballPrice = parseFloat(ballPriceInput) || 0;
+      const weekdayFee = parseFloat(weekdayFeeInput) || 0;
+      const weekendFee = parseFloat(weekendFeeInput) || 0;
+
       const result = await backend.admin.updateSettings({
-        settings: { guest_fee_weekday_cents: Math.round(fee * 100) },
+        settings: {
+          ball_price_cents: Math.round(ballPrice * 100),
+          guest_fee_weekday_cents: Math.round(weekdayFee * 100),
+          guest_fee_weekend_cents: Math.round(weekendFee * 100),
+        },
       });
+
       if (result.ok) {
-        setSettings((prev) => ({
-          ...prev,
-          guestFees: { ...prev.guestFees, weekday: fee },
-        }));
+        setSettings({
+          tennisBallPrice: ballPrice,
+          guestFees: { weekday: weekdayFee, weekend: weekendFee },
+        });
+        setPricingChanged(false);
+        setPricingSaveStatus('saved');
+        setTimeout(() => setPricingSaveStatus(null), 2000);
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
-      console.error('Failed to update weekday guest fee:', err);
+      console.error('Failed to save pricing:', err);
+      setPricingSaveStatus('error');
     }
   };
 
-  // Update weekend guest fee
-  const updateWeekendGuestFee = async (fee) => {
-    if (!backend?.admin?.updateSettings) return;
-
-    try {
-      const result = await backend.admin.updateSettings({
-        settings: { guest_fee_weekend_cents: Math.round(fee * 100) },
-      });
-      if (result.ok) {
-        setSettings((prev) => ({
-          ...prev,
-          guestFees: { ...prev.guestFees, weekend: fee },
-        }));
-        if (onSettingsChanged) onSettingsChanged();
-      }
-    } catch (err) {
-      console.error('Failed to update weekend guest fee:', err);
-    }
-  };
-
-  // Update operating hours for a day
-  const updateOperatingHours = async (dayOfWeek, opensAt, closesAt, isClosed) => {
-    if (!backend?.admin?.updateSettings) return;
-
-    try {
-      const updatedHours = operatingHours.map((h) =>
+  // Update operating hours locally (doesn't save immediately)
+  const handleHoursChange = (dayOfWeek, opensAt, closesAt, isClosed) => {
+    setOperatingHours((prev) =>
+      prev.map((h) =>
         h.day_of_week === dayOfWeek
           ? { ...h, opens_at: opensAt, closes_at: closesAt, is_closed: isClosed }
           : h
-      );
+      )
+    );
+    setHoursChanged(true);
+  };
 
+  // Save operating hours to backend
+  const saveOperatingHours = async () => {
+    if (!backend?.admin?.updateSettings) return;
+
+    setHoursSaveStatus('saving');
+    try {
       const result = await backend.admin.updateSettings({
-        operatingHours: updatedHours.map((h) => ({
+        operatingHours: operatingHours.map((h) => ({
           day_of_week: h.day_of_week,
           opens_at: h.opens_at,
           closes_at: h.closes_at,
@@ -159,11 +185,14 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       });
 
       if (result.ok) {
-        setOperatingHours(updatedHours);
+        setHoursChanged(false);
+        setHoursSaveStatus('saved');
+        setTimeout(() => setHoursSaveStatus(null), 2000);
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
       console.error('Failed to update operating hours:', err);
+      setHoursSaveStatus('error');
     }
   };
 
@@ -171,6 +200,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const addHoursOverride = async (date, opensAt, closesAt, isClosed, reason) => {
     if (!backend?.admin?.updateSettings) return;
 
+    setOverrideSaveStatus('saving');
     try {
       const result = await backend.admin.updateSettings({
         operatingHoursOverride: {
@@ -185,10 +215,13 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       if (result.ok) {
         // Reload to get updated overrides list
         loadSettings();
+        setOverrideSaveStatus('saved');
+        setTimeout(() => setOverrideSaveStatus(null), 2000);
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
       console.error('Failed to add hours override:', err);
+      setOverrideSaveStatus('error');
     }
   };
 
@@ -196,6 +229,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const deleteHoursOverride = async (date) => {
     if (!backend?.admin?.updateSettings) return;
 
+    setOverrideSaveStatus('saving');
     try {
       const result = await backend.admin.updateSettings({
         deleteOverride: date,
@@ -203,10 +237,13 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
 
       if (result.ok) {
         setHoursOverrides((prev) => prev.filter((o) => o.date !== date));
+        setOverrideSaveStatus('saved');
+        setTimeout(() => setOverrideSaveStatus(null), 2000);
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
       console.error('Failed to delete hours override:', err);
+      setOverrideSaveStatus('error');
     }
   };
 
@@ -227,7 +264,26 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       <div className="space-y-6">
         {/* Pricing card */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Pricing</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
+            <button
+              onClick={savePricing}
+              disabled={!pricingChanged}
+              className={`px-4 py-2 rounded text-sm font-medium ${
+                pricingChanged
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : pricingSaveStatus === 'saved'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {pricingSaveStatus === 'saving'
+                ? 'Saving...'
+                : pricingSaveStatus === 'saved'
+                  ? '✓ Saved'
+                  : 'Save Pricing'}
+            </button>
+          </div>
           <div className="flex gap-12">
             {/* Left: Tennis Ball Can */}
             <div>
@@ -240,15 +296,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                   type="text"
                   inputMode="decimal"
                   value={ballPriceInput}
-                  onChange={(e) => setBallPriceInput(e.target.value)}
-                  onBlur={() => {
-                    const parsed = parseFloat(ballPriceInput);
-                    if (!isNaN(parsed) && parsed >= 0) {
-                      updateBallPrice(parsed);
-                    } else {
-                      setBallPriceInput(settings.tennisBallPrice?.toFixed(2) || '5.00');
-                    }
-                  }}
+                  onChange={(e) => handlePricingChange('ballPrice', e.target.value)}
                   className="w-20 p-2 border rounded"
                 />
               </div>
@@ -265,15 +313,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                     type="text"
                     inputMode="decimal"
                     value={weekdayFeeInput}
-                    onChange={(e) => setWeekdayFeeInput(e.target.value)}
-                    onBlur={() => {
-                      const parsed = parseFloat(weekdayFeeInput);
-                      if (!isNaN(parsed) && parsed >= 0) {
-                        updateWeekdayGuestFee(parsed);
-                      } else {
-                        setWeekdayFeeInput(settings.guestFees?.weekday?.toFixed(2) || '15.00');
-                      }
-                    }}
+                    onChange={(e) => handlePricingChange('weekdayFee', e.target.value)}
                     className="w-20 p-2 border rounded"
                   />
                 </div>
@@ -284,15 +324,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                     type="text"
                     inputMode="decimal"
                     value={weekendFeeInput}
-                    onChange={(e) => setWeekendFeeInput(e.target.value)}
-                    onBlur={() => {
-                      const parsed = parseFloat(weekendFeeInput);
-                      if (!isNaN(parsed) && parsed >= 0) {
-                        updateWeekendGuestFee(parsed);
-                      } else {
-                        setWeekendFeeInput(settings.guestFees?.weekend?.toFixed(2) || '20.00');
-                      }
-                    }}
+                    onChange={(e) => handlePricingChange('weekendFee', e.target.value)}
                     className="w-20 p-2 border rounded"
                   />
                 </div>
@@ -303,7 +335,26 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
 
         {/* Regular Hours card */}
         <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Regular Tennis Court Hours</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800">Regular Tennis Court Hours</h3>
+            <button
+              onClick={saveOperatingHours}
+              disabled={!hoursChanged}
+              className={`px-4 py-2 rounded text-sm font-medium ${
+                hoursChanged
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : hoursSaveStatus === 'saved'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {hoursSaveStatus === 'saving'
+                ? 'Saving...'
+                : hoursSaveStatus === 'saved'
+                  ? '✓ Saved'
+                  : 'Save Hours'}
+            </button>
+          </div>
           <div className="flex flex-col gap-2">
             {operatingHours.map((day) => (
               <div
@@ -318,7 +369,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                     type="checkbox"
                     checked={day.is_closed}
                     onChange={(e) =>
-                      updateOperatingHours(
+                      handleHoursChange(
                         day.day_of_week,
                         day.opens_at,
                         day.closes_at,
@@ -335,7 +386,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                       value={day.opens_at?.slice(0, 5) || '06:00'}
                       onChange={(e) =>
                         e.target.value &&
-                        updateOperatingHours(
+                        handleHoursChange(
                           day.day_of_week,
                           e.target.value + ':00',
                           day.closes_at,
@@ -350,7 +401,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                       value={day.closes_at?.slice(0, 5) || '21:00'}
                       onChange={(e) =>
                         e.target.value &&
-                        updateOperatingHours(
+                        handleHoursChange(
                           day.day_of_week,
                           day.opens_at,
                           e.target.value + ':00',
@@ -374,72 +425,96 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Holiday & Special Hours</h3>
 
           {/* Add Override Form */}
-          <div className="flex flex-wrap gap-2 mb-4 p-3 bg-blue-50 rounded-md">
-            <input
-              type="date"
-              value={overrideDate}
-              onChange={(e) => {
-                setOverrideDate(e.target.value);
-                setOverrideError('');
-              }}
-              min={new Date().toISOString().split('T')[0]}
-              className={`px-2 py-1 rounded border ${overrideError && !overrideDate ? 'border-red-500' : 'border-gray-300'}`}
-            />
-            <input
-              type="time"
-              value={overrideOpens}
-              onChange={(e) => setOverrideOpens(e.target.value)}
-              className="px-2 py-1 rounded border border-gray-300"
-            />
-            <span className="self-center text-gray-500">to</span>
-            <input
-              type="time"
-              value={overrideCloses}
-              onChange={(e) => setOverrideCloses(e.target.value)}
-              className="px-2 py-1 rounded border border-gray-300"
-            />
-            <input
-              type="text"
-              value={overrideReason}
-              onChange={(e) => setOverrideReason(e.target.value)}
-              placeholder="Reason (e.g., Holiday)"
-              className="px-2 py-1 rounded border border-gray-300 flex-1 min-w-[150px]"
-            />
-            <label className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                checked={overrideClosed}
-                onChange={(e) => setOverrideClosed(e.target.checked)}
-              />
-              Closed
-            </label>
-            <button
-              onClick={() => {
-                if (!overrideDate) {
-                  setOverrideError('Date is required');
-                  return;
-                }
-                addHoursOverride(
-                  overrideDate,
-                  overrideClosed ? null : overrideOpens + ':00',
-                  overrideClosed ? null : overrideCloses + ':00',
-                  overrideClosed,
-                  overrideReason || null
-                );
-                // Reset form after successful add
-                setOverrideDate('');
-                setOverrideOpens('06:00');
-                setOverrideCloses('21:00');
-                setOverrideReason('');
-                setOverrideClosed(false);
-                setOverrideError('');
-              }}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-            >
-              Add
-            </button>
+          <div className="mb-4 p-3 bg-blue-50 rounded-md">
+            <div className="flex flex-wrap gap-2 items-start">
+              <div>
+                <input
+                  type="date"
+                  value={overrideDate}
+                  onChange={(e) => {
+                    setOverrideDate(e.target.value);
+                    clearOverrideError('date');
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  className={`px-2 py-1 rounded border ${overrideErrors.date ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                {overrideErrors.date && (
+                  <p className="text-red-600 text-xs mt-1">{overrideErrors.date}</p>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="time"
+                    value={overrideOpens}
+                    onChange={(e) => {
+                      setOverrideOpens(e.target.value);
+                      clearOverrideError('times');
+                    }}
+                    className={`px-2 py-1 rounded border ${overrideErrors.times ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  <span className="text-gray-500">to</span>
+                  <input
+                    type="time"
+                    value={overrideCloses}
+                    onChange={(e) => {
+                      setOverrideCloses(e.target.value);
+                      clearOverrideError('times');
+                    }}
+                    className={`px-2 py-1 rounded border ${overrideErrors.times ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                </div>
+                {overrideErrors.times && (
+                  <p className="text-red-600 text-xs mt-1">{overrideErrors.times}</p>
+                )}
+              </div>
+              <div className="flex-1 min-w-[150px]">
+                <input
+                  type="text"
+                  value={overrideReason}
+                  onChange={(e) => {
+                    setOverrideReason(e.target.value);
+                    clearOverrideError('reason');
+                  }}
+                  placeholder="Reason (e.g., Holiday)"
+                  className={`w-full px-2 py-1 rounded border ${overrideErrors.reason ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                {overrideErrors.reason && (
+                  <p className="text-red-600 text-xs mt-1">{overrideErrors.reason}</p>
+                )}
+              </div>
+              <label className="flex items-center gap-1 text-sm py-1">
+                <input
+                  type="checkbox"
+                  checked={overrideClosed}
+                  onChange={(e) => setOverrideClosed(e.target.checked)}
+                />
+                Closed
+              </label>
+              <button
+                onClick={async () => {
+                  if (!validateOverrideForm()) return;
+                  await addHoursOverride(
+                    overrideDate,
+                    overrideClosed ? null : overrideOpens + ':00',
+                    overrideClosed ? null : overrideCloses + ':00',
+                    overrideClosed,
+                    overrideReason
+                  );
+                  // Reset form after successful add
+                  setOverrideDate('');
+                  setOverrideOpens('06:00');
+                  setOverrideCloses('21:00');
+                  setOverrideReason('');
+                  setOverrideClosed(false);
+                  setOverrideErrors({});
+                }}
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              >
+                Add
+              </button>
+            </div>
           </div>
-          {overrideError && <p className="text-red-600 text-sm mb-4 -mt-2">{overrideError}</p>}
 
           {/* Existing Overrides */}
           {hoursOverrides.length > 0 ? (
