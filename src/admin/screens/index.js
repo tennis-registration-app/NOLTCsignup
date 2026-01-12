@@ -6,3 +6,4 @@
 
 export { default as GameHistorySearch } from './GameHistorySearch.jsx';
 export { default as AnalyticsDashboard } from './AnalyticsDashboard.jsx';
+export { default as SystemSettings } from './SystemSettings.jsx';
