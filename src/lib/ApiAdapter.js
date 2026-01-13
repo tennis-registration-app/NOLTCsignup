@@ -376,10 +376,23 @@ export class ApiAdapter {
     });
   }
 
-  async aiAssistant(prompt) {
-    return this._post(ENDPOINTS.AI_ASSISTANT, {
-      prompt: prompt,
-    });
+  async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }) {
+    const body = {
+      prompt,
+      mode,
+      device_id: this.deviceId,
+      device_type: this.deviceType,
+    };
+
+    if (actions_token) {
+      body.actions_token = actions_token;
+    }
+
+    if (confirm_destructive) {
+      body.confirm_destructive = confirm_destructive;
+    }
+
+    return this._post(ENDPOINTS.AI_ASSISTANT, body);
   }
 
   // ===========================================

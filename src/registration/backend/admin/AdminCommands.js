@@ -380,4 +380,8 @@ export class AdminCommands {
       comparisonStart,
     });
   }
+
+  async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }) {
+    return this.api.aiAssistant({ prompt, mode, actions_token, confirm_destructive });
+  }
 }

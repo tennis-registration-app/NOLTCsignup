@@ -105,10 +105,13 @@ import {
 } from './analytics';
 
 // AI components
-import { MockAIAdmin } from './ai';
+import { MockAIAdmin, AIAssistant } from './ai';
 
 // Screen components
 import { GameHistorySearch, AnalyticsDashboard, SystemSettings } from './screens';
+
+// Feature flag: use real AI assistant instead of mock
+const USE_REAL_AI = true;
 
 // Access shared utils from window (loaded via shared scripts in index.html)
 const U = window.APP_UTILS || {};
@@ -2212,28 +2215,31 @@ const AdminPanelV2 = ({ onExit }) => {
           </div>
 
           {/* AI Assistant Modal */}
-          {showAIAssistant && (
-            <MockAIAdmin
-              onClose={() => setShowAIAssistant(false)}
-              dataStore={dataStore}
-              courts={courts}
-              loadData={loadData}
-              clearCourt={clearCourt}
-              clearAllCourts={clearAllCourts}
-              moveCourt={moveCourt}
-              settings={settings}
-              updateBallPrice={updateBallPrice}
-              waitingGroups={waitingGroups}
-              refreshData={() => {
-                loadData();
-                setRefreshTrigger((prev) => prev + 1);
-              }}
-              clearWaitlist={async () => {
-                const res = await backend.commands.clearWaitlist();
-                return res;
-              }}
-            />
-          )}
+          {showAIAssistant &&
+            (USE_REAL_AI ? (
+              <AIAssistant backend={backend} onClose={() => setShowAIAssistant(false)} />
+            ) : (
+              <MockAIAdmin
+                onClose={() => setShowAIAssistant(false)}
+                dataStore={dataStore}
+                courts={courts}
+                loadData={loadData}
+                clearCourt={clearCourt}
+                clearAllCourts={clearAllCourts}
+                moveCourt={moveCourt}
+                settings={settings}
+                updateBallPrice={updateBallPrice}
+                waitingGroups={waitingGroups}
+                refreshData={() => {
+                  loadData();
+                  setRefreshTrigger((prev) => prev + 1);
+                }}
+                clearWaitlist={async () => {
+                  const res = await backend.commands.clearWaitlist();
+                  return res;
+                }}
+              />
+            ))}
         </>
       )}
     </div>
