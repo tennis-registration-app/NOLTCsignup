@@ -3166,6 +3166,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         onAddFrequentPartner={addFrequentPartner}
         onSelectCourt={handleGroupSelectCourt}
         onJoinWaitlist={handleGroupJoinWaitlist}
+        joiningWaitlist={isJoiningWaitlist}
         onGoBack={handleGroupGoBack}
         onStartOver={resetForm}
         // Utilities

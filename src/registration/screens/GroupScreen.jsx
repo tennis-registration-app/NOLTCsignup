@@ -51,6 +51,7 @@ const GroupScreen = ({
   onAddFrequentPartner,
   onSelectCourt,
   onJoinWaitlist,
+  joiningWaitlist = false,
   onGoBack,
   onStartOver,
 
@@ -513,9 +514,44 @@ const GroupScreen = ({
               ) : (
                 <button
                   onClick={onJoinWaitlist}
-                  className={`${isMobileView ? 'px-6' : ''} bg-orange-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-orange-600 transition-colors`}
+                  disabled={joiningWaitlist}
+                  className={`relative overflow-visible ${isMobileView ? 'px-6' : 'px-4 sm:px-8'} py-2 sm:py-4 rounded-xl text-base sm:text-xl font-semibold transition-all duration-200 text-white ${
+                    joiningWaitlist
+                      ? 'scale-105 bg-gradient-to-r from-orange-500 to-orange-600'
+                      : 'bg-orange-600 hover:bg-orange-700 hover:scale-105'
+                  }`}
                 >
-                  Join Waitlist
+                  {joiningWaitlist ? 'Joining Waitlist...' : 'Join Waitlist'}
+                  {joiningWaitlist && (
+                    <svg
+                      className="absolute -inset-[3px] w-[calc(100%+6px)] h-[calc(100%+6px)] pointer-events-none"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                    >
+                      <style>
+                        {`
+                          @keyframes dash-move-waitlist {
+                            0% { stroke-dashoffset: 0; }
+                            100% { stroke-dashoffset: 140; }
+                          }
+                        `}
+                      </style>
+                      <rect
+                        x="1"
+                        y="1"
+                        width="98"
+                        height="98"
+                        rx="12"
+                        ry="12"
+                        fill="none"
+                        stroke="white"
+                        strokeOpacity="0.8"
+                        strokeWidth="2"
+                        strokeDasharray="60 80"
+                        style={{ animation: 'dash-move-waitlist 1s linear infinite' }}
+                      />
+                    </svg>
+                  )}
                 </button>
               )}
             </div>
