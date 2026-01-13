@@ -1414,6 +1414,17 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Board subscription will auto-refresh
         console.log('✅ Waitlist assignment successful, waiting for board refresh signal');
 
+        // Update currentGroup with participant details for ball purchases
+        if (result.session?.participantDetails) {
+          const groupFromWaitlist = result.session.participantDetails.map((p) => ({
+            memberNumber: p.memberId,
+            name: p.name,
+            accountId: p.accountId,
+            isGuest: p.isGuest,
+          }));
+          setCurrentGroup(groupFromWaitlist);
+        }
+
         // Update UI state
         setJustAssignedCourt(courtNumber);
         setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
