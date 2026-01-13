@@ -2217,7 +2217,27 @@ const AdminPanelV2 = ({ onExit }) => {
           {/* AI Assistant Modal */}
           {showAIAssistant &&
             (USE_REAL_AI ? (
-              <AIAssistant backend={backend} onClose={() => setShowAIAssistant(false)} />
+              <AIAssistant
+                backend={backend}
+                onClose={() => setShowAIAssistant(false)}
+                onSettingsChanged={async () => {
+                  const res = await backend.admin.getSettings();
+                  if (res.ok) {
+                    if (res.settings) {
+                      setSettings({
+                        tennisBallPrice: (res.settings.ball_price_cents || 500) / 100,
+                        guestFees: {
+                          weekday: (res.settings.guest_fee_weekday_cents || 1500) / 100,
+                          weekend: (res.settings.guest_fee_weekend_cents || 2000) / 100,
+                        },
+                      });
+                    }
+                    if (res.upcoming_overrides) {
+                      setHoursOverrides(res.upcoming_overrides);
+                    }
+                  }
+                }}
+              />
             ) : (
               <MockAIAdmin
                 onClose={() => setShowAIAssistant(false)}

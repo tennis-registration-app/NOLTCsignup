@@ -5,7 +5,7 @@ import ProposedActions from './ProposedActions';
  * Production AI Assistant - replaces MockAIAdmin
  * Uses propose → confirm → execute pattern with real Claude API
  */
-export default function AIAssistant({ backend, onClose }) {
+export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [mode, setMode] = useState('draft'); // 'read' | 'draft'
@@ -91,13 +91,54 @@ export default function AIAssistant({ backend, onClose }) {
         throw new Error(response.error || 'Execution failed');
       }
 
-      // Show execution results
+      // Show execution results - include data for read tools
       const resultSummary =
         response.executed_actions
-          ?.map((a) => `${a.tool}: ${a.success ? '✓' : '✗ ' + a.error}`)
+          ?.map((a) => {
+            if (!a.success) {
+              return `${a.tool}: ✗ ${a.error}`;
+            }
+            // For analytics/read tools, show the actual data
+            if (a.tool === 'get_analytics' && a.result?.data) {
+              const data = a.result.data;
+              let summary = `${a.tool}: ✓\n`;
+              if (data.summary) {
+                summary += `Sessions: ${data.summary.total_sessions || 0}\n`;
+                summary += `Total hours: ${data.summary.total_hours?.toFixed(1) || 0}\n`;
+              }
+              if (data.heatmap && data.heatmap.length > 0) {
+                // Find busiest day
+                const dayTotals = {};
+                data.heatmap.forEach((h) => {
+                  dayTotals[h.day_of_week] = (dayTotals[h.day_of_week] || 0) + h.session_count;
+                });
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const busiest = Object.entries(dayTotals).sort(
+                  (a, b) => Number(b[1]) - Number(a[1])
+                )[0];
+                if (busiest) {
+                  summary += `Busiest day: ${days[Number(busiest[0])]} (${busiest[1]} sessions)`;
+                }
+              }
+              if (data.buckets) {
+                summary += `Data points: ${data.buckets.length}`;
+              }
+              return summary;
+            }
+            return `${a.tool}: ✓`;
+          })
           .join('\n') || 'Actions executed.';
 
       addMessage('assistant', response.response + '\n\n' + resultSummary, { isResult: true });
+
+      // Refresh settings if any settings-related tool was executed
+      const settingsTools = ['update_settings', 'add_holiday_hours'];
+      const executedActions = response.executed_actions || [];
+      if (executedActions.some((a) => a.success && settingsTools.includes(a.tool))) {
+        if (onSettingsChanged) {
+          await onSettingsChanged();
+        }
+      }
 
       // Clear pending actions
       setPendingActions(null);
