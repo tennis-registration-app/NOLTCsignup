@@ -403,7 +403,13 @@ const SuccessScreen = ({
             </button>
           )}
           <button
-            onClick={() => setShowBallPurchaseModal(true)}
+            onClick={() => {
+              setShowBallPurchaseModal(true);
+              // Auto-select 'charge' if only one non-guest player
+              if (nonGuestPlayers === 1) {
+                setBallPurchaseOption('charge');
+              }
+            }}
             className="flex-1 bg-gradient-to-r from-amber-500 to-amber-400 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-medium hover:from-amber-600 hover:to-amber-500 transition-colors duration-150 flex items-center justify-center gap-2 shadow-md"
           >
             <span className="text-lg sm:text-xl">🎾</span>
