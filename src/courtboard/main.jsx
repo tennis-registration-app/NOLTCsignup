@@ -1524,7 +1524,20 @@ function NextAvailablePanel({
 
 // Reserved Courts Panel
 function ReservedCourtsPanel({ items, className, title = 'Reserved Courts' }) {
-  const fmt = (d) => new Date(d).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  // Format time range compactly: "8:00-9:00 AM" instead of "8:00 AM – 9:00 AM"
+  const fmtRange = (start, end) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    const sTime = s.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const eTime = e.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    // If same AM/PM, omit from start time
+    const sAmPm = s.getHours() >= 12 ? 'PM' : 'AM';
+    const eAmPm = e.getHours() >= 12 ? 'PM' : 'AM';
+    if (sAmPm === eAmPm) {
+      return `${sTime.replace(/ (AM|PM)/, '')}-${eTime}`;
+    }
+    return `${sTime}-${eTime}`;
+  };
 
   return (
     <section id="reserved-courts-root" className={className}>
@@ -1542,14 +1555,12 @@ function ReservedCourtsPanel({ items, className, title = 'Reserved Courts' }) {
           <p className="text-gray-400 reserved-courts-empty">No scheduled blocks today</p>
         </div>
       ) : (
-        <ul className="mt-2 space-y-1 reserved-courts-text text-gray-300">
+        <ul className="mt-2 space-y-1 reserved-courts-text text-gray-300 text-lg">
           {items.slice(0, 8).map((it, i) => (
             <li key={`${it.key || i}`} className="flex justify-between">
-              <span className="font-medium text-gray-200">
-                {it.courts.length > 1 ? `Courts ${it.courts.join(', ')}` : `Court ${it.courts[0]}`}
-              </span>
+              <span className="font-medium text-gray-200">{it.courts.join(', ')}</span>
               <span className="ml-2 whitespace-nowrap text-gray-400">
-                {fmt(it.start)} – {fmt(it.end)} ({it.label}){it.warning ? ' ⚠️' : ''}
+                {fmtRange(it.start, it.end)} ({it.label}){it.warning ? ' ⚠️' : ''}
               </span>
             </li>
           ))}
