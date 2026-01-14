@@ -187,7 +187,7 @@ function labelFor(status, courtObj) {
   return '';
 }
 
-function computeClock(status, courtObj, now) {
+function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
   if (status === 'occupied') {
     const end = courtObj?.session?.scheduledEndAt
       ? new Date(courtObj.session.scheduledEndAt)
@@ -205,7 +205,7 @@ function computeClock(status, courtObj, now) {
     const start = courtObj?.session?.startedAt ? new Date(courtObj.session.startedAt) : null;
     if (start) {
       const minutesPlaying = Math.floor((now - start) / 60000);
-      if (minutesPlaying >= 150) {
+      if (checkStatusMinutes > 0 && minutesPlaying >= checkStatusMinutes) {
         return { primary: 'Overtime', secondary: 'check status', secondaryColor: 'yellow' };
       }
     }
@@ -550,6 +550,7 @@ function TennisCourtDisplay() {
   const [waitlist, setWaitlist] = useState([]);
   const [courtBlocks, setCourtBlocks] = useState([]); // Active blocks only (for availability)
   const [upcomingBlocks, setUpcomingBlocks] = useState([]); // Future blocks today (for display)
+  const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
 
   // Time update
   useEffect(() => {
@@ -692,6 +693,25 @@ function TennisCourtDisplay() {
     };
   }, []);
 
+  // Load check_status_minutes from system settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const result = await backend.admin?.getSettings?.();
+        if (result?.ok && result.settings?.check_status_minutes) {
+          const minutes = parseInt(result.settings.check_status_minutes, 10);
+          if (minutes > 0) {
+            setCheckStatusMinutes(minutes);
+            console.log('[Courtboard] Loaded check_status_minutes:', minutes);
+          }
+        }
+      } catch (err) {
+        console.warn('[Courtboard] Failed to load settings, using default:', err);
+      }
+    };
+    loadSettings();
+  }, []);
+
   /**
    * TWO-ROOT BRIDGE: Sync React state to window for mobile modal access.
    *
@@ -822,6 +842,7 @@ function TennisCourtDisplay() {
                     statusObjectByCourt={statusObjectByCourt}
                     data={data}
                     isMobileView={isMobileView}
+                    checkStatusMinutes={checkStatusMinutes}
                   />
                 </div>
               ))}
@@ -847,6 +868,7 @@ function TennisCourtDisplay() {
                       statusObjectByCourt={statusObjectByCourt}
                       data={data}
                       isMobileView={isMobileView}
+                      checkStatusMinutes={checkStatusMinutes}
                     />
                   </div>
                 ))}
@@ -866,6 +888,7 @@ function TennisCourtDisplay() {
                     statusObjectByCourt={statusObjectByCourt}
                     data={data}
                     isMobileView={isMobileView}
+                    checkStatusMinutes={checkStatusMinutes}
                   />
                 ))}
               </div>
@@ -908,6 +931,7 @@ function CourtCard({
   statusObjectByCourt,
   data,
   isMobileView,
+  checkStatusMinutes = 150,
 }) {
   const status = statusByCourt[courtNumber] || 'free';
   const selectable = selectableByCourt[courtNumber] || false;
@@ -915,7 +939,12 @@ function CourtCard({
   const cObj = data?.courts?.[courtNumber - 1] || {};
 
   const now = new Date();
-  const { primary, secondary } = computeClock(status, status === 'blocked' ? statusObj : cObj, now);
+  const { primary, secondary, secondaryColor } = computeClock(
+    status,
+    status === 'blocked' ? statusObj : cObj,
+    now,
+    checkStatusMinutes
+  );
   const nm = namesFor(cObj);
 
   const base =
