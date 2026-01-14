@@ -17,6 +17,13 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const [weekendFeeInput, setWeekendFeeInput] = useState('20.00');
   const [pricingChanged, setPricingChanged] = useState(false);
 
+  // Auto-clear settings state
+  const [autoClearEnabled, setAutoClearEnabled] = useState(false);
+  const [autoClearMinutes, setAutoClearMinutes] = useState('180');
+  const [checkStatusMinutes, setCheckStatusMinutes] = useState('150');
+  const [autoClearChanged, setAutoClearChanged] = useState(false);
+  const [autoClearError, setAutoClearError] = useState(null);
+
   // Operating hours state
   const [operatingHours, setOperatingHours] = useState([]);
   const [hoursChanged, setHoursChanged] = useState(false);
@@ -39,6 +46,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const [pricingSaveStatus, setPricingSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
   const [hoursSaveStatus, setHoursSaveStatus] = useState(null);
   const [overrideSaveStatus, setOverrideSaveStatus] = useState(null);
+  const [autoClearSaveStatus, setAutoClearSaveStatus] = useState(null);
 
   // Day names for operating hours
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -62,6 +70,11 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         setBallPriceInput(newSettings.tennisBallPrice.toFixed(2));
         setWeekdayFeeInput(newSettings.guestFees.weekday.toFixed(2));
         setWeekendFeeInput(newSettings.guestFees.weekend.toFixed(2));
+
+        // Update auto-clear settings
+        setAutoClearEnabled(result.settings?.auto_clear_enabled === 'true');
+        setAutoClearMinutes(result.settings?.auto_clear_minutes || '180');
+        setCheckStatusMinutes(result.settings?.check_status_minutes || '150');
 
         // Update operating hours
         if (result.operating_hours) {
@@ -154,6 +167,64 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     } catch (err) {
       console.error('Failed to save pricing:', err);
       setPricingSaveStatus('error');
+    }
+  };
+
+  // Handle auto-clear setting changes
+  const handleAutoClearChange = (field, value) => {
+    if (field === 'enabled') setAutoClearEnabled(value);
+    if (field === 'autoClearMinutes') setAutoClearMinutes(value);
+    if (field === 'checkStatusMinutes') setCheckStatusMinutes(value);
+    setAutoClearChanged(true);
+    setAutoClearError(null);
+  };
+
+  // Save auto-clear settings
+  const saveAutoClear = async () => {
+    if (!backend?.admin?.updateSettings) return;
+
+    // Client-side validation
+    const autoMin = parseInt(autoClearMinutes);
+    const checkMin = parseInt(checkStatusMinutes);
+
+    if (autoClearEnabled) {
+      if (isNaN(autoMin) || autoMin < 60 || autoMin > 720) {
+        setAutoClearError('Auto-clear minutes must be between 60 and 720');
+        return;
+      }
+      if (isNaN(checkMin) || checkMin < 30 || checkMin > 600) {
+        setAutoClearError('Check status minutes must be between 30 and 600');
+        return;
+      }
+      if (checkMin >= autoMin) {
+        setAutoClearError('Warning threshold must be less than auto-clear threshold');
+        return;
+      }
+    }
+
+    setAutoClearSaveStatus('saving');
+    try {
+      const result = await backend.admin.updateSettings({
+        settings: {
+          auto_clear_enabled: autoClearEnabled ? 'true' : 'false',
+          auto_clear_minutes: String(autoMin),
+          check_status_minutes: String(checkMin),
+        },
+      });
+
+      if (result.ok) {
+        setAutoClearChanged(false);
+        setAutoClearSaveStatus('saved');
+        setTimeout(() => setAutoClearSaveStatus(null), 2000);
+        if (onSettingsChanged) onSettingsChanged();
+      } else {
+        setAutoClearError(result.error || 'Failed to save');
+        setAutoClearSaveStatus('error');
+      }
+    } catch (err) {
+      console.error('Failed to save auto-clear settings:', err);
+      setAutoClearError(err.message || 'Failed to save');
+      setAutoClearSaveStatus('error');
     }
   };
 
@@ -331,6 +402,86 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Auto-Clear card */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Court Auto-Clear</h3>
+            <button
+              onClick={saveAutoClear}
+              disabled={!autoClearChanged}
+              className={`px-4 py-2 rounded text-sm font-medium ${
+                autoClearChanged
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  : autoClearSaveStatus === 'saved'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {autoClearSaveStatus === 'saving'
+                ? 'Saving...'
+                : autoClearSaveStatus === 'saved'
+                  ? '✓ Saved'
+                  : 'Save'}
+            </button>
+          </div>
+
+          {/* Enable toggle */}
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => handleAutoClearChange('enabled', !autoClearEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                autoClearEnabled ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  autoClearEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <span className="text-sm font-medium text-gray-700">Enable Auto-Clear</span>
+          </div>
+
+          {/* Settings (shown only when enabled) */}
+          {autoClearEnabled && (
+            <div className="space-y-3 pl-1">
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-gray-600 w-48">
+                  Show "check status" warning after
+                </label>
+                <input
+                  type="number"
+                  min="30"
+                  max="600"
+                  value={checkStatusMinutes}
+                  onChange={(e) => handleAutoClearChange('checkStatusMinutes', e.target.value)}
+                  className="w-20 p-2 border rounded text-center"
+                />
+                <span className="text-sm text-gray-500">minutes</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm text-gray-600 w-48">Auto-clear session after</label>
+                <input
+                  type="number"
+                  min="60"
+                  max="720"
+                  value={autoClearMinutes}
+                  onChange={(e) => handleAutoClearChange('autoClearMinutes', e.target.value)}
+                  className="w-20 p-2 border rounded text-center"
+                />
+                <span className="text-sm text-gray-500">minutes</span>
+              </div>
+              <p className="text-xs text-gray-400 italic">
+                Warning threshold must be less than auto-clear threshold
+              </p>
+            </div>
+          )}
+
+          {/* Error message */}
+          {autoClearError && <p className="text-red-600 text-sm mt-2">{autoClearError}</p>}
         </div>
 
         {/* Regular Hours card */}
