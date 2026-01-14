@@ -2204,16 +2204,19 @@ const AdminPanelV2 = ({ onExit }) => {
       {(activeTab === 'calendar' ||
         activeTab === 'blocking' ||
         activeTab === 'analytics' ||
-        activeTab === 'system') && (
+        activeTab === 'system' ||
+        activeTab === 'history') && (
         <>
           {/* Floating AI Assistant Button */}
           <div className="fixed bottom-8 right-8 z-40">
             <button
               onClick={() => setShowAIAssistant(true)}
-              className="bg-purple-600 text-white p-4 rounded-full shadow-lg hover:bg-purple-700 transition-all transform hover:scale-110"
-              title="AI Assistant - Use natural language commands"
+              className="bg-[#D97757] text-white p-3 rounded-full shadow-lg hover:bg-[#C4624A] transition-all transform hover:scale-110"
+              title="Claude AI Assistant"
             >
-              <MessageCircle size={24} />
+              <svg width="28" height="28" viewBox="0 0 100 100" fill="currentColor">
+                <path d="M50 0 C52 35 65 48 100 50 C65 52 52 65 50 100 C48 65 35 52 0 50 C35 48 48 35 50 0Z" />
+              </svg>
             </button>
           </div>
 
