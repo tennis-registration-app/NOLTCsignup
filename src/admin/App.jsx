@@ -2201,7 +2201,10 @@ const AdminPanelV2 = ({ onExit }) => {
       </div>
 
       {/* AI Assistant Button and Modal */}
-      {(activeTab === 'status' || activeTab === 'blocking' || activeTab === 'calendar') && (
+      {(activeTab === 'calendar' ||
+        activeTab === 'blocking' ||
+        activeTab === 'analytics' ||
+        activeTab === 'system') && (
         <>
           {/* Floating AI Assistant Button */}
           <div className="fixed bottom-8 right-8 z-40">
