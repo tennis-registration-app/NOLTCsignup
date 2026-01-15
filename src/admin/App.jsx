@@ -1387,6 +1387,9 @@ const AdminPanelV2 = ({ onExit }) => {
           }));
 
         setCourtBlocks(apiBlocks);
+
+        // Trigger calendar refresh when board changes (e.g., AI creates blocks)
+        setRefreshTrigger((prev) => prev + 1);
       }
     });
 
