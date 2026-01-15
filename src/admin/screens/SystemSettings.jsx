@@ -578,7 +578,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
           {/* Block warning setting - always visible */}
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-600 w-48">Show block warning before</label>
+              <label className="text-sm text-gray-600 w-48">Block warning notification</label>
               <input
                 type="number"
                 min="15"
