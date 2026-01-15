@@ -1037,7 +1037,11 @@ function CourtCard({
 
               {/* Show amber block warning for free courts only */}
               {(() => {
-                const blockWarning = getUpcomingBlockWarning(courtNumber, 60);
+                const blockWarning = getUpcomingBlockWarningFromBlocks(
+                  courtNumber,
+                  blockWarningMinutes,
+                  upcomingBlocks
+                );
                 if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
                   return null;
 

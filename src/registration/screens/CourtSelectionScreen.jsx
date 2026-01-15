@@ -16,9 +16,10 @@
  * - onStartOver: () => void - Start over handler
  * - currentGroup: Player[] - Current group to determine session duration
  * - isMobileView: boolean - Whether in mobile view
- * - getUpcomingBlockWarning: (courtNumber, duration) => Warning | null - Block warning checker
+ * - upcomingBlocks: array - Upcoming block data for warning checks
  */
 import React, { useState } from 'react';
+import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import BlockWarningModal from '../modals/BlockWarningModal.jsx';
 
 const CourtSelectionScreen = ({
@@ -33,7 +34,7 @@ const CourtSelectionScreen = ({
   onStartOver,
   currentGroup = [],
   isMobileView = false,
-  getUpcomingBlockWarning
+  upcomingBlocks = [],
 }) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
@@ -51,7 +52,7 @@ const CourtSelectionScreen = ({
     if (loadingCourt) return;
 
     const duration = getSessionDuration(currentGroup);
-    const warning = getUpcomingBlockWarning(courtNumber, duration);
+    const warning = getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks);
 
     if (warning) {
       if (warning.type === 'blocked') {
@@ -89,7 +90,7 @@ const CourtSelectionScreen = ({
   // Get warning info for a court to show visual indicators
   const getCourtWarningInfo = (courtNumber) => {
     const duration = getSessionDuration(currentGroup);
-    return getUpcomingBlockWarning(courtNumber, duration);
+    return getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks);
   };
 
   return (
@@ -105,9 +106,8 @@ const CourtSelectionScreen = ({
           </p>
         )}
 
-
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-16 sm:mb-20">
-          {availableCourts.map(courtNum => {
+          {availableCourts.map((courtNum) => {
             const warningInfo = getCourtWarningInfo(courtNum);
             const hasUpcomingBlock = warningInfo && warningInfo.minutesUntilBlock < 60;
 
@@ -121,12 +121,12 @@ const CourtSelectionScreen = ({
                 disabled={isDisabled}
                 className={`relative overflow-visible p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold text-white transition-all transform shadow-lg ${
                   isLoading
-                    ? "bg-gradient-to-r from-green-500 to-green-600 scale-105"
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 scale-105'
                     : isDisabled
-                      ? "opacity-50 cursor-not-allowed bg-gradient-to-r from-green-400 to-green-500"
+                      ? 'opacity-50 cursor-not-allowed bg-gradient-to-r from-green-400 to-green-500'
                       : showingOvertimeCourts
-                        ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:scale-105"
-                        : "bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 hover:scale-105"
+                        ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 hover:scale-105'
+                        : 'bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 hover:scale-105'
                 }`}
               >
                 {/* Rotating progress ring - only on selected tile */}
@@ -156,7 +156,7 @@ const CourtSelectionScreen = ({
                       strokeWidth="2"
                       strokeDasharray="60 80"
                       style={{
-                        animation: 'dash-move 1s linear infinite'
+                        animation: 'dash-move 1s linear infinite',
                       }}
                     />
                   </svg>
@@ -176,8 +176,6 @@ const CourtSelectionScreen = ({
             );
           })}
         </div>
-
-
 
         <div className="absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex justify-between">
           <button

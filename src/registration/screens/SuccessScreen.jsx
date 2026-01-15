@@ -27,9 +27,11 @@
  * - onLookupMemberAccount: (memberNumber) => Promise<Member[]> - Member lookup handler
  * - TENNIS_CONFIG: object - Tennis configuration constants
  * - getCourtBlockStatus: (courtNumber) => BlockStatus - Court block status checker
+ * - upcomingBlocks: array - Upcoming block data for warning checks
  * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
  */
 import React, { useState, useCallback } from 'react';
+import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
 
 // Fixed layout card component (internal)
@@ -72,7 +74,7 @@ const SuccessScreen = ({
   onLookupMemberAccount,
   TENNIS_CONFIG,
   getCourtBlockStatus,
-  getUpcomingBlockWarning,
+  upcomingBlocks = [],
   blockWarningMinutes = 60,
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
@@ -369,7 +371,11 @@ const SuccessScreen = ({
 
               {/* Upcoming block warning */}
               {(() => {
-                const upcomingWarning = getUpcomingBlockWarning?.(justAssignedCourt, 0);
+                const upcomingWarning = getUpcomingBlockWarningFromBlocks(
+                  justAssignedCourt,
+                  0,
+                  upcomingBlocks
+                );
                 if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= blockWarningMinutes)
                   return null;
                 return (

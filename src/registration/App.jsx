@@ -186,6 +186,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
     waitlist: [],
     blocks: [],
+    upcomingBlocks: [],
     recentlyCleared: [],
   }));
 
@@ -350,6 +351,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         courts: board.courts || [],
         waitlist: board.waitlist || [],
         blocks: board.blocks || [],
+        upcomingBlocks: board.upcomingBlocks || [],
       }));
 
       // Update operating hours
@@ -3027,7 +3029,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           }}
           TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
-          getUpcomingBlockWarning={getUpcomingBlockWarning}
+          upcomingBlocks={data.upcomingBlocks}
           blockWarningMinutes={blockWarningMinutes}
         />
       </>
@@ -3342,7 +3344,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           waitingGroupsCount={data.waitlist.length}
           currentGroup={currentGroup}
           isMobileView={isMobileView}
-          getUpcomingBlockWarning={getUpcomingBlockWarning}
+          upcomingBlocks={data.upcomingBlocks}
           onCourtSelect={async (courtNum) => {
             // If changing courts, handle the court change
             if (isChangingCourt && justAssignedCourt) {
