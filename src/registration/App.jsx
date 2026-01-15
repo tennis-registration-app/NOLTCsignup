@@ -317,6 +317,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         if (result.ok && result.settings?.ball_price_cents) {
           setBallPriceCents(result.settings.ball_price_cents);
         }
+        if (result.ok && result.settings?.block_warning_minutes) {
+          const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
+          if (blockWarnMin > 0) {
+            setBlockWarningMinutes(blockWarnMin);
+          }
+        }
       } catch (error) {
         console.error('Failed to load ball price from API:', error);
       }
@@ -646,6 +652,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Ball price from API (in cents) - used by SuccessScreen
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
+  // Block warning minutes from API - used by SuccessScreen
+  const [blockWarningMinutes, setBlockWarningMinutes] = useState(60);
   const [checkingLocation, setCheckingLocation] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
@@ -3020,6 +3028,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
           getUpcomingBlockWarning={getUpcomingBlockWarning}
+          blockWarningMinutes={blockWarningMinutes}
         />
       </>
     );

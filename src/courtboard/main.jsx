@@ -553,6 +553,7 @@ function TennisCourtDisplay() {
   const [courtBlocks, setCourtBlocks] = useState([]); // Active blocks only (for availability)
   const [upcomingBlocks, setUpcomingBlocks] = useState([]); // Future blocks today (for display)
   const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
+  const [blockWarningMinutes, setBlockWarningMinutes] = useState(60); // Default 60, loaded from settings
 
   // Time update
   useEffect(() => {
@@ -707,6 +708,14 @@ function TennisCourtDisplay() {
             console.log('[Courtboard] Loaded check_status_minutes:', minutes);
           }
         }
+        // Load block_warning_minutes
+        if (result?.ok && result.settings?.block_warning_minutes) {
+          const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
+          if (blockWarnMin > 0) {
+            setBlockWarningMinutes(blockWarnMin);
+            console.log('[Courtboard] Loaded block_warning_minutes:', blockWarnMin);
+          }
+        }
       } catch (err) {
         console.warn('[Courtboard] Failed to load settings, using default:', err);
       }
@@ -846,6 +855,7 @@ function TennisCourtDisplay() {
                     isMobileView={isMobileView}
                     checkStatusMinutes={checkStatusMinutes}
                     upcomingBlocks={upcomingBlocks}
+                    blockWarningMinutes={blockWarningMinutes}
                   />
                 </div>
               ))}
@@ -873,6 +883,7 @@ function TennisCourtDisplay() {
                       isMobileView={isMobileView}
                       checkStatusMinutes={checkStatusMinutes}
                       upcomingBlocks={upcomingBlocks}
+                      blockWarningMinutes={blockWarningMinutes}
                     />
                   </div>
                 ))}
@@ -894,6 +905,7 @@ function TennisCourtDisplay() {
                     isMobileView={isMobileView}
                     checkStatusMinutes={checkStatusMinutes}
                     upcomingBlocks={upcomingBlocks}
+                    blockWarningMinutes={blockWarningMinutes}
                   />
                 ))}
               </div>
@@ -938,6 +950,7 @@ function CourtCard({
   isMobileView,
   checkStatusMinutes = 150,
   upcomingBlocks = [],
+  blockWarningMinutes = 60,
 }) {
   const status = statusByCourt[courtNumber] || 'free';
   const selectable = selectableByCourt[courtNumber] || false;
@@ -1025,7 +1038,8 @@ function CourtCard({
               {/* Show amber block warning for free courts only */}
               {(() => {
                 const blockWarning = getUpcomingBlockWarning(courtNumber, 60);
-                if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
+                  return null;
 
                 return (
                   <div
@@ -1114,7 +1128,8 @@ function CourtCard({
                       0,
                       upcomingBlocks
                     );
-                    if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                    if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
+                      return null;
                     return (
                       <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
                         Block starts in {blockWarning.minutesUntilBlock}m
@@ -1134,7 +1149,8 @@ function CourtCard({
                       0,
                       upcomingBlocks
                     );
-                    if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                    if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
+                      return null;
                     return (
                       <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
                         Block starts in {blockWarning.minutesUntilBlock}m

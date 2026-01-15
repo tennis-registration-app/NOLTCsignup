@@ -27,6 +27,7 @@
  * - onLookupMemberAccount: (memberNumber) => Promise<Member[]> - Member lookup handler
  * - TENNIS_CONFIG: object - Tennis configuration constants
  * - getCourtBlockStatus: (courtNumber) => BlockStatus - Court block status checker
+ * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
  */
 import React, { useState, useCallback } from 'react';
 import { Check } from '../components';
@@ -72,6 +73,7 @@ const SuccessScreen = ({
   TENNIS_CONFIG,
   getCourtBlockStatus,
   getUpcomingBlockWarning,
+  blockWarningMinutes = 60,
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
@@ -368,7 +370,8 @@ const SuccessScreen = ({
               {/* Upcoming block warning */}
               {(() => {
                 const upcomingWarning = getUpcomingBlockWarning?.(justAssignedCourt, 0);
-                if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= 60) return null;
+                if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= blockWarningMinutes)
+                  return null;
                 return (
                   <p className="text-sm text-orange-500 mt-2">
                     Note: Court reserved for {upcomingWarning.reason} at{' '}
