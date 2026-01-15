@@ -98,9 +98,11 @@ export function getCourtBlockStatus(courtNumber) {
 
 /**
  * Check for upcoming blocks that would limit playing time
+ * Uses provided blocks array instead of localStorage.
  *
  * @param {number} courtNumber - Court number to check
- * @param {number} [duration=60] - Intended play duration in minutes
+ * @param {number} [duration=60] - Intended play duration in minutes (0 = any upcoming block)
+ * @param {Array} blocksArray - Array of block objects with courtNumber, startTime, endTime, reason, isWetCourt
  * @returns {Object|null} Warning object or null if no warning needed
  * @returns {string} returns.type - 'blocked' if cannot play, 'limited' if time limited
  * @returns {string} returns.reason - Reason for the upcoming block
@@ -109,14 +111,13 @@ export function getCourtBlockStatus(courtNumber) {
  * @returns {number} [returns.originalDuration] - Originally requested duration
  * @returns {number} returns.minutesUntilBlock - Minutes until block starts
  */
-export function getUpcomingBlockWarning(courtNumber, duration = 60) {
+export function getUpcomingBlockWarningFromBlocks(courtNumber, duration = 60, blocksArray = []) {
   const now = new Date();
   const sessionEndTime = new Date(now.getTime() + duration * 60 * 1000);
 
   try {
-    // Get all blocks from storage and filter for this court
-    const allBlocks = readJSON(STORAGE.BLOCKS) || [];
-    const blocks = allBlocks.filter((b) => b.courtNumber === courtNumber);
+    // Filter blocks for this court
+    const blocks = blocksArray.filter((b) => b.courtNumber === courtNumber);
 
     // Find the earliest block that would interfere with the session
     const upcomingBlock = blocks
@@ -129,6 +130,9 @@ export function getUpcomingBlockWarning(courtNumber, duration = 60) {
 
         // Skip wet court blocks (they're handled separately)
         if (block.isWetCourt) return false;
+
+        // If duration is 0, return any upcoming block (for display purposes)
+        if (duration === 0) return true;
 
         // Block interferes if it starts before our session would naturally end
         return blockStart < sessionEndTime;
@@ -144,17 +148,17 @@ export function getUpcomingBlockWarning(courtNumber, duration = 60) {
     if (minutesUntilBlock <= 5) {
       return {
         type: 'blocked',
-        reason: upcomingBlock.reason,
+        reason: upcomingBlock.reason || upcomingBlock.title || 'Reserved',
         startTime: upcomingBlock.startTime,
         minutesUntilBlock,
       };
     }
 
-    // Warn if playing time will be limited
-    if (minutesUntilBlock < duration) {
+    // Warn if playing time will be limited (or if duration=0, always return limited)
+    if (duration === 0 || minutesUntilBlock < duration) {
       return {
         type: 'limited',
-        reason: upcomingBlock.reason,
+        reason: upcomingBlock.reason || upcomingBlock.title || 'Reserved',
         startTime: upcomingBlock.startTime,
         limitedDuration: minutesUntilBlock,
         originalDuration: duration,
@@ -163,6 +167,24 @@ export function getUpcomingBlockWarning(courtNumber, duration = 60) {
     }
 
     return null;
+  } catch (error) {
+    console.warn('Error checking upcoming blocks:', error);
+    return null;
+  }
+}
+
+/**
+ * Check for upcoming blocks that would limit playing time
+ * Reads blocks from localStorage for backwards compatibility.
+ *
+ * @param {number} courtNumber - Court number to check
+ * @param {number} [duration=60] - Intended play duration in minutes
+ * @returns {Object|null} Warning object or null if no warning needed
+ */
+export function getUpcomingBlockWarning(courtNumber, duration = 60) {
+  try {
+    const allBlocks = readJSON(STORAGE.BLOCKS) || [];
+    return getUpcomingBlockWarningFromBlocks(courtNumber, duration, allBlocks);
   } catch (error) {
     console.warn('Error checking upcoming blocks:', error);
     return null;

@@ -71,6 +71,7 @@ const SuccessScreen = ({
   onLookupMemberAccount,
   TENNIS_CONFIG,
   getCourtBlockStatus,
+  getUpcomingBlockWarning,
 }) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
@@ -363,6 +364,21 @@ const SuccessScreen = ({
               {isTimeLimited && (
                 <p className="text-sm text-gray-500 mt-1">(Remaining time from previous session)</p>
               )}
+
+              {/* Upcoming block warning */}
+              {(() => {
+                const upcomingWarning = getUpcomingBlockWarning?.(justAssignedCourt, 0);
+                if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= 60) return null;
+                return (
+                  <p className="text-sm text-orange-500 mt-2">
+                    Note: Court reserved for {upcomingWarning.reason} at{' '}
+                    {new Date(upcomingWarning.startTime).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                );
+              })()}
 
               {(() => {
                 const courtBlockStatus = getCourtBlockStatus(justAssignedCourt);

@@ -3019,6 +3019,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           }}
           TENNIS_CONFIG={TENNIS_CONFIG}
           getCourtBlockStatus={getCourtBlockStatus}
+          getUpcomingBlockWarning={getUpcomingBlockWarning}
         />
       </>
     );

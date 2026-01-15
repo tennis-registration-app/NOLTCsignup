@@ -14,6 +14,7 @@ import {
   COURT_COUNT,
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
   getUpcomingBlockWarning as _sharedGetUpcomingBlockWarning,
+  getUpcomingBlockWarningFromBlocks as _sharedGetUpcomingBlockWarningFromBlocks,
   TENNIS_CONFIG as _sharedTennisConfig,
 } from '@lib';
 
@@ -335,6 +336,7 @@ const Weather = ({ size = 24, className = '' }) => (
 // Use imported functions
 const getCourtBlockStatus = _sharedGetCourtBlockStatus;
 const getUpcomingBlockWarning = _sharedGetUpcomingBlockWarning;
+const getUpcomingBlockWarningFromBlocks = _sharedGetUpcomingBlockWarningFromBlocks;
 
 // DataStore simulation for demo
 const dataStore = {
@@ -843,6 +845,7 @@ function TennisCourtDisplay() {
                     data={data}
                     isMobileView={isMobileView}
                     checkStatusMinutes={checkStatusMinutes}
+                    upcomingBlocks={upcomingBlocks}
                   />
                 </div>
               ))}
@@ -869,6 +872,7 @@ function TennisCourtDisplay() {
                       data={data}
                       isMobileView={isMobileView}
                       checkStatusMinutes={checkStatusMinutes}
+                      upcomingBlocks={upcomingBlocks}
                     />
                   </div>
                 ))}
@@ -889,6 +893,7 @@ function TennisCourtDisplay() {
                     data={data}
                     isMobileView={isMobileView}
                     checkStatusMinutes={checkStatusMinutes}
+                    upcomingBlocks={upcomingBlocks}
                   />
                 ))}
               </div>
@@ -932,6 +937,7 @@ function CourtCard({
   data,
   isMobileView,
   checkStatusMinutes = 150,
+  upcomingBlocks = [],
 }) {
   const status = statusByCourt[courtNumber] || 'free';
   const selectable = selectableByCourt[courtNumber] || false;
@@ -1100,11 +1106,41 @@ function CourtCard({
                     Until {formatTime(cObj.session.scheduledEndAt)}
                   </div>
                 )}
+                {/* Show upcoming block warning for occupied courts */}
+                {status === 'occupied' &&
+                  (() => {
+                    const blockWarning = getUpcomingBlockWarningFromBlocks(
+                      courtNumber,
+                      0,
+                      upcomingBlocks
+                    );
+                    if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                    return (
+                      <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
+                        Reserved in {blockWarning.minutesUntilBlock}m
+                      </div>
+                    );
+                  })()}
                 {status === 'overtime' && secondary && (
                   <div className="mt-auto text-sm text-center" style={{ color: 'yellow' }}>
                     {secondary}
                   </div>
                 )}
+                {/* Show upcoming block warning for overtime courts */}
+                {status === 'overtime' &&
+                  (() => {
+                    const blockWarning = getUpcomingBlockWarningFromBlocks(
+                      courtNumber,
+                      0,
+                      upcomingBlocks
+                    );
+                    if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
+                    return (
+                      <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
+                        Reserved in {blockWarning.minutesUntilBlock}m
+                      </div>
+                    );
+                  })()}
               </>
             )
           ) : null}

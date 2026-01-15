@@ -121,7 +121,11 @@ export {
 // Court Block Utilities
 // ============================================================
 
-export { getCourtBlockStatus, getUpcomingBlockWarning } from './court-blocks.js';
+export {
+  getCourtBlockStatus,
+  getUpcomingBlockWarning,
+  getUpcomingBlockWarningFromBlocks,
+} from './court-blocks.js';
 
 // ============================================================
 // Configuration
