@@ -148,7 +148,7 @@ export function getUpcomingBlockWarningFromBlocks(courtNumber, duration = 60, bl
     if (minutesUntilBlock <= 5) {
       return {
         type: 'blocked',
-        reason: upcomingBlock.reason || upcomingBlock.title || 'Reserved',
+        reason: upcomingBlock.title || upcomingBlock.reason || 'Reserved',
         startTime: upcomingBlock.startTime,
         minutesUntilBlock,
       };
@@ -158,7 +158,7 @@ export function getUpcomingBlockWarningFromBlocks(courtNumber, duration = 60, bl
     if (duration === 0 || minutesUntilBlock < duration) {
       return {
         type: 'limited',
-        reason: upcomingBlock.reason || upcomingBlock.title || 'Reserved',
+        reason: upcomingBlock.title || upcomingBlock.reason || 'Reserved',
         startTime: upcomingBlock.startTime,
         limitedDuration: minutesUntilBlock,
         originalDuration: duration,

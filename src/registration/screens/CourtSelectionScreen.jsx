@@ -167,7 +167,7 @@ const CourtSelectionScreen = ({
 
                   {/* Show upcoming block warning as simple yellow text when within 60 minutes */}
                   {hasUpcomingBlock && (
-                    <div className="mt-1 text-yellow-300 text-xs text-center font-normal">
+                    <div className="mt-1 text-yellow-300 text-sm text-center font-normal">
                       {warningInfo.reason} in {warningInfo.minutesUntilBlock}m
                     </div>
                   )}
