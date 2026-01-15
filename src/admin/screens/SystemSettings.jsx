@@ -21,6 +21,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const [autoClearEnabled, setAutoClearEnabled] = useState(false);
   const [autoClearMinutes, setAutoClearMinutes] = useState('180');
   const [checkStatusMinutes, setCheckStatusMinutes] = useState('150');
+  const [blockWarningMinutes, setBlockWarningMinutes] = useState('60');
   const [autoClearChanged, setAutoClearChanged] = useState(false);
   const [autoClearError, setAutoClearError] = useState(null);
 
@@ -75,6 +76,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         setAutoClearEnabled(result.settings?.auto_clear_enabled === 'true');
         setAutoClearMinutes(result.settings?.auto_clear_minutes || '180');
         setCheckStatusMinutes(result.settings?.check_status_minutes || '150');
+        setBlockWarningMinutes(result.settings?.block_warning_minutes || '60');
 
         // Update operating hours
         if (result.operating_hours) {
@@ -175,6 +177,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     if (field === 'enabled') setAutoClearEnabled(value);
     if (field === 'autoClearMinutes') setAutoClearMinutes(value);
     if (field === 'checkStatusMinutes') setCheckStatusMinutes(value);
+    if (field === 'blockWarningMinutes') setBlockWarningMinutes(value);
     setAutoClearChanged(true);
     setAutoClearError(null);
   };
@@ -202,6 +205,13 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       }
     }
 
+    // Validate block warning minutes (always, not just when autoClearEnabled)
+    const blockWarnMin = parseInt(blockWarningMinutes);
+    if (isNaN(blockWarnMin) || blockWarnMin < 15 || blockWarnMin > 120) {
+      setAutoClearError('Block warning minutes must be between 15 and 120');
+      return;
+    }
+
     setAutoClearSaveStatus('saving');
     try {
       const result = await backend.admin.updateSettings({
@@ -209,6 +219,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
           auto_clear_enabled: autoClearEnabled ? 'true' : 'false',
           auto_clear_minutes: String(autoMin),
           check_status_minutes: String(checkMin),
+          block_warning_minutes: String(blockWarnMin),
         },
       });
 
@@ -563,6 +574,25 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
               </p>
             </div>
           )}
+
+          {/* Block warning setting - always visible */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-gray-600 w-48">Show block warning before</label>
+              <input
+                type="number"
+                min="15"
+                max="120"
+                value={blockWarningMinutes}
+                onChange={(e) => handleAutoClearChange('blockWarningMinutes', e.target.value)}
+                className="w-20 p-2 border rounded text-center"
+              />
+              <span className="text-sm text-gray-500">minutes</span>
+            </div>
+            <p className="text-xs text-gray-400 italic mt-1">
+              Display upcoming block warnings on courtboard and registration
+            </p>
+          </div>
 
           {/* Error message */}
           {autoClearError && <p className="text-red-600 text-sm mt-2">{autoClearError}</p>}

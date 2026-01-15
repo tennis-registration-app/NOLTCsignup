@@ -1117,7 +1117,7 @@ function CourtCard({
                     if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
                     return (
                       <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
-                        Reserved in {blockWarning.minutesUntilBlock}m
+                        Block starts in {blockWarning.minutesUntilBlock}m
                       </div>
                     );
                   })()}
@@ -1137,7 +1137,7 @@ function CourtCard({
                     if (!blockWarning || blockWarning.minutesUntilBlock >= 60) return null;
                     return (
                       <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
-                        Reserved in {blockWarning.minutesUntilBlock}m
+                        Block starts in {blockWarning.minutesUntilBlock}m
                       </div>
                     );
                   })()}
