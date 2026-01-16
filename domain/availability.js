@@ -120,18 +120,19 @@
   };
 
   /**
-   * getNextFreeTimes({ data, now, blocks }) -> Date[]
+   * getNextFreeTimes({ data, now, blocks, wetSet }) -> Date[]
    * Returns an array of length Tennis.Config.Courts.TOTAL_COUNT (1-indexed → index n-1),
    * where each entry is the earliest Date that court n is free.
    * Rules:
    *  - Coerce any stored times with new Date(...)
+   *  - If court is in wetSet, treat as unavailable until 10pm closing
    *  - Start base = now
    *  - If the court is occupied and session.scheduledEndAt > base, set base = session.scheduledEndAt
    *  - While there exists a block for this court where block.startTime <= base < block.endTime,
    *    set base = block.endTime (and re-check; blocks can be adjacent/stacked)
    *  - Result for court n is that base
    */
-  function getNextFreeTimes({ data, now, blocks }) {
+  function getNextFreeTimes({ data, now, blocks, wetSet }) {
     const total = (window.Tennis?.Config?.Courts?.TOTAL_COUNT) || 12;
     const out = new Array(total);
     const byCourt = (blocks || []).map(b => ({
@@ -139,7 +140,18 @@
       start: new Date(b.startTime),
       end: new Date(b.endTime)
     }));
+    // Normalize wetSet
+    const wet = wetSet instanceof Set ? wetSet : new Set();
+
     for (let n = 1; n <= total; n++) {
+      // If court is wet, treat as unavailable until 10pm closing
+      if (wet.has(n)) {
+        const closingTime = new Date(now);
+        closingTime.setHours(22, 0, 0, 0); // 10pm closing
+        out[n - 1] = closingTime;
+        continue;
+      }
+
       let base = new Date(now);
       const c = data?.courts?.[n - 1];
       // Domain format: session.scheduledEndAt

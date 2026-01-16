@@ -880,6 +880,7 @@ function TennisCourtDisplay() {
                 courts={courts}
                 currentTime={currentTime}
                 courtBlocks={courtBlocks}
+                upcomingBlocks={upcomingBlocks}
               />
               <div className="courts-grid-bottom">
                 {[12, 11, 10, 9].map((num) => (
@@ -928,6 +929,7 @@ function TennisCourtDisplay() {
                     courts={courts}
                     currentTime={currentTime}
                     courtBlocks={courtBlocks}
+                    upcomingBlocks={upcomingBlocks}
                   />
                 </div>
               )}
@@ -1196,7 +1198,7 @@ function CourtCard({
 }
 
 // WaitingList Component (with proper wait time calculations)
-function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
+function WaitingList({ waitlist, courts, currentTime, courtBlocks = [], upcomingBlocks = [] }) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
 
@@ -1213,7 +1215,8 @@ function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
 
       const now = new Date();
       const data = courtsToData(courts); // Use React state instead of localStorage
-      const blocks = courtBlocks || []; // Use prop instead of localStorage
+      // Combine active blocks and future blocks for accurate availability calculation
+      const blocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
 
       // Derive wetSet for current moment
       const wetSet = new Set(
@@ -1224,7 +1227,7 @@ function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
 
       // Get availability info
       const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-      const nextTimes = A.getNextFreeTimes ? A.getNextFreeTimes({ data, now, blocks }) : [];
+      const nextTimes = A.getNextFreeTimes ? A.getNextFreeTimes({ data, now, blocks, wetSet }) : [];
 
       // Calculate ETA using domain waitlist function
       if (W.estimateWaitForPositions) {
@@ -1252,7 +1255,8 @@ function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
 
       const now = new Date();
       const data = courtsToData(courts); // Use React state instead of localStorage
-      const blocks = courtBlocks || []; // Use prop instead of localStorage
+      // Combine active blocks and future blocks for accurate availability calculation
+      const blocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
       const wetSet = new Set(
         blocks
           .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
@@ -1985,6 +1989,7 @@ function MobileModalSheet({ type, payload, onClose }) {
         const waitlistData = payload?.waitlistData || [];
         const modalCourts = payload?.courts || [];
         const modalCourtBlocks = payload?.courtBlocks || [];
+        const modalUpcomingBlocks = payload?.upcomingBlocks || [];
 
         // Helper to convert courts array to data format for availability functions
         const courtsToDataModal = (courtsArray) => ({ courts: courtsArray || [] });
@@ -2028,7 +2033,8 @@ function MobileModalSheet({ type, payload, onClose }) {
 
             const now = new Date();
             const data = courtsToDataModal(modalCourts); // Use payload data
-            const blocks = modalCourtBlocks; // Use payload data
+            // Combine active blocks and future blocks for accurate availability calculation
+            const blocks = [...modalCourtBlocks, ...modalUpcomingBlocks];
             const wetSet = new Set(
               blocks
                 .filter(
@@ -2038,7 +2044,9 @@ function MobileModalSheet({ type, payload, onClose }) {
             );
 
             const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-            const nextTimes = A.getNextFreeTimes ? A.getNextFreeTimes({ data, now, blocks }) : [];
+            const nextTimes = A.getNextFreeTimes
+              ? A.getNextFreeTimes({ data, now, blocks, wetSet })
+              : [];
 
             if (W.estimateWaitForPositions) {
               const avgGame = window.Tennis?.Config?.Timing?.AVG_GAME || 75;
@@ -2065,7 +2073,8 @@ function MobileModalSheet({ type, payload, onClose }) {
 
             const now = new Date();
             const data = courtsToDataModal(modalCourts); // Use payload data
-            const blocks = modalCourtBlocks; // Use payload data
+            // Combine active blocks and future blocks for accurate availability calculation
+            const blocks = [...modalCourtBlocks, ...modalUpcomingBlocks];
             const wetSet = new Set(
               blocks
                 .filter(
