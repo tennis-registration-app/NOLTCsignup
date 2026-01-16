@@ -5,6 +5,10 @@
   window.Tennis = window.Tennis || {};
   window.Tennis.Domain = window.Tennis.Domain || {};
 
+  // Registration buffer: treat blocks as starting this many minutes earlier
+  const REGISTRATION_BUFFER_MINUTES = 15;
+  const REGISTRATION_BUFFER_MS = REGISTRATION_BUFFER_MINUTES * 60 * 1000;
+
   // Helper functions for robust date/block handling
   function coerceDate(d) {
     // Accept Date or string; never NaN
@@ -143,14 +147,16 @@
         const end = new Date(c.session.scheduledEndAt);
         if (end > base) base = end;
       }
-      // advance through overlapping blocks
+      // advance through overlapping blocks (with registration buffer)
       let advanced = true;
       while (advanced) {
         advanced = false;
         for (const b of byCourt) {
           if (b.courtNumber !== n) continue;
-          // overlap when b.start <= base < b.end
-          if (b.start <= base && base < b.end) {
+          // overlap when (b.start - buffer) <= base < b.end
+          // This treats blocks as starting 15 min earlier for availability purposes
+          const effectiveStart = new Date(b.start.getTime() - REGISTRATION_BUFFER_MS);
+          if (effectiveStart <= base && base < b.end) {
             base = new Date(b.end);
             advanced = true;
           }

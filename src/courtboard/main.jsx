@@ -1381,6 +1381,15 @@ function NextAvailablePanel({
       return [];
     }
 
+    // Registration buffer: 15 minutes before block starts
+    const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;
+
+    // Closing time check - default 9pm, exclude courts available within buffer of closing
+    const closingHour = 21; // 9pm - could be made configurable
+    const closingTime = new Date(currentTime);
+    closingTime.setHours(closingHour, 0, 0, 0);
+    const closingBufferTime = new Date(closingTime.getTime() - REGISTRATION_BUFFER_MS);
+
     const courtAvailability = [];
     const overtimeCourts = [];
 
@@ -1410,11 +1419,11 @@ function NextAvailablePanel({
       // Check for blocks that affect this court's availability
       let blockingUntil = null;
 
-      // First check currently active blocks
+      // First check currently active blocks (including those starting within buffer)
       const activeBlock = blocks.find(
         (block) =>
           block.courtNumber === courtNumber &&
-          new Date(block.startTime) <= currentTime &&
+          new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <= currentTime.getTime() &&
           new Date(block.endTime) > currentTime
       );
 
@@ -1428,13 +1437,13 @@ function NextAvailablePanel({
           endTime = court.endTime;
         }
 
-        // Check for future blocks that would overlap with game availability
+        // Check for future blocks that would overlap with game availability (with buffer)
         if (endTime) {
           const gameEndTime = new Date(endTime).getTime();
           const futureBlock = blocks.find(
             (block) =>
               block.courtNumber === courtNumber &&
-              new Date(block.startTime).getTime() < gameEndTime &&
+              new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS < gameEndTime &&
               new Date(block.endTime).getTime() > currentTime.getTime()
           );
 
@@ -1450,12 +1459,26 @@ function NextAvailablePanel({
           const hasPlayers = court.session?.group?.players?.length > 0;
 
           if (hasPlayers && parsedEndTime <= currentTime) {
-            overtimeCourts.push({
-              courtNumber,
-              endTime: null, // Special marker for "Now"
-              isOvertime: true,
-            });
-            return; // Don't add to regular availability
+            // Check if a block starts within the buffer period
+            const imminentBlock = blocks.find(
+              (block) =>
+                block.courtNumber === courtNumber &&
+                new Date(block.startTime).getTime() > currentTime.getTime() &&
+                new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <=
+                  currentTime.getTime()
+            );
+
+            if (imminentBlock) {
+              // Don't show as "Now" - extend availability to after the block
+              blockingUntil = imminentBlock.endTime;
+            } else {
+              overtimeCourts.push({
+                courtNumber,
+                endTime: null, // Special marker for "Now"
+                isOvertime: true,
+              });
+              return; // Don't add to regular availability
+            }
           }
         }
       }
@@ -1467,7 +1490,12 @@ function NextAvailablePanel({
       if (finalEndTime) {
         try {
           const parsedEndTime = new Date(finalEndTime);
-          if (!isNaN(parsedEndTime.getTime()) && parsedEndTime > currentTime) {
+          // Exclude if availability is within 15 min of closing time
+          if (
+            !isNaN(parsedEndTime.getTime()) &&
+            parsedEndTime > currentTime &&
+            parsedEndTime <= closingBufferTime
+          ) {
             courtAvailability.push({
               courtNumber,
               endTime: parsedEndTime,
