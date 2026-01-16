@@ -58,19 +58,22 @@ export default function ProposedActions({
         <h3 className="font-semibold text-amber-800">Proposed Actions</h3>
       </div>
 
-      <ul className="space-y-2 mb-4">
-        {actions.map((action, idx) => (
-          <li key={action.id || idx} className="bg-white rounded p-3 border border-amber-200">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-medium text-gray-900">{action.description}</p>
-                <p className="text-sm text-gray-500 mt-1">Tool: {action.tool}</p>
+      <div className="bg-white rounded border border-amber-200 mb-4 max-h-48 overflow-y-auto">
+        <ul className="divide-y divide-amber-100">
+          {actions.map((action, idx) => (
+            <li
+              key={action.id || idx}
+              className="px-3 py-2 flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-xs text-gray-400 font-mono">{action.tool}</span>
+                <span className="text-gray-900 truncate">{action.description}</span>
               </div>
               {getRiskBadge(action.risk)}
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Confirmation checkbox for high-risk actions */}
       {hasHighRisk && (
