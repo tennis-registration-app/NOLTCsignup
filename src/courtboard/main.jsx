@@ -670,8 +670,8 @@ function TennisCourtDisplay() {
           id: b.id,
           courtNumber: b.courtNumber,
           reason: b.title || b.reason || 'Blocked',
-          startTime: b.startTime,
-          endTime: b.endTime,
+          startTime: b.startsAt,
+          endTime: b.endsAt,
           isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
         }));
         setUpcomingBlocks(futureBlocks);
