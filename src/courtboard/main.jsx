@@ -670,8 +670,8 @@ function TennisCourtDisplay() {
           id: b.id,
           courtNumber: b.courtNumber,
           reason: b.title || b.reason || 'Blocked',
-          startTime: b.startsAt,
-          endTime: b.endsAt,
+          startTime: b.startTime,
+          endTime: b.endTime,
           isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
         }));
         setUpcomingBlocks(futureBlocks);
@@ -679,7 +679,6 @@ function TennisCourtDisplay() {
 
       // Transform already-normalized waitlist from TennisQueries
       // TennisQueries returns { group: { players } } format, we need { names } for rendering
-      console.log('[Courtboard] Waitlist from API (already normalized):', board.waitlist);
       const normalized = (board.waitlist || []).map((entry) => ({
         id: entry.id,
         position: entry.position,
@@ -1198,7 +1197,6 @@ function CourtCard({
 
 // WaitingList Component (with proper wait time calculations)
 function WaitingList({ waitlist, courts, currentTime, courtBlocks = [] }) {
-  console.log('[WaitingList] Received waitlist:', waitlist, 'courtBlocks:', courtBlocks);
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
 
@@ -1709,7 +1707,9 @@ function normalizeBlock(raw) {
   if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
 
   courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a, b) => a - b);
-  if (!start || !end || courts.length === 0) return null;
+  if (!start || !end || courts.length === 0) {
+    return null;
+  }
   return { courts, start, end, reason };
 }
 
