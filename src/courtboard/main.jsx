@@ -206,6 +206,11 @@ function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
     const start = courtObj?.session?.startedAt ? new Date(courtObj.session.startedAt) : null;
     if (start) {
       const minutesPlaying = Math.floor((now - start) / 60000);
+      console.log('[Courtboard] Overtime check:', {
+        minutesPlaying,
+        checkStatusMinutes,
+        shouldShow: minutesPlaying >= checkStatusMinutes,
+      });
       if (checkStatusMinutes > 0 && minutesPlaying >= checkStatusMinutes) {
         return { primary: 'Overtime', secondary: 'check status', secondaryColor: 'yellow' };
       }
@@ -700,7 +705,14 @@ function TennisCourtDisplay() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
+        console.log('[Courtboard] Loading settings, backend.admin:', !!backend.admin);
         const result = await backend.admin?.getSettings?.();
+        console.log(
+          '[Courtboard] Settings result:',
+          result?.ok,
+          'check_status_minutes:',
+          result?.settings?.check_status_minutes
+        );
         if (result?.ok && result.settings?.check_status_minutes) {
           const minutes = parseInt(result.settings.check_status_minutes, 10);
           if (minutes > 0) {
@@ -1050,7 +1062,7 @@ function CourtCard({
                     className="mt-auto text-xs text-center"
                     style={{ color: 'yellow', fontWeight: 'normal' }}
                   >
-                    {blockWarning.reason} begins in {blockWarning.minutesUntilBlock}m
+                    {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
                   </div>
                 );
               })()}
@@ -1136,7 +1148,7 @@ function CourtCard({
                       return null;
                     return (
                       <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
-                        Block starts in {blockWarning.minutesUntilBlock}m
+                        {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
                       </div>
                     );
                   })()}
@@ -1157,7 +1169,7 @@ function CourtCard({
                       return null;
                     return (
                       <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
-                        Block starts in {blockWarning.minutesUntilBlock}m
+                        {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
                       </div>
                     );
                   })()}
