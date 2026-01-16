@@ -1040,14 +1040,8 @@ function CourtCard({
       >
         <div className="flex flex-col h-full w-full">
           {status === 'free' ? (
-            <>
-              <div
-                className={`${isMobileView ? 'mt-1 court-text-base font-medium leading-tight text-sm font-normal' : 'mt-1 court-text-base font-medium leading-tight'} text-center flex-1 flex items-center justify-center`}
-              >
-                {isMobileView ? 'Tap to Select' : primary}
-              </div>
-
-              {/* Show amber block warning for free courts only */}
+            <div className="relative flex-1 flex flex-col items-center justify-center w-full">
+              {/* Block warning - absolutely positioned at top */}
               {(() => {
                 const blockWarning = getUpcomingBlockWarningFromBlocks(
                   courtNumber,
@@ -1059,14 +1053,20 @@ function CourtCard({
 
                 return (
                   <div
-                    className="mt-auto text-xs text-center"
-                    style={{ color: 'yellow', fontWeight: 'normal' }}
+                    className="absolute top-0 left-0 right-0 court-text-base font-bold leading-tight text-center"
+                    style={{ color: 'yellow' }}
                   >
                     {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
                   </div>
                 );
               })()}
-            </>
+              {/* "Available" - centered in full space */}
+              <div
+                className={`${isMobileView ? 'court-text-base font-medium leading-tight text-sm font-normal' : 'court-text-base font-medium leading-tight'} text-center`}
+              >
+                {isMobileView ? 'Tap to Select' : primary}
+              </div>
+            </div>
           ) : status === 'wet' ? (
             <div className="mt-1 court-text-base font-bold leading-tight text-center flex-1 flex items-center justify-center">
               <div className="flex flex-col items-center">
@@ -1118,9 +1118,55 @@ function CourtCard({
               </>
             ) : (
               <>
-                <div className="mt-1 court-text-base font-bold leading-tight text-center">
-                  {primary}
-                </div>
+                {/* For occupied: show block warning instead of "X min" if applicable */}
+                {status === 'occupied' &&
+                  (() => {
+                    const blockWarning = getUpcomingBlockWarningFromBlocks(
+                      courtNumber,
+                      0,
+                      upcomingBlocks
+                    );
+                    if (blockWarning && blockWarning.minutesUntilBlock < blockWarningMinutes) {
+                      return (
+                        <div
+                          className="mt-1 court-text-base font-bold leading-tight text-center"
+                          style={{ color: 'yellow' }}
+                        >
+                          {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="mt-1 court-text-base font-bold leading-tight text-center">
+                        {primary}
+                      </div>
+                    );
+                  })()}
+                {/* For overtime: show primary then block warning below */}
+                {status === 'overtime' && (
+                  <>
+                    <div className="mt-1 court-text-base font-bold leading-tight text-center">
+                      {primary}
+                    </div>
+                    {(() => {
+                      const blockWarning = getUpcomingBlockWarningFromBlocks(
+                        courtNumber,
+                        0,
+                        upcomingBlocks
+                      );
+                      if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
+                        return null;
+                      return (
+                        <div
+                          className="mt-1 court-text-base font-bold leading-tight text-center"
+                          style={{ color: 'yellow' }}
+                        >
+                          {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
                 {nm ? (
                   <div
                     className="mt-1 court-text-sm font-medium text-center flex-1 flex items-center justify-center"
@@ -1136,43 +1182,11 @@ function CourtCard({
                     Until {formatTime(cObj.session.scheduledEndAt)}
                   </div>
                 )}
-                {/* Show upcoming block warning for occupied courts */}
-                {status === 'occupied' &&
-                  (() => {
-                    const blockWarning = getUpcomingBlockWarningFromBlocks(
-                      courtNumber,
-                      0,
-                      upcomingBlocks
-                    );
-                    if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
-                      return null;
-                    return (
-                      <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
-                        {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
-                      </div>
-                    );
-                  })()}
                 {status === 'overtime' && secondary && (
                   <div className="mt-auto text-sm text-center" style={{ color: 'yellow' }}>
                     {secondary}
                   </div>
                 )}
-                {/* Show upcoming block warning for overtime courts */}
-                {status === 'overtime' &&
-                  (() => {
-                    const blockWarning = getUpcomingBlockWarningFromBlocks(
-                      courtNumber,
-                      0,
-                      upcomingBlocks
-                    );
-                    if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
-                      return null;
-                    return (
-                      <div className="mt-1 text-xs text-center" style={{ color: 'yellow' }}>
-                        {blockWarning.reason} in {blockWarning.minutesUntilBlock}m
-                      </div>
-                    );
-                  })()}
               </>
             )
           ) : null}
@@ -1654,9 +1668,11 @@ function ReservedCourtsPanel({ items, className, title = 'Reserved Courts' }) {
       ) : (
         <ul className="mt-2 space-y-1 reserved-courts-text text-gray-300 text-lg">
           {items.slice(0, 8).map((it, i) => (
-            <li key={`${it.key || i}`} className="flex justify-between">
-              <span className="font-medium text-gray-200">{it.courts.join(', ')}</span>
-              <span className="ml-2 whitespace-nowrap text-gray-400">
+            <li key={`${it.key || i}`} className="flex justify-between gap-2">
+              <span className="font-medium text-gray-200 flex-shrink-0">
+                {it.courts.join(', ')}
+              </span>
+              <span className="text-gray-400 text-right">
                 {fmtRange(it.start, it.end)} ({it.label}){it.warning ? ' ⚠️' : ''}
               </span>
             </li>
