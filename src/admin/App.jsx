@@ -1104,6 +1104,9 @@ const AdminPanelV2 = ({ onExit }) => {
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
+  // Ref to track blocks fingerprint for detecting actual changes
+  const lastBlocksFingerprintRef = useRef('');
+
   const ENABLE_WET_COURTS = true;
 
   const handleEmergencyWetCourt = async () => {
@@ -1356,6 +1359,15 @@ const AdminPanelV2 = ({ onExit }) => {
     };
   }, [loadData]);
 
+  // Generate fingerprint from blocks to detect actual changes
+  const generateBlocksFingerprint = (blocks) => {
+    if (!blocks || !Array.isArray(blocks)) return '';
+    return blocks
+      .map((b) => `${b.id}:${b.startsAt || b.starts_at}:${b.endsAt || b.ends_at}`)
+      .sort()
+      .join('|');
+  };
+
   // Subscribe to TennisBackend realtime updates for courts/waitlist
   useEffect(() => {
     console.log('[Admin] Setting up TennisBackend subscription...');
@@ -1388,8 +1400,14 @@ const AdminPanelV2 = ({ onExit }) => {
 
         setCourtBlocks(apiBlocks);
 
-        // Trigger calendar refresh when board changes (e.g., AI creates blocks)
-        setRefreshTrigger((prev) => prev + 1);
+        // Only trigger calendar refresh when blocks actually changed
+        const currentBlocks = [...(board.blocks || []), ...(board.upcomingBlocks || [])];
+        const newFingerprint = generateBlocksFingerprint(currentBlocks);
+        if (newFingerprint !== lastBlocksFingerprintRef.current) {
+          lastBlocksFingerprintRef.current = newFingerprint;
+          setRefreshTrigger((prev) => prev + 1);
+          console.log('[Admin] Blocks changed, triggering calendar refresh');
+        }
       }
     });
 
