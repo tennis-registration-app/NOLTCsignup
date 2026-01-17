@@ -434,7 +434,7 @@ const GroupScreen = ({
                         .map((partner, idx) => {
                           const names = partner.player.name.split(' ');
                           const displayName =
-                            names.join(' ').length > 15
+                            names.join(' ').length > 20
                               ? `${names[0].charAt(0)}. ${names[1] || names[0]}`
                               : partner.player.name;
 
