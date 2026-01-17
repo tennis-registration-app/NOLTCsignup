@@ -19,7 +19,7 @@ const EventCalendarEnhanced = ({
   onRefresh,
   onEditEvent,
   onDuplicateEvent,
-  defaultView = 'week',
+  defaultView = 'day',
   disableEventClick = false,
   backend,
   hoursOverrides = [],
