@@ -69,6 +69,7 @@ const SuccessScreen = ({
   mobileCountdown,
   isMobile = false,
   isTimeLimited = false,
+  timeLimitReason = null,
   ballPriceCents,
   onPurchaseBalls,
   onLookupMemberAccount,
@@ -366,7 +367,11 @@ const SuccessScreen = ({
                 </strong>
               </p>
               {isTimeLimited && (
-                <p className="text-sm text-gray-500 mt-1">(Remaining time from previous session)</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {timeLimitReason === 'rereg'
+                    ? '(Remaining time from previous session)'
+                    : '(Time limited due to upcoming court reservation)'}
+                </p>
               )}
 
               {/* Upcoming block warning */}

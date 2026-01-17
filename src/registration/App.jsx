@@ -602,6 +602,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     CONSTANTS.CHANGE_COURT_TIMEOUT_SEC
   );
   const [isTimeLimited, setIsTimeLimited] = useState(false);
+  const [timeLimitReason, setTimeLimitReason] = useState(null);
   // NOTE: currentScreen moved to top of component (line ~235) to avoid TDZ errors
   const [searchInput, setSearchInput] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -1591,6 +1592,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setCanChangeCourt(allowCourtChange); // Only true if alternatives exist
     setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
     setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false); // Track if time was limited
+    setTimeLimitReason(result.timeLimitReason || (result.isTimeLimited ? 'block' : null));
     setShowSuccess(true);
 
     const uiUpdateTime = Math.round(performance.now() - assignStartTime);
@@ -3006,6 +3008,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           mobileCountdown={window.__mobileFlow ? mobileCountdown : null}
           isMobile={!!window.__mobileFlow}
           isTimeLimited={isTimeLimited}
+          timeLimitReason={timeLimitReason}
           onChangeCourt={changeCourt}
           onNewRegistration={() => {
             resetForm();
