@@ -1590,7 +1590,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setHasAssignedCourt(true); // Track that this group has a court
     setCanChangeCourt(allowCourtChange); // Only true if alternatives exist
     setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
-    setIsTimeLimited(result.isTimeLimited || false); // Track if time was limited
+    setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false); // Track if time was limited
     setShowSuccess(true);
 
     const uiUpdateTime = Math.round(performance.now() - assignStartTime);
