@@ -232,8 +232,15 @@ const CourtStatusGrid = ({
     const diff = end - currentTime;
     const minutes = Math.floor(diff / 60000);
 
-    if (minutes < -60) return `${Math.abs(Math.floor(minutes / 60))}h over`;
-    if (minutes < 0) return `${Math.abs(minutes)}m over`;
+    if (minutes < 0) {
+      const absMinutes = Math.abs(minutes);
+      if (absMinutes >= 60) {
+        const hours = Math.floor(absMinutes / 60);
+        const mins = absMinutes % 60;
+        return mins > 0 ? `${hours}h ${mins}m over` : `${hours}h over`;
+      }
+      return `${absMinutes}m over`;
+    }
     if (minutes < 60) return `${minutes}m left`;
     return `${Math.floor(minutes / 60)}h ${minutes % 60}m left`;
   };
