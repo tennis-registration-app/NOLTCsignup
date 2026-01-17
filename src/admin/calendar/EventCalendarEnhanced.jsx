@@ -519,10 +519,11 @@ const EventCalendarEnhanced = ({
         </div>
       )}
 
-      {/* Event Summary */}
+      {/* REMOVED: Upcoming Events panel
       {EventSummary && (
         <EventSummary events={events} currentTime={currentTime} onEventClick={handleEventClick} />
       )}
+      */}
 
       {/* Hover Card */}
       {hoveredEvent && !quickActionEvent && HoverCard && (
