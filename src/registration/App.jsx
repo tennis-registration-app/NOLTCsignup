@@ -1914,7 +1914,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         const result = await backend.queries.getFrequentPartners(memberId);
         if (result.ok && result.partners) {
           // Transform API response to expected format
-          const partners = result.partners.slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS).map((p) => ({
+          const partners = result.partners.map((p) => ({
             player: {
               id: p.member_id,
               name: p.display_name,
