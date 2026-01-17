@@ -2923,59 +2923,64 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Position in queue - use API position if available
       position = waitlistPosition > 0 ? waitlistPosition : data.waitlist.length;
 
-      // Calculate estimated wait time based on court end times
+      // Calculate estimated wait time using domain functions
       try {
-        const now = currentTime.getTime();
+        const A = window.Tennis?.Domain?.Availability;
+        const W = window.Tennis?.Domain?.Waitlist;
 
-        // Collect end times from sessions and blocks (courts that are occupied/blocked)
-        // Convert ISO strings to milliseconds for comparison
-        const parseEndTime = (timeVal) => {
-          if (!timeVal) return null;
-          const ms = typeof timeVal === 'string' ? new Date(timeVal).getTime() : timeVal;
-          return isNaN(ms) ? null : ms;
-        };
+        if (A && W && A.getFreeCourtsInfo && A.getNextFreeTimes && W.estimateWaitForPositions) {
+          const now = new Date();
 
-        const courtEndTimes = data.courts
-          .map((court) => {
-            if (!court) return null;
-            // Session end time (scheduledEndAt from API)
-            const sessionEnd = parseEndTime(
-              court.session?.scheduledEndAt || court.session?.endTime
-            );
-            if (sessionEnd && sessionEnd > now) {
-              return sessionEnd;
-            }
-            // Block end time (court is blocked)
-            const blockEnd = parseEndTime(court.block?.endTime);
-            if (blockEnd && blockEnd > now) {
-              return blockEnd;
-            }
-            // Fallback: top-level endTime
-            const topEnd = parseEndTime(court.endTime);
-            if (topEnd && topEnd > now) {
-              return topEnd;
-            }
-            return null;
-          })
-          .filter((endTime) => endTime !== null)
-          .sort((a, b) => a - b);
+          // Build blocks array from court-level blocks (active) and upcomingBlocks (future)
+          const activeBlocks = data.courts
+            .filter((c) => c?.block)
+            .map((c) => ({
+              courtNumber: c.number,
+              startTime: c.block.startsAt || c.block.startTime,
+              endTime: c.block.endsAt || c.block.endTime,
+              isWetCourt: (c.block.reason || c.block.title || '').toLowerCase().includes('wet'),
+            }));
+          const upcomingBlocks = (data.upcomingBlocks || []).map((b) => ({
+            courtNumber: b.courtNumber,
+            startTime: b.startTime || b.startsAt,
+            endTime: b.endTime || b.endsAt,
+            isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
+          }));
+          const allBlocks = [...activeBlocks, ...upcomingBlocks];
 
-        if (courtEndTimes.length === 0) {
-          // No courts occupied - either available immediately or fallback to avg time
-          estimatedWait = position === 1 ? 0 : (position - 1) * CONSTANTS.AVG_GAME_TIME_MIN;
-        } else if (position <= courtEndTimes.length) {
-          // Position N means wait for the Nth court to free up
-          const waitMs = courtEndTimes[position - 1] - now;
-          estimatedWait = Math.max(0, Math.ceil(waitMs / 60000));
-        } else {
-          // More waitlist positions than courts - estimate additional cycles
-          const avgGameTime = CONSTANTS.AVG_GAME_TIME_MIN;
-          const lastEndTime = courtEndTimes[courtEndTimes.length - 1];
-          const baseWait = Math.max(0, Math.ceil((lastEndTime - now) / 60000));
-          const extraCycles = Math.ceil(
-            (position - courtEndTimes.length) / Math.max(courtEndTimes.length, 1)
+          // Build wetSet from currently active wet blocks
+          const wetSet = new Set(
+            allBlocks
+              .filter(
+                (b) => b.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+              )
+              .map((b) => b.courtNumber)
           );
-          estimatedWait = baseWait + extraCycles * avgGameTime;
+
+          // Convert data to domain format
+          const domainData = { courts: data.courts };
+
+          // Get availability info
+          const info = A.getFreeCourtsInfo({ data: domainData, now, blocks: allBlocks, wetSet });
+          const nextTimes = A.getNextFreeTimes({
+            data: domainData,
+            now,
+            blocks: allBlocks,
+            wetSet,
+          });
+
+          // Calculate ETA using domain function
+          const avgGame = window.Tennis?.Config?.Timing?.AVG_GAME || CONSTANTS.AVG_GAME_TIME_MIN;
+          const etas = W.estimateWaitForPositions({
+            positions: [position],
+            currentFreeCount: info.free?.length || 0,
+            nextFreeTimes: nextTimes,
+            avgGameMinutes: avgGame,
+          });
+          estimatedWait = etas[0] || 0;
+        } else {
+          // Domain functions not available - fallback to simple calculation
+          estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
         }
       } catch (e) {
         console.error('Error calculating wait time:', e);
