@@ -290,19 +290,16 @@ export class TennisCommands {
       throw new Error('TennisDirectory not set - cannot resolve players');
     }
 
-    const participants = [];
-    let firstMemberAccount = null;
+    const tStart = performance.now();
+
+    // Separate members from guests and collect unique member numbers
+    const memberPlayers = [];
+    const guestPlayers = [];
 
     for (const player of players) {
       if (player.isGuest || player.type === 'guest') {
-        // Guest - will need an account for fees (resolved after members)
-        participants.push({
-          kind: 'guest',
-          guestName: player.name || player.guest_name || 'Guest',
-          accountId: '__NEEDS_ACCOUNT__',
-        });
+        guestPlayers.push(player);
       } else {
-        // Member - resolve via directory
         const memberNumber = player.memberNumber || player.member_number || player.clubNumber;
         const name = player.name || player.displayName;
 
@@ -310,26 +307,98 @@ export class TennisCommands {
           throw new Error(`Member ${name} has no member number`);
         }
 
-        const member = await this.directory.findMemberByName(memberNumber, name);
-
-        if (!member) {
-          throw new Error(`Could not find member: ${name} (account ${memberNumber})`);
-        }
-
-        participants.push({
-          kind: 'member',
-          memberId: member.id,
-          accountId: member.accountId,
-        });
-
-        // Track first member's account for guests
-        if (!firstMemberAccount) {
-          firstMemberAccount = member.accountId;
-        }
+        memberPlayers.push({ ...player, memberNumber, name });
       }
     }
 
-    // Assign guest accounts
+    // Get unique member numbers for parallel fetch
+    const uniqueMemberNumbers = [...new Set(memberPlayers.map((p) => p.memberNumber))];
+
+    // Fetch all accounts in parallel
+    const t0 = performance.now();
+    const accountResults = await Promise.all(
+      uniqueMemberNumbers.map(async (memberNumber) => {
+        const a0 = performance.now();
+        const members = await this.directory.getMembersByAccount(memberNumber);
+        const a1 = performance.now();
+        console.log(
+          `[resolvePlayers] getMembersByAccount ${memberNumber} ${(a1 - a0).toFixed(0)}ms (${members?.length ?? 0} members)`
+        );
+        return [memberNumber, members];
+      })
+    );
+    console.log(`[resolvePlayers] total account fetch ${(performance.now() - t0).toFixed(0)}ms`);
+
+    // Build lookup map: memberNumber -> members[]
+    const membersByAccount = new Map(accountResults);
+
+    // Resolve each member player (no await needed - data already fetched)
+    const participants = [];
+    let firstMemberAccount = null;
+
+    for (const player of memberPlayers) {
+      const members = membersByAccount.get(player.memberNumber) || [];
+      const nameLower = (player.name || '').toLowerCase().trim();
+
+      // Find matching member (exact match, then partial, then last name)
+      let member = members.find(
+        (m) => (m.displayName || m.display_name || '').toLowerCase().trim() === nameLower
+      );
+
+      if (!member) {
+        // Partial match
+        member = members.find((m) => {
+          const display = (m.displayName || m.display_name || '').toLowerCase().trim();
+          return display.includes(nameLower) || nameLower.includes(display);
+        });
+      }
+
+      if (!member) {
+        // Last name match
+        member = members.find((m) => {
+          const displayLast = (m.displayName || m.display_name || '')
+            .toLowerCase()
+            .split(' ')
+            .pop();
+          const nameLast = nameLower.split(' ').pop();
+          return displayLast === nameLast;
+        });
+      }
+
+      if (!member && members.length === 1) {
+        // Single member on account - use it with warning
+        console.warn(
+          `[resolvePlayers] Using only member on account: ${members[0].displayName || members[0].display_name} (searched: ${player.name})`
+        );
+        member = members[0];
+      }
+
+      if (!member) {
+        throw new Error(`Could not find member: ${player.name} (account ${player.memberNumber})`);
+      }
+
+      participants.push({
+        kind: 'member',
+        memberId: member.id,
+        accountId: member.accountId || member.account_id,
+      });
+
+      // Track first member's account for guests
+      if (!firstMemberAccount) {
+        firstMemberAccount = member.accountId || member.account_id;
+      }
+    }
+
+    // Add guest participants
+    for (const player of guestPlayers) {
+      participants.push({
+        kind: 'guest',
+        guestName: player.name || player.guest_name || 'Guest',
+        accountId: '__NEEDS_ACCOUNT__',
+      });
+    }
+
+    // Assign guest accounts from first member
     if (firstMemberAccount) {
       for (const p of participants) {
         if (p.accountId === '__NEEDS_ACCOUNT__') {
@@ -344,6 +413,7 @@ export class TennisCommands {
       }
     }
 
+    console.log(`[resolvePlayers] total ${(performance.now() - tStart).toFixed(0)}ms`);
     return participants;
   }
 
@@ -370,6 +440,13 @@ export class TennisCommands {
     latitude,
     longitude,
   }) {
+    const tStart = performance.now();
+    console.log('[assignCourtWithPlayers] start', {
+      courtId,
+      playerCount: players.length,
+      groupType,
+    });
+
     // 1. Validate command structure (fail-fast)
     const validPlayers = players.map((p) => ({
       memberId: p.memberId || p.member_id || p.id || '',
@@ -386,9 +463,13 @@ export class TennisCommands {
 
     // 2. Resolve players to participants (member lookup)
     const participants = await this.resolvePlayersToParticipants(players);
+    console.log(
+      `[assignCourtWithPlayers] resolved participants ${(performance.now() - tStart).toFixed(0)}ms`
+    );
 
     // 3. Send to API
-    return this.assignCourt({
+    const tPost = performance.now();
+    const result = await this.assignCourt({
       courtId,
       participants,
       groupType,
@@ -397,6 +478,12 @@ export class TennisCommands {
       latitude,
       longitude,
     });
+    console.log(
+      `[assignCourtWithPlayers] POST /assign-court ${(performance.now() - tPost).toFixed(0)}ms`
+    );
+    console.log(`[assignCourtWithPlayers] total ${(performance.now() - tStart).toFixed(0)}ms`);
+
+    return result;
   }
 
   /**
