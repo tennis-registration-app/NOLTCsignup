@@ -423,7 +423,7 @@ const SuccessScreen = ({
                     {registrantStreak === 1
                       ? "Your last session was ended without using 'Clear Court'."
                       : `Your last ${registrantStreak} sessions were ended without using 'Clear Court'.`}{' '}
-                    Please tap Clear Court when you finish so others can get on faster.
+                    Please tap Clear Court when you finish this session so others can get on faster.
                   </p>
                 </div>
               )}
