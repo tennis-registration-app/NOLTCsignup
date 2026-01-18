@@ -2102,6 +2102,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             name: displayName,
             accountId: apiMember.account_id,
             isPrimary: apiMember.is_primary,
+            unclearedStreak: apiMember.uncleared_streak || apiMember.unclearedStreak || 0,
           },
           displayText: `${displayName} (#${memberNumber})`,
         });
