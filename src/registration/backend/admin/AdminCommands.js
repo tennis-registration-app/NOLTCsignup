@@ -44,6 +44,42 @@ export class AdminCommands {
   }
 
   /**
+   * Update a court block
+   * @param {Object} input
+   * @param {string} input.blockId - UUID of the block to update
+   * @param {string} [input.courtId] - New court UUID
+   * @param {string} [input.blockType] - Block type (lesson, clinic, maintenance, wet, other)
+   * @param {string} [input.title] - Block title/description
+   * @param {string} [input.startsAt] - ISO timestamp for block start
+   * @param {string} [input.endsAt] - ISO timestamp for block end
+   * @param {string} input.deviceId - Admin device ID
+   * @param {string} input.deviceType - Device type
+   */
+  async updateBlock(input) {
+    const payload = {
+      block_id: input.blockId,
+      device_id: input.deviceId,
+      device_type: input.deviceType || 'admin',
+    };
+
+    // Only include optional fields if provided
+    if (input.courtId !== undefined) payload.court_id = input.courtId;
+    if (input.blockType !== undefined) payload.block_type = input.blockType;
+    if (input.title !== undefined) payload.title = input.title;
+    if (input.startsAt !== undefined) payload.starts_at = input.startsAt;
+    if (input.endsAt !== undefined) payload.ends_at = input.endsAt;
+
+    const response = await this.api.post('/update-block', payload);
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      block: response.data?.block || response.block,
+    };
+  }
+
+  /**
    * Cancel a court block
    * @param {Object} input
    * @param {string} input.blockId - UUID of the block to cancel
