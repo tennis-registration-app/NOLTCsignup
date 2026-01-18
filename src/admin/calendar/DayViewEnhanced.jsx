@@ -113,7 +113,7 @@ const DayViewEnhanced = memo(
               <div className="flex-1 h-0.5 bg-red-500" />
             </div>
           )}
-          <div className="flex min-w-max">
+          <div className="flex">
             {/* Time column */}
             <div className="w-16 flex-shrink-0 bg-gray-50">
               <div className="h-12 border-b border-gray-300 bg-gray-50 sticky top-0 z-20"></div>
@@ -135,7 +135,7 @@ const DayViewEnhanced = memo(
 
             {/* Court columns */}
             <div
-              className="flex bg-gray-200 min-w-0"
+              className="flex flex-1 bg-gray-200 min-w-0"
               style={{ minHeight: `${hours.length * 60 + 48}px` }}
             >
               {courts.map((courtNum) => {
@@ -144,7 +144,7 @@ const DayViewEnhanced = memo(
                 return (
                   <div
                     key={courtNum}
-                    className="w-24 bg-white border-r border-gray-200 last:border-r-0 flex-shrink-0"
+                    className="flex-1 min-w-[80px] bg-white border-r border-gray-200 last:border-r-0"
                   >
                     <div className="h-12 p-2 text-center border-b border-gray-300 bg-gray-50 sticky top-0 z-20">
                       <div className="text-xs text-gray-600">Court</div>
