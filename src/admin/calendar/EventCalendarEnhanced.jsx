@@ -10,6 +10,7 @@ import { ChevronLeft, ChevronRight } from '../components';
 import DayViewEnhanced from './DayViewEnhanced.jsx';
 import WeekView from './WeekView.jsx';
 import EventDetailsModal from './EventDetailsModal.jsx';
+import EditBlockModal from '../blocks/EditBlockModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
 
 const EventCalendarEnhanced = ({
@@ -37,6 +38,7 @@ const EventCalendarEnhanced = ({
   const [hoverPosition, setHoverPosition] = useState({ top: 0, left: 0 });
   const [quickActionEvent, setQuickActionEvent] = useState(null);
   const [quickActionPosition, setQuickActionPosition] = useState({ top: 0, left: 0 });
+  const [editingBlock, setEditingBlock] = useState(null);
 
   // API-sourced block state
   const [blocks, setBlocks] = useState([]);
@@ -292,18 +294,15 @@ const EventCalendarEnhanced = ({
       });
 
       if (blockToEdit) {
-        setSelectedEvent(null); // Close modal
-        if (typeof onEditEvent === 'function') {
-          onEditEvent(blockToEdit);
-        } else {
-          console.log('Opening edit for block:', blockToEdit);
-          alert(
-            'Edit functionality needs to be properly connected. Please use the Court Blocking tab for editing blocks.'
-          );
-        }
+        setSelectedEvent(null); // Close details modal
+        setEditingBlock(blockToEdit); // Open edit modal
+      } else {
+        // Fallback: use the event directly
+        setSelectedEvent(null);
+        setEditingBlock(event);
       }
     },
-    [blocks, onEditEvent]
+    [blocks]
   );
 
   const handleDelete = useCallback(
@@ -554,6 +553,23 @@ const EventCalendarEnhanced = ({
           onEdit={handleEdit}
           onDelete={handleDelete}
           onDuplicate={handleDuplicate}
+        />
+      )}
+
+      {/* Edit Block Modal */}
+      {editingBlock && (
+        <EditBlockModal
+          block={editingBlock}
+          courts={courts.map((court, idx) => ({
+            id: court?.id || `court-${idx + 1}`,
+            courtNumber: idx + 1,
+          }))}
+          onClose={() => setEditingBlock(null)}
+          onSaved={() => {
+            setEditingBlock(null);
+            onRefresh();
+          }}
+          backend={backend}
         />
       )}
     </div>

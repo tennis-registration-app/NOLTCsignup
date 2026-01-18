@@ -18,6 +18,7 @@ import {
 } from '../components';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
+import EditBlockModal from './EditBlockModal.jsx';
 import { getEventTypeFromReason } from '../calendar/utils.js';
 
 // Get dependencies from window
@@ -190,6 +191,7 @@ const CompleteBlockManagerEnhanced = ({
   const [showTemplates, setShowTemplates] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
+  const [editModalBlock, setEditModalBlock] = useState(null);
   const [isEvent, setIsEvent] = useState(true);
   const [eventType, setEventType] = useState('event');
   const [eventTitle, setEventTitle] = useState('');
@@ -548,23 +550,7 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const handleEditBlock = (block) => {
-    setEditingBlock(block);
-    setSelectedCourts([block.courtNumber]);
-    setBlockReason(block.reason);
-
-    const startDate = new Date(block.startTime);
-    const endDate = new Date(block.endTime);
-
-    setSelectedDate(startDate);
-
-    if (startDate > currentTime) {
-      setStartTime(startDate.toTimeString().slice(0, 5));
-    } else {
-      setStartTime('now');
-    }
-
-    setEndTime(endDate.toTimeString().slice(0, 5));
-    setActiveView('create');
+    setEditModalBlock(block);
   };
 
   const handleDuplicateBlock = (block) => {
@@ -1064,6 +1050,23 @@ const CompleteBlockManagerEnhanced = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Block Modal */}
+      {editModalBlock && (
+        <EditBlockModal
+          block={editModalBlock}
+          courts={courts.map((court, idx) => ({
+            id: court?.id || `court-${idx + 1}`,
+            courtNumber: idx + 1,
+          }))}
+          onClose={() => setEditModalBlock(null)}
+          onSaved={() => {
+            setEditModalBlock(null);
+            setRefreshTrigger((prev) => prev + 1);
+          }}
+          backend={backend}
+        />
       )}
     </div>
   );
