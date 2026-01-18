@@ -45,12 +45,15 @@ export class TennisDirectory {
       `/get-members?member_number=${encodeURIComponent(memberNumber)}`
     );
 
+    console.log('[TennisDirectory] API response:', response);
+
     if (!response.ok) {
       console.error('Account lookup failed:', response.message);
       return [];
     }
 
     const members = (response.members || []).map((m) => this._normalizeMember(m));
+    console.log('[TennisDirectory] Normalized members:', members);
 
     // Cache result
     this._cache.set(memberNumber, { members, timestamp: Date.now() });

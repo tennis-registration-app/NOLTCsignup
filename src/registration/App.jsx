@@ -2160,6 +2160,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       unclearedStreak: suggestion.member.unclearedStreak || 0,
     };
 
+    console.log('[handleSuggestionClick] suggestion.member:', suggestion.member);
+    console.log('[handleSuggestionClick] enrichedMember:', enrichedMember);
+    console.log('[handleSuggestionClick] unclearedStreak:', enrichedMember?.unclearedStreak);
+
     // Early duplicate guard - if player is already playing/waiting, stop here
     if (!guardAddPlayerEarly(enrichedMember)) {
       setSearchInput('');
@@ -2221,10 +2225,25 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log('🔵 Adding player to group:', newPlayer);
 
     // Track registrant's uncleared streak (first player added is the registrant)
+    // Fetch fresh member data to get current streak (cached apiMembers may be stale)
     if (currentGroup.length === 0) {
-      setRegistrantStreak(enrichedMember.unclearedStreak || 0);
+      let currentStreak = 0;
+      try {
+        // Invalidate cache to ensure fresh data
+        backend.directory.invalidateAccount(suggestion.memberNumber);
+        const freshMemberData = await backend.directory.getMembersByAccount(
+          suggestion.memberNumber
+        );
+        const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
+        currentStreak = freshMember?.unclearedStreak || freshMember?.uncleared_streak || 0;
+        console.log('📊 Fresh member data:', freshMember);
+        console.log('📊 Registrant streak (fresh):', currentStreak);
+      } catch (error) {
+        console.error('📊 Failed to fetch fresh streak, using cached:', error);
+        currentStreak = enrichedMember.unclearedStreak || 0;
+      }
+      setRegistrantStreak(currentStreak);
       setStreakAcknowledged(false); // Reset acknowledgment for new registration
-      console.log('📊 Registrant streak:', enrichedMember.unclearedStreak || 0);
     }
 
     setCurrentGroup([...currentGroup, newPlayer]);
@@ -2873,8 +2892,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   const handleGroupSelectCourt = () => {
+    console.log('[handleGroupSelectCourt] registrantStreak:', registrantStreak);
+    console.log('[handleGroupSelectCourt] streakAcknowledged:', streakAcknowledged);
+
     // Check if streak >= 3 and not yet acknowledged
     if (registrantStreak >= 3 && !streakAcknowledged) {
+      console.log('[handleGroupSelectCourt] Showing streak modal');
       setShowStreakModal(true);
       return;
     }
