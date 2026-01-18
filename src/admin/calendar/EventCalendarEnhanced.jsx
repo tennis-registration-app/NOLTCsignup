@@ -475,7 +475,7 @@ const EventCalendarEnhanced = ({
 
       {/* Calendar View */}
       {!isLoading && !error && (
-        <div className="bg-white rounded-lg shadow-sm p-2">
+        <div className="bg-white rounded-lg shadow-sm p-1">
           <div className="border-t border-gray-300">
             {viewMode === 'month' && MonthView && (
               <MonthView

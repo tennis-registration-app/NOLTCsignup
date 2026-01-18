@@ -144,7 +144,7 @@ const DayViewEnhanced = memo(
                 return (
                   <div
                     key={courtNum}
-                    className="w-[88px] bg-white border-r border-gray-200 last:border-r-0 flex-shrink-0"
+                    className="w-24 bg-white border-r border-gray-200 last:border-r-0 flex-shrink-0"
                   >
                     <div className="h-12 p-2 text-center border-b border-gray-300 bg-gray-50 sticky top-0 z-20">
                       <div className="text-xs text-gray-600">Court</div>
