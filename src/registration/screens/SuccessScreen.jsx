@@ -417,11 +417,15 @@ const SuccessScreen = ({
               )}
               {/* Uncleared session warning for streak 1-2 */}
               {registrantStreak >= 1 && registrantStreak <= 2 && (
-                <p className="text-sm text-orange-600 mt-3 px-2">
-                  Your last {registrantStreak} session{registrantStreak > 1 ? 's were' : ' was'}{' '}
-                  ended without using &apos;Clear Court&apos;. Please tap Clear Court when you
-                  finish so others can get on faster.
-                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3 mx-4">
+                  <p className="text-amber-800 text-base">
+                    ⚠️{' '}
+                    {registrantStreak === 1
+                      ? "Your last session was ended without using 'Clear Court'."
+                      : `Your last ${registrantStreak} sessions were ended without using 'Clear Court'.`}{' '}
+                    Please tap Clear Court when you finish so others can get on faster.
+                  </p>
+                </div>
               )}
             </>
           )}
