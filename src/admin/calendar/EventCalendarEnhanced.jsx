@@ -407,7 +407,7 @@ const EventCalendarEnhanced = ({
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="flex items-center justify-between mb-2 px-20">
+      <div className="flex items-center justify-between mb-2 px-4">
         {/* Day/Week/Month buttons on the left */}
         <div className="flex bg-gray-100 rounded-lg p-1">
           <button
