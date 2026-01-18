@@ -501,7 +501,12 @@ const GroupScreen = ({
               })() ? (
                 <button
                   onClick={onSelectCourt}
-                  className={`${isMobileView ? 'px-6' : ''} bg-blue-500 text-white py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl hover:bg-blue-600 transition-colors`}
+                  disabled={showGuestForm}
+                  className={`${isMobileView ? 'px-6' : ''} py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl transition-colors ${
+                    showGuestForm
+                      ? 'bg-blue-300 text-white cursor-not-allowed opacity-60'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  }`}
                 >
                   {isMobileView
                     ? window.__mobileFlow && window.__preselectedCourt
@@ -514,11 +519,13 @@ const GroupScreen = ({
               ) : (
                 <button
                   onClick={onJoinWaitlist}
-                  disabled={joiningWaitlist}
+                  disabled={joiningWaitlist || showGuestForm}
                   className={`relative overflow-visible ${isMobileView ? 'px-6' : 'px-4 sm:px-8'} py-2 sm:py-4 rounded-xl text-base sm:text-xl font-semibold transition-all duration-200 text-white ${
-                    joiningWaitlist
-                      ? 'scale-105 bg-gradient-to-r from-orange-500 to-orange-600'
-                      : 'bg-orange-600 hover:bg-orange-700 hover:scale-105'
+                    showGuestForm
+                      ? 'bg-orange-300 cursor-not-allowed opacity-60'
+                      : joiningWaitlist
+                        ? 'scale-105 bg-gradient-to-r from-orange-500 to-orange-600'
+                        : 'bg-orange-600 hover:bg-orange-700 hover:scale-105'
                   }`}
                 >
                   {joiningWaitlist ? 'Joining Waitlist...' : 'Join Waitlist'}
