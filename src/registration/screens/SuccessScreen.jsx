@@ -70,6 +70,7 @@ const SuccessScreen = ({
   isMobile = false,
   isTimeLimited = false,
   timeLimitReason = null,
+  registrantStreak = 0,
   ballPriceCents,
   onPurchaseBalls,
   onLookupMemberAccount,
@@ -412,6 +413,14 @@ const SuccessScreen = ({
                 <p className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
                   Please courteously request {replacedGroup.players[0].name} and partners conclude
                   their play
+                </p>
+              )}
+              {/* Uncleared session warning for streak 1-2 */}
+              {registrantStreak >= 1 && registrantStreak <= 2 && (
+                <p className="text-sm text-orange-600 mt-3 px-2">
+                  Your last {registrantStreak} session{registrantStreak > 1 ? 's were' : ' was'}{' '}
+                  ended without using &apos;Clear Court&apos;. Please tap Clear Court when you
+                  finish so others can get on faster.
                 </p>
               )}
             </>
