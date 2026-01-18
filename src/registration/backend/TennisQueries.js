@@ -94,59 +94,40 @@ export class TennisQueries {
       })
       .catch((e) => console.error('[TennisQueries] Initial fetch failed:', e));
 
-    // Subscribe to signals using TWO methods for reliability:
-    // 1. postgres_changes - requires database replication to be enabled
-    // 2. broadcast - always works, doesn't need database replication
-    console.log(
-      '📡 Setting up Realtime subscriptions...',
-      BROADCAST_ONLY_MODE ? '(BROADCAST_ONLY_MODE)' : ''
-    );
-
-    // Method 1: postgres_changes (database replication) - skip if BROADCAST_ONLY_MODE
-    if (!BROADCAST_ONLY_MODE) {
-      this.subscription = this.supabase
-        .channel('board-signals')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'board_change_signals' },
-          (payload) => {
-            console.log('📡 [postgres_changes] Signal received:', payload.new?.change_type);
-            this._handleSignal(callback, 'postgres_changes');
-          }
-        )
-        .subscribe((status, err) => {
-          console.log('📡 [postgres_changes] Status:', status, err ? `Error: ${err.message}` : '');
-          if (status === 'SUBSCRIBED') {
-            console.log('📡 [postgres_changes] Connected');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.warn(
-              '📡 [postgres_changes] Error - may need to enable Replication in Supabase Dashboard'
-            );
-          }
-        });
-    } else {
-      console.log('📡 [postgres_changes] SKIPPED (BROADCAST_ONLY_MODE enabled)');
-    }
-
-    // Method 2: broadcast (more reliable, doesn't need database replication)
-    this.broadcastSubscription = this.supabase
-      .channel('board-updates')
-      .on('broadcast', { event: 'board_changed' }, (payload) => {
-        console.log('📡 [broadcast] Signal received:', payload.payload?.change_type);
-        this._handleSignal(callback, 'broadcast');
-      })
-      .subscribe((status, err) => {
-        console.log('📡 [broadcast] Status:', status, err ? `Error: ${err.message}` : '');
-        if (status === 'SUBSCRIBED') {
-          console.log('📡 [broadcast] Connected - ready for real-time updates');
-          this._handleSignal(callback, 'broadcast_subscribe');
-        }
-      });
+    // Set up realtime subscriptions
+    this._setupRealtimeSubscriptions(callback);
 
     // Refresh board when tab becomes visible (handles sleep/wake, tab switching)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('📡 Tab visible, refreshing board...');
+        console.log('📡 Tab visible, checking subscriptions...');
+
+        // Check if channels are still connected
+        const postgresState = this.subscription?.state;
+        const broadcastState = this.broadcastSubscription?.state;
+
+        console.log(`📡 Channel states - postgres: ${postgresState}, broadcast: ${broadcastState}`);
+
+        // If either channel is not joined, reconnect
+        // Supabase channel states: 'closed', 'errored', 'joined', 'joining', 'leaving'
+        if ((this.subscription && postgresState !== 'joined') || broadcastState !== 'joined') {
+          console.log('📡 Channels disconnected, resubscribing...');
+
+          // Remove old channels
+          if (this.subscription) {
+            this.supabase.removeChannel(this.subscription);
+            this.subscription = null;
+          }
+          if (this.broadcastSubscription) {
+            this.supabase.removeChannel(this.broadcastSubscription);
+            this.broadcastSubscription = null;
+          }
+
+          // Resubscribe
+          this._setupRealtimeSubscriptions(callback);
+        }
+
+        // Always refresh data when becoming visible
         this._handleSignal(callback, 'visibility_change');
       }
     };
@@ -223,6 +204,58 @@ export class TennisQueries {
         console.error('Failed to refresh board:', error);
       }
     }, 100);
+  }
+
+  /**
+   * Set up realtime channel subscriptions
+   * Extracted to allow re-subscription on visibility change when channels disconnect
+   * @private
+   */
+  _setupRealtimeSubscriptions(callback) {
+    console.log(
+      '📡 Setting up Realtime subscriptions...',
+      BROADCAST_ONLY_MODE ? '(BROADCAST_ONLY_MODE)' : ''
+    );
+
+    // Method 1: postgres_changes (database replication) - skip if BROADCAST_ONLY_MODE
+    if (!BROADCAST_ONLY_MODE) {
+      this.subscription = this.supabase
+        .channel('board-signals')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'board_change_signals' },
+          (payload) => {
+            console.log('📡 [postgres_changes] Signal received:', payload.new?.change_type);
+            this._handleSignal(callback, 'postgres_changes');
+          }
+        )
+        .subscribe((status, err) => {
+          console.log('📡 [postgres_changes] Status:', status, err ? `Error: ${err.message}` : '');
+          if (status === 'SUBSCRIBED') {
+            console.log('📡 [postgres_changes] Connected');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn(
+              '📡 [postgres_changes] Error - may need to enable Replication in Supabase Dashboard'
+            );
+          }
+        });
+    } else {
+      console.log('📡 [postgres_changes] SKIPPED (BROADCAST_ONLY_MODE enabled)');
+    }
+
+    // Method 2: broadcast (more reliable, doesn't need database replication)
+    this.broadcastSubscription = this.supabase
+      .channel('board-updates')
+      .on('broadcast', { event: 'board_changed' }, (payload) => {
+        console.log('📡 [broadcast] Signal received:', payload.payload?.change_type);
+        this._handleSignal(callback, 'broadcast');
+      })
+      .subscribe((status, err) => {
+        console.log('📡 [broadcast] Status:', status, err ? `Error: ${err.message}` : '');
+        if (status === 'SUBSCRIBED') {
+          console.log('📡 [broadcast] Connected - ready for real-time updates');
+        }
+      });
   }
 
   /**
