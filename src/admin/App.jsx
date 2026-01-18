@@ -1960,6 +1960,7 @@ const AdminPanelV2 = ({ onExit }) => {
                 deactivateWetCourts={deactivateWetCourts}
                 onClearWetCourt={clearWetCourt}
                 onClearAllWetCourts={deactivateWetCourts}
+                backend={backend}
               />
 
               {/* Waitlist Section */}

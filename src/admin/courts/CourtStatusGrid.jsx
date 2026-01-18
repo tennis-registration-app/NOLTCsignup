@@ -41,6 +41,7 @@ const CourtStatusGrid = ({
   wetCourts,
   onClearWetCourt,
   onClearAllWetCourts,
+  backend, // TennisBackend instance for API calls
 }) => {
   const [movingFrom, setMovingFrom] = useState(null);
   const [selectedCourt, setSelectedCourt] = useState(null);
@@ -49,6 +50,7 @@ const CourtStatusGrid = ({
   const [editingBlock, setEditingBlock] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [savingGame, setSavingGame] = useState(false);
 
   const dataStore = getDataStore();
 
@@ -134,6 +136,7 @@ const CourtStatusGrid = ({
       return {
         status: isOvertime ? 'overtime' : 'occupied',
         info: {
+          sessionId: court.sessionId || court.id,
           players: court.players,
           startTime: court.startTime,
           endTime: court.endTime,
@@ -153,6 +156,7 @@ const CourtStatusGrid = ({
       return {
         status: isOvertime ? 'overtime' : 'occupied',
         info: {
+          sessionId: court.session.id,
           players: sessionPlayers,
           startTime: court.session.startedAt,
           endTime: court.session.scheduledEndAt,
@@ -346,37 +350,38 @@ const CourtStatusGrid = ({
   };
 
   const handleSaveGame = async (updatedGame) => {
+    if (!backend?.admin?.updateSession) {
+      console.error('Backend updateSession not available');
+      window.Tennis?.UI?.toast?.('Backend not available', { type: 'error' });
+      return;
+    }
+
+    setSavingGame(true);
     try {
-      const S = window.Tennis?.Storage;
-      const data = S?.readDataClone ? S.readDataClone() : structuredClone(S.readDataSafe());
+      const deviceId = window.Tennis?.getDeviceId?.() || localStorage.getItem('deviceId');
 
-      const courtIndex = updatedGame.courtNumber - 1;
-      // Update session using Domain format
-      if (data.courts && data.courts[courtIndex] && data.courts[courtIndex].session) {
-        data.courts[courtIndex].session = {
-          ...data.courts[courtIndex].session,
-          group: { players: updatedGame.players },
-          startedAt: updatedGame.startTime,
-          scheduledEndAt: updatedGame.endTime,
-          duration: updatedGame.duration,
-        };
+      const result = await backend.admin.updateSession({
+        sessionId: updatedGame.sessionId,
+        participants: updatedGame.participants,
+        scheduledEndAt: updatedGame.scheduledEndAt,
+        deviceId,
+      });
 
-        const DS = window.Tennis?.DataStore || window.DataStore;
-        if (DS?.set) {
-          await DS.set(S.STORAGE.DATA, data);
-          window.Tennis?.UI?.toast?.('Game updated successfully', { type: 'success' });
-        } else {
-          S.writeJSON(S.STORAGE.DATA, data);
-          window.dispatchEvent(new Event('DATA_UPDATED'));
-          window.dispatchEvent(new Event('tennisDataUpdate'));
-        }
+      if (result.ok) {
+        window.Tennis?.UI?.toast?.('Game updated successfully', { type: 'success' });
+        setEditingGame(null);
+        setRefreshKey((prev) => prev + 1);
+        // Trigger data refresh
+        window.dispatchEvent(new Event('DATA_UPDATED'));
+        window.dispatchEvent(new Event('tennisDataUpdate'));
+      } else {
+        throw new Error(result.message || 'Failed to update game');
       }
-
-      setEditingGame(null);
-      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error('Error saving game:', error);
-      window.Tennis?.UI?.toast?.('Failed to save game', { type: 'error' });
+      window.Tennis?.UI?.toast?.(error.message || 'Failed to save game', { type: 'error' });
+    } finally {
+      setSavingGame(false);
     }
   };
 
@@ -623,6 +628,7 @@ const CourtStatusGrid = ({
           game={editingGame}
           onSave={handleSaveGame}
           onClose={() => setEditingGame(null)}
+          saving={savingGame}
         />
       )}
 

@@ -384,4 +384,31 @@ export class AdminCommands {
   async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }) {
     return this.api.aiAssistant({ prompt, mode, actions_token, confirm_destructive });
   }
+
+  /**
+   * Update an active session (players, end time)
+   * @param {Object} input
+   * @param {string} input.sessionId - UUID of session to update
+   * @param {Array<{name: string, type: 'member' | 'guest', member_id?: string}>} input.participants
+   * @param {string|null} input.scheduledEndAt - ISO timestamp or null for "no end time" (midnight)
+   * @param {string} input.deviceId - Admin device ID
+   * @returns {Promise<{ok: boolean, session?: Object, code?: string, message?: string}>}
+   */
+  async updateSession(input) {
+    const payload = {
+      session_id: input.sessionId,
+      participants: input.participants,
+      scheduled_end_at: input.scheduledEndAt,
+      device_id: input.deviceId,
+    };
+
+    const response = await this.api.post('/admin-update-session', payload);
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      session: response.session,
+    };
+  }
 }
