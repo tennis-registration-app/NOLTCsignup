@@ -26,7 +26,7 @@ export class TennisDirectory {
       return [];
     }
 
-    return (response.members || []).map(m => this._normalizeMember(m));
+    return (response.members || []).map((m) => this._normalizeMember(m));
   }
 
   /**
@@ -41,14 +41,16 @@ export class TennisDirectory {
       return cached.members;
     }
 
-    const response = await this.api.get(`/get-members?member_number=${encodeURIComponent(memberNumber)}`);
+    const response = await this.api.get(
+      `/get-members?member_number=${encodeURIComponent(memberNumber)}`
+    );
 
     if (!response.ok) {
       console.error('Account lookup failed:', response.message);
       return [];
     }
 
-    const members = (response.members || []).map(m => this._normalizeMember(m));
+    const members = (response.members || []).map((m) => this._normalizeMember(m));
 
     // Cache result
     this._cache.set(memberNumber, { members, timestamp: Date.now() });
@@ -74,7 +76,7 @@ export class TennisDirectory {
       return [];
     }
 
-    const members = (response.members || []).map(m => this._normalizeMember(m));
+    const members = (response.members || []).map((m) => this._normalizeMember(m));
 
     // Cache result
     this._cache.set('__all__', { members, timestamp: Date.now() });
@@ -96,20 +98,18 @@ export class TennisDirectory {
     const nameLower = name.toLowerCase().trim();
 
     // Exact match
-    let match = members.find(m =>
-      m.displayName.toLowerCase().trim() === nameLower
-    );
+    let match = members.find((m) => m.displayName.toLowerCase().trim() === nameLower);
     if (match) return match;
 
     // Partial match (contains)
-    match = members.find(m => {
+    match = members.find((m) => {
       const display = m.displayName.toLowerCase().trim();
       return display.includes(nameLower) || nameLower.includes(display);
     });
     if (match) return match;
 
     // Last name match
-    match = members.find(m => {
+    match = members.find((m) => {
       const displayLast = m.displayName.toLowerCase().split(' ').pop();
       const nameLast = nameLower.split(' ').pop();
       return displayLast === nameLast;
@@ -118,14 +118,18 @@ export class TennisDirectory {
 
     // Single member on account - use it with warning
     if (members.length === 1) {
-      console.warn(`[TennisDirectory] Using only member on account: ${members[0].displayName} (searched: ${name})`);
+      console.warn(
+        `[TennisDirectory] Using only member on account: ${members[0].displayName} (searched: ${name})`
+      );
       return members[0];
     }
 
     // Multiple members, no match - use primary if available
-    const primary = members.find(m => m.isPrimary);
+    const primary = members.find((m) => m.isPrimary);
     if (primary) {
-      console.warn(`[TennisDirectory] Name mismatch! Using primary: ${primary.displayName} (searched: ${name})`);
+      console.warn(
+        `[TennisDirectory] Name mismatch! Using primary: ${primary.displayName} (searched: ${name})`
+      );
       return primary;
     }
 
@@ -169,11 +173,13 @@ export class TennisDirectory {
       memberNumber: m.member_number,
       displayName: m.display_name,
       isPrimary: m.is_primary,
+      unclearedStreak: m.uncleared_streak || 0,
       // Snake_case aliases for UI compatibility
       account_id: m.account_id,
       member_number: m.member_number,
       display_name: m.display_name,
       is_primary: m.is_primary,
+      uncleared_streak: m.uncleared_streak || 0,
     };
   }
 }
