@@ -118,7 +118,7 @@
     }
 
     if (action === 'reserved') {
-      const blocks = readCourtBlocksSafe();
+      const blocks = readCourtBlocksSafe().filter((b) => !b.isWetCourt);
       openModal('reserved', { reservedData: selectReservedSafe(blocks, new Date()) });
       return;
     }

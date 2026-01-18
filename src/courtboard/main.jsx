@@ -1656,7 +1656,10 @@ function NextAvailablePanel({
       <div className="mt-auto pt-4">
         <ReservedCourtsPanel
           className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur"
-          items={selectReservedItemsFromBlocks([...courtBlocks, ...upcomingBlocks], currentTime)}
+          items={selectReservedItemsFromBlocks(
+            [...courtBlocks, ...upcomingBlocks].filter((b) => !b.isWetCourt),
+            currentTime
+          )}
         />
       </div>
     </div>
