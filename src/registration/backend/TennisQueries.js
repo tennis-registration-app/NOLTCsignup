@@ -143,10 +143,39 @@ export class TennisQueries {
       }
     }, BLOCK_EXPIRY_POLL_INTERVAL);
 
+    // Periodic health check for WebSocket connections (handles silent disconnects on always-visible displays)
+    const HEALTH_CHECK_INTERVAL = 60000; // 60 seconds
+    const healthCheckInterval = setInterval(() => {
+      const postgresState = this.subscription?.state;
+      const broadcastState = this.broadcastSubscription?.state;
+
+      // Only log if there's an issue
+      if ((this.subscription && postgresState !== 'joined') || broadcastState !== 'joined') {
+        console.log(
+          `📡 [health-check] Channel states - postgres: ${postgresState}, broadcast: ${broadcastState}`
+        );
+        console.log('📡 [health-check] Reconnecting...');
+
+        // Remove old channels
+        if (this.subscription) {
+          this.supabase.removeChannel(this.subscription);
+          this.subscription = null;
+        }
+        if (this.broadcastSubscription) {
+          this.supabase.removeChannel(this.broadcastSubscription);
+          this.broadcastSubscription = null;
+        }
+
+        // Resubscribe
+        this._setupRealtimeSubscriptions(callback);
+      }
+    }, HEALTH_CHECK_INTERVAL);
+
     // Return unsubscribe function
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(pollInterval);
+      clearInterval(healthCheckInterval);
       if (this.subscription) {
         this.supabase.removeChannel(this.subscription);
         this.subscription = null;
