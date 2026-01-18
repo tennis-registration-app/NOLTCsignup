@@ -517,34 +517,27 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const handleRemoveBlock = async (blockId) => {
-    console.log('🗑️ Trying to delete block with ID:', blockId);
+    if (!backend) {
+      console.error('No backend available for delete');
+      alert('Backend not available');
+      return;
+    }
+
     try {
-      let existingBlocks = [];
-      try {
-        existingBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
-      } catch {
-        /* transient partial write; use empty array */
+      const result = await backend.admin.cancelBlock({
+        blockId: blockId,
+      });
+
+      if (result.ok) {
+        console.log('✅ Block deleted successfully');
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        console.error('Failed to delete block:', result.message);
+        alert('Failed to delete block: ' + (result.message || 'Unknown error'));
       }
-      console.log('📋 All blocks before deletion:', existingBlocks);
-      console.log('🔍 Looking for block with ID:', blockId);
-
-      const foundBlock = existingBlocks.find((block) => block.id === blockId);
-      console.log('✅ Found block?', foundBlock);
-
-      const updatedBlocks = existingBlocks.filter((block) => block.id !== blockId);
-      console.log('📋 Blocks after filter:', updatedBlocks);
-      console.log(
-        '📊 Length before:',
-        existingBlocks.length,
-        'Length after:',
-        updatedBlocks.length
-      );
-
-      await Tennis.BlocksService.saveBlocks(updatedBlocks);
-      console.log('✅ Delete operation completed');
-      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
-      console.error('Error removing block:', error);
+      console.error('Error deleting block:', error);
+      alert('Error deleting block: ' + error.message);
     }
   };
 
