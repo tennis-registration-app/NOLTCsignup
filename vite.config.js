@@ -1,6 +1,36 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
+
+// Custom plugin to copy plain JS files that are loaded via <script src> tags
+function copyPlainJsFiles() {
+  return {
+    name: 'copy-plain-js-files',
+    writeBundle() {
+      const filesToCopy = [
+        'src/courtboard/mobile-fallback-bar.js',
+        'src/courtboard/mobile-bridge.js',
+        'src/courtboard/sync-promotions.js',
+        'src/courtboard/debug-panel.js',
+      ];
+
+      filesToCopy.forEach((file) => {
+        const src = resolve(__dirname, file);
+        const dest = resolve(__dirname, 'dist', file);
+        const destDir = resolve(__dirname, 'dist', file.substring(0, file.lastIndexOf('/')));
+
+        if (!existsSync(destDir)) {
+          mkdirSync(destDir, { recursive: true });
+        }
+        if (existsSync(src)) {
+          copyFileSync(src, dest);
+          console.log(`Copied ${file} to dist/`);
+        }
+      });
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
@@ -8,6 +38,7 @@ export default defineConfig({
       // Support JSX in .js files and inline <script type="text/babel"> blocks
       include: /\.(jsx?|tsx?)$/,
     }),
+    copyPlainJsFiles(),
   ],
 
   // Base path for GitHub Pages deployment (repo name)
