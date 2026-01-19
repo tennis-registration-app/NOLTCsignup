@@ -18,7 +18,7 @@ import {
 } from '../components';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
-import EditBlockModal from './EditBlockModal.jsx';
+import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 import { getEventTypeFromReason } from '../calendar/utils.js';
 
 // Get dependencies from window
@@ -191,7 +191,7 @@ const CompleteBlockManagerEnhanced = ({
   const [showTemplates, setShowTemplates] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
-  const [editModalBlock, setEditModalBlock] = useState(null);
+  const [selectedBlock, setSelectedBlock] = useState(null);
   const [isEvent, setIsEvent] = useState(true);
   const [eventType, setEventType] = useState('event');
   const [eventTitle, setEventTitle] = useState('');
@@ -550,7 +550,7 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const handleEditBlock = (block) => {
-    setEditModalBlock(block);
+    setSelectedBlock(block);
   };
 
   const handleDuplicateBlock = (block) => {
@@ -1052,20 +1052,20 @@ const CompleteBlockManagerEnhanced = ({
         </div>
       )}
 
-      {/* Edit Block Modal */}
-      {editModalBlock && (
-        <EditBlockModal
-          block={editModalBlock}
+      {/* Block Details/Edit Modal */}
+      {selectedBlock && (
+        <EventDetailsModal
+          event={selectedBlock}
           courts={courts.map((court, idx) => ({
             id: court?.id || `court-${idx + 1}`,
             courtNumber: idx + 1,
           }))}
-          onClose={() => setEditModalBlock(null)}
+          backend={backend}
+          onClose={() => setSelectedBlock(null)}
           onSaved={() => {
-            setEditModalBlock(null);
+            setSelectedBlock(null);
             setRefreshTrigger((prev) => prev + 1);
           }}
-          backend={backend}
         />
       )}
     </div>

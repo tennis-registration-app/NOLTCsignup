@@ -10,7 +10,6 @@ import { ChevronLeft, ChevronRight } from '../components';
 import DayViewEnhanced from './DayViewEnhanced.jsx';
 import WeekView from './WeekView.jsx';
 import EventDetailsModal from './EventDetailsModal.jsx';
-import EditBlockModal from '../blocks/EditBlockModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
 
 const EventCalendarEnhanced = ({
@@ -38,7 +37,6 @@ const EventCalendarEnhanced = ({
   const [hoverPosition, setHoverPosition] = useState({ top: 0, left: 0 });
   const [quickActionEvent, setQuickActionEvent] = useState(null);
   const [quickActionPosition, setQuickActionPosition] = useState({ top: 0, left: 0 });
-  const [editingBlock, setEditingBlock] = useState(null);
 
   // API-sourced block state
   const [blocks, setBlocks] = useState([]);
@@ -285,7 +283,7 @@ const EventCalendarEnhanced = ({
 
   const handleEdit = useCallback(
     (event) => {
-      // Find the block in our API-sourced data
+      // Find the block in our API-sourced data to get full details
       const blockToEdit = blocks.find((block) => {
         if (event.id && block.id) {
           return block.id === event.id;
@@ -293,14 +291,9 @@ const EventCalendarEnhanced = ({
         return block.title === event.title && block.startTime === event.startTime;
       });
 
-      if (blockToEdit) {
-        setSelectedEvent(null); // Close details modal
-        setEditingBlock(blockToEdit); // Open edit modal
-      } else {
-        // Fallback: use the event directly
-        setSelectedEvent(null);
-        setEditingBlock(event);
-      }
+      // Open EventDetailsModal with the block (it has built-in edit mode)
+      setSelectedEvent(blockToEdit || event);
+      setQuickActionEvent(null);
     },
     [blocks]
   );
@@ -545,31 +538,20 @@ const EventCalendarEnhanced = ({
         />
       )}
 
-      {/* Event Details Modal */}
+      {/* Event Details Modal (unified view/edit) */}
       {selectedEvent && !disableEventClick && (
         <EventDetailsModal
           event={selectedEvent}
-          onClose={() => setSelectedEvent(null)}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onDuplicate={handleDuplicate}
-        />
-      )}
-
-      {/* Edit Block Modal */}
-      {editingBlock && (
-        <EditBlockModal
-          block={editingBlock}
           courts={courts.map((court, idx) => ({
             id: court?.id || `court-${idx + 1}`,
             courtNumber: idx + 1,
           }))}
-          onClose={() => setEditingBlock(null)}
+          backend={backend}
+          onClose={() => setSelectedEvent(null)}
           onSaved={() => {
-            setEditingBlock(null);
+            setSelectedEvent(null);
             onRefresh();
           }}
-          backend={backend}
         />
       )}
     </div>
