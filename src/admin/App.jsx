@@ -2030,7 +2030,6 @@ const AdminPanelV2 = ({ onExit }) => {
               currentTime={currentTime}
               refreshTrigger={refreshTrigger}
               defaultView={calendarView}
-              disableEventClick={true}
               backend={backend}
               hoursOverrides={hoursOverrides}
               MonthView={MonthView}
