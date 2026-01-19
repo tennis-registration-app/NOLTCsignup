@@ -1,8 +1,8 @@
 /**
  * EventDetailsModal Component
  *
- * Unified modal for viewing and editing court blocks/events.
- * Supports view mode (read-only) and edit mode (form inputs).
+ * Modal for editing court blocks/events.
+ * All fields are always editable - no view/edit toggle.
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { getEventColor } from './utils.js';
@@ -16,10 +16,6 @@ const BLOCK_TYPES = [
 ];
 
 const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) => {
-  // Mode state
-  const [isEditing, setIsEditing] = useState(false);
-  const [saveAsNewMode, setSaveAsNewMode] = useState(false);
-
   // Form state
   const [courtId, setCourtId] = useState('');
   const [title, setTitle] = useState('');
@@ -44,7 +40,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
     return type === 'wet' || (event.title || '').toLowerCase().includes('wet');
   }, [event]);
 
-  // Initialize/reset form when entering edit mode or event changes
+  // Initialize form when event changes
   useEffect(() => {
     if (event) {
       const start = new Date(event.startTime || event.startsAt);
@@ -58,7 +54,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       setEndTime(end.toTimeString().slice(0, 5));
       setError('');
     }
-  }, [event, isEditing]);
+  }, [event]);
 
   // Build ISO timestamps from form inputs
   const buildTimestamps = () => {
@@ -91,45 +87,6 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       return false;
     }
   }, [courtId, title, date, startTime, endTime]);
-
-  // Get court number for display
-  const displayCourtNumber = useMemo(() => {
-    if (!event) return 'Unknown';
-    if (event.courtNumbers?.length) {
-      return event.courtNumbers.join(', ');
-    }
-    return event.courtNumber || 'Unknown';
-  }, [event]);
-
-  // Handle Edit button click
-  const handleEditClick = () => {
-    setSaveAsNewMode(false);
-    setIsEditing(true);
-  };
-
-  // Handle Duplicate button click
-  const handleDuplicateClick = () => {
-    setSaveAsNewMode(true);
-    setIsEditing(true);
-  };
-
-  // Handle Cancel (exit edit mode)
-  const handleCancel = () => {
-    setIsEditing(false);
-    setSaveAsNewMode(false);
-    setError('');
-    // Reset form to original values
-    if (event) {
-      const start = new Date(event.startTime || event.startsAt);
-      const end = new Date(event.endTime || event.endsAt);
-      setCourtId(event.courtId || '');
-      setTitle(event.title || event.reason || event.eventDetails?.title || '');
-      setBlockType(event.blockType || event.block_type || event.reason?.toLowerCase() || 'other');
-      setDate(start.toISOString().slice(0, 10));
-      setStartTime(start.toTimeString().slice(0, 5));
-      setEndTime(end.toTimeString().slice(0, 5));
-    }
-  };
 
   // Handle Save Changes
   const handleSaveChanges = async () => {
@@ -234,51 +191,29 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
   // Early return after all hooks
   if (!event) return null;
 
-  // Derived values from event
-  const eventStartTime = new Date(event.startTime || event.startsAt);
-  const eventEndTime = new Date(event.endTime || event.endsAt);
-  const duration = (eventEndTime - eventStartTime) / (1000 * 60);
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Colored Header */}
         <div className={`p-6 ${getEventColor(event)}`}>
           <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-2xl font-bold bg-white bg-opacity-90 px-3 py-1 rounded-lg w-full"
-                    placeholder="Block Title"
-                    disabled={saving}
-                  />
-                ) : (
-                  <h2 className="text-2xl font-bold">
-                    {event.eventDetails?.title || event.title || event.reason}
-                  </h2>
-                )}
-                <p className="opacity-90 mt-1">
-                  {isEditing ? (
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                      className="bg-white bg-opacity-90 px-2 py-1 rounded text-sm"
-                      disabled={saving}
-                    />
-                  ) : (
-                    eventStartTime.toLocaleDateString([], {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  )}
-                </p>
+            <div className="flex-1 mr-4">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-2xl font-bold bg-white bg-opacity-90 px-3 py-1 rounded-lg w-full"
+                placeholder="Block Title"
+                disabled={saving}
+              />
+              <div className="mt-2">
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="bg-white bg-opacity-90 px-2 py-1 rounded text-sm"
+                  disabled={saving}
+                />
               </div>
             </div>
             <button
@@ -291,34 +226,6 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
           </div>
         </div>
 
-        {/* Quick Actions Bar (View Mode) */}
-        {!isEditing && (
-          <div className="flex items-center gap-2 px-6 py-3 bg-gray-50 border-b">
-            <button
-              onClick={handleEditClick}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span>✏️</span>
-              Edit
-            </button>
-            <button
-              onClick={handleDuplicateClick}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span>📋</span>
-              Duplicate
-            </button>
-            <button
-              onClick={handleDelete}
-              disabled={saving}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors ml-auto"
-            >
-              <span>🗑️</span>
-              Delete
-            </button>
-          </div>
-        )}
-
         {/* Error Message */}
         {error && (
           <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -327,236 +234,123 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
         )}
 
         {/* Content */}
-        <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
+        <div className="p-6 space-y-6 overflow-y-auto max-h-[50vh]">
           {/* Time and Location */}
           <div className="grid grid-cols-2 gap-6">
             {/* Schedule Section */}
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900">Schedule</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 text-gray-600">
-                  <span>🕐</span>
-                  {isEditing ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        className="px-2 py-1 border rounded text-sm"
-                        disabled={saving}
-                      />
-                      <span>-</span>
-                      <input
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        className="px-2 py-1 border rounded text-sm"
-                        disabled={saving}
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="font-medium">
-                        {eventStartTime.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}{' '}
-                        -{' '}
-                        {eventEndTime.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Duration: {Math.floor(duration / 60)}h {duration % 60}m
-                      </p>
-                    </div>
-                  )}
+              <div className="flex items-center gap-3 text-gray-600">
+                <span>🕐</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="px-2 py-1 border rounded text-sm"
+                    disabled={saving}
+                  />
+                  <span>-</span>
+                  <input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="px-2 py-1 border rounded text-sm"
+                    disabled={saving}
+                  />
                 </div>
-                {event.eventDetails?.recurringInfo && !isEditing && (
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <span>🔄</span>
-                    <div>
-                      <p className="font-medium">{event.eventDetails.recurringInfo.pattern}</p>
-                      <p className="text-sm text-gray-500">
-                        {event.eventDetails.recurringInfo.instance}
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
             {/* Location Section */}
             <div className="space-y-3">
-              <h3 className="font-semibold text-gray-900">Location</h3>
+              <h3 className="font-semibold text-gray-900">Court</h3>
               <div className="flex items-center gap-3 text-gray-600">
                 <span>🎾</span>
-                {isEditing ? (
-                  <select
-                    value={courtId}
-                    onChange={(e) => setCourtId(e.target.value)}
-                    className="px-2 py-1 border rounded text-sm flex-1"
-                    disabled={saving}
-                  >
-                    <option value="">Select Court</option>
-                    {courts.map((court) => (
-                      <option key={court.id} value={court.id}>
-                        Court {court.courtNumber || court.court_number}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div>
-                    <p className="font-medium">Court {displayCourtNumber}</p>
-                    {event.courtNumbers?.length > 1 && (
-                      <p className="text-sm text-gray-500">
-                        {event.courtNumbers.length} courts reserved
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Block Type (Edit Mode Only) */}
-          {isEditing && (
-            <div className="space-y-3">
-              <h3 className="font-semibold text-gray-900">Block Type</h3>
-              <div className="flex items-center gap-3">
-                <span>📋</span>
                 <select
-                  value={blockType}
-                  onChange={(e) => setBlockType(e.target.value)}
-                  className={`px-2 py-1 border rounded text-sm ${isWetBlock ? 'bg-gray-100 text-gray-500' : ''}`}
-                  disabled={saving || isWetBlock}
+                  value={courtId}
+                  onChange={(e) => setCourtId(e.target.value)}
+                  className="px-2 py-1 border rounded text-sm flex-1"
+                  disabled={saving}
                 >
-                  {BLOCK_TYPES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
+                  <option value="">Select Court</option>
+                  {courts.map((court) => (
+                    <option key={court.id} value={court.id}>
+                      Court {court.courtNumber || court.court_number}
                     </option>
                   ))}
                 </select>
-                {isWetBlock && (
-                  <span className="text-xs text-gray-500">Cannot change wet block type</span>
-                )}
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Description (View Mode) */}
-          {!isEditing && event.eventDetails?.description && (
-            <div className="space-y-2">
-              <h3 className="font-semibold text-gray-900">Description</h3>
-              <p className="text-gray-600">{event.eventDetails.description}</p>
-            </div>
-          )}
-
-          {/* Details Grid (View Mode) */}
-          {!isEditing && (event.eventDetails?.participants || event.eventDetails?.organizer) && (
-            <div className="grid grid-cols-2 gap-4">
-              {event.eventDetails?.participants && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-gray-900">Participants</h3>
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <span>👥</span>
-                    <span>{event.eventDetails.participants} registered</span>
-                  </div>
-                </div>
-              )}
-              {event.eventDetails?.organizer && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-gray-900">Organizer</h3>
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <span>ℹ️</span>
-                    <span>{event.eventDetails.organizer}</span>
-                  </div>
-                </div>
+          {/* Block Type */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-gray-900">Block Type</h3>
+            <div className="flex items-center gap-3">
+              <span>📋</span>
+              <select
+                value={blockType}
+                onChange={(e) => setBlockType(e.target.value)}
+                className={`px-2 py-1 border rounded text-sm ${isWetBlock ? 'bg-gray-100 text-gray-500' : ''}`}
+                disabled={saving || isWetBlock}
+              >
+                {BLOCK_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+              {isWetBlock && (
+                <span className="text-xs text-gray-500">Cannot change wet block type</span>
               )}
             </div>
-          )}
-
-          {/* Conflicts Warning (View Mode) */}
-          {!isEditing && event.hasConflict && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <span className="text-xl">⚠️</span>
-                <div>
-                  <h4 className="font-medium text-amber-900">Schedule Conflict</h4>
-                  <p className="text-sm text-amber-700 mt-1">
-                    This event overlaps with other bookings during the same time period.
-                    {event.conflictingEvents && (
-                      <span className="block mt-2">
-                        Conflicts with: {event.conflictingEvents.map((e) => e.title).join(', ')}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Footer Buttons (Edit Mode) */}
-        {isEditing && (
-          <div className="px-6 py-4 bg-gray-50 border-t flex gap-3">
-            {saveAsNewMode ? (
-              <>
-                <button
-                  onClick={handleSaveAsNew}
-                  disabled={saving || !isValid}
-                  className={`flex-1 py-2 rounded-lg font-medium ${
-                    saving || !isValid
-                      ? 'bg-blue-300 text-white cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {saving ? 'Creating...' : 'Create New Block'}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleSaveChanges}
-                  disabled={saving || !isValid}
-                  className={`flex-1 py-2 rounded-lg font-medium ${
-                    saving || !isValid
-                      ? 'bg-blue-300 text-white cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={handleSaveAsNew}
-                  disabled={saving || !isValid}
-                  className={`px-4 py-2 rounded-lg font-medium border ${
-                    saving || !isValid
-                      ? 'border-gray-300 text-gray-400 cursor-not-allowed'
-                      : 'border-blue-600 text-blue-600 hover:bg-blue-50'
-                  }`}
-                >
-                  Save as New
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        )}
+        {/* Footer Buttons */}
+        <div className="px-6 py-4 bg-gray-50 border-t flex gap-3">
+          <button
+            onClick={handleSaveChanges}
+            disabled={saving || !isValid}
+            className={`flex-1 py-2 rounded-lg font-medium ${
+              saving || !isValid
+                ? 'bg-blue-300 text-white cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+          <button
+            onClick={handleSaveAsNew}
+            disabled={saving || !isValid}
+            className={`px-4 py-2 rounded-lg font-medium border ${
+              saving || !isValid
+                ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                : 'border-blue-600 text-blue-600 hover:bg-blue-50'
+            }`}
+          >
+            Save as New
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={saving}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              saving
+                ? 'bg-red-300 text-white cursor-not-allowed'
+                : 'bg-red-600 text-white hover:bg-red-700'
+            }`}
+          >
+            Delete
+          </button>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
