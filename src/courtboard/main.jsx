@@ -605,7 +605,9 @@ function TennisCourtDisplay() {
         serverNow: board.serverNow,
         courts: board.courts?.length,
         waitlist: board.waitlist?.length,
+        upcomingBlocks: board.upcomingBlocks?.length,
       });
+      console.log('[Courtboard Debug] Raw upcomingBlocks:', board.upcomingBlocks);
 
       // Debug: log first 2 courts to see raw data
       console.log('[Courtboard Debug] Raw board courts (first 2):', board.courts?.slice(0, 2));
@@ -747,6 +749,12 @@ function TennisCourtDisplay() {
    * and cannot access this component's state directly.
    */
   useEffect(() => {
+    console.log('[CourtboardState] Setting state:', {
+      courts: courts?.length,
+      courtBlocks: courtBlocks?.length,
+      upcomingBlocks: upcomingBlocks?.length,
+      waitingGroups: waitlist?.length,
+    });
     window.CourtboardState = {
       courts: courts,
       courtBlocks: courtBlocks,

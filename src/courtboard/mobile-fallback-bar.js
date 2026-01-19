@@ -118,19 +118,34 @@
     }
 
     if (action === 'reserved') {
-      const state = getCourtboardState();
-      const allBlocks = [...(state.courtBlocks || []), ...(state.upcomingBlocks || [])].filter(
-        (b) => !b.isWetCourt
-      );
-      openModal('reserved', { reservedData: selectReservedSafe(allBlocks, new Date()) });
+      try {
+        console.log('[Mobile Reserved] ENTER - about to call getCourtboardState');
+        const state = getCourtboardState();
+        console.log('[Mobile Reserved] state:', state);
+        console.log('[Mobile Reserved] window.CourtboardState:', window.CourtboardState);
+        console.log('[Mobile Reserved] courtBlocks:', state.courtBlocks);
+        console.log('[Mobile Reserved] upcomingBlocks:', state.upcomingBlocks);
+        const allBlocks = [...(state.courtBlocks || []), ...(state.upcomingBlocks || [])].filter(
+          (b) => !b.isWetCourt
+        );
+        console.log('[Mobile Reserved] allBlocks after filter:', allBlocks);
+        const reservedData = selectReservedSafe(allBlocks, new Date());
+        console.log('[Mobile Reserved] reservedData:', reservedData);
+        openModal('reserved', { reservedData });
+      } catch (err) {
+        console.error('[Mobile Reserved] ERROR:', err);
+      }
       return;
     }
 
     if (action === 'waitlist') {
       // Include courts data from React state for consistent calculations
       const state = getCourtboardState();
+      const waitlistData = readWaitlistSafe();
+      console.log('[Mobile Waitlist] state:', state);
+      console.log('[Mobile Waitlist] waitlistData:', waitlistData);
       openModal('waitlist', {
-        waitlistData: readWaitlistSafe(),
+        waitlistData,
         courts: state.courts || [],
         courtBlocks: state.courtBlocks || [],
         upcomingBlocks: state.upcomingBlocks || [],
