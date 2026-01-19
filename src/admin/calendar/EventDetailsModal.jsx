@@ -46,7 +46,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       const start = new Date(event.startTime || event.startsAt);
       const end = new Date(event.endTime || event.endsAt);
 
-      setCourtId(event.courtId || '');
+      setCourtId(event.courtId || event.court_id || '');
       setTitle(event.title || event.reason || event.eventDetails?.title || '');
       setBlockType(event.blockType || event.block_type || event.reason?.toLowerCase() || 'other');
       setDate(start.toISOString().slice(0, 10));
