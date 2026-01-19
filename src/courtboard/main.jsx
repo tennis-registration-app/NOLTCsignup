@@ -750,10 +750,11 @@ function TennisCourtDisplay() {
     window.CourtboardState = {
       courts: courts,
       courtBlocks: courtBlocks,
-      waitlist: waitlist,
+      upcomingBlocks: upcomingBlocks,
+      waitingGroups: waitlist,
       timestamp: Date.now(),
     };
-  }, [courts, courtBlocks, waitlist]);
+  }, [courts, courtBlocks, upcomingBlocks, waitlist]);
 
   window.refreshBoard = loadData;
 

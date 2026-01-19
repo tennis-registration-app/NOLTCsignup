@@ -118,18 +118,22 @@
     }
 
     if (action === 'reserved') {
-      const blocks = readCourtBlocksSafe().filter((b) => !b.isWetCourt);
-      openModal('reserved', { reservedData: selectReservedSafe(blocks, new Date()) });
+      const state = getCourtboardState();
+      const allBlocks = [...(state.courtBlocks || []), ...(state.upcomingBlocks || [])].filter(
+        (b) => !b.isWetCourt
+      );
+      openModal('reserved', { reservedData: selectReservedSafe(allBlocks, new Date()) });
       return;
     }
 
     if (action === 'waitlist') {
       // Include courts data from React state for consistent calculations
-      const state = window.CourtboardState || {};
+      const state = getCourtboardState();
       openModal('waitlist', {
         waitlistData: readWaitlistSafe(),
         courts: state.courts || [],
         courtBlocks: state.courtBlocks || [],
+        upcomingBlocks: state.upcomingBlocks || [],
       });
       return;
     }
