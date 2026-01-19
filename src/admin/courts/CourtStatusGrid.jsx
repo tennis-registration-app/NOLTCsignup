@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, X, RefreshCw, Droplets } from '../components';
 import { EditGameModal } from '../components';
-import { EditBlockModal } from '../blocks';
+import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 
 // Get dependencies from window
 const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || {
@@ -633,15 +633,17 @@ const CourtStatusGrid = ({
       )}
 
       {editingBlock && (
-        <EditBlockModal
-          block={editingBlock}
-          onSave={handleSaveBlock}
+        <EventDetailsModal
+          event={editingBlock}
+          courts={courts.map((court, idx) => ({
+            id: court?.id || `court-${idx + 1}`,
+            courtNumber: idx + 1,
+          }))}
+          backend={backend}
           onClose={() => setEditingBlock(null)}
-          onEditInBlockManager={() => {
-            if (onEditBlock) {
-              onEditBlock(editingBlock);
-            }
+          onSaved={() => {
             setEditingBlock(null);
+            setRefreshKey((k) => k + 1);
           }}
         />
       )}

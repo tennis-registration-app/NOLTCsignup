@@ -87,7 +87,6 @@ import {
 import {
   BlockTemplateManager,
   RecurrenceConfig,
-  EditBlockModal,
   BlockTimeline,
   CompleteBlockManagerEnhanced,
 } from './blocks';
