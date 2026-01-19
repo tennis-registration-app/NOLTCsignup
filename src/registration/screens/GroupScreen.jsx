@@ -255,6 +255,11 @@ const GroupScreen = ({
                     onClick={() => {
                       if (showGuestForm) {
                         onCancelGuest();
+                        // Focus with setTimeout to allow React to update readOnly state first
+                        // This keeps focus within the user gesture context for iOS Safari
+                        setTimeout(() => {
+                          addPlayerInputRef.current?.focus();
+                        }, 0);
                       }
                     }}
                     readOnly={showGuestForm}
