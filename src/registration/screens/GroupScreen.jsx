@@ -16,6 +16,10 @@ const GroupScreen = ({
   showTimeoutWarning,
   isMobileView,
 
+  // Mobile flow
+  mobileFlow = false,
+  preselectedCourt = null,
+
   // Search state
   searchInput,
   showSuggestions,
@@ -78,9 +82,112 @@ const GroupScreen = ({
     }
   }, [showGuestForm]);
 
+  // Compact modal for mobile flow with no players yet
+  if (mobileFlow && currentGroup.length === 0) {
+    return (
+      <div className="w-full h-full min-h-screen flex items-start justify-center pt-[12vh] p-4">
+        <ToastHost />
+        <AlertDisplay show={showAlert} message={alertMessage} />
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md relative">
+          {/* X Close button */}
+          <button
+            onClick={() => {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'register:closed' }, '*');
+              }
+            }}
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          {/* Court indicator */}
+          <div className="mb-4 p-3 bg-green-50 rounded-lg text-center">
+            <p className="text-lg text-green-800 font-semibold">
+              Court {preselectedCourt} Selected
+            </p>
+          </div>
+
+          {/* Title */}
+          <p className="text-gray-600 text-center mb-4 text-sm">
+            Please register when all players are ready
+          </p>
+
+          {/* Search input */}
+          <div className="relative">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={onSearchChange}
+              onFocus={onSearchFocus}
+              placeholder="Enter Name or Member #"
+              className="w-full p-3 text-base border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none"
+              id="mobile-group-search-input"
+              autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="words"
+              spellCheck="false"
+            />
+
+            {/* Search suggestions dropdown */}
+            {showSuggestions && (
+              <div
+                className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                style={{ maxHeight: '300px', overflowY: 'auto' }}
+              >
+                {getAutocompleteSuggestions(effectiveSearchInput).length > 0 ? (
+                  getAutocompleteSuggestions(effectiveSearchInput).map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => onSuggestionClick(suggestion)}
+                      className="w-full p-3 text-left hover:bg-blue-50 flex items-center border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {suggestion.member.name}
+                          {suggestion.member.isGuest && (
+                            <span className="text-sm text-blue-600 ml-2">(Guest)</span>
+                          )}
+                        </div>
+                        {suggestion.type === 'member' && (
+                          <div className="text-sm text-gray-600">
+                            Member #{suggestion.member.id}
+                          </div>
+                        )}
+                      </div>
+                      {suggestion.type === 'member' && suggestion.member.ranking && (
+                        <div className="text-sm text-blue-600 font-medium">
+                          Rank #{suggestion.member.ranking}
+                        </div>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-3 text-center text-gray-500 text-sm">
+                    {searchInput.length < 2 ? 'Keep typing...' : 'No members found'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Full GroupScreen UI (desktop or mobile with players)
   return (
     <div
-      className={`w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex ${window.__mobileFlow ? 'items-start pt-[15vh]' : 'items-center justify-center'}`}
+      className={`w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex ${mobileFlow ? 'items-start pt-[15vh]' : 'items-center justify-center'}`}
     >
       <ToastHost />
       <AlertDisplay show={showAlert} message={alertMessage} />
@@ -90,13 +197,13 @@ const GroupScreen = ({
         </div>
       )}
       <div
-        className={`bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl h-full ${window.__mobileFlow ? 'max-h-[70vh]' : 'max-h-[95vh]'} flex flex-col relative overflow-hidden`}
+        className={`bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-5xl h-full ${mobileFlow ? 'max-h-[70vh]' : 'max-h-[95vh]'} flex flex-col relative overflow-hidden`}
       >
-        {/* Mobile-specific UI when no player added yet */}
-        {window.__mobileFlow && currentGroup.length === 0 ? (
+        {/* Mobile flow header when player exists */}
+        {mobileFlow ? (
           <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-green-50 rounded-xl text-center">
             <p className="text-lg sm:text-2xl text-green-800 font-semibold">
-              Court {window.__preselectedCourt} Selected
+              Court {preselectedCourt} Selected
             </p>
           </div>
         ) : (
@@ -129,12 +236,12 @@ const GroupScreen = ({
           style={{ maxHeight: 'calc(100vh - 280px)' }}
         >
           {/* Only show Current Group section if there are players or not in mobile flow */}
-          {(currentGroup.length > 0 || !window.__mobileFlow) && (
+          {(currentGroup.length > 0 || !mobileFlow) && (
             <>
-              {!window.__mobileFlow && (
+              {!mobileFlow && (
                 <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
               )}
-              <div className={`space-y-2 ${!window.__mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
+              <div className={`space-y-2 ${!mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
                 {currentGroup.map((player, idx) => (
                   <div
                     key={idx}
@@ -165,244 +272,178 @@ const GroupScreen = ({
             </>
           )}
 
-          {/* Mobile flow: Show search input when no players, otherwise show Add Another Player button */}
-          {window.__mobileFlow && currentGroup.length === 0 ? (
-            <div className="mb-4">
-              <div className="relative">
+          {/* Add Another Player section */}
+          {currentGroup.length < CONSTANTS.MAX_PLAYERS && (
+            <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-4 relative">
+              <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
+                {showGuestForm ? (
+                  <>
+                    <div className="flex-1 min-w-0"></div>
+                    <h4 className="flex-[4] font-medium text-sm sm:text-base text-center">
+                      Add Guest Player
+                    </h4>
+                  </>
+                ) : (
+                  <h4 className="font-medium text-sm sm:text-base">Add Another Player</h4>
+                )}
+              </div>
+
+              <div className="flex gap-2 sm:gap-3 overflow-hidden">
                 <input
+                  ref={addPlayerInputRef}
                   type="text"
-                  value={searchInput}
-                  onChange={onSearchChange}
-                  onFocus={onSearchFocus}
-                  placeholder={
-                    isMobileView ? 'Enter Name or Number' : 'Enter your name or Member #'
-                  }
-                  className={`w-full ${isMobileView ? 'p-3 text-base input--compact' : 'p-4 sm:p-5 text-xl sm:text-2xl'} border-2 rounded-xl focus:border-green-500 focus:outline-none`}
-                  id="mobile-group-search-input"
-                  autoFocus
+                  placeholder={showGuestForm ? 'Add Member' : 'Enter name or member number'}
+                  value={showGuestForm ? '' : addPlayerSearch}
+                  onChange={onAddPlayerSearchChange}
+                  onFocus={onAddPlayerSearchFocus}
+                  onClick={() => {
+                    if (showGuestForm) {
+                      onCancelGuest();
+                      // Focus with setTimeout to allow React to update readOnly state first
+                      // This keeps focus within the user gesture context for iOS Safari
+                      setTimeout(() => {
+                        addPlayerInputRef.current?.focus();
+                      }, 0);
+                    }
+                  }}
+                  readOnly={showGuestForm}
+                  className={`${showGuestForm ? 'flex-1 bg-gray-100 cursor-pointer placeholder-green-600' : 'flex-[4] bg-white placeholder-gray-400'}
+                      min-w-0 text-green-800 border-2 border-green-500
+                      py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
+                      focus:outline-none focus:ring-2 focus:ring-green-500
+                      transition-all duration-[1400ms] ease-in-out`}
                   autoComplete="off"
                   autoCorrect="off"
                   autoCapitalize="words"
                   spellCheck="false"
                 />
-              </div>
-
-              {/* Search suggestions dropdown */}
-              {showSuggestions && (
-                <div
-                  className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-hidden"
-                  style={{ maxHeight: '400px', overflowY: 'auto' }}
-                >
-                  {getAutocompleteSuggestions(effectiveSearchInput).length > 0 ? (
-                    getAutocompleteSuggestions(effectiveSearchInput).map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => onSuggestionClick(suggestion)}
-                        className="w-full p-4 text-left hover:bg-blue-50 flex items-center border-b border-gray-100"
-                      >
-                        <div className="flex-1">
-                          <div className="font-medium text-lg">
-                            {suggestion.member.name}
-                            {suggestion.member.isGuest && (
-                              <span className="text-sm text-blue-600 ml-2">(Guest)</span>
-                            )}
-                          </div>
-                          {suggestion.type === 'member' && (
-                            <div className="text-sm text-gray-600">
-                              Member #{suggestion.member.id}
-                            </div>
-                          )}
-                        </div>
-                        {suggestion.type === 'member' && suggestion.member.ranking && (
-                          <div className="text-sm text-blue-600 font-medium">
-                            Rank #{suggestion.member.ranking}
-                          </div>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      {searchInput.length < 2 ? 'Keep typing...' : 'No members found'}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            currentGroup.length < CONSTANTS.MAX_PLAYERS && (
-              <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-4 relative">
-                <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
-                  {showGuestForm ? (
-                    <>
-                      <div className="flex-1 min-w-0"></div>
-                      <h4 className="flex-[4] font-medium text-sm sm:text-base text-center">
-                        Add Guest Player
-                      </h4>
-                    </>
-                  ) : (
-                    <h4 className="font-medium text-sm sm:text-base">Add Another Player</h4>
-                  )}
-                </div>
-
-                <div className="flex gap-2 sm:gap-3 overflow-hidden">
+                {showGuestForm ? (
                   <input
-                    ref={addPlayerInputRef}
+                    ref={guestInputRef}
                     type="text"
-                    placeholder={showGuestForm ? 'Add Member' : 'Enter name or member number'}
-                    value={showGuestForm ? '' : addPlayerSearch}
-                    onChange={onAddPlayerSearchChange}
-                    onFocus={onAddPlayerSearchFocus}
-                    onClick={() => {
-                      if (showGuestForm) {
-                        onCancelGuest();
-                        // Focus with setTimeout to allow React to update readOnly state first
-                        // This keeps focus within the user gesture context for iOS Safari
-                        setTimeout(() => {
-                          addPlayerInputRef.current?.focus();
-                        }, 0);
-                      }
-                    }}
-                    readOnly={showGuestForm}
-                    className={`${showGuestForm ? 'flex-1 bg-gray-100 cursor-pointer placeholder-green-600' : 'flex-[4] bg-white placeholder-gray-400'}
-                      min-w-0 text-green-800 border-2 border-green-500
-                      py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
-                      focus:outline-none focus:ring-2 focus:ring-green-500
-                      transition-all duration-[1400ms] ease-in-out`}
+                    placeholder="Enter first and last name"
+                    value={guestName}
+                    onChange={onGuestNameChange}
+                    className="flex-[4] bg-white text-blue-800 placeholder-gray-400 border border-blue-300
+                        py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
+                        focus:outline-none focus:ring-2 focus:ring-blue-500
+                        transition-all duration-[1400ms] ease-in-out"
                     autoComplete="off"
                     autoCorrect="off"
                     autoCapitalize="words"
                     spellCheck="false"
                   />
-                  {showGuestForm ? (
-                    <input
-                      ref={guestInputRef}
-                      type="text"
-                      placeholder="Enter first and last name"
-                      value={guestName}
-                      onChange={onGuestNameChange}
-                      className="flex-[4] bg-white text-blue-800 placeholder-gray-400 border border-blue-300
-                        py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
-                        focus:outline-none focus:ring-2 focus:ring-blue-500
-                        transition-all duration-[1400ms] ease-in-out"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="words"
-                      spellCheck="false"
-                    />
-                  ) : (
-                    <button
-                      onClick={onToggleGuestForm}
-                      className="flex-1 bg-blue-50 text-blue-600 border border-blue-600
+                ) : (
+                  <button
+                    onClick={onToggleGuestForm}
+                    className="flex-1 bg-blue-50 text-blue-600 border border-blue-600
                         py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-base sm:text-xl
                         hover:bg-blue-100 transition-all duration-[1400ms] ease-in-out whitespace-nowrap"
-                    >
-                      + Guest
-                    </button>
-                  )}
-                </div>
-
-                {/* Autocomplete suggestions dropdown - only when not in guest mode */}
-                {!showGuestForm && showAddPlayerSuggestions && (
-                  <div
-                    className="absolute z-10 left-4 right-4 mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg"
-                    style={{ maxHeight: '200px', overflowY: 'auto' }}
                   >
-                    {getAutocompleteSuggestions(effectiveAddPlayerSearch).length > 0 ? (
-                      getAutocompleteSuggestions(effectiveAddPlayerSearch).map(
-                        (suggestion, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => onAddPlayerSuggestionClick(suggestion)}
-                            className="w-full p-2.5 sm:p-3 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
-                          >
-                            <div className="font-medium text-base sm:text-lg">
-                              {suggestion.member.name}
-                            </div>
-                            <div className="text-xs sm:text-sm text-gray-600">
-                              Member #{suggestion.memberNumber}
-                            </div>
-                          </button>
-                        )
-                      )
-                    ) : addPlayerSearch.length >= 2 ? (
+                    + Guest
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete suggestions dropdown - only when not in guest mode */}
+              {!showGuestForm && showAddPlayerSuggestions && (
+                <div
+                  className="absolute z-10 left-4 right-4 mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg"
+                  style={{ maxHeight: '200px', overflowY: 'auto' }}
+                >
+                  {getAutocompleteSuggestions(effectiveAddPlayerSearch).length > 0 ? (
+                    getAutocompleteSuggestions(effectiveAddPlayerSearch).map((suggestion, idx) => (
                       <button
-                        onClick={() => onToggleGuestForm(addPlayerSearch)}
-                        className="w-full p-2.5 sm:p-3 text-left hover:bg-blue-50 transition-colors block"
+                        key={idx}
+                        onClick={() => onAddPlayerSuggestionClick(suggestion)}
+                        className="w-full p-2.5 sm:p-3 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
                       >
-                        <div className="font-medium text-base sm:text-lg text-blue-600">
-                          Add &quot;{addPlayerSearch}&quot; as guest?
+                        <div className="font-medium text-base sm:text-lg">
+                          {suggestion.member.name}
                         </div>
                         <div className="text-xs sm:text-sm text-gray-600">
-                          No member found with this name
+                          Member #{suggestion.memberNumber}
                         </div>
                       </button>
-                    ) : null}
-                  </div>
-                )}
-
-                {/* Guest Form - grid animated */}
-                <div
-                  className={`grid transition-all duration-1000 delay-300 ease-in-out ${
-                    showGuestForm
-                      ? 'grid-rows-[1fr] opacity-100 mt-3'
-                      : 'grid-rows-[0fr] opacity-0 mt-0'
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
-                      {/* Left side - Sponsoring Member (only if multiple non-guest members) */}
-                      {currentGroup.filter((p) => !p.isGuest).length > 1 && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span
-                            className={`text-sm ${showSponsorError ? 'text-red-500' : 'text-gray-600'}`}
-                          >
-                            Sponsor:
-                          </span>
-                          {currentGroup
-                            .filter((p) => !p.isGuest)
-                            .map((member) => (
-                              <button
-                                key={member.id}
-                                onClick={() => onSelectSponsor(member.memberNumber)}
-                                className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                                  guestSponsor === member.memberNumber
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-white border border-blue-300 text-blue-600 hover:bg-blue-50'
-                                }`}
-                              >
-                                {member.memberNumber === memberNumber ? 'My Guest' : member.name}
-                              </button>
-                            ))}
-                        </div>
-                      )}
-
-                      {/* Right side - Add Guest / Cancel */}
-                      <div className="flex gap-2 ml-auto">
-                        <button
-                          onClick={onAddGuest}
-                          className="px-4 py-1 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
-                        >
-                          Add Guest
-                        </button>
-                        <button
-                          onClick={onCancelGuest}
-                          className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
-                        >
-                          Cancel
-                        </button>
+                    ))
+                  ) : addPlayerSearch.length >= 2 ? (
+                    <button
+                      onClick={() => onToggleGuestForm(addPlayerSearch)}
+                      className="w-full p-2.5 sm:p-3 text-left hover:bg-blue-50 transition-colors block"
+                    >
+                      <div className="font-medium text-base sm:text-lg text-blue-600">
+                        Add &quot;{addPlayerSearch}&quot; as guest?
                       </div>
-                    </div>
+                      <div className="text-xs sm:text-sm text-gray-600">
+                        No member found with this name
+                      </div>
+                    </button>
+                  ) : null}
+                </div>
+              )}
 
-                    {/* Error message below */}
-                    {showGuestNameError && (
-                      <p className="text-red-500 text-sm mt-2">
-                        Please enter your guest&apos;s full name
-                      </p>
+              {/* Guest Form - grid animated */}
+              <div
+                className={`grid transition-all duration-1000 delay-300 ease-in-out ${
+                  showGuestForm
+                    ? 'grid-rows-[1fr] opacity-100 mt-3'
+                    : 'grid-rows-[0fr] opacity-0 mt-0'
+                }`}
+              >
+                <div className="overflow-hidden">
+                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2">
+                    {/* Left side - Sponsoring Member (only if multiple non-guest members) */}
+                    {currentGroup.filter((p) => !p.isGuest).length > 1 && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`text-sm ${showSponsorError ? 'text-red-500' : 'text-gray-600'}`}
+                        >
+                          Sponsor:
+                        </span>
+                        {currentGroup
+                          .filter((p) => !p.isGuest)
+                          .map((member) => (
+                            <button
+                              key={member.id}
+                              onClick={() => onSelectSponsor(member.memberNumber)}
+                              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+                                guestSponsor === member.memberNumber
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-white border border-blue-300 text-blue-600 hover:bg-blue-50'
+                              }`}
+                            >
+                              {member.memberNumber === memberNumber ? 'My Guest' : member.name}
+                            </button>
+                          ))}
+                      </div>
                     )}
+
+                    {/* Right side - Add Guest / Cancel */}
+                    <div className="flex gap-2 ml-auto">
+                      <button
+                        onClick={onAddGuest}
+                        className="px-4 py-1 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                      >
+                        Add Guest
+                      </button>
+                      <button
+                        onClick={onCancelGuest}
+                        className="px-4 py-1 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Error message below */}
+                  {showGuestNameError && (
+                    <p className="text-red-500 text-sm mt-2">
+                      Please enter your guest&apos;s full name
+                    </p>
+                  )}
                 </div>
               </div>
-            )
+            </div>
           )}
 
           {/* Frequent partners - always show section when member selected and room in group */}
@@ -514,11 +555,11 @@ const GroupScreen = ({
                   }`}
                 >
                   {isMobileView
-                    ? window.__mobileFlow && window.__preselectedCourt
-                      ? `Take Court ${window.__preselectedCourt}`
+                    ? mobileFlow && preselectedCourt
+                      ? `Take Court ${preselectedCourt}`
                       : 'Continue'
-                    : window.__mobileFlow && window.__preselectedCourt
-                      ? `Register for Court ${window.__preselectedCourt}`
+                    : mobileFlow && preselectedCourt
+                      ? `Register for Court ${preselectedCourt}`
                       : 'Select a Court'}
                 </button>
               ) : (

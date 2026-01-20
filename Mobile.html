@@ -185,6 +185,9 @@
       if (d.type === 'register') {
         console.log('Mobile Shell: Opening registration for court', d.courtNumber);
         showReg(d.courtNumber);
+      } else if (d.type === 'register:closed') {
+        console.log('Mobile Shell: Registration closed by user');
+        hideReg();
       } else if (d.type === 'registration:success') {
         console.log('Mobile Shell: Registration success for court', d.courtNumber, '- closing overlay in 15 seconds');
         // Store the registration in sessionStorage at the top level

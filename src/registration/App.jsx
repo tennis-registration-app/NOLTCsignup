@@ -203,6 +203,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
   const [operatingHours, setOperatingHours] = useState(null); // Operating hours from API
 
+  // Mobile flow state
+  const [mobileFlow, setMobileFlow] = useState(false);
+  const [preselectedCourt, setPreselectedCourt] = useState(null);
+
   // Get the API data service
   const getDataService = useCallback(() => {
     return getTennisService({
@@ -1046,11 +1050,52 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, [currentGroup, currentScreen, showSuccess]);
 
+  // Mobile: Listen for register messages from parent (Mobile.html)
+  useEffect(() => {
+    const handleMessage = (event) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+
+      if (data.type === 'register') {
+        console.log('[Mobile] Received register message:', data);
+        const courtNumber = data.courtNumber;
+
+        // Set mobile flow state
+        setMobileFlow(true);
+        window.__mobileFlow = true;
+
+        if (courtNumber) {
+          setPreselectedCourt(courtNumber);
+          window.__preselectedCourt = courtNumber;
+          console.log('[Mobile] Preselected court:', courtNumber);
+        }
+
+        // Navigate to group screen
+        setCurrentScreen('group', 'mobileRegisterMessage');
+
+        // Focus the search input after navigation
+        requestAnimationFrame(() => {
+          const input =
+            document.querySelector('#mobile-group-search-input') ||
+            document.querySelector('#main-search-input') ||
+            document.querySelector('input[type="text"]');
+          if (input) {
+            input.focus({ preventScroll: true });
+          }
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Mobile: Watch for success state changes and send signal
   useEffect(() => {
-    if (showSuccess && window.__mobileFlow && window.top !== window.self) {
+    if (showSuccess && mobileFlow && window.top !== window.self) {
       dbg('Registration: Success state changed to true, sending mobile signal');
-      const courtNumber = window.__preselectedCourt || justAssignedCourt || null;
+      const courtNumber = preselectedCourt || justAssignedCourt || null;
       dbg('Registration: Court number for success:', courtNumber);
       try {
         window.parent.postMessage({ type: 'registration:success', courtNumber: courtNumber }, '*');
@@ -1073,7 +1118,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       return () => clearInterval(countdownInterval);
     }
-  }, [showSuccess, justAssignedCourt]);
+  }, [showSuccess, justAssignedCourt, mobileFlow, preselectedCourt]);
 
   // PHASE1D: Court availability now handled by TennisBackend subscription
 
@@ -2903,8 +2948,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Mobile: Skip court selection if we have a preselected court
-    if (window.__mobileFlow && window.__preselectedCourt) {
-      assignCourtToGroup(window.__preselectedCourt);
+    if (mobileFlow && preselectedCourt) {
+      assignCourtToGroup(preselectedCourt);
     } else {
       setCurrentScreen('court', 'selectCourtButton');
     }
@@ -2915,8 +2960,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setStreakAcknowledged(true);
     setShowStreakModal(false);
     // Now proceed to court selection
-    if (window.__mobileFlow && window.__preselectedCourt) {
-      assignCourtToGroup(window.__preselectedCourt);
+    if (mobileFlow && preselectedCourt) {
+      assignCourtToGroup(preselectedCourt);
     } else {
       setCurrentScreen('court', 'selectCourtButton');
     }
@@ -3227,6 +3272,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           alertMessage={alertMessage}
           showTimeoutWarning={showTimeoutWarning}
           isMobileView={isMobileView}
+          // Mobile flow
+          mobileFlow={mobileFlow}
+          preselectedCourt={preselectedCourt}
           // Search state
           searchInput={searchInput}
           showSuggestions={showSuggestions}
