@@ -563,6 +563,25 @@
       border-radius: 16px 16px 0 0 !important; /* Rounded top corners only */
     }
 
+    /* Waitlist Available CTA modal - same as clear-court-confirm: bottom, above mobile bar */
+    .modal-waitlist-available {
+      align-items: flex-end !important; /* Position at bottom */
+      pointer-events: none !important; /* Allow clicks to pass through backdrop to courts */
+      background: transparent !important; /* No backdrop */
+      backdrop-filter: none !important;
+    }
+
+    .modal-waitlist-available .mobile-modal-content {
+      pointer-events: auto !important; /* Modal content itself is clickable */
+      margin-bottom: 80px !important; /* Space above mobile bar (72px + 8px) */
+      border-radius: 16px 16px 0 0 !important; /* Rounded top corners only */
+      background: rgba(30, 41, 59, 0.98) !important;
+    }
+
+    /* Hide the header for waitlist-available - keep it compact */
+    .modal-waitlist-available .mobile-modal-header {
+      display: none !important;
+    }
 
     .mobile-bottom-button {
       display: flex;
@@ -1035,6 +1054,9 @@
             console.debug('Modal bus close');
             currentModalType = null;
             document.dispatchEvent(new Event('mm:close'));
+          },
+          get currentType() {
+            return currentModalType;
           }
         };
         console.debug('Modal bus initialized for mobile view');
@@ -1043,9 +1065,9 @@
   </script>
 
   <!-- Mobile fallback bar script -->
-  <script src="./mobile-fallback-bar.js?v=3"></script>
+  <script src="./mobile-fallback-bar.js?v=5"></script>
 
-  <!-- Vite-bundled React app -->
+  <!-- Vite-bundled React app (imports courtAvailability.js which exposes window.CourtAvailability) -->
   <script type="module" src="./main.jsx"></script>
 
   <!-- Debug Panel - Only visible when ?debug=1 -->

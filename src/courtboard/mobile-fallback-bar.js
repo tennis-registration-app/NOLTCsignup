@@ -187,7 +187,8 @@
     let isActuallyOnCourt = false;
 
     // Only check the specific court that sessionStorage says we're on
-    if (registeredCourt) {
+    // Check for actual valid court number, not "null" string or empty
+    if (registeredCourt && registeredCourt !== 'null' && registeredCourt !== '') {
       try {
         // Use React state via getCourtboardState() - no localStorage
         const state = getCourtboardState();
@@ -214,7 +215,12 @@
       }
     }
 
-    if (registeredCourt && isActuallyOnCourt) {
+    if (
+      registeredCourt &&
+      registeredCourt !== 'null' &&
+      registeredCourt !== '' &&
+      isActuallyOnCourt
+    ) {
       // Change to Clear Court button - blue square like occupied courts, no emoji
       joinBtn.setAttribute('data-action', 'clear-court');
       joinBtn.innerHTML =
@@ -234,59 +240,84 @@
       joinBtn.style.color = '';
       joinBtn.title = 'Join Waitlist';
       // Let updateJoinButtonState handle the disabled state
-      updateJoinButtonState();
+      window.updateJoinButtonState();
     }
   };
 
   // Function to check if waitlist join should be allowed
-  function updateJoinButtonState() {
+  // Exposed to window so React can call it after updating CourtboardState
+  window.updateJoinButtonState = function updateJoinButtonState() {
+    console.log('[JoinButton] updateJoinButtonState called');
+    // If user is registered, let updateJoinButtonForMobile handle it (shows Clear Court)
+    const registered = sessionStorage.getItem('mobile-registered-court');
+    // Check for actual valid court number, not "null" string or empty
+    if (registered && registered !== 'null' && registered !== '') {
+      console.log('[JoinButton] User registered on court', registered, '- skipping');
+      return;
+    }
+
+    // If user is already on waitlist, disable the join button
+    const waitlistEntryId = sessionStorage.getItem('mobile-waitlist-entry-id');
+    if (waitlistEntryId && waitlistEntryId !== 'null' && waitlistEntryId !== '') {
+      console.log('[JoinButton] User already on waitlist with entry ID:', waitlistEntryId);
+      joinBtn.disabled = true;
+      joinBtn.setAttribute('aria-disabled', 'true');
+      joinBtn.innerHTML = '⏳<span class="lbl">On Waitlist</span>';
+      joinBtn.title = 'You are on the waitlist';
+      return;
+    }
+
     try {
       // Use React state via getCourtboardState() - no localStorage
       const state = getCourtboardState();
-      const courts = state.courts || [];
-      const waitingGroups = state.waitingGroups || [];
-      const blocks = state.courtBlocks || [];
 
-      // Check if there are available courts using availability domain
-      const Availability =
-        window.Tennis?.Domain?.Availability || window.Tennis?.Domain?.availability;
-      if (Availability && Availability.shouldAllowWaitlistJoin) {
-        const wetSet = new Set(); // Assume no wet courts for now
-        const hasWaitlist = waitingGroups.length > 0;
-
-        // Build data object for availability check
-        const data = { courts: courts };
-
-        // Original logic: no courts available
-        const shouldAllowByNoAvail = Availability.shouldAllowWaitlistJoin({
-          data: data,
-          now: new Date(),
-          blocks: blocks,
-          wetSet: wetSet,
-        });
-
-        // New logic: enable when waitlist exists OR no courts available
-        const shouldAllow = hasWaitlist || shouldAllowByNoAvail;
-
-        joinBtn.disabled = !shouldAllow;
-        joinBtn.setAttribute('aria-disabled', String(!shouldAllow));
+      // Use pre-calculated freeCourts from CourtboardState if available
+      // Otherwise fall back to CourtAvailability helper or 0
+      let freeCourts;
+      if (state?.freeCourts !== undefined) {
+        freeCourts = state.freeCourts;
+        console.log('[JoinButton] Using pre-calculated freeCourts:', freeCourts);
+      } else if (window.CourtAvailability?.countPlayableCourts) {
+        freeCourts = window.CourtAvailability.countPlayableCourts(
+          state?.courts || [],
+          state?.courtBlocks || [],
+          new Date().toISOString()
+        );
+        console.log('[JoinButton] Calculated freeCourts via CourtAvailability:', freeCourts);
       } else {
-        // Fallback: simple check based on occupied courts vs waiting groups
-        const occupiedCourts = courts.filter((c) => c && c.isOccupied).length;
-        const totalCourts = 12;
-
-        // Enable join if all courts occupied OR there are waiting groups
-        const shouldEnableJoin = occupiedCourts >= totalCourts || waitingGroups.length > 0;
-        joinBtn.disabled = !shouldEnableJoin;
-        joinBtn.setAttribute('aria-disabled', String(!shouldEnableJoin));
+        // Fallback - assume no free courts to be safe (button disabled)
+        freeCourts = 0;
+        console.log('[JoinButton] No availability data - defaulting freeCourts to 0');
       }
+
+      // Enable join only when NO free courts (waitlist existence doesn't affect button state)
+      const shouldEnableJoin = freeCourts === 0;
+
+      // Reset button to Join Waitlist state (in case it was showing "On Waitlist")
+      joinBtn.innerHTML = '🎾<span class="lbl">Join Waitlist</span>';
+      joinBtn.title = 'Join Waitlist';
+      joinBtn.disabled = !shouldEnableJoin;
+      joinBtn.setAttribute('aria-disabled', String(!shouldEnableJoin));
+
+      console.log(
+        '[JoinButton] freeCourts:',
+        freeCourts,
+        'shouldEnable:',
+        shouldEnableJoin,
+        'button disabled:',
+        !shouldEnableJoin
+      );
     } catch (e) {
       console.warn('Error updating join button state:', e);
     }
-  }
+  };
 
   // Listen for app events
   document.addEventListener('app:availability', (evt) => {
+    // If user is registered, let updateJoinButtonForMobile handle it
+    const registered = sessionStorage.getItem('mobile-registered-court');
+    if (registered) return;
+
     const hasAvail = !!evt.detail?.hasAvailable;
     // Join button should be ENABLED when NO courts available (hasAvail = false)
     joinBtn.disabled = hasAvail;
@@ -300,24 +331,24 @@
 
   // Listen for data updates to update button state
   document.addEventListener('tennisDataUpdate', () => {
-    updateJoinButtonState();
-    updateJoinButtonForMobile();
+    window.updateJoinButtonState();
+    window.updateJoinButtonForMobile();
   });
 
   // Listen for mobile registration events
   window.addEventListener('message', (evt) => {
     if (evt.data?.type === 'mobile:registrationSuccess') {
       // Try multiple times with increasing delays to ensure data is synchronized
-      setTimeout(updateJoinButtonForMobile, 100);
-      setTimeout(updateJoinButtonForMobile, 500);
-      setTimeout(updateJoinButtonForMobile, 1000);
-      setTimeout(updateJoinButtonForMobile, 2000);
+      setTimeout(window.updateJoinButtonForMobile, 100);
+      setTimeout(window.updateJoinButtonForMobile, 500);
+      setTimeout(window.updateJoinButtonForMobile, 1000);
+      setTimeout(window.updateJoinButtonForMobile, 2000);
     }
   });
 
   // Initial check
-  updateJoinButtonState();
-  updateJoinButtonForMobile();
+  window.updateJoinButtonState();
+  window.updateJoinButtonForMobile();
 
   console.debug('Plain-JS fallback bar mounted');
 })();

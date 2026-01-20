@@ -22,6 +22,9 @@ import {
 import { createBackend } from '../registration/backend/index.js';
 const backend = createBackend();
 
+// Court availability helper - single source of truth for free/playable courts
+import { countPlayableCourts, listPlayableCourts } from '../shared/courts/courtAvailability.js';
+
 // Access shared utils from window for backward compatibility
 const U = window.APP_UTILS || {};
 
@@ -560,6 +563,25 @@ function TennisCourtDisplay() {
   const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
   const [blockWarningMinutes, setBlockWarningMinutes] = useState(60); // Default 60, loaded from settings
 
+  // Mobile state - initialize from sessionStorage, updated via message from Mobile.html
+  const [mobileState, setMobileState] = useState(() => ({
+    registeredCourt: sessionStorage.getItem('mobile-registered-court'),
+    waitlistEntryId: sessionStorage.getItem('mobile-waitlist-entry-id'),
+  }));
+
+  // Listen for state updates from Mobile.html (MobileBridge broadcasts)
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === 'mobile:state-updated') {
+        console.log('[Courtboard] Mobile state updated:', event.data.payload);
+        setMobileState(event.data.payload);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   // Time update
   useEffect(() => {
     const timer = setInterval(() => {
@@ -749,20 +771,79 @@ function TennisCourtDisplay() {
    * and cannot access this component's state directly.
    */
   useEffect(() => {
+    const now = new Date().toISOString();
+    const freeCount = countPlayableCourts(courts, courtBlocks, now);
+
     console.log('[CourtboardState] Setting state:', {
       courts: courts?.length,
       courtBlocks: courtBlocks?.length,
       upcomingBlocks: upcomingBlocks?.length,
       waitingGroups: waitlist?.length,
+      freeCourts: freeCount,
     });
     window.CourtboardState = {
       courts: courts,
       courtBlocks: courtBlocks,
       upcomingBlocks: upcomingBlocks,
       waitingGroups: waitlist,
+      freeCourts: freeCount,
       timestamp: Date.now(),
     };
+
+    // Update mobile button state after state is set
+    if (typeof window.updateJoinButtonState === 'function') {
+      console.log('[CourtboardState] Calling updateJoinButtonState');
+      window.updateJoinButtonState();
+    } else {
+      console.log('[CourtboardState] updateJoinButtonState not found');
+    }
   }, [courts, courtBlocks, upcomingBlocks, waitlist]);
+
+  // Auto-show waitlist-available notice when court is free and THIS mobile user is first in waitlist
+  useEffect(() => {
+    if (!isMobileView) return;
+
+    const hasWaitlist = waitlist.length > 0;
+    if (!hasWaitlist) {
+      // No waitlist - close notice if open
+      if (window.MobileModal?.currentType === 'waitlist-available') {
+        window.MobileModal?.close?.();
+      }
+      return;
+    }
+
+    // Check if THIS mobile user is first in the waitlist
+    // Use mobileState (React state) instead of sessionStorage for reactivity
+    const mobileWaitlistEntryId = mobileState.waitlistEntryId;
+    const firstGroup = waitlist[0];
+    const isUserFirstInWaitlist = mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId;
+
+    // Use shared helper for consistent free court calculation
+    const now = new Date().toISOString();
+    const freeCourtCount = countPlayableCourts(courts, courtBlocks, now);
+    const freeCourtList = listPlayableCourts(courts, courtBlocks, now);
+
+    console.log('[WaitlistNotice] Check:', {
+      freeCourts: freeCourtCount,
+      freeCourtList: freeCourtList,
+      waitlistLength: waitlist?.length,
+      isMobileView: isMobileView,
+      mobileWaitlistEntryId: mobileWaitlistEntryId,
+      firstGroupId: firstGroup?.id,
+      isUserFirstInWaitlist: isUserFirstInWaitlist,
+      shouldShow: freeCourtCount > 0 && isUserFirstInWaitlist,
+      totalCourts: courts?.length,
+      courtsWithSession: courts?.filter((c) => c?.session).length,
+    });
+
+    if (freeCourtCount > 0 && isUserFirstInWaitlist) {
+      // Court available AND this mobile user is first in waitlist - show notice
+      window.MobileModal?.open('waitlist-available', { firstGroup });
+    } else if (window.MobileModal?.currentType === 'waitlist-available') {
+      // Not first, no free courts, or no waitlist - close notice if it's currently showing
+      window.MobileModal?.close?.();
+    }
+  }, [courts, courtBlocks, waitlist, isMobileView, mobileState]);
 
   window.refreshBoard = loadData;
 
@@ -1029,15 +1110,53 @@ function CourtCard({
     return names.length > 1 ? `${primaryName} +${names.length - 1}` : primaryName;
   }
 
+  // Handler for occupied/overtime court taps (mobile only)
+  const handleOccupiedCourtTap = () => {
+    if (!isMobileView) return;
+
+    // Check if court is overtime - treat like free court for registration
+    if (status === 'overtime') {
+      // Overtime court - allow registration (takeover)
+      window.mobileTapToRegister?.(courtNumber);
+      return;
+    }
+
+    // Court is truly occupied (not overtime) - handle clear court flow
+    const registeredCourt = sessionStorage.getItem('mobile-registered-court');
+
+    if (registeredCourt) {
+      // User has a registration - only allow clearing THEIR court
+      if (Number(registeredCourt) === courtNumber) {
+        window.MobileModal?.open('clear-court-confirm', { courtNumber });
+      }
+      // Tapping other occupied courts does nothing when registered
+    } else {
+      // No registration - show players on this court
+      window.MobileModal?.open('clear-court-confirm', {
+        courtNumber,
+        players: nm, // nm already has player names from namesFor(cObj)
+      });
+    }
+  };
+
+  const isOccupiedOrOvertime = status === 'occupied' || status === 'overtime';
+  const isClickable = status === 'free' || (isOccupiedOrOvertime && isMobileView);
+
   return (
     <div
       className={courtClass}
       data-court={courtNumber}
       data-available={status === 'free'}
-      role={status === 'free' ? 'button' : undefined}
-      tabIndex={status === 'free' ? 0 : undefined}
-      onClick={status === 'free' ? () => window.mobileTapToRegister?.(courtNumber) : undefined}
-      style={{ cursor: status === 'free' && isMobileView ? 'pointer' : 'default' }}
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={
+        status === 'free'
+          ? () => window.mobileTapToRegister?.(courtNumber)
+          : isOccupiedOrOvertime && isMobileView
+            ? handleOccupiedCourtTap
+            : undefined
+      }
+      style={{ cursor: isClickable ? 'pointer' : 'default' }}
     >
       <h3
         className={`court-text-lg font-bold ${status === 'wet' || status === 'blocked' ? 'text-gray-800' : 'text-white'} mb-1`}
@@ -1840,6 +1959,8 @@ function MobileModalSheet({ type, payload, onClose }) {
         return 'Waitlist';
       case 'clear-court-confirm':
         return `Clear Court ${payload?.courtNumber || ''}?`;
+      case 'waitlist-available':
+        return 'Court Available!';
       default:
         return '';
     }
@@ -2013,8 +2134,8 @@ function MobileModalSheet({ type, payload, onClose }) {
           const formatOne = (full) => {
             const tokens = full.replace(/\s+/g, ' ').trim().split(' ');
             if (tokens.length === 1) {
-              const t = tokens[0];
-              return t.length <= 3 ? t : `${t[0]}. ${t.slice(1)}`;
+              // Single name (e.g., "Bob" or "Player") - return as-is, no formatting
+              return tokens[0];
             }
             let last = tokens[tokens.length - 1];
             let last2 = tokens[tokens.length - 2];
@@ -2123,7 +2244,10 @@ function MobileModalSheet({ type, payload, onClose }) {
                   {waitlistData.map((group, idx) => {
                     let names = [];
                     if (Array.isArray(group.players)) {
-                      names = group.players.map((p) => p.name || p.id || 'Player');
+                      // Use displayName (domain format) first, then name (legacy), then id as fallback
+                      names = group.players.map(
+                        (p) => p.displayName || p.name || p.id || 'Unknown'
+                      );
                     } else if (group.names) {
                       names = Array.isArray(group.names) ? group.names : [group.names];
                     } else if (group.name) {
@@ -2157,11 +2281,17 @@ function MobileModalSheet({ type, payload, onClose }) {
           </div>
         );
 
-      case 'clear-court-confirm':
+      case 'clear-court-confirm': {
         // Clear Court confirmation modal
-        const courtNumber = payload?.courtNumber || '';
+        const clearCourtNumber = payload?.courtNumber || '';
+        const clearCourtPlayers = payload?.players || '';
         return (
           <div className="p-6 text-center">
+            {clearCourtPlayers && (
+              <p className="text-gray-200 mb-4 text-lg">
+                {clearCourtPlayers} on Court {clearCourtNumber}
+              </p>
+            )}
             <button
               type="button"
               className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium"
@@ -2169,7 +2299,7 @@ function MobileModalSheet({ type, payload, onClose }) {
                 try {
                   // Get court ID from current board state
                   const board = await backend.queries.getBoard();
-                  const court = board?.courts?.find((c) => c.number === Number(courtNumber));
+                  const court = board?.courts?.find((c) => c.number === Number(clearCourtNumber));
 
                   if (court?.id) {
                     // Use API to end session
@@ -2177,9 +2307,9 @@ function MobileModalSheet({ type, payload, onClose }) {
                       courtId: court.id,
                       reason: 'completed',
                     });
-                    console.log(`[Courtboard] Court ${courtNumber} cleared via API`);
+                    console.log(`[Courtboard] Court ${clearCourtNumber} cleared via API`);
                   } else {
-                    console.warn(`[Courtboard] No court ID found for court ${courtNumber}`);
+                    console.warn(`[Courtboard] No court ID found for court ${clearCourtNumber}`);
                   }
 
                   // Post-clear cleanup (mobile UI state)
@@ -2197,10 +2327,23 @@ function MobileModalSheet({ type, payload, onClose }) {
                 }
               }}
             >
-              Yes, we are finished and leaving court {courtNumber}
+              We have finished and are leaving Court {clearCourtNumber}
             </button>
           </div>
         );
+      }
+
+      case 'waitlist-available': {
+        // Waitlist CTA - court is available for first waitlist group
+        const firstGroup = payload?.firstGroup || {};
+        const playerNames = (firstGroup.names || []).join(', ') || 'Next group';
+        return (
+          <div className="p-6 text-center">
+            <p className="text-yellow-400 text-xl font-semibold mb-3">{playerNames}</p>
+            <p className="text-gray-300 text-base">Tap an available court to play</p>
+          </div>
+        );
+      }
 
       default:
         return (
@@ -2219,6 +2362,7 @@ function MobileModalSheet({ type, payload, onClose }) {
     if (type === 'reserved') return ' modal-reserved-large';
     if (type === 'waitlist') return ' modal-waitlist-large';
     if (type === 'clear-court-confirm') return ' modal-clear-court-confirm';
+    if (type === 'waitlist-available') return ' modal-waitlist-available';
     return '';
   };
 

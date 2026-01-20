@@ -206,6 +206,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Mobile flow state
   const [mobileFlow, setMobileFlow] = useState(false);
   const [preselectedCourt, setPreselectedCourt] = useState(null);
+  // Mobile mode: null = normal, 'silent-assign' = loading state for waitlist assignment
+  const [mobileMode, setMobileMode] = useState(null);
 
   // Get the API data service
   const getDataService = useCallback(() => {
@@ -1052,7 +1054,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Mobile: Listen for register messages from parent (Mobile.html)
   useEffect(() => {
-    const handleMessage = (event) => {
+    const handleMessage = async (event) => {
       const data = event.data;
       if (!data || typeof data !== 'object') return;
 
@@ -1083,6 +1085,94 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
             input.focus({ preventScroll: true });
           }
         });
+      } else if (data.type === 'assign-from-waitlist') {
+        // Handle waitlist assignment from mobile court tap (silent assign mode)
+        console.log('[Mobile] Received assign-from-waitlist message:', data);
+        const { courtNumber, waitlistEntryId } = data;
+
+        if (!courtNumber || !waitlistEntryId) {
+          console.error('[Mobile] Missing courtNumber or waitlistEntryId');
+          return;
+        }
+
+        // Set mobile flow state and silent-assign mode (shows loading spinner)
+        setMobileFlow(true);
+        window.__mobileFlow = true;
+        setMobileMode('silent-assign');
+
+        try {
+          // Get court ID from court number
+          const boardData = await backend.queries.getBoard();
+          const court = boardData.courts?.find((c) => c.number === courtNumber);
+
+          if (!court?.id) {
+            console.error('[Mobile] Could not find court ID for court number:', courtNumber);
+            Tennis?.UI?.toast?.('Could not find court', { type: 'error' });
+            return;
+          }
+
+          console.log('[Mobile] Assigning waitlist entry', waitlistEntryId, 'to court', court.id);
+
+          // Get geolocation for mobile (required by backend)
+          let locationData = {};
+          if (navigator.geolocation) {
+            try {
+              const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                  enableHighAccuracy: true,
+                  timeout: 5000,
+                  maximumAge: 0,
+                });
+              });
+              locationData = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+              };
+            } catch (geoError) {
+              console.warn('[Mobile] Geolocation failed:', geoError);
+            }
+          }
+
+          // Call assign from waitlist API
+          const result = await backend.commands.assignFromWaitlistWithLocation({
+            waitlistEntryId,
+            courtId: court.id,
+            ...locationData,
+          });
+
+          if (result.ok) {
+            console.log('[Mobile] Waitlist assignment successful:', result);
+
+            // Clear mobile waitlist entry ID
+            sessionStorage.removeItem('mobile-waitlist-entry-id');
+            // Store the new court registration
+            sessionStorage.setItem('mobile-registered-court', String(courtNumber));
+
+            // Clear silent-assign mode and show success
+            setMobileMode(null);
+            setJustAssignedCourt(courtNumber);
+            setAssignedSessionId(result.session?.id || null);
+            setShowSuccess(true);
+
+            // Toast success
+            Tennis?.UI?.toast?.(`Assigned to Court ${courtNumber}!`, { type: 'success' });
+          } else {
+            console.error('[Mobile] Waitlist assignment failed:', result.code, result.message);
+            Tennis?.UI?.toast?.(result.message || 'Could not assign court', { type: 'error' });
+
+            // Clear silent-assign mode and close overlay on failure
+            setMobileMode(null);
+            window.parent.postMessage({ type: 'resetRegistration' }, '*');
+          }
+        } catch (error) {
+          console.error('[Mobile] Error assigning from waitlist:', error);
+          Tennis?.UI?.toast?.('Error assigning court', { type: 'error' });
+
+          // Clear silent-assign mode and close overlay on error
+          setMobileMode(null);
+          window.parent.postMessage({ type: 'resetRegistration' }, '*');
+        }
       }
     };
 
@@ -1471,6 +1561,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Clear the waitlist entry ID after successful assignment
         setCurrentWaitlistEntryId(null);
         setHasWaitlistPriority(false);
+        // Also clear mobile sessionStorage waitlist entry
+        sessionStorage.removeItem('mobile-waitlist-entry-id');
 
         // Board subscription will auto-refresh
         console.log('✅ Waitlist assignment successful, waiting for board refresh signal');
@@ -1848,15 +1940,51 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       const apiDuration = Math.round(performance.now() - waitlistStartTime);
       setIsJoiningWaitlist(false);
       console.log(`[waitlist] [T+${apiDuration}ms] Result:`, result);
+      console.log(`[waitlist] [T+${apiDuration}ms] result.data:`, result.data);
+      console.log(`[waitlist] [T+${apiDuration}ms] __mobileFlow:`, window.__mobileFlow);
 
       if (result.ok) {
+        // Extract waitlist entry info from API response
+        const waitlistEntry = result.data?.waitlist;
+        const entryId = waitlistEntry?.id;
+        const position = waitlistEntry?.position || result.position || 1;
+        console.log(
+          `[waitlist] [T+${apiDuration}ms] Extracted - entryId:`,
+          entryId,
+          'position:',
+          position
+        );
+
         // Store the position from response for the success screen
-        if (result.position) {
-          setWaitlistPosition(result.position);
-          console.log(`[waitlist] [T+${apiDuration}ms] Position:`, result.position);
+        if (position) {
+          setWaitlistPosition(position);
+          console.log(`[waitlist] [T+${apiDuration}ms] Position:`, position);
         }
+
+        // Store waitlist entry ID in sessionStorage for mobile users
+        // This enables auto-assignment when they tap a court
+        if (entryId && window.__mobileFlow) {
+          sessionStorage.setItem('mobile-waitlist-entry-id', entryId);
+          console.log(`[waitlist] [T+${apiDuration}ms] Stored mobile waitlist entry ID:`, entryId);
+
+          // Notify parent (MobileBridge) about waitlist join so it can broadcast state
+          try {
+            window.parent.postMessage({ type: 'waitlist:joined', entryId }, '*');
+            console.log(`[waitlist] [T+${apiDuration}ms] Sent waitlist:joined to parent`);
+          } catch (e) {
+            console.warn('[waitlist] Failed to notify parent of waitlist join:', e);
+          }
+        } else {
+          console.log(
+            `[waitlist] [T+${apiDuration}ms] NOT storing entry ID - entryId:`,
+            entryId,
+            '__mobileFlow:',
+            window.__mobileFlow
+          );
+        }
+
         // Toast and rely on board subscription for UI refresh
-        Tennis?.UI?.toast?.(`Added to waiting list (position ${result.position})`, {
+        Tennis?.UI?.toast?.(`Added to waiting list (position ${position})`, {
           type: 'success',
         });
         const successTime = Math.round(performance.now() - waitlistStartTime);
@@ -1910,6 +2038,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setHasWaitlistPriority(false);
     setCurrentWaitlistEntryId(null); // Clear waitlist entry ID
     setWaitlistPosition(0); // Reset API waitlist position
+    // NOTE: Do NOT clear mobile-waitlist-entry-id here - user is still on waitlist
+    // It should only be cleared when they successfully get assigned a court
     setSelectedCourtToClear(null);
     setClearCourtStep(1);
     setIsChangingCourt(false);
@@ -3013,6 +3143,18 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setCurrentScreen('home', 'groupGoBack');
     }
   };
+
+  // Silent assign loading screen (mobile waitlist assignment in progress)
+  if (mobileMode === 'silent-assign') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-700 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mb-4"></div>
+          <p className="text-xl font-medium">Assigning court...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Success screen
   if (showSuccess) {

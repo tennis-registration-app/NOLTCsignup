@@ -58,24 +58,46 @@
       return false; // Don't proceed with registration
     }
 
-    // Check if there's a waitlist - if so, redirect to join waitlist instead
+    // Check if there's a waitlist
     try {
       // Use React state via getCourtboardState() - no localStorage
       const state = getCourtboardState();
       const waitingGroups = state.waitingGroups || [];
+      const mobileWaitlistEntryId = sessionStorage.getItem('mobile-waitlist-entry-id');
 
       if (waitingGroups.length > 0) {
-        // Redirect to waitlist join instead of court selection
-        try {
-          window.parent.postMessage({ type: 'register', courtNumber: null }, '*');
-        } catch {}
-        return true;
+        // Check if this mobile user is first in waitlist
+        const firstGroup = waitingGroups[0];
+        const isUserFirstInWaitlist =
+          mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId;
+
+        if (isUserFirstInWaitlist) {
+          // User is first in waitlist - trigger assign-from-waitlist to this court
+          console.log('[Mobile] Assigning first waitlist group to court', courtNumber);
+          try {
+            window.parent.postMessage(
+              {
+                type: 'assign-from-waitlist',
+                courtNumber: Number(courtNumber),
+                waitlistEntryId: mobileWaitlistEntryId,
+              },
+              '*'
+            );
+          } catch {}
+          return true;
+        } else {
+          // User is NOT first (or not on waitlist at all) - redirect to join waitlist
+          try {
+            window.parent.postMessage({ type: 'register', courtNumber: null }, '*');
+          } catch {}
+          return true;
+        }
       }
     } catch (e) {
       console.warn('Error checking waitlist in mobileTapToRegister:', e);
     }
 
-    // Normal behavior: select the court
+    // Normal behavior: no waitlist, select the court directly
     try {
       window.parent.postMessage({ type: 'register', courtNumber: Number(courtNumber) }, '*');
     } catch {}
