@@ -347,9 +347,6 @@ const SuccessScreen = ({
           <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
             Confirmed!
           </h1>
-          {mobileCountdown !== null && mobileCountdown > 0 && (
-            <p className="text-sm text-gray-500 mt-2">Closing in {mobileCountdown}...</p>
-          )}
         </div>
         <div className="bg-green-50 rounded-2xl p-4 sm:p-6 text-center">
           <p className="text-lg sm:text-xl text-gray-700 mb-2">You're all set on</p>
@@ -592,9 +589,6 @@ const SuccessScreen = ({
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent text-center">
           You're on the list!
         </h1>
-        {mobileCountdown !== null && mobileCountdown > 0 && (
-          <p className="text-sm text-gray-500 mt-2">Closing in {mobileCountdown}...</p>
-        )}
       </div>
 
       <div className="bg-blue-50 rounded-2xl p-4 sm:p-6 text-center mb-4 sm:mb-6">
