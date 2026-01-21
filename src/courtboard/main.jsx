@@ -1008,6 +1008,8 @@ function TennisCourtDisplay() {
                     checkStatusMinutes={checkStatusMinutes}
                     upcomingBlocks={upcomingBlocks}
                     blockWarningMinutes={blockWarningMinutes}
+                    courts={courts}
+                    courtBlocks={courtBlocks}
                   />
                 </div>
               ))}
@@ -1037,6 +1039,8 @@ function TennisCourtDisplay() {
                       checkStatusMinutes={checkStatusMinutes}
                       upcomingBlocks={upcomingBlocks}
                       blockWarningMinutes={blockWarningMinutes}
+                      courts={courts}
+                      courtBlocks={courtBlocks}
                     />
                   </div>
                 ))}
@@ -1059,6 +1063,8 @@ function TennisCourtDisplay() {
                     checkStatusMinutes={checkStatusMinutes}
                     upcomingBlocks={upcomingBlocks}
                     blockWarningMinutes={blockWarningMinutes}
+                    courts={courts}
+                    courtBlocks={courtBlocks}
                   />
                 ))}
               </div>
@@ -1105,6 +1111,8 @@ function CourtCard({
   checkStatusMinutes = 150,
   upcomingBlocks = [],
   blockWarningMinutes = 60,
+  courts = [],
+  courtBlocks = [],
 }) {
   const status = statusByCourt[courtNumber] || 'free';
   const selectable = selectableByCourt[courtNumber] || false;
@@ -1181,29 +1189,30 @@ function CourtCard({
 
     // Check if court is overtime - treat like free court for registration
     if (isOvertime) {
-      // Check if empty playable courts exist - if so, block overtime tap
-      const playableCourts = listPlayableCourts(courts, courtBlocks, new Date().toISOString());
-      const emptyPlayable = playableCourts.filter((cn) => {
-        const c = courts[cn - 1];
-        return !c?.session;
-      });
-      console.log('[Overtime Tap Debug]', {
-        courtNumber,
-        playableCourts,
-        emptyPlayable,
-        courts: courts.map((c, i) => ({
-          number: i + 1,
-          hasSession: !!c?.session,
-          status: c?.status,
-        })),
-      });
-      if (emptyPlayable.length > 0) {
-        window.Tennis?.UI?.toast?.('Please select an available court', { type: 'warning' });
+      try {
+        // Check if empty playable courts exist - if so, block overtime tap
+        const playableCourts = listPlayableCourts(courts, courtBlocks, new Date().toISOString());
+        const emptyPlayable = playableCourts.filter((cn) => {
+          const c = courts[cn - 1];
+          return !c?.session;
+        });
+        console.log('[Overtime Tap Debug]', {
+          courtNumber,
+          playableCourts,
+          emptyPlayable,
+          courtsLength: courts?.length,
+          courtBlocksLength: courtBlocks?.length,
+        });
+        if (emptyPlayable.length > 0) {
+          window.Tennis?.UI?.toast?.('Please select an available court', { type: 'warning' });
+          return;
+        }
+        // No empty courts - allow overtime takeover
+        window.mobileTapToRegister?.(courtNumber);
         return;
+      } catch (e) {
+        console.error('[Overtime Tap Debug] ERROR', e);
       }
-      // No empty courts - allow overtime takeover
-      window.mobileTapToRegister?.(courtNumber);
-      return;
     }
 
     // Court is truly occupied (not overtime) - handle clear court flow
