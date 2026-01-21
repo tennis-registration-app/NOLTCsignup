@@ -36,7 +36,7 @@ import { Check } from '../components';
 
 // Fixed layout card component (internal)
 const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
-  <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] h-auto md:h-[550px]">
+  <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] max-h-[80vh] overflow-y-auto h-auto md:h-[550px]">
     {/* Fixed header area - only render if headerContent exists */}
     {headerContent && (
       <div className="h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4">{headerContent}</div>

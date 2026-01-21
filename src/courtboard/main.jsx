@@ -575,6 +575,14 @@ function TennisCourtDisplay() {
       if (event.data?.type === 'mobile:state-updated') {
         console.log('[Courtboard] Mobile state updated:', event.data.payload);
         setMobileState(event.data.payload);
+      } else if (event.data?.type === 'refresh-board') {
+        // Triggered after waitlist:joined to check for waitlist-available notice
+        console.log('[Courtboard] Refresh board requested');
+        // The mobileState update from MobileBridge.broadcastState() will trigger
+        // the waitlist-available useEffect, but we can also manually trigger loadData
+        if (typeof window.refreshBoard === 'function') {
+          window.refreshBoard();
+        }
       }
     };
 
@@ -1116,7 +1124,17 @@ function CourtCard({
 
     // Check if court is overtime - treat like free court for registration
     if (status === 'overtime') {
-      // Overtime court - allow registration (takeover)
+      // Check if empty playable courts exist - if so, block overtime tap
+      const playableCourts = listPlayableCourts(courts, courtBlocks, new Date().toISOString());
+      const emptyPlayable = playableCourts.filter((cn) => {
+        const c = courts[cn - 1];
+        return !c?.session;
+      });
+      if (emptyPlayable.length > 0) {
+        window.Tennis?.UI?.toast?.('Please select an available court', { type: 'warning' });
+        return;
+      }
+      // No empty courts - allow overtime takeover
       window.mobileTapToRegister?.(courtNumber);
       return;
     }

@@ -1194,8 +1194,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         if (DEBUG) console.log('Registration: Error in direct success message:', e);
       }
 
-      // Start countdown for mobile
-      setMobileCountdown(5);
+      // Start countdown for mobile (synced with Mobile.html 8 second dismiss)
+      setMobileCountdown(8);
       const countdownInterval = setInterval(() => {
         setMobileCountdown((prev) => {
           if (prev <= 1) {

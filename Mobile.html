@@ -263,12 +263,12 @@
         if (d.courtNumber) {
           MobileBridge.setWaitlistEntryId(null);
         }
-        // Show success screen for 15 seconds before closing
+        // Show success screen for 8 seconds before closing (synced with App.jsx countdown)
         window._registrationTimeout = setTimeout(() => {
           hideReg();
-          console.log('Mobile Shell: Closing overlay after 15 second delay');
+          console.log('Mobile Shell: Closing overlay after 8 second delay');
           window._registrationTimeout = null;
-        }, 15000);
+        }, 8000);
         // visual confirmation on the board immediately
         try {
           iframeBoard.contentWindow.postMessage({ type:'highlight', courtNumber: Number(d.courtNumber) }, '*');
@@ -322,6 +322,14 @@
         // User joined waitlist - store entry ID and broadcast
         console.log('Mobile Shell: User joined waitlist with entry ID:', d.entryId);
         MobileBridge.setWaitlistEntryId(d.entryId);
+        // Trigger immediate board refresh to check for waitlist-available notice
+        try {
+          if (iframeBoard?.contentWindow) {
+            iframeBoard.contentWindow.postMessage({ type: 'refresh-board' }, '*');
+          }
+        } catch (e) {
+          console.warn('Mobile Shell: Could not trigger board refresh:', e);
+        }
       }
     });
   </script>
