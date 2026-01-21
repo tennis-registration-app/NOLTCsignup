@@ -807,28 +807,6 @@ function TennisCourtDisplay() {
     }
   }, [courts, courtBlocks, upcomingBlocks, waitlist]);
 
-  // DEBUG: Capture-level interaction listener to diagnose tap issues
-  useEffect(() => {
-    const onAnyInteraction = (e) => {
-      const el = e.target;
-      console.log('[Courtboard] INTERACTION', {
-        type: e.type,
-        tag: el?.tagName,
-        id: el?.id,
-        className: el?.className,
-        text: el?.innerText?.slice?.(0, 30),
-      });
-    };
-    document.addEventListener('click', onAnyInteraction, true);
-    document.addEventListener('touchstart', onAnyInteraction, true);
-    document.addEventListener('touchend', onAnyInteraction, true);
-    return () => {
-      document.removeEventListener('click', onAnyInteraction, true);
-      document.removeEventListener('touchstart', onAnyInteraction, true);
-      document.removeEventListener('touchend', onAnyInteraction, true);
-    };
-  }, []);
-
   // Auto-show waitlist-available notice when court is free and THIS mobile user is first in waitlist
   useEffect(() => {
     if (!isMobileView) return;
@@ -911,27 +889,6 @@ function TennisCourtDisplay() {
       statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
       selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));
       statusObjectByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s]));
-
-      // Debug: Log status computation results
-      const overtimeCourts = _statuses.filter((s) => s.status === 'overtime');
-      const occupiedCourts = _statuses.filter((s) => s.status === 'occupied');
-      if (occupiedCourts.length > 0 || overtimeCourts.length > 0) {
-        console.log('[Status Debug]', {
-          now: now.toISOString(),
-          overtimeCourts: overtimeCourts.map((s) => s.courtNumber),
-          occupiedCourts: occupiedCourts.map((s) => s.courtNumber),
-          courtsWithSession: data.courts
-            .map((c, i) => ({
-              courtNumber: i + 1,
-              hasSession: !!c?.session,
-              scheduledEndAt: c?.session?.scheduledEndAt,
-              isPastEnd: c?.session?.scheduledEndAt
-                ? new Date(c.session.scheduledEndAt) <= now
-                : null,
-            }))
-            .filter((c) => c.hasSession),
-        });
-      }
     }
   } catch (e) {
     console.warn('Error building status map:', e);
@@ -1171,19 +1128,9 @@ function CourtCard({
 
   // Handler for occupied/overtime court taps (mobile only)
   const handleOccupiedCourtTap = () => {
-    console.log('[handleOccupiedCourtTap] ENTERED', { courtNumber, status, isMobileView });
-
     // Check overtime directly from session end time (not status, which uses different threshold)
     const isOvertime =
       cObj?.session?.scheduledEndAt && new Date(cObj.session.scheduledEndAt) < new Date();
-
-    console.log('[Court Tap Debug]', {
-      courtNumber,
-      status,
-      isOvertime,
-      isMobileView,
-      scheduledEndAt: cObj?.session?.scheduledEndAt,
-    });
 
     if (!isMobileView) return;
 
@@ -1196,13 +1143,6 @@ function CourtCard({
           const c = courts[cn - 1];
           return !c?.session;
         });
-        console.log('[Overtime Tap Debug]', {
-          courtNumber,
-          playableCourts,
-          emptyPlayable,
-          courtsLength: courts?.length,
-          courtBlocksLength: courtBlocks?.length,
-        });
         if (emptyPlayable.length > 0) {
           window.Tennis?.UI?.toast?.('Please select an available court', { type: 'warning' });
           return;
@@ -1211,7 +1151,7 @@ function CourtCard({
         window.mobileTapToRegister?.(courtNumber);
         return;
       } catch (e) {
-        console.error('[Overtime Tap Debug] ERROR', e);
+        console.error('[Overtime Tap] Error checking playable courts:', e);
       }
     }
 
@@ -1235,19 +1175,6 @@ function CourtCard({
 
   const isOccupiedOrOvertime = status === 'occupied' || status === 'overtime';
   const isClickable = status === 'free' || (isOccupiedOrOvertime && isMobileView);
-
-  console.log('[Court Render Debug]', {
-    courtNumber,
-    status,
-    isOccupiedOrOvertime,
-    isMobileView,
-    hasOnClick:
-      status === 'free'
-        ? 'mobileTap'
-        : isOccupiedOrOvertime && isMobileView
-          ? 'handleOccupied'
-          : 'none',
-  });
 
   return (
     <div
