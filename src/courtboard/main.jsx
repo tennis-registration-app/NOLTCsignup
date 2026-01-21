@@ -1156,6 +1156,8 @@ function CourtCard({
 
   // Handler for occupied/overtime court taps (mobile only)
   const handleOccupiedCourtTap = () => {
+    console.log('[handleOccupiedCourtTap] ENTERED', { courtNumber, status, isMobileView });
+
     // Check overtime directly from session end time (not status, which uses different threshold)
     const isOvertime =
       cObj?.session?.scheduledEndAt && new Date(cObj.session.scheduledEndAt) < new Date();
