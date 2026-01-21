@@ -807,19 +807,26 @@ function TennisCourtDisplay() {
     }
   }, [courts, courtBlocks, upcomingBlocks, waitlist]);
 
-  // DEBUG: Capture-level click listener to diagnose tap issues
+  // DEBUG: Capture-level interaction listener to diagnose tap issues
   useEffect(() => {
-    const onAnyClick = (e) => {
+    const onAnyInteraction = (e) => {
       const el = e.target;
-      console.log('[Courtboard] CLICK CAPTURE', {
+      console.log('[Courtboard] INTERACTION', {
+        type: e.type,
         tag: el?.tagName,
         id: el?.id,
         className: el?.className,
         text: el?.innerText?.slice?.(0, 30),
       });
     };
-    document.addEventListener('click', onAnyClick, true);
-    return () => document.removeEventListener('click', onAnyClick, true);
+    document.addEventListener('click', onAnyInteraction, true);
+    document.addEventListener('touchstart', onAnyInteraction, true);
+    document.addEventListener('touchend', onAnyInteraction, true);
+    return () => {
+      document.removeEventListener('click', onAnyInteraction, true);
+      document.removeEventListener('touchstart', onAnyInteraction, true);
+      document.removeEventListener('touchend', onAnyInteraction, true);
+    };
   }, []);
 
   // Auto-show waitlist-available notice when court is free and THIS mobile user is first in waitlist
