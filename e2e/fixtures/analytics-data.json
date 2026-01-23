@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "serverNow": "2025-01-23T10:00:00Z",
+  "data": {
+    "totalSessions": 150,
+    "averageSessionDuration": 55,
+    "peakHour": 10,
+    "courtUtilization": [
+      { "courtNumber": 1, "utilizationPercent": 75 },
+      { "courtNumber": 2, "utilizationPercent": 82 },
+      { "courtNumber": 3, "utilizationPercent": 68 },
+      { "courtNumber": 4, "utilizationPercent": 71 },
+      { "courtNumber": 5, "utilizationPercent": 65 },
+      { "courtNumber": 6, "utilizationPercent": 78 },
+      { "courtNumber": 7, "utilizationPercent": 80 },
+      { "courtNumber": 8, "utilizationPercent": 45 },
+      { "courtNumber": 9, "utilizationPercent": 72 },
+      { "courtNumber": 10, "utilizationPercent": 69 },
+      { "courtNumber": 11, "utilizationPercent": 55 },
+      { "courtNumber": 12, "utilizationPercent": 77 }
+    ],
+    "dailyTrend": [
+      { "date": "2025-01-20", "sessions": 42 },
+      { "date": "2025-01-21", "sessions": 38 },
+      { "date": "2025-01-22", "sessions": 45 },
+      { "date": "2025-01-23", "sessions": 25 }
+    ]
+  }
+}

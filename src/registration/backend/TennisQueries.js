@@ -29,6 +29,10 @@ export class TennisQueries {
     this._refreshCount = 0;
     // Regression guard: track last refresh time to detect double-refreshes
     this._lastRefreshTime = 0;
+    // E2E test mode: skip realtime subscriptions when ?e2e=1
+    this.isE2ETest =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('e2e') === '1';
   }
 
   /**
@@ -78,6 +82,15 @@ export class TennisQueries {
    * @returns {() => void} Unsubscribe function
    */
   subscribeToBoardChanges(callback) {
+    // E2E test mode: skip realtime, just fetch once
+    if (this.isE2ETest) {
+      console.log('[TennisQueries] E2E mode: skipping realtime subscription');
+      this.getBoard().then((board) => {
+        if (board) callback(board);
+      });
+      return () => {}; // No-op unsubscribe
+    }
+
     console.log('[TennisQueries] subscribeToBoardChanges called, callback type:', typeof callback);
 
     // Initial fetch

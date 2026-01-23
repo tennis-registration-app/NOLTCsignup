@@ -341,7 +341,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-2 gap-6" data-testid="admin-settings-form">
       {/* Left column */}
       <div className="space-y-6">
         {/* Pricing card */}
@@ -351,6 +351,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
             <button
               onClick={savePricing}
               disabled={!pricingChanged}
+              data-testid="admin-settings-save"
               className={`px-4 py-2 rounded text-sm font-medium ${
                 pricingChanged
                   ? 'bg-blue-600 text-white hover:bg-blue-700'

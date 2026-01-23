@@ -548,6 +548,7 @@ const GroupScreen = ({
                 <button
                   onClick={onSelectCourt}
                   disabled={showGuestForm}
+                  data-testid="reg-submit-btn"
                   className={`${isMobileView ? 'px-6' : ''} py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl transition-colors ${
                     showGuestForm
                       ? 'bg-blue-300 text-white cursor-not-allowed opacity-60'

@@ -11,8 +11,9 @@
     "format": "prettier --write src/",
     "lint:fix": "eslint src/ --ext .js,.jsx --fix",
     "prepare": "husky",
-    "test": "echo \"No tests yet (Phase 1 adds Playwright).\"",
-    "verify": "npm run -s lint && npm run -s build && npm run -s test"
+    "test": "npm run test:e2e",
+    "test:e2e": "playwright test",
+    "verify": "npm run -s lint && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.57.0",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.39.2",

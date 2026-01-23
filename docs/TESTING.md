@@ -1,6 +1,61 @@
-# NOLTC Tennis Court Registration - Manual Test Checklist
+# NOLTC Tennis Court Registration - Testing Guide
 
-## Prerequisites
+## Automated E2E Tests (Playwright)
+
+### Running Tests Locally
+
+```bash
+# Build first (required)
+npm run build
+
+# Run all E2E tests
+npm run test:e2e
+
+# Run with UI mode (interactive)
+npx playwright test --ui
+
+# Run a specific test file
+npx playwright test e2e/registration-happy-path.spec.js
+```
+
+### Test Files
+
+| Test | Flow Covered | Entry Point |
+|------|--------------|-------------|
+| `registration-happy-path.spec.js` | Registration Happy Path | `/src/registration/index.html` |
+| `admin-analytics-render.spec.js` | Analytics Dashboard | `/src/admin/index.html` |
+| `admin-settings-override.spec.js` | System Settings | `/src/admin/index.html` |
+| `admin-block-create.spec.js` | Block Management | `/src/admin/index.html` |
+
+### E2E Test Mode
+
+Tests run with `?e2e=1` query parameter which:
+- Disables realtime subscriptions (prevents flaky WebSocket tests)
+- Uses mocked API responses from `e2e/fixtures/`
+
+This is strictly gated and does not affect production behavior.
+
+### CI Integration
+
+E2E tests run automatically on:
+- Push to `main` branch
+- All pull requests
+
+On failure, a Playwright HTML report is uploaded as a CI artifact.
+
+### Updating Fixtures
+
+If API response shapes change, update the corresponding files in `e2e/fixtures/`:
+- `board-state.json` — Court status data
+- `analytics-data.json` — Analytics metrics
+- `settings-data.json` — System settings
+- `blocks-data.json` — Block list
+
+---
+
+## Manual Testing Checklist
+
+### Prerequisites
 - Dev server running: `npm run dev`
 - Supabase backend deployed
 - Clean database state (or known state)

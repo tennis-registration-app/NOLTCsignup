@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "serverNow": "2025-01-23T10:00:00Z",
+  "settings": {
+    "defaultSessionDuration": 60,
+    "overtimeThreshold": 15,
+    "maxWaitlistSize": 20,
+    "autoEndSessions": true,
+    "operatingHours": {
+      "opensAt": "07:00",
+      "closesAt": "21:00"
+    },
+    "courtCount": 12
+  }
+}

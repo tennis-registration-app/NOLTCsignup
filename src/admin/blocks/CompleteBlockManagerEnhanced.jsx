@@ -588,7 +588,7 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="admin-block-list">
       <div className="flex items-center justify-between">
         {editingBlock && activeView === 'create' && (
           <div className="flex items-center gap-2 text-sm text-blue-600">
@@ -1018,6 +1018,7 @@ const CompleteBlockManagerEnhanced = ({
               <button
                 onClick={handleBlockCourts}
                 disabled={!isValid}
+                data-testid="admin-block-create-btn"
                 className={`w-full py-3 rounded-lg font-medium transition-colors ${
                   isValid
                     ? 'bg-blue-600 text-white hover:bg-blue-700'

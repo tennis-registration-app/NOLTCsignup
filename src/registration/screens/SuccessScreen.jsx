@@ -350,7 +350,12 @@ const SuccessScreen = ({
         </div>
         <div className="bg-green-50 rounded-2xl p-4 sm:p-6 text-center">
           <p className="text-lg sm:text-xl text-gray-700 mb-2">You're all set on</p>
-          <p className="text-2xl sm:text-3xl font-bold text-green-600">Court {justAssignedCourt}</p>
+          <p
+            className="text-2xl sm:text-3xl font-bold text-green-600"
+            data-testid="reg-assigned-court"
+          >
+            Court {justAssignedCourt}
+          </p>
           {assignedCourt && (
             <>
               <p className="text-base sm:text-lg text-gray-600 mt-3">
@@ -478,7 +483,10 @@ const SuccessScreen = ({
     );
 
     return (
-      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center relative overflow-hidden p-4">
+      <div
+        className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center relative overflow-hidden p-4"
+        data-testid="reg-success-screen"
+      >
         <SuccessCard
           headerContent={headerContent}
           mainContent={courtMainContent}

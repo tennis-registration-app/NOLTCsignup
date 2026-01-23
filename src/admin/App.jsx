@@ -1801,6 +1801,7 @@ const AdminPanelV2 = ({ onExit }) => {
                   setActiveTab('blocking');
                   setBlockingView('create');
                 }}
+                data-testid="admin-nav-blocks"
                 className={`flex items-center gap-2 px-4 py-3 font-medium transition-all duration-200 ${
                   activeTab === 'blocking'
                     ? 'bg-white text-gray-900 rounded-lg shadow-lg shadow-blue-200 border border-blue-200 transform -translate-y-px'
@@ -1816,6 +1817,7 @@ const AdminPanelV2 = ({ onExit }) => {
               {/* Analytics Tab */}
               <button
                 onClick={() => setActiveTab('analytics')}
+                data-testid="admin-nav-analytics"
                 className={`flex items-center gap-2 px-4 py-3 font-medium transition-all duration-200 ${
                   activeTab === 'analytics'
                     ? 'bg-white text-gray-900 rounded-lg shadow-lg shadow-blue-200 border border-blue-200 transform -translate-y-px'
@@ -1846,6 +1848,7 @@ const AdminPanelV2 = ({ onExit }) => {
               {/* System Tab */}
               <button
                 onClick={() => setActiveTab('system')}
+                data-testid="admin-nav-settings"
                 className={`flex items-center gap-2 px-4 py-3 font-medium transition-all duration-200 ${
                   activeTab === 'system'
                     ? 'bg-white text-gray-900 rounded-lg shadow-lg shadow-blue-200 border border-blue-200 transform -translate-y-px'
