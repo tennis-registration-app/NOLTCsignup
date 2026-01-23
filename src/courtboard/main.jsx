@@ -168,7 +168,13 @@ function labelFor(status, courtObj) {
   }
   if (status === 'overtime') {
     const nm = namesFor(courtObj);
-    return nm ? `Overtime\n${nm}` : 'Overtime';
+    const end = courtObj?.session?.scheduledEndAt
+      ? new Date(courtObj.session.scheduledEndAt)
+      : null;
+    const now = new Date();
+    const minutesOver = end ? Math.round((now - end) / 60000) : 0;
+    const overtimeLabel = minutesOver > 0 ? `+${minutesOver} min over` : 'Overtime';
+    return nm ? `${overtimeLabel}\n${nm}` : overtimeLabel;
   }
   if (status === 'free') return 'Available';
   if (status === 'wet') return '🌧️\nWET COURT';
@@ -192,6 +198,13 @@ function labelFor(status, courtObj) {
 }
 
 function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
+  // Helper to compute "+X min over" label
+  const getOvertimeLabel = (endTime) => {
+    if (!endTime) return 'Overtime';
+    const minutesOver = Math.round((now - endTime) / 60000);
+    return minutesOver > 0 ? `+${minutesOver} min over` : 'Overtime';
+  };
+
   if (status === 'occupied') {
     const end = courtObj?.session?.scheduledEndAt
       ? new Date(courtObj.session.scheduledEndAt)
@@ -203,22 +216,24 @@ function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
         secondary: `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`,
       };
     }
-    return { primary: 'Overtime', secondary: '' };
+    return { primary: getOvertimeLabel(end), secondary: '' };
   }
   if (status === 'overtime') {
+    const end = courtObj?.session?.scheduledEndAt
+      ? new Date(courtObj.session.scheduledEndAt)
+      : null;
     const start = courtObj?.session?.startedAt ? new Date(courtObj.session.startedAt) : null;
     if (start) {
       const minutesPlaying = Math.floor((now - start) / 60000);
-      console.log('[Courtboard] Overtime check:', {
-        minutesPlaying,
-        checkStatusMinutes,
-        shouldShow: minutesPlaying >= checkStatusMinutes,
-      });
       if (checkStatusMinutes > 0 && minutesPlaying >= checkStatusMinutes) {
-        return { primary: 'Overtime', secondary: 'check status', secondaryColor: 'yellow' };
+        return {
+          primary: getOvertimeLabel(end),
+          secondary: 'check status',
+          secondaryColor: 'yellow',
+        };
       }
     }
-    return { primary: 'Overtime', secondary: '' };
+    return { primary: getOvertimeLabel(end), secondary: '' };
   }
   if (status === 'free') return { primary: 'Available', secondary: '' };
   if (status === 'wet') return { primary: '🌧️\nWET COURT', secondary: '' };
