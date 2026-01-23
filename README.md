@@ -5,21 +5,75 @@ Tennis court registration system with three applications:
 - **Courtboard** - Real-time court status display
 - **Admin** - Administrative management panel
 
-## Development
+## Repo Boundaries
+
+> **Important:** This repository contains the **frontend only**. The backend (Supabase Edge Functions + database migrations) lives in a separate repository: `noltc-backend/`.
+>
+> Frontend deployment: GitHub Pages
+> Backend deployment: Supabase (Edge Functions + PostgreSQL)
+
+## Prerequisites
+
+- Node.js 18+
+- npm 9+
+- Access to Supabase project (for full functionality)
+- For backend work: Access to `noltc-backend/` repository
+
+## Installation
 
 ```bash
+git clone <repository-url>
+cd NOLTCsignup
 npm install
+```
+
+## Running Locally
+
+```bash
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
 Opens at http://localhost:5173/src/registration/index.html
 
-## Build
+## Verification
+
+Run the full verification suite (lint + build + tests):
 
 ```bash
-npm run build
-npm run preview  # Preview production build locally
+npm run verify
 ```
+
+This command is also run by CI on all pull requests and pushes to main.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, data flow, architectural decisions |
+| [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) | Environment configuration, staging setup |
+| [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) | Critical user flows for regression testing |
+| [docs/TESTING.md](./docs/TESTING.md) | Testing strategy and guidelines |
+| [docs/verification-checklist.md](./docs/verification-checklist.md) | Pre-deployment verification checklist |
+
+## Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start Vite development server |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint |
+| `npm run lint:fix` | Run ESLint with auto-fix |
+| `npm run format` | Format code with Prettier |
+| `npm run test` | Run tests (Playwright in Phase 1) |
+| `npm run verify` | Full verification: lint + build + test |
 
 ## Deployment
 

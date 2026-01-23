@@ -10,7 +10,9 @@
     "lint": "eslint src/ --ext .js,.jsx",
     "format": "prettier --write src/",
     "lint:fix": "eslint src/ --ext .js,.jsx --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "echo \"No tests yet (Phase 1 adds Playwright).\"",
+    "verify": "npm run -s lint && npm run -s build && npm run -s test"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
