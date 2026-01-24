@@ -1539,7 +1539,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         }
 
         // Auto-reset timer
-        if (!window.__mobileFlow) {
+        if (!mobileFlow) {
           clearSuccessResetTimer();
           successResetTimerRef.current = setTimeout(() => {
             successResetTimerRef.current = null;
@@ -1688,7 +1688,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Auto-reset timer for court assignment (same as waitlist)
-    if (!window.__mobileFlow) {
+    if (!mobileFlow) {
       clearSuccessResetTimer();
       successResetTimerRef.current = setTimeout(() => {
         successResetTimerRef.current = null;
@@ -1877,7 +1877,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setIsJoiningWaitlist(false);
       console.log(`[waitlist] [T+${apiDuration}ms] Result:`, result);
       console.log(`[waitlist] [T+${apiDuration}ms] result.data:`, result.data);
-      console.log(`[waitlist] [T+${apiDuration}ms] __mobileFlow:`, window.__mobileFlow);
+      console.log(`[waitlist] [T+${apiDuration}ms] mobileFlow:`, mobileFlow);
 
       if (result.ok) {
         // Extract waitlist entry info from API response
@@ -1899,7 +1899,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         // Store waitlist entry ID in sessionStorage for mobile users
         // This enables auto-assignment when they tap a court
-        if (entryId && window.__mobileFlow) {
+        if (entryId && mobileFlow) {
           sessionStorage.setItem('mobile-waitlist-entry-id', entryId);
           console.log(`[waitlist] [T+${apiDuration}ms] Stored mobile waitlist entry ID:`, entryId);
 
@@ -1914,8 +1914,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           console.log(
             `[waitlist] [T+${apiDuration}ms] NOT storing entry ID - entryId:`,
             entryId,
-            '__mobileFlow:',
-            window.__mobileFlow
+            'mobileFlow:',
+            mobileFlow
           );
         }
 
@@ -2710,7 +2710,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const handleGroupSuggestionClick = async (suggestion) => {
     await handleSuggestionClick(suggestion);
     // For mobile flow, clear search after adding first player
-    if (window.__mobileFlow) {
+    if (mobileFlow) {
       setSearchInput('');
       setShowSuggestions(false);
     }
@@ -3060,7 +3060,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Don't auto-reset in mobile flow - let the overlay handle timing
-    if (!window.__mobileFlow) {
+    if (!mobileFlow) {
       clearSuccessResetTimer();
       successResetTimerRef.current = setTimeout(() => {
         successResetTimerRef.current = null;
@@ -3070,7 +3070,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   const handleGroupGoBack = () => {
-    if (window.__mobileFlow) {
+    if (mobileFlow) {
       // Check if we're in Clear Court workflow - handle navigation properly
       if (currentScreen === 'clearCourt') {
         // In Clear Court, Back should go to previous step or exit
@@ -3201,8 +3201,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           position={position}
           estimatedWait={estimatedWait}
           currentGroup={currentGroup}
-          mobileCountdown={window.__mobileFlow ? mobileCountdown : null}
-          isMobile={!!window.__mobileFlow}
+          mobileCountdown={mobileFlow ? mobileCountdown : null}
+          isMobile={mobileFlow}
           isTimeLimited={isTimeLimited}
           timeLimitReason={timeLimitReason}
           registrantStreak={registrantStreak}
@@ -3647,7 +3647,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               window.UI.__mobileSendSuccess__();
             }
             // Don't auto-reset in mobile flow - let the overlay handle timing
-            if (!window.__mobileFlow) {
+            if (!mobileFlow) {
               clearSuccessResetTimer();
               successResetTimerRef.current = setTimeout(() => {
                 successResetTimerRef.current = null;
@@ -3733,6 +3733,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         courtData={getCourtData()}
         CONSTANTS={CONSTANTS}
         TennisBusinessLogic={TennisBusinessLogic}
+        mobileFlow={mobileFlow}
       />
     );
   }

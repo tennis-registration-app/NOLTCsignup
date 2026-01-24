@@ -36,6 +36,7 @@ const ClearCourtScreen = ({
   courtData,
   CONSTANTS,
   TennisBusinessLogic,
+  mobileFlow = false,
 }) => {
   const clearableCourts = getCourtsOccupiedForClearing();
   const hasAny = clearableCourts.length > 0;
@@ -121,7 +122,7 @@ const ClearCourtScreen = ({
           <div className="flex justify-center">
             <button
               onClick={() => {
-                if (window.__mobileFlow) {
+                if (mobileFlow) {
                   window.parent.postMessage({ type: 'resetRegistration' }, '*');
                 } else {
                   resetForm();
@@ -129,7 +130,7 @@ const ClearCourtScreen = ({
               }}
               className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors"
             >
-              {window.__mobileFlow ? 'Back' : 'Go Back'}
+              {mobileFlow ? 'Back' : 'Go Back'}
             </button>
           </div>
         </div>
@@ -213,19 +214,19 @@ const ClearCourtScreen = ({
               onClick={() => setClearCourtStep(1)}
               className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors order-2 sm:order-1"
             >
-              {window.__mobileFlow ? 'Back' : 'Go Back'}
+              {mobileFlow ? 'Back' : 'Go Back'}
             </button>
 
             <button
               onClick={() => {
                 resetForm();
-                if (window.__mobileFlow) {
+                if (mobileFlow) {
                   window.parent.postMessage({ type: 'resetRegistration' }, '*');
                 }
               }}
               className="bg-red-500 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-red-600 transition-colors order-1 sm:order-2"
             >
-              {window.__mobileFlow ? 'Exit' : 'Start Over'}
+              {mobileFlow ? 'Exit' : 'Start Over'}
             </button>
           </div>
         </div>

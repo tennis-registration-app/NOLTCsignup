@@ -307,10 +307,11 @@ const SuccessScreen = ({
   ]);
 
   // Header content for both success types - hide for mobile flow
-  const isMobileFlow = window.__mobileFlow || window.top !== window.self;
+  // Use isMobile prop (React state) or fallback to iframe detection
+  const isMobileFlow = isMobile || window.top !== window.self;
   console.log(
-    'SUCCESS SCREEN DEBUG - Mobile Flow:',
-    window.__mobileFlow,
+    'SUCCESS SCREEN DEBUG - isMobile prop:',
+    isMobile,
     'Is Embedded:',
     window.top !== window.self,
     'Final:',
