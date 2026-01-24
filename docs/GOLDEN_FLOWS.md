@@ -157,3 +157,60 @@ When a golden flow fails:
 2. Capture console errors
 3. Capture network responses
 4. Document browser/device information
+
+---
+
+## Regression Tripwires (Grep-Based Invariants)
+
+These commands should return the expected results. Failure indicates regression.
+
+### Phase 3: Globals Eliminated
+```bash
+# Must return 0 results
+rg "window.__" src/registration
+# Expected: 0
+
+# Must return 0 results
+rg "__registrationData" src/registration
+# Expected: 0
+```
+
+### Phase 2.X: Overtime Eligibility Centralized
+```bash
+# Policy module exists and exports both functions
+rg "export function compute" src/shared/courts/overtimeEligibility.js
+# Expected: computeRegistrationCourtSelection, computePlayableCourts
+
+# listPlayableCourts is now a wrapper
+rg "computePlayableCourts" src/shared/courts/courtAvailability.js
+# Expected: 1+ results (delegates to policy module)
+
+# No inline court filtering in registration App.jsx
+rg "filter\(\(c\) => c\.isAvailable\)" src/registration/App.jsx
+# Expected: 0
+```
+
+### Phase 2.2: BlockManager Decomposition
+```bash
+# Extracted modules exist
+ls src/admin/blocks/hooks/useWetCourts.js
+ls src/admin/blocks/CourtSelectionGrid.jsx
+ls src/admin/blocks/BlockReasonSelector.jsx
+ls src/admin/blocks/utils/expandRecurrenceDates.js
+# Expected: All files exist
+
+# Wet court handlers not defined in main component
+rg "const handleEmergencyWetCourt|const deactivateWetCourts|const clearWetCourt" src/admin/blocks/CompleteBlockManagerEnhanced.jsx
+# Expected: 0 (moved to hook)
+
+# Recurrence expansion not inline in handler
+rg "pattern.*daily|pattern.*weekly|pattern.*monthly" src/admin/blocks/CompleteBlockManagerEnhanced.jsx
+# Expected: 0 (moved to utility)
+```
+
+### Phase 3.3: Timeout Reset Parity
+```bash
+# Timeout function includes privacy resets
+rg "setGuestName\|setGuestSponsor\|setRegistrantStreak" src/registration/App.jsx
+# Expected: These setters appear in applyInactivityTimeoutExitSequence function
+```

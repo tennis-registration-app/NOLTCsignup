@@ -98,6 +98,32 @@ Mutations are logged with:
 - Actor (device/admin)
 - Before/after state (where applicable)
 
+## Admin BlockManager Decomposition (Phase 2.2)
+
+The `CompleteBlockManagerEnhanced.jsx` component (~1,076 lines) was decomposed into bounded modules for maintainability.
+
+### Extracted Modules
+
+| Module | Type | Location | Responsibility |
+|--------|------|----------|----------------|
+| `useWetCourts` | Hook | `src/admin/blocks/hooks/useWetCourts.js` | Wet court API handlers (markWet, clear, deactivate). Parent owns state, hook provides handlers. |
+| `CourtSelectionGrid` | Component | `src/admin/blocks/CourtSelectionGrid.jsx` | Presentational 12-court selection grid. Parent owns selection state and toggle logic. |
+| `BlockReasonSelector` | Component | `src/admin/blocks/BlockReasonSelector.jsx` | Presentational quick-reason buttons + custom input. Owns `quickReasons` data (UI-only). |
+| `expandRecurrenceDates` | Utility | `src/admin/blocks/utils/expandRecurrenceDates.js` | Pure function: expands recurrence config into `{date: Date}[]`. No side effects. |
+
+### Ownership Model
+
+- **State ownership:** Parent component (`CompleteBlockManagerEnhanced`) retains all state
+- **Handler pattern:** `useWetCourts` receives setters as props, returns handler functions
+- **Presentational components:** Receive data + callbacks via props, no internal state
+- **Pure utilities:** No React dependencies, testable in isolation
+
+### Post-Decomposition Metrics
+
+- Original: 1,076 lines
+- Current: 832 lines (~23% reduction)
+- Extracted: 363 lines across 4 modules
+
 ## Known Technical Debt
 
 ### Hardcoded Credentials (Phase 4)
@@ -107,11 +133,11 @@ The frontend currently contains hardcoded Supabase credentials in `src/lib/apiCo
 - Creating `.env.example` template
 - Updating build/deploy pipeline
 
-### Frontend Decomposition (Phase 2)
+### Frontend Decomposition (Phase 2) - Partially Complete
 
-Large components pending decomposition:
-- `src/registration/App.jsx` (~2,300 lines)
-- `CompleteBlockManagerEnhanced.jsx` (~1,000 lines)
+Large components status:
+- `src/registration/App.jsx` (~1,815 lines) - 7 hooks extracted in Phase 2.1
+- `CompleteBlockManagerEnhanced.jsx` (~832 lines) - Decomposed in Phase 2.2
 
 ## Security Model
 

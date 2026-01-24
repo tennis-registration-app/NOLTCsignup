@@ -5,6 +5,32 @@ Tennis court registration system with three applications:
 - **Courtboard** - Real-time court status display
 - **Admin** - Administrative management panel
 
+## Recent Major Milestones
+
+### Phase 3: Globals & Event Cleanup (Complete)
+- Eliminated all `window.__*` globals from registration app (9 globals removed)
+- Replaced with React state, props, and explicit dependency injection
+- `window.__registrationData`, `__mobileFlow`, `__mobileSuccessHandler` all removed
+- Improved testability and eliminated cross-component coupling
+
+### Phase 2.2: Admin BlockManager Decomposition (Complete)
+- Decomposed `CompleteBlockManagerEnhanced.jsx` from 1,076 to 832 lines (~23% reduction)
+- Extracted: `useWetCourts` hook, `CourtSelectionGrid`, `BlockReasonSelector`, `expandRecurrenceDates` utility
+- Improved maintainability for admin block management features
+
+### Phase 2.X: Overtime Eligibility Centralization (Complete)
+- Created `src/shared/courts/overtimeEligibility.js` as single source of truth
+- Registration and courtboard now use same policy module
+- Eliminated duplicate inline filtering logic
+
+### Phase 2.1: Registration App Hooks (Complete)
+- Extracted 7 custom hooks from `App.jsx` (~485 lines)
+- Includes: `useBoardState`, `useActivityTimeout`, `useSessionTracking`, etc.
+
+### Test Coverage
+- 7 Playwright E2E tests covering critical flows
+- All phases maintained green tests throughout refactoring
+
 ## Repo Boundaries
 
 > **Important:** This repository contains the **frontend only**. The backend (Supabase Edge Functions + database migrations) lives in a separate repository: `noltc-backend/`.
