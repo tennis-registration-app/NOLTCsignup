@@ -296,14 +296,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // Expose current data globally for guardAddPlayerEarly
-  useEffect(() => {
-    window.__registrationData = data;
-    return () => {
-      window.__registrationData = null;
-    };
-  }, [data]);
-
   // PHASE1C: Redundant - subscribeToBoardChanges handles initial fetch
   // useEffect(() => {
   //   loadData();
@@ -725,12 +717,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       .toLowerCase();
   }
 
-  function guardAddPlayerEarly(player) {
+  function guardAddPlayerEarly(getBoardData, player) {
     // Get memberId from player (API members have id = memberId)
     const memberId = player?.memberId || player?.id;
 
-    // Use current board state from React
-    const board = window.__registrationData || {};
+    // Use current board state from getter
+    const board = getBoardData() || {};
 
     if (DEBUG) {
       console.log('[guardAddPlayerEarly] Checking player:', player);
@@ -2181,7 +2173,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Check if player is already playing or on waitlist
-    if (!guardAddPlayerEarly(enriched)) {
+    if (!guardAddPlayerEarly(getCourtData, enriched)) {
       return; // Toast message already shown by guardAddPlayerEarly
     }
 
@@ -2343,7 +2335,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log('[handleSuggestionClick] unclearedStreak:', enrichedMember?.unclearedStreak);
 
     // Early duplicate guard - if player is already playing/waiting, stop here
-    if (!guardAddPlayerEarly(enrichedMember)) {
+    if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
       setSearchInput('');
       setShowSuggestions(false);
       return; // Don't navigate to group screen
@@ -2780,7 +2772,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
 
     // Early duplicate guard
-    if (!guardAddPlayerEarly(enrichedMember)) {
+    if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
       setAddPlayerSearch('');
       setShowAddPlayer(false);
       setShowAddPlayerSuggestions(false);
@@ -2797,7 +2789,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Check if player is already playing or on waitlist
-    if (!guardAddPlayerEarly(enrichedMember)) {
+    if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
       setAddPlayerSearch('');
       setShowAddPlayer(false);
       setShowAddPlayerSuggestions(false);
@@ -2950,7 +2942,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Early duplicate guard for guest
-    if (!guardAddPlayerEarly(guestName.trim())) {
+    if (!guardAddPlayerEarly(getCourtData, guestName.trim())) {
       setShowGuestForm(false);
       setShowAddPlayer(false);
       setGuestName('');
