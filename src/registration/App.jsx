@@ -1029,7 +1029,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         // Set mobile flow state
         setMobileFlow(true);
-        window.__mobileFlow = true;
 
         if (courtNumber) {
           setPreselectedCourt(courtNumber);
@@ -1061,7 +1060,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         // Set mobile flow state and silent-assign mode (shows loading spinner)
         setMobileFlow(true);
-        window.__mobileFlow = true;
         setMobileMode('silent-assign');
 
         try {
