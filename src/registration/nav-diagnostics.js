@@ -4,36 +4,46 @@
  */
 
 // Early-window storage-event muffler (CTA-safe)
-(function earlyStorageMuffler(){
+(function earlyStorageMuffler() {
   try {
     var earlyMs = 900;
     var leftWelcomeAt = 0;
 
-    setInterval(function(){
+    setInterval(function () {
       var s = window.__regScreen || 'welcome';
-      if ((s === 'search' || s === 'group' || s === 'clearCourt')) {
+      if (s === 'search' || s === 'group' || s === 'clearCourt') {
         if (!leftWelcomeAt) leftWelcomeAt = performance.now();
       } else {
         leftWelcomeAt = 0;
       }
     }, 120);
 
-    function onStorageCapture(ev){
+    function onStorageCapture(ev) {
       try {
         if (!leftWelcomeAt) return;
         var dt = performance.now() - leftWelcomeAt;
         if (dt >= 0 && dt < earlyMs) {
-          (window.__navDiagVerbose ? console.warn : console.debug)('[NavDiag] Swallowing browser storage event during early window (dt=', Math.round(dt), 'ms)');
+          console.debug(
+            '[NavDiag] Swallowing browser storage event during early window (dt=',
+            Math.round(dt),
+            'ms)'
+          );
           ev.stopImmediatePropagation && ev.stopImmediatePropagation();
           ev.stopPropagation && ev.stopPropagation();
         }
-      } catch(e){}
+      } catch (e) {}
     }
     window.addEventListener('storage', onStorageCapture, { capture: true, passive: true });
 
-    window.addEventListener('beforeunload', function(){
-      try { window.removeEventListener('storage', onStorageCapture, { capture: true }); } catch(e){}
-    }, { once: true });
+    window.addEventListener(
+      'beforeunload',
+      function () {
+        try {
+          window.removeEventListener('storage', onStorageCapture, { capture: true });
+        } catch (e) {}
+      },
+      { once: true }
+    );
 
     console.log('[NavDiag] Early-window storage-event muffler ACTIVE.');
   } catch (e) {
@@ -42,45 +52,49 @@
 })();
 
 // Early-window app-event muffler for 'tennisDataUpdate'
-(function earlyAppEventMuffler(){
+(function earlyAppEventMuffler() {
   try {
     var earlyMs = 900;
     var leftWelcomeAt = 0;
 
-    setInterval(function(){
+    setInterval(function () {
       var s = window.__regScreen || 'welcome';
-      if ((s === 'search' || s === 'group' || s === 'clearCourt')) {
+      if (s === 'search' || s === 'group' || s === 'clearCourt') {
         if (!leftWelcomeAt) leftWelcomeAt = performance.now();
       } else {
         leftWelcomeAt = 0;
       }
     }, 120);
 
-    function shouldSwallow(){
+    function shouldSwallow() {
       if (!leftWelcomeAt) return false;
       var dt = performance.now() - leftWelcomeAt;
-      return (dt >= 0 && dt < earlyMs);
+      return dt >= 0 && dt < earlyMs;
     }
 
-    function onCapture(ev){
+    function onCapture(ev) {
       try {
         if (shouldSwallow()) {
-          (window.__navDiagVerbose ? console.warn : console.debug)('[NavDiag] Swallowing app event during early window:', ev.type);
+          console.debug('[NavDiag] Swallowing app event during early window:', ev.type);
           ev.stopImmediatePropagation && ev.stopImmediatePropagation();
           ev.stopPropagation && ev.stopPropagation();
         }
-      } catch(e){}
+      } catch (e) {}
     }
 
     window.addEventListener('tennisDataUpdate', onCapture, { capture: true, passive: true });
     document.addEventListener('tennisDataUpdate', onCapture, { capture: true, passive: true });
 
-    window.addEventListener('beforeunload', function(){
-      try {
-        window.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
-        document.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
-      } catch(e){}
-    }, { once: true });
+    window.addEventListener(
+      'beforeunload',
+      function () {
+        try {
+          window.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
+          document.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
+        } catch (e) {}
+      },
+      { once: true }
+    );
 
     console.log('[NavDiag] Early-window app-event muffler ACTIVE (tennisDataUpdate).');
   } catch (e) {
@@ -89,12 +103,12 @@
 })();
 
 // Success navigation lite guard
-(function successNavLite(){
+(function successNavLite() {
   try {
     var HOLD_MS = 1500;
     var successAt = 0;
 
-    setInterval(function(){
+    setInterval(function () {
       var s = window.__regScreen || 'welcome';
       if (s === 'success') {
         if (!successAt) successAt = performance.now();
@@ -103,52 +117,58 @@
       }
     }, 120);
 
-    function inHold(){ return successAt && (performance.now() - successAt) < HOLD_MS; }
+    function inHold() {
+      return successAt && performance.now() - successAt < HOLD_MS;
+    }
 
     var api = window.UI || window;
     var orig = api && api.navigate;
     if (typeof orig === 'function') {
-      api.navigate = function(next, reason){
+      api.navigate = function (next, reason) {
         var from = window.__regScreen || 'welcome';
-        var to = (typeof next === 'string' ? next : String(next||''));
-        var rsn = (typeof reason === 'string' ? reason : String(reason||''));
-        if (from === 'success' && to === 'welcome' && inHold() && rsn !== 'user-cancel' && rsn !== 'timeout-expired') {
-          (window.__navDiagVerbose ? console.warn : console.debug)('[SuccessNavLite] blocked early success->welcome', {rsn});
+        var to = typeof next === 'string' ? next : String(next || '');
+        var rsn = typeof reason === 'string' ? reason : String(reason || '');
+        if (
+          from === 'success' &&
+          to === 'welcome' &&
+          inHold() &&
+          rsn !== 'user-cancel' &&
+          rsn !== 'timeout-expired'
+        ) {
+          console.debug('[SuccessNavLite] blocked early success->welcome', { rsn });
           return;
         }
         return orig.apply(this, arguments);
       };
       console.log('[SuccessNavLite] active (', HOLD_MS, 'ms )');
     }
-  } catch(e) {
+  } catch (e) {
     console.warn('[SuccessNavLite] init failed:', e);
   }
 })();
 
 // Group navigation hard guard
-(function groupNavHard(){
+(function groupNavHard() {
   try {
     var onGroup = false;
 
-    setInterval(function(){
+    setInterval(function () {
       var s = window.__regScreen || 'welcome';
-      onGroup = (s === 'group');
+      onGroup = s === 'group';
     }, 120);
 
     var api = window.UI || window;
     var orig = api && api.navigate;
     if (typeof orig === 'function') {
-      var allowed = new Set(['user-cancel','timeout-expired']);
+      var allowed = new Set(['user-cancel', 'timeout-expired']);
 
-      api.navigate = function(next, reason){
+      api.navigate = function (next, reason) {
         var from = window.__regScreen || 'welcome';
-        var to = (typeof next === 'string' ? next : String(next||''));
-        var rsn = (typeof reason === 'string' ? reason : String(reason||''));
+        var to = typeof next === 'string' ? next : String(next || '');
+        var rsn = typeof reason === 'string' ? reason : String(reason || '');
 
         if (onGroup && from === 'group' && to === 'welcome' && !allowed.has(rsn)) {
-          (window.__navDiagVerbose ? console.warn : console.debug)(
-            '[GroupNavHard] blocked group->welcome', { rsn }
-          );
+          console.debug('[GroupNavHard] blocked group->welcome', { rsn });
           return;
         }
         return orig.apply(this, arguments);
