@@ -1533,10 +1533,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setCanChangeCourt(false); // Waitlist groups typically don't get court change option
         setShowSuccess(true);
 
-        // Mobile: notify parent on success
-        if (window.__mobileSuccessHandler) {
-          window.__mobileSuccessHandler(courtNumber);
-        }
+        // Mobile: trigger success signal
         if (window.UI?.__mobileSendSuccess__) {
           window.UI.__mobileSendSuccess__();
         }
@@ -1683,10 +1680,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const uiUpdateTime = Math.round(performance.now() - assignStartTime);
     console.log(`✅ [T+${uiUpdateTime}ms] UI state updated, showSuccess=true`);
 
-    // Mobile: notify parent on success
-    if (window.__mobileSuccessHandler) {
-      window.__mobileSuccessHandler(justAssignedCourt || courtNumber);
-    }
     // Mobile: trigger success signal
     dbg('Registration: Checking mobile success signal...', !!window.UI?.__mobileSendSuccess__);
     if (window.UI?.__mobileSendSuccess__) {
@@ -3061,10 +3054,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log('[REG DEBUG] Join Waitlist clicked');
     await sendGroupToWaitlist(currentGroup);
     setShowSuccess(true);
-    // Mobile: notify parent on success
-    if (window.__mobileSuccessHandler) {
-      window.__mobileSuccessHandler(null); // waitlist doesn't have court
-    }
     // Mobile: trigger success signal
     if (window.UI?.__mobileSendSuccess__) {
       window.UI.__mobileSendSuccess__();
@@ -3653,10 +3642,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           onJoinWaitlist={async () => {
             await sendGroupToWaitlist(currentGroup);
             setShowSuccess(true);
-            // Mobile: notify parent on success
-            if (window.__mobileSuccessHandler) {
-              window.__mobileSuccessHandler(null); // waitlist doesn't have court
-            }
             // Mobile: trigger success signal
             if (window.UI?.__mobileSendSuccess__) {
               window.UI.__mobileSendSuccess__();
