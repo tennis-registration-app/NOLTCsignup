@@ -35,7 +35,7 @@ Tennis court registration system with three applications:
 
 > **Important:** This repository contains the **frontend only**. The backend (Supabase Edge Functions + database migrations) lives in a separate repository: `noltc-backend/`.
 >
-> Frontend deployment: GitHub Pages
+> Frontend deployment: Vercel
 > Backend deployment: Supabase (Edge Functions + PostgreSQL)
 
 ## Prerequisites
@@ -83,6 +83,7 @@ This command is also run by CI on all pull requests and pushes to main.
 | Document | Description |
 |----------|-------------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, data flow, architectural decisions |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Vercel hosting, URLs, deployment process |
 | [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) | Environment configuration, staging setup |
 | [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) | Critical user flows for regression testing |
 | [docs/TESTING.md](./docs/TESTING.md) | Testing strategy and guidelines |
@@ -101,37 +102,18 @@ This command is also run by CI on all pull requests and pushes to main.
 | `npm run test` | Run tests (Playwright in Phase 1) |
 | `npm run verify` | Full verification: lint + build + test |
 
-## Deployment
+## Live Demo
 
-### Automatic (GitHub Actions)
+**Vercel:** https://courtboard-noltc.vercel.app
 
-Deployment happens automatically on push to `main` branch via GitHub Actions.
+| Component | URL |
+|-----------|-----|
+| Registration | https://courtboard-noltc.vercel.app/src/registration/index.html |
+| Admin | https://courtboard-noltc.vercel.app/src/admin/index.html |
+| Courtboard | https://courtboard-noltc.vercel.app/src/courtboard/index.html |
+| Mobile | https://courtboard-noltc.vercel.app/Mobile.html |
 
-**GitHub Pages Settings Required:**
-1. Go to Settings > Pages
-2. Set **Source** to **GitHub Actions** (not "Deploy from a branch")
-3. The workflow will build and deploy `dist/` automatically
-
-### Manual Verification
-
-To verify the build locally before pushing:
-
-```bash
-npm run build
-npm run preview
-```
-
-Then visit http://localhost:4173/NOLTCsignup/
-
-### Live URL
-
-https://tennis-registration-app.github.io/NOLTCsignup/
-
-| App | Path |
-|-----|------|
-| Registration | `/NOLTCsignup/src/registration/` |
-| Courtboard | `/NOLTCsignup/src/courtboard/` |
-| Admin | `/NOLTCsignup/src/admin/` |
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment documentation.
 
 ## Project Structure
 
