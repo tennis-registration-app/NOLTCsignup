@@ -1951,10 +1951,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
    * Applies the full inactivity timeout exit sequence.
    *
    * NOTE: This function includes navigation (setCurrentScreen) intentionally.
-   * It is a verbatim extraction of the previous inline timeout sequence.
-   * Do not reorder. See "Timeout Reset Parity Audit" for intentional redesign later.
+   * Phase 3.3b: Added targeted parity fixes to prevent state bleed/privacy leaks on timeout.
+   * Preserves existing ordering and navigation reason.
    */
   function applyInactivityTimeoutExitSequence() {
+    clearSuccessResetTimer(); // Prevent delayed timer firing after timeout
+
+    // === Original timeout sequence (preserved order) ===
     setCurrentGroup([]);
     setShowSuccess(false);
     setMemberNumber('');
@@ -1966,6 +1969,22 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setCanChangeCourt(false);
     setIsTimeLimited(false);
     setCurrentScreen('home', 'sessionTimeout');
+
+    // Phase 3.3b: Clear privacy-sensitive and flow state after navigation
+    setAssignedSessionId(null);
+    setCurrentWaitlistEntryId(null);
+    setWaitlistPosition(0);
+    setCourtToMove(null);
+    setMoveToCourtNum(null);
+    setHasAssignedCourt(false);
+    setShowGuestForm(false);
+    setGuestName('');
+    setGuestSponsor('');
+    setRegistrantStreak(0);
+    setShowStreakModal(false);
+    setStreakAcknowledged(false);
+
+    // === Continue original sequence ===
     setSearchInput('');
     setShowSuggestions(false);
     setShowAddPlayer(false);
