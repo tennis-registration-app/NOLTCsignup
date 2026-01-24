@@ -6,18 +6,18 @@
     { "id": "member-67890", "account_id": "acc-67890", "member_number": "67890", "display_name": "Another Player", "is_primary": true }
   ],
   "courts": [
-    { "number": 1, "status": "free", "session": null, "block": null },
-    { "number": 2, "status": "free", "session": null, "block": null },
+    { "number": 1, "status": "available", "session": null, "block": null },
+    { "number": 2, "status": "available", "session": null, "block": null },
     { "number": 3, "status": "occupied", "session": { "id": "session-1", "players": [{ "name": "Test Player", "memberId": "12345" }], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
-    { "number": 4, "status": "free", "session": null, "block": null },
-    { "number": 5, "status": "free", "session": null, "block": null },
+    { "number": 4, "status": "available", "session": null, "block": null },
+    { "number": 5, "status": "available", "session": null, "block": null },
     { "number": 6, "status": "overtime", "session": { "id": "session-2", "players": [{ "name": "Overtime Player", "memberId": "67890" }], "startedAt": "2025-01-23T08:00:00Z" }, "block": null },
-    { "number": 7, "status": "free", "session": null, "block": null },
+    { "number": 7, "status": "available", "session": null, "block": null },
     { "number": 8, "status": "blocked", "session": null, "block": { "id": "block-1", "reason": "Maintenance", "startsAt": "2025-01-23T08:00:00Z", "endsAt": "2025-01-23T12:00:00Z", "isActive": true } },
-    { "number": 9, "status": "free", "session": null, "block": null },
-    { "number": 10, "status": "free", "session": null, "block": null },
+    { "number": 9, "status": "available", "session": null, "block": null },
+    { "number": 10, "status": "available", "session": null, "block": null },
     { "number": 11, "status": "wet", "session": null, "block": null },
-    { "number": 12, "status": "free", "session": null, "block": null }
+    { "number": 12, "status": "available", "session": null, "block": null }
   ],
   "waitlist": [],
   "upcomingBlocks": [],
