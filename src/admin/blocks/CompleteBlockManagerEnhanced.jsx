@@ -13,6 +13,7 @@ import BlockReasonSelector from './BlockReasonSelector.jsx';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 import { getEventTypeFromReason } from '../calendar/utils.js';
 import { useWetCourts } from './hooks/useWetCourts';
+import { expandRecurrenceDates } from './utils/expandRecurrenceDates';
 
 // Get dependencies from window
 const Tennis = window.Tennis;
@@ -287,37 +288,8 @@ const CompleteBlockManagerEnhanced = ({
   };
 
   const handleBlockCourts = () => {
-    const blocks = [];
+    const blocks = expandRecurrenceDates(selectedDate, recurrence);
     const now = new Date();
-
-    if (!recurrence) {
-      blocks.push({ date: selectedDate });
-    } else {
-      let currentDate = new Date(selectedDate);
-      let occurrenceCount = 0;
-
-      while (true) {
-        blocks.push({ date: new Date(currentDate) });
-        occurrenceCount++;
-
-        if (recurrence.endType === 'after' && occurrenceCount >= recurrence.occurrences) {
-          break;
-        }
-        if (recurrence.endType === 'date' && currentDate > new Date(recurrence.endDate)) {
-          break;
-        }
-
-        if (recurrence.pattern === 'daily') {
-          currentDate.setDate(currentDate.getDate() + recurrence.frequency);
-        } else if (recurrence.pattern === 'weekly') {
-          currentDate.setDate(currentDate.getDate() + 7 * recurrence.frequency);
-        } else if (recurrence.pattern === 'monthly') {
-          currentDate.setMonth(currentDate.getMonth() + recurrence.frequency);
-        }
-
-        if (occurrenceCount > 365) break;
-      }
-    }
 
     const appliedBlocks = [];
 
