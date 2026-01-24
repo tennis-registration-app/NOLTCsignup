@@ -1232,28 +1232,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       // Set timeout timer
       timeoutTimerRef.current = setTimeout(() => {
         showAlertMessage('Session timed out due to inactivity');
-        // Reset all form state
-        setCurrentGroup([]);
-        setShowSuccess(false);
-        setMemberNumber('');
-        setCurrentMemberId(null);
-        setJustAssignedCourt(null);
-        setReplacedGroup(null);
-        setDisplacement(null);
-        setOriginalCourtData(null);
-        setCanChangeCourt(false);
-        setIsTimeLimited(false);
-        setCurrentScreen('home', 'sessionTimeout');
-        setSearchInput('');
-        setShowSuggestions(false);
-        setShowAddPlayer(false);
-        setAddPlayerSearch('');
-        setShowAddPlayerSuggestions(false);
-        setHasWaitlistPriority(false);
-        setSelectedCourtToClear(null);
-        setClearCourtStep(1);
-        setIsChangingCourt(false);
-        setWasOvertimeCourt(false);
+        applyInactivityTimeoutExitSequence();
       }, CONSTANTS.SESSION_TIMEOUT_MS);
     }
   };
@@ -2005,6 +1984,37 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       successResetTimerRef.current = null;
     }
   };
+
+  /**
+   * Applies the full inactivity timeout exit sequence.
+   *
+   * NOTE: This function includes navigation (setCurrentScreen) intentionally.
+   * It is a verbatim extraction of the previous inline timeout sequence.
+   * Do not reorder. See "Timeout Reset Parity Audit" for intentional redesign later.
+   */
+  function applyInactivityTimeoutExitSequence() {
+    setCurrentGroup([]);
+    setShowSuccess(false);
+    setMemberNumber('');
+    setCurrentMemberId(null);
+    setJustAssignedCourt(null);
+    setReplacedGroup(null);
+    setDisplacement(null);
+    setOriginalCourtData(null);
+    setCanChangeCourt(false);
+    setIsTimeLimited(false);
+    setCurrentScreen('home', 'sessionTimeout');
+    setSearchInput('');
+    setShowSuggestions(false);
+    setShowAddPlayer(false);
+    setAddPlayerSearch('');
+    setShowAddPlayerSuggestions(false);
+    setHasWaitlistPriority(false);
+    setSelectedCourtToClear(null);
+    setClearCourtStep(1);
+    setIsChangingCourt(false);
+    setWasOvertimeCourt(false);
+  }
 
   // Reset form
   const resetForm = () => {
