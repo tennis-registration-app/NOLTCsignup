@@ -9,10 +9,15 @@ function copyPlainJsFiles() {
     name: 'copy-plain-js-files',
     writeBundle() {
       const filesToCopy = [
+        // Courtboard plain JS files
         'src/courtboard/mobile-fallback-bar.js',
         'src/courtboard/mobile-bridge.js',
         'src/courtboard/sync-promotions.js',
         'src/courtboard/debug-panel.js',
+        // Registration plain JS files
+        'src/registration/nav-diagnostics.js',
+        // Shared lib plain JS files
+        'src/lib/browser-bridge.js',
       ];
 
       filesToCopy.forEach((file) => {
