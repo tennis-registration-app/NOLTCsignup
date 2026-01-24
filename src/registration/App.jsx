@@ -278,14 +278,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log('🔄 availableCourts state changed:', availableCourts);
   }, [availableCourts]);
 
-  // Expose setData globally for scheduleAvailabilityRefresh
-  useEffect(() => {
-    window.__setRegistrationData = setData;
-    return () => {
-      window.__setRegistrationData = null;
-    };
-  }, []);
-
   // Cleanup success reset timer on unmount
   useEffect(() => {
     return () => {
