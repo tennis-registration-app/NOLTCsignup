@@ -307,12 +307,10 @@ const SuccessScreen = ({
   ]);
 
   // Header content for both success types - hide for mobile flow
-  const isMobileFlow = window.__mobileFlow || window.__wasMobileFlow || window.top !== window.self;
+  const isMobileFlow = window.__mobileFlow || window.top !== window.self;
   console.log(
     'SUCCESS SCREEN DEBUG - Mobile Flow:',
     window.__mobileFlow,
-    'Was Mobile:',
-    window.__wasMobileFlow,
     'Is Embedded:',
     window.top !== window.self,
     'Final:',
