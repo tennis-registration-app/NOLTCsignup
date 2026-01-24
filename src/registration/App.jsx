@@ -1020,15 +1020,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setCurrentScreen is a logging wrapper, intentionally not memoized
   }, []);
 
-  // Expose React state for mobile guards
-  useEffect(() => {
-    window.__reactState = {
-      currentGroup,
-      currentScreen,
-      showSuccess,
-    };
-  }, [currentGroup, currentScreen, showSuccess]);
-
   // Mobile: Listen for register messages from parent (Mobile.html)
   useEffect(() => {
     const handleMessage = async (event) => {
