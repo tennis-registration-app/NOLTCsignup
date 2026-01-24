@@ -5,20 +5,11 @@
  * Handles court blocking, wet courts, and event scheduling.
  */
 import React, { useState, useEffect } from 'react';
-import {
-  Edit2,
-  X,
-  Plus,
-  CalendarDays,
-  Droplets,
-  AlertTriangle,
-  Wrench,
-  GraduationCap,
-  Users,
-} from '../components';
+import { Edit2, X, CalendarDays, Droplets, AlertTriangle } from '../components';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
 import CourtSelectionGrid from './CourtSelectionGrid.jsx';
+import BlockReasonSelector from './BlockReasonSelector.jsx';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 import { getEventTypeFromReason } from '../calendar/utils.js';
 import { useWetCourts } from './hooks/useWetCourts';
@@ -249,20 +240,6 @@ const CompleteBlockManagerEnhanced = ({
     setRefreshTrigger,
   });
 
-  const quickReasons = [
-    {
-      label: 'COURT WORK',
-      icon: Wrench,
-      color: 'bg-orange-100 hover:bg-orange-200 text-orange-700',
-    },
-    {
-      label: 'LESSON',
-      icon: GraduationCap,
-      color: 'bg-green-100 hover:bg-green-200 text-green-700',
-    },
-    { label: 'CLINIC', icon: Users, color: 'bg-purple-100 hover:bg-purple-200 text-purple-700' },
-  ];
-
   const blockTemplates = [
     { name: 'Wet Courts (2 hours)', reason: 'WET COURT', duration: 120 },
     { name: 'Maintenance (4 hours)', reason: 'COURT WORK', duration: 240 },
@@ -473,6 +450,18 @@ const CompleteBlockManagerEnhanced = ({
     }
   };
 
+  // Wrapper for quick reason selection (calls handleQuickReason + clears custom mode)
+  const handleQuickReasonSelect = (reason) => {
+    handleQuickReason(reason);
+    setShowCustomReason(false);
+  };
+
+  // Wrapper for "Other" button (enables custom mode + clears reason)
+  const handleOtherClick = () => {
+    setShowCustomReason(true);
+    setBlockReason('');
+  };
+
   return (
     <div className="space-y-6" data-testid="admin-block-list">
       <div className="flex items-center justify-between">
@@ -621,62 +610,13 @@ const CompleteBlockManagerEnhanced = ({
               onClearSelection={() => setSelectedCourts([])}
             />
 
-            <div style={{ order: 2 }}>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2">
-                  Block Reason
-                </h3>
-
-                <div className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {quickReasons.map((reason) => {
-                      const Icon = reason.icon;
-                      return (
-                        <button
-                          key={reason.label}
-                          onClick={() => {
-                            handleQuickReason(reason.label);
-                            setShowCustomReason(false);
-                          }}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                            blockReason === reason.label ? 'bg-blue-600 text-white' : reason.color
-                          }`}
-                        >
-                          <Icon size={18} />
-                          {reason.label}
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      onClick={() => {
-                        setShowCustomReason(true);
-                        setBlockReason('');
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm border ${
-                        showCustomReason
-                          ? 'bg-blue-600 text-white border-blue-700'
-                          : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400'
-                      }`}
-                    >
-                      <Plus size={18} />
-                      Other
-                    </button>
-                  </div>
-
-                  {showCustomReason && (
-                    <input
-                      ref={(input) => input && input.focus()}
-                      type="text"
-                      value={blockReason}
-                      onChange={(e) => setBlockReason(e.target.value)}
-                      placeholder="Enter custom reason..."
-                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
+            <BlockReasonSelector
+              blockReason={blockReason}
+              showCustomReason={showCustomReason}
+              onQuickReasonSelect={handleQuickReasonSelect}
+              onOtherClick={handleOtherClick}
+              onCustomReasonChange={setBlockReason}
+            />
 
             <div style={{ order: 3 }}>
               <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
