@@ -112,6 +112,28 @@ export async function setupMockApi(page, options = {}) {
           body: JSON.stringify({ ok: true, partners: [] }),
         });
 
+      case 'assign-from-waitlist':
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: true,
+            court: 1,
+            sessionId: 'session-waitlist-123',
+            message: 'Assigned from waitlist',
+          }),
+        });
+
+      case 'end-session':
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: true,
+            message: 'Session ended',
+          }),
+        });
+
       case 'get-usage-comparison':
         return route.fulfill({
           status: 200,

@@ -101,7 +101,10 @@ const CourtSelectionScreen = ({
         </h2>
 
         {showingOvertimeCourts && (
-          <p className="text-center text-gray-600 mb-4 text-sm sm:text-base">
+          <p
+            className="text-center text-gray-600 mb-4 text-sm sm:text-base"
+            data-testid="overtime-warning"
+          >
             All courts are occupied. You may claim an overtime court.
           </p>
         )}

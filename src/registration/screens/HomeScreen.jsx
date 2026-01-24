@@ -170,6 +170,7 @@ const HomeScreen = ({
             }}
             className="pulse-cta cta-primary w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-3 animate-pulse"
             aria-live="polite"
+            data-testid="waitlist-cta-1"
           >
             {(() => {
               const g = firstWaitlistEntryData;
@@ -232,6 +233,7 @@ const HomeScreen = ({
       <button
         onClick={onClearCourtClick}
         className="mt-20 sm:mt-24 mb-8 sm:mb-12 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xl sm:text-2xl font-bold py-4 sm:py-6 px-8 sm:px-12 rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-700 button-transition transform hover:scale-105"
+        data-testid="clear-court-btn"
       >
         Clear a court
       </button>

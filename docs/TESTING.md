@@ -20,12 +20,20 @@ npx playwright test e2e/registration-happy-path.spec.js
 
 ### Test Files
 
+#### Existing Tests (Phase 1)
 | Test | Flow Covered | Entry Point |
 |------|--------------|-------------|
 | `registration-happy-path.spec.js` | Registration Happy Path | `/src/registration/index.html` |
 | `admin-analytics-render.spec.js` | Analytics Dashboard | `/src/admin/index.html` |
 | `admin-settings-override.spec.js` | System Settings | `/src/admin/index.html` |
 | `admin-block-create.spec.js` | Block Management | `/src/admin/index.html` |
+
+#### Added Tests (Phase 2 Checkpoint)
+| Test | Flow Covered | Entry Point | Fixture |
+|------|--------------|-------------|---------|
+| `waitlist-cta-flow.spec.js` | Waitlist "Court Available" CTA | `/src/registration/index.html` | `board-state-waitlist.json` |
+| `overtime-takeover.spec.js` | Overtime court takeover eligibility | `/src/registration/index.html` | `board-state-overtime-only.json` |
+| `clear-court-flow.spec.js` | Clear occupied court | `/src/registration/index.html` | `board-state.json` |
 
 ### E2E Test Mode
 
@@ -43,13 +51,20 @@ E2E tests run automatically on:
 
 On failure, a Playwright HTML report is uploaded as a CI artifact.
 
+### Test Fixtures
+
+| Fixture | Purpose |
+|---------|---------|
+| `board-state.json` | Default board with mix of court states |
+| `board-state-waitlist.json` | Free court + waitlist entry (triggers CTA) |
+| `board-state-overtime-only.json` | No free courts, only overtime available |
+| `analytics-data.json` | Analytics metrics |
+| `settings-data.json` | System settings |
+| `blocks-data.json` | Block list |
+
 ### Updating Fixtures
 
-If API response shapes change, update the corresponding files in `e2e/fixtures/`:
-- `board-state.json` — Court status data
-- `analytics-data.json` — Analytics metrics
-- `settings-data.json` — System settings
-- `blocks-data.json` — Block list
+If API response shapes change, update the corresponding files in `e2e/fixtures/`.
 
 ---
 

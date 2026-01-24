@@ -185,6 +185,7 @@ const ClearCourtScreen = ({
                 });
               }}
               className="w-full bg-green-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-green-600 transition-colors"
+              data-testid="clear-confirm-leaving"
             >
               We are finished our game and leaving court {selectedCourtToClear}
             </button>
