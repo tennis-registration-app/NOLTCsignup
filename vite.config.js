@@ -41,8 +41,8 @@ export default defineConfig({
     copyPlainJsFiles(),
   ],
 
-  // Base path for GitHub Pages deployment (repo name)
-  base: '/NOLTCsignup/',
+  // Base path for deployment (root for Vercel, was /NOLTCsignup/ for GitHub Pages)
+  base: '/',
 
   // Root directory for resolving entry points
   root: '.',
