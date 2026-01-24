@@ -973,9 +973,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     return roster;
   }, [memberDatabase]);
 
-  // Make roster available for other functions
-  window.__memberRoster = memberRoster;
-
   // Update current time every second for responsive overtime detection
   useEffect(() => {
     const timer = setInterval(() => {
