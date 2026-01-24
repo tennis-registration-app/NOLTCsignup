@@ -10,7 +10,7 @@
     var leftWelcomeAt = 0;
 
     setInterval(function () {
-      var s = window.__regScreen || 'welcome';
+      var s = 'welcome';
       if (s === 'search' || s === 'group' || s === 'clearCourt') {
         if (!leftWelcomeAt) leftWelcomeAt = performance.now();
       } else {
@@ -58,7 +58,7 @@
     var leftWelcomeAt = 0;
 
     setInterval(function () {
-      var s = window.__regScreen || 'welcome';
+      var s = 'welcome';
       if (s === 'search' || s === 'group' || s === 'clearCourt') {
         if (!leftWelcomeAt) leftWelcomeAt = performance.now();
       } else {
@@ -109,7 +109,7 @@
     var successAt = 0;
 
     setInterval(function () {
-      var s = window.__regScreen || 'welcome';
+      var s = 'welcome';
       if (s === 'success') {
         if (!successAt) successAt = performance.now();
       } else {
@@ -125,7 +125,7 @@
     var orig = api && api.navigate;
     if (typeof orig === 'function') {
       api.navigate = function (next, reason) {
-        var from = window.__regScreen || 'welcome';
+        var from = 'welcome';
         var to = typeof next === 'string' ? next : String(next || '');
         var rsn = typeof reason === 'string' ? reason : String(reason || '');
         if (
@@ -153,7 +153,7 @@
     var onGroup = false;
 
     setInterval(function () {
-      var s = window.__regScreen || 'welcome';
+      var s = 'welcome';
       onGroup = s === 'group';
     }, 120);
 
@@ -163,7 +163,7 @@
       var allowed = new Set(['user-cancel', 'timeout-expired']);
 
       api.navigate = function (next, reason) {
-        var from = window.__regScreen || 'welcome';
+        var from = 'welcome';
         var to = typeof next === 'string' ? next : String(next || '');
         var rsn = typeof reason === 'string' ? reason : String(reason || '');
 

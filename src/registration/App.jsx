@@ -3003,26 +3003,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       console.log('💾 Guest charge saved to localStorage');
 
       // Dispatch event for real-time updates
-      (function deferUpdateAfterSuccess() {
-        const isOnSuccess = window.__regScreen === 'success';
-        const DISPATCH_DELAY_MS = 1500; // small delay so Success screen is stable
-
-        const doDispatch = () => {
-          window.dispatchEvent(
-            new CustomEvent('tennisDataUpdate', {
-              detail: { source: 'guest-charge' },
-            })
-          );
-          console.log('📡 Dispatched update event (source=guest-charge)');
-        };
-
-        if (isOnSuccess) {
-          setTimeout(doDispatch, DISPATCH_DELAY_MS);
-          console.log('[SuccessHold-lite] Deferred tennisDataUpdate by', DISPATCH_DELAY_MS, 'ms');
-        } else {
-          doDispatch();
-        }
-      })();
+      window.dispatchEvent(
+        new CustomEvent('tennisDataUpdate', {
+          detail: { source: 'guest-charge' },
+        })
+      );
+      console.log('📡 Dispatched update event (source=guest-charge)');
     } catch (error) {
       console.error('❌ Error saving guest charge:', error);
     }
