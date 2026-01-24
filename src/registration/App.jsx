@@ -988,7 +988,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       window.RegistrationUI.setSelectedCourt = (courtNumber) => {
         console.log('Mobile: Setting selected court to', courtNumber);
         // Store the court for assignment but don't navigate yet
-        window.__preselectedCourt = courtNumber;
+        setPreselectedCourt(courtNumber);
       };
 
       window.RegistrationUI.startRegistration = (courtNumber) => {
@@ -1033,7 +1033,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
         if (courtNumber) {
           setPreselectedCourt(courtNumber);
-          window.__preselectedCourt = courtNumber;
           console.log('[Mobile] Preselected court:', courtNumber);
         }
 
@@ -1331,8 +1330,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
 
     // Mobile: Use preselected court if in mobile flow
-    if (window.__mobileFlow && window.__preselectedCourt && !courtNumber) {
-      courtNumber = window.__preselectedCourt;
+    if (mobileFlow && preselectedCourt && !courtNumber) {
+      courtNumber = preselectedCourt;
       console.log('Mobile: Using preselected court', courtNumber);
     }
 
