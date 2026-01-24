@@ -6,6 +6,8 @@
  * 2. No active block currently covering "now" (wet/maintenance/lesson/etc.)
  */
 
+import { computePlayableCourts } from './overtimeEligibility.js';
+
 /**
  * Check if a time is within an interval
  */
@@ -120,16 +122,13 @@ export function countPlayableCourts(courts, blocks, now = new Date().toISOString
 
 /**
  * List playable court numbers
+ * Wrapper around computePlayableCourts for backward compatibility.
+ * Returns array of court numbers (not court objects).
  */
 export function listPlayableCourts(courts, blocks, now = new Date().toISOString()) {
-  if (!courts?.length) return [];
-
-  return courts
-    .map((court, index) => {
-      const courtNumber = court?.number || court?.courtNumber || index + 1;
-      return isPlayableNow(court, courtNumber, blocks, now) ? courtNumber : null;
-    })
-    .filter((n) => n !== null);
+  // Delegate to policy module
+  const { playableCourtNumbers } = computePlayableCourts(courts, blocks, now);
+  return playableCourtNumbers;
 }
 
 // Expose globally for plain JS files (mobile-fallback-bar.js)

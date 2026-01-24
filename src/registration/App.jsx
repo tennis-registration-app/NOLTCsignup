@@ -53,6 +53,9 @@ import { getTennisService } from './services/index.js';
 import { createBackend } from './backend/index.js';
 // DenialCodes available in ./backend/index.js if needed
 
+// Overtime eligibility policy
+import { computeRegistrationCourtSelection } from '../shared/courts/overtimeEligibility.js';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -245,21 +248,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setApiMembers(initialData.members);
       }
 
-      // Compute court categories using new availability flags
-      // Exclude blocked courts from all selectable categories
-      const unoccupiedCourts = courts.filter((c) => c.isAvailable && !c.isBlocked);
-      const overtimeCourts = courts.filter((c) => c.isOvertime && !c.isBlocked);
-
-      // Selectable courts: unoccupied first, then overtime if no unoccupied
-      let selectableCourts;
-      if (unoccupiedCourts.length > 0) {
-        selectableCourts = unoccupiedCourts;
-      } else if (overtimeCourts.length > 0) {
-        selectableCourts = overtimeCourts;
-      } else {
-        selectableCourts = []; // No courts available, show waitlist
-      }
-
+      // Compute court selection using centralized policy
+      const selection = computeRegistrationCourtSelection(courts);
+      const selectableCourts = selection.showingOvertimeCourts
+        ? selection.fallbackOvertimeCourts
+        : selection.primaryCourts;
       const selectableNumbers = selectableCourts.map((c) => c.number);
       setAvailableCourts(selectableNumbers);
       setApiError(null);
@@ -3512,17 +3505,16 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const data = reactData;
     const courts = data.courts || [];
 
-    // Compute court categories using availability flags
-    const unoccupiedCourts = courts.filter((c) => c.isAvailable);
-    const overtimeCourts = courts.filter((c) => c.isOvertime);
+    // Compute court selection using centralized policy
+    const courtSelection = computeRegistrationCourtSelection(courts);
+    const unoccupiedCourts = courtSelection.primaryCourts;
+    const overtimeCourts = courtSelection.fallbackOvertimeCourts;
 
     // Selectable: unoccupied first, then overtime if no unoccupied
-    let selectable = [];
-    if (unoccupiedCourts.length > 0) {
-      selectable = unoccupiedCourts.map((c) => c.number);
-    } else if (overtimeCourts.length > 0) {
-      selectable = overtimeCourts.map((c) => c.number);
-    }
+    const selectableCourts = courtSelection.showingOvertimeCourts
+      ? overtimeCourts
+      : unoccupiedCourts;
+    const selectable = selectableCourts.map((c) => c.number);
 
     const hasWaiters = (data.waitlist?.length || 0) > 0;
 
