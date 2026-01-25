@@ -2249,12 +2249,22 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       const firstName = nameParts[0] || '';
       const lastName = nameParts[nameParts.length - 1] || '';
 
-      // Check if input matches the beginning of first or last name, or member number
-      if (
-        firstName.toLowerCase().startsWith(lowerInput) ||
-        lastName.toLowerCase().startsWith(lowerInput) ||
-        memberNumber.startsWith(input)
-      ) {
+      // Split input into words for multi-word search
+      const inputWords = lowerInput
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+
+      // Check if member number matches (only check first word for member number)
+      const memberNumberMatch = memberNumber.startsWith(inputWords[0]);
+
+      // Check if all input words match the start of some name part
+      const namePartsLower = nameParts.map((part) => part.toLowerCase());
+      const nameMatch = inputWords.every((inputWord) =>
+        namePartsLower.some((namePart) => namePart.startsWith(inputWord))
+      );
+
+      if (memberNumberMatch || nameMatch) {
         suggestions.push({
           memberNumber: memberNumber,
           member: {

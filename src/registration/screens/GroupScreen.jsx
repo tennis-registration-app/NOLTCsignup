@@ -307,6 +307,17 @@ const GroupScreen = ({
                       }, 0);
                     }
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !showGuestForm) {
+                      const suggestions = getAutocompleteSuggestions(addPlayerSearch);
+                      // Only auto-select if there's exactly one member suggestion
+                      if (suggestions.length === 1) {
+                        e.preventDefault();
+                        onAddPlayerSuggestionClick(suggestions[0]);
+                      }
+                      // If no matches, do nothing - user must explicitly click "Add as guest" option
+                    }
+                  }}
                   readOnly={showGuestForm}
                   className={`${showGuestForm ? 'flex-1 bg-gray-100 cursor-pointer placeholder-green-600' : 'flex-[4] bg-white placeholder-gray-400'}
                       min-w-0 text-green-800 border-2 border-green-500

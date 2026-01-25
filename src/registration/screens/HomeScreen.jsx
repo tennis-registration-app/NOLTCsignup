@@ -95,6 +95,21 @@ const HomeScreen = ({
                 markUserTyping();
                 setShowSuggestions(searchInput.length > 0);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const suggestions = getAutocompleteSuggestions(searchInput);
+                  if (suggestions.length === 1) {
+                    e.preventDefault();
+                    handleSuggestionClick(suggestions[0]);
+                  } else if (suggestions.length === 0 && searchInput.trim().length > 0) {
+                    e.preventDefault();
+                    // Show toast for no member found
+                    if (window.Tennis?.UI?.toast) {
+                      window.Tennis.UI.toast('No member found', { type: 'error' });
+                    }
+                  }
+                }
+              }}
               placeholder="Enter your member number or name"
               className="w-full p-3 sm:p-4 text-lg sm:text-xl border-2 rounded-xl focus:border-green-500 focus:outline-none"
               id="main-search-input"
