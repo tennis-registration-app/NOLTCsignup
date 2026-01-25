@@ -505,7 +505,7 @@ const GroupScreen = ({
         >
           <button
             onClick={onGoBack}
-            className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-400 transition-colors relative z-10"
+            className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-3 sm:px-6 rounded-xl text-sm sm:text-lg hover:bg-gray-200 transition-colors relative z-10"
           >
             {isMobileView ? 'Back' : 'Go Back'}
           </button>

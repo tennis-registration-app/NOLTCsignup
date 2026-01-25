@@ -183,7 +183,7 @@ const CourtSelectionScreen = ({
         <div className="absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex justify-between">
           <button
             onClick={onGoBack}
-            className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors"
+            className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors"
           >
             {isMobileView ? 'Back' : 'Go Back'}
           </button>

@@ -128,7 +128,7 @@ const ClearCourtScreen = ({
                   resetForm();
                 }
               }}
-              className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors"
+              className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors"
             >
               {mobileFlow ? 'Back' : 'Go Back'}
             </button>
@@ -212,7 +212,7 @@ const ClearCourtScreen = ({
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <button
               onClick={() => setClearCourtStep(1)}
-              className="bg-gray-300 text-gray-700 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-400 transition-colors order-2 sm:order-1"
+              className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors order-2 sm:order-1"
             >
               {mobileFlow ? 'Back' : 'Go Back'}
             </button>
