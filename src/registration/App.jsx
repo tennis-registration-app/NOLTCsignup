@@ -3414,6 +3414,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           onCancelGuest={handleCancelGuest}
           onAddFrequentPartner={addFrequentPartner}
           onSelectCourt={handleGroupSelectCourt}
+          isAssigning={isAssigning}
           onJoinWaitlist={handleGroupJoinWaitlist}
           joiningWaitlist={isJoiningWaitlist}
           onGoBack={handleGroupGoBack}

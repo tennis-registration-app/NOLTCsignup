@@ -54,6 +54,7 @@ const GroupScreen = ({
   onCancelGuest,
   onAddFrequentPartner,
   onSelectCourt,
+  isAssigning = false,
   onJoinWaitlist,
   joiningWaitlist = false,
   onGoBack,
@@ -547,21 +548,55 @@ const GroupScreen = ({
               })() ? (
                 <button
                   onClick={onSelectCourt}
-                  disabled={showGuestForm}
+                  disabled={isAssigning || showGuestForm}
                   data-testid="reg-submit-btn"
-                  className={`${isMobileView ? 'px-6' : ''} py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl transition-colors ${
+                  className={`relative overflow-visible ${isMobileView ? 'px-6' : ''} py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl transition-colors text-white ${
                     showGuestForm
-                      ? 'bg-blue-300 text-white cursor-not-allowed opacity-60'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                      ? 'bg-blue-300 cursor-not-allowed opacity-60'
+                      : isAssigning
+                        ? 'bg-blue-600'
+                        : 'bg-blue-500 hover:bg-blue-600'
                   }`}
                 >
-                  {isMobileView
-                    ? mobileFlow && preselectedCourt
-                      ? `Take Court ${preselectedCourt}`
-                      : 'Continue'
-                    : mobileFlow && preselectedCourt
-                      ? `Register for Court ${preselectedCourt}`
-                      : 'Select a Court'}
+                  {isAssigning
+                    ? 'Assigning Court...'
+                    : isMobileView
+                      ? mobileFlow && preselectedCourt
+                        ? `Take Court ${preselectedCourt}`
+                        : 'Continue'
+                      : mobileFlow && preselectedCourt
+                        ? `Register for Court ${preselectedCourt}`
+                        : 'Select a Court'}
+                  {isAssigning && (
+                    <svg
+                      className="absolute -inset-[3px] w-[calc(100%+6px)] h-[calc(100%+6px)] pointer-events-none"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                    >
+                      <style>
+                        {`
+                          @keyframes dash-move-select {
+                            0% { stroke-dashoffset: 0; }
+                            100% { stroke-dashoffset: 140; }
+                          }
+                        `}
+                      </style>
+                      <rect
+                        x="1"
+                        y="1"
+                        width="98"
+                        height="98"
+                        rx="12"
+                        ry="12"
+                        fill="none"
+                        stroke="white"
+                        strokeOpacity="0.8"
+                        strokeWidth="2"
+                        strokeDasharray="60 80"
+                        style={{ animation: 'dash-move-select 1s linear infinite' }}
+                      />
+                    </svg>
+                  )}
                 </button>
               ) : (
                 <button
