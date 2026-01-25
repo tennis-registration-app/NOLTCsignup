@@ -1999,6 +1999,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Reset form
   const resetForm = () => {
+    console.log('[RESET] resetForm() called at', new Date().toISOString());
     // Clear any pending success timer to prevent stale callbacks
     clearSuccessResetTimer();
 

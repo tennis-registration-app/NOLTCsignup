@@ -328,7 +328,11 @@ const SuccessScreen = ({
   const headerContent = isMobileFlow ? null : (
     <div className="flex justify-end items-center h-full">
       <button
-        onClick={onHome}
+        onClick={() => {
+          console.log('[SUCCESS] Home button clicked at', new Date().toISOString());
+          onHome();
+          console.log('[SUCCESS] onHome() completed');
+        }}
         className="bg-gray-400 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-gray-500 transition-colors duration-150"
       >
         Home
