@@ -2387,23 +2387,29 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // Track registrant's uncleared streak (first player added is the registrant)
     // Fetch fresh member data to get current streak (cached apiMembers may be stale)
     if (currentGroup.length === 0) {
-      let currentStreak = 0;
-      try {
-        // Invalidate cache to ensure fresh data
-        backend.directory.invalidateAccount(suggestion.memberNumber);
-        const freshMemberData = await backend.directory.getMembersByAccount(
-          suggestion.memberNumber
-        );
-        const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
-        currentStreak = freshMember?.unclearedStreak || freshMember?.uncleared_streak || 0;
-        console.log('📊 Fresh member data:', freshMember);
-        console.log('📊 Registrant streak (fresh):', currentStreak);
-      } catch (error) {
-        console.error('📊 Failed to fetch fresh streak, using cached:', error);
-        currentStreak = enrichedMember.unclearedStreak || 0;
-      }
-      setRegistrantStreak(currentStreak);
-      setStreakAcknowledged(false); // Reset acknowledgment for new registration
+      // Set defaults immediately
+      setRegistrantStreak(0);
+      setStreakAcknowledged(false);
+
+      // Fetch fresh streak in background (fire-and-forget)
+      (async () => {
+        let currentStreak = 0;
+        try {
+          // Invalidate cache to ensure fresh data
+          backend.directory.invalidateAccount(suggestion.memberNumber);
+          const freshMemberData = await backend.directory.getMembersByAccount(
+            suggestion.memberNumber
+          );
+          const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
+          currentStreak = freshMember?.unclearedStreak || freshMember?.uncleared_streak || 0;
+          console.log('📊 Fresh member data:', freshMember);
+          console.log('📊 Registrant streak (fresh):', currentStreak);
+        } catch (error) {
+          console.error('📊 Failed to fetch fresh streak, using cached:', error);
+          currentStreak = enrichedMember.unclearedStreak || 0;
+        }
+        setRegistrantStreak(currentStreak);
+      })();
     }
 
     setCurrentGroup([...currentGroup, newPlayer]);
