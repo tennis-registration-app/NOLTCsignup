@@ -461,7 +461,7 @@ const GroupScreen = ({
               }
 
               return (
-                <div className="p-3 sm:p-4 bg-yellow-50 rounded-xl">
+                <div className="p-3 sm:p-4 bg-amber-50 rounded-xl">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                     {frequentPartnersLoading ? (
                       // Skeleton loading state
@@ -469,7 +469,7 @@ const GroupScreen = ({
                         {[...Array(6)].map((_, i) => (
                           <div
                             key={i}
-                            className="h-10 sm:h-12 bg-yellow-200/60 rounded-lg animate-pulse"
+                            className="h-10 sm:h-12 bg-amber-200/60 rounded-lg animate-pulse"
                           />
                         ))}
                       </>
@@ -488,7 +488,7 @@ const GroupScreen = ({
                             <button
                               key={idx}
                               onClick={() => onAddFrequentPartner(partner.player)}
-                              className="bg-white p-2 sm:p-3 rounded-lg hover:bg-yellow-100 transition-colors text-left"
+                              className="bg-white p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-amber-100 transition-colors text-left"
                             >
                               <div className="font-medium text-xs sm:text-sm">{displayName}</div>
                             </button>
