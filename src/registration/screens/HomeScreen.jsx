@@ -51,7 +51,7 @@ const HomeScreen = ({
   return (
     <div
       className="w-full h-full min-h-screen bg-cover bg-center bg-no-repeat p-4 sm:p-8 flex flex-col items-center"
-      style={{ backgroundImage: 'url(/NOLTCsignup/background.png)' }}
+      style={{ backgroundImage: 'url(/background.png)' }}
     >
       <ToastHost />
       <AlertDisplay show={showAlert} message={alertMessage} />
