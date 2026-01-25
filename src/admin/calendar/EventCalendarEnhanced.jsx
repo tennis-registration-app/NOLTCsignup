@@ -93,24 +93,34 @@ const EventCalendarEnhanced = ({
 
         if (result.ok) {
           // Transform API response to calendar event format
-          const transformedBlocks = result.blocks.map((b) => ({
-            id: b.id,
-            courtId: b.courtId,
-            courtNumber: b.courtNumber,
-            courtNumbers: [b.courtNumber], // Calendar expects array
-            title: b.title,
-            startTime: b.startsAt,
-            endTime: b.endsAt,
-            reason: b.blockType,
-            blockType: b.blockType,
-            eventType: getEventTypeFromReason(b.blockType),
-            isRecurring: b.isRecurring,
-            recurrenceRule: b.recurrenceRule,
-            isBlock: true,
-            isEvent:
-              b.blockType === 'event' || b.blockType === 'clinic' || b.blockType === 'lesson',
-            isWetCourt: b.blockType === 'wet' || b.title?.toLowerCase().includes('wet'),
-          }));
+          // Handle both camelCase and snake_case from API
+          const transformedBlocks = result.blocks.map((b) => {
+            const courtId = b.courtId || b.court_id;
+            const courtNumber = b.courtNumber || b.court_number;
+            const blockType = b.blockType || b.block_type;
+            const startsAt = b.startsAt || b.starts_at;
+            const endsAt = b.endsAt || b.ends_at;
+            const isRecurring = b.isRecurring || b.is_recurring;
+            const recurrenceRule = b.recurrenceRule || b.recurrence_rule;
+
+            return {
+              id: b.id,
+              courtId,
+              courtNumber,
+              courtNumbers: [courtNumber], // Calendar expects array
+              title: b.title,
+              startTime: startsAt,
+              endTime: endsAt,
+              reason: blockType,
+              blockType,
+              eventType: getEventTypeFromReason(blockType),
+              isRecurring,
+              recurrenceRule,
+              isBlock: true,
+              isEvent: blockType === 'event' || blockType === 'clinic' || blockType === 'lesson',
+              isWetCourt: blockType === 'wet' || b.title?.toLowerCase().includes('wet'),
+            };
+          });
           setBlocks(transformedBlocks);
         } else {
           console.error('[EventCalendar] API error:', result.message);
@@ -154,6 +164,8 @@ const EventCalendarEnhanced = ({
         if (!processedEvents.has(eventKey)) {
           processedEvents.set(eventKey, {
             id: block.id,
+            courtId: block.courtId,
+            courtNumber: block.courtNumber,
             title: block.title || block.reason,
             startTime: block.startTime,
             endTime: block.endTime,

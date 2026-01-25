@@ -192,6 +192,7 @@ const CompleteBlockManagerEnhanced = ({
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showCustomReason, setShowCustomReason] = useState(false);
   const [showRecurrence, setShowRecurrence] = useState(false);
+  const [originalValues, setOriginalValues] = useState(null);
 
   useEffect(() => {
     setActiveView(defaultView);
@@ -218,6 +219,17 @@ const CompleteBlockManagerEnhanced = ({
         const endDate = new Date(endDateTime);
         setEndTime(endDate.toTimeString().slice(0, 5));
       }
+
+      // Store original values for change detection
+      setOriginalValues({
+        courts: initialEditingBlock.courtNumber ? [initialEditingBlock.courtNumber] : [],
+        reason: initialEditingBlock.reason || '',
+        title: initialEditingBlock.title || initialEditingBlock.reason || '',
+        eventType: initialEditingBlock.blockType || 'maintenance',
+        startTime: startDateTime ? new Date(startDateTime).toTimeString().slice(0, 5) : '',
+        endTime: endDateTime ? new Date(endDateTime).toTimeString().slice(0, 5) : '',
+        selectedDate: startDateTime ? new Date(startDateTime).toDateString() : null,
+      });
 
       // Clear after consuming so effect doesn't re-run
       if (onEditingBlockConsumed) {
@@ -270,8 +282,32 @@ const CompleteBlockManagerEnhanced = ({
       }
     }
 
-    setIsValid(hasValidTimes && hasReason && hasCourts && timeIsValid);
-  }, [selectedCourts, blockReason, startTime, endTime]);
+    // Check if any values have changed from original (only when editing)
+    let hasChanges = true; // Default true for new blocks
+    if (editingBlock && originalValues) {
+      hasChanges =
+        JSON.stringify([...selectedCourts].sort()) !==
+          JSON.stringify([...originalValues.courts].sort()) ||
+        blockReason !== originalValues.reason ||
+        eventTitle !== originalValues.title ||
+        eventType !== originalValues.eventType ||
+        startTime !== originalValues.startTime ||
+        endTime !== originalValues.endTime ||
+        selectedDate?.toDateString() !== originalValues.selectedDate;
+    }
+
+    setIsValid(hasValidTimes && hasReason && hasCourts && timeIsValid && hasChanges);
+  }, [
+    selectedCourts,
+    blockReason,
+    startTime,
+    endTime,
+    eventTitle,
+    eventType,
+    selectedDate,
+    editingBlock,
+    originalValues,
+  ]);
 
   const handleTemplateSelect = (template) => {
     setBlockReason(template.reason);
@@ -348,6 +384,7 @@ const CompleteBlockManagerEnhanced = ({
     setSelectedDate(new Date());
     setRecurrence(null);
     setEditingBlock(null);
+    setOriginalValues(null);
     setIsEvent(false);
     setEventType('event');
     setEventTitle('');
@@ -444,6 +481,7 @@ const CompleteBlockManagerEnhanced = ({
             <button
               onClick={() => {
                 setEditingBlock(null);
+                setOriginalValues(null);
                 setSelectedCourts([]);
                 setBlockReason('');
                 setStartTime('');
@@ -493,10 +531,12 @@ const CompleteBlockManagerEnhanced = ({
 
             const startDate = new Date(blockToEdit.startTime);
             const endDate = new Date(blockToEdit.endTime);
+            const parsedStartTime = startDate.toTimeString().slice(0, 5);
+            const parsedEndTime = endDate.toTimeString().slice(0, 5);
 
             setSelectedDate(startDate);
-            setStartTime(startDate.toTimeString().slice(0, 5));
-            setEndTime(endDate.toTimeString().slice(0, 5));
+            setStartTime(parsedStartTime);
+            setEndTime(parsedEndTime);
 
             // Set event details if it's an event
             if (blockToEdit.isEvent) {
@@ -504,11 +544,23 @@ const CompleteBlockManagerEnhanced = ({
               setEventTitle(blockToEdit.eventDetails?.title || '');
               setEventType(blockToEdit.eventDetails?.type || 'event');
             }
+
+            // Store original values for change detection
+            setOriginalValues({
+              courts: [blockToEdit.courtNumber],
+              reason: blockToEdit.reason,
+              title: blockToEdit.eventDetails?.title || blockToEdit.reason,
+              eventType: blockToEdit.eventDetails?.type || 'maintenance',
+              startTime: parsedStartTime,
+              endTime: parsedEndTime,
+              selectedDate: startDate.toDateString(),
+            });
           }}
           onDuplicateEvent={(event) => {
             // Switch to create view with duplicated data
             setActiveView('create');
             setEditingBlock(null); // Not editing, creating new
+            setOriginalValues(null); // Clear original values for new block
             setSelectedCourts(event.courtNumbers || []);
             setBlockReason(event.reason);
 

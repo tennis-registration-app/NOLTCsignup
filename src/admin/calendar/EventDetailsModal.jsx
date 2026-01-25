@@ -27,6 +27,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
   // UI state
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [originalValues, setOriginalValues] = useState(null);
 
   // Get device ID
   const deviceId = useMemo(() => {
@@ -46,13 +47,31 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       const start = new Date(event.startTime || event.startsAt);
       const end = new Date(event.endTime || event.endsAt);
 
-      setCourtId(event.courtId || event.court_id || '');
-      setTitle(event.title || event.reason || event.eventDetails?.title || '');
-      setBlockType(event.blockType || event.block_type || event.reason?.toLowerCase() || 'other');
-      setDate(start.toISOString().slice(0, 10));
-      setStartTime(start.toTimeString().slice(0, 5));
-      setEndTime(end.toTimeString().slice(0, 5));
+      const initialCourtId = event.courtId || event.court_id || '';
+      const initialTitle = event.title || event.reason || event.eventDetails?.title || '';
+      const initialBlockType =
+        event.blockType || event.block_type || event.reason?.toLowerCase() || 'other';
+      const initialDate = start.toISOString().slice(0, 10);
+      const initialStartTime = start.toTimeString().slice(0, 5);
+      const initialEndTime = end.toTimeString().slice(0, 5);
+
+      setCourtId(initialCourtId);
+      setTitle(initialTitle);
+      setBlockType(initialBlockType);
+      setDate(initialDate);
+      setStartTime(initialStartTime);
+      setEndTime(initialEndTime);
       setError('');
+
+      // Store original values for change detection
+      setOriginalValues({
+        courtId: initialCourtId,
+        title: initialTitle,
+        blockType: initialBlockType,
+        date: initialDate,
+        startTime: initialStartTime,
+        endTime: initialEndTime,
+      });
     }
   }, [event]);
 
@@ -87,6 +106,19 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       return false;
     }
   }, [courtId, title, date, startTime, endTime]);
+
+  // Change detection
+  const hasChanges = useMemo(() => {
+    if (!originalValues) return false;
+    return (
+      courtId !== originalValues.courtId ||
+      title !== originalValues.title ||
+      blockType !== originalValues.blockType ||
+      date !== originalValues.date ||
+      startTime !== originalValues.startTime ||
+      endTime !== originalValues.endTime
+    );
+  }, [courtId, title, blockType, date, startTime, endTime, originalValues]);
 
   // Handle Save Changes
   const handleSaveChanges = async () => {
@@ -312,9 +344,9 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
         <div className="px-6 py-4 bg-gray-50 border-t flex gap-3">
           <button
             onClick={handleSaveChanges}
-            disabled={saving || !isValid}
+            disabled={saving || !isValid || !hasChanges}
             className={`flex-1 py-2 rounded-lg font-medium ${
-              saving || !isValid
+              saving || !isValid || !hasChanges
                 ? 'bg-blue-300 text-white cursor-not-allowed'
                 : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}

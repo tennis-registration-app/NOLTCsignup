@@ -1391,6 +1391,7 @@ const AdminPanelV2 = ({ onExit }) => {
           .filter((c) => c.block)
           .map((c) => ({
             id: c.block.id,
+            courtId: c.id,
             courtNumber: c.number,
             reason: c.block.reason,
             startTime: c.block?.startsAt || c.block?.startTime || new Date().toISOString(),
@@ -2032,6 +2033,7 @@ const AdminPanelV2 = ({ onExit }) => {
               courts={courts}
               currentTime={currentTime}
               refreshTrigger={refreshTrigger}
+              onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
               defaultView={calendarView}
               backend={backend}
               hoursOverrides={hoursOverrides}
