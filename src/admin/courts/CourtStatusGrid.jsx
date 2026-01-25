@@ -433,7 +433,7 @@ const CourtStatusGrid = ({
           <div className="flex items-center gap-3">
             <button
               onClick={onClearAllCourts}
-              className="px-3 py-1 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-xs font-medium"
+              className="px-3 py-1 bg-white text-red-500 border-2 border-red-400 rounded-lg hover:bg-red-50 hover:border-red-500 text-xs font-medium transition-colors"
             >
               Clear All Courts
             </button>
