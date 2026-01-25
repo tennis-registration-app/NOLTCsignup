@@ -214,3 +214,17 @@ rg "pattern.*daily|pattern.*weekly|pattern.*monthly" src/admin/blocks/CompleteBl
 rg "setGuestName\|setGuestSponsor\|setRegistrantStreak" src/registration/App.jsx
 # Expected: These setters appear in applyInactivityTimeoutExitSequence function
 ```
+
+### Navigation Performance Invariant
+```bash
+# No awaited network call before setCurrentScreen('group', ...) when adding first player
+# Navigation must be immediate; fresh-data fetches (streak/partners) run AFTER navigation
+#
+# To verify: In handleSuggestionClick, any 'await' must appear AFTER setCurrentGroup/setCurrentScreen
+# The async IIFE pattern (async () => { await ... })() is acceptable as it doesn't block
+```
+
+**Rule:** When adding the first player, the Group Management screen must render immediately. Any fresh-data fetches (registrant streak, frequent partners) must:
+1. Run asynchronously AFTER `setCurrentGroup()` and `setCurrentScreen('group', ...)`
+2. Update state when complete (background enrichment pattern)
+3. NOT block the navigation with `await`
