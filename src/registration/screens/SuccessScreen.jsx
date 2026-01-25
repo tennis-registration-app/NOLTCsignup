@@ -16,7 +16,6 @@
  * - position: number - Waitlist position
  * - estimatedWait: number - Estimated wait time in minutes
  * - onChangeCourt: () => void - Change court handler
- * - onNewRegistration: () => void - New registration handler
  * - onHome: () => void - Home handler
  * - currentGroup: Player[] - Current group for ball purchase
  * - mobileCountdown: number | null - Mobile auto-close countdown
@@ -63,7 +62,6 @@ const SuccessScreen = ({
   position,
   estimatedWait,
   onChangeCourt,
-  onNewRegistration,
   onHome,
   currentGroup,
   mobileCountdown,
@@ -328,18 +326,12 @@ const SuccessScreen = ({
   );
 
   const headerContent = isMobileFlow ? null : (
-    <div className="flex justify-between items-center h-full">
+    <div className="flex justify-end items-center h-full">
       <button
         onClick={onHome}
         className="bg-gray-400 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-gray-500 transition-colors duration-150"
       >
         Home
-      </button>
-      <button
-        onClick={onNewRegistration}
-        className="bg-green-500 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-green-600 transition-colors duration-150"
-      >
-        New Registration
       </button>
     </div>
   );

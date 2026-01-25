@@ -3224,10 +3224,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           timeLimitReason={timeLimitReason}
           registrantStreak={registrantStreak}
           onChangeCourt={changeCourt}
-          onNewRegistration={() => {
-            resetForm();
-            setCurrentScreen('home', 'successNewRegistration');
-          }}
           onHome={resetForm}
           ballPriceCents={ballPriceCents}
           onPurchaseBalls={async (sessionId, accountId, options) => {
