@@ -83,6 +83,7 @@ const SuccessScreen = ({
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
   const [ballsPurchased, setBallsPurchased] = useState(false);
   const [purchaseDetails, setPurchaseDetails] = useState(null);
+  const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
 
   // Ball price from API (passed as prop in cents, converted to dollars)
   const ballPrice = ballPriceCents ? ballPriceCents / 100 : TENNIS_CONFIG.PRICING.TENNIS_BALLS;
@@ -98,6 +99,11 @@ const SuccessScreen = ({
   }, []);
 
   const handleBallPurchase = useCallback(async () => {
+    if (isProcessingPurchase) {
+      console.log('⚠️ Purchase already in progress, ignoring duplicate request');
+      return;
+    }
+    setIsProcessingPurchase(true);
     try {
       // Debug: Log all session ID sources at start
       console.log('[Ball Purchase] Handler called', {
@@ -292,8 +298,11 @@ const SuccessScreen = ({
       setShowBallPurchaseModal(false);
     } catch (error) {
       console.error('[handleBallPurchase] Error processing purchase:', error);
+    } finally {
+      setIsProcessingPurchase(false);
     }
   }, [
+    isProcessingPurchase,
     ballPurchaseOption,
     ballPrice,
     currentGroup,
@@ -560,14 +569,44 @@ const SuccessScreen = ({
               <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={handleBallPurchase}
-                  disabled={!ballPurchaseOption}
-                  className={`flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-full font-medium transition-colors text-sm sm:text-base ${
-                    ballPurchaseOption
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-blue-200 text-blue-400 cursor-not-allowed'
+                  disabled={!ballPurchaseOption || isProcessingPurchase}
+                  className={`relative overflow-visible flex-1 py-2.5 sm:py-3 px-4 sm:px-6 rounded-full font-medium transition-colors text-sm sm:text-base ${
+                    !ballPurchaseOption || isProcessingPurchase
+                      ? 'bg-blue-200 text-blue-400 cursor-not-allowed'
+                      : 'bg-blue-500 text-white hover:bg-blue-600'
                   }`}
                 >
-                  Confirm Purchase
+                  {isProcessingPurchase ? 'Processing...' : 'Confirm Purchase'}
+                  {isProcessingPurchase && (
+                    <svg
+                      className="absolute -inset-[3px] w-[calc(100%+6px)] h-[calc(100%+6px)] pointer-events-none"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="none"
+                    >
+                      <style>
+                        {`
+                          @keyframes dash-move-purchase {
+                            0% { stroke-dashoffset: 0; }
+                            100% { stroke-dashoffset: 140; }
+                          }
+                        `}
+                      </style>
+                      <rect
+                        x="1"
+                        y="1"
+                        width="98"
+                        height="98"
+                        rx="50"
+                        ry="50"
+                        fill="none"
+                        stroke="white"
+                        strokeOpacity="0.6"
+                        strokeWidth="2"
+                        strokeDasharray="60 80"
+                        style={{ animation: 'dash-move-purchase 1s linear infinite' }}
+                      />
+                    </svg>
+                  )}
                 </button>
                 <button
                   onClick={() => {
