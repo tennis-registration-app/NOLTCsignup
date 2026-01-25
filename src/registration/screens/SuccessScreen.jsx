@@ -326,7 +326,7 @@ const SuccessScreen = ({
   );
 
   const headerContent = isMobileFlow ? null : (
-    <div className="flex justify-end items-center h-full">
+    <div className="flex justify-start items-center h-full">
       <button
         onClick={() => {
           console.log('[SUCCESS] Home button clicked at', new Date().toISOString());
