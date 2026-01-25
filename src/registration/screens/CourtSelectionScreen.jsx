@@ -190,7 +190,7 @@ const CourtSelectionScreen = ({
 
           <button
             onClick={onStartOver}
-            className="bg-red-500 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-red-600 transition-colors"
+            className="bg-white text-red-500 border-2 border-red-400 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-red-50 hover:border-red-500 transition-colors"
           >
             Start Over
           </button>
