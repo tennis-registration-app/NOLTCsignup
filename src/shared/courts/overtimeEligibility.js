@@ -34,8 +34,8 @@ export function computeRegistrationCourtSelection(courts) {
   // EXACT LOGIC FROM App.jsx loadData() lines 250-251
   // primaryCourts: courts.filter((c) => c.isAvailable && !c.isBlocked)
   // fallbackOvertimeCourts: courts.filter((c) => c.isOvertime && !c.isBlocked)
-  const primaryCourts = courts.filter((c) => c.isAvailable && !c.isBlocked);
-  const fallbackOvertimeCourts = courts.filter((c) => c.isOvertime && !c.isBlocked);
+  const primaryCourts = courts.filter((c) => c && c.isAvailable && !c.isBlocked);
+  const fallbackOvertimeCourts = courts.filter((c) => c && c.isOvertime && !c.isBlocked);
   const showingOvertimeCourts = primaryCourts.length === 0 && fallbackOvertimeCourts.length > 0;
 
   // Build eligibility map
@@ -94,7 +94,8 @@ export function computePlayableCourts(courts, blocks, serverNow) {
   // Build eligibility map
   const eligibilityByCourtNumber = {};
   for (const court of courts) {
-    const courtNumber = court?.number || court?.courtNumber;
+    if (!court) continue; // Skip null/undefined court entries
+    const courtNumber = court.number || court.courtNumber;
     const isPlayable = playableCourts.some((c) => (c.number || c.courtNumber) === courtNumber);
     eligibilityByCourtNumber[courtNumber] = {
       eligible: isPlayable,
