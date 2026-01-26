@@ -367,10 +367,10 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
           <button
             onClick={handleDelete}
             disabled={saving}
-            className={`px-4 py-2 rounded-lg font-medium ${
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               saving
-                ? 'bg-red-300 text-white cursor-not-allowed'
-                : 'bg-red-600 text-white hover:bg-red-700'
+                ? 'bg-white text-red-300 border-2 border-red-200 cursor-not-allowed'
+                : 'bg-white text-red-500 border-2 border-red-400 hover:bg-red-50 hover:border-red-500'
             }`}
           >
             Delete
