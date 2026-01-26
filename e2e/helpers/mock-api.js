@@ -14,7 +14,13 @@ export async function setupMockApi(page, options = {}) {
 
   const analyticsData = options.analyticsData || loadFixture('analytics-data');
   const settingsData = options.settingsData || loadFixture('settings-data');
-  const blocksData = options.blocksData || loadFixture('blocks-data');
+
+  // Support both single blocksData and sequenced blocksDataQueue
+  const blocksDataQueue = options.blocksDataQueue
+    ? [...options.blocksDataQueue]  // Clone to avoid mutation
+    : [options.blocksData || loadFixture('blocks-data')];
+
+  let blocksCallCount = 0;
 
   // Updated membersData to match fixture names
   const membersData = {
@@ -98,12 +104,18 @@ export async function setupMockApi(page, options = {}) {
         });
 
       case 'get-blocks':
-      case 'list-blocks':
+      case 'list-blocks': {
+        // Return next item from queue, or repeat last item if exhausted
+        const blocksData = blocksCallCount < blocksDataQueue.length
+          ? blocksDataQueue[blocksCallCount]
+          : blocksDataQueue[blocksDataQueue.length - 1];
+        blocksCallCount++;
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify(blocksData),
         });
+      }
 
       case 'create-block':
         return route.fulfill({
