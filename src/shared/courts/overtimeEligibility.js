@@ -83,7 +83,8 @@ export function computePlayableCourts(courts, blocks, serverNow) {
   // EXACT LOGIC FROM courtAvailability.js isPlayableNow
   // isPlayableNow: !isOccupiedNow(court, now) && !isBlockedNow(courtNumber, blocks, now)
   const playableCourts = courts.filter((court, index) => {
-    const courtNumber = court?.number || court?.courtNumber || index + 1;
+    if (!court) return false; // Skip null court entries
+    const courtNumber = court.number || court.courtNumber || index + 1;
     if (isOccupiedNow(court, now)) return false;
     if (isBlockedNow(courtNumber, blocks, now)) return false;
     return true;
