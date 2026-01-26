@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "serverNow": "2025-01-23T10:00:00Z",
+  "members": [
+    { "id": "m1", "memberNumber": "1001", "firstName": "John", "lastName": "Smith", "membershipType": "Full" }
+  ],
+  "courts": [
+    { "number": 1, "status": "blocked", "session": null, "block": { "id": "b1", "reason": "Court Maintenance", "startsAt": "2025-01-23T09:00:00Z", "endsAt": "2025-01-23T11:00:00Z", "isActive": true } },
+    { "number": 2, "status": "available", "session": null, "block": null },
+    { "number": 3, "status": "available", "session": null, "block": null },
+    { "number": 4, "status": "available", "session": null, "block": null },
+    { "number": 5, "status": "available", "session": null, "block": null },
+    { "number": 6, "status": "available", "session": null, "block": null },
+    { "number": 7, "status": "available", "session": null, "block": null },
+    { "number": 8, "status": "available", "session": null, "block": null },
+    { "number": 9, "status": "available", "session": null, "block": null },
+    { "number": 10, "status": "available", "session": null, "block": null },
+    { "number": 11, "status": "available", "session": null, "block": null },
+    { "number": 12, "status": "available", "session": null, "block": null }
+  ],
+  "waitlist": [],
+  "upcomingBlocks": [],
+  "operatingHours": { "opensAt": "07:00", "closesAt": "21:00" }
+}
