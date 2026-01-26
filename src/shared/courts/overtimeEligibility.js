@@ -41,6 +41,7 @@ export function computeRegistrationCourtSelection(courts) {
   // Build eligibility map
   const eligibilityByCourtNumber = {};
   for (const court of courts) {
+    if (!court) continue; // Skip null/undefined court entries
     const isPrimary = primaryCourts.some((c) => c.number === court.number);
     const isFallback = fallbackOvertimeCourts.some((c) => c.number === court.number);
 
