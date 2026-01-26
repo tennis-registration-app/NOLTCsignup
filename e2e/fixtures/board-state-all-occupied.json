@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "serverNow": "2025-01-23T10:00:00Z",
+  "courts": [
+    { "number": 1, "status": "occupied", "session": { "id": "s1", "players": [{"name": "Player 1", "memberId": "p1"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 2, "status": "occupied", "session": { "id": "s2", "players": [{"name": "Player 2", "memberId": "p2"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 3, "status": "occupied", "session": { "id": "s3", "players": [{"name": "Player 3", "memberId": "p3"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 4, "status": "occupied", "session": { "id": "s4", "players": [{"name": "Player 4", "memberId": "p4"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 5, "status": "occupied", "session": { "id": "s5", "players": [{"name": "Player 5", "memberId": "p5"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 6, "status": "occupied", "session": { "id": "s6", "players": [{"name": "Player 6", "memberId": "p6"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 7, "status": "occupied", "session": { "id": "s7", "players": [{"name": "Player 7", "memberId": "p7"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 8, "status": "occupied", "session": { "id": "s8", "players": [{"name": "Player 8", "memberId": "p8"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 9, "status": "occupied", "session": { "id": "s9", "players": [{"name": "Player 9", "memberId": "p9"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 10, "status": "occupied", "session": { "id": "s10", "players": [{"name": "Player 10", "memberId": "p10"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 11, "status": "occupied", "session": { "id": "s11", "players": [{"name": "Player 11", "memberId": "p11"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null },
+    { "number": 12, "status": "occupied", "session": { "id": "s12", "players": [{"name": "Player 12", "memberId": "p12"}], "startedAt": "2025-01-23T09:00:00Z" }, "block": null }
+  ],
+  "waitlist": [
+    {
+      "id": "entry-1",
+      "position": 1,
+      "players": [{ "name": "Waiting Player", "memberId": "W001" }],
+      "joinedAt": "2025-01-23T09:30:00Z"
+    }
+  ],
+  "upcomingBlocks": [],
+  "operatingHours": { "opensAt": "07:00", "closesAt": "21:00" }
+}
