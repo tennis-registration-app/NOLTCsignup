@@ -5,19 +5,30 @@ import { loadFixture } from './fixtures.js';
  * Intercepts all Supabase Edge Function calls and returns fixture data.
  */
 export async function setupMockApi(page, options = {}) {
-  const boardState = options.boardState || loadFixture('board-state');
+  // Support both single boardState and sequenced boardStateQueue
+  const boardStateQueue = options.boardStateQueue
+    ? [...options.boardStateQueue]  // Clone to avoid mutation
+    : [options.boardState || loadFixture('board-state')];
+
+  let boardCallCount = 0;
+
   const analyticsData = options.analyticsData || loadFixture('analytics-data');
   const settingsData = options.settingsData || loadFixture('settings-data');
   const blocksData = options.blocksData || loadFixture('blocks-data');
 
-  // Mock members data for autocomplete (snake_case to match API format)
+  // Updated membersData to match fixture names
   const membersData = {
     ok: true,
     members: [
+      { id: 'm1', account_id: 'acc-1001', member_number: '1001', display_name: 'John Smith', is_primary: true },
+      { id: 'm2', account_id: 'acc-1002', member_number: '1002', display_name: 'Jane Doe', is_primary: true },
       { id: 'member-12345', account_id: 'acc-12345', member_number: '12345', display_name: 'Test Player', is_primary: true },
       { id: 'member-67890', account_id: 'acc-67890', member_number: '67890', display_name: 'Another Player', is_primary: true },
     ],
   };
+
+  // Clear any existing route to prevent collisions
+  await page.unroute('**/functions/v1/*').catch(() => {});
 
   // Intercept ALL Supabase function calls with a single handler
   await page.route('**/functions/v1/*', async (route) => {
@@ -27,12 +38,18 @@ export async function setupMockApi(page, options = {}) {
     console.log(`[Mock API] Intercepted: ${endpoint} from ${url}`);
 
     switch (endpoint) {
-      case 'get-board':
+      case 'get-board': {
+        // Return next item from queue, or repeat last item if exhausted
+        const boardState = boardCallCount < boardStateQueue.length
+          ? boardStateQueue[boardCallCount]
+          : boardStateQueue[boardStateQueue.length - 1];
+        boardCallCount++;
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify(boardState),
         });
+      }
 
       case 'get-members':
         return route.fulfill({
