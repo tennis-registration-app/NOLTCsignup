@@ -665,7 +665,7 @@ function TennisCourtDisplay() {
           .fill(null)
           .map((_, idx) => {
             const courtNumber = idx + 1;
-            const apiCourt = board.courts.find((c) => c.number === courtNumber);
+            const apiCourt = board.courts.find((c) => c && c.number === courtNumber);
             if (!apiCourt) {
               return null; // Empty court
             }
@@ -701,7 +701,7 @@ function TennisCourtDisplay() {
 
         // Extract active blocks from courts (for availability calculations)
         const activeBlocks = board.courts
-          .filter((c) => c.block)
+          .filter((c) => c && c.block)
           .map((c) => ({
             id: c.block.id,
             courtNumber: c.number,
@@ -2348,7 +2348,9 @@ function MobileModalSheet({ type, payload, onClose }) {
                 try {
                   // Get court ID from current board state
                   const board = await backend.queries.getBoard();
-                  const court = board?.courts?.find((c) => c.number === Number(clearCourtNumber));
+                  const court = board?.courts?.find(
+                    (c) => c && c.number === Number(clearCourtNumber)
+                  );
 
                   if (court?.id) {
                     // Use API to end session
