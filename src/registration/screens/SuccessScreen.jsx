@@ -29,24 +29,35 @@
  * - upcomingBlocks: array - Upcoming block data for warning checks
  * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
 
 // Fixed layout card component (internal)
+// Header is outside scroll container to avoid compositor hit-test bugs
 const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
-  <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] max-h-[80vh] overflow-y-auto h-auto md:h-[550px]">
-    {/* Fixed header area - only render if headerContent exists */}
+  <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col h-auto md:h-auto">
+    {/* Fixed header area - outside scroll container, won't shrink */}
     {headerContent && (
-      <div className="h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4">{headerContent}</div>
+      <div
+        data-testid="success-header"
+        className="flex-shrink-0 h-auto md:h-20 bg-gray-200 rounded-t-3xl p-4"
+      >
+        {headerContent}
+      </div>
     )}
 
-    {/* Fixed main content area - auto height on mobile, 310px on desktop */}
-    <div className="h-auto md:h-[310px] p-6 sm:p-8 flex flex-col justify-center">{mainContent}</div>
+    {/* Scrollable content area */}
+    <div className="flex-1 min-h-0 overflow-y-auto">
+      {/* Main content area */}
+      <div data-testid="success-main" className="flex-1 p-6 sm:p-8 flex flex-col justify-center">
+        {mainContent}
+      </div>
 
-    {/* Fixed footer area - auto height on mobile, 160px on desktop */}
-    <div className="h-auto md:h-[160px] px-6 sm:px-8 pb-6 sm:pb-8">
-      {footerContent || <div className="h-full" />}
+      {/* Footer area */}
+      <div className="flex-shrink-0 h-auto md:h-[160px] px-6 sm:px-8 pb-6 sm:pb-8">
+        {footerContent || <div className="h-full" />}
+      </div>
     </div>
   </div>
 );
@@ -316,23 +327,12 @@ const SuccessScreen = ({
   // Header content for both success types - hide for mobile flow
   // Use isMobile prop (React state) or fallback to iframe detection
   const isMobileFlow = isMobile || window.top !== window.self;
-  console.log(
-    'SUCCESS SCREEN DEBUG - isMobile prop:',
-    isMobile,
-    'Is Embedded:',
-    window.top !== window.self,
-    'Final:',
-    isMobileFlow
-  );
 
   const headerContent = isMobileFlow ? null : (
     <div className="flex justify-start items-center h-full">
       <button
-        onClick={() => {
-          console.log('[SUCCESS] Home button clicked at', new Date().toISOString());
-          onHome();
-          console.log('[SUCCESS] onHome() completed');
-        }}
+        data-testid="success-home-btn"
+        onClick={() => onHome()}
         className="bg-gray-400 text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base font-medium hover:bg-gray-500 transition-colors duration-150"
       >
         Home

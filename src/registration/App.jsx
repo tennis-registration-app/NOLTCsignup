@@ -884,68 +884,70 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     loadAdminSettings();
   }, [currentScreen]);
 
-  // Simplified member database
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- memberDatabase is static data, recreated each render for simplicity (performance optimization deferred)
-  const memberDatabase = {};
-  for (let i = 1; i <= CONSTANTS.MEMBER_COUNT; i++) {
-    const id = CONSTANTS.MEMBER_ID_START + i;
-    const names = [
-      'Novak Djokovic',
-      'Carlos Alcaraz',
-      'Jannik Sinner',
-      'Daniil Medvedev',
-      'Alexander Zverev',
-      'Andrey Rublev',
-      'Casper Ruud',
-      'Hubert Hurkacz',
-      'Taylor Fritz',
-      'Alex de Minaur',
-      'Iga Swiatek',
-      'Aryna Sabalenka',
-      'Coco Gauff',
-      'Elena Rybakina',
-      'Jessica Pegula',
-      'Ons Jabeur',
-      'Marketa Vondrousova',
-      'Karolina Muchova',
-      'Beatriz Haddad Maia',
-      'Petra Kvitova',
-      'Stefanos Tsitsipas',
-      'Felix Auger-Aliassime',
-      'Cameron Norrie',
-      'Karen Khachanov',
-      'Frances Tiafoe',
-      'Tommy Paul',
-      'Lorenzo Musetti',
-      'Ben Shelton',
-      'Nicolas Jarry',
-      'Sebastian Korda',
-      'Madison Keys',
-      'Victoria Azarenka',
-      'Daria Kasatkina',
-      'Belinda Bencic',
-      'Caroline Garcia',
-      'Simona Halep',
-      'Elina Svitolina',
-      'Maria Sakkari',
-      'Liudmila Samsonova',
-      'Zheng Qinwen',
-    ];
+  // Simplified member database - memoized to prevent re-creation on every render
+  const memberDatabase = React.useMemo(() => {
+    const db = {};
+    for (let i = 1; i <= CONSTANTS.MEMBER_COUNT; i++) {
+      const id = CONSTANTS.MEMBER_ID_START + i;
+      const names = [
+        'Novak Djokovic',
+        'Carlos Alcaraz',
+        'Jannik Sinner',
+        'Daniil Medvedev',
+        'Alexander Zverev',
+        'Andrey Rublev',
+        'Casper Ruud',
+        'Hubert Hurkacz',
+        'Taylor Fritz',
+        'Alex de Minaur',
+        'Iga Swiatek',
+        'Aryna Sabalenka',
+        'Coco Gauff',
+        'Elena Rybakina',
+        'Jessica Pegula',
+        'Ons Jabeur',
+        'Marketa Vondrousova',
+        'Karolina Muchova',
+        'Beatriz Haddad Maia',
+        'Petra Kvitova',
+        'Stefanos Tsitsipas',
+        'Felix Auger-Aliassime',
+        'Cameron Norrie',
+        'Karen Khachanov',
+        'Frances Tiafoe',
+        'Tommy Paul',
+        'Lorenzo Musetti',
+        'Ben Shelton',
+        'Nicolas Jarry',
+        'Sebastian Korda',
+        'Madison Keys',
+        'Victoria Azarenka',
+        'Daria Kasatkina',
+        'Belinda Bencic',
+        'Caroline Garcia',
+        'Simona Halep',
+        'Elina Svitolina',
+        'Maria Sakkari',
+        'Liudmila Samsonova',
+        'Zheng Qinwen',
+      ];
 
-    memberDatabase[id.toString()] = {
-      familyMembers: [
-        {
-          id: id,
-          name: names[i - 1] || `Player ${i}`,
-          phone: `555-${String(i).padStart(4, '0')}`,
-          ranking: ((i - 1) % 20) + 1,
-          winRate: 0.5 + Math.random() * 0.4,
-        },
-      ],
-      playingHistory: [],
-      lastGame: null,
-    };
-  }
+      db[id.toString()] = {
+        familyMembers: [
+          {
+            id: id,
+            name: names[i - 1] || `Player ${i}`,
+            phone: `555-${String(i).padStart(4, '0')}`,
+            ranking: ((i - 1) % 20) + 1,
+            winRate: 0.5 + Math.random() * 0.4,
+          },
+        ],
+        playingHistory: [],
+        lastGame: null,
+      };
+    }
+    return db;
+  }, []); // Empty deps - this data is static
 
   // Create roster from memberDatabase and ensure member IDs
   const memberRoster = React.useMemo(() => {
@@ -3085,9 +3087,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   const handleGroupJoinWaitlist = async () => {
-    console.log('[REG DEBUG] Join Waitlist clicked');
-    await sendGroupToWaitlist(currentGroup);
-    setShowSuccess(true);
+    try {
+      await sendGroupToWaitlist(currentGroup);
+      setShowSuccess(true);
+    } catch (error) {
+      console.error('[handleGroupJoinWaitlist] Error:', error);
+    }
     // Mobile: trigger success signal
     if (window.UI?.__mobileSendSuccess__) {
       window.UI.__mobileSendSuccess__();
