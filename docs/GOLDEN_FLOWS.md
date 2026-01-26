@@ -228,3 +228,26 @@ rg "setGuestName\|setGuestSponsor\|setRegistrantStreak" src/registration/App.jsx
 1. Run asynchronously AFTER `setCurrentGroup()` and `setCurrentScreen('group', ...)`
 2. Update state when complete (background enrichment pattern)
 3. NOT block the navigation with `await`
+
+### Court Array Null Safety Invariant
+
+**Invariant:** `board.courts` may contain `null` entries for courts without active sessions.
+
+**Rule:** All iterations, filters, and finds over `board.courts` (or any courts array) must defensively guard against nulls.
+
+```javascript
+// ✅ Correct
+courts.filter((c) => c && c.isAvailable)
+courts.find((c) => c && c.number === courtNumber)
+for (const court of courts) { if (!court) continue; ... }
+
+// ❌ Wrong - will crash on null entries
+courts.filter((c) => c.isAvailable)
+courts.find((c) => c.number === courtNumber)
+```
+
+**Discovered:** During mobile waitlist testing (Jan 2026). Null entries occur when court slots have no active session.
+
+**Files affected:**
+- `src/shared/courts/overtimeEligibility.js` - Fixed in commit 50dfd33
+- `src/courtboard/main.jsx` - Fixed in commit 89998ac
