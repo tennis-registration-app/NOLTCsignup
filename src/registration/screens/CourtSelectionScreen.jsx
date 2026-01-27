@@ -25,11 +25,7 @@ import BlockWarningModal from '../modals/BlockWarningModal.jsx';
 const CourtSelectionScreen = ({
   availableCourts,
   showingOvertimeCourts,
-  hasWaitingGroups,
-  waitingGroupsCount,
   onCourtSelect,
-  onJoinWaitlist,
-  onAssignNext,
   onGoBack,
   onStartOver,
   currentGroup = [],

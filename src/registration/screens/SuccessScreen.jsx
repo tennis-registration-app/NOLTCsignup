@@ -29,7 +29,7 @@
  * - upcomingBlocks: array - Upcoming block data for warning checks
  * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
 
@@ -75,7 +75,7 @@ const SuccessScreen = ({
   onChangeCourt,
   onHome,
   currentGroup,
-  mobileCountdown,
+  _mobileCountdown,
   isMobile = false,
   isTimeLimited = false,
   timeLimitReason = null,

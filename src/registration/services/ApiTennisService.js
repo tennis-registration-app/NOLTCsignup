@@ -60,7 +60,7 @@ class ApiTennisService {
   }
 
   _notifyListeners(changeType) {
-    this.listeners.forEach(cb => {
+    this.listeners.forEach((cb) => {
       try {
         cb({ type: changeType, timestamp: Date.now() });
       } catch (e) {
@@ -129,44 +129,48 @@ class ApiTennisService {
   _transformCourts(apiCourts) {
     if (!apiCourts) return [];
 
-    return apiCourts.map(court => {
+    return apiCourts.map((court) => {
       // Transform session data
       // Note: API returns participants as array of strings (names) or objects
-      const session = court.session ? {
-        id: court.session.id,
-        type: court.session.type,
-        players: (court.session.participants || []).map(p => {
-          // Handle both string (just name) and object formats
-          if (typeof p === 'string') {
-            return { id: null, name: p, isGuest: false };
+      const session = court.session
+        ? {
+            id: court.session.id,
+            type: court.session.type,
+            players: (court.session.participants || []).map((p) => {
+              // Handle both string (just name) and object formats
+              if (typeof p === 'string') {
+                return { id: null, name: p, isGuest: false };
+              }
+              return {
+                id: p.member_id || p.id,
+                name: p.display_name || p.guest_name || p.name,
+                isGuest: p.type === 'guest',
+              };
+            }),
+            startTime: new Date(court.session.started_at).getTime(),
+            endTime: new Date(court.session.scheduled_end_at).getTime(),
+            timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
+            duration: court.session.duration_minutes,
+            // Formatted times in Central Time for display
+            startTimeFormatted: formatCourtTime(court.session.started_at),
+            endTimeFormatted: formatCourtTime(court.session.scheduled_end_at),
           }
-          return {
-            id: p.member_id || p.id,
-            name: p.display_name || p.guest_name || p.name,
-            isGuest: p.type === 'guest',
-          };
-        }),
-        startTime: new Date(court.session.started_at).getTime(),
-        endTime: new Date(court.session.scheduled_end_at).getTime(),
-        timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
-        duration: court.session.duration_minutes,
-        // Formatted times in Central Time for display
-        startTimeFormatted: formatCourtTime(court.session.started_at),
-        endTimeFormatted: formatCourtTime(court.session.scheduled_end_at),
-      } : null;
+        : null;
 
       // Transform block data
-      const block = court.block ? {
-        id: court.block.id,
-        type: court.block.type,
-        title: court.block.title,
-        reason: court.block.title,
-        startTime: new Date(court.block.starts_at).getTime(),
-        endTime: new Date(court.block.ends_at).getTime(),
-        // Formatted times in Central Time for display
-        startTimeFormatted: formatCourtTime(court.block.starts_at),
-        endTimeFormatted: formatCourtTime(court.block.ends_at),
-      } : null;
+      const block = court.block
+        ? {
+            id: court.block.id,
+            type: court.block.type,
+            title: court.block.title,
+            reason: court.block.title,
+            startTime: new Date(court.block.starts_at).getTime(),
+            endTime: new Date(court.block.ends_at).getTime(),
+            // Formatted times in Central Time for display
+            startTimeFormatted: formatCourtTime(court.block.starts_at),
+            endTimeFormatted: formatCourtTime(court.block.ends_at),
+          }
+        : null;
 
       // Determine court availability status
       // - isUnoccupied: No session AND no block - always selectable first
@@ -201,10 +205,10 @@ class ApiTennisService {
         name: court.court_name,
         status: court.status,
         // New availability flags
-        isUnoccupied,      // No session, no block - always selectable first
-        isOvertime,        // Has session but time expired - conditionally selectable
-        isActive,          // Has session with time remaining - never selectable
-        isBlocked,         // Has active block - never selectable
+        isUnoccupied, // No session, no block - always selectable first
+        isOvertime, // Has session but time expired - conditionally selectable
+        isActive, // Has session with time remaining - never selectable
+        isBlocked, // Has active block - never selectable
         // Legacy compatibility
         isAvailable: isUnoccupied, // Legacy: true if unoccupied (for backward compat)
         isOccupied: hasSession,
@@ -212,21 +216,25 @@ class ApiTennisService {
         session,
         block,
         // Legacy format compatibility
-        current: session ? {
-          players: session.players,
-          startTime: session.startTime,
-          endTime: session.endTime,
-          duration: session.duration,
-        } : null,
+        current: session
+          ? {
+              players: session.players,
+              startTime: session.startTime,
+              endTime: session.endTime,
+              duration: session.duration,
+            }
+          : null,
         // Also add top-level for some legacy code paths
         players: session?.players || [],
         startTime: session?.startTime || block?.startTime,
         endTime: session?.endTime || block?.endTime,
-        blocked: block ? {
-          startTime: block.startTime,
-          endTime: block.endTime,
-          reason: block.reason,
-        } : null,
+        blocked: block
+          ? {
+              startTime: block.startTime,
+              endTime: block.endTime,
+              reason: block.reason,
+            }
+          : null,
       };
     });
   }
@@ -234,7 +242,7 @@ class ApiTennisService {
   _transformWaitlist(apiWaitlist) {
     if (!apiWaitlist) return [];
 
-    return apiWaitlist.map(entry => ({
+    return apiWaitlist.map((entry) => ({
       id: entry.id,
       position: entry.position,
       type: entry.group_type,
@@ -252,7 +260,7 @@ class ApiTennisService {
     if (!this.courtData) {
       await this.refreshCourtData();
     }
-    return this._transformCourts(this.courtData.courts).filter(c => c.isAvailable);
+    return this._transformCourts(this.courtData.courts).filter((c) => c.isAvailable);
   }
 
   async getAllCourts() {
@@ -264,7 +272,7 @@ class ApiTennisService {
 
   async getCourtByNumber(courtNumber) {
     const courts = await this.getAllCourts();
-    return courts.find(c => c.number === courtNumber);
+    return courts.find((c) => c.number === courtNumber);
   }
 
   async assignCourt(courtNumber, playersOrGroup, optionsOrDuration = {}) {
@@ -296,141 +304,159 @@ class ApiTennisService {
 
     // Find the court ID from court number
     const courts = await this.getAllCourts();
-    const court = courts.find(c => c.number === courtNumber);
+    const court = courts.find((c) => c.number === courtNumber);
 
     if (!court) {
       throw new Error(`Court ${courtNumber} not found`);
     }
 
     // Transform players to API format
-    const participants = await Promise.all(players.map(async (player) => {
-      console.log('🔍 Processing player:', JSON.stringify(player));
+    const participants = await Promise.all(
+      players.map(async (player) => {
+        console.log('🔍 Processing player:', JSON.stringify(player));
 
-      // Try to get account_id and member UUID from various sources
-      let accountId = player.accountId || player.account_id || player.billingAccountId;
-      let memberUuid = null;
+        // Try to get account_id and member UUID from various sources
+        let accountId = player.accountId || player.account_id || player.billingAccountId;
+        let memberUuid = null;
 
-      // Check if player already has a valid UUID (36 chars with dashes)
-      const playerId = player.id || player.memberId || player.member_id;
-      const isUuid = playerId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(playerId);
+        // Check if player already has a valid UUID (36 chars with dashes)
+        const playerId = player.id || player.memberId || player.member_id;
+        const isUuid =
+          playerId &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(playerId);
 
-      if (isUuid) {
-        memberUuid = playerId;
-        console.log('🔍 Player ID is already a UUID:', memberUuid);
-      }
+        if (isUuid) {
+          memberUuid = playerId;
+          console.log('🔍 Player ID is already a UUID:', memberUuid);
+        }
 
-      // If we have a memberNumber, use it to look up the member
-      const memberNumber = player.memberNumber || player.clubNumber || player.account_number;
-      if (memberNumber && (!accountId || !memberUuid)) {
-        try {
-          console.log(`🔍 Looking up by member_number: ${memberNumber}, player.name: "${player.name}"`);
-          const result = await this.api.getMembersByAccount(String(memberNumber));
-          const members = result.members || [];
-          console.log(`🔍 Found ${members.length} members for account:`, members.map(m => m.display_name));
-
-          if (members.length > 0) {
-            const playerNameLower = (player.name || '').toLowerCase().trim();
-            let member = null;
-
-            // Try exact match first (case-insensitive)
-            member = members.find(m =>
-              m.display_name?.toLowerCase().trim() === playerNameLower
+        // If we have a memberNumber, use it to look up the member
+        const memberNumber = player.memberNumber || player.clubNumber || player.account_number;
+        if (memberNumber && (!accountId || !memberUuid)) {
+          try {
+            console.log(
+              `🔍 Looking up by member_number: ${memberNumber}, player.name: "${player.name}"`
+            );
+            const result = await this.api.getMembersByAccount(String(memberNumber));
+            const members = result.members || [];
+            console.log(
+              `🔍 Found ${members.length} members for account:`,
+              members.map((m) => m.display_name)
             );
 
-            // Try partial match (player name contains or is contained in display_name)
-            if (!member) {
-              member = members.find(m => {
-                const displayLower = (m.display_name || '').toLowerCase().trim();
-                return displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower);
-              });
-            }
+            if (members.length > 0) {
+              const playerNameLower = (player.name || '').toLowerCase().trim();
+              let member = null;
 
-            // Try matching by last name only
-            if (!member && playerNameLower) {
-              member = members.find(m => {
-                const displayLower = (m.display_name || '').toLowerCase().trim();
-                const playerLastName = playerNameLower.split(' ').pop();
-                const memberLastName = displayLower.split(' ').pop();
-                return playerLastName === memberLastName;
-              });
-            }
+              // Try exact match first (case-insensitive)
+              member = members.find(
+                (m) => m.display_name?.toLowerCase().trim() === playerNameLower
+              );
 
-            // If only one member on account, use it
-            if (!member && members.length === 1) {
-              member = members[0];
-              console.log(`⚠️ Using only member on account: ${member.display_name}`);
-            }
-
-            // If multiple members and no match, use primary with warning
-            if (!member && members.length > 1) {
-              const primaryMember = members.find(m => m.is_primary);
-              if (primaryMember) {
-                console.warn(`⚠️ Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.display_name}"`);
-                member = primaryMember;
+              // Try partial match (player name contains or is contained in display_name)
+              if (!member) {
+                member = members.find((m) => {
+                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  return (
+                    displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower)
+                  );
+                });
               }
-            }
 
-            if (member) {
-              if (!accountId) accountId = member.account_id;
-              if (!memberUuid) memberUuid = member.id;
-              console.log(`✅ Matched: "${player.name}" -> "${member.display_name}" (${member.id})`);
-            }
-          }
-        } catch (e) {
-          console.warn('Could not look up member by member_number:', e);
-        }
-      }
+              // Try matching by last name only
+              if (!member && playerNameLower) {
+                member = members.find((m) => {
+                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  const playerLastName = playerNameLower.split(' ').pop();
+                  const memberLastName = displayLower.split(' ').pop();
+                  return playerLastName === memberLastName;
+                });
+              }
 
-      // If still no account_id, try searching by name
-      if (!accountId || !memberUuid) {
-        const searchName = player.name || player.displayName;
-        if (searchName) {
-          try {
-            console.log(`🔍 Searching by name: ${searchName}`);
-            const result = await this.api.getMembers(searchName);
-            console.log('🔍 getMembers result:', JSON.stringify(result));
+              // If only one member on account, use it
+              if (!member && members.length === 1) {
+                member = members[0];
+                console.log(`⚠️ Using only member on account: ${member.display_name}`);
+              }
 
-            if (result.members && result.members.length > 0) {
-              // Find exact match by name
-              const normalizedSearch = searchName.toLowerCase().trim();
-              const member = result.members.find(m =>
-                m.display_name?.toLowerCase().trim() === normalizedSearch
-              ) || result.members[0];
+              // If multiple members and no match, use primary with warning
+              if (!member && members.length > 1) {
+                const primaryMember = members.find((m) => m.is_primary);
+                if (primaryMember) {
+                  console.warn(
+                    `⚠️ Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.display_name}"`
+                  );
+                  member = primaryMember;
+                }
+              }
 
               if (member) {
                 if (!accountId) accountId = member.account_id;
                 if (!memberUuid) memberUuid = member.id;
-                console.log(`🔍 Found by name: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`);
+                console.log(
+                  `✅ Matched: "${player.name}" -> "${member.display_name}" (${member.id})`
+                );
               }
             }
           } catch (e) {
-            console.warn('Could not look up member by name:', e);
+            console.warn('Could not look up member by member_number:', e);
           }
         }
-      }
 
-      if (player.isGuest || player.type === 'guest') {
-        // For guests, we need an account to charge - use the first member's account
-        // This will be set after we process all participants
-        return {
-          type: 'guest',
-          guest_name: player.name || player.displayName || player.guest_name || 'Guest',
-          account_id: accountId || '__NEEDS_ACCOUNT__',
-          charged_to_account_id: accountId || '__NEEDS_ACCOUNT__',
-        };
-      } else {
-        return {
-          type: 'member',
-          member_id: memberUuid || playerId, // Use looked-up UUID or fall back to original
-          account_id: accountId,
-        };
-      }
-    }));
+        // If still no account_id, try searching by name
+        if (!accountId || !memberUuid) {
+          const searchName = player.name || player.displayName;
+          if (searchName) {
+            try {
+              console.log(`🔍 Searching by name: ${searchName}`);
+              const result = await this.api.getMembers(searchName);
+              console.log('🔍 getMembers result:', JSON.stringify(result));
+
+              if (result.members && result.members.length > 0) {
+                // Find exact match by name
+                const normalizedSearch = searchName.toLowerCase().trim();
+                const member =
+                  result.members.find(
+                    (m) => m.display_name?.toLowerCase().trim() === normalizedSearch
+                  ) || result.members[0];
+
+                if (member) {
+                  if (!accountId) accountId = member.account_id;
+                  if (!memberUuid) memberUuid = member.id;
+                  console.log(
+                    `🔍 Found by name: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`
+                  );
+                }
+              }
+            } catch (e) {
+              console.warn('Could not look up member by name:', e);
+            }
+          }
+        }
+
+        if (player.isGuest || player.type === 'guest') {
+          // For guests, we need an account to charge - use the first member's account
+          // This will be set after we process all participants
+          return {
+            type: 'guest',
+            guest_name: player.name || player.displayName || player.guest_name || 'Guest',
+            account_id: accountId || '__NEEDS_ACCOUNT__',
+            charged_to_account_id: accountId || '__NEEDS_ACCOUNT__',
+          };
+        } else {
+          return {
+            type: 'member',
+            member_id: memberUuid || playerId, // Use looked-up UUID or fall back to original
+            account_id: accountId,
+          };
+        }
+      })
+    );
 
     // Find a valid account_id from members for any guests that need it
-    const memberWithAccount = participants.find(p => p.type === 'member' && p.account_id);
+    const memberWithAccount = participants.find((p) => p.type === 'member' && p.account_id);
     if (memberWithAccount) {
-      participants.forEach(p => {
+      participants.forEach((p) => {
         if (p.account_id === '__NEEDS_ACCOUNT__') {
           p.account_id = memberWithAccount.account_id;
         }
@@ -441,7 +467,9 @@ class ApiTennisService {
     }
 
     // Final validation
-    const missingAccountId = participants.find(p => !p.account_id || p.account_id === '__NEEDS_ACCOUNT__');
+    const missingAccountId = participants.find(
+      (p) => !p.account_id || p.account_id === '__NEEDS_ACCOUNT__'
+    );
     if (missingAccountId) {
       console.error('Participant missing account_id:', missingAccountId);
       throw new Error('Could not determine account_id for participant');
@@ -450,8 +478,8 @@ class ApiTennisService {
     console.log('🔍 Transformed participants:', JSON.stringify(participants, null, 2));
 
     // Determine session type
-    const sessionType = options.type || options.sessionType ||
-      (participants.length <= 2 ? 'singles' : 'doubles');
+    const sessionType =
+      options.type || options.sessionType || (participants.length <= 2 ? 'singles' : 'doubles');
 
     const result = await this.api.assignCourt(court.id, sessionType, participants, {
       addBalls: options.addBalls || options.balls || false,
@@ -470,7 +498,7 @@ class ApiTennisService {
 
   async clearCourt(courtNumber, options = {}) {
     const courts = await this.getAllCourts();
-    const court = courts.find(c => c.number === courtNumber);
+    const court = courts.find((c) => c.number === courtNumber);
 
     if (!court) {
       throw new Error(`Court ${courtNumber} not found`);
@@ -483,16 +511,27 @@ class ApiTennisService {
 
     if (legacyReason) {
       const reasonLower = String(legacyReason).toLowerCase();
-      if (reasonLower.includes('early') || reasonLower.includes('left') || reasonLower.includes('done') || reasonLower === 'cleared') {
+      if (
+        reasonLower.includes('early') ||
+        reasonLower.includes('left') ||
+        reasonLower.includes('done') ||
+        reasonLower === 'cleared'
+      ) {
         endReason = 'cleared_early';
       } else if (reasonLower.includes('observed') || reasonLower.includes('empty')) {
         endReason = 'completed';
-      } else if (reasonLower.includes('admin') || reasonLower.includes('override') || reasonLower.includes('force')) {
+      } else if (
+        reasonLower.includes('admin') ||
+        reasonLower.includes('override') ||
+        reasonLower.includes('force')
+      ) {
         endReason = 'admin_override';
       }
     }
 
-    console.log(`🔍 Clearing court ${courtNumber} with reason: ${endReason} (legacy: ${legacyReason})`);
+    console.log(
+      `🔍 Clearing court ${courtNumber} with reason: ${endReason} (legacy: ${legacyReason})`
+    );
 
     const result = await this.api.endSessionByCourt(court.id, endReason);
 
@@ -539,155 +578,185 @@ class ApiTennisService {
     const traceId = options.traceId || `API-${Date.now()}`;
     console.log(`🔵🔵🔵 [${traceId}] addToWaitlist ENTRY`);
     console.log(`🔵 [${traceId}] Input players:`, JSON.stringify(players, null, 2));
-    console.log(`🔵 [${traceId}] Players summary:`, players.map(p => `${p.name}(id=${p.id},mn=${p.memberNumber})`));
+    console.log(
+      `🔵 [${traceId}] Players summary:`,
+      players.map((p) => `${p.name}(id=${p.id},mn=${p.memberNumber})`)
+    );
     console.log(`🔵 [${traceId}] Options:`, options);
 
     // Transform players to API format (same logic as assignCourt)
-    const participants = await Promise.all(players.map(async (player, idx) => {
-      console.log(`🔵 [${traceId}] Processing player[${idx}]: name="${player.name}", id="${player.id}", memberNumber="${player.memberNumber}"`);
+    const participants = await Promise.all(
+      players.map(async (player, idx) => {
+        console.log(
+          `🔵 [${traceId}] Processing player[${idx}]: name="${player.name}", id="${player.id}", memberNumber="${player.memberNumber}"`
+        );
 
-      let memberId = null;
-      let accountId = null;
+        let memberId = null;
+        let accountId = null;
 
-      // Check if this is a guest
-      if (player.isGuest || player.type === 'guest') {
-        return {
-          type: 'guest',
-          guest_name: player.name || player.displayName || player.guest_name || 'Guest',
-          account_id: '__NEEDS_ACCOUNT__',
-        };
-      }
+        // Check if this is a guest
+        if (player.isGuest || player.type === 'guest') {
+          return {
+            type: 'guest',
+            guest_name: player.name || player.displayName || player.guest_name || 'Guest',
+            account_id: '__NEEDS_ACCOUNT__',
+          };
+        }
 
-      // Try to get existing IDs if they're UUIDs
-      const existingId = player.id || player.memberId || player.member_id;
-      const isUUID = existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
+        // Try to get existing IDs if they're UUIDs
+        const existingId = player.id || player.memberId || player.member_id;
+        const isUUID =
+          existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
 
-      console.log(`🔵 [${traceId}] Player UUID check:`, {
-        existingId,
-        isUUID,
-        'player.accountId': player.accountId,
-        'player.account_id': player.account_id,
-      });
+        console.log(`🔵 [${traceId}] Player UUID check:`, {
+          existingId,
+          isUUID,
+          'player.accountId': player.accountId,
+          'player.account_id': player.account_id,
+        });
 
-      if (isUUID) {
-        memberId = existingId;
-        accountId = player.accountId || player.account_id;
-        console.log(`🔵 [${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`);
-      }
+        if (isUUID) {
+          memberId = existingId;
+          accountId = player.accountId || player.account_id;
+          console.log(
+            `🔵 [${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`
+          );
+        }
 
-      // If we don't have BOTH UUID and accountId, look up by member_number
-      if (!memberId || !accountId) {
-        console.log(`🔵 [${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`);
-        const memberNumber = player.memberNumber || player.member_number || player.id;
+        // If we don't have BOTH UUID and accountId, look up by member_number
+        if (!memberId || !accountId) {
+          console.log(
+            `🔵 [${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`
+          );
+          const memberNumber = player.memberNumber || player.member_number || player.id;
 
-        if (memberNumber) {
+          if (memberNumber) {
+            try {
+              console.log(
+                `🔵 [${traceId}] Looking up member_number: ${memberNumber}, player.name: "${player.name}"`
+              );
+              const result = await this.api.getMembersByAccount(String(memberNumber));
+              const members = result.members || [];
+              console.log(
+                `🔵 [${traceId}] Found ${members.length} members for account:`,
+                members.map((m) => `${m.display_name}(primary=${m.is_primary})`)
+              );
+
+              const playerNameLower = (player.name || '').toLowerCase().trim();
+
+              // Try exact match first (case-insensitive)
+              let member = members.find(
+                (m) => m.display_name?.toLowerCase().trim() === playerNameLower
+              );
+
+              // Try partial match (player name contains or is contained in display_name)
+              if (!member) {
+                member = members.find((m) => {
+                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  return (
+                    displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower)
+                  );
+                });
+              }
+
+              // Try matching by last name only (common case: "Sinner" -> "Jannik Sinner")
+              if (!member && playerNameLower) {
+                member = members.find((m) => {
+                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  const playerLastName = playerNameLower.split(' ').pop();
+                  const memberLastName = displayLower.split(' ').pop();
+                  return playerLastName === memberLastName;
+                });
+              }
+
+              // If only one member on account, use it (single-member accounts)
+              if (!member && members.length === 1) {
+                member = members[0];
+                console.log(`🔵 [${traceId}] Using only member on account: ${member.display_name}`);
+              }
+
+              // If multiple members and no match, prefer primary member with warning
+              if (!member && members.length > 1) {
+                const primaryMember = members.find((m) => m.is_primary);
+                if (primaryMember) {
+                  console.warn(
+                    `🔵⚠️ [${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.display_name}"`
+                  );
+                  member = primaryMember;
+                } else {
+                  console.error(
+                    `🔵❌ [${traceId}] Name mismatch! Player "${player.name}" not found in:`,
+                    members.map((m) => m.display_name)
+                  );
+                  throw new Error(
+                    `Could not match "${player.name}" to any member on account ${memberNumber}. Available: ${members.map((m) => m.display_name).join(', ')}`
+                  );
+                }
+              }
+
+              if (member) {
+                memberId = member.id;
+                accountId = member.account_id;
+                console.log(
+                  `🔵✅ [${traceId}] Matched: "${player.name}" -> "${member.display_name}" (${memberId})`
+                );
+              }
+            } catch (e) {
+              console.error('[addToWaitlist] Error looking up member:', e);
+              throw e; // Re-throw to prevent wrong member assignment
+            }
+          }
+        }
+
+        // Fallback: search by name
+        if (!memberId || !accountId) {
           try {
-            console.log(`🔵 [${traceId}] Looking up member_number: ${memberNumber}, player.name: "${player.name}"`);
-            const result = await this.api.getMembersByAccount(String(memberNumber));
-            const members = result.members || [];
-            console.log(`🔵 [${traceId}] Found ${members.length} members for account:`, members.map(m => `${m.display_name}(primary=${m.is_primary})`));
-
-            const playerNameLower = (player.name || '').toLowerCase().trim();
-
-            // Try exact match first (case-insensitive)
-            let member = members.find(m =>
-              m.display_name?.toLowerCase().trim() === playerNameLower
-            );
-
-            // Try partial match (player name contains or is contained in display_name)
-            if (!member) {
-              member = members.find(m => {
-                const displayLower = (m.display_name || '').toLowerCase().trim();
-                return displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower);
-              });
-            }
-
-            // Try matching by last name only (common case: "Sinner" -> "Jannik Sinner")
-            if (!member && playerNameLower) {
-              member = members.find(m => {
-                const displayLower = (m.display_name || '').toLowerCase().trim();
-                const playerLastName = playerNameLower.split(' ').pop();
-                const memberLastName = displayLower.split(' ').pop();
-                return playerLastName === memberLastName;
-              });
-            }
-
-            // If only one member on account, use it (single-member accounts)
-            if (!member && members.length === 1) {
-              member = members[0];
-              console.log(`🔵 [${traceId}] Using only member on account: ${member.display_name}`);
-            }
-
-            // If multiple members and no match, prefer primary member with warning
-            if (!member && members.length > 1) {
-              const primaryMember = members.find(m => m.is_primary);
-              if (primaryMember) {
-                console.warn(`🔵⚠️ [${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.display_name}"`);
-                member = primaryMember;
-              } else {
-                console.error(`🔵❌ [${traceId}] Name mismatch! Player "${player.name}" not found in:`, members.map(m => m.display_name));
-                throw new Error(`Could not match "${player.name}" to any member on account ${memberNumber}. Available: ${members.map(m => m.display_name).join(', ')}`);
+            const searchName = player.name || player.displayName;
+            if (searchName) {
+              console.log(`🔍 [addToWaitlist] Searching by name: ${searchName}`);
+              const result = await this.api.getMembers(searchName);
+              const members = result.members || [];
+              const member = members.find(
+                (m) => m.display_name?.toLowerCase() === searchName.toLowerCase()
+              );
+              if (member) {
+                memberId = member.id;
+                accountId = member.account_id;
+                console.log(`✅ [addToWaitlist] Found by name: ${searchName} -> ${memberId}`);
               }
             }
-
-            if (member) {
-              memberId = member.id;
-              accountId = member.account_id;
-              console.log(`🔵✅ [${traceId}] Matched: "${player.name}" -> "${member.display_name}" (${memberId})`);
-            }
           } catch (e) {
-            console.error('[addToWaitlist] Error looking up member:', e);
-            throw e; // Re-throw to prevent wrong member assignment
+            console.error('[addToWaitlist] Error searching by name:', e);
           }
         }
-      }
 
-      // Fallback: search by name
-      if (!memberId || !accountId) {
-        try {
-          const searchName = player.name || player.displayName;
-          if (searchName) {
-            console.log(`🔍 [addToWaitlist] Searching by name: ${searchName}`);
-            const result = await this.api.getMembers(searchName);
-            const members = result.members || [];
-            const member = members.find(m =>
-              m.display_name?.toLowerCase() === searchName.toLowerCase()
-            );
-            if (member) {
-              memberId = member.id;
-              accountId = member.account_id;
-              console.log(`✅ [addToWaitlist] Found by name: ${searchName} -> ${memberId}`);
-            }
-          }
-        } catch (e) {
-          console.error('[addToWaitlist] Error searching by name:', e);
+        if (!memberId || !accountId) {
+          console.error('[addToWaitlist] Could not resolve member:', player);
+          throw new Error(
+            `Could not find member in database: ${player.name} (${player.memberNumber || player.id})`
+          );
         }
-      }
 
-      if (!memberId || !accountId) {
-        console.error('[addToWaitlist] Could not resolve member:', player);
-        throw new Error(`Could not find member in database: ${player.name} (${player.memberNumber || player.id})`);
-      }
-
-      return {
-        type: 'member',
-        member_id: memberId,
-        account_id: accountId,
-      };
-    }));
+        return {
+          type: 'member',
+          member_id: memberId,
+          account_id: accountId,
+        };
+      })
+    );
 
     // Handle guests needing account
-    const memberWithAccount = participants.find(p => p.type === 'member' && p.account_id);
+    const memberWithAccount = participants.find((p) => p.type === 'member' && p.account_id);
     if (memberWithAccount) {
-      participants.forEach(p => {
+      participants.forEach((p) => {
         if (p.account_id === '__NEEDS_ACCOUNT__') {
           p.account_id = memberWithAccount.account_id;
         }
       });
     }
 
-    const groupType = options.type || options.groupType ||
-      (participants.length <= 2 ? 'singles' : 'doubles');
+    const groupType =
+      options.type || options.groupType || (participants.length <= 2 ? 'singles' : 'doubles');
 
     console.log('🔍 [addToWaitlist] Calling API with:', { groupType, participants });
 
@@ -697,7 +766,11 @@ class ApiTennisService {
 
       // Refresh waitlist and log it
       await this.refreshWaitlist();
-      console.log('🔍 [addToWaitlist] Waitlist after refresh:', this.waitlistData?.waitlist?.length, 'entries');
+      console.log(
+        '🔍 [addToWaitlist] Waitlist after refresh:',
+        this.waitlistData?.waitlist?.length,
+        'entries'
+      );
 
       // Extract position from API response
       const position = result.waitlist?.position || 1;
@@ -725,7 +798,7 @@ class ApiTennisService {
       waitlistId = entry.id;
     }
 
-    const result = await this.api.cancelWaitlist(waitlistId);
+    await this.api.cancelWaitlist(waitlistId);
 
     // Refresh waitlist
     await this.refreshWaitlist();
@@ -748,7 +821,7 @@ class ApiTennisService {
 
     // Get court ID from court number
     const courts = await this.getAllCourts();
-    const court = courts.find(c => c.number === courtNumber);
+    const court = courts.find((c) => c.number === courtNumber);
 
     if (!court) {
       throw new Error(`Court ${courtNumber} not found`);

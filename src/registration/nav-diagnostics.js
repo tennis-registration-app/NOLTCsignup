@@ -31,7 +31,9 @@
           ev.stopImmediatePropagation && ev.stopImmediatePropagation();
           ev.stopPropagation && ev.stopPropagation();
         }
-      } catch (e) {}
+      } catch (_e) {
+        /* Intentionally empty */
+      }
     }
     window.addEventListener('storage', onStorageCapture, { capture: true, passive: true });
 
@@ -40,7 +42,9 @@
       function () {
         try {
           window.removeEventListener('storage', onStorageCapture, { capture: true });
-        } catch (e) {}
+        } catch (_e) {
+          /* Intentionally empty */
+        }
       },
       { once: true }
     );
@@ -79,7 +83,9 @@
           ev.stopImmediatePropagation && ev.stopImmediatePropagation();
           ev.stopPropagation && ev.stopPropagation();
         }
-      } catch (e) {}
+      } catch (_e) {
+        /* Intentionally empty */
+      }
     }
 
     window.addEventListener('tennisDataUpdate', onCapture, { capture: true, passive: true });
@@ -91,7 +97,9 @@
         try {
           window.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
           document.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
-        } catch (e) {}
+        } catch (_e) {
+          /* Intentionally empty */
+        }
       },
       { once: true }
     );

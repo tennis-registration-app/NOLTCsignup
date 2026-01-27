@@ -10,7 +10,6 @@ import {
   readJSON as _sharedReadJSON,
   getEmptyData as _sharedGetEmptyData,
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
-  getUpcomingBlockWarning as _sharedGetUpcomingBlockWarning,
   TENNIS_CONFIG as _sharedTennisConfig,
   // Services (also from @lib)
   DataValidation,
@@ -71,7 +70,7 @@ window.GeolocationService = window.GeolocationService || GeolocationService;
 const U = window.APP_UTILS || {};
 
 // === Shared Core Integration Flag ===
-const USE_SHARED_CORE = true;
+// USE_SHARED_CORE flag removed - always using shared core
 const DEBUG = false; // Gate noisy logs
 const dbg = (...args) => {
   if (DEBUG) console.log(...args);
@@ -79,7 +78,6 @@ const dbg = (...args) => {
 
 // These will be populated from window.Tennis after modules load
 const Storage = window.Tennis?.Storage;
-const Events = window.Tennis?.Events;
 let dataStore = window.Tennis?.DataStore || null;
 
 // Storage helpers from shared module
@@ -180,7 +178,6 @@ const TENNIS_CONFIG = _sharedTennisConfig;
 // REMOVED: local getCourtBlockStatus (~28 lines) and getUpcomingBlockWarning (~59 lines)
 // These functions are now imported via destructuring at the top of the script
 const getCourtBlockStatus = _sharedGetCourtBlockStatus;
-const getUpcomingBlockWarning = _sharedGetUpcomingBlockWarning;
 
 // Main TennisRegistration Component
 const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
@@ -202,7 +199,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     _setCurrentScreen(screen);
   };
   const [availableCourts, setAvailableCourts] = useState([]);
-  const [apiError, setApiError] = useState(null);
   const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
   const [operatingHours, setOperatingHours] = useState(null); // Operating hours from API
 
@@ -520,8 +516,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     secondWaitlistEntry,
     canFirstGroupPlay,
     canSecondGroupPlay,
-    waitingGroupDisplay,
-    secondWaitlistEntryDisplay,
     firstWaitlistEntryData,
     secondWaitlistEntryData,
   } = useMemo(() => {
@@ -543,21 +537,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     const live1 = gateCount >= 1 && firstGroup !== null;
     const live2 = gateCount >= 2 && secondGroup !== null;
 
-    // Compute display names
-    let display1 = '';
-    if (live1 && firstGroup?.players?.length) {
-      const names = firstGroup.players.map((p) => (p.displayName || p.name || '').split(' ').pop());
-      display1 = names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')}, etc`;
-    }
-
-    let display2 = '';
-    if (live2 && secondGroup?.players?.length) {
-      const names = secondGroup.players.map((p) =>
-        (p.displayName || p.name || '').split(' ').pop()
-      );
-      display2 = names.length <= 3 ? names.join(', ') : `${names.slice(0, 3).join(', ')}, etc`;
-    }
-
     // Build entry objects for SearchScreen
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
@@ -571,8 +550,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       secondWaitlistEntry: second,
       canFirstGroupPlay: !!live1,
       canSecondGroupPlay: !!live2,
-      waitingGroupDisplay: display1,
-      secondWaitlistEntryDisplay: display2,
       firstWaitlistEntryData: first,
       secondWaitlistEntryData: second,
     };
@@ -602,8 +579,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [selectedCourtToClear, setSelectedCourtToClear] = useState(null);
   const [clearCourtStep, setClearCourtStep] = useState(1);
   const [isChangingCourt, setIsChangingCourt] = useState(false);
-  const [wasOvertimeCourt, setWasOvertimeCourt] = useState(false);
-  const [lastActivity, setLastActivity] = useState(Date.now());
+  const [, setWasOvertimeCourt] = useState(false); // Getter unused, setter used
+  const [, setLastActivity] = useState(Date.now()); // Getter unused, setter used
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
   const timeoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
@@ -614,7 +591,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [currentMemberId, setCurrentMemberId] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courtToMove, setCourtToMove] = useState(null);
-  const [moveToCourtNum, setMoveToCourtNum] = useState(null);
   const [hasAssignedCourt, setHasAssignedCourt] = useState(false);
   const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
   const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
@@ -646,7 +622,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Block warning minutes from API - used by SuccessScreen
   const [blockWarningMinutes, setBlockWarningMinutes] = useState(60);
   const [checkingLocation, setCheckingLocation] = useState(false);
-  const [isUserTyping, setIsUserTyping] = useState(false);
+  const [, setIsUserTyping] = useState(false); // Getter unused, setter used
   const typingTimeoutRef = useRef(null);
 
   // QR location token state (mobile GPS fallback)
@@ -949,32 +925,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     return db;
   }, []); // Empty deps - this data is static
 
-  // Create roster from memberDatabase and ensure member IDs
-  const memberRoster = React.useMemo(() => {
-    const roster = [];
-    Object.entries(memberDatabase).forEach(([memberNum, data]) => {
-      data.familyMembers.forEach((member) => {
-        roster.push({
-          id: member.id,
-          name: member.name,
-          memberNumber: memberNum,
-          phone: member.phone,
-          ranking: member.ranking,
-          winRate: member.winRate,
-        });
-      });
-    });
-
-    // Ensure all roster entries have memberIds
-    const R = window.Tennis?.Domain?.roster;
-    if (R?.ensureMemberIds) {
-      const result = R.ensureMemberIds(roster);
-      console.log('Member IDs ensured:', result.assigned, 'new IDs assigned');
-      return result.roster;
-    }
-    return roster;
-  }, [memberDatabase]);
-
   // Update current time every second for responsive overtime detection
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1258,22 +1208,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     return true; // Return success to avoid breaking callers during migration
   };
 
-  // Check if player is next in waitlist
-  const isPlayerNextInWaitlist = (playerId) => {
-    const data = getCourtData();
-    if (data.waitlist.length > 0) {
-      const firstEntry = data.waitlist[0];
-      // Domain: entry.group.players with memberId
-      const players = firstEntry.group?.players || [];
-      return players.some((p) => p.memberId === playerId);
-    }
-    return false;
-  };
-
   // Get available courts (strict selectable API - single source of truth)
   const getAvailableCourts = (
     checkWaitlistPriority = true,
-    includeOvertimeIfChanging = false,
+    _includeOvertimeIfChanging = false,
     excludeCourtNumber = null,
     dataOverride = null
   ) => {
@@ -1629,26 +1567,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI state...`);
 
     // Determine if court change should be allowed
-    // Rule: Can change if there are other free courts, OR if user took an overtime court and there are other overtime courts
-    const tookOvertimeCourt = result.displacement !== null;
-
-    // Get court availability from API-sourced state
-    const courtData = getCourtData();
-    const Av = Tennis.Domain.availability || Tennis.Domain.Availability;
-    const currentTimestamp = new Date();
-
-    // Get free and overtime courts from the normalized board data
-    const courtInfo = Av.getFreeCourtsInfo({
-      data: courtData,
-      now: currentTimestamp,
-      blocks: courtData?.blocks || [],
-      wetSet: new Set(),
-    });
-
-    // Exclude the just-assigned court from both lists
-    const otherFreeCourts = (courtInfo.free || []).filter((n) => n !== courtNumber);
-    const otherOvertimeCourts = (courtInfo.overtime || []).filter((n) => n !== courtNumber);
-
     // If only one court was selectable when user chose, no change option
     const allowCourtChange =
       selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
@@ -1715,10 +1633,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const changeCourt = () => {
     if (!canChangeCourt || !justAssignedCourt) return;
 
-    const data = getCourtData();
-
     // Store the original court data if it was an overtime court we replaced
-    const currentCourtData = data.courts[justAssignedCourt - 1];
     if (replacedGroup) {
       // We had replaced an overtime court - restore the original group
       setOriginalCourtData({
@@ -2248,8 +2163,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
       // Split the name into parts
       const nameParts = displayName.split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts[nameParts.length - 1] || '';
 
       // Split input into words for multi-word search
       const inputWords = lowerInput
@@ -3539,7 +3452,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     });
 
     const hasWaitlistEntries = data.waitlist.length > 0;
-    const isFirstInWaitlist = currentGroup.some((player) => isPlayerNextInWaitlist(player.id));
 
     // Check if showing overtime courts
     // Only count truly free courts as unoccupied (not blocked or wet courts)
