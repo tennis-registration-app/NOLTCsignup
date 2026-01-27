@@ -66,7 +66,7 @@ export function QRScanner({ onScan, onClose, onError }) {
 
       if (onError) onError(err);
     }
-  }, [onScan, onError]);
+  }, [onScan, onError, stopScanner]);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {

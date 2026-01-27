@@ -6,6 +6,9 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Day names for operating hours (module scope for stable reference)
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Settings state
   const [, setSettings] = useState({
@@ -48,9 +51,6 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   const [hoursSaveStatus, setHoursSaveStatus] = useState(null);
   const [, setOverrideSaveStatus] = useState(null); // Getter unused, setter used
   const [autoClearSaveStatus, setAutoClearSaveStatus] = useState(null);
-
-  // Day names for operating hours
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Fetch settings on mount
   const loadSettings = useCallback(async () => {

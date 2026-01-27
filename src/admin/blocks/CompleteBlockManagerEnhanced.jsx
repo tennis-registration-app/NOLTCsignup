@@ -107,7 +107,7 @@ const ConflictDetector = ({
     });
 
     setConflicts(detectedConflicts);
-  }, [courts, selectedCourts, startTime, endTime, selectedDate]);
+  }, [courts, selectedCourts, startTime, endTime, selectedDate, editingBlock]);
 
   if (conflicts.length === 0) return null;
 
