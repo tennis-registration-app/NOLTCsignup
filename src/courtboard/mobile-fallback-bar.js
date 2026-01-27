@@ -19,11 +19,6 @@
     return window.CourtboardState ?? { courts: [], courtBlocks: [], waitingGroups: [] };
   }
 
-  // Helper functions for safe data reading - now uses getCourtboardState()
-  function readCourtBlocksSafe() {
-    return getCourtboardState().courtBlocks || [];
-  }
-
   function selectReservedSafe(blocks, now) {
     try {
       // Use the same logic as selectReservedItemsFromBlocks

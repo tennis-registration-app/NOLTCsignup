@@ -1,19 +1,10 @@
 // CourtBoard - Vite-bundled React Entry Point
 // Converted from inline Babel to ES module JSX
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom/client';
 
 // Import shared utilities from @lib
 import {
-  STORAGE,
-  EVENTS,
-  readJSON,
-  writeJSON,
-  getEmptyData,
-  readDataSafe as _sharedReadDataSafe,
-  COURT_COUNT,
-  getCourtBlockStatus as _sharedGetCourtBlockStatus,
-  getUpcomingBlockWarning as _sharedGetUpcomingBlockWarning,
   getUpcomingBlockWarningFromBlocks as _sharedGetUpcomingBlockWarningFromBlocks,
   TENNIS_CONFIG as _sharedTennisConfig,
 } from '@lib';
@@ -26,33 +17,10 @@ const backend = createBackend();
 import { countPlayableCourts, listPlayableCourts } from '../shared/courts/courtAvailability.js';
 
 // Access shared utils from window for backward compatibility
-const U = window.APP_UTILS || {};
+// (U now unused but kept for backward compatibility comment)
 
-// === Shared Core Integration Flags ===
-const USE_SHARED_CORE = true;
-const USE_SHARED_DOMAIN = true;
-
-// These will be populated after DOM is ready
-let Config, Storage, Events, A, W, T, DataStore, Av, Tm, TimeFmt;
-
-// Local readDataSafe wraps the shared version for backward compatibility
-const readDataSafe = () =>
-  _sharedReadDataSafe ? _sharedReadDataSafe() : readJSON(STORAGE.DATA) || getEmptyData();
-
-// ---- Core constants (declared only; not replacing existing usages) ----
-const APP = {
-  COURT_COUNT: 12,
-  PLAYERS: { MIN: 1, MAX: 4 },
-  DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 },
-};
-
-// --- Waiting selectors (CourtBoard) ---
-function selectWaitlist(data) {
-  return Array.isArray(data?.waitlist) ? data.waitlist : [];
-}
-function selectWaitingCount(data) {
-  return selectWaitlist(data).length;
-}
+// Module references assigned in App() useEffect - only A and W are used
+let _Config, _Storage, _Events, A, W, _T, _DataStore, _Av, _Tm, _TimeFmt;
 
 // ---- Read-only guard (prevent accidental writes in this view) ----
 const readOnlyWrite = (...args) => {
@@ -87,12 +55,6 @@ function classForStatus(statusObj) {
 }
 
 // Unified status source for the board UI
-// ---- Dev flag & assert (no UI change) ----
-const DEV = typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.host);
-const assert = (cond, msg, obj) => {
-  if (DEV && !cond) console.warn('ASSERT:', msg, obj || '');
-};
-
 // ---- Debounce helper (no UI change) ----
 const debounce = (fn, ms = 150) => {
   let t;
@@ -101,24 +63,6 @@ const debounce = (fn, ms = 150) => {
     t = setTimeout(() => fn(...a), ms);
   };
 };
-
-// ---- Logger (no UI change) ----
-const LOG_LEVEL = DEV ? 'debug' : 'warn';
-const _PREFIX = '[CourtBoard]';
-const log = {
-  debug: (...a) => {
-    if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a);
-  },
-  info: (...a) => {
-    if (['debug', 'info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a);
-  },
-  warn: (...a) => {
-    if (['debug', 'info', 'warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a);
-  },
-};
-
-// central registry for timers in this view
-const _timers = [];
 
 // ---- Helpers for domain-based tile text ----
 function namesFor(courtObj) {
@@ -141,60 +85,11 @@ function namesFor(courtObj) {
   return '';
 }
 
-function formatUntilTime(dt) {
-  if (!dt) return null;
-  const d = dt instanceof Date ? dt : new Date(dt);
-  if (isNaN(+d)) return null;
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
 function formatTime(dt) {
   if (!dt) return null;
   const d = dt instanceof Date ? dt : new Date(dt);
   if (isNaN(+d)) return null;
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function labelFor(status, courtObj) {
-  if (status === 'occupied') {
-    const end = courtObj?.session?.scheduledEndAt
-      ? new Date(courtObj.session.scheduledEndAt)
-      : null;
-    const until = end
-      ? `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-      : '';
-    const nm = namesFor(courtObj);
-    return nm ? `${nm}${until ? '\n' + until : ''}` : until || '';
-  }
-  if (status === 'overtime') {
-    const nm = namesFor(courtObj);
-    const end = courtObj?.session?.scheduledEndAt
-      ? new Date(courtObj.session.scheduledEndAt)
-      : null;
-    const now = new Date();
-    const minutesOver = end ? Math.round((now - end) / 60000) : 0;
-    const overtimeLabel = minutesOver > 0 ? `+${minutesOver} min over` : 'Overtime';
-    return nm ? `${overtimeLabel}\n${nm}` : overtimeLabel;
-  }
-  if (status === 'free') return 'Available';
-  if (status === 'wet') return '🌧️\nWET COURT';
-  if (status === 'blocked') {
-    const label = courtObj?.blockedLabel || 'Blocked';
-    const until = courtObj?.blockedEnd ? courtObj.blockedEnd : null;
-    if (until) {
-      try {
-        const endTime = new Date(until);
-        if (!isNaN(endTime)) {
-          const timeStr = endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-          return `${label}\nUntil ${timeStr}`;
-        }
-      } catch (e) {
-        // ignore invalid date
-      }
-    }
-    return label;
-  }
-  return '';
 }
 
 function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
@@ -260,7 +155,7 @@ function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
         if (!isNaN(endTime)) {
           secondary = `Until ${endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore invalid date
       }
     }
@@ -269,40 +164,23 @@ function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
   return { primary: '', secondary: '' };
 }
 
-const addTimer = (id, type = 'interval') => {
-  _timers.push({ id, type });
-  return id;
-};
+// Timer registry for cleanup
+const _timers = [];
 const clearAllTimers = () => {
   _timers.forEach(({ id, type }) => {
     try {
       if (type === 'interval') clearInterval(id);
       else clearTimeout(id);
-    } catch {}
+    } catch {} /* eslint-disable-line no-empty */
   });
   _timers.length = 0;
 };
-
-// Coalesce multiple data events into a single refresh
-let __boardRefreshPending = false;
-function scheduleBoardRefresh() {
-  if (__boardRefreshPending) return;
-  __boardRefreshPending = true;
-  setTimeout(() => {
-    __boardRefreshPending = false;
-    const fn = (typeof window.refreshBoard === 'function' && window.refreshBoard) || null;
-    if (fn) fn();
-  }, 0);
-}
-
-// --- One-time guard helper (no UI change)
-const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 
 // Global cleanup on page unload
 window.addEventListener('beforeunload', () => {
   try {
     clearAllTimers();
-  } catch {}
+  } catch {} /* eslint-disable-line no-empty */
 });
 
 // ---- TENNIS_CONFIG: Override POLL_INTERVAL_MS for CourtBoard (faster updates) ----
@@ -314,12 +192,7 @@ const TENNIS_CONFIG = {
   },
 };
 
-// Icon components
-const Clock = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⏱️
-  </span>
-);
+// Icon components (only used ones)
 const Users = ({ size = 34, className = '' }) => (
   <span style={{ fontSize: `${size}px` }} className={className}>
     👥
@@ -340,29 +213,12 @@ const AlertCircle = ({ size = 24, className = '' }) => (
     🔔
   </span>
 );
-const Check = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ✅
-  </span>
-);
-const Plus = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🏸
-  </span>
-);
-const Weather = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🌦️
-  </span>
-);
 
-// Use imported functions
-const getCourtBlockStatus = _sharedGetCourtBlockStatus;
-const getUpcomingBlockWarning = _sharedGetUpcomingBlockWarning;
+// Use imported function
 const getUpcomingBlockWarningFromBlocks = _sharedGetUpcomingBlockWarningFromBlocks;
 
-// DataStore simulation for demo
-const dataStore = {
+// DataStore simulation for demo (unused but kept for reference)
+const _dataStore = {
   async get(key) {
     const startTime = performance.now();
     if (Math.random() > 0.2) {
@@ -516,17 +372,17 @@ function App() {
     // Check if Tennis modules are loaded
     const checkReady = () => {
       if (window.Tennis?.Storage && window.Tennis?.Domain?.availability) {
-        // Initialize module references
-        Config = window.Tennis.Config;
-        Storage = window.Tennis.Storage;
-        Events = window.Tennis.Events;
+        // Initialize module references (only A and W are used)
+        _Config = window.Tennis.Config;
+        _Storage = window.Tennis.Storage;
+        _Events = window.Tennis.Events;
         A = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
         W = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
-        T = window.Tennis.Domain.time || window.Tennis.Domain.Time;
-        DataStore = window.Tennis.DataStore;
-        Av = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
-        Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
-        TimeFmt = window.Tennis.Domain.time || window.Tennis.Domain.Time;
+        _T = window.Tennis.Domain.time || window.Tennis.Domain.Time;
+        _DataStore = window.Tennis.DataStore;
+        _Av = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
+        _Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
+        _TimeFmt = window.Tennis.Domain.time || window.Tennis.Domain.Time;
         setReady(true);
         return true;
       }
@@ -1074,7 +930,7 @@ function TennisCourtDisplay() {
 // CourtCard Component
 function CourtCard({
   courtNumber,
-  currentTime,
+  currentTime: _currentTime,
   statusByCourt,
   selectableByCourt,
   statusObjectByCourt,
@@ -1087,17 +943,16 @@ function CourtCard({
   courtBlocks = [],
 }) {
   const status = statusByCourt[courtNumber] || 'free';
-  const selectable = selectableByCourt[courtNumber] || false;
+  const _selectable = selectableByCourt[courtNumber] || false; // Unused, kept for prop consistency
   const statusObj = statusObjectByCourt?.[courtNumber] || {};
   const cObj = data?.courts?.[courtNumber - 1] || {};
 
   const now = new Date();
-  const { primary, secondary, secondaryColor } = computeClock(
-    status,
-    status === 'blocked' ? statusObj : cObj,
-    now,
-    checkStatusMinutes
-  );
+  const {
+    primary,
+    secondary,
+    secondaryColor: _secondaryColor,
+  } = computeClock(status, status === 'blocked' ? statusObj : cObj, now, checkStatusMinutes);
   const nm = namesFor(cObj);
 
   const base =
@@ -1375,7 +1230,13 @@ function CourtCard({
 }
 
 // WaitingList Component (with proper wait time calculations)
-function WaitingList({ waitlist, courts, currentTime, courtBlocks = [], upcomingBlocks = [] }) {
+function WaitingList({
+  waitlist,
+  courts,
+  currentTime: _currentTime,
+  courtBlocks = [],
+  upcomingBlocks = [],
+}) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
 
@@ -2272,7 +2133,7 @@ function MobileModalSheet({ type, payload, onClose }) {
               return freeCount > 0 || overtimeCount > 0;
             }
             return false;
-          } catch (error) {
+          } catch (_error) {
             return false;
           }
         };

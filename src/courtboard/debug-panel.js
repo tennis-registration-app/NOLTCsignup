@@ -1,5 +1,5 @@
 // Debug Panel - Only visible when ?debug=1
-(function() {
+(function () {
   const params = new URLSearchParams(location.search);
   if (params.get('debug') !== '1') return;
 
@@ -39,14 +39,16 @@
     const content = document.getElementById('debugContent');
     if (!content) return;
 
-    content.innerHTML = events.map((event, i) => {
-      const time = new Date(event.timestamp).toLocaleTimeString();
-      return `<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
+    content.innerHTML = events
+      .map((event) => {
+        const time = new Date(event.timestamp).toLocaleTimeString();
+        return `<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
         <div style="color: #ff0;">[${time}] ${event.type}</div>
         <div style="color: #0ff;">${event.eventName}</div>
         ${event.data ? `<div style="color: #fff; font-size: 10px;">${JSON.stringify(event.data, null, 2)}</div>` : ''}
       </div>`;
-    }).join('');
+      })
+      .join('');
   };
 
   // Safe wrapper for self-tests
@@ -54,15 +56,20 @@
     const fn = window.Tennis?.selfTest?.runAll;
     if (typeof fn !== 'function') {
       return {
-        passed: 0, failed: 1,
-        results: [{ name: 'SelfTest not available', ok: false, notes: 'Tennis.selfTest.runAll missing' }]
+        passed: 0,
+        failed: 1,
+        results: [
+          { name: 'SelfTest not available', ok: false, notes: 'Tennis.selfTest.runAll missing' },
+        ],
       };
     }
-    try { return fn(); }
-    catch (e) {
+    try {
+      return fn();
+    } catch (e) {
       return {
-        passed: 0, failed: 1,
-        results: [{ name: 'Run failed', ok: false, notes: String(e?.message || e) }]
+        passed: 0,
+        failed: 1,
+        results: [{ name: 'Run failed', ok: false, notes: String(e?.message || e) }],
       };
     }
   }
@@ -84,9 +91,10 @@
     if (result.results && result.results.length > 0) {
       html += '<div style="margin-top: 5px; max-height: 150px; overflow-y: auto;">';
       html += '<table style="width: 100%; font-size: 9px; border-collapse: collapse;">';
-      html += '<tr style="color: #ff0;"><th style="text-align: left; padding: 2px;">Test</th><th style="text-align: center; padding: 2px;">OK</th><th style="text-align: left; padding: 2px;">Notes</th></tr>';
+      html +=
+        '<tr style="color: #ff0;"><th style="text-align: left; padding: 2px;">Test</th><th style="text-align: center; padding: 2px;">OK</th><th style="text-align: left; padding: 2px;">Notes</th></tr>';
 
-      result.results.forEach(test => {
+      result.results.forEach((test) => {
         const okColor = test.ok ? '#0f0' : '#f00';
         const okText = test.ok ? '✓' : '✗';
         html += `<tr style="border-top: 1px solid #333;">`;
@@ -124,12 +132,16 @@
   }
 
   // Keyboard shortcut (t key)
-  window.addEventListener('keydown', (e) => {
-    if ((e.key || '').toLowerCase() === 't') {
-      e.preventDefault();
-      handleRunSelfTests();
-    }
-  }, { passive: false });
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if ((e.key || '').toLowerCase() === 't') {
+        e.preventDefault();
+        handleRunSelfTests();
+      }
+    },
+    { passive: false }
+  );
 
   // Update every 500ms
   setInterval(updateDebugPanel, 500);
