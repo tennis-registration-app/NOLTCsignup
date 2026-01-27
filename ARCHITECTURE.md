@@ -124,6 +124,47 @@ The `CompleteBlockManagerEnhanced.jsx` component (~1,076 lines) was decomposed i
 - Current: 832 lines (~23% reduction)
 - Extracted: 363 lines across 4 modules
 
+## Courtboard Module Structure (WP4 Phase 1)
+
+```
+src/courtboard/
+├── main.jsx                    # Thin entry point (≤500 lines target met)
+├── bridge/
+│   └── window-bridge.js        # Single writer for window.CourtboardState
+├── components/
+│   ├── CourtCard.jsx           # Individual court display
+│   ├── Icons.jsx               # Shared icon components
+│   ├── LoadingPlaceholder.jsx  # Loading state
+│   ├── NextAvailablePanel.jsx  # Next available courts panel
+│   ├── ReservedCourtsPanel.jsx # Reserved courts panel
+│   ├── TennisCourtDisplay.jsx  # Main court grid (state owner)
+│   ├── ToastHost.jsx           # Toast notifications
+│   └── WaitingList.jsx         # Waitlist display
+├── mobile/
+│   ├── MobileModalApp.jsx      # Mobile app shell
+│   └── MobileModalSheet.jsx    # Mobile modal content
+├── utils/
+│   └── courtUtils.js           # Shared helper functions
+└── Existing supporting modules (unchanged):
+    ├── browser-bridge.js       # window.CourtAvailability export
+    ├── courtboardState.js      # State reading helpers
+    ├── mobile-bridge.js        # Mobile communication
+    ├── mobile-fallback-bar.js  # Fallback UI
+    ├── debug-panel.js          # Debug utilities
+    └── sync-promotions.js      # Promotion sync
+```
+
+### Key Architectural Patterns
+
+- **Single Writer**: `window.CourtboardState` is written ONLY by `bridge/window-bridge.js`
+- **State Owner**: `TennisCourtDisplay.jsx` owns React state and calls bridge to sync
+- **Mobile Shell**: `mobile/` components handle mobile-specific UI
+- **Pure Extraction**: All components extracted without behavior changes
+
+### Verification Baseline
+
+Playwright baseline is currently 14/15 due to pre-existing failure in `block-refresh-wiring.spec.js` (to be addressed in WP5 Cleanup).
+
 ## Known Technical Debt
 
 ### Hardcoded Credentials (Phase 4)
