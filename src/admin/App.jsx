@@ -72,6 +72,8 @@ import { EventSummary } from './components/EventSummary';
 // Tab section components
 import { CalendarSection } from './tabs/CalendarSection';
 import { HistorySection } from './tabs/HistorySection';
+import { AnalyticsSection } from './tabs/AnalyticsSection';
+import { BlockingSection } from './tabs/BlockingSection';
 
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
@@ -1093,91 +1095,33 @@ const AdminPanelV2 = ({ onExit }) => {
             />
           )}
           {activeTab === 'blocking' && (
-            <div className="space-y-6 p-6 ">
-              {/* Sub-tab Content */}
-              {blockingView === 'create' && (
-                <CompleteBlockManagerEnhanced
-                  courts={courts}
-                  onApplyBlocks={applyBlocks}
-                  existingBlocks={existingBlocks}
-                  wetCourtsActive={wetCourtsActive}
-                  setWetCourtsActive={setWetCourtsActive}
-                  wetCourts={wetCourts}
-                  setWetCourts={setWetCourts}
-                  suspendedBlocks={suspendedBlocks}
-                  setSuspendedBlocks={setSuspendedBlocks}
-                  ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-                  onNotification={showNotification}
-                  defaultView="create"
-                  VisualTimeEntry={VisualTimeEntry}
-                  MiniCalendar={MiniCalendar}
-                  EventCalendarEnhanced={EventCalendarEnhanced}
-                  MonthView={MonthView}
-                  EventSummary={EventSummary}
-                  HoverCard={HoverCard}
-                  QuickActionsMenu={QuickActionsMenu}
-                  Tennis={window.Tennis}
-                  backend={backend}
-                  hoursOverrides={hoursOverrides}
-                  initialEditingBlock={blockToEdit}
-                  onEditingBlockConsumed={() => setBlockToEdit(null)}
-                />
-              )}
-
-              {blockingView === 'future' && (
-                <CompleteBlockManagerEnhanced
-                  courts={courts}
-                  onApplyBlocks={applyBlocks}
-                  existingBlocks={existingBlocks}
-                  wetCourtsActive={wetCourtsActive}
-                  setWetCourtsActive={setWetCourtsActive}
-                  wetCourts={wetCourts}
-                  setWetCourts={setWetCourts}
-                  suspendedBlocks={suspendedBlocks}
-                  setSuspendedBlocks={setSuspendedBlocks}
-                  ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-                  onNotification={showNotification}
-                  defaultView="calendar"
-                  VisualTimeEntry={VisualTimeEntry}
-                  MiniCalendar={MiniCalendar}
-                  EventCalendarEnhanced={EventCalendarEnhanced}
-                  MonthView={MonthView}
-                  EventSummary={EventSummary}
-                  HoverCard={HoverCard}
-                  QuickActionsMenu={QuickActionsMenu}
-                  Tennis={window.Tennis}
-                  backend={backend}
-                  hoursOverrides={hoursOverrides}
-                />
-              )}
-
-              {blockingView === 'list' && (
-                <CompleteBlockManagerEnhanced
-                  courts={courts}
-                  onApplyBlocks={applyBlocks}
-                  existingBlocks={existingBlocks}
-                  wetCourtsActive={wetCourtsActive}
-                  setWetCourtsActive={setWetCourtsActive}
-                  wetCourts={wetCourts}
-                  setWetCourts={setWetCourts}
-                  suspendedBlocks={suspendedBlocks}
-                  setSuspendedBlocks={setSuspendedBlocks}
-                  ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-                  onNotification={showNotification}
-                  defaultView="timeline"
-                  VisualTimeEntry={VisualTimeEntry}
-                  MiniCalendar={MiniCalendar}
-                  EventCalendarEnhanced={EventCalendarEnhanced}
-                  MonthView={MonthView}
-                  EventSummary={EventSummary}
-                  HoverCard={HoverCard}
-                  QuickActionsMenu={QuickActionsMenu}
-                  Tennis={window.Tennis}
-                  backend={backend}
-                  hoursOverrides={hoursOverrides}
-                />
-              )}
-            </div>
+            <BlockingSection
+              blockingView={blockingView}
+              courts={courts}
+              onApplyBlocks={applyBlocks}
+              existingBlocks={existingBlocks}
+              wetCourtsActive={wetCourtsActive}
+              setWetCourtsActive={setWetCourtsActive}
+              wetCourts={wetCourts}
+              setWetCourts={setWetCourts}
+              suspendedBlocks={suspendedBlocks}
+              setSuspendedBlocks={setSuspendedBlocks}
+              ENABLE_WET_COURTS={ENABLE_WET_COURTS}
+              onNotification={showNotification}
+              VisualTimeEntry={VisualTimeEntry}
+              MiniCalendar={MiniCalendar}
+              EventCalendarEnhanced={EventCalendarEnhanced}
+              MonthView={MonthView}
+              EventSummary={EventSummary}
+              HoverCard={HoverCard}
+              QuickActionsMenu={QuickActionsMenu}
+              Tennis={window.Tennis}
+              backend={backend}
+              hoursOverrides={hoursOverrides}
+              initialEditingBlock={blockToEdit}
+              onEditingBlockConsumed={() => setBlockToEdit(null)}
+              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced}
+            />
           )}
           {activeTab === 'waitlist' && (
             <div className="bg-white rounded-lg shadow-sm p-6">
@@ -1233,15 +1177,9 @@ const AdminPanelV2 = ({ onExit }) => {
               )}
             </div>
           )}
-          {activeTab === 'analytics' &&
-            (typeof AnalyticsDashboard !== 'undefined' ? (
-              <AnalyticsDashboard onClose={null} backend={backend} />
-            ) : (
-              <div className="p-8 text-center">
-                <h3 className="text-lg font-semibold text-gray-600">Analytics Dashboard</h3>
-                <p className="text-gray-500 mt-2">Analytics component not available</p>
-              </div>
-            ))}
+          {activeTab === 'analytics' && (
+            <AnalyticsSection backend={backend} AnalyticsDashboard={AnalyticsDashboard} />
+          )}
           {activeTab === 'history' && (
             <HistorySection backend={backend} GameHistorySearch={GameHistorySearch} />
           )}
