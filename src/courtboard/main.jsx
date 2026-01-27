@@ -1879,7 +1879,7 @@ function MobileModalSheet({ type, payload, onClose }) {
 
   const getBodyContent = () => {
     switch (type) {
-      case 'court-conditions':
+      case 'court-conditions': {
         // Court conditions with iframe
         const wetCourtsUrl = 'https://camera.noltc.com/courtconditions.html';
         return (
@@ -1899,8 +1899,9 @@ function MobileModalSheet({ type, payload, onClose }) {
             </button>
           </div>
         );
+      }
 
-      case 'roster':
+      case 'roster': {
         // Member roster display
         let rosterData = [];
         try {
@@ -1997,8 +1998,9 @@ function MobileModalSheet({ type, payload, onClose }) {
             )}
           </div>
         );
+      }
 
-      case 'reserved':
+      case 'reserved': {
         // Reserved courts list
         const reservedItems = payload?.reservedData || [];
         const fmt = (d) =>
@@ -2027,8 +2029,9 @@ function MobileModalSheet({ type, payload, onClose }) {
             )}
           </div>
         );
+      }
 
-      case 'waitlist':
+      case 'waitlist': {
         // Waitlist display - uses courts data from payload (passed from React state)
         const waitlistData = payload?.waitlistData || [];
         const modalCourts = payload?.courts || [];
@@ -2191,6 +2194,7 @@ function MobileModalSheet({ type, payload, onClose }) {
             )}
           </div>
         );
+      }
 
       case 'clear-court-confirm': {
         // Clear Court confirmation modal
