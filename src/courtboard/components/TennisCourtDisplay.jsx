@@ -10,6 +10,9 @@ const backend = createBackend();
 // Court availability helper - single source of truth for free/playable courts
 import { countPlayableCourts, listPlayableCourts } from '../../shared/courts/courtAvailability.js';
 
+// Window bridge - single writer for window.CourtboardState
+import { writeCourtboardState } from '../bridge/window-bridge';
+
 // Import shared utilities from @lib
 import { TENNIS_CONFIG as _sharedTennisConfig } from '@lib';
 
@@ -271,14 +274,14 @@ export function TennisCourtDisplay() {
       waitingGroups: waitlist?.length,
       freeCourts: freeCount,
     });
-    window.CourtboardState = {
+    writeCourtboardState({
       courts: courts,
       courtBlocks: courtBlocks,
       upcomingBlocks: upcomingBlocks,
       waitingGroups: waitlist,
       freeCourts: freeCount,
       timestamp: Date.now(),
-    };
+    });
 
     // Update mobile button state after state is set
     if (typeof window.updateJoinButtonState === 'function') {
