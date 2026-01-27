@@ -151,7 +151,7 @@ export function QRScanner({ onScan, onClose, onError }) {
 
       {/* Instructions */}
       <div className="p-4 bg-gray-900 text-white text-center text-sm">
-        <p>Can't find the QR code? Ask a staff member for help.</p>
+        <p>Can&apos;t find the QR code? Ask a staff member for help.</p>
       </div>
     </div>
   );

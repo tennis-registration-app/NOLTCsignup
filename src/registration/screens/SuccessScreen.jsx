@@ -353,7 +353,7 @@ const SuccessScreen = ({
           </h1>
         </div>
         <div className="bg-green-50 rounded-2xl p-4 sm:p-6 text-center">
-          <p className="text-lg sm:text-xl text-gray-700 mb-2">You're all set on</p>
+          <p className="text-lg sm:text-xl text-gray-700 mb-2">You&apos;re all set on</p>
           <p
             className="text-2xl sm:text-3xl font-bold text-green-600"
             data-testid="reg-assigned-court"
@@ -629,7 +629,7 @@ const SuccessScreen = ({
           <Check size={32} className="text-white sm:w-10 sm:h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent text-center">
-          You're on the list!
+          You&apos;re on the list!
         </h1>
       </div>
 

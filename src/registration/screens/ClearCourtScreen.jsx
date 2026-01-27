@@ -205,7 +205,7 @@ const ClearCourtScreen = ({
               }}
               className="w-full bg-blue-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-blue-600 transition-colors"
             >
-              Players have finished and court {selectedCourtToClear} is open (I'm sure!)
+              Players have finished and court {selectedCourtToClear} is open (I&apos;m sure!)
             </button>
           </div>
 

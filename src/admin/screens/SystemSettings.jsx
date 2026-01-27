@@ -546,7 +546,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
             <div className="space-y-3 pl-1">
               <div className="flex items-center gap-3">
                 <label className="text-sm text-gray-600 w-48">
-                  Show "check status" warning after
+                  Show &quot;check status&quot; warning after
                 </label>
                 <input
                   type="number"

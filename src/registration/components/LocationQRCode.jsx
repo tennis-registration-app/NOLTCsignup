@@ -27,21 +27,18 @@ export function LocationQRCode({ onError }) {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}/generate-location-token`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${API_CONFIG.ANON_KEY}`,
-            'apikey': API_CONFIG.ANON_KEY,
-          },
-          body: JSON.stringify({
-            device_id: API_CONFIG.DEVICE_ID,
-            validity_minutes: TOKEN_VALIDITY_MINUTES,
-          }),
-        }
-      );
+      const response = await fetch(`${API_CONFIG.BASE_URL}/generate-location-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${API_CONFIG.ANON_KEY}`,
+          apikey: API_CONFIG.ANON_KEY,
+        },
+        body: JSON.stringify({
+          device_id: API_CONFIG.DEVICE_ID,
+          validity_minutes: TOKEN_VALIDITY_MINUTES,
+        }),
+      });
 
       const data = await response.json();
 
@@ -66,7 +63,6 @@ export function LocationQRCode({ onError }) {
           generateToken();
         }, refreshTime);
       }
-
     } catch (err) {
       console.error('Failed to generate location token:', err);
       setError(err.message);
@@ -152,32 +148,25 @@ export function LocationQRCode({ onError }) {
 
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">
-        Location Verification
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">Location Verification</h3>
       <p className="text-sm text-gray-600 mb-4 text-center">
-        Scan with your phone if GPS isn't working
+        Scan with your phone if GPS isn&apos;t working
       </p>
 
       <div className="p-4 bg-white border-4 border-green-600 rounded-lg">
-        <QRCodeSVG
-          value={qrValue}
-          size={200}
-          level="M"
-          includeMargin={false}
-        />
+        <QRCodeSVG value={qrValue} size={200} level="M" includeMargin={false} />
       </div>
 
       <div className="mt-4 flex items-center text-sm">
-        <span className={`font-mono text-lg ${timeLeft && timeLeft < 60 ? 'text-orange-500' : 'text-gray-700'}`}>
+        <span
+          className={`font-mono text-lg ${timeLeft && timeLeft < 60 ? 'text-orange-500' : 'text-gray-700'}`}
+        >
           {formatTimeLeft(timeLeft)}
         </span>
         <span className="ml-2 text-gray-500">until refresh</span>
       </div>
 
-      {loading && (
-        <p className="mt-2 text-xs text-gray-400">Refreshing...</p>
-      )}
+      {loading && <p className="mt-2 text-xs text-gray-400">Refreshing...</p>}
     </div>
   );
 }

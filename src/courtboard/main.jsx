@@ -1387,7 +1387,7 @@ function WaitingList({
                   {showAlert && (
                     <div className="flex items-center text-yellow-400 animate-pulse">
                       <AlertCircle className="mr-1" size={16} />
-                      <span className="courtboard-text-xs font-bold">You're Up!</span>
+                      <span className="courtboard-text-xs font-bold">You&apos;re Up!</span>
                     </div>
                   )}
                   {!showAlert && (

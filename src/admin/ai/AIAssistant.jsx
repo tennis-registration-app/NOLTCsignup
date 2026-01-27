@@ -195,7 +195,8 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
             <div className="text-center text-gray-500 py-8">
               <p className="mb-2">How can I help you manage the courts?</p>
               <p className="text-sm">
-                Try: "What courts are available?" or "Block court 5 for maintenance"
+                Try: &quot;What courts are available?&quot; or &quot;Block court 5 for
+                maintenance&quot;
               </p>
             </div>
           )}
