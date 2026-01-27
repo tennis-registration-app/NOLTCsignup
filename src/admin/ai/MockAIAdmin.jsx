@@ -18,11 +18,11 @@ const MockAIAdmin = ({
   onClose,
   dataStore,
   courts,
-  loadData,
+  loadData: _loadData,
   clearCourt,
   clearAllCourts,
   moveCourt,
-  settings,
+  settings: _settings,
   updateBallPrice,
   waitingGroups,
   refreshData,
@@ -77,7 +77,7 @@ const MockAIAdmin = ({
         const now = new Date();
 
         if (timeMatch) {
-          const [_, start, end] = timeMatch;
+          const [, start, end] = timeMatch;
           startTime = `${start}:00`;
           endTime = `${end}:00`;
         } else if (lower.includes('hour')) {
@@ -300,7 +300,7 @@ const MockAIAdmin = ({
         try {
           await updateBallPrice(action.price.toString());
           return `✓ Ball price set to $${action.price.toFixed(2)}`;
-        } catch (e) {
+        } catch (_e) {
           return '✗ Failed to update ball price';
         }
 

@@ -8,10 +8,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Settings state
-  const [settings, setSettings] = useState({
+  const [, setSettings] = useState({
     tennisBallPrice: 5.0,
     guestFees: { weekday: 15.0, weekend: 20.0 },
-  });
+  }); // Getter unused, setter used
   const [ballPriceInput, setBallPriceInput] = useState('5.00');
   const [weekdayFeeInput, setWeekdayFeeInput] = useState('15.00');
   const [weekendFeeInput, setWeekendFeeInput] = useState('20.00');
@@ -46,7 +46,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Save status state for each card
   const [pricingSaveStatus, setPricingSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
   const [hoursSaveStatus, setHoursSaveStatus] = useState(null);
-  const [overrideSaveStatus, setOverrideSaveStatus] = useState(null);
+  const [, setOverrideSaveStatus] = useState(null); // Getter unused, setter used
   const [autoClearSaveStatus, setAutoClearSaveStatus] = useState(null);
 
   // Day names for operating hours

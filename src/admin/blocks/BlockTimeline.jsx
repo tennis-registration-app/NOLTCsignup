@@ -8,7 +8,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Edit2, Copy, Trash2 } from '../components';
 
 const BlockTimeline = ({
-  courts,
+  courts: _courts,
   currentTime,
   onEditBlock,
   onRemoveBlock,
@@ -42,7 +42,6 @@ const BlockTimeline = ({
         // For day view: fetch current day + buffer for navigation
         // For week view: fetch current week + buffer
         // We fetch a broader range to allow smooth navigation without re-fetching
-        const now = new Date();
         let fromDate, toDate;
 
         if (viewMode === 'day') {

@@ -193,7 +193,7 @@ export function UsageComparisonChart({ data, loading, error }) {
 
           {/* X-axis labels */}
           <div className="absolute bottom-0 left-0 right-0 h-8 flex overflow-hidden">
-            {buckets.map((bucket, idx) => (
+            {buckets.map((bucket) => (
               <div
                 key={bucket.bucketStart}
                 className="flex-1 text-center text-xs text-gray-600 truncate px-0.5 pt-2"

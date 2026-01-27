@@ -21,87 +21,34 @@ const getDeviceId = () => {
 import {
   // Icons
   Calendar,
-  Calendar2,
-  CalendarDays,
   Clock,
-  Users,
   GraduationCap,
   Settings,
-  Copy,
   Trash2,
-  Save,
-  X,
-  Plus,
-  Edit,
-  Edit2,
-  Edit3,
-  Download,
-  RefreshCw,
-  Move,
   AlertCircle,
-  AlertTriangle,
-  CheckCircle,
-  Check,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Grid,
-  Grid3X3,
-  List,
-  Filter,
-  MoreHorizontal,
   BarChart,
   FileText,
-  TrendingUp,
-  Activity,
-  Play,
-  Pause,
-  Square,
-  Eye,
-  EyeOff,
-  Wrench,
-  Droplets,
-  TennisBall,
-  Court,
   Trophy,
   Star,
-  Bot,
-  MessageCircle,
   greyFilter,
   // UI Components
   HoverCard,
   QuickActionsMenu,
-  EditGameModal,
 } from './components';
 
 // Calendar components
-import {
-  EventCalendarEnhanced,
-  getEventColor,
-  getEventEmoji,
-  getEventTypeFromReason,
-} from './calendar';
+import { EventCalendarEnhanced, getEventColor } from './calendar';
 
 // Block management components
-import {
-  BlockTemplateManager,
-  RecurrenceConfig,
-  BlockTimeline,
-  CompleteBlockManagerEnhanced,
-} from './blocks';
+import { CompleteBlockManagerEnhanced } from './blocks';
 
 // Court management components
 import { CourtStatusGrid } from './courts';
 
-// Analytics components
-import {
-  UsageHeatmap,
-  UtilizationChart,
-  WaitTimeAnalysis,
-  BallPurchaseLog,
-  GuestChargeLog,
-} from './analytics';
+// Analytics components (re-exported via ./screens/AnalyticsDashboard)
 
 // AI components
 import { MockAIAdmin, AIAssistant } from './ai';
@@ -116,12 +63,8 @@ const USE_REAL_AI = true;
 const U = window.APP_UTILS || {};
 const {
   STORAGE,
-  EVENTS,
   readJSON,
-  writeJSON,
   getEmptyData,
-  readDataSafe: _sharedReadDataSafe,
-  COURT_COUNT,
   TennisCourtDataStore,
   TENNIS_CONFIG: _sharedTennisConfig,
 } = U;
@@ -177,51 +120,14 @@ const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 })();
 
 // Shared domain modules
-const USE_SHARED_DOMAIN = true;
-const WC = window.Tennis?.Domain?.wetCourts || window.Tennis?.Domain?.WetCourts;
-const Storage = window.Tennis?.Storage;
 const Events = window.Tennis?.Events;
-const BL = window.Tennis?.Domain?.blocks || window.Tennis?.Domain?.Blocks;
-
-// Local readDataSafe wraps the shared version for backward compatibility
-const readDataSafe = () =>
-  _sharedReadDataSafe ? _sharedReadDataSafe() : readJSON(STORAGE.DATA) || getEmptyData();
 
 // ---- Core constants (declared only; not replacing existing usages) ----
-const APP = {
-  COURT_COUNT: 12,
-  PLAYERS: { MIN: 1, MAX: 4 },
-  DURATION_MIN: { SINGLES: 60, DOUBLES: 90, MAX: 240 },
-};
 
 // ---- Dev flag & assert (no UI change) ----
 const DEV = typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.host);
 const assert = (cond, msg, obj) => {
   if (DEV && !cond) console.warn('ASSERT:', msg, obj || '');
-};
-
-// ---- Debounce helper (no UI change) ----
-const debounce = (fn, ms = 150) => {
-  let t;
-  return (...a) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...a), ms);
-  };
-};
-
-// ---- Logger (no UI change) ----
-const LOG_LEVEL = DEV ? 'debug' : 'warn';
-const _PREFIX = '[Admin]';
-const log = {
-  debug: (...a) => {
-    if (['debug'].includes(LOG_LEVEL)) console.debug(_PREFIX, ...a);
-  },
-  info: (...a) => {
-    if (['debug', 'info'].includes(LOG_LEVEL)) console.info(_PREFIX, ...a);
-  },
-  warn: (...a) => {
-    if (['debug', 'info', 'warn'].includes(LOG_LEVEL)) console.warn(_PREFIX, ...a);
-  },
 };
 
 // central registry for timers in this view
@@ -268,28 +174,6 @@ const dataStore = TennisCourtDataStore ? new TennisCourtDataStore() : null;
 // REMOVED: local TENNIS_CONFIG (~21 lines)
 // The shared config includes all properties (COURTS, TIMING, STORAGE, PRICING, etc.)
 const TENNIS_CONFIG = _sharedTennisConfig;
-
-// Utility Functions
-const formatTime = (date) => {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-};
-
-const formatDate = (date) => {
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-};
-
-const getDayOfWeek = (date) => {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  return days[date.getDay()];
-};
 
 // BlockTemplateManager and RecurrenceConfig moved to ./blocks/
 // CourtStatusGrid moved to ./courts/
@@ -652,7 +536,7 @@ const VisualTimeEntry = ({
   );
 };
 
-const MiniCalendar = ({ selectedDate, onDateSelect, minDate = new Date() }) => {
+const MiniCalendar = ({ selectedDate, onDateSelect, minDate: _minDate = new Date() }) => {
   const [viewMonth, setViewMonth] = useState(new Date(selectedDate));
 
   const getDaysInMonth = (date) => {
@@ -755,8 +639,8 @@ const MiniCalendar = ({ selectedDate, onDateSelect, minDate = new Date() }) => {
   );
 };
 
-// Day View Component with collision detection
-const DayView = memo(
+// Day View Component with collision detection (unused - kept for future reference)
+const _DayView = memo(
   ({
     selectedDate,
     events,
@@ -908,7 +792,7 @@ const MonthView = memo(
       return map;
     }, [hoursOverrides]);
 
-    const { start, end, calendarDays, eventsByDate } = useMemo(() => {
+    const { calendarDays, eventsByDate } = useMemo(() => {
       const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
       const startingDayOfWeek = firstDay.getDay();
       const daysInMonth = new Date(
@@ -938,8 +822,6 @@ const MonthView = memo(
       });
 
       return {
-        start: firstDay,
-        end: new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59, 999),
         calendarDays: days,
         eventsByDate: evtsByDate,
       };
@@ -1086,9 +968,9 @@ const AdminPanelV2 = ({ onExit }) => {
   const [activeTab, setActiveTab] = useState('status');
   const [courts, setCourts] = useState([]);
   const [waitingGroups, setWaitingGroups] = useState([]);
-  const [blockTemplates, setBlockTemplates] = useState([]);
+  const [, setBlockTemplates] = useState([]); // Getter unused, setter used
   const [settings, setSettings] = useState({});
-  const [operatingHours, setOperatingHours] = useState([]);
+  const [, setOperatingHours] = useState([]); // Getter unused, setter used
   const [hoursOverrides, setHoursOverrides] = useState([]);
   const [notification, setNotification] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -1099,9 +981,9 @@ const AdminPanelV2 = ({ onExit }) => {
   const [blockingView, setBlockingView] = useState('create');
   const [courtBlocks, setCourtBlocks] = useState([]);
   const [blockToEdit, setBlockToEdit] = useState(null);
-  const [calendarView, setCalendarView] = useState('day');
+  const [calendarView, _setCalendarView] = useState('day'); // Setter unused
   const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, _setSelectedDate] = useState(new Date()); // Setter unused
 
   // Ref to track blocks fingerprint for detecting actual changes
   const lastBlocksFingerprintRef = useRef('');
@@ -1279,33 +1161,6 @@ const AdminPanelV2 = ({ onExit }) => {
     window.addEventListener('ADMIN_REFRESH', onAdminRefresh);
     return () => window.removeEventListener('ADMIN_REFRESH', onAdminRefresh);
   }, []);
-
-  // Save data to localStorage
-  const saveData = useCallback(
-    async (newCourts, newWaitingGroups) => {
-      try {
-        const key = TENNIS_CONFIG.STORAGE.KEY;
-        const prev = Tennis.Storage?.readDataSafe
-          ? Tennis.Storage.readDataSafe()
-          : JSON.parse(localStorage.getItem(key) || 'null') || {};
-        const next = {
-          courts: newCourts || courts,
-          waitingGroups: newWaitingGroups || waitingGroups,
-          recentlyCleared: [],
-        };
-        const merged = window.APP_UTILS.preservePromotions(prev, next);
-
-        await dataStore.set(key, merged, { immediate: true });
-        window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-
-        showNotification('Changes saved successfully', 'success');
-      } catch (error) {
-        console.error('Failed to save data:', error);
-        showNotification('Failed to save changes', 'error');
-      }
-    },
-    [courts, waitingGroups]
-  );
 
   // Show notification
   const showNotification = (message, type = 'info') => {
@@ -1661,40 +1516,6 @@ const AdminPanelV2 = ({ onExit }) => {
     } else {
       showNotification(`Applied ${successCount} block(s) successfully`, 'success');
     }
-  };
-
-  // Template operations
-  const saveTemplate = async (template) => {
-    const newTemplates = [...blockTemplates, template];
-    setBlockTemplates(newTemplates);
-    await dataStore.set(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY, newTemplates, {
-      immediate: true,
-    });
-    showNotification('Template saved', 'success');
-  };
-
-  const deleteTemplate = async (id) => {
-    const newTemplates = blockTemplates.filter((t) => t.id !== id);
-    setBlockTemplates(newTemplates);
-    await dataStore.set(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY, newTemplates, {
-      immediate: true,
-    });
-    showNotification('Template deleted', 'success');
-  };
-
-  const applyTemplate = (template) => {
-    const now = new Date();
-    const [hours, minutes] = now.toTimeString().split(':');
-
-    applyBlocks([
-      {
-        date: now.toISOString().split('T')[0],
-        time: `${hours}:${minutes}`,
-        duration: template.duration,
-        courts: template.courts,
-        reason: template.reason,
-      },
-    ]);
   };
 
   // Waitlist operations - using TennisBackend API
@@ -2295,60 +2116,6 @@ const AdminPanelV2 = ({ onExit }) => {
       )}
     </div>
   );
-};
-
-// Utility Functions
-const formatDateTime = (date) => {
-  return new Date(date).toLocaleString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  });
-};
-
-const formatHour = (hour) => {
-  if (hour === 0) return '12 AM';
-  if (hour === 12) return '12 PM';
-  if (hour < 12) return `${hour} AM`;
-  return `${hour - 12} PM`;
-};
-
-// Note: getEventEmoji moved to ./calendar/utils.js
-
-const downloadCSV = (data, filename) => {
-  const csv = convertToCSV(data);
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
-};
-
-const convertToCSV = (data) => {
-  if (!data || data.length === 0) return '';
-
-  const headers = Object.keys(data[0]);
-  const csvHeaders = headers.join(',');
-
-  const csvRows = data.map((row) => {
-    return headers
-      .map((header) => {
-        const value = row[header];
-        // Escape quotes and wrap in quotes if contains comma
-        const escaped = String(value).replace(/"/g, '""');
-        return escaped.includes(',') ? `"${escaped}"` : escaped;
-      })
-      .join(',');
-  });
-
-  return [csvHeaders, ...csvRows].join('\n');
 };
 
 // Export the main App component (renamed from TestMenu)

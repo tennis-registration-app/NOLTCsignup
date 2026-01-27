@@ -15,10 +15,7 @@ import { getEventTypeFromReason } from '../calendar/utils.js';
 import { useWetCourts } from './hooks/useWetCourts';
 import { expandRecurrenceDates } from './utils/expandRecurrenceDates';
 
-// Get dependencies from window
-const Tennis = window.Tennis;
-const Events = window.Events;
-const WC = window.WC;
+// Dependencies from window (currently unused but kept for future use)
 
 // Conflict Detection Component
 const ConflictDetector = ({
@@ -149,12 +146,12 @@ const ConflictDetector = ({
 const CompleteBlockManagerEnhanced = ({
   courts,
   onApplyBlocks,
-  existingBlocks,
+  existingBlocks: _existingBlocks,
   wetCourtsActive,
   setWetCourtsActive,
   wetCourts,
   setWetCourts,
-  suspendedBlocks,
+  suspendedBlocks: _suspendedBlocks,
   setSuspendedBlocks,
   ENABLE_WET_COURTS,
   onNotification,

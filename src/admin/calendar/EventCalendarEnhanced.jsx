@@ -5,7 +5,7 @@
  * Coordinates all calendar views and handles event interactions.
  * Fetches block data from API via TennisBackend.
  */
-import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from '../components';
 import DayViewEnhanced from './DayViewEnhanced.jsx';
 import WeekView from './WeekView.jsx';
@@ -17,7 +17,7 @@ const EventCalendarEnhanced = ({
   currentTime,
   refreshTrigger,
   onRefresh,
-  onEditEvent,
+  onEditEvent: _onEditEvent,
   onDuplicateEvent,
   defaultView = 'day',
   disableEventClick = false,
@@ -25,10 +25,10 @@ const EventCalendarEnhanced = ({
   hoursOverrides = [],
   // These components are passed from parent until they're extracted
   MonthView,
-  EventSummary,
+  EventSummary: _EventSummary,
   HoverCard,
   QuickActionsMenu,
-  Tennis,
+  Tennis: _Tennis,
 }) => {
   const [viewMode, setViewMode] = useState(defaultView);
   const [selectedDate, setSelectedDate] = useState(new Date());
