@@ -69,6 +69,10 @@ import { MiniCalendar } from './components/MiniCalendar';
 import { MonthView } from './components/MonthView';
 import { EventSummary } from './components/EventSummary';
 
+// Tab section components
+import { CalendarSection } from './tabs/CalendarSection';
+import { HistorySection } from './tabs/HistorySection';
+
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
@@ -1072,12 +1076,12 @@ const AdminPanelV2 = ({ onExit }) => {
             </div>
           )}
           {activeTab === 'calendar' && (
-            <EventCalendarEnhanced
+            <CalendarSection
               courts={courts}
               currentTime={currentTime}
               refreshTrigger={refreshTrigger}
               onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
-              defaultView={calendarView}
+              calendarView={calendarView}
               backend={backend}
               hoursOverrides={hoursOverrides}
               MonthView={MonthView}
@@ -1085,6 +1089,7 @@ const AdminPanelV2 = ({ onExit }) => {
               HoverCard={HoverCard}
               QuickActionsMenu={QuickActionsMenu}
               Tennis={window.Tennis}
+              EventCalendarEnhanced={EventCalendarEnhanced}
             />
           )}
           {activeTab === 'blocking' && (
@@ -1237,7 +1242,9 @@ const AdminPanelV2 = ({ onExit }) => {
                 <p className="text-gray-500 mt-2">Analytics component not available</p>
               </div>
             ))}
-          {activeTab === 'history' && <GameHistorySearch backend={backend} />}
+          {activeTab === 'history' && (
+            <HistorySection backend={backend} GameHistorySearch={GameHistorySearch} />
+          )}
         </div>
         {/* System tab - outside the white wrapper so cards have visible separation */}
         {activeTab === 'system' && (
