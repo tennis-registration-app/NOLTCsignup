@@ -643,278 +643,143 @@ const MiniCalendar = ({ selectedDate, onDateSelect, minDate: _minDate = new Date
   );
 };
 
-// Day View Component with collision detection (unused - kept for future reference)
-const _DayView = memo(
-  ({
-    selectedDate,
-    events,
-    currentTime,
-    onEventClick,
-    onEventHover,
-    onEventLeave,
-    onQuickAction,
-  }) => {
-    const { eventsWithLayout, hours, showCurrentTime } = useMemo(() => {
-      const isToday = selectedDate.toDateString() === currentTime.toDateString();
-      const hoursArray = Array.from({ length: 15 }, (_, i) => i + 7);
-
-      // Filter events for this day
-      const dayEvents = events.filter((event) => {
-        const eventDate = new Date(event.startTime);
-        return eventDate.toDateString() === selectedDate.toDateString();
-      });
-
-      // Calculate layout for collision detection
-      const layout = calculateEventLayout(dayEvents);
-
-      const positions = dayEvents.map((event) => {
-        const eventStart = new Date(event.startTime);
-        const eventEnd = new Date(event.endTime);
-        const startHour = eventStart.getHours() + eventStart.getMinutes() / 60;
-        const endHour = eventEnd.getHours() + eventEnd.getMinutes() / 60;
-
-        const layoutInfo = layout.get(
-          event.id || `${event.startTime}-${event.courtNumbers?.[0]}`
-        ) || {
-          column: 0,
-          totalColumns: 1,
-        };
-
-        return {
-          ...event,
-          top: (startHour - 7) * 60,
-          height: (endHour - startHour) * 60,
-          startHour,
-          endHour,
-          column: layoutInfo.column,
-          totalColumns: layoutInfo.totalColumns,
-          hasConflict:
-            layoutInfo.totalColumns > 1 &&
-            layoutInfo.group.some(
-              (otherEvent) =>
-                otherEvent !== event &&
-                event.courtNumbers?.some((court) => otherEvent.courtNumbers?.includes(court))
-            ),
-        };
-      });
-
-      return {
-        eventsWithLayout: positions,
-        hours: hoursArray,
-        showCurrentTime: isToday,
-      };
-    }, [selectedDate, events, currentTime]);
-
-    return (
-      <div className="flex h-full">
-        {/* Time column */}
-        <div className="w-20 flex-shrink-0 relative" style={{ height: `${hours.length * 60}px` }}>
-          {hours.map((hour, idx) => (
-            <div
-              key={hour}
-              className="absolute right-2 text-sm text-gray-500"
-              style={{ top: `${idx * 60 - 8}px` }}
-            >
-              {hour > 12 ? `${hour - 12}:00 PM` : hour === 12 ? '12:00 PM' : `${hour}:00 AM`}
-            </div>
-          ))}
-        </div>
-
-        {/* Event column */}
-        <div
-          className="flex-1 bg-white relative border-l border-gray-300"
-          style={{ height: `${hours.length * 60}px` }}
-        >
-          {/* Hour blocks with grid lines */}
-          {hours.map((hour, idx) => (
-            <div
-              key={hour}
-              className="absolute w-full h-[60px] border-t border-gray-200"
-              style={{ top: `${idx * 60}px` }}
-            >
-              {/* Half-hour line */}
-              <div className="absolute w-full h-px bg-gray-100" style={{ top: '30px' }} />
-            </div>
-          ))}
-
-          {/* Current time indicator */}
-          {showCurrentTime && (
-            <div
-              className="absolute left-0 right-0 border-t-2 border-red-500 z-10"
-              style={{
-                top: `${(currentTime.getHours() + currentTime.getMinutes() / 60 - 7) * 60}px`,
-              }}
-            >
-              <div className="absolute -top-2 left-0 bg-red-500 text-white text-xs px-1 rounded">
-                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
-            </div>
-          )}
-
-          {/* Events with collision handling */}
-          {eventsWithLayout.map((event, idx) => {
-            const width = `calc(${100 / event.totalColumns}% - 16px)`;
-            const left = `calc(${(100 / event.totalColumns) * event.column}% + 8px)`;
-
-            return (
-              <InteractiveEvent
-                key={idx}
-                event={event}
-                className={`absolute p-3 rounded-lg shadow-md ${getEventColor(event)} border-2 group hover:z-10 hover:shadow-lg transition-shadow`}
-                style={{
-                  top: `${event.top}px`,
-                  height: `${event.height}px`,
-                  minHeight: '60px',
-                  left: left,
-                  width: width,
-                }}
-                onEventClick={onEventClick}
-                onEventHover={onEventHover}
-                onEventLeave={onEventLeave}
-                onQuickAction={onQuickAction}
-                isWeekView={false}
-              />
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-);
-
 // Note: DayViewEnhanced moved to ./calendar/DayViewEnhanced.jsx
 
 // Month View Component with memoization
-const MonthView = memo(
-  ({ selectedDate, events, currentTime, hoursOverrides = [], onEventClick }) => {
-    // Create a map for quick lookup of overrides by date
-    const overridesByDate = useMemo(() => {
-      const map = {};
-      hoursOverrides.forEach((o) => {
-        map[o.date] = o;
-      });
-      return map;
-    }, [hoursOverrides]);
+const MonthView = memo(function MonthView({
+  selectedDate,
+  events,
+  currentTime,
+  hoursOverrides = [],
+  onEventClick,
+}) {
+  // Create a map for quick lookup of overrides by date
+  const overridesByDate = useMemo(() => {
+    const map = {};
+    hoursOverrides.forEach((o) => {
+      map[o.date] = o;
+    });
+    return map;
+  }, [hoursOverrides]);
 
-    const { calendarDays, eventsByDate } = useMemo(() => {
-      const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      const startingDayOfWeek = firstDay.getDay();
-      const daysInMonth = new Date(
-        selectedDate.getFullYear(),
-        selectedDate.getMonth() + 1,
-        0
-      ).getDate();
+  const { calendarDays, eventsByDate } = useMemo(() => {
+    const firstDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const startingDayOfWeek = firstDay.getDay();
+    const daysInMonth = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth() + 1,
+      0
+    ).getDate();
 
-      const days = [];
-      // Add empty cells for days before month starts
-      for (let i = 0; i < startingDayOfWeek; i++) {
-        days.push(null);
+    const days = [];
+    // Add empty cells for days before month starts
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    // Add days of month
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i));
+    }
+
+    // Group events by date
+    const evtsByDate = {};
+    events.forEach((event) => {
+      const dateKey = new Date(event.startTime).toDateString();
+      if (!evtsByDate[dateKey]) {
+        evtsByDate[dateKey] = [];
       }
-      // Add days of month
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), i));
-      }
+      evtsByDate[dateKey].push(event);
+    });
 
-      // Group events by date
-      const evtsByDate = {};
-      events.forEach((event) => {
-        const dateKey = new Date(event.startTime).toDateString();
-        if (!evtsByDate[dateKey]) {
-          evtsByDate[dateKey] = [];
-        }
-        evtsByDate[dateKey].push(event);
-      });
+    return {
+      calendarDays: days,
+      eventsByDate: evtsByDate,
+    };
+  }, [selectedDate, events]);
 
-      return {
-        calendarDays: days,
-        eventsByDate: evtsByDate,
-      };
-    }, [selectedDate, events]);
-
-    return (
-      <div>
-        <div className="grid grid-cols-7 gap-px bg-gray-200">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="bg-gray-50 p-2 text-center text-sm font-medium">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-px bg-gray-200 mt-px">
-          {calendarDays.map((date, index) => {
-            const isToday = date && date.toDateString() === currentTime.toDateString();
-            const dateEvents = date ? eventsByDate[date.toDateString()] || [] : [];
-            // Check for holiday/override on this day
-            const dateStr = date ? date.toISOString().slice(0, 10) : null;
-            const override = dateStr ? overridesByDate[dateStr] : null;
-
-            return (
-              <div
-                key={index}
-                className={`relative group bg-white p-2 min-h-[100px] ${
-                  !date ? 'bg-gray-50' : ''
-                } ${override?.is_closed ? 'bg-red-50' : override ? 'bg-orange-50' : isToday ? 'bg-blue-50' : ''}`}
-              >
-                {date && (
-                  <>
-                    <div
-                      className={`text-sm font-medium mb-1 flex items-center gap-1 ${
-                        override?.is_closed
-                          ? 'text-red-600'
-                          : isToday
-                            ? 'text-blue-600'
-                            : 'text-gray-900'
-                      }`}
-                    >
-                      {date.getDate()}
-                      {override && (
-                        <span
-                          className={`w-2 h-2 rounded-full ${override.is_closed ? 'bg-red-500' : 'bg-orange-400'}`}
-                        />
-                      )}
-                    </div>
-                    {/* Hover tooltip for holiday/override */}
-                    {override && (
-                      <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 top-1 right-1 whitespace-nowrap z-50 shadow-lg">
-                        {override.reason || 'Special Hours'}
-                        {override.is_closed
-                          ? ' (CLOSED)'
-                          : `: ${override.opens_at?.slice(0, 5)} - ${override.closes_at?.slice(0, 5)}`}
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      {dateEvents.slice(0, 2).map((event, idx) => {
-                        const Icon = getEventIcon(event.eventDetails?.type);
-                        return (
-                          <div
-                            key={idx}
-                            onClick={() => onEventClick(event)}
-                            className={`text-xs p-1 rounded flex items-center gap-1 cursor-pointer hover:opacity-80 ${getEventColor(event)}`}
-                          >
-                            <Icon size={10} />
-                            <span className="truncate">
-                              {event.eventDetails?.title || event.reason}
-                            </span>
-                          </div>
-                        );
-                      })}
-                      {dateEvents.length > 2 && (
-                        <div className="text-xs text-gray-500">+{dateEvents.length - 2} more</div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+  return (
+    <div>
+      <div className="grid grid-cols-7 gap-px bg-gray-200">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+          <div key={day} className="bg-gray-50 p-2 text-center text-sm font-medium">
+            {day}
+          </div>
+        ))}
       </div>
-    );
-  }
-);
+      <div className="grid grid-cols-7 gap-px bg-gray-200 mt-px">
+        {calendarDays.map((date, index) => {
+          const isToday = date && date.toDateString() === currentTime.toDateString();
+          const dateEvents = date ? eventsByDate[date.toDateString()] || [] : [];
+          // Check for holiday/override on this day
+          const dateStr = date ? date.toISOString().slice(0, 10) : null;
+          const override = dateStr ? overridesByDate[dateStr] : null;
+
+          return (
+            <div
+              key={index}
+              className={`relative group bg-white p-2 min-h-[100px] ${
+                !date ? 'bg-gray-50' : ''
+              } ${override?.is_closed ? 'bg-red-50' : override ? 'bg-orange-50' : isToday ? 'bg-blue-50' : ''}`}
+            >
+              {date && (
+                <>
+                  <div
+                    className={`text-sm font-medium mb-1 flex items-center gap-1 ${
+                      override?.is_closed
+                        ? 'text-red-600'
+                        : isToday
+                          ? 'text-blue-600'
+                          : 'text-gray-900'
+                    }`}
+                  >
+                    {date.getDate()}
+                    {override && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${override.is_closed ? 'bg-red-500' : 'bg-orange-400'}`}
+                      />
+                    )}
+                  </div>
+                  {/* Hover tooltip for holiday/override */}
+                  {override && (
+                    <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 top-1 right-1 whitespace-nowrap z-50 shadow-lg">
+                      {override.reason || 'Special Hours'}
+                      {override.is_closed
+                        ? ' (CLOSED)'
+                        : `: ${override.opens_at?.slice(0, 5)} - ${override.closes_at?.slice(0, 5)}`}
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    {dateEvents.slice(0, 2).map((event, idx) => {
+                      const Icon = getEventIcon(event.eventDetails?.type);
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => onEventClick(event)}
+                          className={`text-xs p-1 rounded flex items-center gap-1 cursor-pointer hover:opacity-80 ${getEventColor(event)}`}
+                        >
+                          <Icon size={10} />
+                          <span className="truncate">
+                            {event.eventDetails?.title || event.reason}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {dateEvents.length > 2 && (
+                      <div className="text-xs text-gray-500">+{dateEvents.length - 2} more</div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
 
 // Event Summary Component
-const EventSummary = memo(({ events, currentTime, onEventClick }) => {
+const EventSummary = memo(function EventSummary({ events, currentTime, onEventClick }) {
   const upcomingEvents = useMemo(() => {
     return events
       .filter((event) => new Date(event.startTime) > currentTime)
