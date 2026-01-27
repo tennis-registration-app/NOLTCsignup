@@ -521,6 +521,21 @@ export class TennisCommands {
       longitude,
     });
   }
+
+  /**
+   * Generate a location verification token for QR code display
+   * Used on kiosk when mobile users need alternative to GPS
+   *
+   * @param {Object} params
+   * @param {number} [params.validityMinutes=5] - Token validity duration
+   * @returns {Promise<{ok: boolean, token?: string, expiresAt?: string, message?: string}>}
+   */
+  async generateLocationToken({ validityMinutes = 5 } = {}) {
+    const response = await this.api.post('/generate-location-token', {
+      validity_minutes: validityMinutes,
+    });
+    return response;
+  }
 }
 
 export default TennisCommands;

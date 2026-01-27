@@ -8,10 +8,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { API_CONFIG } from '../../lib/apiConfig.js';
+import { createBackend } from '../backend/index.js';
 
 const TOKEN_VALIDITY_MINUTES = 5;
 const REFRESH_BEFORE_EXPIRY_MS = 60 * 1000; // Refresh 1 minute before expiry
+
+// Backend singleton for API operations
+const backend = createBackend();
 
 export function LocationQRCode({ onError }) {
   const [token, setToken] = useState(null);
@@ -27,20 +30,9 @@ export function LocationQRCode({ onError }) {
     setError(null);
 
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/generate-location-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${API_CONFIG.ANON_KEY}`,
-          apikey: API_CONFIG.ANON_KEY,
-        },
-        body: JSON.stringify({
-          device_id: API_CONFIG.DEVICE_ID,
-          validity_minutes: TOKEN_VALIDITY_MINUTES,
-        }),
+      const data = await backend.commands.generateLocationToken({
+        validityMinutes: TOKEN_VALIDITY_MINUTES,
       });
-
-      const data = await response.json();
 
       if (!data.ok) {
         throw new Error(data.message || 'Failed to generate token');
