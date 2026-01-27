@@ -251,7 +251,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         : selection.primaryCourts;
       const selectableNumbers = selectableCourts.map((c) => c.number);
       setAvailableCourts(selectableNumbers);
-      setApiError(null);
 
       // CTA state is now derived via useMemo from data.waitlist and availableCourts
       // No cta:state event dispatch needed - React's reactivity handles updates
@@ -263,7 +262,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       return updatedData;
     } catch (error) {
       console.error('Failed to load data:', error);
-      setApiError(error.message);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally using stale recentlyCleared to preserve state across refreshes
   }, [getDataService]);
@@ -1892,7 +1890,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setCurrentWaitlistEntryId(null);
     setWaitlistPosition(0);
     setCourtToMove(null);
-    setMoveToCourtNum(null);
     setHasAssignedCourt(false);
     setShowGuestForm(false);
     setGuestName('');
@@ -1947,7 +1944,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setIsChangingCourt(false);
     setWasOvertimeCourt(false);
     setCourtToMove(null);
-    setMoveToCourtNum(null);
     setHasAssignedCourt(false);
     frequentPartnersCacheRef.current = {};
     setShowGuestForm(false);

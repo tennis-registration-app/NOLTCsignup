@@ -5,6 +5,7 @@
  * This is the initial monolithic extraction (~7,100 lines).
  * Future phases will break this into smaller component files.
  */
+/* global Tennis */
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
