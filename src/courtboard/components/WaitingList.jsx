@@ -11,7 +11,7 @@ export function WaitingList({
   currentTime: _currentTime,
   courtBlocks = [],
   upcomingBlocks = [],
-  maxWaitingDisplay = 4,
+  maxWaitingDisplay,
 }) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
   const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
