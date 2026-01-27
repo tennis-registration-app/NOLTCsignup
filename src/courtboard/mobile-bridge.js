@@ -83,13 +83,17 @@
               },
               '*'
             );
-          } catch {}
+          } catch {
+            // Intentionally ignored (Phase 3.5 lint): cross-origin postMessage may throw
+          }
           return true;
         } else {
           // User is NOT first (or not on waitlist at all) - redirect to join waitlist
           try {
             window.parent.postMessage({ type: 'register', courtNumber: null }, '*');
-          } catch {}
+          } catch {
+            // Intentionally ignored (Phase 3.5 lint): cross-origin postMessage may throw
+          }
           return true;
         }
       }
@@ -100,7 +104,9 @@
     // Normal behavior: no waitlist, select the court directly
     try {
       window.parent.postMessage({ type: 'register', courtNumber: Number(courtNumber) }, '*');
-    } catch {}
+    } catch {
+      // Intentionally ignored (Phase 3.5 lint): cross-origin postMessage may throw
+    }
     return true;
   };
 
@@ -156,7 +162,9 @@
       // Fallback to direct message if mobileTapToRegister not available
       try {
         window.parent.postMessage({ type: 'register', courtNumber: n }, '*');
-      } catch {}
+      } catch {
+        // Intentionally ignored (Phase 3.5 lint): cross-origin postMessage may throw
+      }
       ev.preventDefault();
     }
   });

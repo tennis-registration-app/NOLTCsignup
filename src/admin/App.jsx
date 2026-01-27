@@ -141,7 +141,9 @@ const clearAllTimers = () => {
     try {
       if (type === 'interval') clearInterval(id);
       else clearTimeout(id);
-    } catch {}
+    } catch {
+      // Intentionally ignored (Phase 3.5 lint): timer may already be cleared
+    }
   });
   _timers.length = 0;
 };
@@ -151,7 +153,9 @@ if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     try {
       clearAllTimers();
-    } catch {}
+    } catch {
+      // Intentionally ignored (Phase 3.5 lint): cleanup on unload
+    }
   });
 }
 
@@ -1198,10 +1202,14 @@ const AdminPanelV2 = ({ onExit }) => {
       () => {
         try {
           clearAllTimers();
-        } catch {}
+        } catch {
+          // Intentionally ignored (Phase 3.5 lint): cleanup on unload
+        }
         try {
           window.removeEventListener('storage', handleStorageEvent);
-        } catch {}
+        } catch {
+          // Intentionally ignored (Phase 3.5 lint): listener may not exist
+        }
       },
       { once: true }
     );
@@ -1209,7 +1217,9 @@ const AdminPanelV2 = ({ onExit }) => {
     return () => {
       try {
         window.removeEventListener('storage', handleStorageEvent);
-      } catch {}
+      } catch {
+        // Intentionally ignored (Phase 3.5 lint): cleanup on unmount
+      }
     };
   }, [loadData]);
 
@@ -1287,7 +1297,9 @@ const AdminPanelV2 = ({ onExit }) => {
     return () => {
       try {
         clearInterval(timer);
-      } catch {}
+      } catch {
+        // Intentionally ignored (Phase 3.5 lint): cleanup on unmount
+      }
     };
   }, []);
 
