@@ -16,6 +16,9 @@ const backend = createBackend();
 // Court availability helper - single source of truth for free/playable courts
 import { countPlayableCourts, listPlayableCourts } from '../shared/courts/courtAvailability.js';
 
+// Browser bridge - exposes window.CourtAvailability for non-bundled scripts (mobile-fallback-bar.js)
+import './browser-bridge.js';
+
 // Access shared utils from window for backward compatibility
 // (U now unused but kept for backward compatibility comment)
 
