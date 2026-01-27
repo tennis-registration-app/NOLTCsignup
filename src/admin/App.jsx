@@ -10,6 +10,9 @@ import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from '
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 
+// Admin refresh utilities - IIFEs execute at import time (same as original module-level)
+import './utils/adminRefresh.js';
+
 // TennisBackend singleton for API operations
 const backend = createBackend();
 
@@ -82,52 +85,8 @@ const {
 // --- One-time guard helper (no UI change)
 const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 
-// Idempotent coalescer
-(function () {
-  if (window.scheduleAdminRefresh) return;
-
-  window.__adminRefreshPending = false;
-  window.__adminCoalesceHits = 0; // dev-only metric
-
-  window.scheduleAdminRefresh = function scheduleAdminRefresh() {
-    if (window.__adminRefreshPending) return;
-    window.__adminRefreshPending = true;
-
-    setTimeout(() => {
-      try {
-        window.__adminCoalesceHits++;
-        const fn = window.refreshAdminView || window.loadData || null;
-
-        if (typeof fn === 'function') {
-          fn(); // direct path
-          return;
-        }
-        // bridge path
-        window.dispatchEvent(new Event('ADMIN_REFRESH'));
-      } finally {
-        window.__adminRefreshPending = false;
-      }
-    }, 0);
-  };
-})();
-
-// Idempotent wiring (window + document, just in case)
-(function wireAdminListenersOnce() {
-  if (window.__wiredAdminListeners) return;
-  window.__wiredAdminListeners = true;
-
-  const h = window.scheduleAdminRefresh;
-  if (typeof h !== 'function') return;
-
-  window.addEventListener('tennisDataUpdate', h, { passive: true });
-  window.addEventListener('DATA_UPDATED', h, { passive: true });
-  window.addEventListener('BLOCKS_UPDATED', h, { passive: true });
-
-  // backup (some environments dispatch on document)
-  document.addEventListener('tennisDataUpdate', h, { passive: true });
-  document.addEventListener('DATA_UPDATED', h, { passive: true });
-  document.addEventListener('BLOCKS_UPDATED', h, { passive: true });
-})();
+// Note: scheduleAdminRefresh and wireAdminListenersOnce IIFEs moved to ./utils/adminRefresh.js
+// They execute at import time (same timing as original module-level IIFEs)
 
 // Shared domain modules
 const Events = window.Tennis?.Events;
