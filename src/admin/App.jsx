@@ -1023,10 +1023,14 @@ const AdminPanelV2 = ({ onExit }) => {
 
   window.refreshAdminView = loadData; // export for coalescer & tests
 
-  // Event-driven refresh bridge listener
+  // Stable ref for loadData to avoid stale closures in event listeners
+  const loadDataRef = useRef(loadData);
+  loadDataRef.current = loadData;
+
+  // Event-driven refresh bridge listener (uses ref to avoid stale closure)
   React.useEffect(() => {
     const onAdminRefresh = () => {
-      loadData();
+      loadDataRef.current();
     };
     window.addEventListener('ADMIN_REFRESH', onAdminRefresh);
     return () => window.removeEventListener('ADMIN_REFRESH', onAdminRefresh);

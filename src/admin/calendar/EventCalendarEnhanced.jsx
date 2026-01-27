@@ -194,6 +194,7 @@ const EventCalendarEnhanced = ({
     });
 
     return Array.from(processedEvents.values());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshTrigger intentionally forces re-compute on external events (block creation/deletion)
   }, [blocks, courts, refreshTrigger]);
 
   // Memoized filtered events based on view and date range

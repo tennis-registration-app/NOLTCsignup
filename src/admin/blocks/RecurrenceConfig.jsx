@@ -18,17 +18,16 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
       frequency,
       endType,
       occurrences,
-      endDate
+      endDate,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onRecurrenceChange excluded: only call when internal fields change, not on parent re-render
   }, [pattern, frequency, endType, occurrences, endDate]);
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Repeat Pattern
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Repeat Pattern</label>
           <select
             value={pattern}
             onChange={(e) => setPattern(e.target.value)}
@@ -40,9 +39,7 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
           </select>
         </div>
         <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Every
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Every</label>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -60,9 +57,7 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          End
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">End</label>
         <div className="space-y-2">
           <label className="flex items-center gap-2">
             <input

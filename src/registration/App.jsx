@@ -921,7 +921,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       };
     }
     return db;
-  }, []); // Empty deps - this data is static
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- CONSTANTS.MEMBER_* are true constants, never change at runtime
+  }, []);
 
   // Update current time every second for responsive overtime detection
   useEffect(() => {
@@ -2024,6 +2025,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         setFrequentPartnersLoading(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- FREQUENT_PARTNERS_CACHE_TTL_MS is a module constant, never changes
     [backend]
   );
 

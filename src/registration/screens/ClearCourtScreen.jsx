@@ -77,7 +77,8 @@ const ClearCourtScreen = ({
         timerStepRef.current = null;
       }
     };
-  }, [clearCourtStep]); // Remove resetForm and CONSTANTS from deps - they cause re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetForm/CONSTANTS excluded: timer should only reset on step change, not on parent re-renders
+  }, [clearCourtStep]);
   const occupiedCourts = clearableCourts.map((courtNumber) => ({
     courtNumber,
     players:
