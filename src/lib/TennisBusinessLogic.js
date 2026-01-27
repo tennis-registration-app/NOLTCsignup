@@ -13,14 +13,10 @@
 import { TENNIS_CONFIG } from './config.js';
 import { getCourtBlockStatus as _getCourtBlockStatus } from './court-blocks.js';
 
-// Get court block status - prefer shared, fallback to window
+// Get court block status - direct import (window fallbacks removed as dead code)
 const getCourtBlockStatus = (courtNumber) => {
   try {
-    const fn =
-      _getCourtBlockStatus ||
-      window.Tennis?.Domain?.blocks?.getCourtBlockStatus ||
-      window.getCourtBlockStatus;
-    return fn ? fn(courtNumber) : null;
+    return _getCourtBlockStatus ? _getCourtBlockStatus(courtNumber) : null;
   } catch (_e) {
     return null;
   }
