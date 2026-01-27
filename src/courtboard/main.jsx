@@ -20,6 +20,7 @@ import { countPlayableCourts, listPlayableCourts } from '../shared/courts/courtA
 // (U now unused but kept for backward compatibility comment)
 
 // Module references assigned in App() useEffect - only A and W are used
+// eslint-disable-next-line no-unused-vars -- A and W are assigned in useEffect and used throughout; ESLint can't track dynamic assignment
 let _Config, _Storage, _Events, A, W, _T, _DataStore, _Av, _Tm, _TimeFmt;
 
 // ---- Read-only guard (prevent accidental writes in this view) ----
