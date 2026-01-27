@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "verify": "npm run -s lint && npm run -s build && npm run -s test:e2e"
+    "verify": "npm run -s lint && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
