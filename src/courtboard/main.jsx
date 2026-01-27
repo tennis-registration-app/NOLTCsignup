@@ -19,6 +19,10 @@ import { countPlayableCourts, listPlayableCourts } from '../shared/courts/courtA
 // Browser bridge - exposes window.CourtAvailability for non-bundled scripts (mobile-fallback-bar.js)
 import './browser-bridge.js';
 
+// Extracted components
+import { ToastHost } from './components/ToastHost';
+import { LoadingPlaceholder } from './components/LoadingPlaceholder';
+
 // Access shared utils from window for backward compatibility
 // (U now unused but kept for backward compatibility comment)
 
@@ -315,58 +319,6 @@ const _dataStore = {
     };
   },
 };
-
-// Due to the size constraint, importing full component implementations
-// For now, create a placeholder that shows the app is working
-// The full component code will be added in subsequent files
-
-// ToastHost Component
-function ToastHost() {
-  const [toasts, setToasts] = useState([]);
-  useEffect(() => {
-    const onToast = (e) => {
-      const t = { id: Date.now() + Math.random(), duration: 3000, type: 'warning', ...e.detail };
-      setToasts((xs) => [...xs, t]);
-      setTimeout(() => setToasts((xs) => xs.filter((x) => x.id !== t.id)), t.duration);
-    };
-    window.addEventListener('UI_TOAST', onToast);
-    return () => window.removeEventListener('UI_TOAST', onToast);
-  }, []);
-
-  return (
-    <div className="fixed top-4 inset-x-0 z-[1000] flex justify-center pointer-events-none">
-      <div className="w-full max-w-lg px-4 space-y-2">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`pointer-events-auto rounded-xl px-4 py-3 shadow-lg ring-1 ${
-              t.type === 'error'
-                ? 'bg-red-50 ring-red-200 text-red-800'
-                : t.type === 'success'
-                  ? 'bg-green-50 ring-green-200 text-green-800'
-                  : 'bg-yellow-50 ring-yellow-200 text-yellow-800'
-            }`}
-          >
-            {t.msg || t.message}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Loading placeholder while Tennis modules initialize
-function LoadingPlaceholder() {
-  return (
-    <div className="h-screen min-h-screen bg-gradient-to-br from-slate-700 to-slate-600 p-4 text-white flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-4xl mb-4">🎾</div>
-        <div className="text-xl">Loading Court Display...</div>
-        <div className="text-sm text-gray-400 mt-2">Waiting for Tennis modules</div>
-      </div>
-    </div>
-  );
-}
 
 // Main App wrapper that waits for Tennis modules
 function App() {
