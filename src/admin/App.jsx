@@ -57,6 +57,9 @@ import { MockAIAdmin, AIAssistant } from './ai';
 // Screen components
 import { GameHistorySearch, AnalyticsDashboard, SystemSettings } from './screens';
 
+// Utilities
+import { getEventIcon } from './utils/eventIcons';
+
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
@@ -187,20 +190,7 @@ const TENNIS_CONFIG = _sharedTennisConfig;
 // EditGameModal - imported from ./components
 // EditBlockModal moved to ./blocks/
 // Note: getEventTypeFromReason and calculateEventLayout moved to ./calendar/utils.js
-
-const getEventIcon = (type) => {
-  switch (type) {
-    case 'league':
-      return Trophy;
-    case 'tournament':
-      return Star;
-    case 'clinic':
-      return GraduationCap;
-    default:
-      return Calendar;
-  }
-};
-
+// Note: getEventIcon moved to ./utils/eventIcons.js
 // Note: getEventColor and InteractiveEvent moved to ./calendar/
 
 // Enhanced Time Entry Component
