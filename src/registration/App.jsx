@@ -42,7 +42,8 @@ import {
 // BlockWarningModal available in ./modals if needed
 
 // Import custom hooks
-import { useDebounce } from './hooks';
+// useDebounce now used internally by useMemberSearch hook
+import { useMemberSearch } from './search/useMemberSearch.js';
 
 // API Backend Integration
 import { getTennisService } from './services/index.js';
@@ -381,20 +382,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // Load members for autocomplete (one-time fetch)
-  useEffect(() => {
-    const loadMembers = async () => {
-      try {
-        console.log('[TennisBackend] Loading members for autocomplete...');
-        const members = await backend.directory.getAllMembers();
-        setApiMembers(members);
-        console.log('[TennisBackend] Loaded', members.length, 'members');
-      } catch (error) {
-        console.error('[TennisBackend] Failed to load members:', error);
-      }
-    };
-    loadMembers();
-  }, []);
+  // Load members for autocomplete moved to useMemberSearch hook (WP5.3 R5a.3)
 
   // CSS Performance Optimizations
   useEffect(() => {
@@ -582,12 +570,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [isTimeLimited, setIsTimeLimited] = useState(false);
   const [timeLimitReason, setTimeLimitReason] = useState(null);
   // NOTE: currentScreen moved to top of component (line ~235) to avoid TDZ errors
-  const [searchInput, setSearchInput] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  // searchInput, showSuggestions, addPlayerSearch, showAddPlayerSuggestions, apiMembers moved to useMemberSearch hook (WP5.3 R5a.3)
   const [showAddPlayer, setShowAddPlayer] = useState(false);
-  const [addPlayerSearch, setAddPlayerSearch] = useState('');
-  const [showAddPlayerSuggestions, setShowAddPlayerSuggestions] = useState(false);
-  const [apiMembers, setApiMembers] = useState([]); // Cached API members for search
 
   const [selectedCourtToClear, setSelectedCourtToClear] = useState(null);
   const [clearCourtStep, setClearCourtStep] = useState(1);
@@ -616,7 +600,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [showGuestNameError, setShowGuestNameError] = useState(false);
   const [showSponsorError, setShowSponsorError] = useState(false);
   // Block modal state moved to useBlockAdmin hook (WP5.3 R3.3)
-  const [isSearching, setIsSearching] = useState(false); // Add searching state
+  // isSearching moved to useMemberSearch hook (WP5.3 R5a.3)
   const [isAssigning, setIsAssigning] = useState(false); // Prevent double-submit during court assignment
   const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false); // Prevent double-submit during waitlist join
 
@@ -637,21 +621,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [gpsFailedPrompt, setGpsFailedPrompt] = useState(false);
 
-  // Debouncing hooks - MUST be at top level
-  const debouncedSearchInput = useDebounce(searchInput, 300);
-  const debouncedAddPlayerSearch = useDebounce(addPlayerSearch, 300);
-
-  // Determine which search value to use based on input type
-  const shouldDebounceMainSearch = !/^\d+$/.test(searchInput);
-  const effectiveSearchInput = shouldDebounceMainSearch ? debouncedSearchInput : searchInput;
+  // Debounce/derived search values moved to useMemberSearch hook (WP5.3 R5a.3)
 
   // CTA state is now derived via useMemo from data.waitlist and availableCourts
   // The cta:state event listener has been removed in favor of direct derivation
-
-  const shouldDebounceAddPlayer = !/^\d+$/.test(addPlayerSearch);
-  const effectiveAddPlayerSearch = shouldDebounceAddPlayer
-    ? debouncedAddPlayerSearch
-    : addPlayerSearch;
 
   // Helper function to get courts that can be cleared (occupied or overtime)
   function getCourtsOccupiedForClearing() {
@@ -682,6 +655,41 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setIsUserTyping(false);
     }, 3000);
   };
+
+  // Member search hook (WP5.3 R5a.3)
+  const {
+    // State
+    searchInput,
+    showSuggestions,
+    addPlayerSearch,
+    showAddPlayerSuggestions,
+    apiMembers,
+    isSearching,
+    // Derived
+    effectiveSearchInput,
+    effectiveAddPlayerSearch,
+    // Setters (for components that need them)
+    setSearchInput,
+    setShowSuggestions,
+    setAddPlayerSearch,
+    setShowAddPlayerSuggestions,
+    setApiMembers,
+    // Handlers
+    handleGroupSearchChange,
+    handleGroupSearchFocus,
+    handleAddPlayerSearchChange,
+    handleAddPlayerSearchFocus,
+    getAutocompleteSuggestions,
+    // Resets (exposed but not wired yet)
+    resetLeaderSearch,
+    resetAddPlayerSearch,
+    resetAllSearch,
+  } = useMemberSearch({
+    backend,
+    setCurrentScreen,
+    CONSTANTS,
+    markUserTyping,
+  });
 
   // --- duplicate guard helpers (early-check on selection) ---
   function __normalizeName(n) {
@@ -832,18 +840,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     });
   };
 
-  // Track when main search is in progress
-  useEffect(() => {
-    if (
-      shouldDebounceMainSearch &&
-      searchInput !== debouncedSearchInput &&
-      searchInput.length > 0
-    ) {
-      setIsSearching(true);
-    } else {
-      setIsSearching(false);
-    }
-  }, [searchInput, debouncedSearchInput, shouldDebounceMainSearch]);
+  // isSearching effect moved to useMemberSearch hook (WP5.3 R5a.3)
 
   // Load current ball price when entering admin screen
   useEffect(() => {
@@ -2185,72 +2182,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     return A.every((x, i) => x === B[i]);
   };
 
-  // Get autocomplete suggestions (uses API members)
-  const getAutocompleteSuggestions = (input) => {
-    if (!input || input.length < 1) return [];
-
-    const suggestions = [];
-    const lowerInput = input.toLowerCase();
-
-    // If API members haven't loaded yet, return empty
-    if (apiMembers.length === 0) {
-      return [];
-    }
-
-    apiMembers.forEach((apiMember) => {
-      const displayName = apiMember.display_name || apiMember.name || '';
-      const memberNumber = apiMember.member_number || '';
-
-      // Split the name into parts
-      const nameParts = displayName.split(' ');
-
-      // Split input into words for multi-word search
-      const inputWords = lowerInput
-        .trim()
-        .split(/\s+/)
-        .filter((word) => word.length > 0);
-
-      // Check if member number matches (only check first word for member number)
-      const memberNumberMatch = memberNumber.startsWith(inputWords[0]);
-
-      // Check if all input words match the start of some name part
-      const namePartsLower = nameParts.map((part) => part.toLowerCase());
-      const nameMatch = inputWords.every((inputWord) =>
-        namePartsLower.some((namePart) => namePart.startsWith(inputWord))
-      );
-
-      if (memberNumberMatch || nameMatch) {
-        suggestions.push({
-          memberNumber: memberNumber,
-          member: {
-            id: apiMember.id, // This is the UUID from API
-            name: displayName,
-            accountId: apiMember.account_id,
-            isPrimary: apiMember.is_primary,
-            unclearedStreak: apiMember.uncleared_streak || apiMember.unclearedStreak || 0,
-          },
-          displayText: `${displayName} (#${memberNumber})`,
-        });
-      }
-    });
-
-    // Sort suggestions to prioritize first name matches, then last name matches
-    suggestions.sort((a, b) => {
-      const aName = a.member.name.toLowerCase();
-      const bName = b.member.name.toLowerCase();
-      const aFirstName = aName.split(' ')[0];
-      const bFirstName = bName.split(' ')[0];
-
-      // Prioritize first name matches
-      if (aFirstName.startsWith(lowerInput) && !bFirstName.startsWith(lowerInput)) return -1;
-      if (!aFirstName.startsWith(lowerInput) && bFirstName.startsWith(lowerInput)) return 1;
-
-      // Then sort alphabetically
-      return aName.localeCompare(bName);
-    });
-
-    return suggestions.slice(0, CONSTANTS.MAX_AUTOCOMPLETE_RESULTS);
-  };
+  // getAutocompleteSuggestions moved to useMemberSearch hook (WP5.3 R5a.3)
 
   // Handle suggestion click
   const handleSuggestionClick = async (suggestion) => {
@@ -2446,26 +2378,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // ============================================================
   // GroupScreen Handlers
   // ============================================================
-
-  const handleGroupSearchChange = (e) => {
-    markUserTyping();
-    const value = e.target.value || '';
-    setSearchInput(value);
-
-    // Check for admin code (immediate, no debounce)
-    if (value === CONSTANTS.ADMIN_CODE) {
-      setCurrentScreen('admin', 'adminCodeEntered');
-      setSearchInput('');
-      return;
-    }
-
-    setShowSuggestions(value.length > 0);
-  };
-
-  const handleGroupSearchFocus = () => {
-    markUserTyping();
-    setShowSuggestions(searchInput.length > 0);
-  };
+  // handleGroupSearchChange, handleGroupSearchFocus, handleAddPlayerSearchChange,
+  // handleAddPlayerSearchFocus moved to useMemberSearch hook (WP5.3 R5a.3)
 
   const handleGroupSuggestionClick = async (suggestion) => {
     await handleSuggestionClick(suggestion);
@@ -2474,17 +2388,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       setSearchInput('');
       setShowSuggestions(false);
     }
-  };
-
-  const handleAddPlayerSearchChange = (e) => {
-    markUserTyping();
-    setAddPlayerSearch(e.target.value || '');
-    setShowAddPlayerSuggestions((e.target.value || '').length > 0);
-  };
-
-  const handleAddPlayerSearchFocus = () => {
-    markUserTyping();
-    setShowAddPlayerSuggestions(addPlayerSearch.length > 0);
   };
 
   const handleAddPlayerSuggestionClick = async (suggestion) => {
