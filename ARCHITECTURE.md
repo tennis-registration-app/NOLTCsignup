@@ -165,6 +165,55 @@ src/courtboard/
 
 Playwright baseline is currently 14/15 due to pre-existing failure in `block-refresh-wiring.spec.js` (to be addressed in WP5 Cleanup).
 
+## Admin Module Structure (WP4 Phase 2)
+
+```
+src/admin/
+├── App.jsx                     # Entry point + AdminPanelV2 (~792 lines)
+├── handlers/
+│   ├── applyBlocksOperation.js # Block creation logic
+│   ├── courtOperations.js      # Clear/move court operations
+│   └── waitlistOperations.js   # Waitlist management
+├── tabs/
+│   ├── AIAssistantSection.jsx  # AI assistant floating panel
+│   ├── AnalyticsSection.jsx    # Analytics tab content
+│   ├── BlockingSection.jsx     # Block management tab
+│   ├── CalendarSection.jsx     # Calendar tab content
+│   ├── HistorySection.jsx      # Game history tab
+│   ├── StatusSection.jsx       # Court status tab
+│   ├── SystemSection.jsx       # System settings tab
+│   ├── TabNavigation.jsx       # Tab bar navigation
+│   └── WaitlistSection.jsx     # Waitlist tab content
+├── utils/
+│   ├── adminRefresh.js         # Refresh coalescer utilities (extracted IIFEs)
+│   └── eventIcons.js           # Event icon helper
+├── screens/                    # Existing (AnalyticsDashboard, GameHistorySearch, SystemSettings)
+├── blocks/                     # Existing (CompleteBlockManagerEnhanced, etc.)
+├── calendar/                   # Existing (EventCalendarEnhanced, etc.)
+├── analytics/                  # Existing (UsageHeatmap, UtilizationChart, etc.)
+├── courts/                     # Existing (CourtStatusGrid)
+├── ai/                         # Existing (AIAssistant, MockAIAdmin)
+└── components/                 # Existing + extracted (VisualTimeEntry, MiniCalendar, MonthView, EventSummary)
+```
+
+### Key Architectural Patterns
+
+- **Handler modules**: Pure async functions with dependency injection (`ctx` parameter). No React hooks or state.
+- **Tab sections**: Render-only components. All handlers passed as props from AdminPanelV2.
+- **State ownership**: AdminPanelV2 owns all React state and delegates rendering to tab components.
+- **Refresh contract**: `window.refreshAdminView` remains assigned in App.jsx; used by refresh utilities and test wiring.
+
+### Why App.jsx Remains ~792 Lines
+
+Reaching ≤500 lines requires refactoring beyond WP4 scope:
+- `loadData` + subscription effects are tightly coupled to multiple state setters
+- Wet-court handler cluster (`handleEmergencyWetCourt`, `deactivateWetCourts`, `clearWetCourt`) couples 7+ state setters
+- Further reduction requires hooks/state modularization (WP5+)
+
+### Verification Baseline
+
+Playwright baseline is 14/15 due to pre-existing failure in `block-refresh-wiring.spec.js` (to be addressed in WP5).
+
 ## Known Technical Debt
 
 ### Hardcoded Credentials (Phase 4)
