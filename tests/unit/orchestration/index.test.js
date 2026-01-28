@@ -38,4 +38,8 @@ describe('orchestration facade exports', () => {
   it('exports sendGroupToWaitlistOrchestrated', () => {
     expect(typeof orchestration.sendGroupToWaitlistOrchestrated).toBe('function');
   });
+
+  it('exports assignCourtToGroupOrchestrated', () => {
+    expect(typeof orchestration.assignCourtToGroupOrchestrated).toBe('function');
+  });
 });

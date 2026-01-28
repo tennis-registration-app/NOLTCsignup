@@ -19,4 +19,4 @@ export {
   handleAddPlayerSuggestionClickOrchestrated,
 } from './memberSelectionOrchestrator.js';
 export { sendGroupToWaitlistOrchestrated } from './waitlistOrchestrator.js';
-// export { assignCourtToGroupOrchestrated } from './assignCourtOrchestrator.js';
+export { assignCourtToGroupOrchestrated } from './assignCourtOrchestrator.js';
