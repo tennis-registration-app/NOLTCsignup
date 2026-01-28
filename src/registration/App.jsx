@@ -59,13 +59,14 @@ import { computeRegistrationCourtSelection } from '../shared/courts/overtimeElig
 import {
   handleClearWaitlistOp,
   handleRemoveFromWaitlistOp,
-  handleCancelBlockOp,
   handleAdminClearCourtOp,
   handleClearAllCourtsOp,
   handleReorderWaitlistOp,
   handleMoveCourtOp,
-  handleBlockCreateOp,
 } from './handlers/adminOperations';
+
+// Block admin hook (WP5.3 R3.3)
+import { useBlockAdmin } from './blocks/useBlockAdmin';
 
 // TennisBackend singleton instance
 const backend = createBackend();
@@ -612,12 +613,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [guestCounter, setGuestCounter] = useState(1);
   const [showGuestNameError, setShowGuestNameError] = useState(false);
   const [showSponsorError, setShowSponsorError] = useState(false);
-  const [showBlockModal, setShowBlockModal] = useState(false);
-  const [blockingInProgress, setBlockingInProgress] = useState(false);
-  const [selectedCourtsToBlock, setSelectedCourtsToBlock] = useState([]);
-  const [blockMessage, setBlockMessage] = useState('');
-  const [blockStartTime, setBlockStartTime] = useState('now');
-  const [blockEndTime, setBlockEndTime] = useState('');
+  // Block modal state moved to useBlockAdmin hook (WP5.3 R3.3)
   const [isSearching, setIsSearching] = useState(false); // Add searching state
   const [isAssigning, setIsAssigning] = useState(false); // Prevent double-submit during court assignment
   const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false); // Prevent double-submit during waitlist join
@@ -629,8 +625,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Ball price from API (in cents) - used by SuccessScreen
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
-  // Block warning minutes from API - used by SuccessScreen
-  const [blockWarningMinutes, setBlockWarningMinutes] = useState(60);
+  // blockWarningMinutes moved to useBlockAdmin hook (WP5.3 R3.3)
   const [checkingLocation, setCheckingLocation] = useState(false);
   const [, setIsUserTyping] = useState(false); // Getter unused, setter used
   const typingTimeoutRef = useRef(null);
@@ -1209,6 +1204,33 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const getCourtData = () => {
     return data;
   };
+
+  // Block admin hook (WP5.3 R3.3)
+  const {
+    // State values
+    showBlockModal,
+    blockingInProgress,
+    selectedCourtsToBlock,
+    blockMessage,
+    blockStartTime,
+    blockEndTime,
+    blockWarningMinutes,
+    // Setters
+    setShowBlockModal,
+    setSelectedCourtsToBlock,
+    setBlockMessage,
+    setBlockStartTime,
+    setBlockEndTime,
+    setBlockWarningMinutes,
+    setBlockingInProgress,
+    // Handlers
+    onBlockCreate,
+    onCancelBlock,
+  } = useBlockAdmin({
+    backend,
+    showAlertMessage,
+    getCourtData,
+  });
 
   // Save court data using the data service
   // @deprecated — localStorage persistence removed; API commands handle state
@@ -2358,20 +2380,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   const handleClearAllCourts = () => handleClearAllCourtsOp({ backend, showAlertMessage });
 
-  const handleBlockCreate = () =>
-    handleBlockCreateOp({
-      backend,
-      getCourtData,
-      showAlertMessage,
-      setBlockingInProgress,
-      selectedCourtsToBlock,
-      blockMessage,
-      blockStartTime,
-      blockEndTime,
-    });
-
-  const handleCancelBlock = (blockId, courtNum) =>
-    handleCancelBlockOp({ backend, showAlertMessage }, blockId, courtNum);
+  // handleBlockCreate and handleCancelBlock moved to useBlockAdmin hook (WP5.3 R3.3)
 
   const handleAdminClearCourt = (courtNum) =>
     handleAdminClearCourtOp({ clearCourt, showAlertMessage }, courtNum);
@@ -3077,8 +3086,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         // Callbacks
         onClearAllCourts={handleClearAllCourts}
         onClearCourt={handleAdminClearCourt}
-        onCancelBlock={handleCancelBlock}
-        onBlockCreate={handleBlockCreate}
+        onCancelBlock={onCancelBlock}
+        onBlockCreate={onBlockCreate}
         onMoveCourt={handleMoveCourt}
         onClearWaitlist={handleClearWaitlist}
         onRemoveFromWaitlist={handleRemoveFromWaitlist}
