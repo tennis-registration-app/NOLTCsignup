@@ -18,5 +18,5 @@ export {
   handleSuggestionClickOrchestrated,
   handleAddPlayerSuggestionClickOrchestrated,
 } from './memberSelectionOrchestrator.js';
-// export { sendGroupToWaitlistOrchestrated } from './waitlistOrchestrator.js';
+export { sendGroupToWaitlistOrchestrated } from './waitlistOrchestrator.js';
 // export { assignCourtToGroupOrchestrated } from './assignCourtOrchestrator.js';

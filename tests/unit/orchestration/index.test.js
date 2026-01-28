@@ -34,4 +34,8 @@ describe('orchestration facade exports', () => {
   it('exports handleAddPlayerSuggestionClickOrchestrated', () => {
     expect(typeof orchestration.handleAddPlayerSuggestionClickOrchestrated).toBe('function');
   });
+
+  it('exports sendGroupToWaitlistOrchestrated', () => {
+    expect(typeof orchestration.sendGroupToWaitlistOrchestrated).toBe('function');
+  });
 });
