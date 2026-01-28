@@ -74,6 +74,9 @@ import { useWaitlistAdmin } from './waitlist/useWaitlistAdmin';
 // Group/Guest hook (WP5.3 R8a.3)
 import { useGroupGuest } from './group/useGroupGuest';
 
+// Streak hook (WP5.3 R8c.3)
+import { useStreak } from './streak/useStreak';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -506,10 +509,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
-  // Uncleared session tracking - streak of the registrant (first player added)
-  const [registrantStreak, setRegistrantStreak] = useState(0);
-  const [showStreakModal, setShowStreakModal] = useState(false);
-  const [streakAcknowledged, setStreakAcknowledged] = useState(false);
+  // Uncleared session tracking - moved to useStreak hook (WP5.3 R8c.3)
   // NOTE: availableCourts moved to top of component (line ~236) to avoid TDZ errors
 
   // Derive CTA state from data.waitlist and availableCourts using useMemo
@@ -1256,6 +1256,17 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // resetGuestForm,
     // resetGroup,
   } = useGroupGuest();
+
+  // Streak hook (WP5.3 R8c.3)
+  const {
+    registrantStreak,
+    showStreakModal,
+    streakAcknowledged,
+    setRegistrantStreak,
+    setShowStreakModal,
+    setStreakAcknowledged,
+    // resetStreak available but not wired into reset functions yet
+  } = useStreak();
 
   // Save court data using the data service
   // @deprecated — localStorage persistence removed; API commands handle state
