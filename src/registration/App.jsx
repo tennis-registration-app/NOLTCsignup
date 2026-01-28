@@ -55,6 +55,9 @@ import { createBackend } from './backend/index.js';
 // Overtime eligibility policy
 import { computeRegistrationCourtSelection } from '../shared/courts/overtimeEligibility.js';
 
+// Extracted admin operations
+import { handleClearWaitlistOp, handleRemoveFromWaitlistOp } from './handlers/adminOperations';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -2517,60 +2520,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setCourtToMove(null);
   };
 
-  const handleClearWaitlist = async () => {
-    const data = getCourtData();
-    const confirmClear = window.confirm('Clear the waitlist? This will remove all waiting groups.');
-    if (confirmClear) {
-      let successCount = 0;
-      let failCount = 0;
+  const handleClearWaitlist = () =>
+    handleClearWaitlistOp({ backend, showAlertMessage, getCourtData });
 
-      for (const group of data.waitlist) {
-        if (!group.id) {
-          failCount++;
-          continue;
-        }
-
-        const result = await backend.admin.removeFromWaitlist({
-          waitlistEntryId: group.id,
-          reason: 'admin_clear_all',
-          deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-        });
-
-        if (result.ok) {
-          successCount++;
-        } else {
-          failCount++;
-        }
-      }
-
-      if (failCount === 0) {
-        showAlertMessage(`Waitlist cleared (${successCount} groups removed)`);
-      } else if (successCount > 0) {
-        showAlertMessage(`Removed ${successCount} groups, ${failCount} failed`);
-      } else {
-        showAlertMessage('Failed to clear waitlist');
-      }
-    }
-  };
-
-  const handleRemoveFromWaitlist = async (group) => {
-    if (!group.id) {
-      showAlertMessage('Cannot remove: group ID not found');
-      return;
-    }
-
-    const result = await backend.admin.removeFromWaitlist({
-      waitlistEntryId: group.id,
-      reason: 'admin_removed',
-      deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-    });
-
-    if (result.ok) {
-      showAlertMessage('Group removed from waitlist');
-    } else {
-      showAlertMessage(result.message || 'Failed to remove group');
-    }
-  };
+  const handleRemoveFromWaitlist = (group) =>
+    handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group);
 
   const handleReorderWaitlist = async (fromIndex, toIndex) => {
     const data = getCourtData();
