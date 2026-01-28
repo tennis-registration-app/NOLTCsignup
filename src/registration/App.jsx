@@ -77,6 +77,9 @@ import { useGroupGuest } from './group/useGroupGuest';
 // Streak hook (WP5.3 R8c.3)
 import { useStreak } from './streak/useStreak';
 
+// Member identity hook (WP5.3 R8b.3)
+import { useMemberIdentity } from './memberIdentity/useMemberIdentity';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -505,7 +508,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     UPDATE_INTERVAL_MS: TENNIS_CONFIG.TIMING.UPDATE_INTERVAL_MS,
   };
 
-  const [memberNumber, setMemberNumber] = useState('');
+  // memberNumber moved to useMemberIdentity hook (WP5.3 R8b.3)
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
@@ -584,10 +587,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const timeoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
   const successResetTimerRef = useRef(null);
-  const frequentPartnersCacheRef = useRef({});
-  const [frequentPartners, setFrequentPartners] = useState([]);
-  const [frequentPartnersLoading, setFrequentPartnersLoading] = useState(false);
-  const [currentMemberId, setCurrentMemberId] = useState(null);
+  // frequentPartnersCacheRef, frequentPartners, frequentPartnersLoading, currentMemberId
+  // moved to useMemberIdentity hook (WP5.3 R8b.3)
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courtToMove, setCourtToMove] = useState(null);
   const [hasAssignedCourt, setHasAssignedCourt] = useState(false);
@@ -1267,6 +1268,20 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setStreakAcknowledged,
     // resetStreak available but not wired into reset functions yet
   } = useStreak();
+
+  // Member identity hook (WP5.3 R8b.3)
+  const {
+    memberNumber,
+    currentMemberId,
+    frequentPartners,
+    frequentPartnersLoading,
+    setMemberNumber,
+    setCurrentMemberId,
+    // setFrequentPartners, setFrequentPartnersLoading used internally by hook
+    fetchFrequentPartners,
+    clearCache,
+    // resetMemberIdentity, resetMemberIdentityWithCache available but not wired yet
+  } = useMemberIdentity({ backend });
 
   // Save court data using the data service
   // @deprecated — localStorage persistence removed; API commands handle state
@@ -2016,7 +2031,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setWasOvertimeCourt(false);
     setCourtToMove(null);
     setHasAssignedCourt(false);
-    frequentPartnersCacheRef.current = {};
+    clearCache(); // Clear frequent partners cache (WP5.3 R8b.3)
     setShowGuestForm(false);
     setGuestName('');
     setGuestSponsor('');
@@ -2028,76 +2043,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setStreakAcknowledged(false);
   };
 
-  // Fetch frequent partners from API
-  const FREQUENT_PARTNERS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-  const fetchFrequentPartners = useCallback(
-    async (memberId) => {
-      console.log('[FP] fetchFrequentPartners called', {
-        memberId,
-        cacheState: frequentPartnersCacheRef.current[memberId],
-        timestamp: Date.now(),
-      });
-
-      if (!memberId || !backend?.queries) {
-        console.log('[FP] No memberId or backend, returning');
-        return;
-      }
-
-      // Check cache status - don't refetch if loading or still fresh
-      const cached = frequentPartnersCacheRef.current[memberId];
-      const now = Date.now();
-
-      if (cached?.status === 'loading') {
-        console.log('[FP] Already loading, skipping');
-        return; // Already in flight
-      }
-      if (cached?.status === 'ready' && now - cached.ts < FREQUENT_PARTNERS_CACHE_TTL_MS) {
-        console.log('[FP] Cache hit, using cached data');
-        setFrequentPartners(cached.data);
-        return; // Use cached data (still fresh)
-      }
-
-      // Mark as loading before fetch starts
-      console.log('[FP] Starting fetch, marking as loading');
-      frequentPartnersCacheRef.current[memberId] = { status: 'loading', ts: Date.now() };
-      setFrequentPartnersLoading(true);
-
-      try {
-        const result = await backend.queries.getFrequentPartners(memberId);
-        if (result.ok && result.partners) {
-          // Transform API response to expected format
-          const partners = result.partners.map((p) => ({
-            player: {
-              id: p.member_id,
-              name: p.display_name,
-              memberNumber: p.member_number,
-              memberId: p.member_id,
-            },
-            count: p.play_count,
-          }));
-
-          frequentPartnersCacheRef.current[memberId] = {
-            status: 'ready',
-            data: partners,
-            ts: Date.now(),
-          };
-          setFrequentPartners(partners);
-          setFrequentPartnersLoading(false);
-        } else {
-          frequentPartnersCacheRef.current[memberId] = { status: 'error', ts: Date.now() };
-          setFrequentPartnersLoading(false);
-        }
-      } catch (error) {
-        console.error('Failed to fetch frequent partners:', error);
-        frequentPartnersCacheRef.current[memberId] = { status: 'error', ts: Date.now() };
-        setFrequentPartners([]);
-        setFrequentPartnersLoading(false);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- FREQUENT_PARTNERS_CACHE_TTL_MS is a module constant, never changes
-    [backend]
-  );
+  // fetchFrequentPartners moved to useMemberIdentity hook (WP5.3 R8b.3)
 
   // Fetch frequent partners when entering group screen (fallback if pre-fetch missed)
   useEffect(() => {
