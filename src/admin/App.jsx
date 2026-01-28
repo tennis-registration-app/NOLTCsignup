@@ -61,6 +61,7 @@ import { TabNavigation } from './tabs/TabNavigation';
 import { StatusSection } from './tabs/StatusSection';
 import { WaitlistSection } from './tabs/WaitlistSection';
 import { SystemSection } from './tabs/SystemSection';
+import { AIAssistantSection } from './tabs/AIAssistantSection';
 
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
@@ -816,6 +817,37 @@ const AdminPanelV2 = ({ onExit }) => {
     });
   };
 
+  // Callback for AIAssistant to refresh settings after AI-triggered changes
+  const handleAISettingsChanged = async () => {
+    const res = await backend.admin.getSettings();
+    if (res.ok) {
+      if (res.settings) {
+        setSettings({
+          tennisBallPrice: (res.settings.ball_price_cents || 500) / 100,
+          guestFees: {
+            weekday: (res.settings.guest_fee_weekday_cents || 1500) / 100,
+            weekend: (res.settings.guest_fee_weekend_cents || 2000) / 100,
+          },
+        });
+      }
+      if (res.upcoming_overrides) {
+        setHoursOverrides(res.upcoming_overrides);
+      }
+    }
+  };
+
+  // Callback for MockAIAdmin to refresh data
+  const handleRefreshData = () => {
+    loadData();
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  // Callback for MockAIAdmin to clear waitlist
+  const handleClearWaitlist = async () => {
+    const res = await backend.commands.clearWaitlist();
+    return res;
+  };
+
   // AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
@@ -936,73 +968,27 @@ const AdminPanelV2 = ({ onExit }) => {
       </div>
 
       {/* AI Assistant Button and Modal */}
-      {(activeTab === 'calendar' ||
-        activeTab === 'blocking' ||
-        activeTab === 'analytics' ||
-        activeTab === 'system' ||
-        activeTab === 'history') && (
-        <>
-          {/* Floating AI Assistant Button */}
-          <div className="fixed bottom-8 right-8 z-40">
-            <button
-              onClick={() => setShowAIAssistant(true)}
-              className="bg-[#D97757] text-white p-3 rounded-full shadow-lg hover:bg-[#C4624A] transition-all transform hover:scale-110"
-              title="Claude AI Assistant"
-            >
-              <svg width="28" height="28" viewBox="0 0 100 100" fill="currentColor">
-                <path d="M50 0 C52 35 65 48 100 50 C65 52 52 65 50 100 C48 65 35 52 0 50 C35 48 48 35 50 0Z" />
-              </svg>
-            </button>
-          </div>
-
-          {/* AI Assistant Modal */}
-          {showAIAssistant &&
-            (USE_REAL_AI ? (
-              <AIAssistant
-                backend={backend}
-                onClose={() => setShowAIAssistant(false)}
-                onSettingsChanged={async () => {
-                  const res = await backend.admin.getSettings();
-                  if (res.ok) {
-                    if (res.settings) {
-                      setSettings({
-                        tennisBallPrice: (res.settings.ball_price_cents || 500) / 100,
-                        guestFees: {
-                          weekday: (res.settings.guest_fee_weekday_cents || 1500) / 100,
-                          weekend: (res.settings.guest_fee_weekend_cents || 2000) / 100,
-                        },
-                      });
-                    }
-                    if (res.upcoming_overrides) {
-                      setHoursOverrides(res.upcoming_overrides);
-                    }
-                  }
-                }}
-              />
-            ) : (
-              <MockAIAdmin
-                onClose={() => setShowAIAssistant(false)}
-                dataStore={dataStore}
-                courts={courts}
-                loadData={loadData}
-                clearCourt={clearCourt}
-                clearAllCourts={clearAllCourts}
-                moveCourt={moveCourt}
-                settings={settings}
-                updateBallPrice={updateBallPrice}
-                waitingGroups={waitingGroups}
-                refreshData={() => {
-                  loadData();
-                  setRefreshTrigger((prev) => prev + 1);
-                }}
-                clearWaitlist={async () => {
-                  const res = await backend.commands.clearWaitlist();
-                  return res;
-                }}
-              />
-            ))}
-        </>
-      )}
+      <AIAssistantSection
+        activeTab={activeTab}
+        showAIAssistant={showAIAssistant}
+        setShowAIAssistant={setShowAIAssistant}
+        USE_REAL_AI={USE_REAL_AI}
+        backend={backend}
+        onAISettingsChanged={handleAISettingsChanged}
+        AIAssistant={AIAssistant}
+        MockAIAdmin={MockAIAdmin}
+        dataStore={dataStore}
+        courts={courts}
+        loadData={loadData}
+        clearCourt={clearCourt}
+        clearAllCourts={clearAllCourts}
+        moveCourt={moveCourt}
+        settings={settings}
+        updateBallPrice={updateBallPrice}
+        waitingGroups={waitingGroups}
+        refreshData={handleRefreshData}
+        clearWaitlist={handleClearWaitlist}
+      />
     </div>
   );
 };
