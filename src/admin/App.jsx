@@ -63,6 +63,9 @@ import { WaitlistSection } from './tabs/WaitlistSection';
 import { SystemSection } from './tabs/SystemSection';
 import { AIAssistantSection } from './tabs/AIAssistantSection';
 
+// Handler modules
+import { removeFromWaitlistOp, moveInWaitlistOp } from './handlers/waitlistOperations';
+
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
@@ -734,52 +737,12 @@ const AdminPanelV2 = ({ onExit }) => {
     }
   };
 
-  // Waitlist operations - using TennisBackend API
-  const removeFromWaitlist = async (index) => {
-    const group = waitingGroups[index];
-    if (!group || !group.id) {
-      showNotification('Cannot remove: group ID not found', 'error');
-      return;
-    }
+  // Waitlist operations - delegated to handler module
+  const removeFromWaitlist = (index) =>
+    removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index);
 
-    try {
-      const result = await backend.admin.removeFromWaitlist({
-        waitlistEntryId: group.id,
-        reason: 'admin_removed',
-        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-      });
-
-      if (!result.ok) {
-        throw new Error(result.message || 'Failed to remove from waitlist');
-      }
-
-      showNotification('Group removed from waitlist', 'success');
-      // Realtime subscription will update the UI
-    } catch (error) {
-      console.error('Error removing from waitlist:', error);
-      showNotification(error.message || 'Failed to remove group', 'error');
-    }
-  };
-
-  const moveInWaitlist = async (from, to) => {
-    const entry = waitingGroups[from];
-    if (!entry) return;
-
-    // Convert from 0-based index to 1-based position
-    const newPosition = to + 1;
-
-    const result = await backend.admin.reorderWaitlist({
-      entryId: entry.id,
-      newPosition,
-    });
-
-    if (result.ok) {
-      showNotification(`Moved to position ${newPosition}`, 'success');
-      // Board will refresh via realtime subscription
-    } else {
-      showNotification(result.error || 'Failed to reorder waitlist', 'error');
-    }
-  };
+  const moveInWaitlist = (from, to) =>
+    moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to);
 
   // Settings operations
   const updateBallPrice = async (price) => {
