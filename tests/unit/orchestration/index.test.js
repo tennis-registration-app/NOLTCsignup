@@ -26,4 +26,8 @@ describe('orchestration facade exports', () => {
   it('exports applyInactivityTimeoutOrchestrated', () => {
     expect(typeof orchestration.applyInactivityTimeoutOrchestrated).toBe('function');
   });
+
+  it('exports handleSuggestionClickOrchestrated', () => {
+    expect(typeof orchestration.handleSuggestionClickOrchestrated).toBe('function');
+  });
 });
