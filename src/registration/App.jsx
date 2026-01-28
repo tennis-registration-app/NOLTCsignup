@@ -71,6 +71,9 @@ import { useBlockAdmin } from './blocks/useBlockAdmin';
 // Waitlist admin hook (WP5.3 R4a.3)
 import { useWaitlistAdmin } from './waitlist/useWaitlistAdmin';
 
+// Group/Guest hook (WP5.3 R8a.3)
+import { useGroupGuest } from './group/useGroupGuest';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -499,7 +502,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     UPDATE_INTERVAL_MS: TENNIS_CONFIG.TIMING.UPDATE_INTERVAL_MS,
   };
 
-  const [currentGroup, setCurrentGroup] = useState([]);
   const [memberNumber, setMemberNumber] = useState('');
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -593,12 +595,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
 
   // waitlistMoveFrom moved to useWaitlistAdmin hook (WP5.3 R4a.3)
-  const [showGuestForm, setShowGuestForm] = useState(false);
-  const [guestName, setGuestName] = useState('');
-  const [guestSponsor, setGuestSponsor] = useState('');
+  // showGuestForm, guestName, guestSponsor, showGuestNameError, showSponsorError moved to useGroupGuest hook (WP5.3 R8a.3)
   const [guestCounter, setGuestCounter] = useState(1);
-  const [showGuestNameError, setShowGuestNameError] = useState(false);
-  const [showSponsorError, setShowSponsorError] = useState(false);
   // Block modal state moved to useBlockAdmin hook (WP5.3 R3.3)
   // isSearching moved to useMemberSearch hook (WP5.3 R5a.3)
   const [isAssigning, setIsAssigning] = useState(false); // Prevent double-submit during court assignment
@@ -1233,6 +1231,31 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     getCourtData,
     showAlertMessage,
   });
+
+  // Group/Guest hook (WP5.3 R8a.3)
+  const {
+    // State
+    currentGroup,
+    guestName,
+    guestSponsor,
+    showGuestForm,
+    showGuestNameError,
+    showSponsorError,
+    // Setters (for selection handlers and other callers)
+    setCurrentGroup,
+    setGuestName,
+    setGuestSponsor,
+    setShowGuestForm,
+    setShowGuestNameError,
+    setShowSponsorError,
+    // Handlers
+    handleRemovePlayer,
+    handleSelectSponsor,
+    handleCancelGuest,
+    // Resets (available but not wired into resetForm yet)
+    // resetGuestForm,
+    // resetGroup,
+  } = useGroupGuest();
 
   // Save court data using the data service
   // @deprecated — localStorage persistence removed; API commands handle state
@@ -2546,14 +2569,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
   };
 
-  const handleRemovePlayer = (idx) => {
-    setCurrentGroup(currentGroup.filter((_, i) => i !== idx));
-  };
-
-  const handleSelectSponsor = (memberNum) => {
-    setGuestSponsor(memberNum);
-    setShowSponsorError(false);
-  };
+  // handleRemovePlayer moved to useGroupGuest hook (WP5.3 R8a.3)
+  // handleSelectSponsor moved to useGroupGuest hook (WP5.3 R8a.3)
 
   const handleGuestNameChange = (e) => {
     markUserTyping();
@@ -2671,13 +2688,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setShowSponsorError(false);
   };
 
-  const handleCancelGuest = () => {
-    setShowGuestForm(false);
-    setGuestName('');
-    setGuestSponsor('');
-    setShowGuestNameError(false);
-    setShowSponsorError(false);
-  };
+  // handleCancelGuest moved to useGroupGuest hook (WP5.3 R8a.3)
 
   const handleGroupSelectCourt = () => {
     console.log('[handleGroupSelectCourt] registrantStreak:', registrantStreak);
