@@ -61,12 +61,14 @@ import {
   handleRemoveFromWaitlistOp,
   handleAdminClearCourtOp,
   handleClearAllCourtsOp,
-  handleReorderWaitlistOp,
   handleMoveCourtOp,
 } from './handlers/adminOperations';
 
 // Block admin hook (WP5.3 R3.3)
 import { useBlockAdmin } from './blocks/useBlockAdmin';
+
+// Waitlist admin hook (WP5.3 R4a.3)
+import { useWaitlistAdmin } from './waitlist/useWaitlistAdmin';
 
 // TennisBackend singleton instance
 const backend = createBackend();
@@ -606,7 +608,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
   const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
 
-  const [waitlistMoveFrom, setWaitlistMoveFrom] = useState(null);
+  // waitlistMoveFrom moved to useWaitlistAdmin hook (WP5.3 R4a.3)
   const [showGuestForm, setShowGuestForm] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestSponsor, setGuestSponsor] = useState('');
@@ -1230,6 +1232,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     backend,
     showAlertMessage,
     getCourtData,
+  });
+
+  // Waitlist admin hook (WP5.3 R4a.3)
+  const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
+    getCourtData,
+    showAlertMessage,
   });
 
   // Save court data using the data service
@@ -2398,12 +2406,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const handleRemoveFromWaitlist = (group) =>
     handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group);
 
-  const handleReorderWaitlist = (fromIndex, toIndex) =>
-    handleReorderWaitlistOp(
-      { getCourtData, showAlertMessage, setWaitlistMoveFrom },
-      fromIndex,
-      toIndex
-    );
+  // handleReorderWaitlist moved to useWaitlistAdmin hook (WP5.3 R4a.3)
 
   const handlePriceUpdate = async () => {
     const price = parseFloat(ballPriceInput);
@@ -3091,7 +3094,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         onMoveCourt={handleMoveCourt}
         onClearWaitlist={handleClearWaitlist}
         onRemoveFromWaitlist={handleRemoveFromWaitlist}
-        onReorderWaitlist={handleReorderWaitlist}
+        onReorderWaitlist={onReorderWaitlist}
         onPriceUpdate={handlePriceUpdate}
         onExit={handleExitAdmin}
         showAlertMessage={showAlertMessage}
