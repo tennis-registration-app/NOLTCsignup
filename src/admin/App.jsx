@@ -84,9 +84,6 @@ const {
 // --- One-time guard helper (no UI change)
 const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 
-// Note: scheduleAdminRefresh and wireAdminListenersOnce IIFEs moved to ./utils/adminRefresh.js
-// They execute at import time (same timing as original module-level IIFEs)
-
 // Shared domain modules
 const Events = window.Tennis?.Events;
 
@@ -143,32 +140,7 @@ assert(
 const dataStore = TennisCourtDataStore ? new TennisCourtDataStore() : null;
 
 // ---- TENNIS_CONFIG: NOW IMPORTED FROM window.APP_UTILS ----
-// REMOVED: local TENNIS_CONFIG (~21 lines)
-// The shared config includes all properties (COURTS, TIMING, STORAGE, PRICING, etc.)
 const TENNIS_CONFIG = _sharedTennisConfig;
-
-// BlockTemplateManager and RecurrenceConfig moved to ./blocks/
-// CourtStatusGrid moved to ./courts/
-// MockAIAdmin moved to ./ai/
-// UsageHeatmap, UtilizationChart, WaitTimeAnalysis, BallPurchaseLog, GuestChargeLog moved to ./analytics/
-// EditGameModal - imported from ./components
-// EditBlockModal moved to ./blocks/
-// Note: getEventTypeFromReason and calculateEventLayout moved to ./calendar/utils.js
-// Note: getEventIcon moved to ./utils/eventIcons.js
-// Note: getEventColor and InteractiveEvent moved to ./calendar/
-// Note: VisualTimeEntry moved to ./components/VisualTimeEntry.jsx
-// Note: MiniCalendar moved to ./components/MiniCalendar.jsx
-// Note: DayViewEnhanced moved to ./calendar/DayViewEnhanced.jsx
-// Note: MonthView moved to ./components/MonthView.jsx
-// Note: EventSummary moved to ./components/EventSummary.jsx
-// Note: WeekView moved to ./calendar/WeekView.jsx
-// Note: EventCalendarEnhanced moved to ./calendar/EventCalendarEnhanced.jsx
-
-// HoverCard, QuickActionsMenu - imported from ./components
-// Note: EventDetailsModal moved to ./calendar/EventDetailsModal.jsx
-
-// BlockTimeline, ConflictDetector and CompleteBlockManagerEnhanced moved to ./blocks/
-// GameHistorySearch and AnalyticsDashboard moved to ./screens/
 
 // Main Admin Panel Component
 const AdminPanelV2 = ({ onExit }) => {
