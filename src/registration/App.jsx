@@ -663,7 +663,6 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     showSuggestions,
     addPlayerSearch,
     showAddPlayerSuggestions,
-    apiMembers,
     isSearching,
     // Derived
     effectiveSearchInput,
@@ -680,10 +679,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     handleAddPlayerSearchChange,
     handleAddPlayerSearchFocus,
     getAutocompleteSuggestions,
-    // Resets (exposed but not wired yet)
-    resetLeaderSearch,
-    resetAddPlayerSearch,
-    resetAllSearch,
+    // Resets available: resetLeaderSearch, resetAddPlayerSearch, resetAllSearch
+    // apiMembers and setApiMembers available if needed
   } = useMemberSearch({
     backend,
     setCurrentScreen,
