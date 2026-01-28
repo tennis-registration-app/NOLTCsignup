@@ -56,7 +56,16 @@ import { createBackend } from './backend/index.js';
 import { computeRegistrationCourtSelection } from '../shared/courts/overtimeEligibility.js';
 
 // Extracted admin operations
-import { handleClearWaitlistOp, handleRemoveFromWaitlistOp } from './handlers/adminOperations';
+import {
+  handleClearWaitlistOp,
+  handleRemoveFromWaitlistOp,
+  handleCancelBlockOp,
+  handleAdminClearCourtOp,
+  handleClearAllCourtsOp,
+  handleReorderWaitlistOp,
+  handleMoveCourtOp,
+  handleBlockCreateOp,
+} from './handlers/adminOperations';
 
 // TennisBackend singleton instance
 const backend = createBackend();
@@ -2347,178 +2356,32 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Admin Screen Handlers
   // ============================================
 
-  const handleClearAllCourts = async () => {
-    const confirmClear = window.confirm(
-      'Clear all courts? This will make all courts immediately available.'
+  const handleClearAllCourts = () => handleClearAllCourtsOp({ backend, showAlertMessage });
+
+  const handleBlockCreate = () =>
+    handleBlockCreateOp({
+      backend,
+      getCourtData,
+      showAlertMessage,
+      setBlockingInProgress,
+      selectedCourtsToBlock,
+      blockMessage,
+      blockStartTime,
+      blockEndTime,
+    });
+
+  const handleCancelBlock = (blockId, courtNum) =>
+    handleCancelBlockOp({ backend, showAlertMessage }, blockId, courtNum);
+
+  const handleAdminClearCourt = (courtNum) =>
+    handleAdminClearCourtOp({ clearCourt, showAlertMessage }, courtNum);
+
+  const handleMoveCourt = (fromCourtNum, toCourtNum) =>
+    handleMoveCourtOp(
+      { backend, getCourtData, showAlertMessage, setCourtToMove },
+      fromCourtNum,
+      toCourtNum
     );
-    if (confirmClear) {
-      const result = await backend.admin.clearAllCourts({
-        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-        reason: 'admin_clear_all',
-      });
-      if (result.ok) {
-        showAlertMessage(
-          `All courts cleared successfully (${result.sessionsEnded || 0} sessions ended)`
-        );
-      } else {
-        showAlertMessage(result.message || 'Failed to clear courts');
-      }
-    }
-  };
-
-  const handleBlockCreate = async () => {
-    if (selectedCourtsToBlock.length === 0) {
-      showAlertMessage('Please select at least one court to block');
-      return;
-    }
-    if (!blockMessage) {
-      showAlertMessage('Please enter a block reason');
-      return;
-    }
-    if (!blockEndTime) {
-      showAlertMessage('Please select an end time');
-      return;
-    }
-
-    setBlockingInProgress(true);
-
-    const boardData = getCourtData();
-    const currentTimeNow = new Date();
-
-    // Calculate start time
-    let startTime;
-    if (blockStartTime === 'now') {
-      startTime = new Date();
-    } else {
-      startTime = new Date();
-      const [hours, minutes] = blockStartTime.split(':');
-      startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    }
-
-    // Calculate end time based on the selected time
-    const [endHours, endMinutes] = blockEndTime.split(':');
-    let endTime = new Date(startTime);
-    endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
-
-    // If end time is before start time, assume next day
-    if (endTime <= startTime) {
-      endTime.setDate(endTime.getDate() + 1);
-    }
-
-    console.log('Block times calculated:', {
-      blockStartTimeInput: blockStartTime,
-      currentTime: currentTimeNow.toLocaleString(),
-      startTime: startTime.toLocaleString(),
-      endTime: endTime.toLocaleString(),
-    });
-
-    // Map block message to block type
-    const blockTypeMap = {
-      'WET COURT': 'wet',
-      'COURT WORK': 'maintenance',
-      LESSON: 'lesson',
-    };
-    const blockType = blockTypeMap[blockMessage.toUpperCase()] || 'other';
-
-    // Block selected courts via backend API
-    let successCount = 0;
-    let failedCourts = [];
-
-    for (const courtNum of selectedCourtsToBlock) {
-      const court = boardData.courts[courtNum - 1];
-      if (!court || !court.id) {
-        failedCourts.push(courtNum);
-        continue;
-      }
-
-      const result = await backend.admin.createBlock({
-        courtId: court.id,
-        blockType: blockType,
-        title: blockMessage,
-        startsAt: startTime.toISOString(),
-        endsAt: endTime.toISOString(),
-        deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-      });
-
-      if (result.ok) {
-        successCount++;
-      } else {
-        failedCourts.push(courtNum);
-        console.error(`Failed to block court ${courtNum}:`, result.message);
-      }
-    }
-
-    if (failedCourts.length === 0) {
-      showAlertMessage(`${successCount} court(s) blocked successfully`);
-    } else if (successCount > 0) {
-      showAlertMessage(
-        `${successCount} court(s) blocked. Failed: courts ${failedCourts.join(', ')}`
-      );
-    } else {
-      showAlertMessage(`Failed to block courts: ${failedCourts.join(', ')}`);
-    }
-  };
-
-  const handleCancelBlock = async (blockId, courtNum) => {
-    const result = await backend.admin.cancelBlock({
-      blockId: blockId,
-      deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-    });
-    if (result.ok) {
-      showAlertMessage(`Court ${courtNum} unblocked`);
-    } else {
-      showAlertMessage(result.message || 'Failed to unblock court');
-    }
-  };
-
-  const handleAdminClearCourt = async (courtNum) => {
-    await clearCourt(courtNum);
-    showAlertMessage(`Court ${courtNum} cleared`);
-  };
-
-  const handleMoveCourt = async (fromCourtNum, toCourtNum) => {
-    try {
-      const data = getCourtData();
-      const fromCourt = data.courts[fromCourtNum - 1];
-      const toCourt = data.courts[toCourtNum - 1];
-
-      if (!fromCourt?.id) {
-        showAlertMessage('Source court not found');
-        setCourtToMove(null);
-        return;
-      }
-
-      // For empty courts, get ID from API board
-      let toCourtId = toCourt?.id;
-      if (!toCourtId) {
-        const board = await backend.queries.getBoard();
-        const targetCourt = board?.courts?.find((c) => c.number === toCourtNum);
-        toCourtId = targetCourt?.id;
-      }
-
-      if (!toCourtId) {
-        showAlertMessage('Destination court not found');
-        setCourtToMove(null);
-        return;
-      }
-
-      const result = await backend.commands.moveCourt({
-        fromCourtId: fromCourt.id,
-        toCourtId: toCourtId,
-      });
-
-      if (result.ok) {
-        showAlertMessage(`Court ${fromCourtNum} moved to Court ${toCourtNum}`);
-      } else {
-        showAlertMessage(result.message || 'Failed to move court');
-      }
-    } catch (err) {
-      console.error('[moveCourt] Error:', err);
-      showAlertMessage(err.message || 'Failed to move court');
-    }
-
-    setCourtToMove(null);
-  };
 
   const handleClearWaitlist = () =>
     handleClearWaitlistOp({ backend, showAlertMessage, getCourtData });
@@ -2526,28 +2389,12 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const handleRemoveFromWaitlist = (group) =>
     handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group);
 
-  const handleReorderWaitlist = async (fromIndex, toIndex) => {
-    const data = getCourtData();
-    const movedGroup = data.waitlist[fromIndex];
-    const entryId = movedGroup?.id || movedGroup?.group?.id;
-
-    if (entryId && window.Tennis?.Commands?.reorderWaitlist) {
-      try {
-        await window.Tennis.Commands.reorderWaitlist({
-          entryId,
-          newPosition: toIndex,
-        });
-        showAlertMessage(`Group moved to position ${toIndex + 1}`);
-      } catch (err) {
-        showAlertMessage(err.message || 'Failed to move group');
-      }
-    } else {
-      console.warn('[Waitlist Reorder] API not available, action skipped');
-      showAlertMessage('Waitlist reorder requires API — feature temporarily unavailable');
-    }
-
-    setWaitlistMoveFrom(null);
-  };
+  const handleReorderWaitlist = (fromIndex, toIndex) =>
+    handleReorderWaitlistOp(
+      { getCourtData, showAlertMessage, setWaitlistMoveFrom },
+      fromIndex,
+      toIndex
+    );
 
   const handlePriceUpdate = async () => {
     const price = parseFloat(ballPriceInput);
