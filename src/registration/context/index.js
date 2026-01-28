@@ -6,4 +6,4 @@
  *   import { TennisProvider, useTennis } from './context';
  */
 
-export { TennisProvider, useTennis, TennisContext } from './TennisContext.jsx';
+export { TennisProvider, useTennis, useRegistrationDeps, TennisContext } from './TennisContext.jsx';
