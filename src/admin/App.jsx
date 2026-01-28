@@ -68,6 +68,9 @@ import { removeFromWaitlistOp, moveInWaitlistOp } from './handlers/waitlistOpera
 import { clearCourtOp, moveCourtOp, clearAllCourtsOp } from './handlers/courtOperations';
 import { applyBlocksOp } from './handlers/applyBlocksOperation';
 
+// Wet courts hook (WP5.2)
+import { useWetCourts } from './wetCourts/useWetCourts';
+
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
@@ -155,9 +158,6 @@ const AdminPanelV2 = ({ onExit }) => {
   const [hoursOverrides, setHoursOverrides] = useState([]);
   const [notification, setNotification] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [wetCourtsActive, setWetCourtsActive] = useState(false);
-  const [wetCourts, setWetCourts] = useState(new Set());
-  const [suspendedBlocks, setSuspendedBlocks] = useState([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [blockingView, setBlockingView] = useState('create');
   const [courtBlocks, setCourtBlocks] = useState([]);
@@ -171,118 +171,36 @@ const AdminPanelV2 = ({ onExit }) => {
 
   const ENABLE_WET_COURTS = true;
 
-  const handleEmergencyWetCourt = async () => {
-    console.log('🌧️ Emergency wet court activated - calling API');
+  // Wet courts hook (WP5.2) - manages state + backend ops + side effects
+  const {
+    isActive: wetCourtsActive,
+    wetCourtNumbers,
+    suspendedBlocks,
+    activateWet: handleEmergencyWetCourt,
+    deactivateWet: deactivateWetCourts,
+    clearWetCourt,
+    clearAllWet: _removeAllWetCourtBlocks,
+  } = useWetCourts({
+    backend,
+    getDeviceId,
+    courts,
+    Events,
+    onRefresh: () => setRefreshTrigger((prev) => prev + 1),
+  });
 
-    try {
-      const result = await backend.admin.markWetCourts({
-        deviceId: getDeviceId(),
-        durationMinutes: 720, // 12 hours
-        reason: 'WET COURT',
-        idempotencyKey: `wet-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      });
+  // Convert array to Set for compatibility with existing code that expects Set
+  const wetCourts = new Set(wetCourtNumbers);
 
-      if (result.ok) {
-        console.log(`✅ Marked ${result.courtsMarked} courts as wet until ${result.endsAt}`);
-
-        // Update local state
-        const allCourts = new Set(result.courtNumbers || [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-        setWetCourts(allCourts);
-        setWetCourtsActive(true);
-
-        // Notify legacy components
-        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) });
-        setRefreshTrigger((prev) => prev + 1);
-      } else {
-        console.error('Failed to mark wet courts:', result.message);
-      }
-    } catch (error) {
-      console.error('Error creating wet court blocks:', error);
-    }
-  };
+  // No-op setters for prop compatibility with children using old hook pattern
+  // State is now managed by useWetCourts hook
+  const setWetCourtsActive = () => {};
+  const setWetCourts = () => {};
+  const setSuspendedBlocks = () => {};
 
   const handleEditBlockFromStatus = (block) => {
     setBlockToEdit(block);
     setActiveTab('blocking');
     setBlockingView('create');
-  };
-
-  const removeAllWetCourtBlocks = async () => {
-    if (!ENABLE_WET_COURTS) return;
-
-    console.log('🧹 Clearing all wet court blocks via API');
-
-    try {
-      const result = await backend.admin.clearWetCourts({
-        deviceId: getDeviceId(),
-      });
-
-      if (result.ok) {
-        console.log(`✅ Cleared ${result.blocksCleared} wet court blocks`);
-        setRefreshTrigger((prev) => prev + 1);
-      } else {
-        console.error('Failed to clear wet courts:', result.message);
-      }
-    } catch (error) {
-      console.error('Error removing wet court blocks:', error);
-    }
-  };
-
-  const clearWetCourt = async (courtNumber) => {
-    console.log(`☀️ Clearing wet court ${courtNumber} via API`);
-
-    // Get court ID from courts state
-    const court = courts?.find((c) => c.number === courtNumber);
-    if (!court?.id) {
-      console.warn(`Court ${courtNumber} not found in board state`);
-      return;
-    }
-
-    try {
-      const result = await backend.admin.clearWetCourts({
-        deviceId: getDeviceId(),
-        courtIds: [court.id],
-      });
-
-      if (result.ok) {
-        console.log(`✅ Cleared wet court ${courtNumber}`);
-
-        // Update local state
-        const newWetCourts = new Set(wetCourts);
-        newWetCourts.delete(courtNumber);
-        setWetCourts(newWetCourts);
-
-        // Notify legacy components
-        Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
-        setRefreshTrigger((prev) => prev + 1);
-
-        // If all courts are dry, deactivate system
-        if (newWetCourts.size === 0) {
-          setWetCourtsActive(false);
-          console.log('✅ All courts dry - wet court system deactivated');
-        }
-      } else {
-        console.error('Failed to clear wet court:', result.message);
-      }
-    } catch (error) {
-      console.error('Error removing wet court block:', error);
-    }
-  };
-
-  const deactivateWetCourts = async () => {
-    if (!ENABLE_WET_COURTS) return;
-
-    console.log('🔄 Manually deactivating wet court system via API');
-
-    try {
-      await removeAllWetCourtBlocks();
-      setWetCourtsActive(false);
-      setWetCourts(new Set());
-      setSuspendedBlocks([]);
-      Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] });
-    } catch (error) {
-      console.error('Error deactivating wet courts:', error);
-    }
   };
 
   // Load data from localStorage
