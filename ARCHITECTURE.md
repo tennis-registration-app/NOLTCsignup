@@ -214,6 +214,56 @@ Reaching ≤500 lines requires refactoring beyond WP4 scope:
 
 Playwright baseline is 14/15 due to pre-existing failure in `block-refresh-wiring.spec.js` (to be addressed in WP5).
 
+## Registration Module Structure (WP4 Phase 3)
+
+```
+src/registration/
+├── App.jsx                     # Entry point + TennisRegistration (~3,491 lines)
+├── handlers/
+│   └── adminOperations.js      # Admin operations (274 lines, 8 exported ops)
+├── screens/                    # Already extracted (6 screens, 2,817 lines)
+│   ├── HomeScreen.jsx          # Home/search screen (259 lines)
+│   ├── GroupScreen.jsx         # Group management (680 lines)
+│   ├── CourtSelectionScreen.jsx # Court selection (206 lines)
+│   ├── ClearCourtScreen.jsx    # Court clearing flow (279 lines)
+│   ├── AdminScreen.jsx         # Admin interface (715 lines)
+│   └── SuccessScreen.jsx       # Success/completion (678 lines)
+├── components/                 # UI components (696 lines)
+├── hooks/                      # Custom hooks (278 lines)
+├── modals/                     # Modal components (86 lines)
+├── backend/                    # Backend API layer (~500 lines)
+├── services/                   # Business services (~400 lines)
+├── context/                    # React context (~100 lines)
+└── utils/                      # Utility functions (~50 lines)
+```
+
+### Key Architectural Patterns
+
+- **Handler modules**: Pure async functions with dependency injection (`ctx` parameter). 8 admin operations extracted to `handlers/adminOperations.js`.
+- **Screen components**: Already extracted prior to WP4. Each screen receives props from TennisRegistration.
+- **State ownership**: TennisRegistration owns all React state (73 useState declarations) and assembles props for screens.
+
+### Why App.jsx Remains ~3,491 Lines
+
+The screens are already extracted (2,817 lines in 6 files). The remaining ~3,491 lines in App.jsx is primarily:
+- **State declarations**: 73 useState hooks for form, UI, and flow state
+- **State orchestration**: Handlers that coordinate multiple state updates
+- **Prop assembly**: Building prop objects to pass to extracted screens
+
+Specific blockers for further WP4 extraction:
+- `assignCourtToGroup` (370 lines) orchestrates 20+ state setters
+- `resetForm` / `clearSuccessResetTimer` touch 38 setters each
+- Navigation flows (`handleGroupGoBack`, etc.) couple 5-10 setters
+
+Further reduction requires architectural refactoring (WP5+):
+- State consolidation into domain-specific hooks (e.g., `useGroupState`, `useWaitlistState`)
+- Context-based state management to eliminate prop drilling
+- Potential state machine pattern for complex registration flows
+
+### Verification Baseline
+
+Playwright baseline is 14/15 due to pre-existing failure in `block-refresh-wiring.spec.js` (to be addressed in WP5).
+
 ## Known Technical Debt
 
 ### Hardcoded Credentials (Phase 4)
@@ -223,11 +273,15 @@ The frontend currently contains hardcoded Supabase credentials in `src/lib/apiCo
 - Creating `.env.example` template
 - Updating build/deploy pipeline
 
-### Frontend Decomposition (Phase 2) - Partially Complete
+### Frontend Decomposition (WP4) - Complete
 
 Large components status:
-- `src/registration/App.jsx` (~1,815 lines) - 7 hooks extracted in Phase 2.1
+- `src/registration/App.jsx` (~3,491 lines) - Screens extracted prior to WP4; 8 admin handlers extracted in WP4 Phase 3
+- `src/admin/App.jsx` (~792 lines) - Tab sections + handlers extracted in WP4 Phase 2
+- `src/courtboard/main.jsx` (~105 lines) - Fully decomposed in WP4 Phase 1
 - `CompleteBlockManagerEnhanced.jsx` (~832 lines) - Decomposed in Phase 2.2
+
+Note: registration/App.jsx remains large due to 73 useState declarations and tightly coupled state orchestration. Further reduction requires WP5+ architectural refactoring.
 
 ## Security Model
 
