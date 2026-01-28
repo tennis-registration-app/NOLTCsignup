@@ -83,6 +83,9 @@ import { useMemberIdentity } from './memberIdentity/useMemberIdentity';
 // Court assignment result hook (WP5.4 R9a-1.3)
 import { useCourtAssignmentResult } from './court/useCourtAssignmentResult';
 
+// Clear court flow hook (WP5.4 R9a-2.3)
+import { useClearCourtFlow } from './court/useClearCourtFlow';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -580,8 +583,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // searchInput, showSuggestions, addPlayerSearch, showAddPlayerSuggestions, apiMembers moved to useMemberSearch hook (WP5.3 R5a.3)
   const [showAddPlayer, setShowAddPlayer] = useState(false);
 
-  const [selectedCourtToClear, setSelectedCourtToClear] = useState(null);
-  const [clearCourtStep, setClearCourtStep] = useState(1);
+  // selectedCourtToClear, clearCourtStep moved to useClearCourtFlow hook (WP5.4 R9a-2.3)
   const [isChangingCourt, setIsChangingCourt] = useState(false);
   const [, setWasOvertimeCourt] = useState(false); // Getter unused, setter used
   const [, setLastActivity] = useState(Date.now()); // Getter unused, setter used
@@ -700,6 +702,15 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setHasAssignedCourt,
     // resetCourtAssignmentResult available but not wired into reset functions yet
   } = useCourtAssignmentResult();
+
+  // Clear court flow hook (WP5.4 R9a-2.3)
+  const {
+    selectedCourtToClear,
+    clearCourtStep,
+    setSelectedCourtToClear,
+    setClearCourtStep,
+    decrementClearCourtStep,
+  } = useClearCourtFlow();
 
   // --- duplicate guard helpers (early-check on selection) ---
   function __normalizeName(n) {
@@ -2720,7 +2731,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       if (currentScreen === 'clearCourt') {
         // In Clear Court, Back should go to previous step or exit
         if (clearCourtStep > 1) {
-          setClearCourtStep(clearCourtStep - 1);
+          decrementClearCourtStep();
         } else {
           // Exit Clear Court workflow
           window.parent.postMessage({ type: 'resetRegistration' }, '*');
