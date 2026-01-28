@@ -43,7 +43,7 @@ import { CompleteBlockManagerEnhanced } from './blocks';
 import { MockAIAdmin, AIAssistant } from './ai';
 
 // Screen components
-import { GameHistorySearch, AnalyticsDashboard, SystemSettings } from './screens';
+import { GameHistorySearch, AnalyticsDashboard } from './screens';
 
 // Utilities (getEventIcon now used in MonthView)
 
@@ -60,6 +60,7 @@ import { BlockingSection } from './tabs/BlockingSection';
 import { TabNavigation } from './tabs/TabNavigation';
 import { StatusSection } from './tabs/StatusSection';
 import { WaitlistSection } from './tabs/WaitlistSection';
+import { SystemSection } from './tabs/SystemSection';
 
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
@@ -792,6 +793,29 @@ const AdminPanelV2 = ({ onExit }) => {
     }
   };
 
+  // Callback for SystemSettings to refresh local state after settings change
+  const handleSettingsChanged = () => {
+    backend.admin.getSettings().then((result) => {
+      if (result.ok) {
+        if (result.settings) {
+          setSettings({
+            tennisBallPrice: (result.settings.ball_price_cents || 500) / 100,
+            guestFees: {
+              weekday: (result.settings.guest_fee_weekday_cents || 1500) / 100,
+              weekend: (result.settings.guest_fee_weekend_cents || 2000) / 100,
+            },
+          });
+        }
+        if (result.operating_hours) {
+          setOperatingHours(result.operating_hours);
+        }
+        if (result.upcoming_overrides) {
+          setHoursOverrides(result.upcoming_overrides);
+        }
+      }
+    });
+  };
+
   // AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
@@ -907,30 +931,7 @@ const AdminPanelV2 = ({ onExit }) => {
         </div>
         {/* System tab - outside the white wrapper so cards have visible separation */}
         {activeTab === 'system' && (
-          <SystemSettings
-            backend={backend}
-            onSettingsChanged={() => {
-              backend.admin.getSettings().then((result) => {
-                if (result.ok) {
-                  if (result.settings) {
-                    setSettings({
-                      tennisBallPrice: (result.settings.ball_price_cents || 500) / 100,
-                      guestFees: {
-                        weekday: (result.settings.guest_fee_weekday_cents || 1500) / 100,
-                        weekend: (result.settings.guest_fee_weekend_cents || 2000) / 100,
-                      },
-                    });
-                  }
-                  if (result.operating_hours) {
-                    setOperatingHours(result.operating_hours);
-                  }
-                  if (result.upcoming_overrides) {
-                    setHoursOverrides(result.upcoming_overrides);
-                  }
-                }
-              });
-            }}
-          />
+          <SystemSection backend={backend} onSettingsChanged={handleSettingsChanged} />
         )}
       </div>
 
