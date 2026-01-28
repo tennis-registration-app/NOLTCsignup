@@ -92,6 +92,7 @@ import {
   resetFormOrchestrated,
   applyInactivityTimeoutOrchestrated,
   handleSuggestionClickOrchestrated,
+  handleAddPlayerSuggestionClickOrchestrated,
 } from './orchestration';
 
 // TennisBackend singleton instance
@@ -2272,119 +2273,30 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
   };
 
+  // Handle add player suggestion click (moved to orchestration layer - WP5.5)
   const handleAddPlayerSuggestionClick = async (suggestion) => {
-    // Validate suggestion
-    if (!suggestion || !suggestion.member || !suggestion.member.id) {
-      showAlertMessage('Invalid player selection. Please try again.');
-      return;
-    }
-
-    // API member already has correct data
-    const enrichedMember = {
-      id: suggestion.member.id,
-      name: suggestion.member.name,
-      memberNumber: suggestion.memberNumber,
-      accountId: suggestion.member.accountId,
-      memberId: suggestion.member.id,
-    };
-
-    // Early duplicate guard
-    if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
-      setAddPlayerSearch('');
-      setShowAddPlayer(false);
-      setShowAddPlayerSuggestions(false);
-      return;
-    }
-
-    // Check for duplicate in current group
-    if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
-      Tennis.UI.toast(`${enrichedMember.name} is already in this group`);
-      setAddPlayerSearch('');
-      setShowAddPlayer(false);
-      setShowAddPlayerSuggestions(false);
-      return;
-    }
-
-    // Check if player is already playing or on waitlist
-    if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
-      setAddPlayerSearch('');
-      setShowAddPlayer(false);
-      setShowAddPlayerSuggestions(false);
-      return; // Toast message already shown by guardAddPlayerEarly
-    }
-
-    const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
-
-    if (
-      playerStatus.isPlaying &&
-      playerStatus.location === 'waiting' &&
-      playerStatus.position === 1
-    ) {
-      const data = getCourtData();
-      const availCourts = getAvailableCourts(false);
-
-      if (availCourts.length > 0) {
-        const firstWaitlistEntry = data.waitlist[0];
-        // Domain: entry.group.players
-        const players = firstWaitlistEntry.group?.players || [];
-        setCurrentGroup(
-          players.map((p) => ({
-            id: p.memberId,
-            name: p.displayName || 'Unknown',
-            memberNumber: findMemberNumber(p.memberId),
-          }))
-        );
-
-        setHasWaitlistPriority(true);
-
-        data.waitlist.shift();
-        saveCourtData(data);
-
-        setAddPlayerSearch('');
-        setShowAddPlayer(false);
-        setShowAddPlayerSuggestions(false);
-        return;
-      }
-    }
-
-    if (!playerStatus.isPlaying) {
-      // Validate we're not exceeding max players
-      if (currentGroup.length >= CONSTANTS.MAX_PLAYERS) {
-        showAlertMessage(`Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`);
-        setAddPlayerSearch('');
-        setShowAddPlayer(false);
-        setShowAddPlayerSuggestions(false);
-        return;
-      }
-
-      const newPlayer = {
-        name: enrichedMember.name,
-        memberNumber: suggestion.memberNumber,
-        id: enrichedMember.id,
-        memberId: enrichedMember.memberId || enrichedMember.id,
-        phone: enrichedMember.phone || '',
-        ranking: enrichedMember.ranking || null,
-        winRate: enrichedMember.winRate || 0.5,
-        accountId: enrichedMember.accountId,
-      };
-      console.log('🔵 Adding player to group (add player flow):', newPlayer);
-      setCurrentGroup([...currentGroup, newPlayer]);
-      setAddPlayerSearch('');
-      setShowAddPlayer(false);
-      setShowAddPlayerSuggestions(false);
-    } else {
-      let message = '';
-      if (playerStatus.location === 'court') {
-        message = `${playerStatus.playerName} is already playing on Court ${playerStatus.courtNumber}`;
-      } else if (playerStatus.location === 'waiting') {
-        message = `${playerStatus.playerName} is already in a group waiting for a court`;
-      } else if (playerStatus.location === 'current') {
-        message = `${playerStatus.playerName} is already in your group`;
-      }
-      setAlertMessage(message);
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
-    }
+    await handleAddPlayerSuggestionClickOrchestrated(suggestion, {
+      // Read values
+      currentGroup,
+      // Setters
+      setAddPlayerSearch,
+      setShowAddPlayer,
+      setShowAddPlayerSuggestions,
+      setCurrentGroup,
+      setHasWaitlistPriority,
+      setAlertMessage,
+      setShowAlert,
+      // Services/helpers
+      guardAddPlayerEarly,
+      guardAgainstGroupDuplicate,
+      isPlayerAlreadyPlaying,
+      getAvailableCourts,
+      getCourtData,
+      saveCourtData,
+      findMemberNumber,
+      showAlertMessage,
+      CONSTANTS,
+    });
   };
 
   const handleToggleAddPlayer = () => {

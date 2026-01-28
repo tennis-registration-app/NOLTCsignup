@@ -30,4 +30,8 @@ describe('orchestration facade exports', () => {
   it('exports handleSuggestionClickOrchestrated', () => {
     expect(typeof orchestration.handleSuggestionClickOrchestrated).toBe('function');
   });
+
+  it('exports handleAddPlayerSuggestionClickOrchestrated', () => {
+    expect(typeof orchestration.handleAddPlayerSuggestionClickOrchestrated).toBe('function');
+  });
 });
