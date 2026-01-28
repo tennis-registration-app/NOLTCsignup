@@ -89,6 +89,9 @@ import { useClearCourtFlow } from './court/useClearCourtFlow';
 // Alert display hook (WP5.6 R6a-1)
 import { useAlertDisplay } from './ui/alert';
 
+// Admin price feedback hook (WP5.6 R6a-2)
+import { useAdminPriceFeedback } from './ui/adminPriceFeedback';
+
 // Orchestration facade (WP5.5)
 import {
   changeCourtOrchestrated,
@@ -624,8 +627,14 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // Admin panel state - moved to top level
   const [ballPriceInput, setBallPriceInput] = useState('');
-  const [showPriceSuccess, setShowPriceSuccess] = useState(false);
-  const [priceError, setPriceError] = useState('');
+  // showPriceSuccess/priceError moved to useAdminPriceFeedback hook (WP5.6 R6a-2)
+  const {
+    showPriceSuccess,
+    priceError,
+    setShowPriceSuccess,
+    setPriceError,
+    showPriceSuccessWithClear,
+  } = useAdminPriceFeedback();
 
   // Ball price from API (in cents) - used by SuccessScreen
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
@@ -1783,9 +1792,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
       await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, parsed, { immediate: true });
 
       // Show success message
-      setShowPriceSuccess(true);
-      setPriceError('');
-      setTimeout(() => setShowPriceSuccess(false), 3000);
+      showPriceSuccessWithClear();
       // eslint-disable-next-line no-unused-vars
     } catch (_error) {
       setPriceError('Failed to save price');
