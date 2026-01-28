@@ -80,6 +80,9 @@ import { useStreak } from './streak/useStreak';
 // Member identity hook (WP5.3 R8b.3)
 import { useMemberIdentity } from './memberIdentity/useMemberIdentity';
 
+// Court assignment result hook (WP5.4 R9a-1.3)
+import { useCourtAssignmentResult } from './court/useCourtAssignmentResult';
+
 // TennisBackend singleton instance
 const backend = createBackend();
 
@@ -562,8 +565,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   }, [data.waitlist, availableCourts]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [mobileCountdown, setMobileCountdown] = useState(5);
-  const [justAssignedCourt, setJustAssignedCourt] = useState(null);
-  const [assignedSessionId, setAssignedSessionId] = useState(null); // Session ID from assignment (for ball purchases)
+  // justAssignedCourt, assignedSessionId moved to useCourtAssignmentResult hook (WP5.4 R9a-1.3)
   const [replacedGroup, setReplacedGroup] = useState(null);
   const [displacement, setDisplacement] = useState(null);
   // Shape: { displacedSessionId, displacedCourtId, takeoverSessionId, restoreUntil } | null
@@ -591,7 +593,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // moved to useMemberIdentity hook (WP5.3 R8b.3)
   const [currentTime, setCurrentTime] = useState(new Date());
   const [courtToMove, setCourtToMove] = useState(null);
-  const [hasAssignedCourt, setHasAssignedCourt] = useState(false);
+  // hasAssignedCourt moved to useCourtAssignmentResult hook (WP5.4 R9a-1.3)
   const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
   const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
 
@@ -686,6 +688,18 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     CONSTANTS,
     markUserTyping,
   });
+
+  // Court assignment result hook (WP5.4 R9a-1.3)
+  // NOTE: Must be initialized before useEffect at ~line 1100 that references justAssignedCourt
+  const {
+    justAssignedCourt,
+    assignedSessionId,
+    hasAssignedCourt,
+    setJustAssignedCourt,
+    setAssignedSessionId,
+    setHasAssignedCourt,
+    // resetCourtAssignmentResult available but not wired into reset functions yet
+  } = useCourtAssignmentResult();
 
   // --- duplicate guard helpers (early-check on selection) ---
   function __normalizeName(n) {
