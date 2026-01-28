@@ -6,7 +6,7 @@
  * Future phases will break this into smaller component files.
  */
 /* global Tennis */
-import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 
@@ -23,21 +23,10 @@ const getDeviceId = () => {
 
 // Import extracted components
 import {
-  // Icons
-  Calendar,
-  Clock,
-  GraduationCap,
-  Settings,
+  // Icons (used in waitlist tab)
   Trash2,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
-  Grid,
-  BarChart,
-  FileText,
-  Trophy,
-  Star,
-  greyFilter,
   // UI Components
   HoverCard,
   QuickActionsMenu,
@@ -45,13 +34,12 @@ import {
 } from './components';
 
 // Calendar components
-import { EventCalendarEnhanced, getEventColor } from './calendar';
+import { EventCalendarEnhanced } from './calendar';
 
 // Block management components
 import { CompleteBlockManagerEnhanced } from './blocks';
 
-// Court management components
-import { CourtStatusGrid } from './courts';
+// Court management components (CourtStatusGrid now used in StatusSection)
 
 // Analytics components (re-exported via ./screens/AnalyticsDashboard)
 
@@ -61,8 +49,7 @@ import { MockAIAdmin, AIAssistant } from './ai';
 // Screen components
 import { GameHistorySearch, AnalyticsDashboard, SystemSettings } from './screens';
 
-// Utilities
-import { getEventIcon } from './utils/eventIcons';
+// Utilities (getEventIcon now used in MonthView)
 
 // Direct component imports (not from barrel to avoid circular deps)
 import { MiniCalendar } from './components/MiniCalendar';
@@ -75,6 +62,7 @@ import { HistorySection } from './tabs/HistorySection';
 import { AnalyticsSection } from './tabs/AnalyticsSection';
 import { BlockingSection } from './tabs/BlockingSection';
 import { TabNavigation } from './tabs/TabNavigation';
+import { StatusSection } from './tabs/StatusSection';
 
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
@@ -840,87 +828,25 @@ const AdminPanelV2 = ({ onExit }) => {
           {' '}
           {/* ADD THIS LINE */}
           {activeTab === 'status' && (
-            <div className="p-6">
-              <CourtStatusGrid
-                courts={courts}
-                courtBlocks={courtBlocks}
-                selectedDate={selectedDate}
-                onClearCourt={clearCourt}
-                onMoveCourt={moveCourt}
-                currentTime={currentTime}
-                onEditBlock={handleEditBlockFromStatus}
-                onEmergencyWetCourt={handleEmergencyWetCourt}
-                onClearAllCourts={clearAllCourts}
-                wetCourtsActive={wetCourtsActive}
-                handleEmergencyWetCourt={handleEmergencyWetCourt}
-                wetCourts={wetCourts}
-                deactivateWetCourts={deactivateWetCourts}
-                onClearWetCourt={clearWetCourt}
-                onClearAllWetCourts={deactivateWetCourts}
-                backend={backend}
-              />
-
-              {/* Waitlist Section */}
-              <div
-                className={`bg-white rounded-lg shadow-sm ${waitingGroups.length === 0 ? 'p-4' : 'p-6'}`}
-              >
-                {waitingGroups.length > 0 && (
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Waiting Groups ({waitingGroups.length})
-                  </h3>
-                )}
-
-                {waitingGroups.length === 0 ? (
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-800">Waiting Groups (0)</h3>
-                    <span className="text-sm text-gray-500">No groups waiting</span>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {waitingGroups.map((group, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium">
-                            Position {index + 1}: {(group.names || []).join(', ') || 'Unknown'}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {(group.names || []).length} player
-                            {(group.names || []).length !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          {index > 0 && (
-                            <button
-                              onClick={() => moveInWaitlist(index, index - 1)}
-                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                            >
-                              <ChevronLeft size={20} />
-                            </button>
-                          )}
-                          {index < waitingGroups.length - 1 && (
-                            <button
-                              onClick={() => moveInWaitlist(index, index + 1)}
-                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                            >
-                              <ChevronRight size={20} />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => removeFromWaitlist(index)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
-                          >
-                            <Trash2 size={20} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <StatusSection
+              courts={courts}
+              courtBlocks={courtBlocks}
+              selectedDate={selectedDate}
+              currentTime={currentTime}
+              wetCourtsActive={wetCourtsActive}
+              wetCourts={wetCourts}
+              waitingGroups={waitingGroups}
+              backend={backend}
+              clearCourt={clearCourt}
+              moveCourt={moveCourt}
+              handleEditBlockFromStatus={handleEditBlockFromStatus}
+              handleEmergencyWetCourt={handleEmergencyWetCourt}
+              clearAllCourts={clearAllCourts}
+              deactivateWetCourts={deactivateWetCourts}
+              clearWetCourt={clearWetCourt}
+              moveInWaitlist={moveInWaitlist}
+              removeFromWaitlist={removeFromWaitlist}
+            />
           )}
           {activeTab === 'calendar' && (
             <CalendarSection
