@@ -86,6 +86,9 @@ import { useCourtAssignmentResult } from './court/useCourtAssignmentResult';
 // Clear court flow hook (WP5.4 R9a-2.3)
 import { useClearCourtFlow } from './court/useClearCourtFlow';
 
+// Alert display hook (WP5.6 R6a-1)
+import { useAlertDisplay } from './ui/alert';
+
 // Orchestration facade (WP5.5)
 import {
   changeCourtOrchestrated,
@@ -526,8 +529,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   };
 
   // memberNumber moved to useMemberIdentity hook (WP5.3 R8b.3)
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
+  // showAlert/alertMessage moved to useAlertDisplay hook (WP5.6 R6a-1)
+  const { showAlert, alertMessage, setShowAlert, setAlertMessage, showAlertMessage } =
+    useAlertDisplay({ alertDurationMs: CONSTANTS.ALERT_DISPLAY_MS });
 
   // Uncleared session tracking - moved to useStreak hook (WP5.3 R8c.3)
   // NOTE: availableCourts moved to top of component (line ~236) to avoid TDZ errors
@@ -1223,12 +1227,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only depend on currentScreen, not updateActivity
   }, [currentScreen]);
 
-  // Show alert message helper
-  const showAlertMessage = (message) => {
-    setAlertMessage(message);
-    setShowAlert(true);
-    setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
-  };
+  // showAlertMessage moved to useAlertDisplay hook (WP5.6 R6a-1)
 
   // Get court data using the data service (synchronous for React renders)
   // NOTE: Auto-timeout and cleanup now handled by API/server
@@ -1653,9 +1652,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
     // Validate group size
     if (currentGroup.length >= CONSTANTS.MAX_PLAYERS) {
-      setAlertMessage(`Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`);
-      setShowAlert(true);
-      setTimeout(() => setShowAlert(false), CONSTANTS.ALERT_DISPLAY_MS);
+      showAlertMessage(`Group is full (max ${CONSTANTS.MAX_PLAYERS} players)`);
       return;
     }
 
