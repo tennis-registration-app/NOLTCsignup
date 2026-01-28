@@ -12,7 +12,7 @@
 export { success, failure, wrapAsync } from './helpers/resultNormalizer.js';
 
 // Orchestrators will be added here as they are moved:
-// export { changeCourtOrchestrated } from './courtChangeOrchestrator.js';
+export { changeCourtOrchestrated } from './courtChangeOrchestrator.js';
 // export { resetFormOrchestrated, applyInactivityTimeoutOrchestrated } from './resetOrchestrator.js';
 // export { handleSuggestionClickOrchestrated, handleAddPlayerSuggestionClickOrchestrated } from './memberSelectionOrchestrator.js';
 // export { sendGroupToWaitlistOrchestrated } from './waitlistOrchestrator.js';

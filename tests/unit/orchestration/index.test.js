@@ -14,8 +14,8 @@ describe('orchestration facade exports', () => {
     expect(typeof orchestration.wrapAsync).toBe('function');
   });
 
-  // These tests will be uncommented as orchestrators are added:
-  // it('exports changeCourtOrchestrated', () => {
-  //   expect(typeof orchestration.changeCourtOrchestrated).toBe('function');
-  // });
+  // Orchestrators:
+  it('exports changeCourtOrchestrated', () => {
+    expect(typeof orchestration.changeCourtOrchestrated).toBe('function');
+  });
 });
