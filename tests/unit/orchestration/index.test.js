@@ -18,4 +18,12 @@ describe('orchestration facade exports', () => {
   it('exports changeCourtOrchestrated', () => {
     expect(typeof orchestration.changeCourtOrchestrated).toBe('function');
   });
+
+  it('exports resetFormOrchestrated', () => {
+    expect(typeof orchestration.resetFormOrchestrated).toBe('function');
+  });
+
+  it('exports applyInactivityTimeoutOrchestrated', () => {
+    expect(typeof orchestration.applyInactivityTimeoutOrchestrated).toBe('function');
+  });
 });
