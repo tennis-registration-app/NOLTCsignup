@@ -1,6 +1,58 @@
 import { loadFixture } from './fixtures.js';
 
 /**
+ * Adjusts block fixture dates to be relative to today (local time).
+ * Preserves the time-of-day from the original fixture but changes the date to today.
+ * Uses local date (not UTC) to match browser's Date behavior.
+ * This makes tests time-independent.
+ */
+function adjustBlockDatesToToday(blocksData) {
+  if (!blocksData || !blocksData.blocks || blocksData.blocks.length === 0) {
+    return {
+      ...blocksData,
+      serverNow: new Date().toISOString(),
+    };
+  }
+
+  // Use local date components to match browser's selectedDate (which uses new Date())
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayDateStr = `${year}-${month}-${day}`; // YYYY-MM-DD in local time
+
+  const adjustedBlocks = blocksData.blocks.map((block) => {
+    const adjusted = { ...block };
+
+    // Adjust startsAt - preserve time, change date to today (local)
+    if (block.startsAt) {
+      const originalTime = block.startsAt.split('T')[1]; // HH:MM:SS.sssZ
+      adjusted.startsAt = `${todayDateStr}T${originalTime}`;
+    }
+
+    // Adjust endsAt - preserve time, change date to today (local)
+    if (block.endsAt) {
+      const originalTime = block.endsAt.split('T')[1];
+      adjusted.endsAt = `${todayDateStr}T${originalTime}`;
+    }
+
+    // Adjust createdAt if present
+    if (block.createdAt) {
+      const originalTime = block.createdAt.split('T')[1];
+      adjusted.createdAt = `${todayDateStr}T${originalTime}`;
+    }
+
+    return adjusted;
+  });
+
+  return {
+    ...blocksData,
+    serverNow: new Date().toISOString(),
+    blocks: adjustedBlocks,
+  };
+}
+
+/**
  * Sets up API route interception for E2E tests.
  * Intercepts all Supabase Edge Function calls and returns fixture data.
  */
@@ -110,10 +162,12 @@ export async function setupMockApi(page, options = {}) {
           ? blocksDataQueue[blocksCallCount]
           : blocksDataQueue[blocksDataQueue.length - 1];
         blocksCallCount++;
+        // Adjust block dates to today for time-independent tests
+        const adjustedBlocksData = adjustBlockDatesToToday(blocksData);
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(blocksData),
+          body: JSON.stringify(adjustedBlocksData),
         });
       }
 
