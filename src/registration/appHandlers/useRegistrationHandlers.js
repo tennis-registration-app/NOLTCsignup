@@ -15,157 +15,120 @@ import { TennisBusinessLogic } from '@lib';
 /**
  * useRegistrationHandlers
  * Extracted from App.jsx — WP5.9.3
+ * Refactored to accept { app } — WP7.0
  *
  * Contains all handler functions for the registration flow.
  * Handlers are thin wrappers around orchestrators or direct state manipulations.
  *
- * @param {Object} deps - All dependencies needed by handlers
+ * @param {Object} params - Parameters object containing app
+ * @param {Object} params.app - The app state object from useRegistrationAppState
  * @returns {Object} - All handler functions
  */
-export function useRegistrationHandlers(deps) {
+export function useRegistrationHandlers({ app }) {
+  // Destructure everything from app that was previously passed as individual props
   const {
-    // Backend/services
-    backend,
-    dataStore,
-
-    // Orchestrators (from orchestration layer)
+    services: { backend, dataStore },
     assignCourtToGroupOrchestrated,
     sendGroupToWaitlistOrchestrated,
     handleSuggestionClickOrchestrated,
     handleAddPlayerSuggestionClickOrchestrated,
     changeCourtOrchestrated,
     resetFormOrchestrated,
-
-    // Alert
-    showAlertMessage,
-    setShowAlert,
-    setAlertMessage,
-
-    // Mobile
-    getMobileGeolocation,
-    setCheckingLocation,
-    setGpsFailedPrompt,
-
-    // Navigation
-    setCurrentScreen,
-
-    // Data
-    data,
-    operatingHours,
-
-    // Success/assignment state
-    setShowSuccess,
-    justAssignedCourt,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    hasAssignedCourt,
-    setHasAssignedCourt,
-    replacedGroup,
-    setReplacedGroup,
-    setDisplacement,
-    setOriginalCourtData,
-    canChangeCourt,
-    setCanChangeCourt,
-    setChangeTimeRemaining,
-    setIsTimeLimited,
-    setTimeLimitReason,
-    isChangingCourt,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-
-    // Group state
-    currentGroup,
-    setCurrentGroup,
-    currentMemberId,
-    setCurrentMemberId,
-    memberNumber,
-    setMemberNumber,
-
-    // Search state
-    setSearchInput,
-    setShowSuggestions,
-    setAddPlayerSearch,
-    setShowAddPlayerSuggestions,
-
-    // Guest state
-    guestName,
-    setGuestName,
-    guestSponsor,
-    setGuestSponsor,
-    showGuestForm,
-    setShowGuestForm,
-    setShowGuestNameError,
-    setShowSponsorError,
-    guestCounter,
-    incrementGuestCounter,
-
-    // Add player state
-    showAddPlayer,
-    setShowAddPlayer,
-
-    // Waitlist state
-    setHasWaitlistPriority,
-    currentWaitlistEntryId,
-    setCurrentWaitlistEntryId,
-    setWaitlistPosition,
-
-    // Streak state
-    registrantStreak,
-    setRegistrantStreak,
-    setShowStreakModal,
-    streakAcknowledged,
-    setStreakAcknowledged,
-
-    // Clear court state
-    clearCourtStep,
-    setSelectedCourtToClear,
-    setClearCourtStep,
-    decrementClearCourtStep,
-
-    // Admin state
-    isAssigning,
-    setIsAssigning,
-    isJoiningWaitlist,
-    setIsJoiningWaitlist,
-    ballPriceInput,
-    setPriceError,
-    setCourtToMove,
-
-    // Refs
-    successResetTimerRef,
-    typingTimeoutRef,
-
-    // Helpers from other hooks
-    fetchFrequentPartners,
-    clearCache,
-    getCourtBlockStatus,
-
-    // Mobile
-    mobileFlow,
-    preselectedCourt,
-    requestMobileReset,
-
-    // Constants
+    alert: { showAlertMessage, setShowAlert, setAlertMessage },
+    mobile: {
+      getMobileGeolocation,
+      setCheckingLocation,
+      setGpsFailedPrompt,
+      mobileFlow,
+      preselectedCourt,
+      requestMobileReset,
+    },
+    setters: {
+      setCurrentScreen,
+      setShowSuccess,
+      setReplacedGroup,
+      setDisplacement,
+      setOriginalCourtData,
+      setCanChangeCourt,
+      setChangeTimeRemaining,
+      setIsTimeLimited,
+      setTimeLimitReason,
+      setIsChangingCourt,
+      setWasOvertimeCourt,
+      setShowAddPlayer,
+      setHasWaitlistPriority,
+      setCurrentWaitlistEntryId,
+      setWaitlistPosition,
+      setIsAssigning,
+      setIsJoiningWaitlist,
+      setCourtToMove,
+    },
+    state: {
+      currentScreen,
+      data,
+      operatingHours,
+      replacedGroup,
+      canChangeCourt,
+      isChangingCourt: _isChangingCourt,
+      showAddPlayer,
+      currentWaitlistEntryId,
+      isAssigning,
+      isJoiningWaitlist,
+      ballPriceInput,
+    },
+    courtAssignment: {
+      justAssignedCourt,
+      setJustAssignedCourt,
+      setAssignedSessionId,
+      hasAssignedCourt: _hasAssignedCourt,
+      setHasAssignedCourt,
+    },
+    groupGuest: {
+      currentGroup,
+      setCurrentGroup,
+      guestName,
+      setGuestName,
+      guestSponsor,
+      setGuestSponsor,
+      showGuestForm,
+      setShowGuestForm,
+      setShowGuestNameError,
+      setShowSponsorError,
+    },
+    memberIdentity: {
+      currentMemberId: _currentMemberId,
+      setCurrentMemberId,
+      memberNumber,
+      setMemberNumber,
+      fetchFrequentPartners,
+      clearCache,
+    },
+    search: { setSearchInput, setShowSuggestions, setAddPlayerSearch, setShowAddPlayerSuggestions },
+    guestCounterHook: { guestCounter, incrementGuestCounter },
+    streak: {
+      registrantStreak,
+      setRegistrantStreak,
+      setShowStreakModal,
+      streakAcknowledged,
+      setStreakAcknowledged,
+    },
+    clearCourtFlow: {
+      clearCourtStep,
+      setSelectedCourtToClear,
+      setClearCourtStep,
+      decrementClearCourtStep,
+    },
+    adminPriceFeedback: { setPriceError, showPriceSuccessWithClear },
+    refs: { successResetTimerRef, typingTimeoutRef: _typingTimeoutRef },
+    blockAdmin: { getCourtBlockStatus },
     CONSTANTS,
     TENNIS_CONFIG,
     API_CONFIG,
-
-    // Utility functions
-    memberDatabase,
-    showPriceSuccessWithClear,
+    derived: { memberDatabase },
     dbg,
-
-    // Guard functions (passed from App.jsx)
-    guardAddPlayerEarly,
-    guardAgainstGroupDuplicate,
-
-    // Validation function
+    helpers: { guardAddPlayerEarly, guardAgainstGroupDuplicate, markUserTyping, getCourtData },
     validateGroupCompat,
-
-    // Functions defined in App.jsx (needed by hooks before this hook can be called)
-    markUserTyping,
-    getCourtData,
-  } = deps;
+  } = app;
 
   // ===== UTILITY FUNCTIONS =====
 
@@ -435,7 +398,7 @@ export function useRegistrationHandlers(deps) {
     showGuestForm,
     showAddPlayer,
     mobileFlow,
-    currentScreen: deps.currentScreen,
+    currentScreen,
     clearCourtStep,
     // Setters
     setShowGuestForm,
