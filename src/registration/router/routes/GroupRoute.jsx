@@ -4,84 +4,72 @@ import { GroupScreen } from '../../screens';
 /**
  * GroupRoute
  * Extracted from RegistrationRouter — WP6.0.1
- * Added app/handlers grouping — WP6.0.2a
+ * Collapsed to app/handlers only — WP6.0.2b
  * Verbatim JSX. No behavior change.
  */
-export function GroupRoute(props) {
-  // Bridge mode: prefer app/handlers, fallback to props for compatibility
-  const app = props.app ?? props;
-  const handlers = props.handlers ?? props;
-
-  // Destructure from app (state/config)
+export function GroupRoute({ app, handlers }) {
+  // Destructure from app
   const {
-    // Data
-    data = app.state?.data,
-    currentGroup = app.groupGuest?.currentGroup,
-    memberNumber = app.memberIdentity?.memberNumber,
-    availableCourts = app.derived?.availableCourts,
-    frequentPartners = app.state?.frequentPartners,
-    frequentPartnersLoading = app.state?.frequentPartnersLoading,
-    // UI state
-    showAlert = app.alert?.showAlert,
-    alertMessage = app.alert?.alertMessage,
-    showTimeoutWarning = app.sessionTimeout?.showTimeoutWarning,
-    isMobileView = app.derived?.isMobileView,
-    // Mobile flow
-    mobileFlow = app.mobile?.mobileFlow,
-    preselectedCourt = app.mobile?.preselectedCourt,
-    // Search state
-    searchInput = app.groupSearch?.searchInput,
-    showSuggestions = app.groupSearch?.showSuggestions,
-    effectiveSearchInput = app.groupSearch?.effectiveSearchInput,
-    // Add player state
-    showAddPlayer = app.addPlayer?.showAddPlayer,
-    addPlayerSearch = app.addPlayer?.addPlayerSearch,
-    showAddPlayerSuggestions = app.addPlayer?.showAddPlayerSuggestions,
-    effectiveAddPlayerSearch = app.addPlayer?.effectiveAddPlayerSearch,
-    // Guest form state
-    showGuestForm = app.groupGuest?.showGuestForm,
-    guestName = app.groupGuest?.guestName,
-    guestSponsor = app.groupGuest?.guestSponsor,
-    showGuestNameError = app.groupGuest?.showGuestNameError,
-    showSponsorError = app.groupGuest?.showSponsorError,
-    // Streak modal
-    showStreakModal = app.streakModal?.showStreakModal,
-    registrantStreak = app.state?.registrantStreak,
-    streakAcknowledged = app.streakModal?.streakAcknowledged,
-    setStreakAcknowledged = app.streakModal?.setStreakAcknowledged,
-    // Utilities
-    CONSTANTS = app.CONSTANTS,
-  } = props;
+    state,
+    groupGuest,
+    memberIdentity,
+    derived,
+    alert,
+    timeout,
+    mobile,
+    search,
+    streak,
+    CONSTANTS,
+  } = app;
+  const { data, showAddPlayer, isAssigning, isJoiningWaitlist, availableCourts } = state;
+  const {
+    currentGroup,
+    showGuestForm,
+    guestName,
+    guestSponsor,
+    showGuestNameError,
+    showSponsorError,
+    handleRemovePlayer,
+    handleSelectSponsor,
+    handleCancelGuest,
+  } = groupGuest;
+  const { memberNumber, frequentPartners, frequentPartnersLoading } = memberIdentity;
+  const { isMobileView } = derived;
+  const { showAlert, alertMessage } = alert;
+  const { showTimeoutWarning } = timeout;
+  const { mobileFlow, preselectedCourt } = mobile;
+  const {
+    searchInput,
+    showSuggestions,
+    effectiveSearchInput,
+    addPlayerSearch,
+    showAddPlayerSuggestions,
+    effectiveAddPlayerSearch,
+    getAutocompleteSuggestions,
+    handleGroupSearchChange,
+    handleGroupSearchFocus,
+    handleAddPlayerSearchChange,
+    handleAddPlayerSearchFocus,
+  } = search;
+  const { registrantStreak, showStreakModal, streakAcknowledged, setStreakAcknowledged } = streak;
 
   // Destructure from handlers
   const {
-    // Callbacks
-    handleGroupSearchChange = handlers.handleGroupSearchChange,
-    handleGroupSearchFocus = handlers.handleGroupSearchFocus,
-    handleGroupSuggestionClick = handlers.handleGroupSuggestionClick,
-    handleAddPlayerSearchChange = handlers.handleAddPlayerSearchChange,
-    handleAddPlayerSearchFocus = handlers.handleAddPlayerSearchFocus,
-    handleAddPlayerSuggestionClick = handlers.handleAddPlayerSuggestionClick,
-    handleToggleAddPlayer = handlers.handleToggleAddPlayer,
-    handleToggleGuestForm = handlers.handleToggleGuestForm,
-    handleRemovePlayer = handlers.handleRemovePlayer,
-    handleSelectSponsor = handlers.handleSelectSponsor,
-    handleGuestNameChange = handlers.handleGuestNameChange,
-    handleAddGuest = handlers.handleAddGuest,
-    handleCancelGuest = handlers.handleCancelGuest,
-    addFrequentPartner = handlers.addFrequentPartner,
-    handleGroupSelectCourt = handlers.handleGroupSelectCourt,
-    isAssigning = handlers.isAssigning,
-    handleGroupJoinWaitlist = handlers.handleGroupJoinWaitlist,
-    isJoiningWaitlist = handlers.isJoiningWaitlist,
-    handleGroupGoBack = handlers.handleGroupGoBack,
-    resetForm = handlers.resetForm,
-    // Utilities
-    getAutocompleteSuggestions = app.search?.getAutocompleteSuggestions,
-    isPlayerAlreadyPlaying = handlers.isPlayerAlreadyPlaying,
-    sameGroup = handlers.sameGroup,
-    handleStreakAcknowledge = handlers.handleStreakAcknowledge,
-  } = props;
+    handleGroupSuggestionClick,
+    handleAddPlayerSuggestionClick,
+    handleToggleAddPlayer,
+    handleToggleGuestForm,
+    handleGuestNameChange,
+    handleAddGuest,
+    addFrequentPartner,
+    handleGroupSelectCourt,
+    handleGroupJoinWaitlist,
+    handleGroupGoBack,
+    resetForm,
+    isPlayerAlreadyPlaying,
+    sameGroup,
+    handleStreakAcknowledge,
+  } = handlers;
 
   return (
     <>

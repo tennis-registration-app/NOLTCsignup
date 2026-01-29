@@ -4,65 +4,46 @@ import { AdminScreen } from '../../screens';
 /**
  * AdminRoute
  * Extracted from RegistrationRouter — WP6.0.1
- * Added app/handlers grouping — WP6.0.2a
+ * Collapsed to app/handlers only — WP6.0.2b
  * Verbatim JSX. No behavior change.
  */
-export function AdminRoute(props) {
-  // Bridge mode: prefer app/handlers, fallback to props for compatibility
-  const app = props.app ?? props;
-  const handlers = props.handlers ?? props;
-
-  // Destructure from app (state/config)
+export function AdminRoute({ app, handlers }) {
+  // Destructure from app
+  const { state, setters, alert, blockAdmin, waitlistAdmin, adminPriceFeedback, CONSTANTS } = app;
+  const { currentTime, courtToMove, ballPriceInput } = state;
+  const { setCourtToMove, setBallPriceInput } = setters;
+  const { showAlert, alertMessage, showAlertMessage } = alert;
   const {
-    currentTime = app.state?.currentTime,
-    // Alert state (read only)
-    showAlert = app.alert?.showAlert,
-    alertMessage = app.alert?.alertMessage,
-    showAlertMessage = app.alert?.showAlertMessage,
-    // Block modal state
-    showBlockModal = app.blockAdmin?.showBlockModal,
-    setShowBlockModal = app.blockAdmin?.setShowBlockModal,
-    selectedCourtsToBlock = app.blockAdmin?.selectedCourtsToBlock,
-    setSelectedCourtsToBlock = app.blockAdmin?.setSelectedCourtsToBlock,
-    blockMessage = app.blockAdmin?.blockMessage,
-    setBlockMessage = app.blockAdmin?.setBlockMessage,
-    blockStartTime = app.blockAdmin?.blockStartTime,
-    setBlockStartTime = app.blockAdmin?.setBlockStartTime,
-    blockEndTime = app.blockAdmin?.blockEndTime,
-    setBlockEndTime = app.blockAdmin?.setBlockEndTime,
-    blockingInProgress = app.blockAdmin?.blockingInProgress,
-    setBlockingInProgress = app.blockAdmin?.setBlockingInProgress,
-    onCancelBlock = app.blockAdmin?.onCancelBlock,
-    onBlockCreate = app.blockAdmin?.onBlockCreate,
-    getCourtBlockStatus = app.blockAdmin?.getCourtBlockStatus,
-    // Move state
-    courtToMove = app.state?.courtToMove,
-    setCourtToMove = app.setters?.setCourtToMove,
-    waitlistMoveFrom = app.waitlistAdmin?.waitlistMoveFrom,
-    setWaitlistMoveFrom = app.waitlistAdmin?.setWaitlistMoveFrom,
-    onReorderWaitlist = app.waitlistAdmin?.onReorderWaitlist,
-    // Price state
-    ballPriceInput = app.state?.ballPriceInput,
-    setBallPriceInput = app.setters?.setBallPriceInput,
-    priceError = app.adminPriceFeedback?.priceError,
-    setPriceError = app.adminPriceFeedback?.setPriceError,
-    showPriceSuccess = app.adminPriceFeedback?.showPriceSuccess,
-    setShowPriceSuccess = app.adminPriceFeedback?.setShowPriceSuccess,
-    // Utilities
-    CONSTANTS = app.CONSTANTS,
-  } = props;
+    showBlockModal,
+    setShowBlockModal,
+    selectedCourtsToBlock,
+    setSelectedCourtsToBlock,
+    blockMessage,
+    setBlockMessage,
+    blockStartTime,
+    setBlockStartTime,
+    blockEndTime,
+    setBlockEndTime,
+    blockingInProgress,
+    setBlockingInProgress,
+    onCancelBlock,
+    onBlockCreate,
+    getCourtBlockStatus,
+  } = blockAdmin;
+  const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = waitlistAdmin;
+  const { priceError, setPriceError, showPriceSuccess, setShowPriceSuccess } = adminPriceFeedback;
 
   // Destructure from handlers
   const {
-    getCourtData = handlers.getCourtData,
-    handleClearAllCourts = handlers.handleClearAllCourts,
-    handleAdminClearCourt = handlers.handleAdminClearCourt,
-    handleMoveCourt = handlers.handleMoveCourt,
-    handleClearWaitlist = handlers.handleClearWaitlist,
-    handleRemoveFromWaitlist = handlers.handleRemoveFromWaitlist,
-    handlePriceUpdate = handlers.handlePriceUpdate,
-    handleExitAdmin = handlers.handleExitAdmin,
-  } = props;
+    getCourtData,
+    handleClearAllCourts,
+    handleAdminClearCourt,
+    handleMoveCourt,
+    handleClearWaitlist,
+    handleRemoveFromWaitlist,
+    handlePriceUpdate,
+    handleExitAdmin,
+  } = handlers;
 
   const adminData = getCourtData();
 

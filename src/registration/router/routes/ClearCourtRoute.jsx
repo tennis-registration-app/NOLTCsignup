@@ -5,33 +5,20 @@ import { TennisBusinessLogic } from '@lib';
 /**
  * ClearCourtRoute
  * Extracted from RegistrationRouter — WP6.0.1
- * Added app/handlers grouping — WP6.0.2a
+ * Collapsed to app/handlers only — WP6.0.2b
  * Verbatim JSX. No behavior change.
  */
-export function ClearCourtRoute(props) {
-  // Bridge mode: prefer app/handlers, fallback to props for compatibility
-  const app = props.app ?? props;
-  const handlers = props.handlers ?? props;
-
-  // Destructure from app (state/config)
-  const {
-    clearCourtStep = app.clearCourtFlow?.clearCourtStep,
-    setClearCourtStep = app.clearCourtFlow?.setClearCourtStep,
-    selectedCourtToClear = app.clearCourtFlow?.selectedCourtToClear,
-    setSelectedCourtToClear = app.clearCourtFlow?.setSelectedCourtToClear,
-    showAlert = app.alert?.showAlert,
-    alertMessage = app.alert?.alertMessage,
-    getCourtsOccupiedForClearing = app.helpers?.getCourtsOccupiedForClearing,
-    CONSTANTS = app.CONSTANTS,
-    mobileFlow = app.mobile?.mobileFlow,
-  } = props;
+export function ClearCourtRoute({ app, handlers }) {
+  // Destructure from app
+  const { clearCourtFlow, alert, helpers, mobile, CONSTANTS } = app;
+  const { clearCourtStep, setClearCourtStep, selectedCourtToClear, setSelectedCourtToClear } =
+    clearCourtFlow;
+  const { showAlert, alertMessage } = alert;
+  const { getCourtsOccupiedForClearing } = helpers;
+  const { mobileFlow } = mobile;
 
   // Destructure from handlers
-  const {
-    clearCourt = handlers.clearCourt,
-    resetForm = handlers.resetForm,
-    getCourtData = handlers.getCourtData,
-  } = props;
+  const { clearCourt, resetForm, getCourtData } = handlers;
 
   return (
     <ClearCourtScreen

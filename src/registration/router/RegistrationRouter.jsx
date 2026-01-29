@@ -13,13 +13,15 @@ import {
  * RegistrationRouter
  * Extracted from App.jsx — WP5.9.1
  * Refactored to delegate to route components — WP6.0.1
- * Added app/handlers grouping — WP6.0.2a
+ * Collapsed to app/handlers only — WP6.0.2b
  *
  * Handles screen routing based on currentScreen state.
- * All props are passed through from App.jsx.
+ * Routes receive only { app, handlers }.
  */
-export default function RegistrationRouter(props) {
-  const { currentScreen, mobileMode, showSuccess, app, handlers } = props;
+export default function RegistrationRouter({ app, handlers }) {
+  const { currentScreen } = app.state;
+  const { mobileMode } = app.mobile;
+  const { showSuccess } = app.state;
 
   // Silent assign loading screen (mobile waitlist assignment in progress)
   if (mobileMode === 'silent-assign') {
@@ -28,32 +30,32 @@ export default function RegistrationRouter(props) {
 
   // Success screen
   if (showSuccess) {
-    return <SuccessRoute app={app} handlers={handlers} {...props} />;
+    return <SuccessRoute app={app} handlers={handlers} />;
   }
 
   // Home screen (combined Welcome + Search)
   if (currentScreen === 'home') {
-    return <HomeRoute app={app} handlers={handlers} {...props} />;
+    return <HomeRoute app={app} handlers={handlers} />;
   }
 
   // Admin screen
   if (currentScreen === 'admin') {
-    return <AdminRoute app={app} handlers={handlers} {...props} />;
+    return <AdminRoute app={app} handlers={handlers} />;
   }
 
   // Group management screen
   if (currentScreen === 'group') {
-    return <GroupRoute app={app} handlers={handlers} {...props} />;
+    return <GroupRoute app={app} handlers={handlers} />;
   }
 
   // Court selection screen
   if (currentScreen === 'court') {
-    return <CourtRoute app={app} handlers={handlers} {...props} />;
+    return <CourtRoute app={app} handlers={handlers} />;
   }
 
   // Clear court screen
   if (currentScreen === 'clearCourt') {
-    return <ClearCourtRoute app={app} handlers={handlers} {...props} />;
+    return <ClearCourtRoute app={app} handlers={handlers} />;
   }
 
   return null;
