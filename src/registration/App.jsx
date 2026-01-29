@@ -92,6 +92,9 @@ import { useAlertDisplay } from './ui/alert';
 // Admin price feedback hook (WP5.6 R6a-2)
 import { useAdminPriceFeedback } from './ui/adminPriceFeedback';
 
+// Guest counter hook (WP5.6 R6a-3)
+import { useGuestCounter } from './ui/guestCounter';
+
 // Orchestration facade (WP5.5)
 import {
   changeCourtOrchestrated,
@@ -619,7 +622,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   // waitlistMoveFrom moved to useWaitlistAdmin hook (WP5.3 R4a.3)
   // showGuestForm, guestName, guestSponsor, showGuestNameError, showSponsorError moved to useGroupGuest hook (WP5.3 R8a.3)
-  const [guestCounter, setGuestCounter] = useState(1);
+  // guestCounter moved to useGuestCounter hook (WP5.6 R6a-3)
+  const { guestCounter, incrementGuestCounter } = useGuestCounter();
   // Block modal state moved to useBlockAdmin hook (WP5.3 R3.3)
   // isSearching moved to useMemberSearch hook (WP5.3 R5a.3)
   const [isAssigning, setIsAssigning] = useState(false); // Prevent double-submit during court assignment
@@ -1931,7 +1935,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
     // Add guest to group
     const guestId = -guestCounter;
-    setGuestCounter(guestCounter + 1);
+    incrementGuestCounter();
 
     const sponsorMember =
       guestSponsor || currentGroup.filter((p) => !p.isGuest)[0]?.memberNumber || memberNumber;
