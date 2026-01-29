@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 // Import shared utilities from @lib
 import {
@@ -16,9 +16,6 @@ import { API_CONFIG } from '../../lib/apiConfig.js';
 // Import Domain engagement helpers
 import { findEngagementByMemberId, getEngagementMessage } from '../../lib/domain/engagement.js';
 
-// Import API Backend Integration
-import { getTennisService } from '../services/index.js';
-
 // TennisBackend interface layer
 import { createBackend } from '../backend/index.js';
 
@@ -33,6 +30,12 @@ import { useRegistrationUiState } from './state/useRegistrationUiState';
 
 // Domain Hooks module (WP5.9.6.4)
 import { useRegistrationDomainHooks } from './state/useRegistrationDomainHooks';
+
+// Runtime module (WP5.9.6.2)
+import { useRegistrationRuntime } from './state/useRegistrationRuntime';
+
+// Data Layer module (WP5.9.6.3)
+import { useRegistrationDataLayer } from './state/useRegistrationDataLayer';
 
 // Orchestration facade (WP5.5)
 import {
@@ -159,9 +162,15 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setIsUserTyping,
   } = useRegistrationUiState({ CONSTANTS });
 
-  // ===== REFS =====
-  const successResetTimerRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
+  // ===== RUNTIME MODULE (WP5.9.6.2) =====
+  // Provides refs and handles timer/CSS/interval effects
+  const { successResetTimerRef, typingTimeoutRef } = useRegistrationRuntime({
+    setCurrentTime,
+    setBallPriceCents,
+    setBlockWarningMinutes: () => {}, // Will be set by domain hooks
+    availableCourts,
+    backend,
+  });
 
   // ===== HELPER FUNCTIONS (defined before hooks that need them) =====
 
@@ -186,58 +195,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
       setIsUserTyping(false);
     }, 3000);
   };
-
-  // Get the API data service
-  const getDataService = useCallback(() => {
-    return getTennisService({
-      deviceId: 'a0000000-0000-0000-0000-000000000001',
-      deviceType: 'kiosk',
-    });
-  }, []);
-
-  // Load data from API
-  const loadData = useCallback(async () => {
-    try {
-      const service = getDataService();
-      const initialData = await service.loadInitialData();
-
-      const courts = initialData.courts || [];
-      const waitlist = initialData.waitlist || [];
-
-      const updatedData = {
-        courts: courts,
-        waitlist: waitlist,
-        recentlyCleared: data.recentlyCleared || [],
-      };
-
-      setData(updatedData);
-
-      if (initialData.operatingHours) {
-        setOperatingHours(initialData.operatingHours);
-      }
-
-      if (initialData.members && Array.isArray(initialData.members)) {
-        setApiMembers(initialData.members);
-      }
-
-      const selection = computeRegistrationCourtSelection(courts);
-      const selectableCourts = selection.showingOvertimeCourts
-        ? selection.fallbackOvertimeCourts
-        : selection.primaryCourts;
-      const selectableNumbers = selectableCourts.map((c) => c.number);
-      setAvailableCourts(selectableNumbers);
-
-      console.log(
-        '[Registration] Initial load complete, waitlist length:',
-        initialData.waitlist?.length
-      );
-
-      return updatedData;
-    } catch (error) {
-      console.error('Failed to load data:', error);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getDataService]);
 
   // Helper to get courts occupied for clearing
   function getCourtsOccupiedForClearing() {
@@ -619,147 +576,20 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ===== DATA LAYER MODULE (WP5.9.6.3) =====
+  // Provides getDataService, loadData and handles board subscription
+  const { getDataService, loadData } = useRegistrationDataLayer({
+    backend,
+    setData,
+    setAvailableCourts,
+    setOperatingHours,
+    setApiMembers,
+    data,
+    computeRegistrationCourtSelection,
+  });
+
   // ===== USE EFFECTS =====
-
-  // Debug: log whenever availableCourts changes
-  useEffect(() => {
-    console.log('🔄 availableCourts state changed:', availableCourts);
-  }, [availableCourts]);
-
-  // Cleanup success reset timer on unmount
-  useEffect(() => {
-    return () => {
-      if (successResetTimerRef.current) {
-        clearTimeout(successResetTimerRef.current);
-        successResetTimerRef.current = null;
-      }
-    };
-  }, []);
-
-  // Fetch ball price from API on mount
-  useEffect(() => {
-    const fetchBallPrice = async () => {
-      try {
-        const result = await backend.admin.getSettings();
-        if (result.ok && result.settings?.ball_price_cents) {
-          setBallPriceCents(result.settings.ball_price_cents);
-        }
-        if (result.ok && result.settings?.block_warning_minutes) {
-          const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
-          if (blockWarnMin > 0) {
-            setBlockWarningMinutes(blockWarnMin);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load ball price from API:', error);
-      }
-    };
-    fetchBallPrice();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // TennisBackend Real-time subscription
-  useEffect(() => {
-    console.log('[TennisBackend] Setting up board subscription...');
-
-    const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
-      const board = domainBoard;
-
-      console.log('[TennisBackend] Board update received:', {
-        serverNow: board.serverNow,
-        courts: board.courts?.length,
-        waitlist: board.waitlist?.length,
-      });
-
-      setData((prev) => ({
-        ...prev,
-        courts: board.courts || [],
-        waitlist: board.waitlist || [],
-        blocks: board.blocks || [],
-        upcomingBlocks: board.upcomingBlocks || [],
-      }));
-
-      if (board.operatingHours) {
-        setOperatingHours(board.operatingHours);
-      }
-
-      const selectable = (board.courts || [])
-        .filter((c) => (c.isAvailable || c.isOvertime) && !c.isBlocked)
-        .map((c) => c.number);
-      setAvailableCourts(selectable);
-
-      console.log(
-        '[Registration CTA Debug] Courts from API:',
-        board.courts?.map((c) => ({
-          num: c.number,
-          isBlocked: c.isBlocked,
-          isAvailable: c.isAvailable,
-          isOvertime: c.isOvertime,
-          block: c.block ? { id: c.block.id, reason: c.block.reason } : null,
-        }))
-      );
-    });
-
-    console.log('[TennisBackend] Board subscription active');
-
-    return () => {
-      console.log('[TennisBackend] Unsubscribing from board updates');
-      unsubscribe();
-    };
-  }, []);
-
-  // CSS Performance Optimizations
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      .animate-pulse {
-        will-change: opacity;
-        transform: translateZ(0);
-        backface-visibility: hidden;
-      }
-      .animate-spin {
-        will-change: transform;
-        transform: translateZ(0);
-        backface-visibility: hidden;
-      }
-      .transform {
-        transition: transform 200ms ease-out;
-        will-change: transform;
-      }
-      .transition-all {
-        transition: none !important;
-      }
-      .court-transition {
-        transition: background-color 200ms ease-out,
-                    border-color 200ms ease-out,
-                    box-shadow 200ms ease-out;
-      }
-      .button-transition {
-        transition: background-color 150ms ease-out,
-                    transform 150ms ease-out;
-        transform: translateZ(0);
-      }
-      .button-transition:hover {
-        will-change: transform;
-      }
-      .backdrop-blur {
-        transform: translateZ(0);
-        will-change: backdrop-filter;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .animate-pulse {
-          animation: none;
-          opacity: 1;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+  // Note: Most effects are now handled by Runtime and DataLayer modules
 
   // Load admin settings when entering admin screen
   useEffect(() => {
@@ -782,14 +612,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     };
     loadAdminSettings();
   }, [currentScreen]);
-
-  // Update current time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Mobile Bridge Integration
   useEffect(() => {
@@ -822,13 +644,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Cleanup typing timeout on unmount
-  useEffect(() => {
-    return () => {
-      clearTimeout(typingTimeoutRef.current);
-    };
   }, []);
 
   // Fetch frequent partners when entering group screen
