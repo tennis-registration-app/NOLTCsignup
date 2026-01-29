@@ -98,6 +98,9 @@ import { useGuestCounter } from './ui/guestCounter';
 // Session timeout hook (WP5.7)
 import { useSessionTimeout } from './ui/timeout';
 
+// Mobile flow controller hook (WP5.8)
+import { useMobileFlowController } from './ui/mobile';
+
 // Orchestration facade (WP5.5)
 import {
   changeCourtOrchestrated,
@@ -256,11 +259,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [waitlistPosition, setWaitlistPosition] = useState(0); // Position from API response
   const [operatingHours, setOperatingHours] = useState(null); // Operating hours from API
 
-  // Mobile flow state
-  const [mobileFlow, setMobileFlow] = useState(false);
-  const [preselectedCourt, setPreselectedCourt] = useState(null);
-  // Mobile mode: null = normal, 'silent-assign' = loading state for waitlist assignment
-  const [mobileMode, setMobileMode] = useState(null);
+  // Mobile flow state moved to useMobileFlowController hook (WP5.8)
 
   // Get the API data service
   const getDataService = useCallback(() => {
@@ -591,7 +590,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, [data.waitlist, availableCourts]);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [mobileCountdown, setMobileCountdown] = useState(5);
+  // mobileCountdown moved to useMobileFlowController hook (WP5.8)
   // justAssignedCourt, assignedSessionId moved to useCourtAssignmentResult hook (WP5.4 R9a-1.3)
   const [replacedGroup, setReplacedGroup] = useState(null);
   const [displacement, setDisplacement] = useState(null);
@@ -650,14 +649,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Ball price from API (in cents) - used by SuccessScreen
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
   // blockWarningMinutes moved to useBlockAdmin hook (WP5.3 R3.3)
-  const [checkingLocation, setCheckingLocation] = useState(false);
+  // checkingLocation, locationToken, showQRScanner, gpsFailedPrompt moved to useMobileFlowController hook (WP5.8)
   const [, setIsUserTyping] = useState(false); // Getter unused, setter used
   const typingTimeoutRef = useRef(null);
-
-  // QR location token state (mobile GPS fallback)
-  const [locationToken, setLocationToken] = useState(null);
-  const [showQRScanner, setShowQRScanner] = useState(false);
-  const [gpsFailedPrompt, setGpsFailedPrompt] = useState(false);
 
   // Debounce/derived search values moved to useMemberSearch hook (WP5.3 R5a.3)
 
@@ -746,6 +740,39 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     setClearCourtStep,
     decrementClearCourtStep,
   } = useClearCourtFlow();
+
+  // Mobile flow controller hook (WP5.8)
+  const {
+    mobileFlow,
+    preselectedCourt,
+    mobileMode,
+    mobileCountdown,
+    checkingLocation,
+    locationToken,
+    showQRScanner,
+    gpsFailedPrompt,
+    setMobileFlow,
+    setPreselectedCourt,
+    setMobileMode,
+    setCheckingLocation,
+    setLocationToken,
+    setShowQRScanner,
+    setGpsFailedPrompt,
+    getMobileGeolocation,
+    requestMobileReset,
+    onQRScanToken,
+    onQRScannerClose,
+    openQRScanner,
+    dismissGpsPrompt,
+  } = useMobileFlowController({
+    showSuccess,
+    justAssignedCourt,
+    backend,
+    isMobile: API_CONFIG.IS_MOBILE,
+    toast: window.Tennis?.UI?.toast,
+    dbg,
+    DEBUG,
+  });
 
   // --- duplicate guard helpers (early-check on selection) ---
   function __normalizeName(n) {
@@ -844,57 +871,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     }
   };
 
-  /**
-   * Get current geolocation coordinates for mobile backend validation
-   * Returns { latitude, longitude } or { location_token } or null if unavailable/not mobile
-   * If GPS fails but we have a location token from QR scan, use that instead
-   */
-  const getMobileGeolocation = async () => {
-    // Only needed for mobile device type
-    if (!API_CONFIG.IS_MOBILE) {
-      return null;
-    }
-
-    // If we have a location token from QR scan, use that
-    if (locationToken) {
-      console.log('[Mobile] Using location token instead of GPS');
-      return { location_token: locationToken };
-    }
-
-    return new Promise((resolve) => {
-      if (!navigator.geolocation) {
-        console.warn('[Mobile] Geolocation not available');
-        resolve(null);
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log(
-            '[Mobile] Got geolocation:',
-            position.coords.latitude,
-            position.coords.longitude,
-            'accuracy:',
-            position.coords.accuracy
-          );
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy, // GPS accuracy in meters
-          });
-        },
-        (error) => {
-          console.error('[Mobile] Geolocation error:', error);
-          resolve(null);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: TENNIS_CONFIG.GEOLOCATION.TIMEOUT_MS || 10000,
-          maximumAge: 0,
-        }
-      );
-    });
-  };
+  // getMobileGeolocation moved to useMobileFlowController hook (WP5.8)
 
   // isSearching effect moved to useMemberSearch hook (WP5.3 R5a.3)
 
@@ -1030,160 +1007,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- setCurrentScreen is a logging wrapper, intentionally not memoized
   }, []);
 
-  // Mobile: Listen for register messages from parent (Mobile.html)
-  useEffect(() => {
-    const handleMessage = async (event) => {
-      const data = event.data;
-      if (!data || typeof data !== 'object') return;
-
-      if (data.type === 'register') {
-        console.log('[Mobile] Received register message:', data);
-        const courtNumber = data.courtNumber;
-
-        // Set mobile flow state
-        setMobileFlow(true);
-
-        if (courtNumber) {
-          setPreselectedCourt(courtNumber);
-          console.log('[Mobile] Preselected court:', courtNumber);
-        }
-
-        // Navigate to group screen
-        setCurrentScreen('group', 'mobileRegisterMessage');
-
-        // Focus the search input after navigation
-        requestAnimationFrame(() => {
-          const input =
-            document.querySelector('#mobile-group-search-input') ||
-            document.querySelector('#main-search-input') ||
-            document.querySelector('input[type="text"]');
-          if (input) {
-            input.focus({ preventScroll: true });
-          }
-        });
-      } else if (data.type === 'assign-from-waitlist') {
-        // Handle waitlist assignment from mobile court tap (silent assign mode)
-        console.log('[Mobile] Received assign-from-waitlist message:', data);
-        const { courtNumber, waitlistEntryId } = data;
-
-        if (!courtNumber || !waitlistEntryId) {
-          console.error('[Mobile] Missing courtNumber or waitlistEntryId');
-          return;
-        }
-
-        // Set mobile flow state and silent-assign mode (shows loading spinner)
-        setMobileFlow(true);
-        setMobileMode('silent-assign');
-
-        try {
-          // Get court ID from court number
-          const boardData = await backend.queries.getBoard();
-          const court = boardData.courts?.find((c) => c.number === courtNumber);
-
-          if (!court?.id) {
-            console.error('[Mobile] Could not find court ID for court number:', courtNumber);
-            Tennis?.UI?.toast?.('Could not find court', { type: 'error' });
-            return;
-          }
-
-          console.log('[Mobile] Assigning waitlist entry', waitlistEntryId, 'to court', court.id);
-
-          // Get geolocation for mobile (required by backend)
-          let locationData = {};
-          if (navigator.geolocation) {
-            try {
-              const position = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                  enableHighAccuracy: true,
-                  timeout: 5000,
-                  maximumAge: 0,
-                });
-              });
-              locationData = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                accuracy: position.coords.accuracy,
-              };
-            } catch (geoError) {
-              console.warn('[Mobile] Geolocation failed:', geoError);
-            }
-          }
-
-          // Call assign from waitlist API
-          const result = await backend.commands.assignFromWaitlistWithLocation({
-            waitlistEntryId,
-            courtId: court.id,
-            ...locationData,
-          });
-
-          if (result.ok) {
-            console.log('[Mobile] Waitlist assignment successful:', result);
-
-            // Clear mobile waitlist entry ID
-            sessionStorage.removeItem('mobile-waitlist-entry-id');
-            // Store the new court registration
-            sessionStorage.setItem('mobile-registered-court', String(courtNumber));
-
-            // Clear silent-assign mode and show success
-            setMobileMode(null);
-            setJustAssignedCourt(courtNumber);
-            setAssignedSessionId(result.session?.id || null);
-            setShowSuccess(true);
-
-            // Toast success
-            Tennis?.UI?.toast?.(`Assigned to Court ${courtNumber}!`, { type: 'success' });
-          } else {
-            console.error('[Mobile] Waitlist assignment failed:', result.code, result.message);
-            Tennis?.UI?.toast?.(result.message || 'Could not assign court', { type: 'error' });
-
-            // Clear silent-assign mode and close overlay on failure
-            setMobileMode(null);
-            window.parent.postMessage({ type: 'resetRegistration' }, '*');
-          }
-        } catch (error) {
-          console.error('[Mobile] Error assigning from waitlist:', error);
-          Tennis?.UI?.toast?.('Error assigning court', { type: 'error' });
-
-          // Clear silent-assign mode and close overlay on error
-          setMobileMode(null);
-          window.parent.postMessage({ type: 'resetRegistration' }, '*');
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Mobile: Watch for success state changes and send signal
-  useEffect(() => {
-    if (showSuccess && mobileFlow && window.top !== window.self) {
-      dbg('Registration: Success state changed to true, sending mobile signal');
-      const courtNumber = preselectedCourt || justAssignedCourt || null;
-      dbg('Registration: Court number for success:', courtNumber);
-      try {
-        window.parent.postMessage({ type: 'registration:success', courtNumber: courtNumber }, '*');
-        dbg('Registration: Direct success message sent');
-      } catch (e) {
-        if (DEBUG) console.log('Registration: Error in direct success message:', e);
-      }
-
-      // Start countdown for mobile (synced with Mobile.html 8 second dismiss)
-      setMobileCountdown(8);
-      const countdownInterval = setInterval(() => {
-        setMobileCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(countdownInterval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(countdownInterval);
-    }
-  }, [showSuccess, justAssignedCourt, mobileFlow, preselectedCourt]);
+  // Mobile message listener and success signal effects moved to useMobileFlowController hook (WP5.8)
 
   // PHASE1D: Court availability now handled by TennisBackend subscription
 
@@ -2034,11 +1858,11 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
           decrementClearCourtStep();
         } else {
           // Exit Clear Court workflow
-          window.parent.postMessage({ type: 'resetRegistration' }, '*');
+          requestMobileReset();
         }
       } else {
         // For other screens, close the registration overlay
-        window.parent.postMessage({ type: 'resetRegistration' }, '*');
+        requestMobileReset();
       }
     } else {
       // Desktop behavior - go back to home
@@ -2495,16 +2319,8 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
         {/* QR Scanner modal for mobile GPS fallback */}
         {showQRScanner && (
           <QRScanner
-            onScan={(token) => {
-              console.log('[Mobile] QR token scanned:', token);
-              setLocationToken(token);
-              setShowQRScanner(false);
-              setGpsFailedPrompt(false);
-              Tennis.UI.toast('Location verified! You can now register.', { type: 'success' });
-            }}
-            onClose={() => {
-              setShowQRScanner(false);
-            }}
+            onScan={onQRScanToken}
+            onClose={onQRScannerClose}
             onError={(err) => {
               console.error('[Mobile] QR scanner error:', err);
             }}
@@ -2522,13 +2338,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowQRScanner(true)}
+                  onClick={openQRScanner}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
                   Scan QR Code
                 </button>
                 <button
-                  onClick={() => setGpsFailedPrompt(false)}
+                  onClick={dismissGpsPrompt}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   Cancel
