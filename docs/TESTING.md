@@ -1,5 +1,83 @@
 # NOLTC Tennis Court Registration - Testing Guide
 
+## Test Types
+
+This project uses two test frameworks:
+
+| Type | Framework | Count | Location | Command |
+|------|-----------|-------|----------|---------|
+| Unit | Vitest | 267 | `tests/unit/` | `npm run test:unit` |
+| E2E | Playwright | 15 | `e2e/` | `npm run test:e2e` |
+
+## Verification Gate
+
+**All commits must pass the full verification suite:**
+```bash
+npm run verify
+```
+
+This runs in order:
+1. `npm run lint` — ESLint (0 errors required)
+2. `npm run test:unit` — Vitest unit tests (267 tests)
+3. `npm run build` — Production build
+4. `npm run test:e2e` — Playwright E2E tests (15/15 required)
+
+**Do not merge if any step fails.**
+
+## Where to Add Tests
+
+### Unit Tests
+- **Location**: `tests/unit/`
+- **For**: Business logic, utilities, pure functions, reducers
+- **Framework**: Vitest
+- **Naming**: `*.test.js`
+
+### E2E Tests
+- **Location**: `e2e/`
+- **For**: Full user flows, screen interactions, integration
+- **Framework**: Playwright
+- **Naming**: `*.spec.js`
+
+### Guidelines
+- Add unit test for new business logic
+- Add E2E test for new user-facing flows
+- Both must pass before merge
+
+---
+
+## Unit Tests (Vitest)
+
+### Running Unit Tests
+
+```bash
+# Run all unit tests
+npm run test:unit
+
+# Run in watch mode
+npm run test:unit:watch
+
+# Run a specific test file
+npx vitest run tests/unit/lib/courtHelpers.test.js
+```
+
+### Unit Test Structure
+
+Tests mirror the source structure:
+```
+tests/unit/
+├── lib/                    # Tests for src/lib/
+├── shared/                 # Tests for src/shared/
+├── registration/           # Tests for src/registration/
+│   ├── blocks/
+│   ├── court/
+│   ├── group/
+│   ├── search/
+│   └── ...
+└── admin/                  # Tests for src/admin/
+```
+
+---
+
 ## Automated E2E Tests (Playwright)
 
 ### Running Tests Locally
