@@ -65,7 +65,15 @@ import { useStreak } from '../streak/useStreak';
 import { useMemberIdentity } from '../memberIdentity/useMemberIdentity';
 
 // Orchestration facade (WP5.5)
-import { applyInactivityTimeoutOrchestrated } from '../orchestration';
+import {
+  applyInactivityTimeoutOrchestrated,
+  changeCourtOrchestrated,
+  resetFormOrchestrated,
+  handleSuggestionClickOrchestrated,
+  handleAddPlayerSuggestionClickOrchestrated,
+  sendGroupToWaitlistOrchestrated,
+  assignCourtToGroupOrchestrated,
+} from '../orchestration';
 
 // Config
 const TENNIS_CONFIG = _sharedTennisConfig;
@@ -1144,5 +1152,76 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
 
     // Overtime eligibility helper
     computeRegistrationCourtSelection,
+
+    // Orchestrators (WP5.5)
+    assignCourtToGroupOrchestrated,
+    sendGroupToWaitlistOrchestrated,
+    handleSuggestionClickOrchestrated,
+    handleAddPlayerSuggestionClickOrchestrated,
+    changeCourtOrchestrated,
+    resetFormOrchestrated,
+
+    // Validation
+    validateGroupCompat,
   };
+}
+
+// --- Robust validation wrapper: always returns { ok, errors[] }
+function validateGroupCompat(players, guests) {
+  const W =
+    typeof window !== 'undefined'
+      ? window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist || null
+      : null;
+  const norm = (ok, errs) => ({
+    ok: !!ok,
+    errors: Array.isArray(errs) ? errs : errs ? [errs] : [],
+  });
+
+  // 1) Prefer domain-level validator if available
+  try {
+    if (W && typeof W.validateGroup === 'function') {
+      const out = W.validateGroup({ players, guests });
+      if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
+        return norm(out.ok, out.errors);
+      }
+    }
+    // eslint-disable-next-line no-unused-vars
+  } catch (_e) {
+    // fall through to local rules
+  }
+
+  // 2) Local minimal validator (matches club rules)
+  // - At least 1 named player or guest
+  // - Guests is a non-negative integer
+  // - Total size 1–4 (singles/doubles max 4)
+
+  // Count guests by isGuest flag in players array
+  const guestRowCount = Array.isArray(players)
+    ? players.filter((p) => p && p.isGuest === true).length
+    : 0;
+
+  // Parse the separate guests field
+  const gVal = Number.isFinite(guests) ? guests : parseInt(guests || 0, 10);
+
+  // Count non-guest players
+  const namedPlayers = Array.isArray(players)
+    ? players.filter((p) => p && !p.isGuest && String(p?.name ?? p ?? '').trim())
+    : [];
+  const namedCount = namedPlayers.length;
+
+  const errs = [];
+  if (namedCount < 1 && Math.max(guestRowCount, gVal) < 1) errs.push('Enter at least one player.');
+  if (!Number.isFinite(gVal) || gVal < 0) errs.push('Guests must be 0 or more.');
+
+  // Effective guest count is the MAX of the two representations (not the sum),
+  // so we never double-count a guest.
+  const effectiveGuestCount = Math.max(guestRowCount, Math.max(0, gVal));
+
+  // Final effective size
+  const totalSize = namedCount + effectiveGuestCount;
+
+  if (totalSize < 1) errs.push('Group size must be at least 1.');
+  if (totalSize > 4) errs.push('Maximum group size is 4.');
+
+  return norm(errs.length === 0, errs);
 }
