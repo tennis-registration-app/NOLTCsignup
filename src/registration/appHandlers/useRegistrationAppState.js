@@ -111,45 +111,23 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   };
 
   // ===== UI STATE MODULE (WP5.9.6.1) =====
+  const ui = useRegistrationUiState({ CONSTANTS });
+  // Destructure for internal use
   const {
-    // State values
     data,
     currentScreen,
     availableCourts,
-    waitlistPosition,
-    operatingHours,
     showSuccess,
-    replacedGroup,
-    displacement,
-    originalCourtData,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
-    showAddPlayer,
-    isChangingCourt,
-    currentTime,
-    courtToMove,
-    hasWaitlistPriority,
-    currentWaitlistEntryId,
-    isAssigning,
-    isJoiningWaitlist,
-    ballPriceInput,
-    ballPriceCents,
-    // Setters
     setData,
     setCurrentScreen,
     setAvailableCourts,
-    setWaitlistPosition,
     setOperatingHours,
     setShowSuccess,
     setReplacedGroup,
     setDisplacement,
     setOriginalCourtData,
     setCanChangeCourt,
-    setChangeTimeRemaining,
     setIsTimeLimited,
-    setTimeLimitReason,
     setShowAddPlayer,
     setIsChangingCourt,
     setWasOvertimeCourt,
@@ -163,17 +141,20 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setBallPriceInput,
     setBallPriceCents,
     setIsUserTyping,
-  } = useRegistrationUiState({ CONSTANTS });
+    setWaitlistPosition,
+    setTimeLimitReason,
+  } = ui;
 
   // ===== RUNTIME MODULE (WP5.9.6.2) =====
   // Provides refs and handles timer/CSS/interval effects
-  const { successResetTimerRef, typingTimeoutRef } = useRegistrationRuntime({
+  const runtime = useRegistrationRuntime({
     setCurrentTime,
     setBallPriceCents,
     setBlockWarningMinutes: () => {}, // Will be set by domain hooks
     availableCourts,
     backend,
   });
+  const { successResetTimerRef, typingTimeoutRef } = runtime;
 
   // ===== HELPER FUNCTIONS (defined before hooks that need them) =====
 
@@ -275,140 +256,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   }
 
   // ===== DOMAIN HOOKS MODULE (WP5.9.6.4) =====
-  const {
-    // Alert display (WP5.6 R6a-1)
-    showAlert,
-    alertMessage,
-    setShowAlert,
-    setAlertMessage,
-    showAlertMessage,
-
-    // Admin price feedback (WP5.6 R6a-2)
-    showPriceSuccess,
-    priceError,
-    setShowPriceSuccess,
-    setPriceError,
-    showPriceSuccessWithClear,
-
-    // Guest counter (WP5.6 R6a-3)
-    guestCounter,
-    incrementGuestCounter,
-
-    // Court assignment result (WP5.4 R9a-1.3)
-    justAssignedCourt,
-    assignedSessionId,
-    hasAssignedCourt,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setHasAssignedCourt,
-
-    // Clear court flow (WP5.4 R9a-2.3)
-    selectedCourtToClear,
-    clearCourtStep,
-    setSelectedCourtToClear,
-    setClearCourtStep,
-    decrementClearCourtStep,
-
-    // Group/Guest (WP5.3 R8a.3)
-    currentGroup,
-    guestName,
-    guestSponsor,
-    showGuestForm,
-    showGuestNameError,
-    showSponsorError,
-    setCurrentGroup,
-    setGuestName,
-    setGuestSponsor,
-    setShowGuestForm,
-    setShowGuestNameError,
-    setShowSponsorError,
-    handleRemovePlayer,
-    handleSelectSponsor,
-    handleCancelGuest,
-
-    // Streak (WP5.3 R8c.3)
-    registrantStreak,
-    showStreakModal,
-    streakAcknowledged,
-    setRegistrantStreak,
-    setShowStreakModal,
-    setStreakAcknowledged,
-
-    // Member identity (WP5.3 R8b.3)
-    memberNumber,
-    currentMemberId,
-    frequentPartners,
-    frequentPartnersLoading,
-    setMemberNumber,
-    setCurrentMemberId,
-    fetchFrequentPartners,
-    clearCache,
-
-    // Member search (WP5.3 R5a.3)
-    searchInput,
-    showSuggestions,
-    addPlayerSearch,
-    showAddPlayerSuggestions,
-    isSearching,
-    effectiveSearchInput,
-    effectiveAddPlayerSearch,
-    setSearchInput,
-    setShowSuggestions,
-    setAddPlayerSearch,
-    setShowAddPlayerSuggestions,
-    setApiMembers,
-    handleGroupSearchChange,
-    handleGroupSearchFocus,
-    handleAddPlayerSearchChange,
-    handleAddPlayerSearchFocus,
-    getAutocompleteSuggestions,
-
-    // Mobile flow controller (WP5.8)
-    mobileFlow,
-    preselectedCourt,
-    mobileMode,
-    mobileCountdown,
-    checkingLocation,
-    locationToken,
-    showQRScanner,
-    gpsFailedPrompt,
-    setMobileFlow,
-    setPreselectedCourt,
-    setMobileMode,
-    setCheckingLocation,
-    setLocationToken,
-    setShowQRScanner,
-    setGpsFailedPrompt,
-    getMobileGeolocation,
-    requestMobileReset,
-    onQRScanToken,
-    onQRScannerClose,
-    openQRScanner,
-    dismissGpsPrompt,
-
-    // Block admin (WP5.3 R3.3)
-    showBlockModal,
-    blockingInProgress,
-    selectedCourtsToBlock,
-    blockMessage,
-    blockStartTime,
-    blockEndTime,
-    blockWarningMinutes,
-    setShowBlockModal,
-    setSelectedCourtsToBlock,
-    setBlockMessage,
-    setBlockStartTime,
-    setBlockEndTime,
-    setBlockWarningMinutes,
-    setBlockingInProgress,
-    onBlockCreate,
-    onCancelBlock,
-
-    // Waitlist admin (WP5.3 R4a.3)
-    waitlistMoveFrom,
-    setWaitlistMoveFrom,
-    onReorderWaitlist,
-  } = useRegistrationDomainHooks({
+  const domain = useRegistrationDomainHooks({
     backend,
     CONSTANTS,
     setCurrentScreen,
@@ -420,6 +268,32 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     getCourtData,
     showAlertMessage: null, // Will use internal showAlertMessage
   });
+  // Destructure for internal use
+  const {
+    showAlertMessage,
+    setJustAssignedCourt,
+    setAssignedSessionId,
+    setCurrentGroup,
+    setShowGuestForm,
+    setGuestName,
+    setGuestSponsor,
+    setRegistrantStreak,
+    setShowStreakModal,
+    setStreakAcknowledged,
+    setSearchInput,
+    setShowSuggestions,
+    setAddPlayerSearch,
+    setShowAddPlayerSuggestions,
+    setHasAssignedCourt,
+    setSelectedCourtToClear,
+    setClearCourtStep,
+    setMemberNumber,
+    setCurrentMemberId,
+    setPreselectedCourt,
+    setApiMembers,
+    currentMemberId,
+    fetchFrequentPartners,
+  } = domain;
 
   // Inactivity timeout exit sequence (must be defined before useSessionTimeout)
   function applyInactivityTimeoutExitSequence() {
@@ -581,7 +455,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
 
   // ===== DATA LAYER MODULE (WP5.9.6.3) =====
   // Provides getDataService, loadData and handles board subscription
-  const { getDataService, loadData } = useRegistrationDataLayer({
+  const dataLayer = useRegistrationDataLayer({
     backend,
     setData,
     setAvailableCourts,
@@ -590,6 +464,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     data,
     computeRegistrationCourtSelection,
   });
+  const { loadData } = dataLayer;
 
   // ===== USE EFFECTS =====
   // Note: Most effects are now handled by Runtime and DataLayer modules
@@ -663,66 +538,21 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     }
   }, [loadData]);
 
-  // ===== RETURN ALL STATE AND HELPERS =====
-  return buildRegistrationReturn({
-    // UI State values
-    data,
-    currentScreen,
-    availableCourts,
-    waitlistPosition,
-    operatingHours,
-    showSuccess,
-    replacedGroup,
-    displacement,
-    originalCourtData,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
-    showAddPlayer,
-    isChangingCourt,
-    currentTime,
-    courtToMove,
-    hasWaitlistPriority,
-    currentWaitlistEntryId,
-    isAssigning,
-    isJoiningWaitlist,
-    ballPriceInput,
-    ballPriceCents,
+  // ===== GROUP HELPERS (WP5.9.6.6a2) =====
+  const helpers = {
+    markUserTyping,
+    getCourtData,
+    clearSuccessResetTimer,
+    getDataService: dataLayer.getDataService,
+    loadData,
+    applyInactivityTimeoutExitSequence,
+    getCourtsOccupiedForClearing,
+    guardAddPlayerEarly,
+    guardAgainstGroupDuplicate,
+  };
 
-    // UI State setters
-    setData,
-    setCurrentScreen,
-    setAvailableCourts,
-    setWaitlistPosition,
-    setOperatingHours,
-    setShowSuccess,
-    setReplacedGroup,
-    setDisplacement,
-    setOriginalCourtData,
-    setCanChangeCourt,
-    setChangeTimeRemaining,
-    setIsTimeLimited,
-    setTimeLimitReason,
-    setShowAddPlayer,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-    setLastActivity,
-    setCurrentTime,
-    setCourtToMove,
-    setHasWaitlistPriority,
-    setCurrentWaitlistEntryId,
-    setIsAssigning,
-    setIsJoiningWaitlist,
-    setBallPriceInput,
-    setBallPriceCents,
-    setIsUserTyping,
-
-    // Runtime refs
-    successResetTimerRef,
-    typingTimeoutRef,
-
-    // Derived values
+  // ===== GROUP DERIVED VALUES (WP5.9.6.6a2) =====
+  const derived = {
     isMobileView,
     canFirstGroupPlay,
     canSecondGroupPlay,
@@ -731,179 +561,33 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     firstWaitlistEntryData,
     secondWaitlistEntryData,
     memberDatabase,
+  };
 
-    // Helper functions
-    markUserTyping,
-    getCourtData,
-    clearSuccessResetTimer,
-    getDataService,
-    loadData,
-    applyInactivityTimeoutExitSequence,
-    getCourtsOccupiedForClearing,
-    guardAddPlayerEarly,
-    guardAgainstGroupDuplicate,
-
-    // Services
+  // ===== RETURN ALL STATE AND HELPERS =====
+  return buildRegistrationReturn({
+    ui,
+    domain,
+    runtime,
+    dataLayer,
+    helpers,
+    derived,
+    timeout: { showTimeoutWarning },
     backend,
     dataStore,
-
-    // Alert display
-    showAlert,
-    alertMessage,
-    setShowAlert,
-    setAlertMessage,
-    showAlertMessage,
-
-    // Admin price feedback
-    showPriceSuccess,
-    priceError,
-    setPriceError,
-    setShowPriceSuccess,
-    showPriceSuccessWithClear,
-
-    // Guest counter
-    guestCounter,
-    incrementGuestCounter,
-
-    // Session timeout
-    showTimeoutWarning,
-
-    // Member search
-    searchInput,
-    setSearchInput,
-    showSuggestions,
-    setShowSuggestions,
-    isSearching,
-    effectiveSearchInput,
-    addPlayerSearch,
-    setAddPlayerSearch,
-    showAddPlayerSuggestions,
-    setShowAddPlayerSuggestions,
-    effectiveAddPlayerSearch,
-    setApiMembers,
-    getAutocompleteSuggestions,
-    handleGroupSearchChange,
-    handleGroupSearchFocus,
-    handleAddPlayerSearchChange,
-    handleAddPlayerSearchFocus,
-
-    // Court assignment result
-    justAssignedCourt,
-    setJustAssignedCourt,
-    assignedSessionId,
-    setAssignedSessionId,
-    hasAssignedCourt,
-    setHasAssignedCourt,
-
-    // Clear court flow
-    selectedCourtToClear,
-    setSelectedCourtToClear,
-    clearCourtStep,
-    setClearCourtStep,
-    decrementClearCourtStep,
-
-    // Mobile flow controller
-    mobileFlow,
-    preselectedCourt,
-    mobileMode,
-    mobileCountdown,
-    checkingLocation,
-    locationToken,
-    showQRScanner,
-    gpsFailedPrompt,
-    setMobileFlow,
-    setPreselectedCourt,
-    setMobileMode,
-    setCheckingLocation,
-    setLocationToken,
-    setShowQRScanner,
-    setGpsFailedPrompt,
-    getMobileGeolocation,
-    requestMobileReset,
-    onQRScanToken,
-    onQRScannerClose,
-    openQRScanner,
-    dismissGpsPrompt,
-
-    // Block admin
-    showBlockModal,
-    setShowBlockModal,
-    selectedCourtsToBlock,
-    setSelectedCourtsToBlock,
-    blockStartTime,
-    setBlockStartTime,
-    blockEndTime,
-    setBlockEndTime,
-    blockMessage,
-    setBlockMessage,
-    blockWarningMinutes,
-    setBlockWarningMinutes,
-    blockingInProgress,
-    setBlockingInProgress,
-    getCourtBlockStatus,
-    onBlockCreate,
-    onCancelBlock,
-
-    // Waitlist admin
-    waitlistMoveFrom,
-    setWaitlistMoveFrom,
-    onReorderWaitlist,
-
-    // Group/Guest
-    currentGroup,
-    setCurrentGroup,
-    guestName,
-    setGuestName,
-    guestSponsor,
-    setGuestSponsor,
-    showGuestForm,
-    setShowGuestForm,
-    showGuestNameError,
-    setShowGuestNameError,
-    showSponsorError,
-    setShowSponsorError,
-    handleRemovePlayer,
-    handleSelectSponsor,
-    handleCancelGuest,
-
-    // Streak
-    registrantStreak,
-    setRegistrantStreak,
-    showStreakModal,
-    setShowStreakModal,
-    streakAcknowledged,
-    setStreakAcknowledged,
-
-    // Member identity
-    memberNumber,
-    setMemberNumber,
-    currentMemberId,
-    setCurrentMemberId,
-    frequentPartners,
-    frequentPartnersLoading,
-    fetchFrequentPartners,
-    clearCache,
-
-    // Constants and config
     CONSTANTS,
     TENNIS_CONFIG,
     API_CONFIG,
     TennisBusinessLogic,
     dbg,
     DEBUG,
-
-    // Overtime eligibility helper
+    getCourtBlockStatus,
     computeRegistrationCourtSelection,
-
-    // Orchestrators
     assignCourtToGroupOrchestrated,
     sendGroupToWaitlistOrchestrated,
     handleSuggestionClickOrchestrated,
     handleAddPlayerSuggestionClickOrchestrated,
     changeCourtOrchestrated,
     resetFormOrchestrated,
-
-    // Validation
     validateGroupCompat,
   });
 }
