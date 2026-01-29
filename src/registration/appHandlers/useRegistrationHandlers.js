@@ -1,11 +1,7 @@
 import { useCallback } from 'react';
-import {
-  handleClearAllCourtsOp,
-  handleAdminClearCourtOp,
-  handleMoveCourtOp,
-  handleClearWaitlistOp,
-  handleRemoveFromWaitlistOp,
-} from '../handlers/adminOperations';
+
+// Admin handlers module (WP5.9.5.1)
+import { useAdminHandlers } from './handlers';
 
 // Import services for handlers that need them
 import { GeolocationService } from '../services';
@@ -725,71 +721,22 @@ export function useRegistrationHandlers(deps) {
   );
 
   // ============================================
-  // Admin Screen Handlers
+  // Admin Screen Handlers (extracted to adminHandlers.js - WP5.9.5.1)
   // ============================================
-
-  const handleClearAllCourts = useCallback(
-    () => handleClearAllCourtsOp({ backend, showAlertMessage }),
-    [backend, showAlertMessage]
-  );
-
-  const handleAdminClearCourt = useCallback(
-    (courtNum) => handleAdminClearCourtOp({ clearCourt, showAlertMessage }, courtNum),
-    [clearCourt, showAlertMessage]
-  );
-
-  const handleMoveCourt = useCallback(
-    (fromCourtNum, toCourtNum) =>
-      handleMoveCourtOp(
-        { backend, getCourtData, showAlertMessage, setCourtToMove },
-        fromCourtNum,
-        toCourtNum
-      ),
-    [backend, getCourtData, showAlertMessage, setCourtToMove]
-  );
-
-  const handleClearWaitlist = useCallback(
-    () => handleClearWaitlistOp({ backend, showAlertMessage, getCourtData }),
-    [backend, showAlertMessage, getCourtData]
-  );
-
-  const handleRemoveFromWaitlist = useCallback(
-    (group) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group),
-    [backend, showAlertMessage]
-  );
-
-  const handlePriceUpdate = useCallback(async () => {
-    const price = parseFloat(ballPriceInput);
-
-    // Validation
-    if (isNaN(price)) {
-      setPriceError('Please enter a valid number');
-      return;
-    }
-
-    if (price < 0.5 || price > 50.0) {
-      setPriceError('Price must be between $0.50 and $50.00');
-      return;
-    }
-
-    // Save to localStorage
-    try {
-      const parsed = (await dataStore.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY)) || {};
-      parsed.tennisBallPrice = price;
-      await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, parsed, { immediate: true });
-
-      // Show success message
-      showPriceSuccessWithClear();
-      // eslint-disable-next-line no-unused-vars
-    } catch (_error) {
-      setPriceError('Failed to save price');
-    }
-  }, [ballPriceInput, setPriceError, dataStore, TENNIS_CONFIG, showPriceSuccessWithClear]);
-
-  const handleExitAdmin = useCallback(() => {
-    setCurrentScreen('home', 'exitAdminPanel');
-    setSearchInput('');
-  }, [setCurrentScreen, setSearchInput]);
+  const adminHandlers = useAdminHandlers({
+    backend,
+    showAlertMessage,
+    clearCourt,
+    getCourtData,
+    setCourtToMove,
+    ballPriceInput,
+    setPriceError,
+    dataStore,
+    TENNIS_CONFIG,
+    showPriceSuccessWithClear,
+    setCurrentScreen,
+    setSearchInput,
+  });
 
   // ============================================================
   // GroupScreen Handlers
@@ -1175,6 +1122,9 @@ export function useRegistrationHandlers(deps) {
 
   // ===== RETURN ALL HANDLERS =====
   return {
+    // Admin handlers (extracted - WP5.9.5.1)
+    ...adminHandlers,
+    // Core handlers
     markUserTyping,
     checkLocationAndProceed,
     getCourtData,
@@ -1192,13 +1142,6 @@ export function useRegistrationHandlers(deps) {
     findMemberNumber,
     sameGroup,
     handleSuggestionClick,
-    handleClearAllCourts,
-    handleAdminClearCourt,
-    handleMoveCourt,
-    handleClearWaitlist,
-    handleRemoveFromWaitlist,
-    handlePriceUpdate,
-    handleExitAdmin,
     handleGroupSuggestionClick,
     handleAddPlayerSuggestionClick,
     handleToggleAddPlayer,
