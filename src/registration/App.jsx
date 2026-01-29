@@ -95,6 +95,9 @@ import { useAdminPriceFeedback } from './ui/adminPriceFeedback';
 // Guest counter hook (WP5.6 R6a-3)
 import { useGuestCounter } from './ui/guestCounter';
 
+// Session timeout hook (WP5.7)
+import { useSessionTimeout } from './ui/timeout';
+
 // Orchestration facade (WP5.5)
 import {
   changeCourtOrchestrated,
@@ -608,9 +611,13 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   const [isChangingCourt, setIsChangingCourt] = useState(false);
   const [, setWasOvertimeCourt] = useState(false); // Getter unused, setter used
   const [, setLastActivity] = useState(Date.now()); // Getter unused, setter used
-  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  const timeoutTimerRef = useRef(null);
-  const warningTimerRef = useRef(null);
+  // showTimeoutWarning, timeoutTimerRef, warningTimerRef moved to useSessionTimeout hook (WP5.7)
+  const { showTimeoutWarning } = useSessionTimeout({
+    currentScreen,
+    setLastActivity,
+    showAlertMessage,
+    onTimeout: applyInactivityTimeoutExitSequence,
+  });
   const successResetTimerRef = useRef(null);
   // frequentPartnersCacheRef, frequentPartners, frequentPartnersLoading, currentMemberId
   // moved to useMemberIdentity hook (WP5.3 R8b.3)
@@ -1189,56 +1196,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
     };
   }, []);
 
-  // Activity tracking for timeout
-  const updateActivity = () => {
-    setLastActivity(Date.now());
-    setShowTimeoutWarning(false);
-
-    // Clear and restart timers when there's activity
-    if (timeoutTimerRef.current) clearTimeout(timeoutTimerRef.current);
-    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-
-    if (currentScreen === 'group') {
-      // Set warning timer
-      warningTimerRef.current = setTimeout(() => {
-        setShowTimeoutWarning(true);
-      }, CONSTANTS.SESSION_WARNING_MS);
-
-      // Set timeout timer
-      timeoutTimerRef.current = setTimeout(() => {
-        showAlertMessage('Session timed out due to inactivity');
-        applyInactivityTimeoutExitSequence();
-      }, CONSTANTS.SESSION_TIMEOUT_MS);
-    }
-  };
-
-  // Setup timeout for group management screen
-  useEffect(() => {
-    if (currentScreen === 'group') {
-      // Initial setup of timers when entering group screen
-      updateActivity();
-
-      // Add activity listeners
-      const handleActivity = () => updateActivity();
-      window.addEventListener('click', handleActivity);
-      window.addEventListener('touchstart', handleActivity);
-      window.addEventListener('keypress', handleActivity);
-
-      return () => {
-        // Cleanup
-        if (timeoutTimerRef.current) clearTimeout(timeoutTimerRef.current);
-        if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-        window.removeEventListener('click', handleActivity);
-        window.removeEventListener('touchstart', handleActivity);
-        window.removeEventListener('keypress', handleActivity);
-      };
-    } else {
-      // Clear timers when leaving group screen
-      if (timeoutTimerRef.current) clearTimeout(timeoutTimerRef.current);
-      if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only depend on currentScreen, not updateActivity
-  }, [currentScreen]);
+  // updateActivity function and timeout useEffect moved to useSessionTimeout hook (WP5.7)
 
   // showAlertMessage moved to useAlertDisplay hook (WP5.6 R6a-1)
 
