@@ -1,10 +1,13 @@
 import { useCallback } from 'react';
 
 // Extracted handler modules (WP5.9.5)
-import { useAdminHandlers, useGuestHandlers, useGroupHandlers } from './handlers';
-
-// Import services for handlers that need them
-import { GeolocationService } from '../services';
+import {
+  useAdminHandlers,
+  useGuestHandlers,
+  useGroupHandlers,
+  useCourtHandlers,
+  useNavigationHandlers,
+} from './handlers';
 
 // Import validation services
 import { TennisBusinessLogic } from '@lib';
@@ -166,105 +169,6 @@ export function useRegistrationHandlers(deps) {
 
   // ===== UTILITY FUNCTIONS =====
 
-  // Wrapper function to check location before proceeding
-  const checkLocationAndProceed = useCallback(
-    async (onSuccess) => {
-      // Skip location check if disabled
-      if (!TENNIS_CONFIG.GEOLOCATION.ENABLED) {
-        console.log('⚠️ Geolocation check disabled for development');
-        onSuccess();
-        return;
-      }
-
-      setCheckingLocation(true);
-
-      try {
-        const locationResult = await GeolocationService.verifyAtClub();
-
-        if (locationResult.success) {
-          // Location verified, proceed with action
-          onSuccess();
-        } else {
-          // Not at club
-          showAlertMessage(locationResult.message);
-        }
-      } catch (error) {
-        // Location check failed (timeout, permission denied, etc.)
-        console.error('Location check failed:', error);
-        showAlertMessage(TENNIS_CONFIG.GEOLOCATION.ERROR_MESSAGE);
-      } finally {
-        setCheckingLocation(false);
-      }
-    },
-    [TENNIS_CONFIG, setCheckingLocation, showAlertMessage]
-  );
-
-  // getCourtData is passed in as a dep from App.jsx (needed by hooks before this hook)
-
-  // Save court data using the data service
-  // @deprecated — localStorage persistence removed; API commands handle state
-  const saveCourtData = useCallback(async (_data) => {
-    // TennisDataService.saveData removed — API is source of truth
-    // Callers should migrate to TennisCommands for write operations
-    console.warn('[saveCourtData] DEPRECATED: localStorage persistence removed. Use API commands.');
-    return true; // Return success to avoid breaking callers during migration
-  }, []);
-
-  // Get available courts (strict selectable API - single source of truth)
-  const getAvailableCourts = useCallback(
-    (
-      checkWaitlistPriority = true,
-      _includeOvertimeIfChanging = false,
-      excludeCourtNumber = null,
-      dataOverride = null
-    ) => {
-      const Av = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-      if (!Av?.getSelectableCourtsStrict || !Av?.getFreeCourtsInfo) {
-        console.warn('Availability functions not available');
-        return [];
-      }
-
-      try {
-        // Use API state by default, fall back to localStorage only if state not available
-        const courtData = dataOverride || getCourtData();
-        const boardData =
-          courtData?.courts?.length > 0 ? courtData : window.Tennis?.Storage?.readDataSafe();
-        const now = new Date();
-
-        // Get blocks from the board data if available, otherwise localStorage
-        const blocks =
-          courtData?.blocks ||
-          window.Tennis?.Storage?.readJSON(window.Tennis?.Storage?.STORAGE?.BLOCKS) ||
-          [];
-        const wetSet = new Set();
-
-        let selectable = [];
-
-        if (checkWaitlistPriority) {
-          // Waitlist priority mode: ONLY show truly free courts (no overtime fallback)
-          const info = Av.getFreeCourtsInfo({ data: boardData, now, blocks, wetSet });
-          selectable = info.free || [];
-          dbg('Waitlist priority mode - free courts only:', selectable);
-        } else {
-          // Non-waitlist mode: use standard selectable logic (free first, then overtime fallback)
-          selectable = Av.getSelectableCourtsStrict({ data: boardData, now, blocks, wetSet });
-          dbg('Standard selectable courts:', selectable);
-        }
-
-        // Apply excludeCourtNumber filter if specified
-        const filtered = excludeCourtNumber
-          ? selectable.filter((n) => n !== excludeCourtNumber)
-          : selectable;
-
-        return filtered;
-      } catch (error) {
-        console.error('Error in getAvailableCourts:', error);
-        return [];
-      }
-    },
-    [getCourtData, dbg]
-  );
-
   // Clear any pending success reset timer
   const clearSuccessResetTimer = useCallback(() => {
     if (successResetTimerRef.current) {
@@ -363,211 +267,12 @@ export function useRegistrationHandlers(deps) {
     [getCourtData, currentGroup]
   );
 
-  // Clear a court via TennisBackend
-  const clearViaService = useCallback(
-    async (courtNumber, clearReason) => {
-      // Get court UUID from court number
-      const court = data.courts.find((c) => c.number === courtNumber);
-      if (!court) {
-        console.error('[clearViaService] Court not found for number:', courtNumber);
-        return { success: false, error: 'Court not found' };
-      }
-
-      console.log('[clearViaService] Using TennisBackend for court:', court.id);
-
-      try {
-        const result = await backend.commands.endSession({
-          courtId: court.id,
-          reason: clearReason || 'completed',
-        });
-
-        // Map {ok, message} to {success, error} for compatibility
-        return {
-          success: result.ok,
-          error: result.ok ? undefined : result.message,
-        };
-      } catch (error) {
-        console.error('[clearViaService] Error:', error);
-        return { success: false, error: error.message || 'Failed to clear court' };
-      }
-    },
-    [data.courts, backend]
-  );
-
-  const clearCourt = useCallback(
-    async (courtNumber, clearReason = 'Cleared') => {
-      console.log(
-        `[Registration UI] clearCourt called for court ${courtNumber} with reason: ${clearReason}`
-      );
-
-      const res = await clearViaService(courtNumber, clearReason);
-      if (!res?.success) {
-        window.Tennis?.UI?.toast(res?.error || 'Failed to clear court');
-        return;
-      }
-      console.log(`Court ${courtNumber} cleared successfully`);
-      // success UI stays the same (thanks/close), no manual writes needed—
-      // DataStore.set inside the service will emit both events.
-    },
-    [clearViaService]
-  );
-
-  // Assign court (moved to orchestration layer - WP5.5)
-  const assignCourtToGroup = useCallback(
-    async (courtNumber, selectableCountAtSelection = null) => {
-      return assignCourtToGroupOrchestrated(courtNumber, selectableCountAtSelection, {
-        // Read values
-        isAssigning,
-        mobileFlow,
-        preselectedCourt,
-        operatingHours,
-        currentGroup,
-        courts: data.courts,
-        currentWaitlistEntryId,
-        CONSTANTS,
-        // Setters
-        setIsAssigning,
-        setCurrentWaitlistEntryId,
-        setHasWaitlistPriority,
-        setCurrentGroup,
-        setJustAssignedCourt,
-        setAssignedSessionId,
-        setReplacedGroup,
-        setDisplacement,
-        setOriginalCourtData,
-        setIsChangingCourt,
-        setWasOvertimeCourt,
-        setHasAssignedCourt,
-        setCanChangeCourt,
-        setChangeTimeRemaining,
-        setIsTimeLimited,
-        setTimeLimitReason,
-        setShowSuccess,
-        setGpsFailedPrompt,
-        // Services
-        backend,
-        // Helpers
-        getCourtBlockStatus,
-        getMobileGeolocation,
-        showAlertMessage,
-        validateGroupCompat,
-        clearSuccessResetTimer,
-        resetForm,
-        successResetTimerRef,
-        dbg,
-        API_CONFIG,
-      });
-    },
-    [
-      assignCourtToGroupOrchestrated,
-      isAssigning,
-      mobileFlow,
-      preselectedCourt,
-      operatingHours,
-      currentGroup,
-      data.courts,
-      currentWaitlistEntryId,
-      CONSTANTS,
-      setIsAssigning,
-      setCurrentWaitlistEntryId,
-      setHasWaitlistPriority,
-      setCurrentGroup,
-      setJustAssignedCourt,
-      setAssignedSessionId,
-      setReplacedGroup,
-      setDisplacement,
-      setOriginalCourtData,
-      setIsChangingCourt,
-      setWasOvertimeCourt,
-      setHasAssignedCourt,
-      setCanChangeCourt,
-      setChangeTimeRemaining,
-      setIsTimeLimited,
-      setTimeLimitReason,
-      setShowSuccess,
-      setGpsFailedPrompt,
-      backend,
-      getCourtBlockStatus,
-      getMobileGeolocation,
-      showAlertMessage,
-      validateGroupCompat,
-      clearSuccessResetTimer,
-      resetForm,
-      successResetTimerRef,
-      dbg,
-      API_CONFIG,
-    ]
-  );
-
-  // Change court assignment (moved to orchestration layer - WP5.5)
-  const changeCourt = useCallback(() => {
-    changeCourtOrchestrated({
-      canChangeCourt,
-      justAssignedCourt,
-      replacedGroup,
-      setOriginalCourtData,
-      setShowSuccess,
-      setIsChangingCourt,
-      setWasOvertimeCourt,
-      setCurrentScreen,
-    });
-  }, [
-    changeCourtOrchestrated,
-    canChangeCourt,
-    justAssignedCourt,
-    replacedGroup,
-    setOriginalCourtData,
-    setShowSuccess,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-    setCurrentScreen,
-  ]);
-
-  // Send group to waitlist (moved to orchestration layer - WP5.5)
-  const sendGroupToWaitlist = useCallback(
-    async (group) => {
-      await sendGroupToWaitlistOrchestrated(group, {
-        // Read values
-        isJoiningWaitlist,
-        currentGroup,
-        mobileFlow,
-        // Setters
-        setIsJoiningWaitlist,
-        setWaitlistPosition,
-        setGpsFailedPrompt,
-        // Services/helpers
-        backend,
-        getMobileGeolocation,
-        validateGroupCompat,
-        isPlayerAlreadyPlaying,
-        showAlertMessage,
-        API_CONFIG,
-      });
-    },
-    [
-      sendGroupToWaitlistOrchestrated,
-      isJoiningWaitlist,
-      currentGroup,
-      mobileFlow,
-      setIsJoiningWaitlist,
-      setWaitlistPosition,
-      setGpsFailedPrompt,
-      backend,
-      getMobileGeolocation,
-      validateGroupCompat,
-      isPlayerAlreadyPlaying,
-      showAlertMessage,
-      API_CONFIG,
-    ]
-  );
-
   // ============================================
   // Admin Screen Handlers (extracted to adminHandlers.js - WP5.9.5.1)
   // ============================================
   const adminHandlers = useAdminHandlers({
     backend,
     showAlertMessage,
-    clearCourt,
     getCourtData,
     setCourtToMove,
     ballPriceInput,
@@ -608,6 +313,67 @@ export function useRegistrationHandlers(deps) {
     TENNIS_CONFIG,
   });
 
+  // ============================================
+  // Court Handlers (extracted to courtHandlers.js - WP5.9.5.4)
+  // ============================================
+  const courtHandlers = useCourtHandlers({
+    // State
+    data,
+    isAssigning,
+    mobileFlow,
+    preselectedCourt,
+    operatingHours,
+    currentGroup,
+    currentWaitlistEntryId,
+    canChangeCourt,
+    justAssignedCourt,
+    replacedGroup,
+    isJoiningWaitlist,
+    // Setters
+    setIsAssigning,
+    setCurrentWaitlistEntryId,
+    setHasWaitlistPriority,
+    setCurrentGroup,
+    setJustAssignedCourt,
+    setAssignedSessionId,
+    setReplacedGroup,
+    setDisplacement,
+    setOriginalCourtData,
+    setIsChangingCourt,
+    setWasOvertimeCourt,
+    setHasAssignedCourt,
+    setCanChangeCourt,
+    setChangeTimeRemaining,
+    setIsTimeLimited,
+    setTimeLimitReason,
+    setShowSuccess,
+    setGpsFailedPrompt,
+    setCurrentScreen,
+    setIsJoiningWaitlist,
+    setWaitlistPosition,
+    // Refs
+    successResetTimerRef,
+    // Services
+    backend,
+    // Helpers
+    getCourtData,
+    getCourtBlockStatus,
+    getMobileGeolocation,
+    showAlertMessage,
+    validateGroupCompat,
+    clearSuccessResetTimer,
+    resetForm,
+    isPlayerAlreadyPlaying,
+    dbg,
+    // Orchestrators
+    assignCourtToGroupOrchestrated,
+    changeCourtOrchestrated,
+    sendGroupToWaitlistOrchestrated,
+    // Constants
+    CONSTANTS,
+    API_CONFIG,
+  });
+
   // ============================================================
   // Group Handlers (extracted to groupHandlers.js - WP5.9.5.3)
   // ============================================================
@@ -645,11 +411,11 @@ export function useRegistrationHandlers(deps) {
     guardAddPlayerEarly,
     guardAgainstGroupDuplicate,
     getCourtData,
-    getAvailableCourts,
-    saveCourtData,
+    getAvailableCourts: courtHandlers.getAvailableCourts,
+    saveCourtData: courtHandlers.saveCourtData,
     fetchFrequentPartners,
-    assignCourtToGroup,
-    sendGroupToWaitlist,
+    assignCourtToGroup: courtHandlers.assignCourtToGroup,
+    sendGroupToWaitlist: courtHandlers.sendGroupToWaitlist,
     clearSuccessResetTimer,
     resetForm,
     isPlayerAlreadyPlaying,
@@ -662,66 +428,34 @@ export function useRegistrationHandlers(deps) {
   });
 
   // ============================================================
-  // Navigation Handlers
+  // Navigation Handlers (extracted to navigationHandlers.js - WP5.9.5.4)
   // ============================================================
-
-  const handleToggleAddPlayer = useCallback(() => {
-    if (showGuestForm) {
-      // If guest form is showing, close it and reset
-      setShowGuestForm(false);
-      setGuestName('');
-      setGuestSponsor('');
-      setShowGuestNameError(false);
-      setShowSponsorError(false);
-      setShowAddPlayer(false);
-    } else {
-      // Normal toggle behavior
-      setShowAddPlayer(!showAddPlayer);
-    }
-  }, [
+  const navigationHandlers = useNavigationHandlers({
+    // State
     showGuestForm,
+    showAddPlayer,
+    mobileFlow,
+    currentScreen: deps.currentScreen,
+    clearCourtStep,
+    // Setters
     setShowGuestForm,
     setGuestName,
     setGuestSponsor,
     setShowGuestNameError,
     setShowSponsorError,
-    showAddPlayer,
     setShowAddPlayer,
-  ]);
-
-  const handleGroupGoBack = useCallback(() => {
-    if (mobileFlow) {
-      // Check if we're in Clear Court workflow - handle navigation properly
-      if (deps.currentScreen === 'clearCourt') {
-        // In Clear Court, Back should go to previous step or exit
-        if (clearCourtStep > 1) {
-          decrementClearCourtStep();
-        } else {
-          // Exit Clear Court workflow
-          requestMobileReset();
-        }
-      } else {
-        // For other screens, close the registration overlay
-        requestMobileReset();
-      }
-    } else {
-      // Desktop behavior - go back to home
-      setCurrentGroup([]);
-      setMemberNumber('');
-      setCurrentMemberId(null);
-      setCurrentScreen('home', 'groupGoBack');
-    }
-  }, [
-    mobileFlow,
-    deps.currentScreen,
-    clearCourtStep,
-    decrementClearCourtStep,
-    requestMobileReset,
     setCurrentGroup,
     setMemberNumber,
     setCurrentMemberId,
     setCurrentScreen,
-  ]);
+    setCheckingLocation,
+    // Helpers
+    decrementClearCourtStep,
+    requestMobileReset,
+    showAlertMessage,
+    // Constants
+    TENNIS_CONFIG,
+  });
 
   // ===== RETURN ALL HANDLERS =====
   return {
@@ -731,21 +465,15 @@ export function useRegistrationHandlers(deps) {
     ...guestHandlers,
     // Group handlers (extracted - WP5.9.5.3)
     ...groupHandlers,
-    // Core handlers
+    // Court handlers (extracted - WP5.9.5.4)
+    ...courtHandlers,
+    // Navigation handlers (extracted - WP5.9.5.4)
+    ...navigationHandlers,
+    // Core handlers (shared across modules)
     markUserTyping,
-    checkLocationAndProceed,
     getCourtData,
-    saveCourtData,
-    getAvailableCourts,
-    assignCourtToGroup,
-    changeCourt,
-    clearCourt,
-    sendGroupToWaitlist,
     clearSuccessResetTimer,
     resetForm,
     isPlayerAlreadyPlaying,
-    // Navigation handlers
-    handleToggleAddPlayer,
-    handleGroupGoBack,
   };
 }
