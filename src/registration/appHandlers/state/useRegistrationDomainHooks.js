@@ -14,9 +14,6 @@ import { useAdminPriceFeedback } from '../../ui/adminPriceFeedback';
 // Guest counter hook (WP5.6 R6a-3)
 import { useGuestCounter } from '../../ui/guestCounter';
 
-// Session timeout hook (WP5.7)
-import { useSessionTimeout } from '../../ui/timeout';
-
 // Mobile flow controller hook (WP5.8)
 import { useMobileFlowController } from '../../ui/mobile';
 
@@ -56,31 +53,25 @@ const dbg = (...args) => {
  * @param {Object} deps.backend - Backend service instance
  * @param {Object} deps.CONSTANTS - App constants
  * @param {Function} deps.setCurrentScreen - Screen navigation setter
- * @param {Function} deps.setLastActivity - Activity timestamp setter
  * @param {Function} deps.setShowSuccess - Success display setter
  * @param {boolean} deps.showSuccess - Current success state
  * @param {string|null} deps.justAssignedCourt - Just assigned court
- * @param {string} deps.currentScreen - Current screen name
  * @param {boolean} deps.isMobile - Mobile device flag
  * @param {Function} deps.toast - Toast function
  * @param {Function} deps.markUserTyping - Mark user typing function
  * @param {Function} deps.getCourtData - Get court data function
- * @param {Function} deps.onTimeout - Timeout callback
  */
 export function useRegistrationDomainHooks({
   backend,
   CONSTANTS,
   setCurrentScreen,
-  setLastActivity,
   showSuccess,
   justAssignedCourt,
-  currentScreen,
   isMobile,
   toast,
   markUserTyping,
   getCourtData,
   showAlertMessage: externalShowAlertMessage,
-  onTimeout,
 }) {
   // Alert display hook (WP5.6 R6a-1)
   const { showAlert, alertMessage, setShowAlert, setAlertMessage, showAlertMessage } =
@@ -157,14 +148,6 @@ export function useRegistrationDomainHooks({
     fetchFrequentPartners,
     clearCache,
   } = useMemberIdentity({ backend });
-
-  // Session timeout hook (WP5.7)
-  const { showTimeoutWarning } = useSessionTimeout({
-    currentScreen,
-    setLastActivity,
-    showAlertMessage: externalShowAlertMessage || showAlertMessage,
-    onTimeout,
-  });
 
   // Member search hook (WP5.3 R5a.3)
   const {
@@ -324,9 +307,6 @@ export function useRegistrationDomainHooks({
     setCurrentMemberId,
     fetchFrequentPartners,
     clearCache,
-
-    // Session timeout (WP5.7)
-    showTimeoutWarning,
 
     // Member search (WP5.3 R5a.3)
     searchInput,

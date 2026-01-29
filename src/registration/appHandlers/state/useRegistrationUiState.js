@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { TENNIS_CONFIG, CONSTANTS } from '@lib';
+import { TENNIS_CONFIG } from '@lib';
 
 /**
  * useRegistrationUiState
@@ -7,8 +7,11 @@ import { TENNIS_CONFIG, CONSTANTS } from '@lib';
  *
  * Owns all UI state declarations (useState) for the registration flow.
  * Verbatim extraction, no logic changes.
+ *
+ * @param {Object} deps - Dependencies
+ * @param {Object} deps.CONSTANTS - App constants (defined in main hook)
  */
-export function useRegistrationUiState() {
+export function useRegistrationUiState({ CONSTANTS }) {
   // ===== NAVIGATION STATE =====
   const [currentScreen, _setCurrentScreen] = useState('home');
 

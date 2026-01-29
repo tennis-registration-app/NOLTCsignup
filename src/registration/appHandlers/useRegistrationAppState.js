@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 
 // Import shared utilities from @lib
 import {
@@ -63,6 +63,9 @@ import { useStreak } from '../streak/useStreak';
 
 // Member identity hook (WP5.3 R8b.3)
 import { useMemberIdentity } from '../memberIdentity/useMemberIdentity';
+
+// UI State module (WP5.9.6.1)
+import { useRegistrationUiState } from './state/useRegistrationUiState';
 
 // Orchestration facade (WP5.5)
 import {
@@ -134,52 +137,64 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     UPDATE_INTERVAL_MS: TENNIS_CONFIG.TIMING.UPDATE_INTERVAL_MS,
   };
 
+  // ===== UI STATE MODULE (WP5.9.6.1) =====
+  const {
+    // State values
+    data,
+    currentScreen,
+    availableCourts,
+    waitlistPosition,
+    operatingHours,
+    showSuccess,
+    replacedGroup,
+    displacement,
+    originalCourtData,
+    canChangeCourt,
+    changeTimeRemaining,
+    isTimeLimited,
+    timeLimitReason,
+    showAddPlayer,
+    isChangingCourt,
+    currentTime,
+    courtToMove,
+    hasWaitlistPriority,
+    currentWaitlistEntryId,
+    isAssigning,
+    isJoiningWaitlist,
+    ballPriceInput,
+    ballPriceCents,
+    // Setters
+    setData,
+    setCurrentScreen,
+    setAvailableCourts,
+    setWaitlistPosition,
+    setOperatingHours,
+    setShowSuccess,
+    setReplacedGroup,
+    setDisplacement,
+    setOriginalCourtData,
+    setCanChangeCourt,
+    setChangeTimeRemaining,
+    setIsTimeLimited,
+    setTimeLimitReason,
+    setShowAddPlayer,
+    setIsChangingCourt,
+    setWasOvertimeCourt,
+    setLastActivity,
+    setCurrentTime,
+    setCourtToMove,
+    setHasWaitlistPriority,
+    setCurrentWaitlistEntryId,
+    setIsAssigning,
+    setIsJoiningWaitlist,
+    setBallPriceInput,
+    setBallPriceCents,
+    setIsUserTyping,
+  } = useRegistrationUiState({ CONSTANTS });
+
   // ===== REFS =====
   const successResetTimerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
-  // ===== CORE STATE =====
-  const [data, setData] = useState(() => ({
-    courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
-    waitlist: [],
-    blocks: [],
-    upcomingBlocks: [],
-    recentlyCleared: [],
-  }));
-
-  const [currentScreen, _setCurrentScreen] = useState('home');
-  const setCurrentScreen = (screen, source = 'unknown') => {
-    console.log(`[NAV] ${currentScreen} → ${screen} (from: ${source})`);
-    console.trace('[NAV] Stack trace');
-    _setCurrentScreen(screen);
-  };
-
-  const [availableCourts, setAvailableCourts] = useState([]);
-  const [waitlistPosition, setWaitlistPosition] = useState(0);
-  const [operatingHours, setOperatingHours] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [replacedGroup, setReplacedGroup] = useState(null);
-  const [displacement, setDisplacement] = useState(null);
-  const [originalCourtData, setOriginalCourtData] = useState(null);
-  const [canChangeCourt, setCanChangeCourt] = useState(false);
-  const [changeTimeRemaining, setChangeTimeRemaining] = useState(
-    CONSTANTS.CHANGE_COURT_TIMEOUT_SEC
-  );
-  const [isTimeLimited, setIsTimeLimited] = useState(false);
-  const [timeLimitReason, setTimeLimitReason] = useState(null);
-  const [showAddPlayer, setShowAddPlayer] = useState(false);
-  const [isChangingCourt, setIsChangingCourt] = useState(false);
-  const [, setWasOvertimeCourt] = useState(false);
-  const [, setLastActivity] = useState(Date.now());
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [courtToMove, setCourtToMove] = useState(null);
-  const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
-  const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
-  const [ballPriceInput, setBallPriceInput] = useState('');
-  const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
-  const [, setIsUserTyping] = useState(false);
 
   // ===== HELPER FUNCTIONS (defined before hooks that need them) =====
 
