@@ -25,47 +25,14 @@ import { createBackend } from '../backend/index.js';
 // Overtime eligibility policy
 import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
 
-// Alert display hook (WP5.6 R6a-1)
-import { useAlertDisplay } from '../ui/alert';
-
-// Admin price feedback hook (WP5.6 R6a-2)
-import { useAdminPriceFeedback } from '../ui/adminPriceFeedback';
-
-// Guest counter hook (WP5.6 R6a-3)
-import { useGuestCounter } from '../ui/guestCounter';
-
 // Session timeout hook (WP5.7)
 import { useSessionTimeout } from '../ui/timeout';
 
-// Mobile flow controller hook (WP5.8)
-import { useMobileFlowController } from '../ui/mobile';
-
-// Member search hook (WP5.3 R5a.3)
-import { useMemberSearch } from '../search/useMemberSearch.js';
-
-// Court assignment result hook (WP5.4 R9a-1.3)
-import { useCourtAssignmentResult } from '../court/useCourtAssignmentResult';
-
-// Clear court flow hook (WP5.4 R9a-2.3)
-import { useClearCourtFlow } from '../court/useClearCourtFlow';
-
-// Block admin hook (WP5.3 R3.3)
-import { useBlockAdmin } from '../blocks/useBlockAdmin';
-
-// Waitlist admin hook (WP5.3 R4a.3)
-import { useWaitlistAdmin } from '../waitlist/useWaitlistAdmin';
-
-// Group/Guest hook (WP5.3 R8a.3)
-import { useGroupGuest } from '../group/useGroupGuest';
-
-// Streak hook (WP5.3 R8c.3)
-import { useStreak } from '../streak/useStreak';
-
-// Member identity hook (WP5.3 R8b.3)
-import { useMemberIdentity } from '../memberIdentity/useMemberIdentity';
-
 // UI State module (WP5.9.6.1)
 import { useRegistrationUiState } from './state/useRegistrationUiState';
+
+// Domain Hooks module (WP5.9.6.4)
+import { useRegistrationDomainHooks } from './state/useRegistrationDomainHooks';
 
 // Orchestration facade (WP5.5)
 import {
@@ -347,45 +314,42 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     });
   }
 
-  // ===== EXTRACTED HOOKS =====
-
-  // Alert display hook (WP5.6 R6a-1)
-  const { showAlert, alertMessage, setShowAlert, setAlertMessage, showAlertMessage } =
-    useAlertDisplay({ alertDurationMs: CONSTANTS.ALERT_DISPLAY_MS });
-
-  // Admin price feedback hook (WP5.6 R6a-2)
+  // ===== DOMAIN HOOKS MODULE (WP5.9.6.4) =====
   const {
+    // Alert display (WP5.6 R6a-1)
+    showAlert,
+    alertMessage,
+    setShowAlert,
+    setAlertMessage,
+    showAlertMessage,
+
+    // Admin price feedback (WP5.6 R6a-2)
     showPriceSuccess,
     priceError,
     setShowPriceSuccess,
     setPriceError,
     showPriceSuccessWithClear,
-  } = useAdminPriceFeedback();
 
-  // Guest counter hook (WP5.6 R6a-3)
-  const { guestCounter, incrementGuestCounter } = useGuestCounter();
+    // Guest counter (WP5.6 R6a-3)
+    guestCounter,
+    incrementGuestCounter,
 
-  // Court assignment result hook (WP5.4 R9a-1.3)
-  const {
+    // Court assignment result (WP5.4 R9a-1.3)
     justAssignedCourt,
     assignedSessionId,
     hasAssignedCourt,
     setJustAssignedCourt,
     setAssignedSessionId,
     setHasAssignedCourt,
-  } = useCourtAssignmentResult();
 
-  // Clear court flow hook (WP5.4 R9a-2.3)
-  const {
+    // Clear court flow (WP5.4 R9a-2.3)
     selectedCourtToClear,
     clearCourtStep,
     setSelectedCourtToClear,
     setClearCourtStep,
     decrementClearCourtStep,
-  } = useClearCourtFlow();
 
-  // Group/Guest hook (WP5.3 R8a.3)
-  const {
+    // Group/Guest (WP5.3 R8a.3)
     currentGroup,
     guestName,
     guestSponsor,
@@ -401,20 +365,16 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     handleRemovePlayer,
     handleSelectSponsor,
     handleCancelGuest,
-  } = useGroupGuest();
 
-  // Streak hook (WP5.3 R8c.3)
-  const {
+    // Streak (WP5.3 R8c.3)
     registrantStreak,
     showStreakModal,
     streakAcknowledged,
     setRegistrantStreak,
     setShowStreakModal,
     setStreakAcknowledged,
-  } = useStreak();
 
-  // Member identity hook (WP5.3 R8b.3)
-  const {
+    // Member identity (WP5.3 R8b.3)
     memberNumber,
     currentMemberId,
     frequentPartners,
@@ -423,7 +383,83 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setCurrentMemberId,
     fetchFrequentPartners,
     clearCache,
-  } = useMemberIdentity({ backend });
+
+    // Member search (WP5.3 R5a.3)
+    searchInput,
+    showSuggestions,
+    addPlayerSearch,
+    showAddPlayerSuggestions,
+    isSearching,
+    effectiveSearchInput,
+    effectiveAddPlayerSearch,
+    setSearchInput,
+    setShowSuggestions,
+    setAddPlayerSearch,
+    setShowAddPlayerSuggestions,
+    setApiMembers,
+    handleGroupSearchChange,
+    handleGroupSearchFocus,
+    handleAddPlayerSearchChange,
+    handleAddPlayerSearchFocus,
+    getAutocompleteSuggestions,
+
+    // Mobile flow controller (WP5.8)
+    mobileFlow,
+    preselectedCourt,
+    mobileMode,
+    mobileCountdown,
+    checkingLocation,
+    locationToken,
+    showQRScanner,
+    gpsFailedPrompt,
+    setMobileFlow,
+    setPreselectedCourt,
+    setMobileMode,
+    setCheckingLocation,
+    setLocationToken,
+    setShowQRScanner,
+    setGpsFailedPrompt,
+    getMobileGeolocation,
+    requestMobileReset,
+    onQRScanToken,
+    onQRScannerClose,
+    openQRScanner,
+    dismissGpsPrompt,
+
+    // Block admin (WP5.3 R3.3)
+    showBlockModal,
+    blockingInProgress,
+    selectedCourtsToBlock,
+    blockMessage,
+    blockStartTime,
+    blockEndTime,
+    blockWarningMinutes,
+    setShowBlockModal,
+    setSelectedCourtsToBlock,
+    setBlockMessage,
+    setBlockStartTime,
+    setBlockEndTime,
+    setBlockWarningMinutes,
+    setBlockingInProgress,
+    onBlockCreate,
+    onCancelBlock,
+
+    // Waitlist admin (WP5.3 R4a.3)
+    waitlistMoveFrom,
+    setWaitlistMoveFrom,
+    onReorderWaitlist,
+  } = useRegistrationDomainHooks({
+    backend,
+    CONSTANTS,
+    setCurrentScreen,
+    showSuccess,
+    justAssignedCourt: null, // Not available yet at this point
+    isMobile: API_CONFIG.IS_MOBILE,
+    toast: typeof window !== 'undefined' ? window.Tennis?.UI?.toast : undefined,
+    markUserTyping,
+    getCourtData,
+    showAlertMessage: null, // Will use internal showAlertMessage
+  });
 
   // Inactivity timeout exit sequence (must be defined before useSessionTimeout)
   function applyInactivityTimeoutExitSequence() {
@@ -470,95 +506,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setLastActivity,
     showAlertMessage,
     onTimeout: applyInactivityTimeoutExitSequence,
-  });
-
-  // Member search hook (WP5.3 R5a.3)
-  const {
-    searchInput,
-    showSuggestions,
-    addPlayerSearch,
-    showAddPlayerSuggestions,
-    isSearching,
-    effectiveSearchInput,
-    effectiveAddPlayerSearch,
-    setSearchInput,
-    setShowSuggestions,
-    setAddPlayerSearch,
-    setShowAddPlayerSuggestions,
-    setApiMembers,
-    handleGroupSearchChange,
-    handleGroupSearchFocus,
-    handleAddPlayerSearchChange,
-    handleAddPlayerSearchFocus,
-    getAutocompleteSuggestions,
-  } = useMemberSearch({
-    backend,
-    setCurrentScreen,
-    CONSTANTS,
-    markUserTyping,
-  });
-
-  // Mobile flow controller hook (WP5.8)
-  const {
-    mobileFlow,
-    preselectedCourt,
-    mobileMode,
-    mobileCountdown,
-    checkingLocation,
-    locationToken,
-    showQRScanner,
-    gpsFailedPrompt,
-    setMobileFlow,
-    setPreselectedCourt,
-    setMobileMode,
-    setCheckingLocation,
-    setLocationToken,
-    setShowQRScanner,
-    setGpsFailedPrompt,
-    getMobileGeolocation,
-    requestMobileReset,
-    onQRScanToken,
-    onQRScannerClose,
-    openQRScanner,
-    dismissGpsPrompt,
-  } = useMobileFlowController({
-    showSuccess,
-    justAssignedCourt,
-    backend,
-    isMobile: API_CONFIG.IS_MOBILE,
-    toast: typeof window !== 'undefined' ? window.Tennis?.UI?.toast : undefined,
-    dbg,
-    DEBUG,
-  });
-
-  // Block admin hook (WP5.3 R3.3)
-  const {
-    showBlockModal,
-    blockingInProgress,
-    selectedCourtsToBlock,
-    blockMessage,
-    blockStartTime,
-    blockEndTime,
-    blockWarningMinutes,
-    setShowBlockModal,
-    setSelectedCourtsToBlock,
-    setBlockMessage,
-    setBlockStartTime,
-    setBlockEndTime,
-    setBlockWarningMinutes,
-    setBlockingInProgress,
-    onBlockCreate,
-    onCancelBlock,
-  } = useBlockAdmin({
-    backend,
-    showAlertMessage,
-    getCourtData,
-  });
-
-  // Waitlist admin hook (WP5.3 R4a.3)
-  const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
-    getCourtData,
-    showAlertMessage,
   });
 
   // ===== DERIVED VALUES (useMemo) =====
