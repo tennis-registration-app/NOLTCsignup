@@ -6,49 +6,62 @@ import { API_CONFIG } from '../../../lib/apiConfig.js';
 /**
  * CourtRoute
  * Extracted from RegistrationRouter — WP6.0.1
+ * Added app/handlers grouping — WP6.0.2a
  * Verbatim JSX. No behavior change.
  */
 export function CourtRoute(props) {
+  // Bridge mode: prefer app/handlers, fallback to props for compatibility
+  const app = props.app ?? props;
+  const handlers = props.handlers ?? props;
+
+  // Destructure from app (state/config)
   const {
     // State
-    isChangingCourt,
-    hasAssignedCourt,
-    justAssignedCourt,
-    currentGroup,
-    isMobileView,
-    hasWaitlistPriority,
-    showAlert,
-    alertMessage,
-    displacement,
-    originalCourtData,
-    mobileFlow,
+    isChangingCourt = app.state?.isChangingCourt,
+    hasAssignedCourt = app.derived?.hasAssignedCourt,
+    justAssignedCourt = app.state?.justAssignedCourt,
+    currentGroup = app.groupGuest?.currentGroup,
+    isMobileView = app.derived?.isMobileView,
+    hasWaitlistPriority = app.state?.hasWaitlistPriority,
+    showAlert = app.alert?.showAlert,
+    alertMessage = app.alert?.alertMessage,
+    displacement = app.state?.displacement,
+    originalCourtData = app.state?.originalCourtData,
+    mobileFlow = app.mobile?.mobileFlow,
     // QR Scanner
-    showQRScanner,
-    onQRScanToken,
-    onQRScannerClose,
-    gpsFailedPrompt,
-    openQRScanner,
-    dismissGpsPrompt,
+    showQRScanner = app.qrScanner?.showQRScanner,
+    gpsFailedPrompt = app.qrScanner?.gpsFailedPrompt,
+    // Refs
+    successResetTimerRef = app.refs?.successResetTimerRef,
+    // Utilities
+    backend = app.backend,
+    CONSTANTS = app.CONSTANTS,
+  } = props;
+
+  // Destructure from handlers
+  const {
+    // QR Scanner handlers
+    onQRScanToken = handlers.onQRScanToken,
+    onQRScannerClose = handlers.onQRScannerClose,
+    openQRScanner = handlers.openQRScanner,
+    dismissGpsPrompt = handlers.dismissGpsPrompt,
     // Callbacks
-    getCourtData,
-    computeRegistrationCourtSelection,
-    getCourtBlockStatus,
-    clearCourt,
-    setDisplacement,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-    assignCourtToGroup,
-    sendGroupToWaitlist,
-    setShowSuccess,
-    clearSuccessResetTimer,
-    successResetTimerRef,
-    resetForm,
-    showAlertMessage,
-    setCurrentScreen,
-    setOriginalCourtData,
-    saveCourtData,
-    backend,
-    CONSTANTS,
+    getCourtData = handlers.getCourtData,
+    computeRegistrationCourtSelection = handlers.computeRegistrationCourtSelection,
+    getCourtBlockStatus = app.blockAdmin?.getCourtBlockStatus,
+    clearCourt = handlers.clearCourt,
+    setDisplacement = app.setters?.setDisplacement,
+    setIsChangingCourt = app.setters?.setIsChangingCourt,
+    setWasOvertimeCourt = app.setters?.setWasOvertimeCourt,
+    assignCourtToGroup = handlers.assignCourtToGroup,
+    sendGroupToWaitlist = handlers.sendGroupToWaitlist,
+    setShowSuccess = app.setters?.setShowSuccess,
+    clearSuccessResetTimer = handlers.clearSuccessResetTimer,
+    resetForm = handlers.resetForm,
+    showAlertMessage = app.alert?.showAlertMessage,
+    setCurrentScreen = app.setters?.setCurrentScreen,
+    setOriginalCourtData = app.setters?.setOriginalCourtData,
+    saveCourtData = handlers.saveCourtData,
   } = props;
 
   // When a group has already been assigned a court, treat it like changing courts

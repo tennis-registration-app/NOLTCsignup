@@ -169,6 +169,9 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Render the router with all props
   return (
     <RegistrationRouter
+      // Grouped props for bridge mode (WP6.0.2a)
+      app={app}
+      handlers={handlers}
       // Core navigation
       currentScreen={app.state.currentScreen}
       setCurrentScreen={app.setters.setCurrentScreen}

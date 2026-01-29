@@ -5,37 +5,48 @@ import { AlertDisplay, ToastHost } from '../../components';
 /**
  * SuccessRoute
  * Extracted from RegistrationRouter — WP6.0.1
+ * Added app/handlers grouping — WP6.0.2a
  * Verbatim JSX. No behavior change.
  */
 export function SuccessRoute(props) {
+  // Bridge mode: prefer app/handlers, fallback to props for compatibility
+  const app = props.app ?? props;
+  const handlers = props.handlers ?? props;
+
+  // Destructure from app (state/config)
   const {
     // Alert state
-    showAlert,
-    alertMessage,
+    showAlert = app.alert?.showAlert,
+    alertMessage = app.alert?.alertMessage,
     // Success state
-    justAssignedCourt,
-    assignedSessionId,
-    replacedGroup,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
-    currentGroup,
-    mobileFlow,
-    mobileCountdown,
-    registrantStreak,
-    ballPriceCents,
-    waitlistPosition,
-    blockWarningMinutes,
-    data,
+    justAssignedCourt = app.state?.justAssignedCourt,
+    assignedSessionId = app.state?.assignedSessionId,
+    replacedGroup = app.state?.replacedGroup,
+    canChangeCourt = app.derived?.canChangeCourt,
+    changeTimeRemaining = app.derived?.changeTimeRemaining,
+    isTimeLimited = app.derived?.isTimeLimited,
+    timeLimitReason = app.derived?.timeLimitReason,
+    currentGroup = app.groupGuest?.currentGroup,
+    mobileFlow = app.mobile?.mobileFlow,
+    mobileCountdown = app.mobile?.mobileCountdown,
+    registrantStreak = app.state?.registrantStreak,
+    ballPriceCents = app.state?.ballPriceCents,
+    waitlistPosition = app.state?.waitlistPosition,
+    blockWarningMinutes = app.derived?.blockWarningMinutes,
+    data = app.state?.data,
+    // Utilities
+    backend = app.backend,
+    CONSTANTS = app.CONSTANTS,
+    TENNIS_CONFIG = app.TENNIS_CONFIG,
+  } = props;
+
+  // Destructure from handlers
+  const {
     // Callbacks
-    changeCourt,
-    resetForm,
-    getCourtData,
-    getCourtBlockStatus,
-    backend,
-    CONSTANTS,
-    TENNIS_CONFIG,
+    changeCourt = handlers.changeCourt,
+    resetForm = handlers.resetForm,
+    getCourtData = handlers.getCourtData,
+    getCourtBlockStatus = app.blockAdmin?.getCourtBlockStatus,
   } = props;
 
   const isCourtAssignment = justAssignedCourt !== null;

@@ -5,22 +5,32 @@ import { TennisBusinessLogic } from '@lib';
 /**
  * ClearCourtRoute
  * Extracted from RegistrationRouter — WP6.0.1
+ * Added app/handlers grouping — WP6.0.2a
  * Verbatim JSX. No behavior change.
  */
 export function ClearCourtRoute(props) {
+  // Bridge mode: prefer app/handlers, fallback to props for compatibility
+  const app = props.app ?? props;
+  const handlers = props.handlers ?? props;
+
+  // Destructure from app (state/config)
   const {
-    clearCourtStep,
-    setClearCourtStep,
-    selectedCourtToClear,
-    setSelectedCourtToClear,
-    clearCourt,
-    resetForm,
-    showAlert,
-    alertMessage,
-    getCourtsOccupiedForClearing,
-    getCourtData,
-    CONSTANTS,
-    mobileFlow,
+    clearCourtStep = app.clearCourtFlow?.clearCourtStep,
+    setClearCourtStep = app.clearCourtFlow?.setClearCourtStep,
+    selectedCourtToClear = app.clearCourtFlow?.selectedCourtToClear,
+    setSelectedCourtToClear = app.clearCourtFlow?.setSelectedCourtToClear,
+    showAlert = app.alert?.showAlert,
+    alertMessage = app.alert?.alertMessage,
+    getCourtsOccupiedForClearing = app.helpers?.getCourtsOccupiedForClearing,
+    CONSTANTS = app.CONSTANTS,
+    mobileFlow = app.mobile?.mobileFlow,
+  } = props;
+
+  // Destructure from handlers
+  const {
+    clearCourt = handlers.clearCourt,
+    resetForm = handlers.resetForm,
+    getCourtData = handlers.getCourtData,
   } = props;
 
   return (
