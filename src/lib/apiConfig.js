@@ -1,10 +1,23 @@
-// NOLTC Backend API Configuration
+/**
+ * API Configuration
+ *
+ * Supabase credentials are sourced from environment via runtimeConfig.
+ * Device/admin/mobile context is derived from window.location at access-time.
+ *
+ * @module apiConfig
+ */
 
 import { DEVICES } from './config.js';
+import { getSupabaseConfig } from '../config/runtimeConfig.js';
+
+// =============================================================================
+// URL Context Detection (runtime, not module init)
+// =============================================================================
 
 /**
  * Detect if running in mobile context (evaluated per-call)
  * Mobile context = embedded in Mobile.html or view=mobile query param
+ * @returns {boolean}
  */
 export function getIsMobile() {
   if (typeof window === 'undefined') return false;
@@ -31,6 +44,7 @@ export function getIsMobile() {
 /**
  * Detect if running in admin context (evaluated per-call)
  * Admin context = URL contains /admin/
+ * @returns {boolean}
  */
 export function getIsAdmin() {
   if (typeof window === 'undefined') return false;
@@ -40,7 +54,7 @@ export function getIsAdmin() {
 /**
  * Get device context at request time
  * Priority: Admin > Mobile > Kiosk (default)
- * @returns {{ deviceId: string, deviceType: string }}
+ * @returns {{ deviceId: string, deviceType: 'admin' | 'mobile' | 'kiosk' }}
  */
 export function getDeviceContext() {
   const isAdmin = getIsAdmin();
@@ -55,32 +69,54 @@ export function getDeviceContext() {
   return { deviceId: DEVICES.KIOSK_ID, deviceType: 'kiosk' };
 }
 
-// Legacy: evaluate once at module load for backward compatibility
-const IS_MOBILE = getIsMobile();
-const IS_ADMIN = getIsAdmin();
+// =============================================================================
+// API_CONFIG (preserve shape; compute dynamic fields at access time)
+// =============================================================================
 
-export const API_CONFIG = {
-  // Supabase project URL (for Realtime connections)
-  SUPABASE_URL: 'https://dncjloqewjubodkoruou.supabase.co',
+function computeApiConfig() {
+  const supabase = getSupabaseConfig();
+  const { deviceId, deviceType } = getDeviceContext();
+  const IS_MOBILE = getIsMobile();
+  const IS_ADMIN = getIsAdmin();
 
-  // Edge Functions base URL
-  BASE_URL: 'https://dncjloqewjubodkoruou.supabase.co/functions/v1',
+  return {
+    SUPABASE_URL: supabase.url,
+    BASE_URL: supabase.baseUrl,
+    ANON_KEY: supabase.anonKey,
+    IS_MOBILE,
+    IS_ADMIN,
+    DEVICE_ID: deviceId,
+    DEVICE_TYPE: deviceType,
+  };
+}
 
-  // Anonymous key for public access
-  ANON_KEY:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
+/**
+ * API Configuration object
+ * NOTE: No caching because IS_ADMIN/IS_MOBILE/DEVICE_* depend on current URL.
+ */
+export const API_CONFIG = new Proxy(
+  {},
+  {
+    get(_, prop) {
+      return computeApiConfig()[prop];
+    },
+    ownKeys() {
+      return Object.keys(computeApiConfig());
+    },
+    getOwnPropertyDescriptor(_, prop) {
+      const config = computeApiConfig();
+      if (prop in config) {
+        return { enumerable: true, configurable: true, value: config[prop] };
+      }
+      return undefined;
+    },
+  }
+);
 
-  // Device configuration - auto-detected based on context
-  // Priority: Admin > Mobile > Kiosk (default)
-  DEVICE_ID: IS_ADMIN ? DEVICES.ADMIN_ID : IS_MOBILE ? DEVICES.MOBILE_ID : DEVICES.KIOSK_ID,
-  DEVICE_TYPE: IS_ADMIN ? 'admin' : IS_MOBILE ? 'mobile' : 'kiosk',
+// =============================================================================
+// ENDPOINTS (preserve export name and keys exactly as previously defined)
+// =============================================================================
 
-  // Expose detection flags for other modules
-  IS_MOBILE,
-  IS_ADMIN,
-};
-
-// Endpoint paths
 export const ENDPOINTS = {
   // Mutations
   ASSIGN_COURT: '/assign-court',
@@ -90,18 +126,23 @@ export const ENDPOINTS = {
   JOIN_WAITLIST: '/join-waitlist',
   CANCEL_WAITLIST: '/cancel-waitlist',
   ASSIGN_FROM_WAITLIST: '/assign-from-waitlist',
+  REMOVE_FROM_WAITLIST: '/remove-from-waitlist',
   UPDATE_SETTINGS: '/update-system-settings',
   EXPORT_TRANSACTIONS: '/export-transactions',
   AI_ASSISTANT: '/ai-assistant',
-
   PURCHASE_BALLS: '/purchase-balls',
 
   // Read-only
-  GET_BOARD: '/get-board', // Unified court + waitlist endpoint
+  GET_BOARD: '/get-board',
   GET_COURT_STATUS: '/get-court-status', // Legacy, use GET_BOARD instead
   GET_WAITLIST: '/get-waitlist', // Legacy, use GET_BOARD instead
   GET_MEMBERS: '/get-members',
   GET_SETTINGS: '/get-settings',
   GET_SESSION_HISTORY: '/get-session-history',
   GET_TRANSACTIONS: '/get-transactions',
+  GET_BLOCKS: '/get-blocks',
+  GET_ANALYTICS: '/get-analytics',
+  GET_USAGE_ANALYTICS: '/get-usage-analytics',
+  GET_USAGE_COMPARISON: '/get-usage-comparison',
+  GET_FREQUENT_PARTNERS: '/get-frequent-partners',
 };
