@@ -103,6 +103,7 @@ export function getCourtBlockStatus(courtNumber) {
  * @param {number} courtNumber - Court number to check
  * @param {number} [duration=60] - Intended play duration in minutes (0 = any upcoming block)
  * @param {Array} blocksArray - Array of block objects with courtNumber, startTime, endTime, reason, isWetCourt
+ * @param {Date} [now=new Date()] - Current time (injectable for testing)
  * @returns {Object|null} Warning object or null if no warning needed
  * @returns {string} returns.type - 'blocked' if cannot play, 'limited' if time limited
  * @returns {string} returns.reason - Reason for the upcoming block
@@ -111,8 +112,12 @@ export function getCourtBlockStatus(courtNumber) {
  * @returns {number} [returns.originalDuration] - Originally requested duration
  * @returns {number} returns.minutesUntilBlock - Minutes until block starts
  */
-export function getUpcomingBlockWarningFromBlocks(courtNumber, duration = 60, blocksArray = []) {
-  const now = new Date();
+export function getUpcomingBlockWarningFromBlocks(
+  courtNumber,
+  duration = 60,
+  blocksArray = [],
+  now = new Date()
+) {
   const sessionEndTime = new Date(now.getTime() + duration * 60 * 1000);
 
   try {

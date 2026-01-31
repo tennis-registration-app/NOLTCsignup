@@ -77,6 +77,60 @@ describe('computeRegistrationCourtSelection', () => {
     const result = computeRegistrationCourtSelection(courts);
     expect(result.primaryCourts).toHaveLength(1);
   });
+
+  it('handles mixed null and undefined entries safely', () => {
+    const courts = [
+      null,
+      { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      undefined,
+      { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
+    ];
+    const result = computeRegistrationCourtSelection(courts);
+    expect(result.primaryCourts.map((c) => c.number)).toEqual([1, 2]);
+  });
+
+  // Contract: output preserves input ordering (no implicit sort)
+  it('preserves input order in output arrays', () => {
+    const courts = [
+      { number: 5, isAvailable: true, isBlocked: false, isOvertime: false },
+      { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
+      { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+    ];
+    const result = computeRegistrationCourtSelection(courts);
+    expect(result.primaryCourts.map((c) => c.number)).toEqual([5, 2, 8]);
+  });
+
+  it('eligibilityByCourtNumber reflects correct selection state', () => {
+    const courts = [
+      { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // primary
+      { number: 2, isAvailable: true, isBlocked: true, isOvertime: false }, // blocked
+      { number: 3, isAvailable: false, isBlocked: false, isOvertime: true }, // overtime (not eligible - primaries exist)
+    ];
+    const result = computeRegistrationCourtSelection(courts);
+
+    // Available unblocked court is eligible
+    expect(result.eligibilityByCourtNumber[1]).toMatchObject({ eligible: true });
+
+    // Blocked court is not eligible
+    expect(result.eligibilityByCourtNumber[2]).toMatchObject({ eligible: false });
+
+    // Overtime court not eligible when primaries exist
+    expect(result.eligibilityByCourtNumber[3]).toMatchObject({ eligible: false });
+  });
+
+  it('eligibilityByCourtNumber marks overtime courts eligible when no primaries', () => {
+    const courts = [
+      { number: 1, isAvailable: false, isBlocked: false, isOvertime: true },
+      { number: 2, isAvailable: false, isBlocked: true, isOvertime: true }, // blocked
+    ];
+    const result = computeRegistrationCourtSelection(courts);
+
+    // Overtime court eligible when showing overtime
+    expect(result.eligibilityByCourtNumber[1]).toMatchObject({ eligible: true });
+
+    // Blocked overtime still not eligible
+    expect(result.eligibilityByCourtNumber[2]).toMatchObject({ eligible: false });
+  });
 });
 
 describe('computePlayableCourts', () => {
