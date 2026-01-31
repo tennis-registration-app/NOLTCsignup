@@ -357,13 +357,111 @@ Registration app achieved <500 line target through:
 
 ## Security Model
 
-### Current State
-- Device authentication trusts client-supplied IDs
-- Supabase anon key used for all frontend requests
+### Current State: Open Demo Mode
 
-### Planned Improvements (Phase 4)
-- Signed device authentication (JWT/HMAC)
-- Request validation at Edge Function boundary
+> ⚠️ **This system is currently in open demo mode.** Anyone with access to the URL can perform any action, including admin operations. Security currently relies primarily on physical access control (kiosk located in a private club). Database Row Level Security (RLS) policies exist but may be permissive in demo mode.
+
+### Trust Model Overview
+
+| Surface | URL Pattern | Trust Level | Notes |
+|---------|-------------|-------------|-------|
+| Registration Kiosk | `/` (root) | Open | Primary member-facing interface |
+| Admin Panel | `/admin/*` | Open | URL-path detection only, no auth |
+| Courtboard Display | `/courtboard/` | Open | Read-only passive display |
+| Mobile | `/Mobile.html` | Open | Location token for QR context only |
+
+**Key limitation:** Admin mode is determined solely by URL path (`window.location.pathname.includes('/admin/')`). There is no authentication — anyone who navigates to `/admin/` has full admin access.
+
+### Device Identification
+
+Devices are identified by **client-supplied constants**, not authenticated tokens:
+
+| Device Type | ID Source | Spoofable? |
+|-------------|-----------|------------|
+| Kiosk | `DEVICES.KIOSK_ID` (constant) | Yes |
+| Admin | `DEVICES.ADMIN_ID` (constant) | Yes |
+| Mobile | `DEVICES.MOBILE_ID` (constant) | Yes |
+
+Device IDs are passed to Edge Functions in request payloads. Backend validation of these IDs cannot be confirmed from the frontend code alone.
+
+### Action Authorization Matrix
+
+| Action | Endpoint | Intended Access | Current Protection |
+|--------|----------|-----------------|-------------------|
+| Assign court | `/assign-court` | Kiosk/Admin | Frontend: none |
+| End session | `/end-session` | Kiosk/Admin | Frontend: none |
+| Create block | `/create-block` | Admin only | Frontend: none |
+| Cancel block | `/cancel-block` | Admin only | Frontend: none |
+| Join waitlist | `/join-waitlist` | Kiosk/Mobile | Frontend: none |
+| Cancel waitlist | `/cancel-waitlist` | Kiosk/Mobile | Frontend: none |
+| Update settings | `/update-system-settings` | Admin only | Frontend: none |
+| Export data | `/export-transactions` | Admin only | Frontend: none |
+| AI assistant | `/ai-assistant` | Admin only | Frontend: none |
+
+**Note:** "Frontend: none" means the frontend does not enforce access control. Backend Edge Functions may have additional validation — this requires backend code review to confirm.
+
+### What's Protected vs. What's Not
+
+| Layer | Protection | Status |
+|-------|------------|--------|
+| Supabase service role key | Not in frontend code | ✅ Protected |
+| Admin UI features | URL-path hidden only | ❌ Not protected |
+| Mutation endpoints | Unknown backend validation | ⚠️ Unknown |
+| Read access | RLS policies | ⚠️ Unknown (may be permissive) |
+| Physical access | Kiosk in private club | ✅ Environmental control |
+
+### Compromise Scenarios
+
+#### Scenario 1: Kiosk tablet stolen
+- **Impact:** Access to registration and, if the admin URL is known, admin functions
+- **Current mitigation:** None beyond physical security
+- **Production mitigation:** Device enrollment, remote wipe capability, session tokens
+
+#### Scenario 2: Vercel/deployment URL shared publicly
+- **Impact:** Anyone can register, create blocks, modify settings, export data
+- **Current mitigation:** URL not publicly advertised
+- **Production mitigation:** Authentication, IP allowlisting, or VPN requirement
+
+#### Scenario 3: Malicious user spams mutations
+- **Impact:** Junk registrations, fake blocks, data pollution
+- **Current mitigation:** None
+- **Production mitigation:** Rate limiting, authentication, audit logging
+
+#### Scenario 4: Frontend attempts privilege escalation
+- **Impact:** Limited — no service role key available, RLS should block unauthorized DB access
+- **Current mitigation:** Supabase anon key + RLS policies
+- **Production mitigation:** Verify RLS policies are correctly restrictive
+
+### Device Trust Concept (Future)
+
+When leaving demo mode, implement device trust via:
+
+1. **Device enrollment**: Admin registers device IDs/tokens in a trusted devices table
+2. **Token storage**: Device token in secure storage (HttpOnly cookie or device keychain)
+3. **Token validation**: Backend verifies device token on each request
+4. **Rotation**: Tokens expire and require re-enrollment periodically
+5. **Revocation**: Admin can invalidate a device token immediately if compromised
+
+This is **not implemented** — documented here for future reference.
+
+### Leaving Demo Mode Checklist
+
+The order of these steps is flexible and depends on deployment priorities.
+
+- [ ] **Add admin authentication**: Password, SSO, or device certificate for `/admin/*` routes
+- [ ] **Implement device enrollment**: Replace client-supplied device IDs with server-issued tokens
+- [ ] **Audit RLS policies**: Verify all tables have appropriate row-level security (WP-B3)
+- [ ] **Validate Edge Function authorization**: Confirm admin-only endpoints check device type/auth
+- [ ] **Rotate credentials**: Generate new Supabase anon key after removing hardcoded values
+- [ ] **Enable rate limiting**: Protect mutation endpoints from abuse
+- [ ] **Restrict CORS**: Limit allowed origins to known deployment URLs (WP-B4)
+- [ ] **Add audit logging**: Track who performed admin actions and when
+- [ ] **Document incident response**: What to do if a device is compromised
+
+### Related Security Documentation
+
+- `docs/ENVIRONMENT.md` — Environment configuration and demo mode notice
+- Backend repository — Edge Function authorization logic (separate repo)
 
 ## Type Boundaries
 
