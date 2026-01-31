@@ -7,6 +7,11 @@ import { TennisBusinessLogic } from '@lib';
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
  * Verbatim JSX. No behavior change.
+ *
+ * @param {{
+ *   app: import('../../../types/appTypes').AppState,
+ *   handlers: import('../../../types/appTypes').Handlers
+ * }} props
  */
 export function ClearCourtRoute({ app, handlers }) {
   // Destructure from app

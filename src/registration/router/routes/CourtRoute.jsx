@@ -3,11 +3,19 @@ import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
 import { API_CONFIG } from '../../../lib/apiConfig.js';
 
+// Platform bridge
+import { getTennisUI } from '../../../platform';
+
 /**
  * CourtRoute
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
  * Verbatim JSX. No behavior change.
+ *
+ * @param {{
+ *   app: import('../../../types/appTypes').AppState,
+ *   handlers: import('../../../types/appTypes').Handlers
+ * }} props
  */
 export function CourtRoute({ app, handlers }) {
   // Destructure from app
@@ -273,12 +281,12 @@ export function CourtRoute({ app, handlers }) {
             });
 
             if (res?.ok) {
-              window.Tennis?.UI?.toast?.(`Assigned to Court ${availableCourt.number}`, {
+              getTennisUI()?.toast?.(`Assigned to Court ${availableCourt.number}`, {
                 type: 'success',
               });
               showAlertMessage(`Assigned to Court ${availableCourt.number}`);
             } else {
-              window.Tennis?.UI?.toast?.(res?.message || 'Failed assigning next', {
+              getTennisUI()?.toast?.(res?.message || 'Failed assigning next', {
                 type: 'error',
               });
               showAlertMessage(res?.message || 'Failed assigning next');

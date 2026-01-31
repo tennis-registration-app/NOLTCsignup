@@ -2,11 +2,19 @@ import React from 'react';
 import { SuccessScreen } from '../../screens';
 import { AlertDisplay, ToastHost } from '../../components';
 
+// Platform bridge
+import { getTennisDomain, getTennisNamespaceConfig } from '../../../platform';
+
 /**
  * SuccessRoute
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
  * Verbatim JSX. No behavior change.
+ *
+ * @param {{
+ *   app: import('../../../types/appTypes').AppState,
+ *   handlers: import('../../../types/appTypes').Handlers
+ * }} props
  */
 export function SuccessRoute({ app, handlers }) {
   // Destructure from app
@@ -60,8 +68,9 @@ export function SuccessRoute({ app, handlers }) {
 
     // Calculate estimated wait time using domain functions
     try {
-      const A = window.Tennis?.Domain?.Availability;
-      const W = window.Tennis?.Domain?.Waitlist;
+      const Domain = getTennisDomain();
+      const A = Domain?.Availability;
+      const W = Domain?.Waitlist;
 
       if (A && W && A.getFreeCourtsInfo && A.getNextFreeTimes && W.estimateWaitForPositions) {
         const now = new Date();
@@ -105,7 +114,7 @@ export function SuccessRoute({ app, handlers }) {
         });
 
         // Calculate ETA using domain function
-        const avgGame = window.Tennis?.Config?.Timing?.AVG_GAME || CONSTANTS.AVG_GAME_TIME_MIN;
+        const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || CONSTANTS.AVG_GAME_TIME_MIN;
         const etas = W.estimateWaitForPositions({
           positions: [position],
           currentFreeCount: info.free?.length || 0,

@@ -17,6 +17,11 @@ import {
  *
  * Handles screen routing based on currentScreen state.
  * Routes receive only { app, handlers }.
+ *
+ * @param {{
+ *   app: import('../../types/appTypes').AppState,
+ *   handlers: import('../../types/appTypes').Handlers
+ * }} props
  */
 export default function RegistrationRouter({ app, handlers }) {
   const { currentScreen } = app.state;
