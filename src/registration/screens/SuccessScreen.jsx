@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * SuccessScreen Component
  *
@@ -29,9 +30,11 @@
  * - upcomingBlocks: array - Upcoming block data for warning checks
  * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
+import { TypedIcon } from '../../components/icons/TypedIcon';
+import { getDataStoreValue, setDataStoreValue } from '../../platform/windowBridge';
 
 // Fixed layout card component (internal)
 // Header is outside scroll container to avoid compositor hit-test bugs
@@ -75,7 +78,7 @@ const SuccessScreen = ({
   onChangeCourt,
   onHome,
   currentGroup,
-  mobileCountdown,
+  _mobileCountdown,
   isMobile = false,
   isTimeLimited = false,
   timeLimitReason = null,
@@ -284,10 +287,11 @@ const SuccessScreen = ({
 
       // Get existing purchases and save
       let existingPurchases = [];
-      if (window.Tennis?.DataStore) {
-        existingPurchases = (await window.Tennis.DataStore.get('tennisBallPurchases')) || [];
+      const dataStoreResult = await getDataStoreValue('tennisBallPurchases');
+      if (dataStoreResult !== undefined) {
+        existingPurchases = dataStoreResult || [];
         existingPurchases.push(purchase);
-        await window.Tennis.DataStore.set('tennisBallPurchases', existingPurchases, {
+        await setDataStoreValue('tennisBallPurchases', existingPurchases, {
           immediate: true,
         });
       } else {
@@ -346,14 +350,14 @@ const SuccessScreen = ({
       <>
         <div className="flex flex-col items-center mb-4 sm:mb-6">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mb-2 sm:mb-3">
-            <Check size={32} className="text-white sm:w-10 sm:h-10" />
+            <TypedIcon icon={Check} size={32} className="text-white sm:w-10 sm:h-10" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
             Confirmed!
           </h1>
         </div>
         <div className="bg-green-50 rounded-2xl p-4 sm:p-6 text-center">
-          <p className="text-lg sm:text-xl text-gray-700 mb-2">You're all set on</p>
+          <p className="text-lg sm:text-xl text-gray-700 mb-2">You&apos;re all set on</p>
           <p
             className="text-2xl sm:text-3xl font-bold text-green-600"
             data-testid="reg-assigned-court"
@@ -470,7 +474,7 @@ const SuccessScreen = ({
       <div className="bg-green-50 rounded-2xl p-3 sm:p-4 h-full flex items-center justify-center">
         <div>
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-1">
-            <Check size={16} className="text-green-600 sm:w-5 sm:h-5" />
+            <TypedIcon icon={Check} size={16} className="text-green-600 sm:w-5 sm:h-5" />
             <p className="text-sm sm:text-base font-medium text-green-800">
               Balls Added: $
               {purchaseDetails.type === 'single'
@@ -626,10 +630,10 @@ const SuccessScreen = ({
     <>
       <div className="flex flex-col items-center mb-4 sm:mb-6">
         <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mb-2 sm:mb-3">
-          <Check size={32} className="text-white sm:w-10 sm:h-10" />
+          <TypedIcon icon={Check} size={32} className="text-white sm:w-10 sm:h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent text-center">
-          You're on the list!
+          You&apos;re on the list!
         </h1>
       </div>
 

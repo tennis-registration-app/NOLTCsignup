@@ -76,6 +76,7 @@ export function useTennisService(options = {}) {
     return () => {
       mountedRef.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- options is read once on mount; re-subscribing on options change would cause reconnection storms
   }, []);
 
   // ===========================================

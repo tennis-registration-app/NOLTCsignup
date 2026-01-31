@@ -1,0 +1,304 @@
+import React from 'react';
+import { TennisBall } from './Icons';
+import { ReservedCourtsPanel, selectReservedItemsFromBlocks } from './ReservedCourtsPanel';
+
+/**
+ * NextAvailablePanel - Display panel showing next available courts
+ * Shows timeline of when courts will become available
+ */
+export function NextAvailablePanel({
+  courts,
+  currentTime,
+  waitlist = [],
+  courtBlocks = [],
+  upcomingBlocks = [],
+  maxDisplay,
+}) {
+  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+
+  // Convert React courts state to the data format expected by availability functions
+  const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
+
+  // Calculate court availability timeline
+  const getCourtAvailabilityTimeline = (waitlist = []) => {
+    if (!courts || !Array.isArray(courts)) {
+      return [];
+    }
+
+    // Registration buffer: 15 minutes before block starts
+    const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;
+
+    // Closing time check - default 9pm, exclude courts available within buffer of closing
+    const closingHour = 21; // 9pm - could be made configurable
+    const closingTime = new Date(currentTime);
+    closingTime.setHours(closingHour, 0, 0, 0);
+    const closingBufferTime = new Date(closingTime.getTime() - REGISTRATION_BUFFER_MS);
+
+    const courtAvailability = [];
+    const overtimeCourts = [];
+
+    // Use courtBlocks from props instead of localStorage
+    const blocks = courtBlocks || [];
+
+    // Check if ALL courts are currently wet
+    const activeWetBlocks = blocks.filter(
+      (block) =>
+        block.isWetCourt === true &&
+        new Date(block.startTime) <= currentTime &&
+        new Date(block.endTime) > currentTime
+    );
+    const wetCourtNumbers = new Set(activeWetBlocks.map((block) => block.courtNumber));
+
+    // If all courts are wet, return special marker
+    const totalCourts = courts.length;
+    if (wetCourtNumbers.size === totalCourts && totalCourts > 0) {
+      return [{ allCourtsWet: true }];
+    }
+
+    // Check each court for availability
+    courts.forEach((court, index) => {
+      const courtNumber = index + 1;
+      let endTime = null;
+
+      // Check for blocks that affect this court's availability
+      let blockingUntil = null;
+
+      // First check currently active blocks (including those starting within buffer)
+      const activeBlock = blocks.find(
+        (block) =>
+          block.courtNumber === courtNumber &&
+          new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <= currentTime.getTime() &&
+          new Date(block.endTime) > currentTime
+      );
+
+      if (activeBlock) {
+        blockingUntil = activeBlock.endTime;
+      } else if (court) {
+        // Court has players - check for overtime or regular game
+        if (court.session && court.session.scheduledEndAt) {
+          endTime = court.session.scheduledEndAt;
+        } else if (court.endTime) {
+          endTime = court.endTime;
+        }
+
+        // Check for future blocks that would overlap with game availability (with buffer)
+        if (endTime) {
+          const gameEndTime = new Date(endTime).getTime();
+          const futureBlock = blocks.find(
+            (block) =>
+              block.courtNumber === courtNumber &&
+              new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS < gameEndTime &&
+              new Date(block.endTime).getTime() > currentTime.getTime()
+          );
+
+          if (futureBlock) {
+            blockingUntil = futureBlock.endTime;
+          }
+        }
+
+        // Check if this is an overtime court (game has exceeded scheduled duration)
+        if (endTime) {
+          const parsedEndTime = new Date(endTime);
+          // Domain format: session.group.players
+          const hasPlayers = court.session?.group?.players?.length > 0;
+
+          if (hasPlayers && parsedEndTime <= currentTime) {
+            // Check if a block starts within the buffer period
+            const imminentBlock = blocks.find(
+              (block) =>
+                block.courtNumber === courtNumber &&
+                new Date(block.startTime).getTime() > currentTime.getTime() &&
+                new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <=
+                  currentTime.getTime()
+            );
+
+            if (imminentBlock) {
+              // Don't show as "Now" - extend availability to after the block
+              blockingUntil = imminentBlock.endTime;
+            } else {
+              overtimeCourts.push({
+                courtNumber,
+                endTime: null, // Special marker for "Now"
+                isOvertime: true,
+              });
+              return; // Don't add to regular availability
+            }
+          }
+        }
+      }
+
+      // Use the blocking time if blocks interfere, otherwise use game end time
+      const finalEndTime = blockingUntil || endTime;
+
+      // Parse and validate the end time for future availability
+      if (finalEndTime) {
+        try {
+          const parsedEndTime = new Date(finalEndTime);
+          // Exclude if availability is within 15 min of closing time
+          if (
+            !isNaN(parsedEndTime.getTime()) &&
+            parsedEndTime > currentTime &&
+            parsedEndTime <= closingBufferTime
+          ) {
+            courtAvailability.push({
+              courtNumber,
+              endTime: parsedEndTime,
+            });
+          }
+        } catch (error) {
+          console.error(`Error parsing end time for court ${courtNumber}:`, error);
+        }
+      }
+    });
+
+    // Sort future availability by time
+    courtAvailability.sort((a, b) => a.endTime.getTime() - b.endTime.getTime());
+
+    // Check if we should show overtime courts as "Now"
+    // Only show overtime as available if there aren't surplus empty courts
+    let filteredOvertimeCourts = overtimeCourts;
+
+    try {
+      if (A && A.getFreeCourtsInfo) {
+        const now = new Date();
+        const data = courtsToData(courts); // Use React state instead of localStorage
+        const wetSet = new Set(
+          blocks
+            .filter(
+              (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+            )
+            .map((b) => b.courtNumber)
+        );
+        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+        const emptyCount = info.free ? info.free.length : 0;
+        const waitingCount = waitlist.length;
+
+        // If there are surplus empty courts, overtime courts aren't truly "available now"
+        if (emptyCount > waitingCount) {
+          filteredOvertimeCourts = [];
+        }
+      }
+    } catch (error) {
+      console.error('Error filtering overtime courts:', error);
+    }
+
+    // Combine filtered overtime courts (first) with future availability
+    return [...filteredOvertimeCourts, ...courtAvailability];
+  };
+
+  const timeline = getCourtAvailabilityTimeline(waitlist);
+
+  // Calculate if courts are available after serving the waitlist
+  let emptyCourtCount = 0;
+  try {
+    if (A && A.getFreeCourtsInfo) {
+      const now = new Date();
+      const data = courtsToData(courts); // Use React state instead of localStorage
+      const wetSet = new Set(
+        courtBlocks
+          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+          .map((b) => b.courtNumber)
+      );
+      const info = A.getFreeCourtsInfo({ data, now, blocks: courtBlocks, wetSet });
+      emptyCourtCount = info.free ? info.free.length : 0;
+    }
+  } catch (error) {
+    console.error('Error getting free court count:', error);
+  }
+
+  // Modified logic: Show "available now" if more empty courts than waiting groups
+  const surplusCourts = emptyCourtCount - waitlist.length;
+  const hasAvailableNow = surplusCourts > 0;
+
+  // Check club hours for closed message
+  const currentHour = currentTime.getHours();
+  const currentMinutes = currentTime.getMinutes();
+  const currentTimeDecimal = currentHour + currentMinutes / 60;
+  const dayOfWeek = currentTime.getDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
+  const openingTimeString = isWeekend ? '7:00 AM' : '6:30 AM';
+
+  // Show opening message when courts are available but club is closed
+  const isInEarlyHours = currentTimeDecimal >= 4 && currentTimeDecimal < openingTime;
+  const shouldShowOpeningMessage = hasAvailableNow && isInEarlyHours;
+
+  return (
+    <div className="next-available-section h-full min-h-0 flex flex-col">
+      <div className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur flex-1">
+        {hasAvailableNow ? (
+          <>
+            <h2 className="courtboard-text-xl font-bold mb-3 flex items-center text-gray-400">
+              <TennisBall className="mr-3 icon-grey" size={24} />
+              Next Available
+            </h2>
+            <div className="text-center mt-12">
+              <p className="text-gray-400 courtboard-text-base">
+                {shouldShowOpeningMessage
+                  ? `Courts open at ${openingTimeString}`
+                  : 'Courts available now'}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="courtboard-text-xl font-bold mb-3 flex items-center text-blue-300">
+              <TennisBall className="mr-3" size={24} />
+              Next Available
+            </h2>
+            <div className="border-b border-gray-600 mb-2"></div>
+            <div className="space-y-2 mt-4">
+              {timeline.length > 0 ? (
+                timeline[0]?.allCourtsWet ? (
+                  <div className="text-center mt-8">
+                    <p className="text-yellow-400 courtboard-text-lg">
+                      Courts will become available as they dry
+                    </p>
+                  </div>
+                ) : (
+                  timeline.slice(0, maxDisplay).map((availability, idx) => (
+                    <div key={idx} className="bg-slate-700/50 p-2 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="courtboard-text-base font-medium text-white">
+                            Court {availability.courtNumber}
+                          </span>
+                        </div>
+                        <div className="courtboard-text-base font-semibold text-white">
+                          {availability.isOvertime ? (
+                            <span className="text-white font-bold">Now</span>
+                          ) : availability.endTime ? (
+                            availability.endTime.toLocaleTimeString([], {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })
+                          ) : (
+                            'Time TBD'
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : (
+                <div className="text-center mt-8">
+                  <p className="text-gray-400 courtboard-text-lg">No availability data</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="mt-auto pt-4">
+        <ReservedCourtsPanel
+          className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur"
+          items={selectReservedItemsFromBlocks(
+            [...courtBlocks, ...upcomingBlocks].filter((b) => !b.isWetCourt),
+            currentTime
+          )}
+        />
+      </div>
+    </div>
+  );
+}

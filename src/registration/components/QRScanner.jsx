@@ -9,7 +9,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 export function QRScanner({ onScan, onClose, onError }) {
-  const [isScanning, setIsScanning] = useState(false);
+  const [, setIsScanning] = useState(false); // Getter unused, setter used
   const [error, setError] = useState(null);
   const [hasPermission, setHasPermission] = useState(null);
   const scannerRef = useRef(null);
@@ -45,7 +45,7 @@ export function QRScanner({ onScan, onClose, onError }) {
             setError('Invalid QR code. Please scan the location code from the kiosk.');
           }
         },
-        (errorMessage) => {
+        (_errorMessage) => {
           // Ignore continuous scan errors (expected when no QR in frame)
         }
       );
@@ -66,7 +66,7 @@ export function QRScanner({ onScan, onClose, onError }) {
 
       if (onError) onError(err);
     }
-  }, [onScan, onError]);
+  }, [onScan, onError, stopScanner]);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -104,7 +104,12 @@ export function QRScanner({ onScan, onClose, onError }) {
           aria-label="Close scanner"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -146,7 +151,7 @@ export function QRScanner({ onScan, onClose, onError }) {
 
       {/* Instructions */}
       <div className="p-4 bg-gray-900 text-white text-center text-sm">
-        <p>Can't find the QR code? Ask a staff member for help.</p>
+        <p>Can&apos;t find the QR code? Ask a staff member for help.</p>
       </div>
     </div>
   );

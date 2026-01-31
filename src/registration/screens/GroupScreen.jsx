@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useRef, useEffect } from 'react';
 import { ToastHost, AlertDisplay } from '../components';
 
@@ -26,7 +27,7 @@ const GroupScreen = ({
   effectiveSearchInput,
 
   // Add player state
-  showAddPlayer,
+  _showAddPlayer,
   addPlayerSearch,
   showAddPlayerSuggestions,
   effectiveAddPlayerSearch,
@@ -45,7 +46,7 @@ const GroupScreen = ({
   onAddPlayerSearchChange,
   onAddPlayerSearchFocus,
   onAddPlayerSuggestionClick,
-  onToggleAddPlayer,
+  _onToggleAddPlayer,
   onToggleGuestForm,
   onRemovePlayer,
   onSelectSponsor,

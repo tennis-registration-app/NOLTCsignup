@@ -47,12 +47,6 @@ const WaitlistHeatmap = ({ heatmapData = [] }) => {
     return `${hour}a`;
   };
 
-  const getTooltip = (dayIndex, hour) => {
-    const data = getData(dayIndex, hour);
-    if (data.count === 0) return `${days[dayIndex]} ${formatHour(hour)}: No waitlist`;
-    return `${days[dayIndex]} ${formatHour(hour)}: ${data.count} group${data.count > 1 ? 's' : ''}, avg ${data.avgWait} min wait`;
-  };
-
   return (
     <div className="overflow-x-auto">
       <div className="inline-grid gap-1" style={{ gridTemplateColumns: `auto repeat(15, 1fr)` }}>

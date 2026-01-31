@@ -13,15 +13,11 @@
 import { TENNIS_CONFIG } from './config.js';
 import { getCourtBlockStatus as _getCourtBlockStatus } from './court-blocks.js';
 
-// Get court block status - prefer shared, fallback to window
+// Get court block status - direct import (window fallbacks removed as dead code)
 const getCourtBlockStatus = (courtNumber) => {
   try {
-    const fn =
-      _getCourtBlockStatus ||
-      window.Tennis?.Domain?.blocks?.getCourtBlockStatus ||
-      window.getCourtBlockStatus;
-    return fn ? fn(courtNumber) : null;
-  } catch (e) {
+    return _getCourtBlockStatus ? _getCourtBlockStatus(courtNumber) : null;
+  } catch (_e) {
     return null;
   }
 };
@@ -63,7 +59,7 @@ export const TennisBusinessLogic = {
    * @param {number} avgGameTime - Average game duration in minutes (default: 75)
    * @returns {number} Estimated wait time in minutes
    */
-  calculateEstimatedWaitTime(position, courts, currentTime, avgGameTime = 75) {
+  calculateEstimatedWaitTime(position, courts, _currentTime, avgGameTime = 75) {
     if (!courts || !Array.isArray(courts) || position < 1) return 0;
 
     const courtEndTimes = courts

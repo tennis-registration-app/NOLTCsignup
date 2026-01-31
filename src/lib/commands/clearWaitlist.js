@@ -55,6 +55,6 @@ export function preflightClearWaitlist(command, board) {
  * @param {ClearWaitlistCommand} command
  * @returns {Object}
  */
-export function toClearWaitlistPayload(command) {
+export function toClearWaitlistPayload(_command) {
   return {};
 }

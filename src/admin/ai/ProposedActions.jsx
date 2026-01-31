@@ -5,7 +5,7 @@ import React, { useState } from 'react';
  */
 export default function ProposedActions({
   actions,
-  requiresConfirmation,
+  requiresConfirmation: _requiresConfirmation,
   onExecute,
   onCancel,
   loading,

@@ -53,14 +53,14 @@ function shouldUseApi() {
 
     try {
       if (localStorage.getItem('NOLTC_USE_API') === 'true') return true;
-    } catch (e) {
+    } catch (_e) {
       // localStorage may not be available
     }
 
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('useApi') === 'true') return true;
-    } catch (e) {
+    } catch (_e) {
       // URL parsing may fail
     }
   }

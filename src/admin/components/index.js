@@ -12,3 +12,4 @@ export * from './Icons.jsx';
 export { default as HoverCard } from './HoverCard.jsx';
 export { default as QuickActionsMenu } from './QuickActionsMenu.jsx';
 export { default as EditGameModal } from './EditGameModal.jsx';
+export { VisualTimeEntry } from './VisualTimeEntry.jsx';

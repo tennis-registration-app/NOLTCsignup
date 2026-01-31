@@ -17,7 +17,9 @@
         const info = Avail.getFreeCourtsInfo({ data, now, blocks });
         if (info && Array.isArray(info.free)) return info.free;
       }
-    } catch {}
+    } catch {
+      // Intentionally ignored (Phase 3.5 lint): domain helper optional, fallback below
+    }
     const free = [];
     const activeBlocks = (Array.isArray(blocks) ? blocks : []).filter((b) => {
       return new Date(b.startTime) <= now && now < new Date(b.endTime);

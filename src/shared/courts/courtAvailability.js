@@ -130,15 +130,3 @@ export function listPlayableCourts(courts, blocks, now = new Date().toISOString(
   const { playableCourtNumbers } = computePlayableCourts(courts, blocks, now);
   return playableCourtNumbers;
 }
-
-// Expose globally for plain JS files (mobile-fallback-bar.js)
-if (typeof window !== 'undefined') {
-  window.CourtAvailability = {
-    isPlayableNow,
-    countPlayableCourts,
-    listPlayableCourts,
-    isOccupiedNow,
-    isBlockedNow,
-    isWetNow,
-  };
-}

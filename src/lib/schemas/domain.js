@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import { END_REASONS, WAITLIST_STATUSES, GROUP_TYPES, COURT_NUMBERS } from '../types/domain.js';
+import { END_REASONS, GROUP_TYPES, COURT_NUMBERS } from '../types/domain.js';
 
 // Member schema
 export const MemberSchema = z.object({

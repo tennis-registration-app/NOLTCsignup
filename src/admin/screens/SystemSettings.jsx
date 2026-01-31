@@ -6,12 +6,15 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 
+// Day names for operating hours (module scope for stable reference)
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Settings state
-  const [settings, setSettings] = useState({
+  const [, setSettings] = useState({
     tennisBallPrice: 5.0,
     guestFees: { weekday: 15.0, weekend: 20.0 },
-  });
+  }); // Getter unused, setter used
   const [ballPriceInput, setBallPriceInput] = useState('5.00');
   const [weekdayFeeInput, setWeekdayFeeInput] = useState('15.00');
   const [weekendFeeInput, setWeekendFeeInput] = useState('20.00');
@@ -46,11 +49,8 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Save status state for each card
   const [pricingSaveStatus, setPricingSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
   const [hoursSaveStatus, setHoursSaveStatus] = useState(null);
-  const [overrideSaveStatus, setOverrideSaveStatus] = useState(null);
+  const [, setOverrideSaveStatus] = useState(null); // Getter unused, setter used
   const [autoClearSaveStatus, setAutoClearSaveStatus] = useState(null);
-
-  // Day names for operating hours
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   // Fetch settings on mount
   const loadSettings = useCallback(async () => {
@@ -546,7 +546,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
             <div className="space-y-3 pl-1">
               <div className="flex items-center gap-3">
                 <label className="text-sm text-gray-600 w-48">
-                  Show "check status" warning after
+                  Show &quot;check status&quot; warning after
                 </label>
                 <input
                   type="number"

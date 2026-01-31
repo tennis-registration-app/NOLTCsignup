@@ -1,9 +1,38 @@
 # NOLTC Tennis Registration
 
-Tennis court registration system with three applications:
-- **Registration** - User-facing court sign-up
-- **Courtboard** - Real-time court status display
-- **Admin** - Administrative management panel
+## Overview
+
+The NOLTC Tennis Court Registration System is a kiosk-based application for the New Orleans Lawn Tennis Club. It manages court registration for ~2,500 members across 12 courts, handling player check-in, waitlist management, court assignments, and administrative functions. The system runs on physical kiosks at the club, with mobile and admin interfaces.
+
+**Three applications:**
+- **Registration** — User-facing court sign-up (kiosk + mobile)
+- **Courtboard** — Real-time court status display
+- **Admin** — Administrative management panel
+
+## Quick Start for Developers
+
+1. **Clone and install**
+```bash
+git clone <repo>
+npm install
+```
+
+2. **Run locally**
+```bash
+npm run dev
+```
+
+3. **Run tests**
+```bash
+npm run verify          # Full gate: lint + unit + build + e2e
+npm run test:unit       # Unit tests only (Vitest, 267 tests)
+npm run test:e2e        # E2E tests only (Playwright, 15 tests)
+```
+
+4. **Read the docs**
+   - [CONTRIBUTING.md](./CONTRIBUTING.md) — Development workflow and conventions
+   - [ARCHITECTURE.md](./ARCHITECTURE.md) — System architecture and module structure
+   - [docs/RUNBOOK.md](./docs/RUNBOOK.md) — Operations and troubleshooting
 
 ## Recent Major Milestones
 
@@ -28,7 +57,8 @@ Tennis court registration system with three applications:
 - Includes: `useBoardState`, `useActivityTimeout`, `useSessionTracking`, etc.
 
 ### Test Coverage
-- 7 Playwright E2E tests covering critical flows
+- 267 Vitest unit tests
+- 15 Playwright E2E tests covering critical flows
 - All phases maintained green tests throughout refactoring
 
 ## Repo Boundaries
@@ -82,8 +112,10 @@ This command is also run by CI on all pull requests and pushes to main.
 
 | Document | Description |
 |----------|-------------|
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Development workflow and conventions |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, data flow, architectural decisions |
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | Vercel hosting, URLs, deployment process |
+| [docs/RUNBOOK.md](./docs/RUNBOOK.md) | Operations and troubleshooting |
 | [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) | Environment configuration, staging setup |
 | [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) | Critical user flows for regression testing |
 | [docs/TESTING.md](./docs/TESTING.md) | Testing strategy and guidelines |

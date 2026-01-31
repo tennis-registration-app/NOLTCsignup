@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * ClearCourtScreen Component
  *
@@ -22,6 +23,8 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
+import { TypedIcon } from '../../components/icons/TypedIcon';
+import { getStorageDataSafe } from '../../platform/windowBridge';
 
 const ClearCourtScreen = ({
   clearCourtStep,
@@ -42,7 +45,7 @@ const ClearCourtScreen = ({
   const hasAny = clearableCourts.length > 0;
   // Use courtData prop (from React state for API backend, or from parent)
   // Fall back to localStorage only if courtData is not provided
-  const data = courtData || window.Tennis?.Storage?.readDataSafe?.() || { courts: [] };
+  const data = courtData || getStorageDataSafe() || { courts: [] };
 
   // Auto-reset timer for success screens (step 3 and 4)
   const timerRef = useRef(null);
@@ -77,7 +80,8 @@ const ClearCourtScreen = ({
         timerStepRef.current = null;
       }
     };
-  }, [clearCourtStep]); // Remove resetForm and CONSTANTS from deps - they cause re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetForm/CONSTANTS excluded: timer should only reset on step change, not on parent re-renders
+  }, [clearCourtStep]);
   const occupiedCourts = clearableCourts.map((courtNumber) => ({
     courtNumber,
     players:
@@ -205,7 +209,7 @@ const ClearCourtScreen = ({
               }}
               className="w-full bg-blue-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-blue-600 transition-colors"
             >
-              Players have finished and court {selectedCourtToClear} is open (I'm sure!)
+              Players have finished and court {selectedCourtToClear} is open (I&apos;m sure!)
             </button>
           </div>
 
@@ -242,7 +246,7 @@ const ClearCourtScreen = ({
         <ToastHost />
         <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
-            <Check size={48} className="text-white sm:w-16 sm:h-16" />
+            <TypedIcon icon={Check} size={48} className="text-white sm:w-16 sm:h-16" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thanks, have a great day!</h1>
           <p className="text-lg sm:text-xl text-gray-600">
@@ -261,7 +265,7 @@ const ClearCourtScreen = ({
         <ToastHost />
         <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
-            <Check size={48} className="text-white sm:w-16 sm:h-16" />
+            <TypedIcon icon={Check} size={48} className="text-white sm:w-16 sm:h-16" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thank you!</h1>
           <p className="text-lg sm:text-xl text-gray-600">

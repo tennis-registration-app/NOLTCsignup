@@ -4,7 +4,7 @@
  * Displays a grid of all courts with their current status.
  * Handles wet courts, blocks, games, and player movements.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Edit2, X, RefreshCw, Droplets } from '../components';
 import { EditGameModal } from '../components';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
@@ -17,12 +17,7 @@ const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || {
 // Get dataStore reference
 const getDataStore = () => window.Tennis?.DataStore || window.DataStore;
 
-// Timer registry for cleanup
-const _timers = [];
-const addTimer = (id) => {
-  _timers.push(id);
-  return id;
-};
+// Timer registry for cleanup (kept for future implementation)
 
 const CourtStatusGrid = ({
   courts,
@@ -31,9 +26,9 @@ const CourtStatusGrid = ({
   onClearCourt,
   onMoveCourt,
   currentTime,
-  onEditBlock,
-  onEditGame,
-  onEmergencyWetCourt,
+  onEditBlock: _onEditBlock,
+  onEditGame: _onEditGame,
+  onEmergencyWetCourt: _onEmergencyWetCourt,
   onClearAllCourts,
   wetCourtsActive,
   handleEmergencyWetCourt,
@@ -44,12 +39,11 @@ const CourtStatusGrid = ({
   backend, // TennisBackend instance for API calls
 }) => {
   const [movingFrom, setMovingFrom] = useState(null);
-  const [selectedCourt, setSelectedCourt] = useState(null);
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [, setRefreshKey] = useState(0); // Getter unused, setter used
+  const [, setRefreshTick] = useState(0); // Getter unused, setter used
   const [savingGame, setSavingGame] = useState(false);
 
   const dataStore = getDataStore();
@@ -199,7 +193,7 @@ const CourtStatusGrid = ({
 
     try {
       const blocks = (await dataStore.get('courtBlocks')) || [];
-      const activeWetCourts = wetCourts || localWetCourts;
+      const activeWetCourts = wetCourts || null; // TODO(WP4): Consider defaulting to new Set() if wetCourts should be optional
 
       if (activeWetCourts.has(courtNum)) {
         // Remove wet court block
@@ -317,29 +311,13 @@ const CourtStatusGrid = ({
     setShowActions(null);
   };
 
-  const handleSaveBlock = async (updatedBlock) => {
-    if (!dataStore) return;
-
-    try {
-      const blocks = (await dataStore.get('courtBlocks')) || [];
-      const updatedBlocks = blocks.map((block) =>
-        block.id === updatedBlock.id ? updatedBlock : block
-      );
-      await dataStore.set('courtBlocks', updatedBlocks);
-      setEditingBlock(null);
-      setRefreshKey((prev) => prev + 1);
-    } catch (error) {
-      console.error('Error saving block:', error);
-    }
-  };
-
   const handleMoveCourt = async (from, to) => {
     try {
       const res = await onMoveCourt(from, to);
       if (res?.success) {
         setMovingFrom(null);
       }
-    } catch (e) {
+    } catch (_e) {
       window.Tennis?.UI?.toast?.('Unexpected error moving court', { type: 'error' });
     }
   };
@@ -411,19 +389,6 @@ const CourtStatusGrid = ({
   (courts || []).forEach((c) => {
     courtsByNumber[c.number] = c;
   });
-
-  const now = new Date();
-  const blocks = courtBlocks || [];
-  const wetSet = new Set(
-    (blocks || [])
-      .filter(
-        (b) =>
-          b?.isWetCourt &&
-          new Date(b.startTime ?? b.start) <= now &&
-          now < new Date(b.endTime ?? b.end)
-      )
-      .map((b) => b.courtNumber)
-  );
 
   return (
     <>

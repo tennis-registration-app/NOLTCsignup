@@ -1,5 +1,17 @@
 # Environment Configuration
 
+## Demo Mode Notice
+
+This repository is configured for **demo/development use**:
+
+- **Demo dataset**: The Supabase instance contains sample data for testing and development.
+- **Anon key is public**: The Supabase anon key is designed for client-side use. In this demo configuration, database policies may be permissive. Production deployments should validate and tighten RLS.
+- **Open access**: The current build does not enforce user authentication or device restrictions.
+
+**For production deployment**: You may review and validate RLS policies, implement appropriate access controls, and consider rotating credentials.
+
+---
+
 ## Current State
 
 > **Important:** The frontend currently contains production Supabase URL and anon key directly in source code (`src/lib/apiConfig.js`). This is known technical debt scheduled for Phase 4.

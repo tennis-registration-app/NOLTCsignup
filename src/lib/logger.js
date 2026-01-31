@@ -25,10 +25,6 @@ function getLogLevel() {
   return LOG_LEVELS[stored] ?? LOG_LEVELS.info;
 }
 
-function formatMessage(module, message) {
-  return `[${module}] ${message}`;
-}
-
 function shouldLog(level) {
   return LOG_LEVELS[level] >= getLogLevel();
 }

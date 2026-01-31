@@ -1,0 +1,136 @@
+import { useEffect, useRef } from 'react';
+
+/**
+ * useRegistrationRuntime
+ * Extracted from useRegistrationAppState — WP5.9.6.2
+ *
+ * Owns runtime effects: timer cleanups, CSS optimizations, time interval.
+ * Verbatim extraction, no logic changes.
+ */
+export function useRegistrationRuntime({
+  // Setters needed by effects
+  setCurrentTime,
+  setBallPriceCents,
+  setBlockWarningMinutes,
+  // State reads needed by effects
+  availableCourts,
+  // Services
+  backend,
+}) {
+  // ===== REFS =====
+  const successResetTimerRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+
+  // ===== EFFECTS =====
+
+  // VERBATIM COPY: Debug availableCourts (line 663)
+  useEffect(() => {
+    console.log('🔄 availableCourts state changed:', availableCourts);
+  }, [availableCourts]);
+
+  // VERBATIM COPY: Cleanup success reset timer on unmount (line 668)
+  useEffect(() => {
+    return () => {
+      if (successResetTimerRef.current) {
+        clearTimeout(successResetTimerRef.current);
+        successResetTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  // VERBATIM COPY: Fetch ball price from API on mount (line 678)
+  useEffect(() => {
+    const fetchBallPrice = async () => {
+      try {
+        const result = await backend.admin.getSettings();
+        if (result.ok && result.settings?.ball_price_cents) {
+          setBallPriceCents(result.settings.ball_price_cents);
+        }
+        if (result.ok && result.settings?.block_warning_minutes) {
+          const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
+          if (blockWarnMin > 0) {
+            setBlockWarningMinutes(blockWarnMin);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load ball price from API:', error);
+      }
+    };
+    fetchBallPrice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // VERBATIM COPY: CSS Performance Optimizations (line 750)
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .animate-pulse {
+        will-change: opacity;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+      }
+      .animate-spin {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+      }
+      .transform {
+        transition: transform 200ms ease-out;
+        will-change: transform;
+      }
+      .transition-all {
+        transition: none !important;
+      }
+      .court-transition {
+        transition: background-color 200ms ease-out,
+                    border-color 200ms ease-out,
+                    box-shadow 200ms ease-out;
+      }
+      .button-transition {
+        transition: background-color 150ms ease-out,
+                    transform 150ms ease-out;
+        transform: translateZ(0);
+      }
+      .button-transition:hover {
+        will-change: transform;
+      }
+      .backdrop-blur {
+        transform: translateZ(0);
+        will-change: backdrop-filter;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .animate-pulse {
+          animation: none;
+          opacity: 1;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // VERBATIM COPY: Update current time every second (line 825)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [setCurrentTime]);
+
+  // VERBATIM COPY: Cleanup typing timeout on unmount (line 866)
+  useEffect(() => {
+    return () => {
+      clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
+
+  return {
+    // Refs (needed by handlers)
+    successResetTimerRef,
+    typingTimeoutRef,
+  };
+}

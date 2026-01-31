@@ -18,11 +18,11 @@ const MockAIAdmin = ({
   onClose,
   dataStore,
   courts,
-  loadData,
+  loadData: _loadData,
   clearCourt,
   clearAllCourts,
   moveCourt,
-  settings,
+  settings: _settings,
   updateBallPrice,
   waitingGroups,
   refreshData,
@@ -77,7 +77,7 @@ const MockAIAdmin = ({
         const now = new Date();
 
         if (timeMatch) {
-          const [_, start, end] = timeMatch;
+          const [, start, end] = timeMatch;
           startTime = `${start}:00`;
           endTime = `${end}:00`;
         } else if (lower.includes('hour')) {
@@ -179,7 +179,7 @@ const MockAIAdmin = ({
     const data = (await dataStore.get('tennisClubData')) || { courts: [], waitingGroups: [] };
 
     switch (action.action) {
-      case 'blockCourts':
+      case 'blockCourts': {
         // Create block times
         const now = new Date();
         let startDateTime = new Date();
@@ -266,12 +266,14 @@ const MockAIAdmin = ({
         refreshData();
 
         return `✓ Blocked court${action.courts.length > 1 ? 's' : ''} ${action.courts.join(', ')}`;
+      }
 
-      case 'clearCourt':
+      case 'clearCourt': {
         const result = await clearCourt(action.courtNumber);
         return result.success
           ? `✓ Cleared court ${action.courtNumber}`
           : `✗ ${result.error || 'Failed to clear court'}`;
+      }
 
       case 'clearAllCourts':
         await clearAllCourts();
@@ -290,21 +292,22 @@ const MockAIAdmin = ({
           throw new Error('clearWaitlist function not available');
         }
 
-      case 'movePlayers':
+      case 'movePlayers': {
         const moveResult = await moveCourt(action.fromCourt, action.toCourt);
         return moveResult.success
           ? `✓ Moved players from court ${action.fromCourt} to court ${action.toCourt}`
           : `✗ ${moveResult.error || 'Failed to move players'}`;
+      }
 
       case 'setBallPrice':
         try {
           await updateBallPrice(action.price.toString());
           return `✓ Ball price set to $${action.price.toFixed(2)}`;
-        } catch (e) {
+        } catch (_e) {
           return '✗ Failed to update ball price';
         }
 
-      case 'showStatus':
+      case 'showStatus': {
         const occupied = [];
         data.courts.forEach((court, idx) => {
           // Domain format: court.session.group.players
@@ -327,6 +330,7 @@ const MockAIAdmin = ({
           occupied.map((c) => `• Court ${c.court}: ${c.players}`).join('\n') +
           `\n\n${courts.length - occupied.length} courts available.`
         );
+      }
 
       case 'showWaitlist':
         if (waitingGroups.length === 0) {
@@ -340,7 +344,7 @@ const MockAIAdmin = ({
             .join('\n')
         );
 
-      case 'showBallSales':
+      case 'showBallSales': {
         let sales = [];
         try {
           sales = JSON.parse(localStorage.getItem('tennisBallPurchases') || '[]');
@@ -354,6 +358,7 @@ const MockAIAdmin = ({
         const total = todaySales.reduce((sum, s) => sum + s.totalAmount, 0);
 
         return `Ball sales today:\n• ${todaySales.length} purchases\n• Total: $${total.toFixed(2)}`;
+      }
 
       default:
         return '✗ Command not recognized';
