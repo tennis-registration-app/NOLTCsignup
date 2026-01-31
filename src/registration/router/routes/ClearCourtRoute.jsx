@@ -1,3 +1,4 @@
+// @ts-check
 import React from 'react';
 import { ClearCourtScreen } from '../../screens';
 import { TennisBusinessLogic } from '@lib';
