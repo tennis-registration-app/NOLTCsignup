@@ -32,6 +32,7 @@
 import React, { useState, useCallback } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
+import { getDataStoreValue, setDataStoreValue } from '../../platform/windowBridge';
 
 // Fixed layout card component (internal)
 // Header is outside scroll container to avoid compositor hit-test bugs
@@ -284,10 +285,11 @@ const SuccessScreen = ({
 
       // Get existing purchases and save
       let existingPurchases = [];
-      if (window.Tennis?.DataStore) {
-        existingPurchases = (await window.Tennis.DataStore.get('tennisBallPurchases')) || [];
+      const dataStoreResult = await getDataStoreValue('tennisBallPurchases');
+      if (dataStoreResult !== undefined) {
+        existingPurchases = dataStoreResult || [];
         existingPurchases.push(purchase);
-        await window.Tennis.DataStore.set('tennisBallPurchases', existingPurchases, {
+        await setDataStoreValue('tennisBallPurchases', existingPurchases, {
           immediate: true,
         });
       } else {
