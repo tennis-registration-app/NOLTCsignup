@@ -463,6 +463,116 @@ The order of these steps is flexible and depends on deployment priorities.
 - `docs/ENVIRONMENT.md` — Environment configuration and demo mode notice
 - Backend repository — Edge Function authorization logic (separate repo)
 
+## Frontend-Observable Backend Access Audit (WP-B3a)
+
+> This audit documents what the frontend calls and how. Backend authorization logic, RLS policies, and CORS configuration require separate verification (see WP-B3b checklist below).
+
+### Architecture Summary
+
+The frontend follows a **delegation pattern** designed to route mutations through Edge Functions:
+- ✅ **No direct database writes observed** — All mutations go through Edge Functions
+- ✅ **Anon key only** — No service role key in frontend code
+- ✅ **Minimal realtime exposure** — Only board change signals subscribed
+
+### Endpoint Inventory
+
+#### Mutation Endpoints (POST)
+
+| Endpoint | Intended Access | Called From | Notes |
+|----------|-----------------|-------------|-------|
+| `/assign-court` | Kiosk/Admin | TennisCommands.js | Assign court to member |
+| `/end-session` | Kiosk/Admin | TennisCommands.js | End court session |
+| `/create-block` | Admin only | TennisCommands.js, AdminCommands.js | Create court block |
+| `/cancel-block` | Admin only | TennisCommands.js, AdminCommands.js | Cancel court block |
+| `/join-waitlist` | Kiosk/Mobile | TennisCommands.js | Join waitlist |
+| `/cancel-waitlist` | Kiosk/Mobile | TennisCommands.js | Cancel waitlist entry |
+| `/assign-from-waitlist` | Kiosk/Admin | TennisCommands.js | Assign court from waitlist |
+| `/remove-from-waitlist` | Admin only | AdminCommands.js | Remove entry from waitlist |
+| `/update-system-settings` | Admin only | AdminCommands.js | Update system settings |
+| `/purchase-balls` | Kiosk | TennisCommands.js | Record ball purchase |
+
+#### Query Endpoints (GET/POST)
+
+| Endpoint | Intended Access | Called From | Notes |
+|----------|-----------------|-------------|-------|
+| `/get-board` | Public | TennisQueries.js, boardApi.js | Court status for all surfaces |
+| `/get-members` | Kiosk/Admin | TennisDirectory.js | Member lookup |
+| `/get-settings` | Admin | AdminCommands.js | System settings |
+| `/get-blocks` | Admin | AdminCommands.js | Block list |
+| `/get-transactions` | Admin | AdminCommands.js | Transaction history |
+| `/get-session-history` | Admin | AdminCommands.js | Session history |
+| `/get-analytics` | Admin | AdminCommands.js | Analytics data |
+| `/get-usage-analytics` | Admin | AdminCommands.js | Usage analytics |
+| `/get-usage-comparison` | Admin | AdminCommands.js | Usage comparison |
+| `/get-frequent-partners` | Kiosk | TennisQueries.js | Partner suggestions |
+
+### Supabase Client Usage
+
+| Usage Type | Status | Notes |
+|------------|--------|-------|
+| `createClient()` | 2 instances | TennisQueries.js, RealtimeClient.js |
+| Direct DB reads (`.from().select()`) | None observed in this repo | Reads routed via Edge Functions |
+| Direct DB writes (`.insert/update/delete()`) | None observed in this repo | Writes routed via Edge Functions |
+| RPC calls (`.rpc()`) | None | Not used |
+| Realtime subscriptions | 3 channels | Board signals and broadcasts only |
+
+### Key Usage
+
+| Check | Result |
+|-------|--------|
+| Anon key in frontend | ✅ Yes — `API_CONFIG.ANON_KEY` (public by design) |
+| Service role key in frontend | ✅ None |
+| Key source | Hardcoded in `src/lib/apiConfig.js` (Phase 4 migration planned) |
+| Key type verified | JWT with `"role":"anon"` |
+
+### Realtime Subscriptions
+
+| Channel | Table/Type | Purpose |
+|---------|------------|---------|
+| `board-signals` | `postgres_changes` on `board_change_signals` | Trigger refresh on board changes |
+| `board-updates` | Broadcast | Manual refresh signals |
+| Dynamic channels | Various | General-purpose realtime client |
+
+**Exposure assessment:** Only `board_change_signals` table changes are subscribed — this is intended as a notification/trigger table rather than a member data store.
+
+### Security Dependency Chain
+
+*This diagram reflects frontend-observable intent, not verified backend enforcement.*
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ FRONTEND (this repo)                                            │
+│ ✅ No direct DB writes observed                                 │
+│ ✅ Anon key only (public by design)                             │
+│ ❌ No auth enforcement (URL-path admin detection only)          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ EDGE FUNCTIONS (noltc-backend repo) — ⚠️ UNVERIFIED             │
+│ • Should validate deviceType for admin endpoints                │
+│ • Should use service role key for DB writes                     │
+│ • Should enforce rate limiting                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ SUPABASE RLS POLICIES — ⚠️ UNVERIFIED                           │
+│ • Should restrict direct table access                           │
+│ • Should allow Edge Functions (service role) to bypass          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### WP-B3b Backend Verification Checklist
+
+These items require access to the `noltc-backend/` repository and Supabase dashboard:
+
+- [ ] **RLS policy audit**: Document policies on all tables (members, sessions, blocks, waitlist, transactions)
+- [ ] **Edge Function auth check**: Verify admin-only endpoints validate `deviceType` or auth token
+- [ ] **Service role key usage**: Confirm Edge Functions use service role (not anon) for writes
+- [ ] **CORS configuration**: Document allowed origins in Supabase dashboard
+- [ ] **Rate limiting**: Check if Supabase or Edge Functions have rate limits configured
+- [ ] **Audit logging**: Verify mutations are logged with actor/device information
+
 ## Type Boundaries
 
 The registration app uses JSDoc type boundaries to prevent silent drift of core data shapes. This discipline was established in WP6.3–6.6.
