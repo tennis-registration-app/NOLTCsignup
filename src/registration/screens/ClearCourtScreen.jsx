@@ -22,6 +22,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
+import { TypedIcon } from '../../components/icons/TypedIcon';
 import { getStorageDataSafe } from '../../platform/windowBridge';
 
 const ClearCourtScreen = ({
@@ -244,7 +245,7 @@ const ClearCourtScreen = ({
         <ToastHost />
         <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
-            <Check size={48} className="text-white sm:w-16 sm:h-16" />
+            <TypedIcon icon={Check} size={48} className="text-white sm:w-16 sm:h-16" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thanks, have a great day!</h1>
           <p className="text-lg sm:text-xl text-gray-600">
@@ -263,7 +264,7 @@ const ClearCourtScreen = ({
         <ToastHost />
         <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
-            <Check size={48} className="text-white sm:w-16 sm:h-16" />
+            <TypedIcon icon={Check} size={48} className="text-white sm:w-16 sm:h-16" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thank you!</h1>
           <p className="text-lg sm:text-xl text-gray-600">

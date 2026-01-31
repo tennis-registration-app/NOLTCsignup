@@ -32,6 +32,7 @@
 import React, { useState, useCallback } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
+import { TypedIcon } from '../../components/icons/TypedIcon';
 import { getDataStoreValue, setDataStoreValue } from '../../platform/windowBridge';
 
 // Fixed layout card component (internal)
@@ -348,7 +349,7 @@ const SuccessScreen = ({
       <>
         <div className="flex flex-col items-center mb-4 sm:mb-6">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mb-2 sm:mb-3">
-            <Check size={32} className="text-white sm:w-10 sm:h-10" />
+            <TypedIcon icon={Check} size={32} className="text-white sm:w-10 sm:h-10" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">
             Confirmed!
@@ -472,7 +473,7 @@ const SuccessScreen = ({
       <div className="bg-green-50 rounded-2xl p-3 sm:p-4 h-full flex items-center justify-center">
         <div>
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-1">
-            <Check size={16} className="text-green-600 sm:w-5 sm:h-5" />
+            <TypedIcon icon={Check} size={16} className="text-green-600 sm:w-5 sm:h-5" />
             <p className="text-sm sm:text-base font-medium text-green-800">
               Balls Added: $
               {purchaseDetails.type === 'single'
@@ -628,7 +629,7 @@ const SuccessScreen = ({
     <>
       <div className="flex flex-col items-center mb-4 sm:mb-6">
         <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mb-2 sm:mb-3">
-          <Check size={32} className="text-white sm:w-10 sm:h-10" />
+          <TypedIcon icon={Check} size={32} className="text-white sm:w-10 sm:h-10" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent text-center">
           You&apos;re on the list!
