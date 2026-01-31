@@ -93,7 +93,7 @@ const Events = window.Tennis?.Events;
 // ---- Core constants (declared only; not replacing existing usages) ----
 
 // ---- Dev flag & assert (no UI change) ----
-const DEV = typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.host);
+const DEV = import.meta?.env?.DEV ?? false;
 const assert = (cond, msg, obj) => {
   if (DEV && !cond) console.warn('ASSERT:', msg, obj || '');
 };

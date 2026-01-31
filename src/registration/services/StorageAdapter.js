@@ -7,9 +7,9 @@
 import { readJSON, writeJSON, STORAGE } from '@lib';
 
 // Simulate network latency in development (helps catch async bugs)
-const DEV = typeof location !== 'undefined' && /localhost|127\.0\.0\.1/.test(location.host);
+const DEV = import.meta?.env?.DEV ?? false;
 const simulateLatency = (ms = 0) =>
-  DEV && ms > 0 ? new Promise(resolve => setTimeout(resolve, ms)) : Promise.resolve();
+  DEV && ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
 
 export class LocalStorageAdapter {
   constructor(options = {}) {
