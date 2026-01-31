@@ -365,6 +365,58 @@ Registration app achieved <500 line target through:
 - Signed device authentication (JWT/HMAC)
 - Request validation at Edge Function boundary
 
+## Type Boundaries
+
+The registration app uses JSDoc type boundaries to prevent silent drift of core data shapes. This discipline was established in WP6.3–6.6.
+
+### Canonical Shape Origins
+
+| Shape | Origin File | Description |
+|-------|-------------|-------------|
+| `AppState` | `src/registration/appHandlers/state/buildRegistrationReturn.js` | Application state object |
+| `Handlers` | `src/registration/appHandlers/useRegistrationHandlers.js` | 34 handler functions (explicitly enumerated) |
+
+Type definitions live in `src/types/appTypes.js`.
+
+### Files with `// @ts-check`
+
+All routing and screen files have TypeScript checking enabled via JSDoc:
+
+**Router & Routes (7 files):**
+- `RegistrationRouter.jsx`
+- `HomeRoute.jsx`, `AdminRoute.jsx`, `GroupRoute.jsx`, `CourtRoute.jsx`, `SuccessRoute.jsx`, `ClearCourtRoute.jsx`
+
+**Screens (6 files):**
+- `AdminScreen.jsx`, `ClearCourtScreen.jsx`, `CourtSelectionScreen.jsx`
+- `GroupScreen.jsx`, `HomeScreen.jsx`, `SuccessScreen.jsx`
+
+### Rules of Engagement
+
+1. **Adding a handler:** Update the `Handlers` typedef in `src/types/appTypes.js` to include the new key. The typedef explicitly enumerates all 34 handler keys to prevent silent additions/removals.
+
+2. **Platform access in screens:** Do not use `window.Tennis.*` directly in screen components. Use the platform bridge exports from `src/platform/windowBridge.js`:
+   - `getStorageDataSafe()` — for Storage.readDataSafe()
+   - `getDataStoreValue(key)` — for DataStore.get()
+   - `setDataStoreValue(key, value)` — for DataStore.set()
+
+3. **Icon className typing:** Use `TypedIcon` wrapper from `src/components/icons/TypedIcon.jsx` for lucide-react icons that need className props.
+
+4. **Suppressions:** `@ts-expect-error` comments require a reason and are capped:
+   - Per file: ≤3
+   - Total across codebase: minimize (currently 1 — AdminScreen third-party type issue)
+
+### Verification
+
+Type checking is part of the standard verify pipeline:
+```bash
+npm run verify  # Includes lint + unit tests + build + E2E
+```
+
+For single-file type checking during development:
+```bash
+npx tsc --noEmit --allowJs --checkJs --skipLibCheck <file>
+```
+
 ## Related Documentation
 
 - [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) — Environment setup and staging
