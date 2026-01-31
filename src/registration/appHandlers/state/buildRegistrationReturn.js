@@ -6,6 +6,8 @@
  * Assembles the return object for useRegistrationAppState.
  * Accepts grouped module objects instead of 150+ individual params.
  * Return shape is unchanged.
+ *
+ * @returns {import('../../../../types/appTypes').AppState}
  */
 export function buildRegistrationReturn({
   // Module objects

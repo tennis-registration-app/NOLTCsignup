@@ -20,9 +20,8 @@ import { TennisBusinessLogic } from '@lib';
  * Contains all handler functions for the registration flow.
  * Handlers are thin wrappers around orchestrators or direct state manipulations.
  *
- * @param {Object} params - Parameters object containing app
- * @param {Object} params.app - The app state object from useRegistrationAppState
- * @returns {Object} - All handler functions
+ * @param {{ app: import('../../types/appTypes').AppState }} params
+ * @returns {import('../../types/appTypes').Handlers}
  */
 export function useRegistrationHandlers({ app }) {
   // Destructure everything from app that was previously passed as individual props
