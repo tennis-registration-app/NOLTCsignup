@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useRef, useEffect } from 'react';
 import { ToastHost, AlertDisplay } from '../components';
 
