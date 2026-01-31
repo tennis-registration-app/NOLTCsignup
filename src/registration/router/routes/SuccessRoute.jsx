@@ -1,3 +1,4 @@
+// @ts-check
 import React from 'react';
 import { SuccessScreen } from '../../screens';
 import { AlertDisplay, ToastHost } from '../../components';
