@@ -5,10 +5,10 @@
 This repository is configured for **demo/development use**:
 
 - **Demo dataset**: The Supabase instance contains sample data for testing and development.
-- **Anon key is public**: The Supabase anon key is designed for client-side use and is safe to include in frontend code. Security is enforced via Row Level Security (RLS) policies in the database.
+- **Anon key is public**: The Supabase anon key is designed for client-side use. In this demo configuration, database policies may be permissive. Production deployments should validate and tighten RLS.
 - **Open access**: The current build does not enforce user authentication or device restrictions.
 
-**For production deployment**: Review and validate RLS policies, implement appropriate access controls, and consider rotating credentials.
+**For production deployment**: You may review and validate RLS policies, implement appropriate access controls, and consider rotating credentials.
 
 ---
 
