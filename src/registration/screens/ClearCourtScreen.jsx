@@ -22,6 +22,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
+import { getStorageDataSafe } from '../../platform/windowBridge';
 
 const ClearCourtScreen = ({
   clearCourtStep,
@@ -42,7 +43,7 @@ const ClearCourtScreen = ({
   const hasAny = clearableCourts.length > 0;
   // Use courtData prop (from React state for API backend, or from parent)
   // Fall back to localStorage only if courtData is not provided
-  const data = courtData || window.Tennis?.Storage?.readDataSafe?.() || { courts: [] };
+  const data = courtData || getStorageDataSafe() || { courts: [] };
 
   // Auto-reset timer for success screens (step 3 and 4)
   const timerRef = useRef(null);
