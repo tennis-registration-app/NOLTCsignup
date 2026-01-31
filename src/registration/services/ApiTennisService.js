@@ -9,6 +9,16 @@ import { ApiAdapter } from '@lib/ApiAdapter.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
 import { formatCourtTime } from '@lib/dateUtils.js';
 
+/**
+ * ApiTennisService
+ *
+ * WP7.1: This service is being refactored to extract legacy transformation
+ * logic into src/registration/services/legacy/ modules.
+ *
+ * Public method surface and return shapes will remain unchanged.
+ * Canonical shape documentation will be added after extraction (WP7.1.5).
+ */
+
 class ApiTennisService {
   constructor(options = {}) {
     this.api = new ApiAdapter({
