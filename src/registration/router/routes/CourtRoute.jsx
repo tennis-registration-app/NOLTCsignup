@@ -1,3 +1,4 @@
+// @ts-check
 import React from 'react';
 import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
