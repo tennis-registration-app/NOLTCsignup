@@ -4,6 +4,7 @@
  * Manages wet court state and operations.
  * Extracted from CompleteBlockManagerEnhanced for maintainability.
  */
+import { logger } from '../../../lib/logger.js';
 
 // Get Events from window (same as parent component)
 const Events = window.Events;
@@ -40,12 +41,12 @@ export function useWetCourts({
   const handleEmergencyWetCourt = async () => {
     if (!ENABLE_WET_COURTS) return;
     if (!backend) {
-      console.error('Backend not available');
+      logger.error('WetCourts', 'Backend not available');
       onNotification?.('Backend not available', 'error');
       return;
     }
 
-    console.log('🌧️ Emergency wet court - calling API');
+    logger.debug('WetCourts', 'Emergency wet court - calling API');
 
     try {
       const result = await backend.admin.markWetCourts({
@@ -56,7 +57,10 @@ export function useWetCourts({
       });
 
       if (result.ok) {
-        console.log(`✅ Marked ${result.courtsMarked} courts as wet until ${result.endsAt}`);
+        logger.debug(
+          'WetCourts',
+          `Marked ${result.courtsMarked} courts as wet until ${result.endsAt}`
+        );
         onNotification?.(`All ${result.courtsMarked} courts marked wet`, 'success');
 
         // Update local state for UI
@@ -68,11 +72,11 @@ export function useWetCourts({
         Events?.emitDom?.('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) });
         setRefreshTrigger((prev) => prev + 1);
       } else {
-        console.error('Failed to mark wet courts:', result.message);
+        logger.error('WetCourts', 'Failed to mark wet courts', result.message);
         onNotification?.(result.message || 'Failed to mark wet courts', 'error');
       }
     } catch (error) {
-      console.error('Error marking wet courts:', error);
+      logger.error('WetCourts', 'Error marking wet courts', error);
       onNotification?.('Error marking wet courts', 'error');
     }
   };
@@ -90,7 +94,7 @@ export function useWetCourts({
       });
 
       if (result.ok) {
-        console.log(`✅ Cleared ${result.blocksCleared} wet court blocks`);
+        logger.debug('WetCourts', `Cleared ${result.blocksCleared} wet court blocks`);
         onNotification?.(`Cleared ${result.blocksCleared} wet courts`, 'success');
 
         // Update local state
@@ -102,11 +106,11 @@ export function useWetCourts({
         Events?.emitDom?.('tennisDataUpdate', { key: 'wetCourts', data: [] });
         setRefreshTrigger((prev) => prev + 1);
       } else {
-        console.error('Failed to clear wet courts:', result.message);
+        logger.error('WetCourts', 'Failed to clear wet courts', result.message);
         onNotification?.(result.message || 'Failed to clear wet courts', 'error');
       }
     } catch (error) {
-      console.error('Error clearing wet courts:', error);
+      logger.error('WetCourts', 'Error clearing wet courts', error);
       onNotification?.('Error clearing wet courts', 'error');
     }
   };
@@ -119,12 +123,12 @@ export function useWetCourts({
       return;
     }
 
-    console.log(`☀️ Clearing wet court ${courtNumber}`);
+    logger.debug('WetCourts', `Clearing wet court ${courtNumber}`);
 
     // Get court ID from courts array
     const court = courts[courtNumber - 1];
     if (!court?.id) {
-      console.error(`Court ${courtNumber} not found`);
+      logger.error('WetCourts', `Court ${courtNumber} not found`);
       onNotification?.(`Court ${courtNumber} not found`, 'error');
       return;
     }
@@ -151,11 +155,11 @@ export function useWetCourts({
 
         onNotification?.(`Court ${courtNumber} cleared`, 'success');
       } else {
-        console.error('Failed to clear wet court:', result.message);
+        logger.error('WetCourts', 'Failed to clear wet court', result.message);
         onNotification?.(result.message || 'Failed to clear wet court', 'error');
       }
     } catch (error) {
-      console.error('Error clearing wet court:', error);
+      logger.error('WetCourts', 'Error clearing wet court', error);
       onNotification?.('Error clearing wet court', 'error');
     }
   };

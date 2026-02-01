@@ -5,6 +5,7 @@
  * Self-contained component that manages its own state and API calls.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { logger } from '../../lib/logger.js';
 
 // Day names for operating hours (module scope for stable reference)
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -93,7 +94,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         }
       }
     } catch (err) {
-      console.error('Failed to load settings:', err);
+      logger.error('SystemSettings', 'Failed to load settings', err);
     } finally {
       setLoading(false);
     }
@@ -167,7 +168,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
-      console.error('Failed to save pricing:', err);
+      logger.error('SystemSettings', 'Failed to save pricing', err);
       setPricingSaveStatus('error');
     }
   };
@@ -233,7 +234,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         setAutoClearSaveStatus('error');
       }
     } catch (err) {
-      console.error('Failed to save auto-clear settings:', err);
+      logger.error('SystemSettings', 'Failed to save auto-clear settings', err);
       setAutoClearError(err.message || 'Failed to save');
       setAutoClearSaveStatus('error');
     }
@@ -273,7 +274,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
-      console.error('Failed to update operating hours:', err);
+      logger.error('SystemSettings', 'Failed to update operating hours', err);
       setHoursSaveStatus('error');
     }
   };
@@ -302,7 +303,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
-      console.error('Failed to add hours override:', err);
+      logger.error('SystemSettings', 'Failed to add hours override', err);
       setOverrideSaveStatus('error');
     }
   };
@@ -324,7 +325,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         if (onSettingsChanged) onSettingsChanged();
       }
     } catch (err) {
-      console.error('Failed to delete hours override:', err);
+      logger.error('SystemSettings', 'Failed to delete hours override', err);
       setOverrideSaveStatus('error');
     }
   };

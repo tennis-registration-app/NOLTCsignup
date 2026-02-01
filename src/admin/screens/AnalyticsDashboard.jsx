@@ -16,6 +16,7 @@ import {
   UsageComparisonControls,
   UsageComparisonChart,
 } from '../analytics';
+import { logger } from '../../lib/logger.js';
 
 // Access global dependencies
 const TENNIS_CONFIG = window.TENNIS_CONFIG ||
@@ -124,12 +125,12 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
   useEffect(() => {
     const loadTransactionsData = async () => {
       // Load ball purchases from API
-      console.log('📊 Loading ball purchases...');
+      logger.debug('AdminAnalytics', 'Loading ball purchases...');
       let ballPurchasesData = [];
       if (backend) {
         try {
           const result = await backend.admin.getTransactions({ type: 'ball_purchase', limit: 500 });
-          console.log('[Analytics] Ball purchases result:', result);
+          logger.debug('AdminAnalytics', 'Ball purchases result', result);
           if (result.ok && result.transactions) {
             // Transform API response to match expected shape
             ballPurchasesData = result.transactions.map((t) => ({
@@ -141,14 +142,14 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
             }));
           }
         } catch (err) {
-          console.error('Failed to fetch ball purchases:', err);
+          logger.error('AdminAnalytics', 'Failed to fetch ball purchases', err);
         }
       }
-      console.log('📊 Ball purchases found:', ballPurchasesData.length);
+      logger.debug('AdminAnalytics', 'Ball purchases found', ballPurchasesData.length);
       setBallPurchases(ballPurchasesData);
 
       // Load guest charges from API
-      console.log('📊 Loading guest charges...');
+      logger.debug('AdminAnalytics', 'Loading guest charges...');
       let guestChargesData = [];
       if (backend) {
         try {
@@ -165,10 +166,10 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
             }));
           }
         } catch (err) {
-          console.error('Failed to fetch guest charges:', err);
+          logger.error('AdminAnalytics', 'Failed to fetch guest charges', err);
         }
       }
-      console.log('📊 Guest charges found:', guestChargesData.length);
+      logger.debug('AdminAnalytics', 'Guest charges found', guestChargesData.length);
       setGuestCharges(guestChargesData);
     };
 
@@ -177,7 +178,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
 
     // Set up event listener for real-time updates
     const handleDataUpdate = debounce(() => {
-      console.log('📡 Analytics received data update event, reloading...');
+      logger.debug('AdminAnalytics', 'Received data update event, reloading...');
       loadTransactionsData();
     }, 150);
 

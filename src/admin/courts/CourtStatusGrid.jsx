@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { Edit2, X, RefreshCw, Droplets } from '../components';
 import { EditGameModal } from '../components';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
+import { logger } from '../../lib/logger.js';
 
 // Get dependencies from window
 const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || {
@@ -221,7 +222,7 @@ const CourtStatusGrid = ({
       window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error('Error toggling wet court:', error);
+      logger.error('CourtStatusGrid', 'Error toggling wet court', error);
     }
   };
 
@@ -329,7 +330,7 @@ const CourtStatusGrid = ({
 
   const handleSaveGame = async (updatedGame) => {
     if (!backend?.admin?.updateSession) {
-      console.error('Backend updateSession not available');
+      logger.error('CourtStatusGrid', 'Backend updateSession not available');
       window.Tennis?.UI?.toast?.('Backend not available', { type: 'error' });
       return;
     }
@@ -356,7 +357,7 @@ const CourtStatusGrid = ({
         throw new Error(result.message || 'Failed to update game');
       }
     } catch (error) {
-      console.error('Error saving game:', error);
+      logger.error('CourtStatusGrid', 'Error saving game', error);
       window.Tennis?.UI?.toast?.(error.message || 'Failed to save game', { type: 'error' });
     } finally {
       setSavingGame(false);
@@ -376,10 +377,10 @@ const CourtStatusGrid = ({
       const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
       await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
       window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-      console.log('✅ All courts marked as dry');
+      logger.debug('CourtStatusGrid', 'All courts marked as dry');
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
-      console.error('Error removing all wet court blocks:', error);
+      logger.error('CourtStatusGrid', 'Error removing all wet court blocks', error);
     }
   };
 

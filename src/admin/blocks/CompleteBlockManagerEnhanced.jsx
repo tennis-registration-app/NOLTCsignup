@@ -14,6 +14,7 @@ import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 import { getEventTypeFromReason } from '../calendar/utils.js';
 import { useWetCourts } from './hooks/useWetCourts';
 import { expandRecurrenceDates } from './utils/expandRecurrenceDates';
+import { logger } from '../../lib/logger.js';
 
 // Dependencies from window (currently unused but kept for future use)
 
@@ -82,7 +83,7 @@ const ConflictDetector = ({
           }
         });
       } catch (error) {
-        console.error('Error checking block conflicts:', error);
+        logger.error('BlockManager', 'Error checking block conflicts', error);
       }
 
       // Check session using Domain format: court.session.group.players
@@ -370,7 +371,7 @@ const CompleteBlockManagerEnhanced = ({
       handleRemoveBlock(editingBlock.id);
     }
 
-    console.log('🔍 Sending to applyBlocks:', appliedBlocks);
+    logger.debug('BlockManager', 'Sending to applyBlocks', appliedBlocks);
     onApplyBlocks(appliedBlocks);
 
     // Reset form
@@ -389,7 +390,7 @@ const CompleteBlockManagerEnhanced = ({
 
   const handleRemoveBlock = async (blockId) => {
     if (!backend) {
-      console.error('No backend available for delete');
+      logger.error('BlockManager', 'No backend available for delete');
       alert('Backend not available');
       return;
     }
@@ -400,14 +401,14 @@ const CompleteBlockManagerEnhanced = ({
       });
 
       if (result.ok) {
-        console.log('✅ Block deleted successfully');
+        logger.debug('BlockManager', 'Block deleted successfully');
         setRefreshTrigger((prev) => prev + 1);
       } else {
-        console.error('Failed to delete block:', result.message);
+        logger.error('BlockManager', 'Failed to delete block', result.message);
         alert('Failed to delete block: ' + (result.message || 'Unknown error'));
       }
     } catch (error) {
-      console.error('Error deleting block:', error);
+      logger.error('BlockManager', 'Error deleting block', error);
       alert('Error deleting block: ' + error.message);
     }
   };

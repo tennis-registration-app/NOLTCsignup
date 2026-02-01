@@ -113,3 +113,49 @@ Ensure the value is exactly `"true"` or `"false"` (string), for example:
 
 - ✅ VITE_DEBUG_MODE=true
 - ❌ VITE_DEBUG_MODE=1
+
+---
+
+## Logging Policy
+
+### Centralized Logger
+
+All application logging should use the centralized logger from `src/lib/logger.js`:
+
+```javascript
+import { logger } from '../lib/logger.js';
+
+logger.debug('ModuleName', 'Operation description', optionalData);
+logger.info('ModuleName', 'Important event');
+logger.warn('ModuleName', 'Warning message');
+logger.error('ModuleName', 'Error description', errorObject);
+```
+
+### Usage Guidelines
+
+1. **Always use the logger** — Do not use `console.log/warn/error` directly in ESM modules.
+2. **Module tagging** — First argument is a short module identifier (e.g., `'TennisService'`, `'AdminApp'`).
+3. **Descriptive messages** — Second argument describes what happened (no emoji prefixes).
+4. **Optional data** — Third argument can include additional context (objects, errors).
+
+### Log Levels
+
+| Level | When to Use |
+|-------|-------------|
+| `debug` | Development tracing, state changes, operation progress |
+| `info` | Important events (initialization complete, feature enabled) |
+| `warn` | Recoverable issues, deprecated usage, fallback behavior |
+| `error` | Failures that need attention, caught exceptions |
+
+### Allowlist (Plain Scripts)
+
+These files may retain `console.*` calls because they are plain JavaScript without ESM imports:
+
+- `src/registration/nav-diagnostics.js`
+- `src/courtboard/mobile-fallback-bar.js`
+- `src/courtboard/mobile-bridge.js`
+- `src/admin/sync-promotions.js`
+
+### Enabling Debug Output
+
+Set `VITE_DEBUG_MODE=true` in your environment to enable verbose logging in the browser console.

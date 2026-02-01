@@ -11,6 +11,7 @@ import DayViewEnhanced from './DayViewEnhanced.jsx';
 import WeekView from './WeekView.jsx';
 import EventDetailsModal from './EventDetailsModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
+import { logger } from '../../lib/logger.js';
 
 const EventCalendarEnhanced = ({
   courts,
@@ -51,7 +52,7 @@ const EventCalendarEnhanced = ({
   useEffect(() => {
     const fetchBlocks = async () => {
       if (!backend) {
-        console.warn('[EventCalendar] No backend provided, cannot fetch blocks');
+        logger.warn('AdminCalendar', 'No backend provided, cannot fetch blocks');
         setIsLoading(false);
         return;
       }
@@ -123,11 +124,11 @@ const EventCalendarEnhanced = ({
           });
           setBlocks(transformedBlocks);
         } else {
-          console.error('[EventCalendar] API error:', result.message);
+          logger.error('AdminCalendar', 'API error', result.message);
           setError(result.message || 'Failed to fetch blocks');
         }
       } catch (err) {
-        console.error('[EventCalendar] Fetch error:', err);
+        logger.error('AdminCalendar', 'Fetch error', err);
         setError('Failed to fetch blocks');
       } finally {
         setIsLoading(false);
@@ -314,7 +315,7 @@ const EventCalendarEnhanced = ({
   const handleDelete = useCallback(
     async (event) => {
       if (!backend) {
-        console.error('No backend available for delete');
+        logger.error('AdminCalendar', 'No backend available for delete');
         return;
       }
 
@@ -325,15 +326,15 @@ const EventCalendarEnhanced = ({
         });
 
         if (result.ok) {
-          console.log('Block deleted successfully');
+          logger.debug('AdminCalendar', 'Block deleted successfully');
           setSelectedEvent(null);
           onRefresh();
         } else {
-          console.error('Failed to delete block:', result.message);
+          logger.error('AdminCalendar', 'Failed to delete block', result.message);
           alert(`Failed to delete block: ${result.message}`);
         }
       } catch (error) {
-        console.error('Error deleting block:', error);
+        logger.error('AdminCalendar', 'Error deleting block', error);
         alert('Error deleting block. Please try again.');
       }
     },
@@ -342,7 +343,7 @@ const EventCalendarEnhanced = ({
 
   const handleDuplicate = useCallback(
     (event) => {
-      console.log('Duplicate event:', event);
+      logger.debug('AdminCalendar', 'Duplicate event', event);
       setSelectedEvent(null); // Close modal
       onDuplicateEvent(event); // Let parent handle the duplication
     },

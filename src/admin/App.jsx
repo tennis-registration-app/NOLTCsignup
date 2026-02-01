@@ -9,6 +9,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
+import { logger } from '../lib/logger.js';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
 import './utils/adminRefresh.js';
@@ -95,7 +96,7 @@ const Events = window.Tennis?.Events;
 // ---- Dev flag & assert (no UI change) ----
 const DEV = import.meta?.env?.DEV ?? false;
 const assert = (cond, msg, obj) => {
-  if (DEV && !cond) console.warn('ASSERT:', msg, obj || '');
+  if (DEV && !cond) logger.warn('AdminApp', `ASSERT: ${msg}`, obj || '');
 };
 
 // central registry for timers in this view
@@ -245,7 +246,7 @@ const AdminPanelV2 = ({ onExit }) => {
         }
       }
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('AdminApp', 'Failed to load data', error);
       showNotification('Failed to load data', 'error');
     }
   }, []);
@@ -286,7 +287,7 @@ const AdminPanelV2 = ({ onExit }) => {
     // Listen for storage events from other apps/tabs (fallback for non-API data)
     const handleStorageEvent = (e) => {
       if (e.key === TENNIS_CONFIG.STORAGE.KEY || e.key === 'courtBlocks') {
-        console.log('Cross-app storage update detected for:', e.key);
+        logger.debug('AdminApp', 'Cross-app storage update detected for', e.key);
         // Invalidate cache for this key
         dataStore.cache.delete(e.key);
         loadData();
@@ -333,15 +334,13 @@ const AdminPanelV2 = ({ onExit }) => {
 
   // Subscribe to TennisBackend realtime updates for courts/waitlist
   useEffect(() => {
-    console.log('[Admin] Setting up TennisBackend subscription...');
+    logger.debug('AdminApp', 'Setting up TennisBackend subscription...');
 
     const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
-      console.log(
-        '[Admin] Board update received:',
-        board?.serverNow,
-        'courts:',
-        board?.courts?.length
-      );
+      logger.debug('AdminApp', 'Board update received', {
+        serverNow: board?.serverNow,
+        courts: board?.courts?.length,
+      });
 
       if (board) {
         // Update courts from API
@@ -370,13 +369,13 @@ const AdminPanelV2 = ({ onExit }) => {
         if (newFingerprint !== lastBlocksFingerprintRef.current) {
           lastBlocksFingerprintRef.current = newFingerprint;
           setRefreshTrigger((prev) => prev + 1);
-          console.log('[Admin] Blocks changed, triggering calendar refresh');
+          logger.debug('AdminApp', 'Blocks changed, triggering calendar refresh');
         }
       }
     });
 
     return () => {
-      console.log('[Admin] Cleaning up TennisBackend subscription');
+      logger.debug('AdminApp', 'Cleaning up TennisBackend subscription');
       unsubscribe();
     };
   }, []);
@@ -672,7 +671,7 @@ export default function App() {
         return <div className="p-8">AdminPanelV2 component not found</div>;
       }
     } catch (error) {
-      console.error('AdminPanelV2 render error:', error);
+      logger.error('AdminApp', 'AdminPanelV2 render error', error);
       return (
         <div className="p-8">
           <h1 className="text-xl font-bold text-red-600">Error loading Admin Panel</h1>
