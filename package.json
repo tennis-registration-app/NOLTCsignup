@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "verify": "npm run -s lint:ratchet && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
