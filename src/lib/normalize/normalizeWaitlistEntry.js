@@ -1,3 +1,4 @@
+// @ts-check
 import { normalizeGroup } from './normalizeGroup.js';
 
 /**
@@ -25,7 +26,7 @@ export function normalizeWaitlistEntry(raw, serverNow) {
   // Calculate minutes waiting (derived field)
   let minutesWaiting = raw.minutesWaiting || raw.minutes_waiting || 0;
   if (!minutesWaiting && joinedAt && serverNow) {
-    const diffMs = new Date(serverNow) - new Date(joinedAt);
+    const diffMs = new Date(serverNow).getTime() - new Date(joinedAt).getTime();
     minutesWaiting = Math.floor(diffMs / 60000);
   }
 

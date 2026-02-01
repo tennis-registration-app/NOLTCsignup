@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * NOLTC Tennis Registration - Canonical Domain Types
  *

@@ -1,3 +1,4 @@
+// @ts-check
 import { normalizeGroup } from './normalizeGroup.js';
 import { END_REASONS } from '../types/domain.js';
 

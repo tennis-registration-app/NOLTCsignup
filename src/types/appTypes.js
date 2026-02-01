@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * @fileoverview Canonical JSDoc type boundaries for the NOLTC registration app.
  *

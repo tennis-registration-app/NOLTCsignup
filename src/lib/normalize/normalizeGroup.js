@@ -1,3 +1,4 @@
+// @ts-check
 import { normalizeMember } from './normalizeMember.js';
 import { GROUP_TYPES } from '../types/domain.js';
 

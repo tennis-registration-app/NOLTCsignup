@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Normalize a member from API response to Domain Member
  * Handles: memberId/member_id, displayName/display_name/name variations

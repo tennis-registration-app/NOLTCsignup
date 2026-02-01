@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Normalize a block from API response to Domain Block
  *
