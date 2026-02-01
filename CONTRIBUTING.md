@@ -216,3 +216,85 @@ App.jsx
 - Review `ARCHITECTURE.md` for system design
 - See `docs/GOLDEN_FLOWS.md` for critical user journeys
 - Check work package checkpoints (`docs/WP*.md`) for context
+
+---
+
+## Window Global Policy
+
+### Goals
+- Keep app-global access testable and auditable
+- Avoid spreading direct `window.*` usage throughout ESM code
+
+### Rules for ESM Files
+1. **Do NOT read app-specific globals directly** in ESM files (`src/**/*.js`, `src/**/*.jsx`).
+2. **Use platform bridge accessors** from `src/platform/windowBridge.js`.
+3. **Writes to app globals are allowed only in designated definition sites** (see below). Do not relocate or refactor these writes.
+4. **Browser APIs are allowed** as direct `window.*` access (addEventListener, location, etc.).
+5. Do not create ad-hoc wrappers per module; **add/extend accessors in `windowBridge.js`**.
+
+### App-Specific Globals (Use Bridge for READS)
+
+| Global | Bridge Accessor | Notes |
+|--------|------------------|-------|
+| `window.Tennis` | `getTennis()` | Main namespace |
+| `window.Tennis.UI` | `getTennisUI()` | UI utilities |
+| `window.Tennis.Domain` | `getTennisDomain()` | Domain logic |
+| `window.Tennis.Commands` | `getTennisCommands()` | Command handlers |
+| `window.Tennis.DataStore` | `getTennisDataStore()` | Data store |
+| `window.Tennis.Storage` | `getTennisStorage()` | Storage adapter |
+| `window.Tennis.Events` | `getTennisEvents()` | Event bus |
+| `window.Tennis.Config` | `getTennisNamespaceConfig()` | Namespace config |
+| `window.APP_UTILS` | `getAppUtils()` | App constants |
+| `window.UI` | `getUI()` | UI namespace |
+| `window.MobileModal` | `getMobileModal()` | Mobile modal API |
+| `window.refreshBoard` | `getRefreshBoard()` | Board refresh function |
+| `window.refreshAdminView` | `getRefreshAdminView()` | Admin refresh function |
+| `window.loadData` | `getLoadData()` | Data loader function |
+| `window.mobileTapToRegister` | `getMobileTapToRegister()` | Mobile tap handler |
+| `window.GeolocationService` | `getGeolocationService()` | Geolocation |
+
+### Allowed Direct Window Access
+
+Browser APIs (keep as `window.*`):
+- `window.addEventListener` / `removeEventListener`
+- `window.dispatchEvent`
+- `window.location`
+- `window.parent` / `top` / `self`
+- `window.confirm`
+- `window.innerWidth` / `innerHeight`
+- `window.setTimeout` / `setInterval`
+
+### Plain Script Exceptions (cannot use ESM imports)
+- `src/courtboard/mobile-fallback-bar.js`
+- `src/courtboard/mobile-bridge.js`
+- `src/courtboard/sync-promotions.js`
+- `src/courtboard/debug-panel.js`
+
+### Global Definition Sites (allowed WRITES for interop)
+- `src/lib/browser-bridge.js` — defines `window.APP_UTILS`, `window.Tennis`
+- `src/courtboard/courtboardState.js` — defines `window.CourtboardState`
+- `src/courtboard/components/TennisCourtDisplay.jsx` — defines `window.refreshBoard`
+- `src/admin/App.jsx` — defines `window.refreshAdminView`
+- `src/registration/appHandlers/useRegistrationAppState.js` — defines `window.loadData`
+
+### Adding New Globals
+
+1. Add the global write in the appropriate definition site
+2. Add a bridge accessor in `src/platform/windowBridge.js`
+3. Use the accessor in all ESM files
+4. Document in this table
+
+### Verification Command
+
+Check for unauthorized direct READS of app-specific globals in ESM code:
+```bash
+rg "window\.(Tennis|APP_UTILS|CourtboardState|UI|MobileModal|refreshBoard|refreshAdminView|loadData|mobileTapToRegister)" src --glob "*.js" --glob "*.jsx" \
+  | grep -v "src/platform/windowBridge.js" \
+  | grep -v "src/lib/browser-bridge.js" \
+  | grep -v "src/courtboard/mobile-fallback-bar.js" \
+  | grep -v "src/courtboard/mobile-bridge.js" \
+  | grep -v "src/courtboard/sync-promotions.js" \
+  | grep -v "src/courtboard/debug-panel.js" \
+  | grep -v "src/courtboard/bridge/window-bridge.js" \
+  | grep -v "src/courtboard/courtboardState.js"
+```
