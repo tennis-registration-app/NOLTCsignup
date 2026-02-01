@@ -1,5 +1,12 @@
 import { logger } from '../../lib/logger.js';
-import { getTennisDomain, getUI } from '../../platform/windowBridge.js';
+import { createOrchestrationDeps } from './deps/index.js';
+import {
+  guardNotAssigning,
+  guardOperatingHours,
+  guardCourtNumber,
+  guardGroup,
+  guardGroupCompat,
+} from './helpers/index.js';
 
 /**
  * Assign Court Orchestrator
@@ -107,79 +114,58 @@ export async function assignCourtToGroupOrchestrated(
     API_CONFIG,
   } = deps;
 
-  // ===== ORIGINAL FUNCTION BODY (VERBATIM) =====
-  // Prevent double-submit
-  if (isAssigning) {
+  // ===== GUARD SECTION (WP-HR4: wired to helpers) =====
+
+  // Guard 1: Prevent double-submit (silent)
+  const assigningCheck = guardNotAssigning(isAssigning);
+  if (!assigningCheck.ok) {
     logger.debug('AssignCourt', 'Assignment already in progress, ignoring duplicate request');
     return;
   }
 
+  // Lazy runtime deps - created only when needed (preserves fast-fail)
+  let _runtimeDeps;
+  const getRuntimeDeps = () => (_runtimeDeps ??= createOrchestrationDeps());
+
   // Mobile: Use preselected court if in mobile flow
   if (mobileFlow && preselectedCourt && !courtNumber) {
     courtNumber = preselectedCourt;
-    logger.debug('AssignCourt', 'Mobile: Using preselected court', courtNumber);
+    getRuntimeDeps().logger.debug('AssignCourt', 'Mobile: Using preselected court', courtNumber);
   }
 
-  // Check if club is open (using API operating hours when available)
+  // Guard 2: Check operating hours (toast)
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinutes = now.getMinutes();
-  const dayOfWeek = now.getDay(); // 0 = Sunday, 6 = Saturday
-
-  // Get opening time from API
-  let openingTime;
-  let openingTimeString;
-
-  if (operatingHours && Array.isArray(operatingHours) && operatingHours.length > 0) {
-    // Find today's operating hours from API
-    // Handle both snake_case (from API) and camelCase formats
-    const todayHours = operatingHours.find((h) => (h.dayOfWeek ?? h.day_of_week) === dayOfWeek);
-    const isClosed = todayHours?.isClosed ?? todayHours?.is_closed;
-    if (todayHours && !isClosed) {
-      // Parse opensAt (format: "HH:MM:SS") - handle both camelCase and snake_case
-      const opensAtValue = todayHours.opensAt ?? todayHours.opens_at;
-      const [hours, minutes] = opensAtValue.split(':').map(Number);
-      openingTime = hours + minutes / 60;
-      // Format for display (e.g., "5:00 AM")
-      const hour12 = hours % 12 || 12;
-      const ampm = hours < 12 ? 'AM' : 'PM';
-      openingTimeString = `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-    } else if (todayHours && isClosed) {
-      Tennis.UI.toast('The club is closed today.', { type: 'warning' });
-      return;
-    } else {
-      // Fallback if no hours found for today
-      openingTime = 0; // Allow registration if no hours configured
-      openingTimeString = 'N/A';
+  const hoursCheck = guardOperatingHours({
+    operatingHours,
+    currentHour: now.getHours(),
+    currentMinutes: now.getMinutes(),
+    dayOfWeek: now.getDay(),
+  });
+  if (!hoursCheck.ok) {
+    if (hoursCheck.ui?.action === 'toast') {
+      Tennis.UI.toast(...hoursCheck.ui.args);
     }
-  } else {
-    // No operating hours data - allow registration (API may not be returning hours)
-    openingTime = 0;
-    openingTimeString = 'N/A';
-  }
-
-  const currentTime = currentHour + currentMinutes / 60;
-
-  // If too early, show alert and return
-  if (currentTime < openingTime) {
-    Tennis.UI.toast(
-      `The club is not open yet. Court registration will be available at ${openingTimeString}.`,
-      { type: 'warning' }
-    );
     return;
   }
 
-  // Validate court number
-  if (!courtNumber || courtNumber < 1 || courtNumber > CONSTANTS.COURT_COUNT) {
-    showAlertMessage(
-      `Invalid court number. Please select a court between 1 and ${CONSTANTS.COURT_COUNT}.`
-    );
+  // Guard 3: Validate court number (alert)
+  const courtCheck = guardCourtNumber({
+    courtNumber,
+    courtCount: CONSTANTS.COURT_COUNT,
+  });
+  if (!courtCheck.ok) {
+    if (courtCheck.ui?.action === 'alert') {
+      showAlertMessage(...courtCheck.ui.args);
+    }
     return;
   }
 
-  // Validate group has players
-  if (!currentGroup || currentGroup.length === 0) {
-    showAlertMessage('No players in group. Please add players first.');
+  // Guard 4: Validate group has players (alert)
+  const groupCheck = guardGroup({ currentGroup });
+  if (!groupCheck.ok) {
+    if (groupCheck.ui?.action === 'alert') {
+      showAlertMessage(...groupCheck.ui.args);
+    }
     return;
   }
 
@@ -205,15 +191,21 @@ export async function assignCourtToGroupOrchestrated(
 
   const guests = currentGroup.filter((p) => p.isGuest).length;
 
-  // Domain validation (reuse the same error UI as submit)
-  const { ok, errors } = validateGroupCompat(players, guests);
-  if (!ok) {
-    showAlertMessage(errors.join('\n'));
+  // Guard 5: Domain validation (alert)
+  const compatCheck = guardGroupCompat({
+    players,
+    guests,
+    validateGroupCompat,
+  });
+  if (!compatCheck.ok) {
+    if (compatCheck.ui?.action === 'alert') {
+      showAlertMessage(...compatCheck.ui.args);
+    }
     return;
   }
 
   // Duration determined from group size (including guests)
-  const domain = getTennisDomain();
+  const domain = getRuntimeDeps().platform.getTennisDomain();
   const Tm = domain?.time || domain?.Time;
   const duration = Tm.durationForGroupSize(allPlayers.length); // typically 60/90
 
@@ -240,7 +232,7 @@ export async function assignCourtToGroupOrchestrated(
     }
   }
 
-  logger.debug('AssignCourt', 'UI preparing to assignCourt with', {
+  getRuntimeDeps().logger.debug('AssignCourt', 'UI preparing to assignCourt with', {
     courtNumber,
     group,
     duration,
@@ -251,7 +243,11 @@ export async function assignCourtToGroupOrchestrated(
     // Get court UUID for the waitlist assignment
     const waitlistCourt = courts.find((c) => c.number === courtNumber);
     if (!waitlistCourt) {
-      logger.error('AssignCourt', 'Court not found for waitlist assignment', courtNumber);
+      getRuntimeDeps().logger.error(
+        'AssignCourt',
+        'Court not found for waitlist assignment',
+        courtNumber
+      );
       Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
       return;
     }
@@ -265,7 +261,7 @@ export async function assignCourtToGroupOrchestrated(
         courtId: waitlistCourt.id,
         ...(waitlistMobileLocation || {}),
       });
-      logger.debug('AssignCourt', 'Waitlist group assigned result', result);
+      getRuntimeDeps().logger.debug('AssignCourt', 'Waitlist group assigned result', result);
 
       if (!result.ok) {
         // Handle "Court occupied" race condition
@@ -294,7 +290,7 @@ export async function assignCourtToGroupOrchestrated(
       sessionStorage.removeItem('mobile-waitlist-entry-id');
 
       // Board subscription will auto-refresh
-      logger.debug(
+      getRuntimeDeps().logger.debug(
         'AssignCourt',
         'Waitlist assignment successful, waiting for board refresh signal'
       );
@@ -323,7 +319,7 @@ export async function assignCourtToGroupOrchestrated(
       setShowSuccess(true);
 
       // Mobile: trigger success signal
-      const ui = getUI();
+      const ui = getRuntimeDeps().platform.getUI();
       if (ui?.__mobileSendSuccess__) {
         ui.__mobileSendSuccess__();
       }
@@ -339,7 +335,7 @@ export async function assignCourtToGroupOrchestrated(
 
       return;
     } catch (error) {
-      logger.error('AssignCourt', 'assignFromWaitlist failed', error);
+      getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       setCurrentWaitlistEntryId(null);
       Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
       return;
@@ -349,7 +345,7 @@ export async function assignCourtToGroupOrchestrated(
   // Get court UUID from court number
   const court = courts.find((c) => c.number === courtNumber);
   if (!court) {
-    logger.error('AssignCourt', 'Court not found for number', courtNumber);
+    getRuntimeDeps().logger.error('AssignCourt', 'Court not found for number', courtNumber);
     Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
     return;
   }
@@ -361,13 +357,17 @@ export async function assignCourtToGroupOrchestrated(
   const mobileLocation = await getMobileGeolocation();
 
   const assignStartTime = performance.now();
-  logger.debug('AssignCourt', '[T+0ms] Calling backend.commands.assignCourtWithPlayers', {
-    courtId: court.id,
-    courtNumber: court.number,
-    groupType,
-    playerCount: allPlayers.length,
-    mobileLocation: mobileLocation ? 'provided' : 'not-mobile',
-  });
+  getRuntimeDeps().logger.debug(
+    'AssignCourt',
+    '[T+0ms] Calling backend.commands.assignCourtWithPlayers',
+    {
+      courtId: court.id,
+      courtNumber: court.number,
+      groupType,
+      playerCount: allPlayers.length,
+      mobileLocation: mobileLocation ? 'provided' : 'not-mobile',
+    }
+  );
 
   setIsAssigning(true);
   let result;
@@ -379,10 +379,18 @@ export async function assignCourtToGroupOrchestrated(
       ...(mobileLocation || {}), // Spread latitude/longitude if available
     });
     const apiDuration = Math.round(performance.now() - assignStartTime);
-    logger.debug('AssignCourt', `[T+${apiDuration}ms] Court assigned result`, result);
+    getRuntimeDeps().logger.debug(
+      'AssignCourt',
+      `[T+${apiDuration}ms] Court assigned result`,
+      result
+    );
   } catch (error) {
     const apiDuration = Math.round(performance.now() - assignStartTime);
-    logger.error('AssignCourt', `[T+${apiDuration}ms] assignCourtWithPlayers threw error`, error);
+    getRuntimeDeps().logger.error(
+      'AssignCourt',
+      `[T+${apiDuration}ms] assignCourtWithPlayers threw error`,
+      error
+    );
     Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', {
       type: 'error',
     });
@@ -391,7 +399,7 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   if (!result.ok) {
-    logger.debug('AssignCourt', 'assignCourtWithPlayers returned ok:false', {
+    getRuntimeDeps().logger.debug('AssignCourt', 'assignCourtWithPlayers returned ok:false', {
       code: result.code,
       message: result.message,
     });
@@ -419,7 +427,7 @@ export async function assignCourtToGroupOrchestrated(
 
   // Success! Board subscription will auto-refresh from signal
   const successTime = Math.round(performance.now() - assignStartTime);
-  logger.debug(
+  getRuntimeDeps().logger.debug(
     'AssignCourt',
     `[T+${successTime}ms] Court assignment successful, updating UI state...`
   );
@@ -454,10 +462,13 @@ export async function assignCourtToGroupOrchestrated(
   setShowSuccess(true);
 
   const uiUpdateTime = Math.round(performance.now() - assignStartTime);
-  logger.debug('AssignCourt', `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`);
+  getRuntimeDeps().logger.debug(
+    'AssignCourt',
+    `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`
+  );
 
   // Mobile: trigger success signal
-  const uiNs = getUI();
+  const uiNs = getRuntimeDeps().platform.getUI();
   dbg('Registration: Checking mobile success signal...', !!uiNs?.__mobileSendSuccess__);
   if (uiNs?.__mobileSendSuccess__) {
     dbg('Registration: Calling mobile success signal');
