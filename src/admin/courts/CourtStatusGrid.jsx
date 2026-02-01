@@ -9,14 +9,20 @@ import { Edit2, X, RefreshCw, Droplets } from '../components';
 import { EditGameModal } from '../components';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 import { logger } from '../../lib/logger.js';
+import {
+  getAppUtils,
+  getTennis,
+  getTennisUI,
+  getTennisDataStore,
+} from '../../platform/windowBridge.js';
 
-// Get dependencies from window
-const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || {
+// Get dependencies from platform bridge
+const TENNIS_CONFIG = getAppUtils()?.TENNIS_CONFIG || {
   STORAGE: { UPDATE_EVENT: 'tennisDataUpdate' },
 };
 
 // Get dataStore reference
-const getDataStore = () => window.Tennis?.DataStore || window.DataStore;
+const getDataStore = () => getTennisDataStore() || window.DataStore;
 
 // Timer registry for cleanup (kept for future implementation)
 
@@ -319,7 +325,7 @@ const CourtStatusGrid = ({
         setMovingFrom(null);
       }
     } catch (_e) {
-      window.Tennis?.UI?.toast?.('Unexpected error moving court', { type: 'error' });
+      getTennisUI()?.toast?.('Unexpected error moving court', { type: 'error' });
     }
   };
 
@@ -331,13 +337,13 @@ const CourtStatusGrid = ({
   const handleSaveGame = async (updatedGame) => {
     if (!backend?.admin?.updateSession) {
       logger.error('CourtStatusGrid', 'Backend updateSession not available');
-      window.Tennis?.UI?.toast?.('Backend not available', { type: 'error' });
+      getTennisUI()?.toast?.('Backend not available', { type: 'error' });
       return;
     }
 
     setSavingGame(true);
     try {
-      const deviceId = window.Tennis?.getDeviceId?.() || localStorage.getItem('deviceId');
+      const deviceId = getTennis()?.getDeviceId?.() || localStorage.getItem('deviceId');
 
       const result = await backend.admin.updateSession({
         sessionId: updatedGame.sessionId,
@@ -347,7 +353,7 @@ const CourtStatusGrid = ({
       });
 
       if (result.ok) {
-        window.Tennis?.UI?.toast?.('Game updated successfully', { type: 'success' });
+        getTennisUI()?.toast?.('Game updated successfully', { type: 'success' });
         setEditingGame(null);
         setRefreshKey((prev) => prev + 1);
         // Trigger data refresh
@@ -358,7 +364,7 @@ const CourtStatusGrid = ({
       }
     } catch (error) {
       logger.error('CourtStatusGrid', 'Error saving game', error);
-      window.Tennis?.UI?.toast?.(error.message || 'Failed to save game', { type: 'error' });
+      getTennisUI()?.toast?.(error.message || 'Failed to save game', { type: 'error' });
     } finally {
       setSavingGame(false);
     }

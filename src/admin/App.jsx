@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 import { logger } from '../lib/logger.js';
+import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
 import './utils/adminRefresh.js';
@@ -19,7 +20,7 @@ const backend = createBackend();
 
 // Get device ID for API calls
 const getDeviceId = () => {
-  return window.Tennis?.deviceId || localStorage.getItem('deviceId') || 'admin-device';
+  return getTennis()?.deviceId || localStorage.getItem('deviceId') || 'admin-device';
 };
 
 // Import extracted components
@@ -75,8 +76,8 @@ import { useWetCourts } from './wetCourts/useWetCourts';
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
-// Access shared utils from window (loaded via shared scripts in index.html)
-const U = window.APP_UTILS || {};
+// Access shared utils from platform bridge (loaded via shared scripts in index.html)
+const U = getAppUtils() || {};
 const {
   STORAGE,
   readJSON,
@@ -89,7 +90,7 @@ const {
 const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 
 // Shared domain modules
-const Events = window.Tennis?.Events;
+const Events = getTennisEvents();
 
 // ---- Core constants (declared only; not replacing existing usages) ----
 
@@ -562,7 +563,7 @@ const AdminPanelV2 = ({ onExit }) => {
               EventSummary={EventSummary}
               HoverCard={HoverCard}
               QuickActionsMenu={QuickActionsMenu}
-              Tennis={window.Tennis}
+              Tennis={getTennis()}
               EventCalendarEnhanced={EventCalendarEnhanced}
             />
           )}
@@ -587,7 +588,7 @@ const AdminPanelV2 = ({ onExit }) => {
               EventSummary={EventSummary}
               HoverCard={HoverCard}
               QuickActionsMenu={QuickActionsMenu}
-              Tennis={window.Tennis}
+              Tennis={getTennis()}
               backend={backend}
               hoursOverrides={hoursOverrides}
               initialEditingBlock={blockToEdit}

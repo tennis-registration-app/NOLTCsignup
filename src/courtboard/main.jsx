@@ -6,6 +6,16 @@ import ReactDOM from 'react-dom/client';
 // Browser bridge - exposes window.CourtAvailability for non-bundled scripts (mobile-fallback-bar.js)
 import './browser-bridge.js';
 
+// Platform bridge for window global access
+import {
+  getTennis,
+  getTennisStorage,
+  getTennisDomain,
+  getTennisNamespaceConfig,
+  getTennisEvents,
+  getTennisDataStore,
+} from '../platform/windowBridge.js';
+
 // Extracted components
 import { ToastHost } from './components/ToastHost';
 import { LoadingPlaceholder } from './components/LoadingPlaceholder';
@@ -25,18 +35,20 @@ function App() {
   useEffect(() => {
     // Check if Tennis modules are loaded
     const checkReady = () => {
-      if (window.Tennis?.Storage && window.Tennis?.Domain?.availability) {
+      const storage = getTennisStorage();
+      const domain = getTennisDomain();
+      if (storage && domain?.availability) {
         // Initialize module references (only A and W are used)
-        _Config = window.Tennis.Config;
-        _Storage = window.Tennis.Storage;
-        _Events = window.Tennis.Events;
-        A = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
-        W = window.Tennis.Domain.waitlist || window.Tennis.Domain.Waitlist;
-        _T = window.Tennis.Domain.time || window.Tennis.Domain.Time;
-        _DataStore = window.Tennis.DataStore;
-        _Av = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
-        _Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
-        _TimeFmt = window.Tennis.Domain.time || window.Tennis.Domain.Time;
+        _Config = getTennisNamespaceConfig();
+        _Storage = storage;
+        _Events = getTennisEvents();
+        A = domain.availability || domain.Availability;
+        W = domain.waitlist || domain.Waitlist;
+        _T = domain.time || domain.Time;
+        _DataStore = getTennisDataStore();
+        _Av = domain.availability || domain.Availability;
+        _Tm = domain.time || domain.Time;
+        _TimeFmt = domain.time || domain.Time;
         setReady(true);
         return true;
       }

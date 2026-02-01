@@ -3,6 +3,7 @@ import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import { logger } from '../../lib/logger.js';
+import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../../registration/backend/index.js';
@@ -66,8 +67,9 @@ export function TennisCourtDisplay() {
         logger.debug('CourtDisplay', 'Refresh board requested');
         // The mobileState update from MobileBridge.broadcastState() will trigger
         // the waitlist-available useEffect, but we can also manually trigger loadData
-        if (typeof window.refreshBoard === 'function') {
-          window.refreshBoard();
+        const refreshBoard = getRefreshBoard();
+        if (refreshBoard) {
+          refreshBoard();
         }
       }
     };
@@ -295,8 +297,9 @@ export function TennisCourtDisplay() {
     const hasWaitlist = waitlist.length > 0;
     if (!hasWaitlist) {
       // No waitlist - close notice if open
-      if (window.MobileModal?.currentType === 'waitlist-available') {
-        window.MobileModal?.close?.();
+      const mobileModal = getMobileModal();
+      if (mobileModal?.currentType === 'waitlist-available') {
+        mobileModal?.close?.();
       }
       return;
     }
@@ -325,12 +328,13 @@ export function TennisCourtDisplay() {
       courtsWithSession: courts?.filter((c) => c?.session).length,
     });
 
+    const mobileModal = getMobileModal();
     if (freeCourtCount > 0 && isUserFirstInWaitlist) {
       // Court available AND this mobile user is first in waitlist - show notice
-      window.MobileModal?.open('waitlist-available', { firstGroup });
-    } else if (window.MobileModal?.currentType === 'waitlist-available') {
+      mobileModal?.open('waitlist-available', { firstGroup });
+    } else if (mobileModal?.currentType === 'waitlist-available') {
       // Not first, no free courts, or no waitlist - close notice if it's currently showing
-      window.MobileModal?.close?.();
+      mobileModal?.close?.();
     }
   }, [courts, courtBlocks, waitlist, isMobileView, mobileState]);
 
@@ -350,7 +354,8 @@ export function TennisCourtDisplay() {
   };
 
   try {
-    const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+    const domain = getTennisDomain();
+    const A = domain?.availability || domain?.Availability;
     if (A) {
       const now = new Date();
       // Use courtBlocks from React state instead of localStorage
