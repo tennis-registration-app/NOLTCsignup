@@ -2,9 +2,6 @@ import { useEffect } from 'react';
 
 // Import shared utilities from @lib
 import {
-  STORAGE as STORAGE_SHARED,
-  readJSON as _sharedReadJSON,
-  getEmptyData as _sharedGetEmptyData,
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
   TENNIS_CONFIG as _sharedTennisConfig,
   TennisBusinessLogic,

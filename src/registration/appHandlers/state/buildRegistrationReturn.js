@@ -14,7 +14,7 @@ export function buildRegistrationReturn({
   ui,
   domain,
   runtime,
-  dataLayer,
+  _dataLayer,
   helpers,
   derived,
   timeout,
