@@ -6,6 +6,7 @@
  */
 
 import { API_CONFIG, ENDPOINTS, getDeviceContext } from './apiConfig.js';
+import { AppError, ErrorCategories } from './errors/index.js';
 import { logger } from './logger.js';
 
 export class ApiAdapter {
@@ -51,13 +52,26 @@ export class ApiAdapter {
       const data = await response.json();
 
       if (!data.ok) {
-        throw new Error(data.error || 'API request failed');
+        throw new AppError({
+          category: ErrorCategories.NETWORK,
+          code: 'API_ERROR',
+          message: data.error || 'API request failed',
+          details: data,
+        });
       }
 
       return data;
     } catch (error) {
       logger.error('ApiAdapter', `API Error [${endpoint}]`, error);
-      throw error;
+      if (error instanceof AppError) {
+        throw error;
+      }
+      throw new AppError({
+        category: ErrorCategories.NETWORK,
+        code: 'FETCH_FAILED',
+        message: error.message || 'Network request failed',
+        details: { originalError: error },
+      });
     }
   }
 
