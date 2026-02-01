@@ -211,3 +211,56 @@ export function getTennisEvents() {
 export function isGlobalAvailable(globalName) {
   return window[globalName] != null;
 }
+
+// =============================================================================
+// UI Component Accessors (WP-HR3)
+// =============================================================================
+
+/**
+ * Get the MobileModal API from window.MobileModal
+ * @returns {Object|null} MobileModal API or null if not available
+ */
+export function getMobileModal() {
+  if (typeof window === 'undefined') return null;
+  return window.MobileModal ?? null;
+}
+
+/**
+ * Get the UI namespace from window.UI
+ * @returns {Object|null} UI namespace or null if not available
+ */
+export function getUI() {
+  if (typeof window === 'undefined') return null;
+  return window.UI ?? null;
+}
+
+// =============================================================================
+// Refresh Function Accessors (WP-HR3)
+// =============================================================================
+
+/**
+ * Get the board refresh function from window.refreshBoard
+ * @returns {Function|null} Refresh function or null if not available
+ */
+export function getRefreshBoard() {
+  if (typeof window === 'undefined') return null;
+  return typeof window.refreshBoard === 'function' ? window.refreshBoard : null;
+}
+
+/**
+ * Get the admin view refresh function from window.refreshAdminView
+ * @returns {Function|null} Refresh function or null if not available
+ */
+export function getRefreshAdminView() {
+  if (typeof window === 'undefined') return null;
+  return typeof window.refreshAdminView === 'function' ? window.refreshAdminView : null;
+}
+
+/**
+ * Get the data loader function from window.loadData
+ * @returns {Function|null} Load function or null if not available
+ */
+export function getLoadData() {
+  if (typeof window === 'undefined') return null;
+  return typeof window.loadData === 'function' ? window.loadData : null;
+}
