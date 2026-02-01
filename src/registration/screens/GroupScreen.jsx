@@ -2,71 +2,77 @@
 import React, { useRef, useEffect } from 'react';
 import { ToastHost, AlertDisplay } from '../components';
 
-const GroupScreen = ({
-  // Data
-  data,
-  currentGroup,
-  memberNumber,
-  availableCourts,
-  frequentPartners,
-  frequentPartnersLoading,
+/**
+ * GroupScreen - Player group builder screen
+ * @param {Object} props - All props are passed through; see destructuring below
+ */
+const GroupScreen = (
+  /** @type {any} */ {
+    // Data
+    data,
+    currentGroup,
+    memberNumber,
+    availableCourts,
+    frequentPartners,
+    frequentPartnersLoading,
 
-  // UI state
-  showAlert,
-  alertMessage,
-  showTimeoutWarning,
-  isMobileView,
+    // UI state
+    showAlert,
+    alertMessage,
+    showTimeoutWarning,
+    isMobileView,
 
-  // Mobile flow
-  mobileFlow = false,
-  preselectedCourt = null,
+    // Mobile flow
+    mobileFlow = false,
+    preselectedCourt = null,
 
-  // Search state
-  searchInput,
-  showSuggestions,
-  effectiveSearchInput,
+    // Search state
+    searchInput,
+    showSuggestions,
+    effectiveSearchInput,
 
-  // Add player state
-  _showAddPlayer,
-  addPlayerSearch,
-  showAddPlayerSuggestions,
-  effectiveAddPlayerSearch,
+    // Add player state
+    _showAddPlayer,
+    addPlayerSearch,
+    showAddPlayerSuggestions,
+    effectiveAddPlayerSearch,
 
-  // Guest form state
-  showGuestForm,
-  guestName,
-  guestSponsor,
-  showGuestNameError,
-  showSponsorError,
+    // Guest form state
+    showGuestForm,
+    guestName,
+    guestSponsor,
+    showGuestNameError,
+    showSponsorError,
 
-  // Callbacks
-  onSearchChange,
-  onSearchFocus,
-  onSuggestionClick,
-  onAddPlayerSearchChange,
-  onAddPlayerSearchFocus,
-  onAddPlayerSuggestionClick,
-  _onToggleAddPlayer,
-  onToggleGuestForm,
-  onRemovePlayer,
-  onSelectSponsor,
-  onGuestNameChange,
-  onAddGuest,
-  onCancelGuest,
-  onAddFrequentPartner,
-  onSelectCourt,
-  isAssigning = false,
-  onJoinWaitlist,
-  joiningWaitlist = false,
-  onGoBack,
-  onStartOver,
+    // Callbacks
+    onSearchChange,
+    onSearchFocus,
+    onSuggestionClick,
+    onAddPlayerSearchChange,
+    onAddPlayerSearchFocus,
+    onAddPlayerSuggestionClick,
+    _onToggleAddPlayer,
+    onToggleGuestForm,
+    onRemovePlayer,
+    onSelectSponsor,
+    onGuestNameChange,
+    onAddGuest,
+    onCancelGuest,
+    onAddFrequentPartner,
+    onSelectCourt,
+    isAssigning = false,
+    onJoinWaitlist,
+    joiningWaitlist = false,
+    onGoBack,
+    onStartOver,
 
-  // Utilities
-  getAutocompleteSuggestions,
-  isPlayerAlreadyPlaying,
-  sameGroup,
-  CONSTANTS,
-}) => {
+    // Utilities
+    getAutocompleteSuggestions,
+    isPlayerAlreadyPlaying,
+    sameGroup,
+    CONSTANTS,
+  }
+) => {
   const addPlayerInputRef = useRef(null);
   const guestInputRef = useRef(null);
 

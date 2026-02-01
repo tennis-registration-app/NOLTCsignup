@@ -5,19 +5,19 @@
  * Court picker grid showing available courts.
  * Handles block warnings for courts with upcoming reservations.
  *
- * Props:
- * - availableCourts: number[] - Array of available court numbers
- * - showingOvertimeCourts: boolean - Whether showing overtime courts
- * - hasWaitingGroups: boolean - Whether there are groups waiting
- * - waitingGroupsCount: number - Number of groups waiting
- * - onCourtSelect: (courtNumber: number) => void - Court selection handler
- * - onJoinWaitlist: () => void - Join waitlist handler
- * - onAssignNext: () => void - Assign next handler
- * - onGoBack: () => void - Go back handler
- * - onStartOver: () => void - Start over handler
- * - currentGroup: Player[] - Current group to determine session duration
- * - isMobileView: boolean - Whether in mobile view
- * - upcomingBlocks: array - Upcoming block data for warning checks
+ * @param {Object} props
+ * @param {any[]} props.availableCourts - Array of available court numbers
+ * @param {any} props.showingOvertimeCourts - Whether showing overtime courts
+ * @param {Function} props.onCourtSelect - Court selection handler
+ * @param {Function} props.onGoBack - Go back handler
+ * @param {Function} props.onStartOver - Start over handler
+ * @param {any[]} [props.currentGroup] - Current group to determine session duration
+ * @param {boolean} [props.isMobileView] - Whether in mobile view
+ * @param {any[]} [props.upcomingBlocks] - Upcoming block data for warning checks
+ * @param {boolean} [props.hasWaitingGroups] - Whether there are groups waiting
+ * @param {number} [props.waitingGroupsCount] - Number of groups waiting
+ * @param {Function} [props.onJoinWaitlist] - Join waitlist handler
+ * @param {Function} [props.onAssignNext] - Assign next handler
  */
 import React, { useState } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
@@ -32,6 +32,11 @@ const CourtSelectionScreen = ({
   currentGroup = [],
   isMobileView = false,
   upcomingBlocks = [],
+  // These props are passed but not used in component - accept them to avoid caller type errors
+  hasWaitingGroups: _hasWaitingGroups,
+  waitingGroupsCount: _waitingGroupsCount,
+  onJoinWaitlist: _onJoinWaitlist,
+  onAssignNext: _onAssignNext,
 }) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);

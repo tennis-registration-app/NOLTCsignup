@@ -66,32 +66,34 @@ const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
   </div>
 );
 
-const SuccessScreen = ({
-  isCourtAssignment,
-  justAssignedCourt,
-  assignedCourt,
-  sessionId: sessionIdProp, // Direct session ID from assignment (preferred)
-  replacedGroup,
-  canChangeCourt,
-  changeTimeRemaining,
-  position,
-  estimatedWait,
-  onChangeCourt,
-  onHome,
-  currentGroup,
-  _mobileCountdown,
-  isMobile = false,
-  isTimeLimited = false,
-  timeLimitReason = null,
-  registrantStreak = 0,
-  ballPriceCents,
-  onPurchaseBalls,
-  onLookupMemberAccount,
-  TENNIS_CONFIG,
-  getCourtBlockStatus,
-  upcomingBlocks = [],
-  blockWarningMinutes = 60,
-}) => {
+const SuccessScreen = (
+  /** @type {any} */ {
+    isCourtAssignment,
+    justAssignedCourt,
+    assignedCourt,
+    sessionId: sessionIdProp, // Direct session ID from assignment (preferred)
+    replacedGroup,
+    canChangeCourt,
+    changeTimeRemaining,
+    position,
+    estimatedWait,
+    onChangeCourt,
+    onHome,
+    currentGroup,
+    _mobileCountdown,
+    isMobile = false,
+    isTimeLimited = false,
+    timeLimitReason = null,
+    registrantStreak = 0,
+    ballPriceCents,
+    onPurchaseBalls,
+    onLookupMemberAccount,
+    TENNIS_CONFIG,
+    getCourtBlockStatus,
+    upcomingBlocks = [],
+    blockWarningMinutes = 60,
+  }
+) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
   const [ballsPurchased, setBallsPurchased] = useState(false);

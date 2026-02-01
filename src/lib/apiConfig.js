@@ -91,26 +91,40 @@ function computeApiConfig() {
 }
 
 /**
+ * @typedef {Object} ApiConfigShape
+ * @property {string} SUPABASE_URL
+ * @property {string} BASE_URL
+ * @property {string} ANON_KEY
+ * @property {boolean} IS_MOBILE
+ * @property {boolean} IS_ADMIN
+ * @property {string} DEVICE_ID
+ * @property {'admin' | 'mobile' | 'kiosk'} DEVICE_TYPE
+ */
+
+/**
  * API Configuration object
  * NOTE: No caching because IS_ADMIN/IS_MOBILE/DEVICE_* depend on current URL.
+ * @type {ApiConfigShape}
  */
-export const API_CONFIG = new Proxy(
-  {},
-  {
-    get(_, prop) {
-      return computeApiConfig()[prop];
-    },
-    ownKeys() {
-      return Object.keys(computeApiConfig());
-    },
-    getOwnPropertyDescriptor(_, prop) {
-      const config = computeApiConfig();
-      if (prop in config) {
-        return { enumerable: true, configurable: true, value: config[prop] };
-      }
-      return undefined;
-    },
-  }
+export const API_CONFIG = /** @type {ApiConfigShape} */ (
+  new Proxy(
+    {},
+    {
+      get(_, prop) {
+        return computeApiConfig()[prop];
+      },
+      ownKeys() {
+        return Object.keys(computeApiConfig());
+      },
+      getOwnPropertyDescriptor(_, prop) {
+        const config = computeApiConfig();
+        if (prop in config) {
+          return { enumerable: true, configurable: true, value: config[prop] };
+        }
+        return undefined;
+      },
+    }
+  )
 );
 
 // =============================================================================
