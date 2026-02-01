@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src/ --ext .js,.jsx",
+    "lint:ratchet": "node scripts/lint-ratchet.mjs",
     "format": "prettier --write src/",
     "lint:fix": "eslint src/ --ext .js,.jsx --fix",
     "prepare": "husky",
@@ -15,7 +16,7 @@
     "test:e2e": "playwright test",
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
-    "verify": "npm run -s lint && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
+    "verify": "npm run -s lint:ratchet && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
