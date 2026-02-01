@@ -8,6 +8,7 @@
 import { ApiAdapter } from '@lib/ApiAdapter.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
 import { formatCourtTime } from '@lib/dateUtils.js';
+import { logger } from '../../lib/logger.js';
 
 /**
  * ApiTennisService
@@ -74,7 +75,7 @@ class ApiTennisService {
       try {
         cb({ type: changeType, timestamp: Date.now() });
       } catch (e) {
-        console.error('Listener error:', e);
+        logger.error('ApiService', 'Listener error', e);
       }
     });
   }
@@ -105,7 +106,7 @@ class ApiTennisService {
         members: members.members,
       };
     } catch (error) {
-      console.error('Failed to load initial data:', error);
+      logger.error('ApiService', 'Failed to load initial data', error);
       throw error;
     }
   }
@@ -116,7 +117,7 @@ class ApiTennisService {
       this._notifyListeners('courts');
       return this._transformCourts(this.courtData.courts);
     } catch (error) {
-      console.error('Failed to refresh court data:', error);
+      logger.error('ApiService', 'Failed to refresh court data', error);
       throw error;
     }
   }
@@ -127,7 +128,7 @@ class ApiTennisService {
       this._notifyListeners('waitlist');
       return this._transformWaitlist(this.waitlistData.waitlist);
     } catch (error) {
-      console.error('Failed to refresh waitlist:', error);
+      logger.error('ApiService', 'Failed to refresh waitlist', error);
       throw error;
     }
   }
@@ -196,7 +197,7 @@ class ApiTennisService {
       const isActive = hasSession && timeRemaining > 0;
       const isBlocked = hasBlock;
 
-      console.log(`🎾 Court ${court.court_number} transform:`, {
+      logger.debug('ApiService', `Court ${court.court_number} transform`, {
         hasSession,
         hasBlock,
         apiMinutesRemaining: court.session?.minutes_remaining,
@@ -310,7 +311,7 @@ class ApiTennisService {
     }
 
     // Log player data for debugging
-    console.log('🔍 Players to assign:', JSON.stringify(players, null, 2));
+    logger.debug('ApiService', 'Players to assign', JSON.stringify(players, null, 2));
 
     // Find the court ID from court number
     const courts = await this.getAllCourts();
@@ -323,7 +324,7 @@ class ApiTennisService {
     // Transform players to API format
     const participants = await Promise.all(
       players.map(async (player) => {
-        console.log('🔍 Processing player:', JSON.stringify(player));
+        logger.debug('ApiService', 'Processing player', JSON.stringify(player));
 
         // Try to get account_id and member UUID from various sources
         let accountId = player.accountId || player.account_id || player.billingAccountId;
@@ -337,20 +338,22 @@ class ApiTennisService {
 
         if (isUuid) {
           memberUuid = playerId;
-          console.log('🔍 Player ID is already a UUID:', memberUuid);
+          logger.debug('ApiService', 'Player ID is already a UUID', memberUuid);
         }
 
         // If we have a memberNumber, use it to look up the member
         const memberNumber = player.memberNumber || player.clubNumber || player.account_number;
         if (memberNumber && (!accountId || !memberUuid)) {
           try {
-            console.log(
-              `🔍 Looking up by member_number: ${memberNumber}, player.name: "${player.name}"`
+            logger.debug(
+              'ApiService',
+              `Looking up by member_number: ${memberNumber}, player.name: "${player.name}"`
             );
             const result = await this.api.getMembersByAccount(String(memberNumber));
             const members = result.members || [];
-            console.log(
-              `🔍 Found ${members.length} members for account:`,
+            logger.debug(
+              'ApiService',
+              `Found ${members.length} members for account`,
               members.map((m) => m.display_name)
             );
 
@@ -386,15 +389,16 @@ class ApiTennisService {
               // If only one member on account, use it
               if (!member && members.length === 1) {
                 member = members[0];
-                console.log(`⚠️ Using only member on account: ${member.display_name}`);
+                logger.debug('ApiService', `Using only member on account: ${member.display_name}`);
               }
 
               // If multiple members and no match, use primary with warning
               if (!member && members.length > 1) {
                 const primaryMember = members.find((m) => m.is_primary);
                 if (primaryMember) {
-                  console.warn(
-                    `⚠️ Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.display_name}"`
+                  logger.warn(
+                    'ApiService',
+                    `Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.display_name}"`
                   );
                   member = primaryMember;
                 }
@@ -403,13 +407,14 @@ class ApiTennisService {
               if (member) {
                 if (!accountId) accountId = member.account_id;
                 if (!memberUuid) memberUuid = member.id;
-                console.log(
-                  `✅ Matched: "${player.name}" -> "${member.display_name}" (${member.id})`
+                logger.debug(
+                  'ApiService',
+                  `Matched: "${player.name}" -> "${member.display_name}" (${member.id})`
                 );
               }
             }
           } catch (e) {
-            console.warn('Could not look up member by member_number:', e);
+            logger.warn('ApiService', 'Could not look up member by member_number', e);
           }
         }
 
@@ -418,9 +423,9 @@ class ApiTennisService {
           const searchName = player.name || player.displayName;
           if (searchName) {
             try {
-              console.log(`🔍 Searching by name: ${searchName}`);
+              logger.debug('ApiService', `Searching by name: ${searchName}`);
               const result = await this.api.getMembers(searchName);
-              console.log('🔍 getMembers result:', JSON.stringify(result));
+              logger.debug('ApiService', 'getMembers result', JSON.stringify(result));
 
               if (result.members && result.members.length > 0) {
                 // Find exact match by name
@@ -433,13 +438,14 @@ class ApiTennisService {
                 if (member) {
                   if (!accountId) accountId = member.account_id;
                   if (!memberUuid) memberUuid = member.id;
-                  console.log(
-                    `🔍 Found by name: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`
+                  logger.debug(
+                    'ApiService',
+                    `Found by name: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`
                   );
                 }
               }
             } catch (e) {
-              console.warn('Could not look up member by name:', e);
+              logger.warn('ApiService', 'Could not look up member by name', e);
             }
           }
         }
@@ -481,11 +487,11 @@ class ApiTennisService {
       (p) => !p.account_id || p.account_id === '__NEEDS_ACCOUNT__'
     );
     if (missingAccountId) {
-      console.error('Participant missing account_id:', missingAccountId);
+      logger.error('ApiService', 'Participant missing account_id', missingAccountId);
       throw new Error('Could not determine account_id for participant');
     }
 
-    console.log('🔍 Transformed participants:', JSON.stringify(participants, null, 2));
+    logger.debug('ApiService', 'Transformed participants', JSON.stringify(participants, null, 2));
 
     // Determine session type
     const sessionType =
@@ -539,8 +545,9 @@ class ApiTennisService {
       }
     }
 
-    console.log(
-      `🔍 Clearing court ${courtNumber} with reason: ${endReason} (legacy: ${legacyReason})`
+    logger.debug(
+      'ApiService',
+      `Clearing court ${courtNumber} with reason: ${endReason} (legacy: ${legacyReason})`
     );
 
     const result = await this.api.endSessionByCourt(court.id, endReason);
@@ -559,7 +566,7 @@ class ApiTennisService {
   // ===========================================
 
   async purchaseBalls(sessionId, accountId, options = {}) {
-    console.log('🔍 Purchasing balls for session:', sessionId, 'account:', accountId);
+    logger.debug('ApiService', `Purchasing balls for session: ${sessionId}, account: ${accountId}`);
 
     const result = await this.api.purchaseBalls(sessionId, accountId, {
       splitBalls: options.split || options.splitBalls || false,
@@ -586,19 +593,21 @@ class ApiTennisService {
 
   async addToWaitlist(players, options = {}) {
     const traceId = options.traceId || `API-${Date.now()}`;
-    console.log(`🔵🔵🔵 [${traceId}] addToWaitlist ENTRY`);
-    console.log(`🔵 [${traceId}] Input players:`, JSON.stringify(players, null, 2));
-    console.log(
-      `🔵 [${traceId}] Players summary:`,
+    logger.debug('ApiService', `[${traceId}] addToWaitlist ENTRY`);
+    logger.debug('ApiService', `[${traceId}] Input players`, JSON.stringify(players, null, 2));
+    logger.debug(
+      'ApiService',
+      `[${traceId}] Players summary`,
       players.map((p) => `${p.name}(id=${p.id},mn=${p.memberNumber})`)
     );
-    console.log(`🔵 [${traceId}] Options:`, options);
+    logger.debug('ApiService', `[${traceId}] Options`, options);
 
     // Transform players to API format (same logic as assignCourt)
     const participants = await Promise.all(
       players.map(async (player, idx) => {
-        console.log(
-          `🔵 [${traceId}] Processing player[${idx}]: name="${player.name}", id="${player.id}", memberNumber="${player.memberNumber}"`
+        logger.debug(
+          'ApiService',
+          `[${traceId}] Processing player[${idx}]: name="${player.name}", id="${player.id}", memberNumber="${player.memberNumber}"`
         );
 
         let memberId = null;
@@ -618,7 +627,7 @@ class ApiTennisService {
         const isUUID =
           existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
 
-        console.log(`🔵 [${traceId}] Player UUID check:`, {
+        logger.debug('ApiService', `[${traceId}] Player UUID check`, {
           existingId,
           isUUID,
           'player.accountId': player.accountId,
@@ -628,27 +637,31 @@ class ApiTennisService {
         if (isUUID) {
           memberId = existingId;
           accountId = player.accountId || player.account_id;
-          console.log(
-            `🔵 [${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`
+          logger.debug(
+            'ApiService',
+            `[${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`
           );
         }
 
         // If we don't have BOTH UUID and accountId, look up by member_number
         if (!memberId || !accountId) {
-          console.log(
-            `🔵 [${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`
+          logger.debug(
+            'ApiService',
+            `[${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`
           );
           const memberNumber = player.memberNumber || player.member_number || player.id;
 
           if (memberNumber) {
             try {
-              console.log(
-                `🔵 [${traceId}] Looking up member_number: ${memberNumber}, player.name: "${player.name}"`
+              logger.debug(
+                'ApiService',
+                `[${traceId}] Looking up member_number: ${memberNumber}, player.name: "${player.name}"`
               );
               const result = await this.api.getMembersByAccount(String(memberNumber));
               const members = result.members || [];
-              console.log(
-                `🔵 [${traceId}] Found ${members.length} members for account:`,
+              logger.debug(
+                'ApiService',
+                `[${traceId}] Found ${members.length} members for account`,
                 members.map((m) => `${m.display_name}(primary=${m.is_primary})`)
               );
 
@@ -682,20 +695,25 @@ class ApiTennisService {
               // If only one member on account, use it (single-member accounts)
               if (!member && members.length === 1) {
                 member = members[0];
-                console.log(`🔵 [${traceId}] Using only member on account: ${member.display_name}`);
+                logger.debug(
+                  'ApiService',
+                  `[${traceId}] Using only member on account: ${member.display_name}`
+                );
               }
 
               // If multiple members and no match, prefer primary member with warning
               if (!member && members.length > 1) {
                 const primaryMember = members.find((m) => m.is_primary);
                 if (primaryMember) {
-                  console.warn(
-                    `🔵⚠️ [${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.display_name}"`
+                  logger.warn(
+                    'ApiService',
+                    `[${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.display_name}"`
                   );
                   member = primaryMember;
                 } else {
-                  console.error(
-                    `🔵❌ [${traceId}] Name mismatch! Player "${player.name}" not found in:`,
+                  logger.error(
+                    'ApiService',
+                    `[${traceId}] Name mismatch! Player "${player.name}" not found in`,
                     members.map((m) => m.display_name)
                   );
                   throw new Error(
@@ -707,12 +725,13 @@ class ApiTennisService {
               if (member) {
                 memberId = member.id;
                 accountId = member.account_id;
-                console.log(
-                  `🔵✅ [${traceId}] Matched: "${player.name}" -> "${member.display_name}" (${memberId})`
+                logger.debug(
+                  'ApiService',
+                  `[${traceId}] Matched: "${player.name}" -> "${member.display_name}" (${memberId})`
                 );
               }
             } catch (e) {
-              console.error('[addToWaitlist] Error looking up member:', e);
+              logger.error('ApiService', 'Error looking up member', e);
               throw e; // Re-throw to prevent wrong member assignment
             }
           }
@@ -723,7 +742,7 @@ class ApiTennisService {
           try {
             const searchName = player.name || player.displayName;
             if (searchName) {
-              console.log(`🔍 [addToWaitlist] Searching by name: ${searchName}`);
+              logger.debug('ApiService', `Searching by name: ${searchName}`);
               const result = await this.api.getMembers(searchName);
               const members = result.members || [];
               const member = members.find(
@@ -732,16 +751,16 @@ class ApiTennisService {
               if (member) {
                 memberId = member.id;
                 accountId = member.account_id;
-                console.log(`✅ [addToWaitlist] Found by name: ${searchName} -> ${memberId}`);
+                logger.debug('ApiService', `Found by name: ${searchName} -> ${memberId}`);
               }
             }
           } catch (e) {
-            console.error('[addToWaitlist] Error searching by name:', e);
+            logger.error('ApiService', 'Error searching by name', e);
           }
         }
 
         if (!memberId || !accountId) {
-          console.error('[addToWaitlist] Could not resolve member:', player);
+          logger.error('ApiService', 'Could not resolve member', player);
           throw new Error(
             `Could not find member in database: ${player.name} (${player.memberNumber || player.id})`
           );
@@ -768,23 +787,22 @@ class ApiTennisService {
     const groupType =
       options.type || options.groupType || (participants.length <= 2 ? 'singles' : 'doubles');
 
-    console.log('🔍 [addToWaitlist] Calling API with:', { groupType, participants });
+    logger.debug('ApiService', 'Calling API with', { groupType, participants });
 
     try {
       const result = await this.api.joinWaitlist(groupType, participants);
-      console.log('🔍 [addToWaitlist] API response:', JSON.stringify(result, null, 2));
+      logger.debug('ApiService', 'API response', JSON.stringify(result, null, 2));
 
       // Refresh waitlist and log it
       await this.refreshWaitlist();
-      console.log(
-        '🔍 [addToWaitlist] Waitlist after refresh:',
-        this.waitlistData?.waitlist?.length,
-        'entries'
+      logger.debug(
+        'ApiService',
+        `Waitlist after refresh: ${this.waitlistData?.waitlist?.length} entries`
       );
 
       // Extract position from API response
       const position = result.waitlist?.position || 1;
-      console.log('🔍 [addToWaitlist] Extracted position:', position);
+      logger.debug('ApiService', `Extracted position: ${position}`);
 
       return {
         success: true,
@@ -792,7 +810,7 @@ class ApiTennisService {
         position: position,
       };
     } catch (error) {
-      console.error('🔍 [addToWaitlist] API error:', error);
+      logger.error('ApiService', 'API error', error);
       throw error;
     }
   }

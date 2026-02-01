@@ -25,6 +25,7 @@ import React, { useEffect, useRef } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
 import { TypedIcon } from '../../components/icons/TypedIcon';
 import { getStorageDataSafe } from '../../platform/windowBridge';
+import { logger } from '../../lib/logger.js';
 
 const ClearCourtScreen = ({
   clearCourtStep,
@@ -62,10 +63,10 @@ const ClearCourtScreen = ({
 
       timerStepRef.current = clearCourtStep; // Mark that we've set timer for this step
       const timeoutMs = CONSTANTS?.AUTO_RESET_CLEAR_MS || 2000;
-      console.log(`[ClearCourtScreen] Starting ${timeoutMs}ms timer for step ${clearCourtStep}`);
+      logger.debug('ClearCourt', `Starting ${timeoutMs}ms timer for step ${clearCourtStep}`);
 
       timerRef.current = setTimeout(() => {
-        console.log('[ClearCourtScreen] Auto-reset timer fired');
+        logger.debug('ClearCourt', 'Auto-reset timer fired');
         timerStepRef.current = null; // Reset so we can set timer again if needed
         resetForm();
       }, timeoutMs);
@@ -74,7 +75,7 @@ const ClearCourtScreen = ({
     // Only cleanup on unmount, NOT on every re-render
     return () => {
       if (timerRef.current && timerStepRef.current !== clearCourtStep) {
-        console.log('[ClearCourtScreen] Cleaning up timer on unmount');
+        logger.debug('ClearCourt', 'Cleaning up timer on unmount');
         clearTimeout(timerRef.current);
         timerRef.current = null;
         timerStepRef.current = null;
@@ -152,9 +153,9 @@ const ClearCourtScreen = ({
     const players = court?.session?.group?.players || court?.players || [];
 
     // Debug logging
-    console.log('🔍 ClearCourt Step 2 - selectedCourtToClear:', selectedCourtToClear);
-    console.log('🔍 ClearCourt Step 2 - court found:', court);
-    console.log('🔍 ClearCourt Step 2 - players array:', JSON.stringify(players, null, 2));
+    logger.debug('ClearCourt', `Step 2 - selectedCourtToClear: ${selectedCourtToClear}`);
+    logger.debug('ClearCourt', 'Step 2 - court found', court);
+    logger.debug('ClearCourt', 'Step 2 - players array', JSON.stringify(players, null, 2));
 
     // Handle players as array of strings or objects with name/displayName property
     const displayNames = players
@@ -180,12 +181,15 @@ const ClearCourtScreen = ({
             <button
               onClick={() => {
                 // Optimistic UI: show success immediately
-                console.log(`Clearing court ${selectedCourtToClear} - players leaving`);
+                logger.debug(
+                  'ClearCourt',
+                  `Clearing court ${selectedCourtToClear} - players leaving`
+                );
                 setClearCourtStep(3);
 
                 // API call in background
                 clearCourt(selectedCourtToClear, 'Cleared').catch((error) => {
-                  console.error('[ClearCourt] API error:', error);
+                  logger.error('ClearCourt', 'API error', error);
                   // Error will be logged; Thank You screen auto-dismisses anyway
                 });
               }}
@@ -198,12 +202,15 @@ const ClearCourtScreen = ({
             <button
               onClick={() => {
                 // Optimistic UI: show success immediately
-                console.log(`Clearing court ${selectedCourtToClear} - observed empty`);
+                logger.debug(
+                  'ClearCourt',
+                  `Clearing court ${selectedCourtToClear} - observed empty`
+                );
                 setClearCourtStep(4);
 
                 // API call in background
                 clearCourt(selectedCourtToClear, 'Observed-Cleared').catch((error) => {
-                  console.error('[ClearCourt] API error:', error);
+                  logger.error('ClearCourt', 'API error', error);
                   // Error will be logged; Thank You screen auto-dismisses anyway
                 });
               }}

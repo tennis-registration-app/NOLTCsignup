@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
+import { logger } from '../../lib/logger.js';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../../registration/backend/index.js';
@@ -58,11 +59,11 @@ export function TennisCourtDisplay() {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === 'mobile:state-updated') {
-        console.log('[Courtboard] Mobile state updated:', event.data.payload);
+        logger.debug('CourtDisplay', 'Mobile state updated', event.data.payload);
         setMobileState(event.data.payload);
       } else if (event.data?.type === 'refresh-board') {
         // Triggered after waitlist:joined to check for waitlist-available notice
-        console.log('[Courtboard] Refresh board requested');
+        logger.debug('CourtDisplay', 'Refresh board requested');
         // The mobileState update from MobileBridge.broadcastState() will trigger
         // the waitlist-available useEffect, but we can also manually trigger loadData
         if (typeof window.refreshBoard === 'function') {
@@ -110,22 +111,22 @@ export function TennisCourtDisplay() {
 
   // TennisBackend real-time subscription (primary data source)
   useEffect(() => {
-    console.log('[Courtboard] Setting up TennisBackend subscription...');
+    logger.debug('CourtDisplay', 'Setting up TennisBackend subscription...');
 
     const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
       // Use pure Domain Board directly (legacy adapter removed)
       const board = domainBoard;
 
-      console.log('[Courtboard] Board update received:', {
+      logger.debug('CourtDisplay', 'Board update received', {
         serverNow: board.serverNow,
         courts: board.courts?.length,
         waitlist: board.waitlist?.length,
         upcomingBlocks: board.upcomingBlocks?.length,
       });
-      console.log('[Courtboard Debug] Raw upcomingBlocks:', board.upcomingBlocks);
+      logger.debug('CourtDisplay', 'Raw upcomingBlocks', board.upcomingBlocks);
 
       // Debug: log first 2 courts to see raw data
-      console.log('[Courtboard Debug] Raw board courts (first 2):', board.courts?.slice(0, 2));
+      logger.debug('CourtDisplay', 'Raw board courts (first 2)', board.courts?.slice(0, 2));
 
       // Update courts state
       if (board.courts) {
@@ -163,10 +164,7 @@ export function TennisCourtDisplay() {
           });
 
         // Debug: log first 2 transformed courts
-        console.log(
-          '[Courtboard Debug] Transformed courts (first 2):',
-          transformedCourts.slice(0, 2)
-        );
+        logger.debug('CourtDisplay', 'Transformed courts (first 2)', transformedCourts.slice(0, 2));
         setCourts(transformedCourts);
 
         // Extract active blocks from courts (for availability calculations)
@@ -205,14 +203,14 @@ export function TennisCourtDisplay() {
         names: (entry.group?.players || []).map((p) => p.displayName || p.name || 'Unknown'),
         players: entry.group?.players || [],
       }));
-      console.log('[Courtboard] Transformed waitlist:', normalized);
+      logger.debug('CourtDisplay', 'Transformed waitlist', normalized);
       setWaitlist(normalized);
     });
 
-    console.log('[Courtboard] TennisBackend subscription active');
+    logger.debug('CourtDisplay', 'TennisBackend subscription active');
 
     return () => {
-      console.log('[Courtboard] Unsubscribing from board updates');
+      logger.debug('CourtDisplay', 'Unsubscribing from board updates');
       unsubscribe();
     };
   }, []);
@@ -221,19 +219,17 @@ export function TennisCourtDisplay() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        console.log('[Courtboard] Loading settings, backend.admin:', !!backend.admin);
+        logger.debug('CourtDisplay', 'Loading settings, backend.admin:', !!backend.admin);
         const result = await backend.admin?.getSettings?.();
-        console.log(
-          '[Courtboard] Settings result:',
-          result?.ok,
-          'check_status_minutes:',
-          result?.settings?.check_status_minutes
-        );
+        logger.debug('CourtDisplay', 'Settings result', {
+          ok: result?.ok,
+          check_status_minutes: result?.settings?.check_status_minutes,
+        });
         if (result?.ok && result.settings?.check_status_minutes) {
           const minutes = parseInt(result.settings.check_status_minutes, 10);
           if (minutes > 0) {
             setCheckStatusMinutes(minutes);
-            console.log('[Courtboard] Loaded check_status_minutes:', minutes);
+            logger.debug('CourtDisplay', 'Loaded check_status_minutes:', minutes);
           }
         }
         // Load block_warning_minutes
@@ -241,11 +237,11 @@ export function TennisCourtDisplay() {
           const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
           if (blockWarnMin > 0) {
             setBlockWarningMinutes(blockWarnMin);
-            console.log('[Courtboard] Loaded block_warning_minutes:', blockWarnMin);
+            logger.debug('CourtDisplay', 'Loaded block_warning_minutes:', blockWarnMin);
           }
         }
       } catch (err) {
-        console.warn('[Courtboard] Failed to load settings, using default:', err);
+        logger.warn('CourtDisplay', 'Failed to load settings, using default', err);
       }
     };
     loadSettings();
@@ -267,7 +263,7 @@ export function TennisCourtDisplay() {
     const now = new Date().toISOString();
     const freeCount = countPlayableCourts(courts, courtBlocks, now);
 
-    console.log('[CourtboardState] Setting state:', {
+    logger.debug('CourtDisplay', 'Setting state', {
       courts: courts?.length,
       courtBlocks: courtBlocks?.length,
       upcomingBlocks: upcomingBlocks?.length,
@@ -285,10 +281,10 @@ export function TennisCourtDisplay() {
 
     // Update mobile button state after state is set
     if (typeof window.updateJoinButtonState === 'function') {
-      console.log('[CourtboardState] Calling updateJoinButtonState');
+      logger.debug('CourtDisplay', 'Calling updateJoinButtonState');
       window.updateJoinButtonState();
     } else {
-      console.log('[CourtboardState] updateJoinButtonState not found');
+      logger.debug('CourtDisplay', 'updateJoinButtonState not found');
     }
   }, [courts, courtBlocks, upcomingBlocks, waitlist]);
 
@@ -316,7 +312,7 @@ export function TennisCourtDisplay() {
     const freeCourtCount = countPlayableCourts(courts, courtBlocks, now);
     const freeCourtList = listPlayableCourts(courts, courtBlocks, now);
 
-    console.log('[WaitlistNotice] Check:', {
+    logger.debug('CourtDisplay', 'WaitlistNotice check', {
       freeCourts: freeCourtCount,
       freeCourtList: freeCourtList,
       waitlistLength: waitlist?.length,
@@ -376,7 +372,7 @@ export function TennisCourtDisplay() {
       statusObjectByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s]));
     }
   } catch (e) {
-    console.warn('Error building status map:', e);
+    logger.warn('CourtDisplay', 'Error building status map', e);
   }
 
   const hasWaiting = waitlist.length > 0;

@@ -35,6 +35,7 @@ import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
 import { TypedIcon } from '../../components/icons/TypedIcon';
 import { getDataStoreValue, setDataStoreValue } from '../../platform/windowBridge';
+import { logger } from '../../lib/logger.js';
 
 // Fixed layout card component (internal)
 // Header is outside scroll container to avoid compositor hit-test bugs
@@ -112,18 +113,18 @@ const SuccessScreen = ({
 
   const handleBallPurchase = useCallback(async () => {
     if (isProcessingPurchase) {
-      console.log('⚠️ Purchase already in progress, ignoring duplicate request');
+      logger.debug('SuccessScreen', 'Purchase already in progress, ignoring duplicate request');
       return;
     }
     setIsProcessingPurchase(true);
     try {
       // Debug: Log all session ID sources at start
-      console.log('[Ball Purchase] Handler called', {
+      logger.debug('SuccessScreen', 'Ball Purchase handler called', {
         sessionIdProp,
         assignedCourtSessionId: assignedCourt?.session?.id,
         primaryAccountId: currentGroup[0]?.accountId,
       });
-      console.log('[handleBallPurchase] Starting purchase process:', {
+      logger.debug('SuccessScreen', 'Starting purchase process', {
         ballPurchaseOption,
         ballPrice,
         currentGroup,
@@ -167,15 +168,15 @@ const SuccessScreen = ({
           if (members.length > 0) {
             const member = members.find((m) => m.is_primary || m.isPrimary) || members[0];
             primaryAccountId = member.account_id || member.accountId;
-            console.log('[handleBallPurchase] Found accountId by member lookup:', primaryAccountId);
+            logger.debug('SuccessScreen', 'Found accountId by member lookup', primaryAccountId);
           }
         } catch (e) {
-          console.warn('[handleBallPurchase] Member lookup failed:', e);
+          logger.warn('SuccessScreen', 'Member lookup failed', e);
         }
       }
 
       if (onPurchaseBalls && sessionId && primaryAccountId) {
-        console.log('[handleBallPurchase] Using TennisBackend for purchase', {
+        logger.debug('SuccessScreen', 'Using TennisBackend for purchase', {
           sessionId,
           primaryAccountId,
         });
@@ -199,7 +200,11 @@ const SuccessScreen = ({
                   accountId = member.account_id || member.accountId;
                 }
               } catch (err) {
-                console.error('Failed to lookup account for split:', player.memberNumber, err);
+                logger.error(
+                  'SuccessScreen',
+                  `Failed to lookup account for split: ${player.memberNumber}`,
+                  err
+                );
               }
             }
 
@@ -210,14 +215,15 @@ const SuccessScreen = ({
 
           // If we couldn't get all account IDs, fall back to non-split
           if (splitAccountIds.length < 2) {
-            console.warn(
+            logger.warn(
+              'SuccessScreen',
               'Could not get enough account IDs for split, falling back to single charge'
             );
             splitAccountIds = null;
           }
         }
 
-        console.log('[Ball Purchase] Calling onPurchaseBalls', {
+        logger.debug('SuccessScreen', 'Calling onPurchaseBalls', {
           sessionId,
           primaryAccountId,
           options: { splitBalls: isSplit, splitAccountIds },
@@ -226,18 +232,18 @@ const SuccessScreen = ({
           splitBalls: isSplit,
           splitAccountIds: splitAccountIds,
         });
-        console.log('[Ball Purchase] API result', result);
+        logger.debug('SuccessScreen', 'API result', result);
 
         if (result.ok) {
-          console.log('[handleBallPurchase] Ball purchase successful:', result);
+          logger.debug('SuccessScreen', 'Ball purchase successful', result);
           setBallsPurchased(true);
           setShowBallPurchaseModal(false);
           return;
         } else {
-          console.error('[handleBallPurchase] Ball purchase failed:', result.message);
+          logger.error('SuccessScreen', 'Ball purchase failed', result.message);
         }
       } else {
-        console.log('[handleBallPurchase] Cannot purchase balls - missing data:', {
+        logger.debug('SuccessScreen', 'Cannot purchase balls - missing data', {
           hasOnPurchaseBalls: !!onPurchaseBalls,
           sessionId,
           primaryAccountId,
@@ -245,8 +251,8 @@ const SuccessScreen = ({
       }
 
       // Fallback to localStorage if API not available or failed
-      console.log('[Ball Purchase] FALLBACK to localStorage - API not available');
-      console.log('[handleBallPurchase] Using localStorage fallback');
+      logger.debug('SuccessScreen', 'FALLBACK to localStorage - API not available');
+      logger.debug('SuccessScreen', 'Using localStorage fallback');
 
       /** Return the raw member number for a player (never masked). */
       function getRawMemberNumber(p) {
@@ -283,7 +289,7 @@ const SuccessScreen = ({
         courtNumber: justAssignedCourt,
       };
 
-      console.log('[handleBallPurchase] Purchase object:', purchase);
+      logger.debug('SuccessScreen', 'Purchase object', purchase);
 
       // Get existing purchases and save
       let existingPurchases = [];
@@ -301,16 +307,16 @@ const SuccessScreen = ({
           existingPurchases.push(purchase);
           localStorage.setItem('tennisBallPurchases', JSON.stringify(existingPurchases));
         } catch (error) {
-          console.error('[handleBallPurchase] Error saving to localStorage:', error);
+          logger.error('SuccessScreen', 'Error saving to localStorage', error);
         }
       }
 
-      console.log('[handleBallPurchase] Purchase saved successfully');
+      logger.debug('SuccessScreen', 'Purchase saved successfully');
 
       setBallsPurchased(true);
       setShowBallPurchaseModal(false);
     } catch (error) {
-      console.error('[handleBallPurchase] Error processing purchase:', error);
+      logger.error('SuccessScreen', 'Error processing purchase', error);
     } finally {
       setIsProcessingPurchase(false);
     }
