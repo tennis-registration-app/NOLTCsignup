@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * useMobileFlowController Hook
@@ -77,13 +78,13 @@ export function useMobileFlowController({
 
     // If we have a location token from QR scan, use that
     if (locationToken) {
-      console.log('[Mobile] Using location token instead of GPS');
+      logger.debug('MobileFlow', 'Using location token instead of GPS');
       return { location_token: locationToken };
     }
 
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        console.warn('[Mobile] Geolocation not available');
+        logger.warn('MobileFlow', 'Geolocation not available');
         resolve(null);
         return;
       }
@@ -96,7 +97,7 @@ export function useMobileFlowController({
           });
         },
         (error) => {
-          console.warn('[Mobile] Geolocation error:', error.message);
+          logger.warn('MobileFlow', 'Geolocation error', error.message);
           resolve(null);
         },
         {
@@ -124,7 +125,7 @@ export function useMobileFlowController({
    */
   const onQRScanToken = useCallback(
     (token) => {
-      console.log('[Mobile] QR token scanned:', token);
+      logger.debug('MobileFlow', 'QR token scanned', token);
       setLocationToken(token);
       setShowQRScanner(false);
       setGpsFailedPrompt(false);
@@ -193,7 +194,10 @@ export function useMobileFlowController({
             dbg('Registration: Silent assignment successful');
             // Success will be handled by the success effect
           } else {
-            console.error('[Mobile] Waitlist assignment failed:', result.code, result.message);
+            logger.error('MobileFlow', 'Waitlist assignment failed', {
+              code: result.code,
+              message: result.message,
+            });
             toast?.(result.message || 'Could not assign court', { type: 'error' });
 
             // Clear silent-assign mode and close overlay on failure
@@ -201,7 +205,7 @@ export function useMobileFlowController({
             window.parent.postMessage({ type: 'resetRegistration' }, '*');
           }
         } catch (error) {
-          console.error('[Mobile] Error assigning from waitlist:', error);
+          logger.error('MobileFlow', 'Error assigning from waitlist', error);
           toast?.('Error assigning court', { type: 'error' });
 
           // Clear silent-assign mode and close overlay on error
@@ -226,7 +230,7 @@ export function useMobileFlowController({
         window.parent.postMessage({ type: 'registration:success', courtNumber: courtNumber }, '*');
         dbg('Registration: Direct success message sent');
       } catch (e) {
-        if (DEBUG) console.log('Registration: Error in direct success message:', e);
+        if (DEBUG) logger.debug('MobileFlow', 'Error in direct success message', e);
       }
 
       // Start countdown for mobile (synced with Mobile.html 8 second dismiss)

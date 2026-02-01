@@ -15,6 +15,7 @@ import {
   toCreateBlockPayload,
   toCancelBlockPayload,
 } from './wire.js';
+import { logger } from '../../lib/logger.js';
 
 // Command DTO validation (fail-fast before API call)
 import {
@@ -321,13 +322,16 @@ export class TennisCommands {
         const a0 = performance.now();
         const members = await this.directory.getMembersByAccount(memberNumber);
         const a1 = performance.now();
-        console.log(
-          `[resolvePlayers] getMembersByAccount ${memberNumber} ${(a1 - a0).toFixed(0)}ms (${members?.length ?? 0} members)`
-        );
+        logger.debug('TennisCommands', `getMembersByAccount ${memberNumber}`, {
+          durationMs: (a1 - a0).toFixed(0),
+          memberCount: members?.length ?? 0,
+        });
         return [memberNumber, members];
       })
     );
-    console.log(`[resolvePlayers] total account fetch ${(performance.now() - t0).toFixed(0)}ms`);
+    logger.debug('TennisCommands', 'Account fetch complete', {
+      durationMs: (performance.now() - t0).toFixed(0),
+    });
 
     // Build lookup map: memberNumber -> members[]
     const membersByAccount = new Map(accountResults);
@@ -367,9 +371,10 @@ export class TennisCommands {
 
       if (!member && members.length === 1) {
         // Single member on account - use it with warning
-        console.warn(
-          `[resolvePlayers] Using only member on account: ${members[0].displayName || members[0].display_name} (searched: ${player.name})`
-        );
+        logger.warn('TennisCommands', 'Using only member on account', {
+          found: members[0].displayName || members[0].display_name,
+          searched: player.name,
+        });
         member = members[0];
       }
 
@@ -413,7 +418,9 @@ export class TennisCommands {
       }
     }
 
-    console.log(`[resolvePlayers] total ${(performance.now() - tStart).toFixed(0)}ms`);
+    logger.debug('TennisCommands', 'resolvePlayers complete', {
+      durationMs: (performance.now() - tStart).toFixed(0),
+    });
     return participants;
   }
 
@@ -441,7 +448,7 @@ export class TennisCommands {
     longitude,
   }) {
     const tStart = performance.now();
-    console.log('[assignCourtWithPlayers] start', {
+    logger.debug('TennisCommands', 'assignCourtWithPlayers start', {
       courtId,
       playerCount: players.length,
       groupType,
@@ -463,9 +470,9 @@ export class TennisCommands {
 
     // 2. Resolve players to participants (member lookup)
     const participants = await this.resolvePlayersToParticipants(players);
-    console.log(
-      `[assignCourtWithPlayers] resolved participants ${(performance.now() - tStart).toFixed(0)}ms`
-    );
+    logger.debug('TennisCommands', 'Resolved participants', {
+      durationMs: (performance.now() - tStart).toFixed(0),
+    });
 
     // 3. Send to API
     const tPost = performance.now();
@@ -478,10 +485,12 @@ export class TennisCommands {
       latitude,
       longitude,
     });
-    console.log(
-      `[assignCourtWithPlayers] POST /assign-court ${(performance.now() - tPost).toFixed(0)}ms`
-    );
-    console.log(`[assignCourtWithPlayers] total ${(performance.now() - tStart).toFixed(0)}ms`);
+    logger.debug('TennisCommands', 'POST /assign-court complete', {
+      durationMs: (performance.now() - tPost).toFixed(0),
+    });
+    logger.debug('TennisCommands', 'assignCourtWithPlayers complete', {
+      durationMs: (performance.now() - tStart).toFixed(0),
+    });
 
     return result;
   }

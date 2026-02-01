@@ -2,6 +2,7 @@
 import React from 'react';
 import { SuccessScreen } from '../../screens';
 import { AlertDisplay, ToastHost } from '../../components';
+import { logger } from '../../../lib/logger.js';
 
 // Platform bridge
 import { getTennisDomain, getTennisNamespaceConfig } from '../../../platform';
@@ -128,7 +129,7 @@ export function SuccessRoute({ app, handlers }) {
         estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
       }
     } catch (e) {
-      console.error('Error calculating wait time:', e);
+      logger.error('SuccessRoute', 'Error calculating wait time', e);
       estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
     }
   }
@@ -157,7 +158,7 @@ export function SuccessRoute({ app, handlers }) {
         onHome={resetForm}
         ballPriceCents={ballPriceCents}
         onPurchaseBalls={async (sessionId, accountId, options) => {
-          console.log('[Ball Purchase] App.jsx handler called', {
+          logger.debug('SuccessRoute', 'Ball purchase handler called', {
             sessionId,
             accountId,
             options,
@@ -168,7 +169,7 @@ export function SuccessRoute({ app, handlers }) {
             splitBalls: options?.splitBalls || false,
             splitAccountIds: options?.splitAccountIds || null,
           });
-          console.log('[Ball Purchase] API result from backend.commands.purchaseBalls', result);
+          logger.debug('SuccessRoute', 'Ball purchase API result', result);
           return result;
         }}
         onLookupMemberAccount={async (memberNumber) => {

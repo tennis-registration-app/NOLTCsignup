@@ -6,6 +6,7 @@
  */
 
 import { API_CONFIG, ENDPOINTS, getDeviceContext } from './apiConfig.js';
+import { logger } from './logger.js';
 
 export class ApiAdapter {
   constructor(options = {}) {
@@ -55,7 +56,7 @@ export class ApiAdapter {
 
       return data;
     } catch (error) {
-      console.error(`API Error [${endpoint}]:`, error);
+      logger.error('ApiAdapter', `API Error [${endpoint}]`, error);
       throw error;
     }
   }
@@ -91,7 +92,7 @@ export class ApiAdapter {
    */
   async get(endpoint) {
     const url = `${this.baseUrl}${endpoint}`;
-    console.log('[ApiAdapter] GET', endpoint);
+    logger.debug('ApiAdapter', 'GET', endpoint);
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -100,7 +101,7 @@ export class ApiAdapter {
       },
     });
     const data = await response.json();
-    console.log('[ApiAdapter] GET response ok:', data.ok);
+    logger.debug('ApiAdapter', 'GET response ok', data.ok);
     return data;
   }
 
@@ -119,7 +120,7 @@ export class ApiAdapter {
       device_id: deviceId,
       device_type: deviceType,
     };
-    console.log(`[ApiAdapter] POST ${endpoint}`);
+    logger.debug('ApiAdapter', `POST ${endpoint}`);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -130,7 +131,7 @@ export class ApiAdapter {
     });
     const data = await response.json();
     if (!data.ok) {
-      console.error(`[ApiAdapter] POST ${endpoint} failed:`, data);
+      logger.error('ApiAdapter', `POST ${endpoint} failed`, data);
     }
     return data;
   }
@@ -406,13 +407,13 @@ export class ApiAdapter {
     if (key === 'tennisData' || key === 'TENNIS_DATA') {
       return this._getLegacyDataFormat();
     }
-    console.warn(`ApiAdapter.read() called with unknown key: ${key}`);
+    logger.warn('ApiAdapter', `read() called with unknown key: ${key}`);
     return null;
   }
 
   async write(key, data) {
     // For now, log a warning - writes should use specific methods
-    console.warn(`ApiAdapter.write() called - use specific methods instead. Key: ${key}`);
+    logger.warn('ApiAdapter', `write() called - use specific methods instead. Key: ${key}`);
     return data;
   }
 
@@ -421,7 +422,7 @@ export class ApiAdapter {
   }
 
   async saveData(data) {
-    console.warn('ApiAdapter.saveData() called - use specific methods instead');
+    logger.warn('ApiAdapter', 'saveData() called - use specific methods instead');
     return data;
   }
 

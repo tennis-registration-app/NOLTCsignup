@@ -3,6 +3,7 @@ import React from 'react';
 import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
 import { API_CONFIG } from '../../../lib/apiConfig.js';
+import { logger } from '../../../lib/logger.js';
 
 // Platform bridge
 import { getTennisUI } from '../../../platform';
@@ -110,7 +111,7 @@ export function CourtRoute({ app, handlers }) {
 
   const showCourtTiles = computedAvailableCourts.length > 0;
 
-  console.log('[COURT SCREEN] Debug:', {
+  logger.debug('CourtRoute', 'Debug', {
     hasWaiters,
     hasWaitlistPriority,
     selectableLength: selectable.length,
@@ -158,7 +159,7 @@ export function CourtRoute({ app, handlers }) {
           onScan={onQRScanToken}
           onClose={onQRScannerClose}
           onError={(err) => {
-            console.error('[Mobile] QR scanner error:', err);
+            logger.error('CourtRoute', 'QR scanner error', err);
           }}
         />
       )}
@@ -210,15 +211,16 @@ export function CourtRoute({ app, handlers }) {
                 });
                 // If undo failed with conflict, fall back to clearCourt
                 if (!undoResult.ok) {
-                  console.warn(
-                    '[Displacement] Undo returned conflict, falling back to clearCourt:',
+                  logger.warn(
+                    'CourtRoute',
+                    'Undo returned conflict, falling back to clearCourt',
                     undoResult
                   );
                   await clearCourt(justAssignedCourt, 'Bumped');
                 }
                 // If ok: true, the undo endpoint already ended the takeover session - no clearCourt needed
               } catch (err) {
-                console.error('[Displacement] Undo takeover failed:', err);
+                logger.error('CourtRoute', 'Undo takeover failed', err);
                 // Fallback: just clear the court if undo fails
                 await clearCourt(justAssignedCourt, 'Bumped');
               }
@@ -228,12 +230,10 @@ export function CourtRoute({ app, handlers }) {
             }
             setDisplacement(null); // Clear ONLY after court change is complete
           }
-          console.log(
-            '[Change Court Debug] availableCourts at selection:',
-            computedAvailableCourts,
-            'length:',
-            computedAvailableCourts.length
-          );
+          logger.debug('CourtRoute', 'availableCourts at selection', {
+            courts: computedAvailableCourts,
+            length: computedAvailableCourts.length,
+          });
           await assignCourtToGroup(courtNum, computedAvailableCourts.length);
           // setDisplacement(null) removed from here - it was clearing the state prematurely
           setIsChangingCourt(false);
@@ -256,7 +256,7 @@ export function CourtRoute({ app, handlers }) {
           }
         }}
         onAssignNext={async () => {
-          console.log('[ASSIGN NEXT] Button clicked');
+          logger.debug('CourtRoute', 'ASSIGN NEXT button clicked');
           try {
             // Get current board state
             const board = await backend.queries.getBoard();
@@ -293,7 +293,7 @@ export function CourtRoute({ app, handlers }) {
               showAlertMessage(res?.message || 'Failed assigning next');
             }
           } catch (err) {
-            console.error('[ASSIGN NEXT] Error:', err);
+            logger.error('CourtRoute', 'ASSIGN NEXT error', err);
             showAlertMessage(err.message || 'Failed assigning next');
           }
         }}
@@ -309,7 +309,7 @@ export function CourtRoute({ app, handlers }) {
               saveCourtData(goBackData);
               setOriginalCourtData(null);
             } catch (error) {
-              console.error('Failed to restore court:', error);
+              logger.error('CourtRoute', 'Failed to restore court', error);
             }
           }
         }}

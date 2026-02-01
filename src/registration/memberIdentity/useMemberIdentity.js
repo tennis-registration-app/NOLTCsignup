@@ -10,6 +10,7 @@
 
 import { useReducer, useCallback, useRef } from 'react';
 import { memberIdentityReducer, initialMemberIdentityState } from './memberIdentityReducer.js';
+import { logger } from '../../lib/logger.js';
 
 // TTL for frequent partners cache (10 minutes)
 const FREQUENT_PARTNERS_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -44,14 +45,14 @@ export function useMemberIdentity({ backend }) {
   // ============================================
   const fetchFrequentPartners = useCallback(
     async (memberId) => {
-      console.log('[FP] fetchFrequentPartners called', {
+      logger.debug('MemberIdentity', 'fetchFrequentPartners called', {
         memberId,
         cacheState: frequentPartnersCacheRef.current[memberId],
         timestamp: Date.now(),
       });
 
       if (!memberId || !backend?.queries) {
-        console.log('[FP] No memberId or backend, returning');
+        logger.debug('MemberIdentity', 'No memberId or backend, returning');
         return;
       }
 
@@ -60,17 +61,17 @@ export function useMemberIdentity({ backend }) {
       const now = Date.now();
 
       if (cached?.status === 'loading') {
-        console.log('[FP] Already loading, skipping');
+        logger.debug('MemberIdentity', 'Already loading, skipping');
         return; // Already in flight
       }
       if (cached?.status === 'ready' && now - cached.ts < FREQUENT_PARTNERS_CACHE_TTL_MS) {
-        console.log('[FP] Cache hit, using cached data');
+        logger.debug('MemberIdentity', 'Cache hit, using cached data');
         setFrequentPartners(cached.data);
         return; // Use cached data (still fresh)
       }
 
       // Mark as loading before fetch starts
-      console.log('[FP] Starting fetch, marking as loading');
+      logger.debug('MemberIdentity', 'Starting fetch, marking as loading');
       frequentPartnersCacheRef.current[memberId] = { status: 'loading', ts: Date.now() };
       setFrequentPartnersLoading(true);
 
@@ -100,7 +101,7 @@ export function useMemberIdentity({ backend }) {
           setFrequentPartnersLoading(false);
         }
       } catch (error) {
-        console.error('Failed to fetch frequent partners:', error);
+        logger.error('MemberIdentity', 'Failed to fetch frequent partners', error);
         frequentPartnersCacheRef.current[memberId] = { status: 'error', ts: Date.now() };
         setFrequentPartners([]);
         setFrequentPartnersLoading(false);

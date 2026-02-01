@@ -1,6 +1,7 @@
 /**
  * @fileoverview TennisDirectory - Member lookup operations
  */
+import { logger } from '../../lib/logger.js';
 
 export class TennisDirectory {
   constructor(apiAdapter) {
@@ -22,7 +23,7 @@ export class TennisDirectory {
     const response = await this.api.get(`/get-members?search=${encodeURIComponent(query)}`);
 
     if (!response.ok) {
-      console.error('Member search failed:', response.message);
+      logger.error('TennisDirectory', 'Member search failed', response.message);
       return [];
     }
 
@@ -45,15 +46,15 @@ export class TennisDirectory {
       `/get-members?member_number=${encodeURIComponent(memberNumber)}`
     );
 
-    console.log('[TennisDirectory] API response:', response);
+    logger.debug('TennisDirectory', 'API response', response);
 
     if (!response.ok) {
-      console.error('Account lookup failed:', response.message);
+      logger.error('TennisDirectory', 'Account lookup failed', response.message);
       return [];
     }
 
     const members = (response.members || []).map((m) => this._normalizeMember(m));
-    console.log('[TennisDirectory] Normalized members:', members);
+    logger.debug('TennisDirectory', 'Normalized members', members);
 
     // Cache result
     this._cache.set(memberNumber, { members, timestamp: Date.now() });
@@ -75,7 +76,7 @@ export class TennisDirectory {
     const response = await this.api.get('/get-members');
 
     if (!response.ok) {
-      console.error('Get all members failed:', response.message);
+      logger.error('TennisDirectory', 'Get all members failed', response.message);
       return [];
     }
 
@@ -121,18 +122,20 @@ export class TennisDirectory {
 
     // Single member on account - use it with warning
     if (members.length === 1) {
-      console.warn(
-        `[TennisDirectory] Using only member on account: ${members[0].displayName} (searched: ${name})`
-      );
+      logger.warn('TennisDirectory', 'Using only member on account', {
+        found: members[0].displayName,
+        searched: name,
+      });
       return members[0];
     }
 
     // Multiple members, no match - use primary if available
     const primary = members.find((m) => m.isPrimary);
     if (primary) {
-      console.warn(
-        `[TennisDirectory] Name mismatch! Using primary: ${primary.displayName} (searched: ${name})`
-      );
+      logger.warn('TennisDirectory', 'Name mismatch! Using primary', {
+        found: primary.displayName,
+        searched: name,
+      });
       return primary;
     }
 

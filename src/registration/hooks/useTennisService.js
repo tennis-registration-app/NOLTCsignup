@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getTennisService } from '../services/index.js';
+import { logger } from '../../lib/logger.js';
 
 export function useTennisService(options = {}) {
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +48,7 @@ export function useTennisService(options = {}) {
         service.addListener((change) => {
           if (!mountedRef.current) return;
 
-          console.log('Service change:', change.type);
+          logger.debug('TennisService', 'Service change', change.type);
           setLastUpdate(Date.now());
 
           // Refresh the relevant data
@@ -63,7 +64,7 @@ export function useTennisService(options = {}) {
           }
         });
       } catch (err) {
-        console.error('Failed to initialize tennis service:', err);
+        logger.error('TennisService', 'Failed to initialize', err);
         if (mountedRef.current) {
           setError(err.message);
           setIsLoading(false);
@@ -98,7 +99,7 @@ export function useTennisService(options = {}) {
       const result = await serviceRef.current.assignCourt(courtNumber, players, options);
       return result;
     } catch (err) {
-      console.error('Failed to assign court:', err);
+      logger.error('TennisService', 'Failed to assign court', err);
       throw err;
     }
   }, []);
@@ -110,7 +111,7 @@ export function useTennisService(options = {}) {
       const result = await serviceRef.current.clearCourt(courtNumber, options);
       return result;
     } catch (err) {
-      console.error('Failed to clear court:', err);
+      logger.error('TennisService', 'Failed to clear court', err);
       throw err;
     }
   }, []);
@@ -126,7 +127,7 @@ export function useTennisService(options = {}) {
       const result = await serviceRef.current.addToWaitlist(players, options);
       return result;
     } catch (err) {
-      console.error('Failed to add to waitlist:', err);
+      logger.error('TennisService', 'Failed to add to waitlist', err);
       throw err;
     }
   }, []);
@@ -138,7 +139,7 @@ export function useTennisService(options = {}) {
       const result = await serviceRef.current.removeFromWaitlist(waitlistId);
       return result;
     } catch (err) {
-      console.error('Failed to remove from waitlist:', err);
+      logger.error('TennisService', 'Failed to remove from waitlist', err);
       throw err;
     }
   }, []);
@@ -150,7 +151,7 @@ export function useTennisService(options = {}) {
       const result = await serviceRef.current.assignFromWaitlist(waitlistId, courtNumber, options);
       return result;
     } catch (err) {
-      console.error('Failed to assign from waitlist:', err);
+      logger.error('TennisService', 'Failed to assign from waitlist', err);
       throw err;
     }
   }, []);
@@ -188,7 +189,7 @@ export function useTennisService(options = {}) {
         setLastUpdate(Date.now());
       }
     } catch (err) {
-      console.error('Failed to refresh:', err);
+      logger.error('TennisService', 'Failed to refresh', err);
     }
   }, []);
 
