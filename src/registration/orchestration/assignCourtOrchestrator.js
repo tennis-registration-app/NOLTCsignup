@@ -1,3 +1,5 @@
+import { logger } from '../../lib/logger.js';
+
 /**
  * Assign Court Orchestrator
  * Moved from App.jsx — WP5.5 facade extraction
@@ -107,14 +109,14 @@ export async function assignCourtToGroupOrchestrated(
   // ===== ORIGINAL FUNCTION BODY (VERBATIM) =====
   // Prevent double-submit
   if (isAssigning) {
-    console.log('⚠️ Assignment already in progress, ignoring duplicate request');
+    logger.debug('AssignCourt', 'Assignment already in progress, ignoring duplicate request');
     return;
   }
 
   // Mobile: Use preselected court if in mobile flow
   if (mobileFlow && preselectedCourt && !courtNumber) {
     courtNumber = preselectedCourt;
-    console.log('Mobile: Using preselected court', courtNumber);
+    logger.debug('AssignCourt', 'Mobile: Using preselected court', courtNumber);
   }
 
   // Check if club is open (using API operating hours when available)
@@ -236,7 +238,7 @@ export async function assignCourtToGroupOrchestrated(
     }
   }
 
-  console.log('🔵 UI preparing to assignCourt with:', {
+  logger.debug('AssignCourt', 'UI preparing to assignCourt with', {
     courtNumber,
     group,
     duration,
@@ -247,7 +249,7 @@ export async function assignCourtToGroupOrchestrated(
     // Get court UUID for the waitlist assignment
     const waitlistCourt = courts.find((c) => c.number === courtNumber);
     if (!waitlistCourt) {
-      console.error('❌ Court not found for waitlist assignment:', courtNumber);
+      logger.error('AssignCourt', 'Court not found for waitlist assignment', courtNumber);
       Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
       return;
     }
@@ -261,7 +263,7 @@ export async function assignCourtToGroupOrchestrated(
         courtId: waitlistCourt.id,
         ...(waitlistMobileLocation || {}),
       });
-      console.log('✅ Waitlist group assigned result:', result);
+      logger.debug('AssignCourt', 'Waitlist group assigned result', result);
 
       if (!result.ok) {
         // Handle "Court occupied" race condition
@@ -290,7 +292,10 @@ export async function assignCourtToGroupOrchestrated(
       sessionStorage.removeItem('mobile-waitlist-entry-id');
 
       // Board subscription will auto-refresh
-      console.log('✅ Waitlist assignment successful, waiting for board refresh signal');
+      logger.debug(
+        'AssignCourt',
+        'Waitlist assignment successful, waiting for board refresh signal'
+      );
 
       // Update currentGroup with participant details for ball purchases
       if (result.session?.participantDetails) {
@@ -331,7 +336,7 @@ export async function assignCourtToGroupOrchestrated(
 
       return;
     } catch (error) {
-      console.error('❌ assignFromWaitlist failed:', error);
+      logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       setCurrentWaitlistEntryId(null);
       Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
       return;
@@ -341,7 +346,7 @@ export async function assignCourtToGroupOrchestrated(
   // Get court UUID from court number
   const court = courts.find((c) => c.number === courtNumber);
   if (!court) {
-    console.error('❌ Court not found for number:', courtNumber);
+    logger.error('AssignCourt', 'Court not found for number', courtNumber);
     Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
     return;
   }
@@ -353,7 +358,7 @@ export async function assignCourtToGroupOrchestrated(
   const mobileLocation = await getMobileGeolocation();
 
   const assignStartTime = performance.now();
-  console.log('🔵 [T+0ms] Calling backend.commands.assignCourtWithPlayers:', {
+  logger.debug('AssignCourt', '[T+0ms] Calling backend.commands.assignCourtWithPlayers', {
     courtId: court.id,
     courtNumber: court.number,
     groupType,
@@ -371,10 +376,10 @@ export async function assignCourtToGroupOrchestrated(
       ...(mobileLocation || {}), // Spread latitude/longitude if available
     });
     const apiDuration = Math.round(performance.now() - assignStartTime);
-    console.log(`✅ [T+${apiDuration}ms] Court assigned result:`, result);
+    logger.debug('AssignCourt', `[T+${apiDuration}ms] Court assigned result`, result);
   } catch (error) {
     const apiDuration = Math.round(performance.now() - assignStartTime);
-    console.error(`❌ [T+${apiDuration}ms] assignCourtWithPlayers threw error:`, error);
+    logger.error('AssignCourt', `[T+${apiDuration}ms] assignCourtWithPlayers threw error`, error);
     Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', {
       type: 'error',
     });
@@ -383,7 +388,10 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   if (!result.ok) {
-    console.log('❌ assignCourtWithPlayers returned ok:false:', result.code, result.message);
+    logger.debug('AssignCourt', 'assignCourtWithPlayers returned ok:false', {
+      code: result.code,
+      message: result.message,
+    });
     // Handle "Court occupied" race condition
     if (result.code === 'COURT_OCCUPIED') {
       Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
@@ -408,7 +416,10 @@ export async function assignCourtToGroupOrchestrated(
 
   // Success! Board subscription will auto-refresh from signal
   const successTime = Math.round(performance.now() - assignStartTime);
-  console.log(`✅ [T+${successTime}ms] Court assignment successful, updating UI state...`);
+  logger.debug(
+    'AssignCourt',
+    `[T+${successTime}ms] Court assignment successful, updating UI state...`
+  );
 
   // Determine if court change should be allowed
   // If only one court was selectable when user chose, no change option
@@ -440,7 +451,7 @@ export async function assignCourtToGroupOrchestrated(
   setShowSuccess(true);
 
   const uiUpdateTime = Math.round(performance.now() - assignStartTime);
-  console.log(`✅ [T+${uiUpdateTime}ms] UI state updated, showSuccess=true`);
+  logger.debug('AssignCourt', `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`);
 
   // Mobile: trigger success signal
   dbg('Registration: Checking mobile success signal...', !!window.UI?.__mobileSendSuccess__);

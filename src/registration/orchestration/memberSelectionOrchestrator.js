@@ -1,3 +1,5 @@
+import { logger } from '../../lib/logger.js';
+
 /**
  * Member Selection Orchestrators
  * Moved from App.jsx — WP5.5 facade extraction
@@ -87,9 +89,13 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     unclearedStreak: suggestion.member.unclearedStreak || 0,
   };
 
-  console.log('[handleSuggestionClick] suggestion.member:', suggestion.member);
-  console.log('[handleSuggestionClick] enrichedMember:', enrichedMember);
-  console.log('[handleSuggestionClick] unclearedStreak:', enrichedMember?.unclearedStreak);
+  logger.debug('MemberSelection', '[handleSuggestionClick] suggestion.member', suggestion.member);
+  logger.debug('MemberSelection', '[handleSuggestionClick] enrichedMember', enrichedMember);
+  logger.debug(
+    'MemberSelection',
+    '[handleSuggestionClick] unclearedStreak',
+    enrichedMember?.unclearedStreak
+  );
 
   // Early duplicate guard - if player is already playing/waiting, stop here
   if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
@@ -149,7 +155,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     // API-specific fields
     accountId: enrichedMember.accountId,
   };
-  console.log('🔵 Adding player to group:', newPlayer);
+  logger.debug('MemberSelection', 'Adding player to group', newPlayer);
 
   // Track registrant's uncleared streak (first player added is the registrant)
   // Fetch fresh member data to get current streak (cached apiMembers may be stale)
@@ -169,10 +175,10 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
         );
         const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
         currentStreak = freshMember?.unclearedStreak || freshMember?.uncleared_streak || 0;
-        console.log('📊 Fresh member data:', freshMember);
-        console.log('📊 Registrant streak (fresh):', currentStreak);
+        logger.debug('MemberSelection', 'Fresh member data', freshMember);
+        logger.debug('MemberSelection', 'Registrant streak (fresh)', currentStreak);
       } catch (error) {
-        console.error('📊 Failed to fetch fresh streak, using cached:', error);
+        logger.error('MemberSelection', 'Failed to fetch fresh streak, using cached', error);
         currentStreak = enrichedMember.unclearedStreak || 0;
       }
       setRegistrantStreak(currentStreak);
@@ -333,7 +339,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
       winRate: enrichedMember.winRate || 0.5,
       accountId: enrichedMember.accountId,
     };
-    console.log('🔵 Adding player to group (add player flow):', newPlayer);
+    logger.debug('MemberSelection', 'Adding player to group (add player flow)', newPlayer);
     setCurrentGroup([...currentGroup, newPlayer]);
     setAddPlayerSearch('');
     setShowAddPlayer(false);

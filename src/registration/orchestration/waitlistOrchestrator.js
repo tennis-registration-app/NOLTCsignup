@@ -25,6 +25,8 @@
  * Returns: void (same as original — may have early returns)
  */
 
+import { logger } from '../../lib/logger.js';
+
 /* global Tennis */
 
 export async function sendGroupToWaitlistOrchestrated(group, deps) {
@@ -49,21 +51,22 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
   // ===== ORIGINAL FUNCTION BODY (VERBATIM) =====
   // Prevent double-submit
   if (isJoiningWaitlist) {
-    console.log('⚠️ Waitlist join already in progress, ignoring duplicate request');
+    logger.debug('Waitlist', 'Waitlist join already in progress, ignoring duplicate request');
     return;
   }
 
   const traceId = `WL-${Date.now()}`;
   try {
-    console.log(`🔴🔴🔴 [${traceId}] sendGroupToWaitlist START`);
-    console.log(`🔴 [${traceId}] Raw group argument:`, JSON.stringify(group, null, 2));
-    console.log(
-      `🔴 [${traceId}] Current currentGroup state:`,
+    logger.debug('Waitlist', `[${traceId}] sendGroupToWaitlist START`);
+    logger.debug('Waitlist', `[${traceId}] Raw group argument`, JSON.stringify(group, null, 2));
+    logger.debug(
+      'Waitlist',
+      `[${traceId}] Current currentGroup state`,
       JSON.stringify(currentGroup, null, 2)
     );
 
     if (!group || !group.length) {
-      console.warn('[waitlist] no players selected');
+      logger.warn('Waitlist', 'no players selected');
       return;
     }
 
@@ -77,8 +80,9 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
           ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
           ...(p.sponsor && { sponsor: p.sponsor }),
         };
-        console.log(
-          `🔴 [${traceId}] Mapping player: ${p.name} (id=${p.id}, memberNumber=${p.memberNumber}) -> ${mapped.name} (id=${mapped.id}, memberNumber=${mapped.memberNumber})`
+        logger.debug(
+          'Waitlist',
+          `[${traceId}] Mapping player: ${p.name} (id=${p.id}, memberNumber=${p.memberNumber}) -> ${mapped.name} (id=${mapped.id}, memberNumber=${mapped.memberNumber})`
         );
         return mapped;
       })
@@ -86,13 +90,15 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
 
     const guests = group.filter((p) => p.isGuest).length;
 
-    console.log(`🔴 [${traceId}] Final players to send:`, JSON.stringify(players, null, 2));
-    console.log(
-      '[waitlist] calling addToWaitlist with',
-      players.map((p) => p.name),
-      'guests:',
-      guests
+    logger.debug(
+      'Waitlist',
+      `[${traceId}] Final players to send`,
+      JSON.stringify(players, null, 2)
     );
+    logger.debug('Waitlist', 'calling addToWaitlist with', {
+      players: players.map((p) => p.name),
+      guests,
+    });
 
     // Validation check
     const validation = validateGroupCompat(players, guests);
@@ -122,7 +128,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
     const mobileLocation = await getMobileGeolocation();
 
     const waitlistStartTime = performance.now();
-    console.log('[waitlist] [T+0ms] Calling backend.commands.joinWaitlistWithPlayers:', {
+    logger.debug('Waitlist', '[T+0ms] Calling backend.commands.joinWaitlistWithPlayers', {
       playerCount: players.length,
       groupType,
       players: players.map((p) => `${p.name}(mn=${p.memberNumber})`),
@@ -137,48 +143,41 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
     });
     const apiDuration = Math.round(performance.now() - waitlistStartTime);
     setIsJoiningWaitlist(false);
-    console.log(`[waitlist] [T+${apiDuration}ms] Result:`, result);
-    console.log(`[waitlist] [T+${apiDuration}ms] result.data:`, result.data);
-    console.log(`[waitlist] [T+${apiDuration}ms] mobileFlow:`, mobileFlow);
+    logger.debug('Waitlist', `[T+${apiDuration}ms] Result`, result);
+    logger.debug('Waitlist', `[T+${apiDuration}ms] result.data`, result.data);
+    logger.debug('Waitlist', `[T+${apiDuration}ms] mobileFlow`, mobileFlow);
 
     if (result.ok) {
       // Extract waitlist entry info from API response
       const waitlistEntry = result.data?.waitlist;
       const entryId = waitlistEntry?.id;
       const position = waitlistEntry?.position || result.position || 1;
-      console.log(
-        `[waitlist] [T+${apiDuration}ms] Extracted - entryId:`,
-        entryId,
-        'position:',
-        position
-      );
+      logger.debug('Waitlist', `[T+${apiDuration}ms] Extracted`, { entryId, position });
 
       // Store the position from response for the success screen
       if (position) {
         setWaitlistPosition(position);
-        console.log(`[waitlist] [T+${apiDuration}ms] Position:`, position);
+        logger.debug('Waitlist', `[T+${apiDuration}ms] Position`, position);
       }
 
       // Store waitlist entry ID in sessionStorage for mobile users
       // This enables auto-assignment when they tap a court
       if (entryId && mobileFlow) {
         sessionStorage.setItem('mobile-waitlist-entry-id', entryId);
-        console.log(`[waitlist] [T+${apiDuration}ms] Stored mobile waitlist entry ID:`, entryId);
+        logger.debug('Waitlist', `[T+${apiDuration}ms] Stored mobile waitlist entry ID`, entryId);
 
         // Notify parent (MobileBridge) about waitlist join so it can broadcast state
         try {
           window.parent.postMessage({ type: 'waitlist:joined', entryId }, '*');
-          console.log(`[waitlist] [T+${apiDuration}ms] Sent waitlist:joined to parent`);
+          logger.debug('Waitlist', `[T+${apiDuration}ms] Sent waitlist:joined to parent`);
         } catch (e) {
-          console.warn('[waitlist] Failed to notify parent of waitlist join:', e);
+          logger.warn('Waitlist', 'Failed to notify parent of waitlist join', e);
         }
       } else {
-        console.log(
-          `[waitlist] [T+${apiDuration}ms] NOT storing entry ID - entryId:`,
+        logger.debug('Waitlist', `[T+${apiDuration}ms] NOT storing entry ID`, {
           entryId,
-          'mobileFlow:',
-          mobileFlow
-        );
+          mobileFlow,
+        });
       }
 
       // Toast and rely on board subscription for UI refresh
@@ -186,9 +185,12 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
         type: 'success',
       });
       const successTime = Math.round(performance.now() - waitlistStartTime);
-      console.log(`[waitlist] [T+${successTime}ms] joined ok, UI updated`);
+      logger.debug('Waitlist', `[T+${successTime}ms] joined ok, UI updated`);
     } else {
-      console.error(`[waitlist] [T+${apiDuration}ms] Failed:`, result.code, result.message);
+      logger.error('Waitlist', `[T+${apiDuration}ms] Failed`, {
+        code: result.code,
+        message: result.message,
+      });
       // Handle mobile location errors - offer QR fallback
       if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
         setGpsFailedPrompt(true);
@@ -198,7 +200,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
     }
   } catch (e) {
     setIsJoiningWaitlist(false);
-    console.error('[waitlist] failed:', e);
+    logger.error('Waitlist', 'failed', e);
     Tennis?.UI?.toast?.('Could not join waitlist', { type: 'error' });
   }
   // ===== END ORIGINAL FUNCTION BODY =====

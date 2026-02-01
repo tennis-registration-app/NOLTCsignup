@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { getTennisService } from '../../services/index.js';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * useRegistrationDataLayer
@@ -51,23 +52,22 @@ export function useRegistrationDataLayer({
         : selection.primaryCourts;
       const selectableNumbers = selectableCourts.map((c) => c.number);
       setAvailableCourts(selectableNumbers);
-      console.log(
-        '[Registration] Initial load complete, waitlist length:',
-        initialData.waitlist?.length
-      );
+      logger.debug('DataLayer', 'Initial load complete', {
+        waitlistLength: initialData.waitlist?.length,
+      });
       return updatedData;
     } catch (error) {
-      console.error('Failed to load data:', error);
+      logger.error('DataLayer', 'Failed to load data', error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getDataService]);
 
   // VERBATIM COPY: subscription effect (lines 700-747) — KEEP [] DEPS EXACTLY
   useEffect(() => {
-    console.log('[TennisBackend] Setting up board subscription...');
+    logger.debug('DataLayer', '[TennisBackend] Setting up board subscription...');
     const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
       const board = domainBoard;
-      console.log('[TennisBackend] Board update received:', {
+      logger.debug('DataLayer', '[TennisBackend] Board update received', {
         serverNow: board.serverNow,
         courts: board.courts?.length,
         waitlist: board.waitlist?.length,
@@ -86,8 +86,9 @@ export function useRegistrationDataLayer({
         .filter((c) => (c.isAvailable || c.isOvertime) && !c.isBlocked)
         .map((c) => c.number);
       setAvailableCourts(selectable);
-      console.log(
-        '[Registration CTA Debug] Courts from API:',
+      logger.debug(
+        'DataLayer',
+        '[Registration CTA Debug] Courts from API',
         board.courts?.map((c) => ({
           num: c.number,
           isBlocked: c.isBlocked,
@@ -97,9 +98,9 @@ export function useRegistrationDataLayer({
         }))
       );
     });
-    console.log('[TennisBackend] Board subscription active');
+    logger.debug('DataLayer', '[TennisBackend] Board subscription active');
     return () => {
-      console.log('[TennisBackend] Unsubscribing from board updates');
+      logger.debug('DataLayer', '[TennisBackend] Unsubscribing from board updates');
       unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

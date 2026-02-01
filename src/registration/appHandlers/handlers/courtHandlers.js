@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * Court Handlers
@@ -69,7 +70,7 @@ export function useCourtHandlers(deps) {
   const saveCourtData = useCallback(async (_data) => {
     // TennisDataService.saveData removed — API is source of truth
     // Callers should migrate to TennisCommands for write operations
-    console.warn('[saveCourtData] DEPRECATED: localStorage persistence removed. Use API commands.');
+    logger.warn('CourtHandlers', 'DEPRECATED: localStorage persistence removed. Use API commands.');
     return true; // Return success to avoid breaking callers during migration
   }, []);
 
@@ -83,7 +84,7 @@ export function useCourtHandlers(deps) {
     ) => {
       const Av = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
       if (!Av?.getSelectableCourtsStrict || !Av?.getFreeCourtsInfo) {
-        console.warn('Availability functions not available');
+        logger.warn('CourtHandlers', 'Availability functions not available');
         return [];
       }
 
@@ -121,7 +122,7 @@ export function useCourtHandlers(deps) {
 
         return filtered;
       } catch (error) {
-        console.error('Error in getAvailableCourts:', error);
+        logger.error('CourtHandlers', 'Error in getAvailableCourts', error);
         return [];
       }
     },
@@ -134,11 +135,11 @@ export function useCourtHandlers(deps) {
       // Get court UUID from court number
       const court = data.courts.find((c) => c.number === courtNumber);
       if (!court) {
-        console.error('[clearViaService] Court not found for number:', courtNumber);
+        logger.error('CourtHandlers', '[clearViaService] Court not found for number', courtNumber);
         return { success: false, error: 'Court not found' };
       }
 
-      console.log('[clearViaService] Using TennisBackend for court:', court.id);
+      logger.debug('CourtHandlers', '[clearViaService] Using TennisBackend for court', court.id);
 
       try {
         const result = await backend.commands.endSession({
@@ -152,7 +153,7 @@ export function useCourtHandlers(deps) {
           error: result.ok ? undefined : result.message,
         };
       } catch (error) {
-        console.error('[clearViaService] Error:', error);
+        logger.error('CourtHandlers', '[clearViaService] Error', error);
         return { success: false, error: error.message || 'Failed to clear court' };
       }
     },
@@ -162,7 +163,8 @@ export function useCourtHandlers(deps) {
   // VERBATIM COPY: clearCourt from line ~397
   const clearCourt = useCallback(
     async (courtNumber, clearReason = 'Cleared') => {
-      console.log(
+      logger.debug(
+        'CourtHandlers',
         `[Registration UI] clearCourt called for court ${courtNumber} with reason: ${clearReason}`
       );
 
@@ -171,7 +173,7 @@ export function useCourtHandlers(deps) {
         window.Tennis?.UI?.toast(res?.error || 'Failed to clear court');
         return;
       }
-      console.log(`Court ${courtNumber} cleared successfully`);
+      logger.debug('CourtHandlers', `Court ${courtNumber} cleared successfully`);
       // success UI stays the same (thanks/close), no manual writes needed—
       // DataStore.set inside the service will emit both events.
     },

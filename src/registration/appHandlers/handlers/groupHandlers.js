@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 // Import validation services
 import { DataValidation } from '@lib';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * Group Handlers
@@ -84,11 +85,15 @@ export function useGroupHandlers(deps) {
   // VERBATIM COPY: addFrequentPartner from line ~385
   const addFrequentPartner = useCallback(
     (player) => {
-      console.log('🔵 addFrequentPartner called with:', JSON.stringify(player, null, 2));
+      logger.debug(
+        'GroupHandlers',
+        'addFrequentPartner called with',
+        JSON.stringify(player, null, 2)
+      );
 
       // Validate player object
       if (!DataValidation.isValidPlayer(player)) {
-        console.log('🔴 Invalid player data - validation failed:', {
+        logger.debug('GroupHandlers', 'Invalid player data - validation failed', {
           player,
           hasId: !!player?.id,
           idType: typeof player?.id,
@@ -138,7 +143,7 @@ export function useGroupHandlers(deps) {
         winRate: enriched.winRate || 0.5,
         accountId: enriched.accountId, // Include accountId for API backend
       };
-      console.log('🔵 Adding frequent partner to group:', newPlayer);
+      logger.debug('GroupHandlers', 'Adding frequent partner to group', newPlayer);
       setCurrentGroup([...currentGroup, newPlayer]);
     },
     [
@@ -278,12 +283,16 @@ export function useGroupHandlers(deps) {
 
   // VERBATIM COPY: handleGroupSelectCourt from line ~851
   const handleGroupSelectCourt = useCallback(() => {
-    console.log('[handleGroupSelectCourt] registrantStreak:', registrantStreak);
-    console.log('[handleGroupSelectCourt] streakAcknowledged:', streakAcknowledged);
+    logger.debug('GroupHandlers', '[handleGroupSelectCourt] registrantStreak', registrantStreak);
+    logger.debug(
+      'GroupHandlers',
+      '[handleGroupSelectCourt] streakAcknowledged',
+      streakAcknowledged
+    );
 
     // Check if streak >= 3 and not yet acknowledged
     if (registrantStreak >= 3 && !streakAcknowledged) {
-      console.log('[handleGroupSelectCourt] Showing streak modal');
+      logger.debug('GroupHandlers', '[handleGroupSelectCourt] Showing streak modal');
       setShowStreakModal(true);
       return;
     }
@@ -329,7 +338,7 @@ export function useGroupHandlers(deps) {
       await sendGroupToWaitlist(currentGroup);
       setShowSuccess(true);
     } catch (error) {
-      console.error('[handleGroupJoinWaitlist] Error:', error);
+      logger.error('GroupHandlers', '[handleGroupJoinWaitlist] Error', error);
     }
     // Mobile: trigger success signal
     if (window.UI?.__mobileSendSuccess__) {

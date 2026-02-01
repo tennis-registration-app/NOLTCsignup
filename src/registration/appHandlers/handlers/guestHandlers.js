@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * Guest Handlers
@@ -167,7 +168,7 @@ export function useGuestHandlers(deps) {
       amount: 15.0,
     };
 
-    console.log('🎾 Creating guest charge:', guestCharge);
+    logger.debug('GuestHandlers', 'Creating guest charge', guestCharge);
 
     try {
       // Get existing charges from localStorage
@@ -177,18 +178,18 @@ export function useGuestHandlers(deps) {
       const existingCharges = existingChargesFromStorage
         ? JSON.parse(existingChargesFromStorage)
         : [];
-      console.log('📋 Existing charges before save:', existingCharges.length);
+      logger.debug('GuestHandlers', 'Existing charges before save', existingCharges.length);
 
       // Add new charge
       existingCharges.push(guestCharge);
-      console.log('📋 Charges after adding new one:', existingCharges.length);
+      logger.debug('GuestHandlers', 'Charges after adding new one', existingCharges.length);
 
       // Save to localStorage
       localStorage.setItem(
         TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY,
         JSON.stringify(existingCharges)
       );
-      console.log('💾 Guest charge saved to localStorage');
+      logger.debug('GuestHandlers', 'Guest charge saved to localStorage');
 
       // Dispatch event for real-time updates
       window.dispatchEvent(
@@ -196,9 +197,9 @@ export function useGuestHandlers(deps) {
           detail: { source: 'guest-charge' },
         })
       );
-      console.log('📡 Dispatched update event (source=guest-charge)');
+      logger.debug('GuestHandlers', 'Dispatched update event (source=guest-charge)');
     } catch (error) {
-      console.error('❌ Error saving guest charge:', error);
+      logger.error('GuestHandlers', 'Error saving guest charge', error);
     }
 
     // Reset form
