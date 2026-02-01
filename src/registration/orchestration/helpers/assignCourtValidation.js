@@ -4,11 +4,15 @@
  * These helpers are intentionally "dumb": they mirror current v0 logic exactly.
  * NO side effects. NO network. NO timers. NO DOM access.
  *
- * The return shape is:
- *   { ok: true }
- *   { ok: false, kind: string, message: string }
+ * @typedef {Object} GuardResultOk
+ * @property {true} ok
  *
- * The `message` matches v0's toast/alert text exactly for behavior preservation.
+ * @typedef {Object} GuardResultFail
+ * @property {false} ok
+ * @property {string} kind - Error code
+ * @property {{ action: 'toast' | 'alert', args: any[] } | null} ui - UI dispatch info (null = silent)
+ *
+ * @typedef {GuardResultOk | GuardResultFail} GuardResult
  */
 
 /**
@@ -16,13 +20,13 @@
  * v0 location: lines 112-114
  *
  * @param {boolean} isAssigning - Current assignment state from deps
- * @returns {{ ok: true } | { ok: false, kind: string, message: string }}
+ * @returns {GuardResult}
  */
 export function guardNotAssigning(isAssigning) {
   // v0: if (isAssigning) { logger.debug(...); return; }
   // Silent return in v0 (no toast, just log + return)
   if (isAssigning) {
-    return { ok: false, kind: 'ALREADY_ASSIGNING', message: '' };
+    return { ok: false, kind: 'ALREADY_ASSIGNING', ui: null };
   }
   return { ok: true };
 }
@@ -39,7 +43,7 @@ export function guardNotAssigning(isAssigning) {
  * @param {number} params.currentHour - Current hour (0-23)
  * @param {number} params.currentMinutes - Current minute (0-59)
  * @param {number} params.dayOfWeek - Day of week (0=Sunday, 6=Saturday)
- * @returns {{ ok: true } | { ok: false, kind: string, message: string }}
+ * @returns {GuardResult}
  */
 export function guardOperatingHours({ operatingHours, currentHour, currentMinutes, dayOfWeek }) {
   // v0 logic: lines 133-169
@@ -63,7 +67,11 @@ export function guardOperatingHours({ operatingHours, currentHour, currentMinute
       openingTimeString = `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
     } else if (todayHours && isClosed) {
       // v0: Tennis.UI.toast('The club is closed today.', { type: 'warning' });
-      return { ok: false, kind: 'CLUB_CLOSED', message: 'The club is closed today.' };
+      return {
+        ok: false,
+        kind: 'CLUB_CLOSED',
+        ui: { action: 'toast', args: ['The club is closed today.', { type: 'warning' }] },
+      };
     } else {
       // Fallback if no hours found for today - allow registration
       openingTime = 0;
@@ -79,11 +87,12 @@ export function guardOperatingHours({ operatingHours, currentHour, currentMinute
 
   // If too early, show alert and return
   if (currentTime < openingTime) {
-    // v0: Tennis.UI.toast(`The club is not open yet. Court registration will be available at ${openingTimeString}.`, { type: 'warning' });
+    // v0: Tennis.UI.toast(`The club is not open yet...`, { type: 'warning' });
+    const message = `The club is not open yet. Court registration will be available at ${openingTimeString}.`;
     return {
       ok: false,
       kind: 'CLUB_NOT_OPEN',
-      message: `The club is not open yet. Court registration will be available at ${openingTimeString}.`,
+      ui: { action: 'toast', args: [message, { type: 'warning' }] },
     };
   }
 
@@ -97,16 +106,17 @@ export function guardOperatingHours({ operatingHours, currentHour, currentMinute
  * @param {object} params
  * @param {number|null|undefined} params.courtNumber - Selected court number
  * @param {number} params.courtCount - Max court count from CONSTANTS.COURT_COUNT
- * @returns {{ ok: true } | { ok: false, kind: string, message: string }}
+ * @returns {GuardResult}
  */
 export function guardCourtNumber({ courtNumber, courtCount }) {
   // v0: if (!courtNumber || courtNumber < 1 || courtNumber > CONSTANTS.COURT_COUNT)
   if (!courtNumber || courtNumber < 1 || courtNumber > courtCount) {
-    // v0: showAlertMessage(`Invalid court number. Please select a court between 1 and ${CONSTANTS.COURT_COUNT}.`);
+    // v0: showAlertMessage(`Invalid court number...`);
+    const message = `Invalid court number. Please select a court between 1 and ${courtCount}.`;
     return {
       ok: false,
       kind: 'INVALID_COURT',
-      message: `Invalid court number. Please select a court between 1 and ${courtCount}.`,
+      ui: { action: 'alert', args: [message] },
     };
   }
   return { ok: true };
@@ -121,16 +131,17 @@ export function guardCourtNumber({ courtNumber, courtCount }) {
  *
  * @param {object} params
  * @param {Array|null|undefined} params.currentGroup - Current player group
- * @returns {{ ok: true } | { ok: false, kind: string, message: string }}
+ * @returns {GuardResult}
  */
 export function guardGroup({ currentGroup }) {
   // v0: if (!currentGroup || currentGroup.length === 0)
   if (!currentGroup || currentGroup.length === 0) {
     // v0: showAlertMessage('No players in group. Please add players first.');
+    const message = 'No players in group. Please add players first.';
     return {
       ok: false,
       kind: 'NO_PLAYERS',
-      message: 'No players in group. Please add players first.',
+      ui: { action: 'alert', args: [message] },
     };
   }
   return { ok: true };
@@ -147,17 +158,18 @@ export function guardGroup({ currentGroup }) {
  * @param {Array} params.players - Non-guest players (filtered from currentGroup)
  * @param {number} params.guests - Guest count
  * @param {Function} params.validateGroupCompat - Validator function from deps
- * @returns {{ ok: true } | { ok: false, kind: string, message: string }}
+ * @returns {GuardResult}
  */
 export function guardGroupCompat({ players, guests, validateGroupCompat }) {
   // v0: const { ok, errors } = validateGroupCompat(players, guests);
   const { ok, errors } = validateGroupCompat(players, guests);
   if (!ok) {
     // v0: showAlertMessage(errors.join('\n'));
+    const message = errors.join('\n');
     return {
       ok: false,
       kind: 'GROUP_INVALID',
-      message: errors.join('\n'),
+      ui: { action: 'alert', args: [message] },
     };
   }
   return { ok: true };

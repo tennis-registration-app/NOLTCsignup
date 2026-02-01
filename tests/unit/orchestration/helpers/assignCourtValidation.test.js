@@ -15,7 +15,7 @@ describe('guardNotAssigning (v0 mirror)', () => {
     const result = guardNotAssigning(true);
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('ALREADY_ASSIGNING');
-    expect(result.message).toBe(''); // v0 has silent return, no message
+    expect(result.ui).toBeNull(); // v0 has silent return, no UI
   });
 
   it('returns ok:true when isAssigning is false', () => {
@@ -54,7 +54,9 @@ describe('guardOperatingHours (v0 mirror)', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('CLUB_CLOSED');
-    expect(result.message).toBe('The club is closed today.');
+    expect(result.ui?.action).toBe('toast');
+    expect(result.ui?.args[0]).toBe('The club is closed today.');
+    expect(result.ui?.args[1]).toEqual({ type: 'warning' });
   });
 
   it('returns ok:false with CLUB_CLOSED when today is marked closed (snake_case)', () => {
@@ -77,7 +79,9 @@ describe('guardOperatingHours (v0 mirror)', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('CLUB_NOT_OPEN');
-    expect(result.message).toContain('8:00 AM');
+    expect(result.ui?.action).toBe('toast');
+    expect(result.ui?.args[0]).toContain('8:00 AM');
+    expect(result.ui?.args[1]).toEqual({ type: 'warning' });
   });
 
   it('returns ok:false with CLUB_NOT_OPEN when before opening time (snake_case)', () => {
@@ -89,7 +93,8 @@ describe('guardOperatingHours (v0 mirror)', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('CLUB_NOT_OPEN');
-    expect(result.message).toContain('9:30 AM');
+    expect(result.ui?.action).toBe('toast');
+    expect(result.ui?.args[0]).toContain('9:30 AM');
   });
 
   it('returns ok:true when after opening time', () => {
@@ -136,7 +141,8 @@ describe('guardCourtNumber (v0 mirror)', () => {
     const result = guardCourtNumber({ courtNumber: 15, courtCount: 12 });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('INVALID_COURT');
-    expect(result.message).toContain('between 1 and 12');
+    expect(result.ui?.action).toBe('alert');
+    expect(result.ui?.args[0]).toContain('between 1 and 12');
   });
 
   it('returns ok:true when courtNumber is valid', () => {
@@ -155,19 +161,22 @@ describe('guardGroup (v0 mirror)', () => {
     const result = guardGroup({ currentGroup: null });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('NO_PLAYERS');
-    expect(result.message).toBe('No players in group. Please add players first.');
+    expect(result.ui?.action).toBe('alert');
+    expect(result.ui?.args[0]).toBe('No players in group. Please add players first.');
   });
 
   it('returns ok:false when group is undefined', () => {
     const result = guardGroup({ currentGroup: undefined });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('NO_PLAYERS');
+    expect(result.ui?.action).toBe('alert');
   });
 
   it('returns ok:false when group is empty array', () => {
     const result = guardGroup({ currentGroup: [] });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('NO_PLAYERS');
+    expect(result.ui?.action).toBe('alert');
   });
 
   it('returns ok:true when group has players', () => {
@@ -186,7 +195,8 @@ describe('guardGroupCompat (v0 mirror)', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.kind).toBe('GROUP_INVALID');
-    expect(result.message).toBe('Error 1\nError 2');
+    expect(result.ui?.action).toBe('alert');
+    expect(result.ui?.args[0]).toBe('Error 1\nError 2');
   });
 
   it('returns ok:true when validateGroupCompat passes', () => {
