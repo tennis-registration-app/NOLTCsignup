@@ -265,5 +265,82 @@ src/registration/orchestration/
 │   └── createOrchestrationDeps.js   # Deps factory
 └── helpers/
     ├── index.js                     # Re-exports
-    └── validation.js                # Pure validation helpers
+    └── assignCourtValidation.js     # Side-effect-free guard helpers
 ```
+
+---
+
+## WP-HR4 Outcome
+
+### What Changed (Internal)
+
+1. **Side-effect-free guard helpers extracted** to `helpers/assignCourtValidation.js`:
+   - `guardNotAssigning` — prevents double-submit (silent)
+   - `guardOperatingHours` — club open/closed check (toast)
+   - `guardCourtNumber` — court range validation (alert)
+   - `guardGroup` — players required check (alert)
+   - `guardGroupCompat` — group compatibility (alert)
+
+   These helpers return UI dispatch metadata (`action` + `args`); the orchestrator performs the actual toast/alert calls.
+
+2. **Runtime deps introduced** via `deps/createOrchestrationDeps.js`:
+   - Provides `logger`, `platform`, `time` with production defaults
+   - Lazy initialization (preserves fast-fail for early guards)
+   - Accepts overrides for testing
+
+3. **Guard blocks replaced** with helper calls:
+   - Same ordering preserved (sacred list)
+   - Same UI dispatch (toast vs alert with exact args)
+   - Same early-return behavior
+
+### What Did NOT Change (External Contract)
+
+| Aspect | Status |
+|--------|--------|
+| Export signature | Unchanged: `assignCourtToGroupOrchestrated(courtNumber, selectableCountAtSelection, deps)` |
+| Return type | Unchanged: `void` |
+| v0 `deps` parameter | Unchanged: still receives 36 keys from callers |
+| Call sites | Unchanged: no modifications to callers |
+| Guard ordering | Preserved: 1→2→3→4→5 |
+| UI feedback | Preserved: same toast/alert messages |
+| Network calls | Preserved: no new calls added |
+
+### Invariant Verification
+
+Run these commands to verify WP-HR4 invariants:
+```bash
+# Export signature unchanged
+rg "^export.*assignCourtToGroupOrchestrated" src/registration/orchestration/assignCourtOrchestrator.js
+
+# No window.* in assignCourtOrchestrator
+rg "window\." src/registration/orchestration/assignCourtOrchestrator.js
+
+# No console.* in assignCourtOrchestrator
+rg "console\." src/registration/orchestration/assignCourtOrchestrator.js
+
+# Full test suite
+npm run verify
+npx playwright test
+```
+
+### Test Coverage
+
+- **Unit tests:** Baseline 285 + 22 new guard tests (total now 307)
+- **E2E tests:** Court assignment flow covered by existing Playwright tests (15 passing)
+
+### Commits
+
+| Commit | Hash | Description |
+|--------|------|-------------|
+| 1 | 8708238 | Freeze v0 contract in docs |
+| 2 | 186adb8 | Create deps infrastructure |
+| 3 | 106db7a | Extract guard helpers + tests |
+| 4 | — | Skipped (no pure court selection logic) |
+| 5a | c7dd2b2 | Enrich guard results with UI metadata |
+| 5b | ef4807a | Wire guards + deps into orchestrator |
+| 6 | — | Skipped (call sites already thin) |
+| 7 | TBD | Final docs + verification |
+
+### Legacy Note
+
+Direct `Tennis.UI.toast(...)` calls remain in the orchestrator for non-guard UI feedback. These are explicitly out of scope for WP-HR4 and are candidates for future work (WP-HRx: UI Feedback Adapter).
