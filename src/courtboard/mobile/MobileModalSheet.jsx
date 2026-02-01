@@ -2,6 +2,11 @@ import React, { useEffect } from 'react';
 
 // TennisBackend for clear court functionality
 import { createBackend } from '../../registration/backend/index.js';
+import {
+  getTennisStorage,
+  getTennisDomain,
+  getTennisNamespaceConfig,
+} from '../../platform/windowBridge.js';
 const backend = createBackend();
 
 /**
@@ -84,7 +89,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
         // Member roster display
         let rosterData = [];
         try {
-          const S = window.Tennis?.Storage;
+          const S = getTennisStorage();
           rosterData =
             window.__memberRoster ||
             (S?.readJSON ? S.readJSON('tennisMembers') : null) ||
@@ -250,8 +255,9 @@ export function MobileModalSheet({ type, payload, onClose }) {
         // Calculate estimated wait time for mobile modal (uses payload data, not localStorage)
         const calculateMobileWaitTime = (position) => {
           try {
-            const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-            const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
+            const domain = getTennisDomain();
+            const A = domain?.availability || domain?.Availability;
+            const W = domain?.waitlist || domain?.Waitlist;
 
             if (!A || !W) {
               return position * 15;
@@ -275,7 +281,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
               : [];
 
             if (W.estimateWaitForPositions) {
-              const avgGame = window.Tennis?.Config?.Timing?.AVG_GAME || 75;
+              const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || 75;
               const etas = W.estimateWaitForPositions({
                 positions: [position],
                 currentFreeCount: info.free?.length || 0,
@@ -294,7 +300,8 @@ export function MobileModalSheet({ type, payload, onClose }) {
         // Check if first group can register now (uses payload data, not localStorage)
         const canFirstGroupRegister = () => {
           try {
-            const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+            const domainCanFirst = getTennisDomain();
+            const A = domainCanFirst?.availability || domainCanFirst?.Availability;
             if (!A) return false;
 
             const now = new Date();

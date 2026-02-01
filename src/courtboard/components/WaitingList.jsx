@@ -1,5 +1,6 @@
 import React from 'react';
 import { Users, AlertCircle } from './Icons';
+import { getTennisDomain, getTennisNamespaceConfig } from '../../platform/windowBridge.js';
 
 /**
  * WaitingList - Display panel for groups waiting to play
@@ -13,8 +14,9 @@ export function WaitingList({
   upcomingBlocks = [],
   maxWaitingDisplay,
 }) {
-  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-  const W = window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist;
+  const domain = getTennisDomain();
+  const A = domain?.availability || domain?.Availability;
+  const W = domain?.waitlist || domain?.Waitlist;
 
   // Convert React courts state to the data format expected by availability functions
   // This uses the passed props instead of reading from localStorage
@@ -45,7 +47,7 @@ export function WaitingList({
 
       // Calculate ETA using domain waitlist function
       if (W.estimateWaitForPositions) {
-        const avgGame = window.Tennis?.Config?.Timing?.AVG_GAME || 75;
+        const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || 75;
         const etas = W.estimateWaitForPositions({
           positions: [position],
           currentFreeCount: info.free?.length || 0,

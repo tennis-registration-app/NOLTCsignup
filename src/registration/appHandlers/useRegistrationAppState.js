@@ -13,6 +13,9 @@ import {
 // Import API config for mobile detection
 import { API_CONFIG } from '../../lib/apiConfig.js';
 
+// Platform bridge for window global access
+import { getTennisDataStore, getTennisUI } from '../../platform/windowBridge.js';
+
 // TennisBackend interface layer
 import { createBackend } from '../backend/index.js';
 
@@ -67,7 +70,7 @@ const dbg = (...args) => {
 // DataStore reference
 let dataStore = null;
 if (typeof window !== 'undefined') {
-  dataStore = window.Tennis?.DataStore || null;
+  dataStore = getTennisDataStore() || null;
 }
 
 // TennisBackend singleton instance
@@ -182,7 +185,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     showSuccess,
     justAssignedCourt: null, // Not available yet at this point
     isMobile: API_CONFIG.IS_MOBILE,
-    toast: typeof window !== 'undefined' ? window.Tennis?.UI?.toast : undefined,
+    toast: typeof window !== 'undefined' ? getTennisUI()?.toast : undefined,
     markUserTyping,
     getCourtData,
     showAlertMessage: null, // Will use internal showAlertMessage

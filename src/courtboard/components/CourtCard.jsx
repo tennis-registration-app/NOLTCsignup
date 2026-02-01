@@ -2,6 +2,11 @@ import React from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { listPlayableCourts } from '../../shared/courts/courtAvailability.js';
 import { classForStatus, namesFor, formatTime, computeClock } from '../utils/courtUtils.js';
+import {
+  getTennisUI,
+  getMobileModal,
+  getMobileTapToRegister,
+} from '../../platform/windowBridge.js';
 
 /**
  * CourtCard - Display card for a single tennis court
@@ -93,11 +98,13 @@ export function CourtCard({
           return !c?.session;
         });
         if (emptyPlayable.length > 0) {
-          window.Tennis?.UI?.toast?.('Please select an available court', { type: 'warning' });
+          const tennisUI = getTennisUI();
+          tennisUI?.toast?.('Please select an available court', { type: 'warning' });
           return;
         }
         // No empty courts - allow overtime takeover
-        window.mobileTapToRegister?.(courtNumber);
+        const mobileTap = getMobileTapToRegister();
+        mobileTap?.(courtNumber);
         return;
       } catch (e) {
         console.error('[Overtime Tap] Error checking playable courts:', e);
@@ -107,15 +114,16 @@ export function CourtCard({
     // Court is truly occupied (not overtime) - handle clear court flow
     const registeredCourt = sessionStorage.getItem('mobile-registered-court');
 
+    const mobileModal = getMobileModal();
     if (registeredCourt) {
       // User has a registration - only allow clearing THEIR court
       if (Number(registeredCourt) === courtNumber) {
-        window.MobileModal?.open('clear-court-confirm', { courtNumber });
+        mobileModal?.open('clear-court-confirm', { courtNumber });
       }
       // Tapping other occupied courts does nothing when registered
     } else {
       // No registration - show players on this court
-      window.MobileModal?.open('clear-court-confirm', {
+      mobileModal?.open('clear-court-confirm', {
         courtNumber,
         players: nm, // nm already has player names from namesFor(cObj)
       });
@@ -134,7 +142,7 @@ export function CourtCard({
       tabIndex={isClickable ? 0 : undefined}
       onClick={
         status === 'free'
-          ? () => window.mobileTapToRegister?.(courtNumber)
+          ? () => getMobileTapToRegister()?.(courtNumber)
           : isOccupiedOrOvertime && isMobileView
             ? handleOccupiedCourtTap
             : undefined

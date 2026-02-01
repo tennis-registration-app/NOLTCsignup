@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
+import { getTennisDomain, getTennisStorage, getTennisUI } from '../../../platform/windowBridge.js';
 
 /**
  * Court Handlers
@@ -82,7 +83,8 @@ export function useCourtHandlers(deps) {
       excludeCourtNumber = null,
       dataOverride = null
     ) => {
-      const Av = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+      const domain = getTennisDomain();
+      const Av = domain?.availability || domain?.Availability;
       if (!Av?.getSelectableCourtsStrict || !Av?.getFreeCourtsInfo) {
         logger.warn('CourtHandlers', 'Availability functions not available');
         return [];
@@ -91,15 +93,12 @@ export function useCourtHandlers(deps) {
       try {
         // Use API state by default, fall back to localStorage only if state not available
         const courtData = dataOverride || getCourtData();
-        const boardData =
-          courtData?.courts?.length > 0 ? courtData : window.Tennis?.Storage?.readDataSafe();
+        const storage = getTennisStorage();
+        const boardData = courtData?.courts?.length > 0 ? courtData : storage?.readDataSafe();
         const now = new Date();
 
         // Get blocks from the board data if available, otherwise localStorage
-        const blocks =
-          courtData?.blocks ||
-          window.Tennis?.Storage?.readJSON(window.Tennis?.Storage?.STORAGE?.BLOCKS) ||
-          [];
+        const blocks = courtData?.blocks || storage?.readJSON(storage?.STORAGE?.BLOCKS) || [];
         const wetSet = new Set();
 
         let selectable = [];
@@ -170,7 +169,8 @@ export function useCourtHandlers(deps) {
 
       const res = await clearViaService(courtNumber, clearReason);
       if (!res?.success) {
-        window.Tennis?.UI?.toast(res?.error || 'Failed to clear court');
+        const tennisUI = getTennisUI();
+        tennisUI?.toast(res?.error || 'Failed to clear court');
         return;
       }
       logger.debug('CourtHandlers', `Court ${courtNumber} cleared successfully`);

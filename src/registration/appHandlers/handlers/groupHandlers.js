@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 // Import validation services
 import { DataValidation } from '@lib';
 import { logger } from '../../../lib/logger.js';
+import { getTennisUI, getUI } from '../../../platform/windowBridge.js';
 
 /**
  * Group Handlers
@@ -128,7 +129,8 @@ export function useGroupHandlers(deps) {
 
       // Check for duplicate in current group
       if (!guardAgainstGroupDuplicate(enriched, currentGroup)) {
-        window.Tennis?.UI?.toast(`${enriched.name} is already in this group`);
+        const tennisUI = getTennisUI();
+        tennisUI?.toast(`${enriched.name} is already in this group`);
         return;
       }
 
@@ -341,8 +343,9 @@ export function useGroupHandlers(deps) {
       logger.error('GroupHandlers', '[handleGroupJoinWaitlist] Error', error);
     }
     // Mobile: trigger success signal
-    if (window.UI?.__mobileSendSuccess__) {
-      window.UI.__mobileSendSuccess__();
+    const ui = getUI();
+    if (ui?.__mobileSendSuccess__) {
+      ui.__mobileSendSuccess__();
     }
 
     // Don't auto-reset in mobile flow - let the overlay handle timing

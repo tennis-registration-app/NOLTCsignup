@@ -8,6 +8,7 @@
 
 // Import Domain engagement helpers
 import { findEngagementByMemberId, getEngagementMessage } from '../../../lib/domain/engagement.js';
+import { getTennisUI, getTennisDomain } from '../../../platform/windowBridge.js';
 
 // Debug utilities
 const DEBUG = false;
@@ -99,14 +100,15 @@ export function useRegistrationHelpers({
       }
     }
 
-    if (typeof window !== 'undefined' && window.Tennis?.UI?.toast) {
-      window.Tennis.UI.toast(getEngagementMessage(engagement));
+    const tennisUI = getTennisUI();
+    if (typeof window !== 'undefined' && tennisUI?.toast) {
+      tennisUI.toast(getEngagementMessage(engagement));
     }
     return false;
   }
 
   function guardAgainstGroupDuplicate(player, playersArray) {
-    const R = typeof window !== 'undefined' ? window.Tennis?.Domain?.roster : null;
+    const R = typeof window !== 'undefined' ? getTennisDomain()?.roster : null;
     const nm = R?.normalizeName
       ? R.normalizeName(player?.name || player || '')
       : __normalizeName(player);
@@ -133,10 +135,8 @@ export function useRegistrationHelpers({
 
 // --- Robust validation wrapper: always returns { ok, errors[] }
 export function validateGroupCompat(players, guests) {
-  const W =
-    typeof window !== 'undefined'
-      ? window.Tennis?.Domain?.waitlist || window.Tennis?.Domain?.Waitlist || null
-      : null;
+  const domain = typeof window !== 'undefined' ? getTennisDomain() : null;
+  const W = domain?.waitlist || domain?.Waitlist || null;
   const norm = (ok, errs) => ({
     ok: !!ok,
     errors: Array.isArray(errs) ? errs : errs ? [errs] : [],

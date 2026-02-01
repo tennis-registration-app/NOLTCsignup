@@ -1,4 +1,5 @@
 import { logger } from '../../lib/logger.js';
+import { getTennisDomain, getUI } from '../../platform/windowBridge.js';
 
 /**
  * Assign Court Orchestrator
@@ -212,7 +213,8 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   // Duration determined from group size (including guests)
-  const Tm = window.Tennis.Domain.time || window.Tennis.Domain.Time;
+  const domain = getTennisDomain();
+  const Tm = domain?.time || domain?.Time;
   const duration = Tm.durationForGroupSize(allPlayers.length); // typically 60/90
 
   // Canonical group object (use allPlayers so guests appear on court)
@@ -321,8 +323,9 @@ export async function assignCourtToGroupOrchestrated(
       setShowSuccess(true);
 
       // Mobile: trigger success signal
-      if (window.UI?.__mobileSendSuccess__) {
-        window.UI.__mobileSendSuccess__();
+      const ui = getUI();
+      if (ui?.__mobileSendSuccess__) {
+        ui.__mobileSendSuccess__();
       }
 
       // Auto-reset timer
@@ -454,10 +457,11 @@ export async function assignCourtToGroupOrchestrated(
   logger.debug('AssignCourt', `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`);
 
   // Mobile: trigger success signal
-  dbg('Registration: Checking mobile success signal...', !!window.UI?.__mobileSendSuccess__);
-  if (window.UI?.__mobileSendSuccess__) {
+  const uiNs = getUI();
+  dbg('Registration: Checking mobile success signal...', !!uiNs?.__mobileSendSuccess__);
+  if (uiNs?.__mobileSendSuccess__) {
     dbg('Registration: Calling mobile success signal');
-    window.UI.__mobileSendSuccess__();
+    uiNs.__mobileSendSuccess__();
   }
 
   // Auto-reset timer for court assignment (same as waitlist)

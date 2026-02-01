@@ -264,3 +264,12 @@ export function getLoadData() {
   if (typeof window === 'undefined') return null;
   return typeof window.loadData === 'function' ? window.loadData : null;
 }
+
+/**
+ * Get the mobile tap-to-register function from window.mobileTapToRegister
+ * @returns {Function|null} Mobile registration function or null if not available
+ */
+export function getMobileTapToRegister() {
+  if (typeof window === 'undefined') return null;
+  return typeof window.mobileTapToRegister === 'function' ? window.mobileTapToRegister : null;
+}
