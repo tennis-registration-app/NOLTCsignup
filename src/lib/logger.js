@@ -1,15 +1,26 @@
 /**
  * Consistent logging wrapper for NOLTC Tennis Registration
  *
+ * Level precedence:
+ *   1. localStorage override (NOLTC_LOG_LEVEL) — for dev debugging
+ *   2. Vite env (VITE_DEBUG_MODE or import.meta.env.DEV)
+ *   3. Default fallback: info
+ *
  * Usage:
- *   import { logger } from '@lib/logger';
+ *   import { logger } from '../lib/logger.js';
  *   logger.info('Registration', 'Player added', { playerId });
  *   logger.error('API', 'Request failed', { endpoint, error });
  *   logger.debug('CTA', 'State computed', { gateCount, waitlist });
  *
- * Levels can be controlled via localStorage:
+ * Dev override via localStorage:
  *   localStorage.setItem('NOLTC_LOG_LEVEL', 'debug'); // debug|info|warn|error|none
+ *
+ * @module logger
  */
+
+// =============================================================================
+// Log Levels
+// =============================================================================
 
 const LOG_LEVELS = {
   debug: 0,
@@ -19,64 +30,149 @@ const LOG_LEVELS = {
   none: 4,
 };
 
-function getLogLevel() {
-  if (typeof window === 'undefined') return LOG_LEVELS.info;
-  const stored = localStorage.getItem('NOLTC_LOG_LEVEL');
-  return LOG_LEVELS[stored] ?? LOG_LEVELS.info;
+// =============================================================================
+// Level Resolution (computed per-call, not frozen)
+// =============================================================================
+
+/**
+ * Get default log level from Vite environment.
+ * - VITE_DEBUG_MODE=true → debug
+ * - import.meta.env.DEV (Vite dev server) → debug
+ * - Otherwise → info
+ * @returns {number}
+ */
+function getDefaultLogLevel() {
+  try {
+    const debugEnv = import.meta.env.VITE_DEBUG_MODE === 'true';
+    const isDev = import.meta.env.DEV === true;
+    return debugEnv || isDev ? LOG_LEVELS.debug : LOG_LEVELS.info;
+  } catch {
+    // Fallback if import.meta.env is unavailable
+    return LOG_LEVELS.info;
+  }
 }
 
+/**
+ * Get effective log level.
+ * Precedence: localStorage override > env default > info fallback
+ * @returns {number}
+ */
+function getLogLevel() {
+  // SSR safety
+  if (typeof window === 'undefined') {
+    return LOG_LEVELS.info;
+  }
+
+  // 1. Check localStorage override first (dev debugging)
+  const stored = localStorage.getItem('NOLTC_LOG_LEVEL');
+  if (stored && LOG_LEVELS[stored] !== undefined) {
+    return LOG_LEVELS[stored];
+  }
+
+  // 2. Use env-derived default
+  return getDefaultLogLevel();
+}
+
+/**
+ * Check if a message at the given level should be logged.
+ * @param {string} level - 'debug' | 'info' | 'warn' | 'error'
+ * @returns {boolean}
+ */
 function shouldLog(level) {
   return LOG_LEVELS[level] >= getLogLevel();
 }
 
+// =============================================================================
+// Logger API (signature unchanged for backward compatibility)
+// =============================================================================
+
+/**
+ * Centralized logger with module tagging and level support.
+ */
 export const logger = {
+  /**
+   * Debug level log (most verbose)
+   * @param {string} module - Module/component name
+   * @param {string} message - Log message
+   * @param {*} [data] - Optional data to log
+   */
   debug(module, message, data = null) {
-    if (!shouldLog('debug')) return;
-    if (data) {
-      console.log(`[${module}] ${message}`, data);
-    } else {
-      console.log(`[${module}] ${message}`);
+    if (shouldLog('debug')) {
+      if (data !== null && data !== undefined) {
+        console.log(`[${module}] ${message}`, data);
+      } else {
+        console.log(`[${module}] ${message}`);
+      }
     }
   },
 
+  /**
+   * Info level log
+   * @param {string} module - Module/component name
+   * @param {string} message - Log message
+   * @param {*} [data] - Optional data to log
+   */
   info(module, message, data = null) {
-    if (!shouldLog('info')) return;
-    if (data) {
-      console.log(`[${module}] ${message}`, data);
-    } else {
-      console.log(`[${module}] ${message}`);
+    if (shouldLog('info')) {
+      if (data !== null && data !== undefined) {
+        console.log(`[${module}] ${message}`, data);
+      } else {
+        console.log(`[${module}] ${message}`);
+      }
     }
   },
 
+  /**
+   * Warning level log
+   * @param {string} module - Module/component name
+   * @param {string} message - Log message
+   * @param {*} [data] - Optional data to log
+   */
   warn(module, message, data = null) {
-    if (!shouldLog('warn')) return;
-    if (data) {
-      console.warn(`[${module}] ${message}`, data);
-    } else {
-      console.warn(`[${module}] ${message}`);
+    if (shouldLog('warn')) {
+      if (data !== null && data !== undefined) {
+        console.warn(`[${module}] ${message}`, data);
+      } else {
+        console.warn(`[${module}] ${message}`);
+      }
     }
   },
 
+  /**
+   * Error level log (always logged unless level is 'none')
+   * @param {string} module - Module/component name
+   * @param {string} message - Log message
+   * @param {*} [data] - Optional data to log
+   */
   error(module, message, data = null) {
-    if (!shouldLog('error')) return;
-    if (data) {
-      console.error(`[${module}] ${message}`, data);
-    } else {
-      console.error(`[${module}] ${message}`);
+    if (shouldLog('error')) {
+      if (data !== null && data !== undefined) {
+        console.error(`[${module}] ${message}`, data);
+      } else {
+        console.error(`[${module}] ${message}`);
+      }
     }
   },
 
-  // Group related logs together
+  /**
+   * Start a collapsed console group
+   * @param {string} module - Module/component name
+   * @param {string} label - Group label
+   */
   group(module, label) {
-    if (!shouldLog('debug')) return;
-    console.group(`[${module}] ${label}`);
+    if (shouldLog('debug')) {
+      console.group(`[${module}] ${label}`);
+    }
   },
 
+  /**
+   * End a console group
+   */
   groupEnd() {
-    if (!shouldLog('debug')) return;
-    console.groupEnd();
+    if (shouldLog('debug')) {
+      console.groupEnd();
+    }
   },
 };
 
-// Export for convenience
 export default logger;
