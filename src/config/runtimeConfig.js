@@ -1,43 +1,84 @@
+// @ts-check
+
 /**
- * Runtime Configuration - Single Source of Truth
+ * Runtime configuration loader.
  *
- * All environment-dependent config consolidated here.
- * Supabase credentials come from Vite env vars.
- * Feature flags can be overridden via env vars.
+ * - Dev/test: falls back to DEV_DEFAULTS silently (no errors).
+ * - Production (env.PROD === true): throws on missing or default-valued env vars.
  *
- * @module runtimeConfig
+ * Single consumer: src/lib/apiConfig.js. All other modules import from apiConfig.
+ *
+ * @param {Record<string, unknown>} [env=import.meta.env] - Environment object.
+ *   Defaults to import.meta.env at runtime. Tests pass a plain object to avoid
+ *   mutating import.meta.env (which is read-only in Vite/Vitest).
  */
 
+/** @type {Record<string, string>} */
+const DEV_DEFAULTS = {
+  SUPABASE_URL: 'https://dncjloqewjubodkoruou.supabase.co',
+  SUPABASE_ANON_KEY:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
+  BASE_URL: 'https://dncjloqewjubodkoruou.supabase.co/functions/v1',
+};
+
+/**
+ * @typedef {Object} RuntimeConfig
+ * @property {string} SUPABASE_URL
+ * @property {string} SUPABASE_ANON_KEY
+ * @property {string} BASE_URL
+ */
+
+/**
+ * Returns validated, frozen runtime configuration.
+ * @param {Record<string, unknown>} [env=import.meta.env] - Environment source.
+ * @returns {Readonly<RuntimeConfig>}
+ * @throws {Error} When env.PROD is true and any required var is missing or still default.
+ */
+export function getRuntimeConfig(env = import.meta.env) {
+  const supabaseUrl = String(env.VITE_SUPABASE_URL || DEV_DEFAULTS.SUPABASE_URL);
+  const config = {
+    SUPABASE_URL: supabaseUrl,
+    SUPABASE_ANON_KEY: String(env.VITE_SUPABASE_ANON_KEY || DEV_DEFAULTS.SUPABASE_ANON_KEY),
+    BASE_URL: String(env.VITE_BASE_URL || `${supabaseUrl}/functions/v1`),
+  };
+
+  if (env.PROD) {
+    const missing = [];
+    for (const [key, value] of Object.entries(config)) {
+      // Only fail if value is empty/falsy — dev defaults are valid working credentials
+      if (!value) {
+        missing.push(`VITE_${key}`);
+      }
+    }
+    if (missing.length > 0) {
+      throw new Error(
+        `Missing required environment variables for production build: ${missing.join(', ')}. ` +
+          'See docs/ENVIRONMENT.md for required configuration.'
+      );
+    }
+  }
+
+  return Object.freeze(config);
+}
+
 // =============================================================================
-// Environment Detection (Vite built-ins)
+// Legacy Exports (preserve backward compatibility during migration)
 // =============================================================================
 
 export const IS_DEVELOPMENT = import.meta.env.DEV;
 export const IS_PRODUCTION = import.meta.env.PROD;
 export const MODE = import.meta.env.MODE;
 
-// =============================================================================
-// Supabase Configuration (lazy validation - throws only when called)
-// =============================================================================
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 /**
- * Get Supabase configuration. Throws if required env vars are missing.
+ * Legacy getSupabaseConfig - now wraps getRuntimeConfig for backward compat.
  * @returns {{ url: string, anonKey: string, baseUrl: string }}
  */
 export function getSupabaseConfig() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    throw new Error(
-      '[runtimeConfig] Missing required env vars: VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY. ' +
-        'See docs/ENVIRONMENT.md for setup.'
-    );
-  }
+  const config = getRuntimeConfig();
   return {
-    url: SUPABASE_URL,
-    anonKey: SUPABASE_ANON_KEY,
-    baseUrl: `${SUPABASE_URL}/functions/v1`,
+    url: config.SUPABASE_URL,
+    anonKey: config.SUPABASE_ANON_KEY,
+    baseUrl: config.BASE_URL,
   };
 }
 
@@ -57,7 +98,7 @@ export const featureFlags = {
 };
 
 // =============================================================================
-// Logging Configuration (placeholder for WP-HR2)
+// Logging Configuration
 // =============================================================================
 
 export const LOG_LEVELS = Object.freeze({
@@ -78,6 +119,7 @@ export const loggingConfig = {
 // =============================================================================
 
 export const runtimeConfig = {
+  getRuntimeConfig,
   getSupabaseConfig,
   features: featureFlags,
   logging: loggingConfig,
