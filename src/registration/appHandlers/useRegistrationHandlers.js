@@ -139,9 +139,9 @@ export function useRegistrationHandlers({ app }) {
     }
   }, [successResetTimerRef]);
 
-  // Reset form (moved to orchestration layer - WP5.5)
-  const resetForm = useCallback(() => {
-    resetFormOrchestrated({
+  // WP4-2: Factory function to assemble reset deps
+  const createResetDeps = useCallback(
+    () => ({
       setCurrentGroup,
       setShowSuccess,
       setMemberNumber,
@@ -178,46 +178,52 @@ export function useRegistrationHandlers({ app }) {
       setStreakAcknowledged,
       clearCache,
       clearSuccessResetTimer,
-    });
-  }, [
-    resetFormOrchestrated,
-    setCurrentGroup,
-    setShowSuccess,
-    setMemberNumber,
-    setCurrentMemberId,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setReplacedGroup,
-    setDisplacement,
-    setOriginalCourtData,
-    setCanChangeCourt,
-    setIsTimeLimited,
-    setCurrentScreen,
-    setSearchInput,
-    setShowSuggestions,
-    setShowAddPlayer,
-    setAddPlayerSearch,
-    setShowAddPlayerSuggestions,
-    setHasWaitlistPriority,
-    setCurrentWaitlistEntryId,
-    setWaitlistPosition,
-    setSelectedCourtToClear,
-    setClearCourtStep,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-    setCourtToMove,
-    setHasAssignedCourt,
-    setShowGuestForm,
-    setGuestName,
-    setGuestSponsor,
-    setShowGuestNameError,
-    setShowSponsorError,
-    setRegistrantStreak,
-    setShowStreakModal,
-    setStreakAcknowledged,
-    clearCache,
-    clearSuccessResetTimer,
-  ]);
+    }),
+    [
+      setCurrentGroup,
+      setShowSuccess,
+      setMemberNumber,
+      setCurrentMemberId,
+      setJustAssignedCourt,
+      setAssignedSessionId,
+      setReplacedGroup,
+      setDisplacement,
+      setOriginalCourtData,
+      setCanChangeCourt,
+      setIsTimeLimited,
+      setCurrentScreen,
+      setSearchInput,
+      setShowSuggestions,
+      setShowAddPlayer,
+      setAddPlayerSearch,
+      setShowAddPlayerSuggestions,
+      setHasWaitlistPriority,
+      setCurrentWaitlistEntryId,
+      setWaitlistPosition,
+      setSelectedCourtToClear,
+      setClearCourtStep,
+      setIsChangingCourt,
+      setWasOvertimeCourt,
+      setCourtToMove,
+      setHasAssignedCourt,
+      setShowGuestForm,
+      setGuestName,
+      setGuestSponsor,
+      setShowGuestNameError,
+      setShowSponsorError,
+      setRegistrantStreak,
+      setShowStreakModal,
+      setStreakAcknowledged,
+      clearCache,
+      clearSuccessResetTimer,
+    ]
+  );
+
+  // Reset form (moved to orchestration layer - WP5.5)
+  // WP4-2: deps now assembled by createResetDeps factory
+  const resetForm = useCallback(() => {
+    resetFormOrchestrated(createResetDeps());
+  }, [resetFormOrchestrated, createResetDeps]);
 
   // Check if player is already playing with detailed info
   // Note: This is used by both core handlers and groupHandlers, so it lives here
