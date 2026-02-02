@@ -8,6 +8,7 @@ import { logger } from '../../lib/logger.js';
 import {
   normalizeOperatingHours,
   normalizeOverrides,
+  normalizeSettings,
 } from '../../lib/normalize/normalizeAdminSettings.js';
 
 /**
@@ -21,20 +22,22 @@ const PRICING_DEFAULTS = {
 
 /**
  * Transform raw API settings response to UI-friendly shape.
- * @param {Object} apiSettings - Raw settings from backend
- * @returns {Object} Transformed settings object
+ * WP4-4: Uses normalizeSettings at boundary, then converts cents to dollars.
+ * @param {Object} apiSettings - Raw settings from backend (snake_case)
+ * @returns {Object} Transformed settings object (dollars, nested structure)
  */
 export function transformSettings(apiSettings) {
+  const normalized = normalizeSettings(apiSettings);
   return {
-    tennisBallPrice: apiSettings.ball_price_cents
-      ? apiSettings.ball_price_cents / 100
+    tennisBallPrice: normalized?.ballPriceCents
+      ? normalized.ballPriceCents / 100
       : PRICING_DEFAULTS.TENNIS_BALLS,
     guestFees: {
-      weekday: apiSettings.guest_fee_weekday_cents
-        ? apiSettings.guest_fee_weekday_cents / 100
+      weekday: normalized?.guestFeeWeekdayCents
+        ? normalized.guestFeeWeekdayCents / 100
         : PRICING_DEFAULTS.GUEST_FEE_WEEKDAY,
-      weekend: apiSettings.guest_fee_weekend_cents
-        ? apiSettings.guest_fee_weekend_cents / 100
+      weekend: normalized?.guestFeeWeekendCents
+        ? normalized.guestFeeWeekendCents / 100
         : PRICING_DEFAULTS.GUEST_FEE_WEEKEND,
     },
   };

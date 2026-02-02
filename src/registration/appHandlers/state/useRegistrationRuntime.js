@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { normalizeSettings } from '../../../lib/normalize/normalizeAdminSettings.js';
 
 /**
  * useRegistrationRuntime
@@ -39,17 +40,21 @@ export function useRegistrationRuntime({
   }, []);
 
   // VERBATIM COPY: Fetch ball price from API on mount (line 678)
+  // WP4-4: Normalize settings at boundary
   useEffect(() => {
     const fetchBallPrice = async () => {
       try {
         const result = await backend.admin.getSettings();
-        if (result.ok && result.settings?.ball_price_cents) {
-          setBallPriceCents(result.settings.ball_price_cents);
-        }
-        if (result.ok && result.settings?.block_warning_minutes) {
-          const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
-          if (blockWarnMin > 0) {
-            setBlockWarningMinutes(blockWarnMin);
+        if (result.ok) {
+          const settings = normalizeSettings(result.settings);
+          if (settings?.ballPriceCents) {
+            setBallPriceCents(settings.ballPriceCents);
+          }
+          if (settings?.blockWarningMinutes) {
+            const blockWarnMin = parseInt(settings.blockWarningMinutes, 10);
+            if (blockWarnMin > 0) {
+              setBlockWarningMinutes(blockWarnMin);
+            }
           }
         }
       } catch (error) {

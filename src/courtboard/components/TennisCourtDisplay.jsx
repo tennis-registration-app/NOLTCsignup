@@ -5,6 +5,7 @@ import { NextAvailablePanel } from './NextAvailablePanel';
 import { logger } from '../../lib/logger.js';
 import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
 import { setRefreshBoardGlobal } from '../../platform/registerGlobals.js';
+import { normalizeSettings } from '../../lib/normalize/normalizeAdminSettings.js';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../../registration/backend/index.js';
@@ -219,28 +220,30 @@ export function TennisCourtDisplay() {
   }, []);
 
   // Load check_status_minutes from system settings
+  // WP4-4: Normalize settings at boundary
   useEffect(() => {
     const loadSettings = async () => {
       try {
         logger.debug('CourtDisplay', 'Loading settings, backend.admin:', !!backend.admin);
         const result = await backend.admin?.getSettings?.();
+        const settings = normalizeSettings(result?.settings);
         logger.debug('CourtDisplay', 'Settings result', {
           ok: result?.ok,
-          check_status_minutes: result?.settings?.check_status_minutes,
+          checkStatusMinutes: settings?.checkStatusMinutes,
         });
-        if (result?.ok && result.settings?.check_status_minutes) {
-          const minutes = parseInt(result.settings.check_status_minutes, 10);
+        if (result?.ok && settings?.checkStatusMinutes) {
+          const minutes = parseInt(settings.checkStatusMinutes, 10);
           if (minutes > 0) {
             setCheckStatusMinutes(minutes);
-            logger.debug('CourtDisplay', 'Loaded check_status_minutes:', minutes);
+            logger.debug('CourtDisplay', 'Loaded checkStatusMinutes:', minutes);
           }
         }
-        // Load block_warning_minutes
-        if (result?.ok && result.settings?.block_warning_minutes) {
-          const blockWarnMin = parseInt(result.settings.block_warning_minutes, 10);
+        // Load blockWarningMinutes
+        if (result?.ok && settings?.blockWarningMinutes) {
+          const blockWarnMin = parseInt(settings.blockWarningMinutes, 10);
           if (blockWarnMin > 0) {
             setBlockWarningMinutes(blockWarnMin);
-            logger.debug('CourtDisplay', 'Loaded block_warning_minutes:', blockWarnMin);
+            logger.debug('CourtDisplay', 'Loaded blockWarningMinutes:', blockWarnMin);
           }
         }
       } catch (err) {

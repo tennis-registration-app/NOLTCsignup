@@ -11,7 +11,26 @@ export function normalizeAdminSettingsResponse(raw) {
   return {
     operatingHours: normalizeOperatingHours(raw.operating_hours),
     upcomingOverrides: normalizeOverrides(raw.upcoming_overrides),
-    // settings block handled separately by transformSettings in adminSettingsLogic.js
+    settings: normalizeSettings(raw.settings),
+  };
+}
+
+/**
+ * Normalize flat settings object (ball price, guest fees, etc.)
+ * @param {Object|null|undefined} settings - Raw settings from API
+ * @returns {Object|null}
+ */
+export function normalizeSettings(settings) {
+  if (!settings) return null;
+
+  return {
+    ballPriceCents: settings.ball_price_cents,
+    ballBucketSize: settings.ball_bucket_size,
+    guestFeeWeekdayCents: settings.guest_fee_weekday_cents,
+    guestFeeWeekendCents: settings.guest_fee_weekend_cents,
+    courtCount: settings.court_count,
+    checkStatusMinutes: settings.check_status_minutes,
+    blockWarningMinutes: settings.block_warning_minutes,
   };
 }
 
