@@ -160,7 +160,7 @@ const SuccessScreen = (
       // Get account ID from multiple sources:
       // 1. currentGroup player's accountId (if enriched)
       // 2. Look up by member number using onLookupMemberAccount
-      let primaryAccountId = currentGroup[0]?.accountId || currentGroup[0]?.account_id;
+      let primaryAccountId = currentGroup[0]?.accountId;
 
       // If no accountId in currentGroup, try to look it up by member number
       if (!primaryAccountId && onLookupMemberAccount && currentGroup[0]?.memberNumber) {
@@ -168,8 +168,8 @@ const SuccessScreen = (
           const memberNumber = currentGroup[0].memberNumber;
           const members = (await onLookupMemberAccount(memberNumber)) || [];
           if (members.length > 0) {
-            const member = members.find((m) => m.is_primary || m.isPrimary) || members[0];
-            primaryAccountId = member.account_id || member.accountId;
+            const member = members.find((m) => m.isPrimary) || members[0];
+            primaryAccountId = member.accountId;
             logger.debug('SuccessScreen', 'Found accountId by member lookup', primaryAccountId);
           }
         } catch (e) {
@@ -191,15 +191,15 @@ const SuccessScreen = (
 
           for (const player of nonGuestPlayers) {
             // Check if player already has accountId
-            let accountId = player.accountId || player.account_id;
+            let accountId = player.accountId;
 
             // If not, look it up
             if (!accountId && onLookupMemberAccount && player.memberNumber) {
               try {
                 const members = await onLookupMemberAccount(player.memberNumber);
                 if (members.length > 0) {
-                  const member = members.find((m) => m.is_primary || m.isPrimary) || members[0];
-                  accountId = member.account_id || member.accountId;
+                  const member = members.find((m) => m.isPrimary) || members[0];
+                  accountId = member.accountId;
                 }
               } catch (err) {
                 logger.error(

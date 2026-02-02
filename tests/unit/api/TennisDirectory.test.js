@@ -84,7 +84,7 @@ describe('TennisDirectory', () => {
       expect(member.displayName).toBe('Jane Doe');
     });
 
-    it('preserves snake_case aliases for compatibility', async () => {
+    it('normalizes to camelCase (no snake_case aliases)', async () => {
       stubFetch({
         ok: true,
         members: [minimalMemberResponse({ account_id: 'acc-456', member_number: 'M999' })],
@@ -93,9 +93,12 @@ describe('TennisDirectory', () => {
       const result = await directory.searchMembers('test');
       const member = result[0];
 
-      // snake_case aliases
-      expect(member.account_id).toBe('acc-456');
-      expect(member.member_number).toBe('M999');
+      // WP4-4: camelCase only, no dual-format
+      expect(member.accountId).toBe('acc-456');
+      expect(member.memberNumber).toBe('M999');
+      // snake_case aliases should NOT exist
+      expect(member.account_id).toBeUndefined();
+      expect(member.member_number).toBeUndefined();
     });
 
     it('returns empty array when response.ok is false', async () => {
@@ -417,10 +420,11 @@ describe('TennisDirectory', () => {
       const result = await directory.searchMembers('test');
 
       expect(result[0].unclearedStreak).toBe(0);
-      expect(result[0].uncleared_streak).toBe(0);
+      // WP4-4: snake_case alias should NOT exist
+      expect(result[0].uncleared_streak).toBeUndefined();
     });
 
-    it('preserves all fields through normalization', async () => {
+    it('normalizes all fields to camelCase only', async () => {
       const member = minimalMemberResponse({
         id: 'id-123',
         account_id: 'acc-456',
@@ -434,7 +438,7 @@ describe('TennisDirectory', () => {
       const result = await directory.searchMembers('test');
       const m = result[0];
 
-      // All camelCase
+      // WP4-4: camelCase only
       expect(m.id).toBe('id-123');
       expect(m.accountId).toBe('acc-456');
       expect(m.memberNumber).toBe('M789');
@@ -442,12 +446,12 @@ describe('TennisDirectory', () => {
       expect(m.isPrimary).toBe(false);
       expect(m.unclearedStreak).toBe(3);
 
-      // All snake_case aliases
-      expect(m.account_id).toBe('acc-456');
-      expect(m.member_number).toBe('M789');
-      expect(m.display_name).toBe('Full Name');
-      expect(m.is_primary).toBe(false);
-      expect(m.uncleared_streak).toBe(3);
+      // snake_case aliases should NOT exist
+      expect(m.account_id).toBeUndefined();
+      expect(m.member_number).toBeUndefined();
+      expect(m.display_name).toBeUndefined();
+      expect(m.is_primary).toBeUndefined();
+      expect(m.uncleared_streak).toBeUndefined();
     });
 
     it('handles empty members array', async () => {

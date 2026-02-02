@@ -81,8 +81,9 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
       }
 
       state.apiMembers.forEach((apiMember) => {
-        const displayName = apiMember.display_name || apiMember.name || '';
-        const memberNumber = apiMember.member_number || '';
+        // WP4-4: Use camelCase properties (normalized by TennisDirectory)
+        const displayName = apiMember.displayName || apiMember.name || '';
+        const memberNumber = apiMember.memberNumber || '';
 
         // Split the name into parts
         const nameParts = displayName.split(' ');
@@ -108,9 +109,9 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
             member: {
               id: apiMember.id, // This is the UUID from API
               name: displayName,
-              accountId: apiMember.account_id,
-              isPrimary: apiMember.is_primary,
-              unclearedStreak: apiMember.uncleared_streak || apiMember.unclearedStreak || 0,
+              accountId: apiMember.accountId,
+              isPrimary: apiMember.isPrimary,
+              unclearedStreak: apiMember.unclearedStreak || 0,
             },
             displayText: `${displayName} (#${memberNumber})`,
           });
