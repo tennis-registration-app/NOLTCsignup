@@ -6,9 +6,8 @@
  * Future phases will break this into smaller component files.
  */
 /* global Tennis */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createBackend } from '../registration/backend/index.js';
-import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
 
@@ -75,6 +74,9 @@ import { useWetCourts } from './wetCourts/useWetCourts';
 
 // Settings hook (WP-HR6)
 import { useAdminSettings } from './hooks/useAdminSettings';
+
+// Board subscription hook (WP-HR6)
+import { useBoardSubscription } from './hooks/useBoardSubscription';
 
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
@@ -152,50 +154,17 @@ const AdminPanelV2 = ({ onExit }) => {
   // AdminPanelV2 component initializing
 
   const [activeTab, setActiveTab] = useState('status');
-  const [courts, setCourts] = useState([]);
-  const [waitingGroups, setWaitingGroups] = useState([]);
   const [notification, setNotification] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [blockingView, setBlockingView] = useState('create');
-  const [courtBlocks, setCourtBlocks] = useState([]);
   const [blockToEdit, setBlockToEdit] = useState(null);
   const [calendarView, _setCalendarView] = useState('day'); // Setter unused
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [selectedDate, _setSelectedDate] = useState(new Date()); // Setter unused
 
-  // Ref to track blocks fingerprint for detecting actual changes
-  const lastBlocksFingerprintRef = useRef('');
-
   const ENABLE_WET_COURTS = true;
 
-  // Wet courts hook (WP5.2) - manages state + backend ops + side effects
-  const {
-    isActive: wetCourtsActive,
-    wetCourtNumbers,
-    suspendedBlocks,
-    activateWet: handleEmergencyWetCourt,
-    deactivateWet: deactivateWetCourts,
-    clearWetCourt,
-    clearAllWet: _removeAllWetCourtBlocks,
-  } = useWetCourts({
-    backend,
-    getDeviceId,
-    courts,
-    Events,
-    onRefresh: () => setRefreshTrigger((prev) => prev + 1),
-  });
-
-  // Convert array to Set for compatibility with existing code that expects Set
-  const wetCourts = new Set(wetCourtNumbers);
-
-  // No-op setters for prop compatibility with children using old hook pattern
-  // State is now managed by useWetCourts hook
-  const setWetCourtsActive = () => {};
-  const setWetCourts = () => {};
-  const setSuspendedBlocks = () => {};
-
-  // Show notification (defined before useAdminSettings so it can be passed as dep)
+  // Show notification (defined before hooks so it can be passed as dep)
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type });
     addTimer(
@@ -204,6 +173,7 @@ const AdminPanelV2 = ({ onExit }) => {
     );
   };
 
+  // IMPORTANT: Hook call order preserves effect ordering (settings before subscription)
   // Settings hook (WP-HR6) - owns settings, operatingHours, hoursOverrides, blockTemplates state
   // Hook also returns operatingHours and blockTemplates (not destructured here)
   const {
@@ -221,6 +191,36 @@ const AdminPanelV2 = ({ onExit }) => {
     clearAllTimers,
   });
 
+  // Board subscription hook (WP-HR6) - owns courts, waitingGroups, courtBlocks, refreshTrigger state
+  const { courts, waitingGroups, courtBlocks, refreshTrigger, bumpRefreshTrigger } =
+    useBoardSubscription({ backend });
+
+  // Wet courts hook (WP5.2) - manages state + backend ops + side effects
+  const {
+    isActive: wetCourtsActive,
+    wetCourtNumbers,
+    suspendedBlocks,
+    activateWet: handleEmergencyWetCourt,
+    deactivateWet: deactivateWetCourts,
+    clearWetCourt,
+    clearAllWet: _removeAllWetCourtBlocks,
+  } = useWetCourts({
+    backend,
+    getDeviceId,
+    courts,
+    Events,
+    onRefresh: bumpRefreshTrigger,
+  });
+
+  // Convert array to Set for compatibility with existing code that expects Set
+  const wetCourts = new Set(wetCourtNumbers);
+
+  // No-op setters for prop compatibility with children using old hook pattern
+  // State is now managed by useWetCourts hook
+  const setWetCourtsActive = () => {};
+  const setWetCourts = () => {};
+  const setSuspendedBlocks = () => {};
+
   // Export for coalescer & tests
   window.refreshAdminView = reloadSettings;
 
@@ -229,67 +229,6 @@ const AdminPanelV2 = ({ onExit }) => {
     setActiveTab('blocking');
     setBlockingView('create');
   };
-
-  // Generate fingerprint from blocks to detect actual changes
-  const generateBlocksFingerprint = (blocks) => {
-    if (!blocks || !Array.isArray(blocks)) return '';
-    return blocks
-      .map((b) => `${b.id}:${b.startsAt || b.starts_at}:${b.endsAt || b.ends_at}`)
-      .sort()
-      .join('|');
-  };
-
-  // Subscribe to TennisBackend realtime updates for courts/waitlist
-  useEffect(() => {
-    logger.debug('AdminApp', 'Setting up TennisBackend subscription...');
-
-    const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
-      logger.debug('AdminApp', 'Board update received', {
-        serverNow: board?.serverNow,
-        courts: board?.courts?.length,
-      });
-
-      if (board) {
-        // Update courts from API
-        setCourts(board.courts || []);
-        // Normalize waitlist using shared helper
-        setWaitingGroups(normalizeWaitlist(board.waitlist));
-
-        // Extract block data from courts for UI compatibility
-        // API-only: derive courtBlocks entirely from board.courts
-        const apiBlocks = (board.courts || [])
-          .filter((c) => c.block)
-          .map((c) => ({
-            id: c.block.id,
-            courtId: c.id,
-            courtNumber: c.number,
-            reason: c.block.reason,
-            startTime: c.block?.startsAt || c.block?.startTime || new Date().toISOString(),
-            endTime: c.block?.endsAt || c.block?.endTime,
-          }));
-
-        setCourtBlocks(apiBlocks);
-
-        // Only trigger calendar refresh when blocks actually changed
-        const currentBlocks = [...(board.blocks || []), ...(board.upcomingBlocks || [])];
-        const newFingerprint = generateBlocksFingerprint(currentBlocks);
-        if (newFingerprint !== lastBlocksFingerprintRef.current) {
-          lastBlocksFingerprintRef.current = newFingerprint;
-          setRefreshTrigger((prev) => prev + 1);
-          logger.debug('AdminApp', 'Blocks changed, triggering calendar refresh');
-        }
-      }
-    });
-
-    return () => {
-      logger.debug('AdminApp', 'Cleaning up TennisBackend subscription');
-      unsubscribe();
-    };
-  }, []);
-
-  // NOTE: Block loading now handled by TennisBackend subscription
-  // The subscription extracts block data from court responses and updates courtBlocks state
-  // See the subscribeToBoardChanges useEffect above
 
   // Update current time every second
   useEffect(() => {
@@ -339,7 +278,7 @@ const AdminPanelV2 = ({ onExit }) => {
   // Callback for MockAIAdmin to refresh data
   const handleRefreshData = () => {
     reloadSettings();
-    setRefreshTrigger((prev) => prev + 1);
+    bumpRefreshTrigger();
   };
 
   // Callback for MockAIAdmin to clear waitlist
@@ -406,7 +345,7 @@ const AdminPanelV2 = ({ onExit }) => {
               courts={courts}
               currentTime={currentTime}
               refreshTrigger={refreshTrigger}
-              onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
+              onRefresh={bumpRefreshTrigger}
               calendarView={calendarView}
               backend={backend}
               hoursOverrides={hoursOverrides}
