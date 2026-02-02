@@ -6,27 +6,31 @@
  * Accepts pre-aggregated data from the backend.
  */
 import React, { useMemo } from 'react';
+import { normalizeHeatmapRow } from '../../lib/normalize/adminAnalytics.js';
 
 const UsageHeatmap = ({ heatmapData = [] }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Build lookup from pre-aggregated data (supports both old and new API formats)
+  // WP4-4: Normalize at ingestion, use camelCase throughout
+  const normalizedData = useMemo(() => {
+    return heatmapData.map(normalizeHeatmapRow);
+  }, [heatmapData]);
+
+  // Build lookup from normalized data
   const heatmapLookup = useMemo(() => {
     const lookup = {};
-    heatmapData.forEach((d) => {
-      const dayOfWeek = d.dow ?? d.day_of_week;
-      const count = d.count ?? d.session_count;
-      lookup[`${dayOfWeek}-${d.hour}`] = count;
+    normalizedData.forEach((d) => {
+      lookup[`${d.dayOfWeek}-${d.hour}`] = d.sessionCount;
     });
     return lookup;
-  }, [heatmapData]);
+  }, [normalizedData]);
 
   // Find max for color scaling
   const maxCount = useMemo(() => {
-    if (heatmapData.length === 0) return 1;
-    return Math.max(1, ...heatmapData.map((d) => d.count ?? d.session_count));
-  }, [heatmapData]);
+    if (normalizedData.length === 0) return 1;
+    return Math.max(1, ...normalizedData.map((d) => d.sessionCount));
+  }, [normalizedData]);
 
   const getColor = (dayIndex, hour) => {
     const count = heatmapLookup[`${dayIndex}-${hour}`] || 0;

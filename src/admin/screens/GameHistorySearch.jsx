@@ -6,20 +6,23 @@
  */
 import React, { useState } from 'react';
 import { FileText } from '../components';
+import { normalizeGameSession } from '../../lib/normalize/adminAnalytics.js';
 
-// Map database end_reason to display-friendly values
+// Map database endReason to display-friendly values
+// Keys are database values (snake_case literals preserved for mapping)
+const END_REASON_MAP = {
+  cleared: 'Cleared',
+  observed_cleared: 'Observed-Cleared',
+  admin_override: 'Admin-Cleared',
+  overtime_takeover: 'Bumped',
+  auto_cleared: 'Auto-Cleared',
+  // Legacy values (for historical data before migration)
+  completed: 'Auto-Cleared',
+  cleared_early: 'Cleared',
+};
+
 const mapEndReason = (dbReason) => {
-  const map = {
-    cleared: 'Cleared',
-    observed_cleared: 'Observed-Cleared',
-    admin_override: 'Admin-Cleared',
-    overtime_takeover: 'Bumped',
-    auto_cleared: 'Auto-Cleared',
-    // Legacy values (for historical data before migration)
-    completed: 'Auto-Cleared',
-    cleared_early: 'Cleared',
-  };
-  return map[dbReason] || dbReason || 'Cleared';
+  return END_REASON_MAP[dbReason] || dbReason || 'Cleared';
 };
 
 const GameHistorySearch = ({ backend }) => {
@@ -51,18 +54,21 @@ const GameHistorySearch = ({ backend }) => {
       });
 
       if (response.ok && response.sessions) {
-        // Transform API response to component format
-        let results = response.sessions.map((session) => ({
-          id: session.id,
-          courtNumber: session.court_number,
-          startTime: session.started_at,
-          endTime: session.ended_at,
-          players: (session.participants || []).map((p) => ({
-            name: p.name || 'Unknown',
-            type: p.type,
-          })),
-          clearReason: mapEndReason(session.end_reason),
-        }));
+        // WP4-4: Normalize at ingestion, use camelCase
+        let results = response.sessions.map((session) => {
+          const normalized = normalizeGameSession(session);
+          return {
+            id: normalized.id,
+            courtNumber: normalized.courtNumber,
+            startTime: normalized.startedAt,
+            endTime: normalized.endedAt,
+            players: (normalized.participants || []).map((p) => ({
+              name: p.name || 'Unknown',
+              type: p.type,
+            })),
+            clearReason: mapEndReason(normalized.endReason),
+          };
+        });
 
         // Client-side filter by clearReason if specified
         if (searchFilters.clearReason) {

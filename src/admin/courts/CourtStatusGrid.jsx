@@ -278,7 +278,7 @@ const CourtStatusGrid = ({
             ...block,
             endTime: currentTimeNow.toISOString(),
             actualEndTime: currentTimeNow.toISOString(),
-            endReason: 'admin_override',
+            endReason: 'admin_override', // API enum value (snake_case is database convention)
           };
         }
       }

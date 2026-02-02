@@ -35,9 +35,10 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
   }, []);
 
   // Determine if wet block (can't change type)
+  // WP4-4: event is pre-normalized by EventCalendarEnhanced, use camelCase
   const isWetBlock = useMemo(() => {
     if (!event) return false;
-    const type = event.blockType || event.block_type || event.reason;
+    const type = event.blockType || event.reason;
     return type === 'wet' || (event.title || '').toLowerCase().includes('wet');
   }, [event]);
 
@@ -47,10 +48,10 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       const start = new Date(event.startTime || event.startsAt);
       const end = new Date(event.endTime || event.endsAt);
 
-      const initialCourtId = event.courtId || event.court_id || '';
+      // WP4-4: event is pre-normalized, use camelCase only
+      const initialCourtId = event.courtId || '';
       const initialTitle = event.title || event.reason || event.eventDetails?.title || '';
-      const initialBlockType =
-        event.blockType || event.block_type || event.reason?.toLowerCase() || 'other';
+      const initialBlockType = event.blockType || event.reason?.toLowerCase() || 'other';
       const initialDate = start.toISOString().slice(0, 10);
       const initialStartTime = start.toTimeString().slice(0, 5);
       const initialEndTime = end.toTimeString().slice(0, 5);
@@ -308,7 +309,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
                   <option value="">Select Court</option>
                   {courts.map((court) => (
                     <option key={court.id} value={court.id}>
-                      Court {court.courtNumber || court.court_number}
+                      Court {court.courtNumber}
                     </option>
                   ))}
                 </select>

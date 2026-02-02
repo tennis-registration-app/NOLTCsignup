@@ -28,8 +28,16 @@ export function ApiTestPanel() {
 
   // Test member IDs from seed data
   const TEST_PLAYERS = [
-    { id: 'c0000000-0000-0000-0000-000000000001', name: 'John Smith', accountId: 'b0000000-0000-0000-0000-000000000001' },
-    { id: 'c0000000-0000-0000-0000-000000000003', name: 'Bob Johnson', accountId: 'b0000000-0000-0000-0000-000000000002' },
+    {
+      id: 'c0000000-0000-0000-0000-000000000001',
+      name: 'John Smith',
+      accountId: 'b0000000-0000-0000-0000-000000000001',
+    },
+    {
+      id: 'c0000000-0000-0000-0000-000000000003',
+      name: 'Bob Johnson',
+      accountId: 'b0000000-0000-0000-0000-000000000002',
+    },
   ];
 
   const handleSearch = async () => {
@@ -77,7 +85,9 @@ export function ApiTestPanel() {
       <div style={styles.panel}>
         <h3>API Test Panel</h3>
         <p style={styles.error}>Error: {error}</p>
-        <button onClick={refresh} style={styles.button}>Retry</button>
+        <button onClick={refresh} style={styles.button}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -88,9 +98,11 @@ export function ApiTestPanel() {
 
       {/* Status */}
       <div style={styles.section}>
-        <strong>Status:</strong> Connected |
-        Last update: {lastUpdate ? new Date(lastUpdate).toLocaleTimeString() : 'never'}
-        <button onClick={refresh} style={styles.smallButton}>Refresh</button>
+        <strong>Status:</strong> Connected | Last update:{' '}
+        {lastUpdate ? new Date(lastUpdate).toLocaleTimeString() : 'never'}
+        <button onClick={refresh} style={styles.smallButton}>
+          Refresh
+        </button>
       </div>
 
       {/* Message */}
@@ -98,17 +110,22 @@ export function ApiTestPanel() {
 
       {/* Courts Summary */}
       <div style={styles.section}>
-        <strong>Courts:</strong> {availableCourts.length} available, {occupiedCourts.length} occupied
+        <strong>Courts:</strong> {availableCourts.length} available, {occupiedCourts.length}{' '}
+        occupied
       </div>
 
       {/* Court Grid */}
       <div style={styles.courtGrid}>
-        {courts.map(court => (
+        {courts.map((court) => (
           <div
             key={court.number}
             style={{
               ...styles.courtCard,
-              backgroundColor: court.isAvailable ? '#e8f5e9' : court.isBlocked ? '#ffebee' : '#fff3e0'
+              backgroundColor: court.isAvailable
+                ? '#e8f5e9'
+                : court.isBlocked
+                  ? '#ffebee'
+                  : '#fff3e0',
             }}
           >
             <div style={styles.courtNumber}>Court {court.number}</div>
@@ -119,21 +136,22 @@ export function ApiTestPanel() {
               <div style={styles.courtPlayers}>
                 {court.session.players?.slice(0, 2).join(', ')}
                 <br />
-                <small>{court.session.timeRemaining ? Math.round(court.session.timeRemaining / 60000) + 'm left' : ''}</small>
+                <small>
+                  {court.session.timeRemaining
+                    ? Math.round(court.session.timeRemaining / 60000) + 'm left'
+                    : ''}
+                </small>
               </div>
             )}
             <div style={styles.courtActions}>
               {court.isAvailable ? (
-                <button
-                  onClick={() => handleAssignCourt(court.number)}
-                  style={styles.smallButton}
-                >
+                <button onClick={() => handleAssignCourt(court.number)} style={styles.smallButton}>
                   Assign
                 </button>
               ) : court.isOccupied ? (
                 <button
                   onClick={() => handleClearCourt(court.number)}
-                  style={{...styles.smallButton, backgroundColor: '#c0392b'}}
+                  style={{ ...styles.smallButton, backgroundColor: '#c0392b' }}
                 >
                   Clear
                 </button>
@@ -159,15 +177,19 @@ export function ApiTestPanel() {
         <input
           type="text"
           value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by name..."
           style={styles.input}
         />
-        <button onClick={handleSearch} style={styles.smallButton}>Search</button>
+        <button onClick={handleSearch} style={styles.smallButton}>
+          Search
+        </button>
         {searchResults.length > 0 && (
           <div style={styles.searchResults}>
-            {searchResults.map(m => (
-              <div key={m.id}>{m.display_name} ({m.member_number})</div>
+            {searchResults.map((m) => (
+              <div key={m.id}>
+                {m.displayName} ({m.memberNumber})
+              </div>
             ))}
           </div>
         )}

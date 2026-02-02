@@ -12,6 +12,7 @@ import WeekView from './WeekView.jsx';
 import EventDetailsModal from './EventDetailsModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
 import { logger } from '../../lib/logger.js';
+import { normalizeCalendarBlock } from '../../lib/normalize/adminAnalytics.js';
 
 const EventCalendarEnhanced = ({
   courts,
@@ -94,32 +95,30 @@ const EventCalendarEnhanced = ({
 
         if (result.ok) {
           // Transform API response to calendar event format
-          // Handle both camelCase and snake_case from API
+          // WP4-4: Normalize at ingestion, then use camelCase
           const transformedBlocks = result.blocks.map((b) => {
-            const courtId = b.courtId || b.court_id;
-            const courtNumber = b.courtNumber || b.court_number;
-            const blockType = b.blockType || b.block_type;
-            const startsAt = b.startsAt || b.starts_at;
-            const endsAt = b.endsAt || b.ends_at;
-            const isRecurring = b.isRecurring || b.is_recurring;
-            const recurrenceRule = b.recurrenceRule || b.recurrence_rule;
+            const normalized = normalizeCalendarBlock(b);
 
             return {
-              id: b.id,
-              courtId,
-              courtNumber,
-              courtNumbers: [courtNumber], // Calendar expects array
-              title: b.title,
-              startTime: startsAt,
-              endTime: endsAt,
-              reason: blockType,
-              blockType,
-              eventType: getEventTypeFromReason(blockType),
-              isRecurring,
-              recurrenceRule,
+              id: normalized.id,
+              courtId: normalized.courtId,
+              courtNumber: normalized.courtNumber,
+              courtNumbers: [normalized.courtNumber], // Calendar expects array
+              title: normalized.title,
+              startTime: normalized.startsAt,
+              endTime: normalized.endsAt,
+              reason: normalized.blockType,
+              blockType: normalized.blockType,
+              eventType: getEventTypeFromReason(normalized.blockType),
+              isRecurring: normalized.isRecurring,
+              recurrenceRule: normalized.recurrenceRule,
               isBlock: true,
-              isEvent: blockType === 'event' || blockType === 'clinic' || blockType === 'lesson',
-              isWetCourt: blockType === 'wet' || b.title?.toLowerCase().includes('wet'),
+              isEvent:
+                normalized.blockType === 'event' ||
+                normalized.blockType === 'clinic' ||
+                normalized.blockType === 'lesson',
+              isWetCourt:
+                normalized.blockType === 'wet' || normalized.title?.toLowerCase().includes('wet'),
             };
           });
           setBlocks(transformedBlocks);

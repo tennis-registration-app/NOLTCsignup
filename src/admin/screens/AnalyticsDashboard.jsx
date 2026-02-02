@@ -17,6 +17,7 @@ import {
   UsageComparisonChart,
 } from '../analytics';
 import { logger } from '../../lib/logger.js';
+import { normalizeTransaction } from '../../lib/normalize/adminAnalytics.js';
 
 // Access global dependencies
 const TENNIS_CONFIG = window.TENNIS_CONFIG ||
@@ -132,14 +133,17 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
           const result = await backend.admin.getTransactions({ type: 'ball_purchase', limit: 500 });
           logger.debug('AdminAnalytics', 'Ball purchases result', result);
           if (result.ok && result.transactions) {
-            // Transform API response to match expected shape
-            ballPurchasesData = result.transactions.map((t) => ({
-              id: t.id,
-              timestamp: t.date + 'T' + (t.time || '00:00:00'),
-              memberNumber: t.member_number,
-              memberName: t.account_name || 'Unknown',
-              amount: parseFloat(t.amount_dollars) || t.amount_cents / 100,
-            }));
+            // WP4-4: Normalize at ingestion, use camelCase
+            ballPurchasesData = result.transactions.map((t) => {
+              const normalized = normalizeTransaction(t);
+              return {
+                id: normalized.id,
+                timestamp: normalized.date + 'T' + (normalized.time || '00:00:00'),
+                memberNumber: normalized.memberNumber,
+                memberName: normalized.accountName || 'Unknown',
+                amount: parseFloat(normalized.amountDollars) || normalized.amountCents / 100,
+              };
+            });
           }
         } catch (err) {
           logger.error('AdminAnalytics', 'Failed to fetch ball purchases', err);
@@ -155,15 +159,18 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
         try {
           const result = await backend.admin.getTransactions({ type: 'guest_fee', limit: 500 });
           if (result.ok && result.transactions) {
-            // Transform API response to match expected shape
-            guestChargesData = result.transactions.map((t) => ({
-              id: t.id,
-              timestamp: t.date + 'T' + (t.time || '00:00:00'),
-              sponsorNumber: t.member_number,
-              sponsorName: t.account_name || 'Unknown',
-              amount: parseFloat(t.amount_dollars) || t.amount_cents / 100,
-              guestName: t.description || 'Guest',
-            }));
+            // WP4-4: Normalize at ingestion, use camelCase
+            guestChargesData = result.transactions.map((t) => {
+              const normalized = normalizeTransaction(t);
+              return {
+                id: normalized.id,
+                timestamp: normalized.date + 'T' + (normalized.time || '00:00:00'),
+                sponsorNumber: normalized.memberNumber,
+                sponsorName: normalized.accountName || 'Unknown',
+                amount: parseFloat(normalized.amountDollars) || normalized.amountCents / 100,
+                guestName: normalized.description || 'Guest',
+              };
+            });
           }
         } catch (err) {
           logger.error('AdminAnalytics', 'Failed to fetch guest charges', err);

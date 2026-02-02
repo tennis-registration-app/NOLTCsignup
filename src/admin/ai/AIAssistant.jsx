@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ProposedActions from './ProposedActions';
+import {
+  normalizeAiResponse,
+  normalizeAiAnalyticsSummary,
+  normalizeAiHeatmapRow,
+} from '../../lib/normalize/adminAnalytics.js';
 
 /**
  * Production AI Assistant - replaces MockAIAdmin
@@ -46,10 +51,12 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
     setLoading(true);
 
     try {
-      const response = await backend.admin.aiAssistant({
+      const rawResponse = await backend.admin.aiAssistant({
         prompt: userMessage,
         mode: mode,
       });
+      // WP4-4: Normalize at ingestion
+      const response = normalizeAiResponse(rawResponse);
 
       if (!response.ok) {
         throw new Error(response.error || 'Request failed');
@@ -59,10 +66,10 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
       addMessage('assistant', response.response || 'Done.');
 
       // If draft mode returned proposed actions
-      if (response.proposed_tool_calls && response.proposed_tool_calls.length > 0) {
-        setPendingActions(response.proposed_tool_calls);
-        setActionsToken(response.actions_token);
-        setRequiresConfirmation(response.requires_confirmation || false);
+      if (response.proposedToolCalls && response.proposedToolCalls.length > 0) {
+        setPendingActions(response.proposedToolCalls);
+        setActionsToken(response.actionsToken);
+        setRequiresConfirmation(response.requiresConfirmation || false);
       }
     } catch (err) {
       console.error('AI Assistant error:', err);
@@ -80,12 +87,15 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
     setError(null);
 
     try {
-      const response = await backend.admin.aiAssistant({
+      // Note: actions_token and confirm_destructive are API request parameters (snake_case)
+      const rawResponse = await backend.admin.aiAssistant({
         prompt: 'execute',
         mode: 'execute',
-        actions_token: actionsToken,
-        confirm_destructive: confirmed,
+        actions_token: actionsToken, // API parameter (snake_case intentional)
+        confirm_destructive: confirmed, // API parameter (snake_case intentional)
       });
+      // WP4-4: Normalize response at ingestion
+      const response = normalizeAiResponse(rawResponse);
 
       if (!response.ok) {
         throw new Error(response.error || 'Execution failed');
@@ -93,7 +103,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
 
       // Show execution results - include data for read tools
       const resultSummary =
-        response.executed_actions
+        response.executedActions
           ?.map((a) => {
             if (!a.success) {
               return `${a.tool}: ✗ ${a.error}`;
@@ -101,16 +111,19 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
             // For analytics/read tools, show the actual data
             if (a.tool === 'get_analytics' && a.result?.data) {
               const data = a.result.data;
+              const normalizedSummary = normalizeAiAnalyticsSummary(data.summary);
               let summary = `${a.tool}: ✓\n`;
-              if (data.summary) {
-                summary += `Sessions: ${data.summary.total_sessions || 0}\n`;
-                summary += `Total hours: ${data.summary.total_hours?.toFixed(1) || 0}\n`;
+              if (normalizedSummary) {
+                summary += `Sessions: ${normalizedSummary.totalSessions || 0}\n`;
+                summary += `Total hours: ${normalizedSummary.totalHours?.toFixed(1) || 0}\n`;
               }
               if (data.heatmap && data.heatmap.length > 0) {
-                // Find busiest day
+                // Find busiest day - normalize heatmap rows
                 const dayTotals = {};
                 data.heatmap.forEach((h) => {
-                  dayTotals[h.day_of_week] = (dayTotals[h.day_of_week] || 0) + h.session_count;
+                  const normalized = normalizeAiHeatmapRow(h);
+                  dayTotals[normalized.dayOfWeek] =
+                    (dayTotals[normalized.dayOfWeek] || 0) + normalized.sessionCount;
                 });
                 const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                 const busiest = Object.entries(dayTotals).sort(
@@ -132,8 +145,9 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
       addMessage('assistant', response.response + '\n\n' + resultSummary, { isResult: true });
 
       // Refresh settings if any settings-related tool was executed
+      // Tool names are API constants (snake_case is intentional for matching)
       const settingsTools = ['update_settings', 'add_holiday_hours'];
-      const executedActions = response.executed_actions || [];
+      const executedActions = response.executedActions || [];
       if (executedActions.some((a) => a.success && settingsTools.includes(a.tool))) {
         if (onSettingsChanged) {
           await onSettingsChanged();

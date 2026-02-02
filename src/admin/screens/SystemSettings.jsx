@@ -9,6 +9,7 @@ import { logger } from '../../lib/logger.js';
 import {
   normalizeOperatingHours,
   normalizeOverrides,
+  normalizeSettings,
   denormalizeOperatingHours,
   denormalizeOverride,
 } from '../../lib/normalize/normalizeAdminSettings.js';
@@ -63,12 +64,15 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     try {
       const result = await backend.admin.getSettings();
       if (result.ok) {
-        // Update settings
+        // WP4-4: Normalize settings at ingestion
+        const normalizedSettings = normalizeSettings(result.settings);
+
+        // Update pricing settings
         const newSettings = {
-          tennisBallPrice: (result.settings?.ball_price_cents || 500) / 100,
+          tennisBallPrice: (normalizedSettings?.ballPriceCents || 500) / 100,
           guestFees: {
-            weekday: (result.settings?.guest_fee_weekday_cents || 1500) / 100,
-            weekend: (result.settings?.guest_fee_weekend_cents || 2000) / 100,
+            weekday: (normalizedSettings?.guestFeeWeekdayCents || 1500) / 100,
+            weekend: (normalizedSettings?.guestFeeWeekendCents || 2000) / 100,
           },
         };
         setSettings(newSettings);
@@ -76,11 +80,11 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         setWeekdayFeeInput(newSettings.guestFees.weekday.toFixed(2));
         setWeekendFeeInput(newSettings.guestFees.weekend.toFixed(2));
 
-        // Update auto-clear settings
-        setAutoClearEnabled(result.settings?.auto_clear_enabled === 'true');
-        setAutoClearMinutes(result.settings?.auto_clear_minutes || '180');
-        setCheckStatusMinutes(result.settings?.check_status_minutes || '150');
-        setBlockWarningMinutes(result.settings?.block_warning_minutes || '60');
+        // Update auto-clear settings (using normalized camelCase)
+        setAutoClearEnabled(normalizedSettings?.autoClearEnabled === 'true');
+        setAutoClearMinutes(normalizedSettings?.autoClearMinutes || '180');
+        setCheckStatusMinutes(normalizedSettings?.checkStatusMinutes || '150');
+        setBlockWarningMinutes(normalizedSettings?.blockWarningMinutes || '60');
 
         // Update operating hours (normalized to camelCase)
         const normalizedHours = normalizeOperatingHours(result.operating_hours);
@@ -150,6 +154,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       const weekdayFee = parseFloat(weekdayFeeInput) || 0;
       const weekendFee = parseFloat(weekendFeeInput) || 0;
 
+      // WP4-4: API expects snake_case for write operations (denormalization)
       const result = await backend.admin.updateSettings({
         settings: {
           ball_price_cents: Math.round(ballPrice * 100),
@@ -216,6 +221,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
 
     setAutoClearSaveStatus('saving');
     try {
+      // WP4-4: API expects snake_case for write operations (denormalization)
       const result = await backend.admin.updateSettings({
         settings: {
           auto_clear_enabled: autoClearEnabled ? 'true' : 'false',

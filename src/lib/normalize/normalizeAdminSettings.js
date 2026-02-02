@@ -31,6 +31,8 @@ export function normalizeSettings(settings) {
     courtCount: settings.court_count,
     checkStatusMinutes: settings.check_status_minutes,
     blockWarningMinutes: settings.block_warning_minutes,
+    autoClearEnabled: settings.auto_clear_enabled,
+    autoClearMinutes: settings.auto_clear_minutes,
   };
 }
 
