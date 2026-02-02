@@ -71,53 +71,13 @@ export async function assignCourtToGroupOrchestrated(
   selectableCountAtSelection,
   deps
 ) {
-  const {
-    // Read values
-    isAssigning,
-    mobileFlow,
-    preselectedCourt,
-    operatingHours,
-    currentGroup,
-    courts,
-    currentWaitlistEntryId,
-    CONSTANTS,
-    // Setters
-    setIsAssigning,
-    setCurrentWaitlistEntryId,
-    setHasWaitlistPriority,
-    setCurrentGroup,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setReplacedGroup,
-    setDisplacement,
-    setOriginalCourtData,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-    setHasAssignedCourt,
-    setCanChangeCourt,
-    setChangeTimeRemaining,
-    setIsTimeLimited,
-    setTimeLimitReason,
-    setShowSuccess,
-    setGpsFailedPrompt,
-    // Services
-    backend,
-    // Helpers
-    getCourtBlockStatus,
-    getMobileGeolocation,
-    showAlertMessage,
-    validateGroupCompat,
-    clearSuccessResetTimer,
-    resetForm,
-    successResetTimerRef,
-    dbg,
-    API_CONFIG,
-  } = deps;
+  // WP4-2: Grouped deps structure — { state, actions, services, ui }
+  const { state, actions, services, ui } = deps;
 
   // ===== GUARD SECTION (WP-HR4: wired to helpers) =====
 
   // Guard 1: Prevent double-submit (silent)
-  const assigningCheck = guardNotAssigning(isAssigning);
+  const assigningCheck = guardNotAssigning(state.isAssigning);
   if (!assigningCheck.ok) {
     logger.debug('AssignCourt', 'Assignment already in progress, ignoring duplicate request');
     // SILENT-GUARD: double-submit prevention — no user feedback needed
@@ -129,15 +89,15 @@ export async function assignCourtToGroupOrchestrated(
   const getRuntimeDeps = () => (_runtimeDeps ??= createOrchestrationDeps());
 
   // Mobile: Use preselected court if in mobile flow
-  if (mobileFlow && preselectedCourt && !courtNumber) {
-    courtNumber = preselectedCourt;
+  if (state.mobileFlow && state.preselectedCourt && !courtNumber) {
+    courtNumber = state.preselectedCourt;
     getRuntimeDeps().logger.debug('AssignCourt', 'Mobile: Using preselected court', courtNumber);
   }
 
   // Guard 2: Check operating hours (toast)
   const now = new Date();
   const hoursCheck = guardOperatingHours({
-    operatingHours,
+    operatingHours: state.operatingHours,
     currentHour: now.getHours(),
     currentMinutes: now.getMinutes(),
     dayOfWeek: now.getDay(),
@@ -153,21 +113,21 @@ export async function assignCourtToGroupOrchestrated(
   // Guard 3: Validate court number (alert)
   const courtCheck = guardCourtNumber({
     courtNumber,
-    courtCount: CONSTANTS.COURT_COUNT,
+    courtCount: state.CONSTANTS.COURT_COUNT,
   });
   if (!courtCheck.ok) {
     if (courtCheck.ui?.action === 'alert') {
-      showAlertMessage(...courtCheck.ui.args);
+      ui.showAlertMessage(...courtCheck.ui.args);
     }
     // FEEDBACK: alert provides user feedback above
     return;
   }
 
   // Guard 4: Validate group has players (alert)
-  const groupCheck = guardGroup({ currentGroup });
+  const groupCheck = guardGroup({ currentGroup: state.currentGroup });
   if (!groupCheck.ok) {
     if (groupCheck.ui?.action === 'alert') {
-      showAlertMessage(...groupCheck.ui.args);
+      ui.showAlertMessage(...groupCheck.ui.args);
     }
     // FEEDBACK: alert provides user feedback above
     return;
@@ -175,7 +135,7 @@ export async function assignCourtToGroupOrchestrated(
 
   // Create arrays for validation and assignment
   // Handle both field name formats: id/name (legacy) and memberId/displayName (API)
-  const players = currentGroup
+  const players = state.currentGroup
     .filter((p) => !p.isGuest) // Non-guests for validation
     .map((p) => ({
       id: String(p.id || p.memberId || '').trim(),
@@ -183,7 +143,7 @@ export async function assignCourtToGroupOrchestrated(
     }))
     .filter((p) => p && p.id && p.name);
 
-  const allPlayers = currentGroup // ALL players including guests for court assignment
+  const allPlayers = state.currentGroup // ALL players including guests for court assignment
     .map((p) => ({
       id: String(p.id || p.memberId || '').trim(),
       name: String(p.name || p.displayName || '').trim(),
@@ -193,17 +153,17 @@ export async function assignCourtToGroupOrchestrated(
     }))
     .filter((p) => p && p.id && p.name);
 
-  const guests = currentGroup.filter((p) => p.isGuest).length;
+  const guests = state.currentGroup.filter((p) => p.isGuest).length;
 
   // Guard 5: Domain validation (alert)
   const compatCheck = guardGroupCompat({
     players,
     guests,
-    validateGroupCompat,
+    validateGroupCompat: services.validateGroupCompat,
   });
   if (!compatCheck.ok) {
     if (compatCheck.ui?.action === 'alert') {
-      showAlertMessage(...compatCheck.ui.args);
+      ui.showAlertMessage(...compatCheck.ui.args);
     }
     // FEEDBACK: alert provides user feedback above
     return;
@@ -218,7 +178,7 @@ export async function assignCourtToGroupOrchestrated(
   const group = { players: allPlayers, guests };
 
   // Check for upcoming block on selected court using new system
-  const blockStatus = await getCourtBlockStatus(courtNumber);
+  const blockStatus = await services.getCourtBlockStatus(courtNumber);
   if (blockStatus && !blockStatus.isCurrent && blockStatus.startTime) {
     const nowBlock = new Date();
     const blockStart = new Date(blockStatus.startTime);
@@ -231,7 +191,7 @@ export async function assignCourtToGroupOrchestrated(
 
       const proceed = confirm(confirmMsg);
       if (!proceed) {
-        showAlertMessage('Please select a different court or join the waitlist.');
+        ui.showAlertMessage('Please select a different court or join the waitlist.');
         // FEEDBACK: alert provides user feedback above
         return; // Exit without assigning
       }
@@ -245,9 +205,9 @@ export async function assignCourtToGroupOrchestrated(
   });
 
   // If this is a waitlist group (CTA flow), use assignFromWaitlist instead
-  if (currentWaitlistEntryId) {
+  if (state.currentWaitlistEntryId) {
     // Get court UUID for the waitlist assignment
-    const waitlistCourt = courts.find((c) => c.number === courtNumber);
+    const waitlistCourt = state.courts.find((c) => c.number === courtNumber);
     if (!waitlistCourt) {
       getRuntimeDeps().logger.error(
         'AssignCourt',
@@ -260,11 +220,11 @@ export async function assignCourtToGroupOrchestrated(
     }
 
     // Get geolocation for mobile (required by backend for geofence validation)
-    const waitlistMobileLocation = await getMobileGeolocation();
+    const waitlistMobileLocation = await services.getMobileGeolocation();
 
     try {
-      const result = await backend.commands.assignFromWaitlist({
-        waitlistEntryId: currentWaitlistEntryId,
+      const result = await services.backend.commands.assignFromWaitlist({
+        waitlistEntryId: state.currentWaitlistEntryId,
         courtId: waitlistCourt.id,
         ...(waitlistMobileLocation || {}),
       });
@@ -274,28 +234,28 @@ export async function assignCourtToGroupOrchestrated(
         // Handle "Court occupied" race condition
         if (result.code === 'COURT_OCCUPIED') {
           Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
-          setCurrentWaitlistEntryId(null);
-          await backend.queries.refresh();
+          actions.setCurrentWaitlistEntryId(null);
+          await services.backend.queries.refresh();
           // FEEDBACK: toast provides user feedback above
           return;
         }
         // Handle mobile location errors - offer QR fallback
-        if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
-          setGpsFailedPrompt(true);
+        if (state.API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
+          actions.setGpsFailedPrompt(true);
           // FEEDBACK: GPS prompt modal provides user feedback
           return;
         }
         Tennis.UI.toast(result.message || 'Failed to assign court from waitlist', {
           type: 'error',
         });
-        setCurrentWaitlistEntryId(null);
+        actions.setCurrentWaitlistEntryId(null);
         // FEEDBACK: toast provides user feedback above
         return;
       }
 
       // Clear the waitlist entry ID after successful assignment
-      setCurrentWaitlistEntryId(null);
-      setHasWaitlistPriority(false);
+      actions.setCurrentWaitlistEntryId(null);
+      actions.setHasWaitlistPriority(false);
       // Also clear mobile sessionStorage waitlist entry
       sessionStorage.removeItem('mobile-waitlist-entry-id');
 
@@ -313,41 +273,41 @@ export async function assignCourtToGroupOrchestrated(
           accountId: p.accountId,
           isGuest: p.isGuest,
         }));
-        setCurrentGroup(groupFromWaitlist);
+        actions.setCurrentGroup(groupFromWaitlist);
       }
 
       // Update UI state
-      setJustAssignedCourt(courtNumber);
-      setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
-      setReplacedGroup(null);
-      setDisplacement(null);
-      setOriginalCourtData(null);
-      setIsChangingCourt(false);
-      setWasOvertimeCourt(false);
-      setHasAssignedCourt(true);
-      setCanChangeCourt(false); // Waitlist groups typically don't get court change option
-      setShowSuccess(true);
+      actions.setJustAssignedCourt(courtNumber);
+      actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
+      actions.setReplacedGroup(null);
+      actions.setDisplacement(null);
+      actions.setOriginalCourtData(null);
+      actions.setIsChangingCourt(false);
+      actions.setWasOvertimeCourt(false);
+      actions.setHasAssignedCourt(true);
+      actions.setCanChangeCourt(false); // Waitlist groups typically don't get court change option
+      actions.setShowSuccess(true);
 
       // Mobile: trigger success signal
-      const ui = getRuntimeDeps().platform.getUI();
-      if (ui?.__mobileSendSuccess__) {
-        ui.__mobileSendSuccess__();
+      const uiPlatform = getRuntimeDeps().platform.getUI();
+      if (uiPlatform?.__mobileSendSuccess__) {
+        uiPlatform.__mobileSendSuccess__();
       }
 
       // Auto-reset timer
-      if (!mobileFlow) {
-        clearSuccessResetTimer();
-        successResetTimerRef.current = setTimeout(() => {
-          successResetTimerRef.current = null;
-          resetForm();
-        }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+      if (!state.mobileFlow) {
+        services.clearSuccessResetTimer();
+        state.successResetTimerRef.current = setTimeout(() => {
+          state.successResetTimerRef.current = null;
+          services.resetForm();
+        }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
       }
 
       // EARLY-EXIT: waitlist flow complete — success screen shown
       return;
     } catch (error) {
       getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
-      setCurrentWaitlistEntryId(null);
+      actions.setCurrentWaitlistEntryId(null);
       Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
       // FEEDBACK: toast provides user feedback above
       return;
@@ -355,7 +315,7 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   // Get court UUID from court number
-  const court = courts.find((c) => c.number === courtNumber);
+  const court = state.courts.find((c) => c.number === courtNumber);
   if (!court) {
     getRuntimeDeps().logger.error('AssignCourt', 'Court not found for number', courtNumber);
     Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
@@ -367,7 +327,7 @@ export async function assignCourtToGroupOrchestrated(
   const groupType = allPlayers.length <= 2 ? 'singles' : 'doubles';
 
   // Get geolocation for mobile (required by backend for geofence validation)
-  const mobileLocation = await getMobileGeolocation();
+  const mobileLocation = await services.getMobileGeolocation();
 
   const assignStartTime = performance.now();
   getRuntimeDeps().logger.debug(
@@ -382,10 +342,10 @@ export async function assignCourtToGroupOrchestrated(
     }
   );
 
-  setIsAssigning(true);
+  actions.setIsAssigning(true);
   let result;
   try {
-    result = await backend.commands.assignCourtWithPlayers({
+    result = await services.backend.commands.assignCourtWithPlayers({
       courtId: court.id,
       players: allPlayers,
       groupType,
@@ -407,7 +367,7 @@ export async function assignCourtToGroupOrchestrated(
     Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', {
       type: 'error',
     });
-    setIsAssigning(false);
+    actions.setIsAssigning(false);
     // FEEDBACK: toast provides user feedback above
     return;
   }
@@ -421,26 +381,26 @@ export async function assignCourtToGroupOrchestrated(
     if (result.code === 'COURT_OCCUPIED') {
       Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
       // Board subscription will auto-refresh, but force immediate refresh
-      await backend.queries.refresh();
-      setIsAssigning(false);
+      await services.backend.queries.refresh();
+      actions.setIsAssigning(false);
       // FEEDBACK: toast provides user feedback above
       return;
     }
     // Handle mobile location errors - offer QR fallback
-    if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
-      setGpsFailedPrompt(true);
-      setIsAssigning(false);
+    if (state.API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
+      actions.setGpsFailedPrompt(true);
+      actions.setIsAssigning(false);
       // FEEDBACK: GPS prompt modal provides user feedback
       return;
     }
     Tennis.UI.toast(result.message || 'Failed to assign court', { type: 'error' });
-    setIsAssigning(false);
+    actions.setIsAssigning(false);
     // FEEDBACK: toast provides user feedback above
     return;
   }
 
   // Success - clear the assigning flag
-  setIsAssigning(false);
+  actions.setIsAssigning(false);
 
   // Success! Board subscription will auto-refresh from signal
   const successTime = Math.round(performance.now() - assignStartTime);
@@ -455,8 +415,8 @@ export async function assignCourtToGroupOrchestrated(
     selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
 
   // Update UI state based on result
-  setJustAssignedCourt(courtNumber);
-  setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
+  actions.setJustAssignedCourt(courtNumber);
+  actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
 
   // Construct replacedGroup from displacement.participants for SuccessScreen messaging
   const replacedGroupFromDisplacement =
@@ -466,17 +426,17 @@ export async function assignCourtToGroupOrchestrated(
           endTime: result.displacement.restoreUntil,
         }
       : null;
-  setReplacedGroup(replacedGroupFromDisplacement);
-  setDisplacement(result.displacement); // Will be null if no overtime was displaced
-  setOriginalCourtData(null);
-  setIsChangingCourt(false);
-  setWasOvertimeCourt(false);
-  setHasAssignedCourt(true); // Track that this group has a court
-  setCanChangeCourt(allowCourtChange); // Only true if alternatives exist
-  setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
-  setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false); // Track if time was limited
-  setTimeLimitReason(result.timeLimitReason || (result.isTimeLimited ? 'block' : null));
-  setShowSuccess(true);
+  actions.setReplacedGroup(replacedGroupFromDisplacement);
+  actions.setDisplacement(result.displacement); // Will be null if no overtime was displaced
+  actions.setOriginalCourtData(null);
+  actions.setIsChangingCourt(false);
+  actions.setWasOvertimeCourt(false);
+  actions.setHasAssignedCourt(true); // Track that this group has a court
+  actions.setCanChangeCourt(allowCourtChange); // Only true if alternatives exist
+  actions.setChangeTimeRemaining(state.CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
+  actions.setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false); // Track if time was limited
+  actions.setTimeLimitReason(result.timeLimitReason || (result.isTimeLimited ? 'block' : null));
+  actions.setShowSuccess(true);
 
   const uiUpdateTime = Math.round(performance.now() - assignStartTime);
   getRuntimeDeps().logger.debug(
@@ -486,27 +446,27 @@ export async function assignCourtToGroupOrchestrated(
 
   // Mobile: trigger success signal
   const uiNs = getRuntimeDeps().platform.getUI();
-  dbg('Registration: Checking mobile success signal...', !!uiNs?.__mobileSendSuccess__);
+  services.dbg('Registration: Checking mobile success signal...', !!uiNs?.__mobileSendSuccess__);
   if (uiNs?.__mobileSendSuccess__) {
-    dbg('Registration: Calling mobile success signal');
+    services.dbg('Registration: Calling mobile success signal');
     uiNs.__mobileSendSuccess__();
   }
 
   // Auto-reset timer for court assignment (same as waitlist)
-  if (!mobileFlow) {
-    clearSuccessResetTimer();
-    successResetTimerRef.current = setTimeout(() => {
-      successResetTimerRef.current = null;
-      resetForm();
-    }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
+  if (!state.mobileFlow) {
+    services.clearSuccessResetTimer();
+    state.successResetTimerRef.current = setTimeout(() => {
+      state.successResetTimerRef.current = null;
+      services.resetForm();
+    }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
   }
 
   if (allowCourtChange) {
     const timer = setInterval(() => {
-      setChangeTimeRemaining((prev) => {
+      actions.setChangeTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setCanChangeCourt(false);
+          actions.setCanChangeCourt(false);
           // Don't call resetForm() - let user decide when to leave
           return 0;
         }
