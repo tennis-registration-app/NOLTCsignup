@@ -422,3 +422,108 @@ export async function assignCourtToGroupOrchestrated(
 - `waitlistOrchestrator.js` (already ≤12)
 - `courtChangeOrchestrator.js` (already ≤8)
 - Business logic, UI, or formatting changes
+
+---
+
+## Reset Orchestrator — Pre-Refactor Invariants
+
+### Locked Invariants (must be preserved through refactor)
+
+**Signature:** `resetFormOrchestrated(deps)` — single deps object parameter
+
+**Call site:** `useRegistrationHandlers.js` (line 144)
+
+**Call-site deps assembly:**
+```javascript
+  // Reset form (moved to orchestration layer - WP5.5)
+  const resetForm = useCallback(() => {
+    resetFormOrchestrated({
+      setCurrentGroup,
+      setShowSuccess,
+      setMemberNumber,
+      setCurrentMemberId,
+      setJustAssignedCourt,
+      setAssignedSessionId,
+      setReplacedGroup,
+      setDisplacement,
+      setOriginalCourtData,
+      setCanChangeCourt,
+      setIsTimeLimited,
+      setCurrentScreen,
+      setSearchInput,
+      setShowSuggestions,
+      setShowAddPlayer,
+      setAddPlayerSearch,
+      setShowAddPlayerSuggestions,
+      setHasWaitlistPriority,
+      setCurrentWaitlistEntryId,
+      setWaitlistPosition,
+      setSelectedCourtToClear,
+      setClearCourtStep,
+      setIsChangingCourt,
+      setWasOvertimeCourt,
+      setCourtToMove,
+      setHasAssignedCourt,
+      setShowGuestForm,
+      setGuestName,
+      setGuestSponsor,
+      setShowGuestNameError,
+      setShowSponsorError,
+      setRegistrantStreak,
+      setShowStreakModal,
+      setStreakAcknowledged,
+      clearCache,
+      clearSuccessResetTimer,
+    });
+  }, [/* 36 dependencies */]);
+```
+
+### Setter/Service Call Sequence (in order, from reading the function body)
+
+The following calls are made in this exact order. No reordering is allowed during refactor.
+```
+ 1. clearSuccessResetTimer()
+ 2. setCurrentGroup([])
+ 3. setShowSuccess(false)
+ 4. setMemberNumber('')
+ 5. setCurrentMemberId(null)
+ 6. setJustAssignedCourt(null)
+ 7. setAssignedSessionId(null)
+ 8. setReplacedGroup(null)
+ 9. setDisplacement(null)
+10. setOriginalCourtData(null)
+11. setCanChangeCourt(false)
+12. setIsTimeLimited(false)
+13. setCurrentScreen('home', 'resetForm')
+14. setSearchInput('')
+15. setShowSuggestions(false)
+16. setShowAddPlayer(false)
+17. setAddPlayerSearch('')
+18. setShowAddPlayerSuggestions(false)
+19. setHasWaitlistPriority(false)
+20. setCurrentWaitlistEntryId(null)
+21. setWaitlistPosition(0)
+22. setSelectedCourtToClear(null)
+23. setClearCourtStep(1)
+24. setIsChangingCourt(false)
+25. setWasOvertimeCourt(false)
+26. setCourtToMove(null)
+27. setHasAssignedCourt(false)
+28. clearCache()
+29. setShowGuestForm(false)
+30. setGuestName('')
+31. setGuestSponsor('')
+32. setShowGuestNameError(false)
+33. setShowSponsorError(false)
+34. setRegistrantStreak(0)
+35. setShowStreakModal(false)
+36. setStreakAcknowledged(false)
+```
+
+Total setter calls: 34
+Total service calls: 2 (clearSuccessResetTimer at position 1, clearCache at position 28)
+
+### Constraints
+- **No ordering changes allowed.** The call sequence above is the contract.
+- **No value changes.** Each setter receives the same reset value as currently coded.
+- **No control flow changes.** There are no conditionals in resetFormOrchestrated — pure sequential calls.
