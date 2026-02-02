@@ -6,7 +6,7 @@
  * Future phases will break this into smaller component files.
  */
 /* global Tennis */
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { normalizeWaitlist } from '../lib/normalizeWaitlist.js';
 import { logger } from '../lib/logger.js';
@@ -73,6 +73,9 @@ import { applyBlocksOp } from './handlers/applyBlocksOperation';
 // Wet courts hook (WP5.2)
 import { useWetCourts } from './wetCourts/useWetCourts';
 
+// Settings hook (WP-HR6)
+import { useAdminSettings } from './hooks/useAdminSettings';
+
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
@@ -85,9 +88,6 @@ const {
   TennisCourtDataStore,
   TENNIS_CONFIG: _sharedTennisConfig,
 } = U;
-
-// --- One-time guard helper (no UI change)
-const _one = (key) => (window[key] ? true : ((window[key] = true), false));
 
 // Shared domain modules
 const Events = getTennisEvents();
@@ -154,10 +154,6 @@ const AdminPanelV2 = ({ onExit }) => {
   const [activeTab, setActiveTab] = useState('status');
   const [courts, setCourts] = useState([]);
   const [waitingGroups, setWaitingGroups] = useState([]);
-  const [, setBlockTemplates] = useState([]); // Getter unused, setter used
-  const [settings, setSettings] = useState({});
-  const [, setOperatingHours] = useState([]); // Getter unused, setter used
-  const [hoursOverrides, setHoursOverrides] = useState([]);
   const [notification, setNotification] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -199,75 +195,7 @@ const AdminPanelV2 = ({ onExit }) => {
   const setWetCourts = () => {};
   const setSuspendedBlocks = () => {};
 
-  const handleEditBlockFromStatus = (block) => {
-    setBlockToEdit(block);
-    setActiveTab('blocking');
-    setBlockingView('create');
-  };
-
-  // Load data from localStorage
-  const loadData = useCallback(async () => {
-    try {
-      // Invalidate cache for fresh data
-      if (dataStore.cache) {
-        dataStore.cache.delete(TENNIS_CONFIG.STORAGE.KEY);
-        dataStore.cache.delete('courtBlocks');
-      }
-
-      // Courts, waitlist, and courtBlocks now derived from API via TennisBackend subscription
-      // No localStorage load needed - initial state is empty, API populates it
-
-      // Load templates
-      const templates = await dataStore.get(TENNIS_CONFIG.STORAGE.BLOCK_TEMPLATES_KEY);
-      if (templates) {
-        setBlockTemplates(templates);
-      }
-
-      // Load system settings from API
-      // NOTE: Response includes settings_updated_at timestamp for concurrency detection.
-      // If multiple admins editing settings becomes an issue, compare this timestamp
-      // before saving to warn users about stale state / concurrent edits.
-      const settingsResult = await backend.admin.getSettings();
-      if (settingsResult.ok) {
-        const s = settingsResult.settings;
-        setSettings({
-          tennisBallPrice: s.ball_price_cents
-            ? s.ball_price_cents / 100
-            : TENNIS_CONFIG.PRICING.TENNIS_BALLS,
-          guestFees: {
-            weekday: s.guest_fee_weekday_cents ? s.guest_fee_weekday_cents / 100 : 15.0,
-            weekend: s.guest_fee_weekend_cents ? s.guest_fee_weekend_cents / 100 : 20.0,
-          },
-        });
-        if (settingsResult.operating_hours) {
-          setOperatingHours(settingsResult.operating_hours);
-        }
-        if (settingsResult.upcoming_overrides) {
-          setHoursOverrides(settingsResult.upcoming_overrides);
-        }
-      }
-    } catch (error) {
-      logger.error('AdminApp', 'Failed to load data', error);
-      showNotification('Failed to load data', 'error');
-    }
-  }, []);
-
-  window.refreshAdminView = loadData; // export for coalescer & tests
-
-  // Stable ref for loadData to avoid stale closures in event listeners
-  const loadDataRef = useRef(loadData);
-  loadDataRef.current = loadData;
-
-  // Event-driven refresh bridge listener (uses ref to avoid stale closure)
-  React.useEffect(() => {
-    const onAdminRefresh = () => {
-      loadDataRef.current();
-    };
-    window.addEventListener('ADMIN_REFRESH', onAdminRefresh);
-    return () => window.removeEventListener('ADMIN_REFRESH', onAdminRefresh);
-  }, []);
-
-  // Show notification
+  // Show notification (defined before useAdminSettings so it can be passed as dep)
   const showNotification = (message, type = 'info') => {
     setNotification({ message, type });
     addTimer(
@@ -276,53 +204,31 @@ const AdminPanelV2 = ({ onExit }) => {
     );
   };
 
-  // Load data on mount (realtime updates come via TennisBackend subscription)
-  useEffect(() => {
-    loadData();
+  // Settings hook (WP-HR6) - owns settings, operatingHours, hoursOverrides, blockTemplates state
+  // Hook also returns operatingHours and blockTemplates (not destructured here)
+  const {
+    settings,
+    hoursOverrides,
+    updateBallPrice,
+    handleSettingsChanged,
+    handleAISettingsChanged,
+    reloadSettings,
+  } = useAdminSettings({
+    backend,
+    showNotification,
+    dataStore,
+    TENNIS_CONFIG,
+    clearAllTimers,
+  });
 
-    // prevent duplicate attachment if this component re-mounts
-    if (_one('__ADMIN_LISTENERS_INSTALLED')) return;
+  // Export for coalescer & tests
+  window.refreshAdminView = reloadSettings;
 
-    // NOTE: Polling removed - using TennisBackend realtime subscription instead
-
-    // Listen for storage events from other apps/tabs (fallback for non-API data)
-    const handleStorageEvent = (e) => {
-      if (e.key === TENNIS_CONFIG.STORAGE.KEY || e.key === 'courtBlocks') {
-        logger.debug('AdminApp', 'Cross-app storage update detected for', e.key);
-        // Invalidate cache for this key
-        dataStore.cache.delete(e.key);
-        loadData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageEvent, { passive: true });
-
-    // defensive cleanup on unload as well
-    window.addEventListener(
-      'beforeunload',
-      () => {
-        try {
-          clearAllTimers();
-        } catch {
-          // Intentionally ignored (Phase 3.5 lint): cleanup on unload
-        }
-        try {
-          window.removeEventListener('storage', handleStorageEvent);
-        } catch {
-          // Intentionally ignored (Phase 3.5 lint): listener may not exist
-        }
-      },
-      { once: true }
-    );
-
-    return () => {
-      try {
-        window.removeEventListener('storage', handleStorageEvent);
-      } catch {
-        // Intentionally ignored (Phase 3.5 lint): cleanup on unmount
-      }
-    };
-  }, [loadData]);
+  const handleEditBlockFromStatus = (block) => {
+    setBlockToEdit(block);
+    setActiveTab('blocking');
+    setBlockingView('create');
+  };
 
   // Generate fingerprint from blocks to detect actual changes
   const generateBlocksFingerprint = (blocks) => {
@@ -430,64 +336,9 @@ const AdminPanelV2 = ({ onExit }) => {
   const moveInWaitlist = (from, to) =>
     moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to);
 
-  // Settings operations
-  const updateBallPrice = async (price) => {
-    const result = await backend.admin.updateSettings({
-      settings: { ball_price_cents: Math.round(price * 100) },
-    });
-    if (result.ok) {
-      setSettings((prev) => ({ ...prev, tennisBallPrice: price }));
-      showNotification('Ball price updated', 'success');
-    } else {
-      showNotification('Failed to update ball price', 'error');
-    }
-  };
-
-  // Callback for SystemSettings to refresh local state after settings change
-  const handleSettingsChanged = () => {
-    backend.admin.getSettings().then((result) => {
-      if (result.ok) {
-        if (result.settings) {
-          setSettings({
-            tennisBallPrice: (result.settings.ball_price_cents || 500) / 100,
-            guestFees: {
-              weekday: (result.settings.guest_fee_weekday_cents || 1500) / 100,
-              weekend: (result.settings.guest_fee_weekend_cents || 2000) / 100,
-            },
-          });
-        }
-        if (result.operating_hours) {
-          setOperatingHours(result.operating_hours);
-        }
-        if (result.upcoming_overrides) {
-          setHoursOverrides(result.upcoming_overrides);
-        }
-      }
-    });
-  };
-
-  // Callback for AIAssistant to refresh settings after AI-triggered changes
-  const handleAISettingsChanged = async () => {
-    const res = await backend.admin.getSettings();
-    if (res.ok) {
-      if (res.settings) {
-        setSettings({
-          tennisBallPrice: (res.settings.ball_price_cents || 500) / 100,
-          guestFees: {
-            weekday: (res.settings.guest_fee_weekday_cents || 1500) / 100,
-            weekend: (res.settings.guest_fee_weekend_cents || 2000) / 100,
-          },
-        });
-      }
-      if (res.upcoming_overrides) {
-        setHoursOverrides(res.upcoming_overrides);
-      }
-    }
-  };
-
   // Callback for MockAIAdmin to refresh data
   const handleRefreshData = () => {
-    loadData();
+    reloadSettings();
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -628,7 +479,7 @@ const AdminPanelV2 = ({ onExit }) => {
         MockAIAdmin={MockAIAdmin}
         dataStore={dataStore}
         courts={courts}
-        loadData={loadData}
+        loadData={reloadSettings}
         clearCourt={clearCourt}
         clearAllCourts={clearAllCourts}
         moveCourt={moveCourt}
