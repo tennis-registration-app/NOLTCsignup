@@ -128,3 +128,58 @@ src/registration/
 2. Get Overseer approval
 3. Incremental implementation with gates
 4. Full regression testing
+
+---
+
+## Phase 4 Hardening Completed — Guardrails in Place
+
+Phase 4 established architectural boundaries and enforcement mechanisms to prevent common drift patterns. These guardrails are treated as **hard constraints**: any change that violates them requires an explicit charter + test evidence.
+
+### 1. Config Validation + Freeze
+- **Location:** `src/config/` (see referenced docs)
+- **Behavior:** Runtime config validates required env vars in production, uses dev defaults in development/test, and returns a frozen object
+- **Docs:** `docs/ENVIRONMENT.md`, `docs/DEPLOYMENT.md`
+
+### 2. Window Globals Policy
+- **Writes:** Centralized in `src/platform/registerGlobals.js` via setter helpers
+- **Reads:** Via `src/platform/windowBridge.js`
+- **Rule:** No `window.X = ...` outside platform layer (except documented IIFE exceptions)
+- **Docs:** `docs/WINDOW_GLOBALS.md`
+
+### 3. Orchestrator Deps Grouping
+- **Pattern:** Large dependency objects grouped into `{ state, actions, services, ui }`
+- **resetOrchestrator:** 36 → 2 top-level keys (`actions`, `services`)
+- **assignCourtOrchestrator:** 36 → 4 top-level keys
+- **Docs:** `docs/WP4-2_DEPS_REFACTOR.md`
+
+### 4. Boundary Normalization Rule
+- **Rule:** snake_case allowed only at boundaries; internal UI/services use camelCase
+- **Boundaries:** `src/lib/normalize/`, `src/registration/backend/` (plus any documented adapter modules)
+- **Anti-pattern eliminated:** dual-format fallbacks (e.g., `value || value_snake`)
+- **Docs:** `docs/CODE_CONVENTIONS.md`
+
+### 5. ESLint Naming Enforcement
+- **Rule:** `camelcase` enabled as a ratchet-friendly warning with:
+  - `properties: "never"`
+  - `ignoreDestructuring: true`
+  - `ignoreImports: true`
+- **Exemptions:** Boundary modules listed above
+- **Enforcement:** Lint ratchet prevents new violations
+- **Docs:** `docs/CODE_CONVENTIONS.md`
+
+### Verification
+```bash
+# Config: no hardcoded secrets outside the config module(s)
+rg "supabase.*url|anon.*key" src/ --glob "*.js" | rg -v "src/config/"
+
+# Window: no writes outside platform layer
+rg "\bwindow\.\w+\s*=" src/ --glob "*.js" --glob "*.jsx" | rg -v "src/platform/"
+
+# Naming: no snake_case in JSX outside boundary modules
+rg -n "\b[a-z]+_[a-z]+\b" src/ --glob "*.jsx" | rg -v "src/lib/normalize|src/registration/backend"
+
+# Dual-format: no fallback patterns
+rg -n "accountId\s*\|\|.*account_id|isPrimary\s*\|\|.*is_primary" src/
+```
+
+All checks should return empty (or only documented boundary exceptions).
