@@ -18,10 +18,15 @@ All environment variables use the `VITE_` prefix (required by Vite for client-si
 
 ### Required Variables
 
-| Variable | Description |
-|----------|-------------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
+| Variable | Description | Required In |
+|----------|-------------|-------------|
+| `VITE_SUPABASE_URL` | Supabase project URL | Production builds |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key | Production builds |
+| `VITE_BASE_URL` | API base URL for Edge Functions (optional - derived from SUPABASE_URL if omitted) | Optional |
+
+> **Note:** In development and test modes, built-in defaults are used if env vars are not set.
+> Production builds (with `PROD=true`) will use the defaults if env vars are empty, but
+> it's recommended to set explicit values for production deployments.
 
 ### Optional Feature Flags
 
@@ -76,19 +81,28 @@ Optional feature flags can also be set per-environment if needed.
 
 Environment variables are loaded through a centralized configuration module:
 
-    .env.local (local dev)
-         ↓
-    import.meta.env.VITE_*
-         ↓
-    src/config/runtimeConfig.js (single source of truth)
-         ↓
-    src/lib/apiConfig.js (API_CONFIG export for consumers)
+```
+.env.local (or build-time injection)
+  → import.meta.env.VITE_*
+    → src/config/runtimeConfig.js (validation + freeze)
+      → src/lib/apiConfig.js (single consumer, re-exports)
+        → ApiAdapter, RealtimeClient, TennisQueries (import from apiConfig)
+```
 
 Key files:
 
-- `src/config/runtimeConfig.js` — centralized env var access, feature flags
+- `src/config/runtimeConfig.js` — centralized env var access, validation, feature flags
 - `src/lib/apiConfig.js` — API configuration export + device context
 - `.env.example` — names-only template
+
+### Validation Behavior
+
+The `getRuntimeConfig()` function validates environment variables:
+
+- **Dev/test mode** (`PROD=false`): Falls back to built-in defaults silently
+- **Production mode** (`PROD=true`): Falls back to defaults if env vars are empty (defaults are valid working credentials)
+
+The returned config object is frozen (immutable) for safety.
 
 ---
 
