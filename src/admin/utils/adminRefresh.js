@@ -5,21 +5,30 @@
  * Both IIFEs execute immediately at module load to maintain original timing.
  */
 import { getRefreshAdminView, getLoadData } from '../../platform/windowBridge.js';
+import {
+  setAdminRefreshPending,
+  getAdminRefreshPending,
+  setAdminCoalesceHits,
+  incrementAdminCoalesceHits,
+  setScheduleAdminRefreshGlobal,
+  setWiredAdminListeners,
+  getWiredAdminListeners,
+} from '../../platform/registerGlobals.js';
 
 // Idempotent coalescer - executes immediately at module load
 (function () {
   if (window.scheduleAdminRefresh) return;
 
-  window.__adminRefreshPending = false;
-  window.__adminCoalesceHits = 0; // dev-only metric
+  setAdminRefreshPending(false);
+  setAdminCoalesceHits(0); // dev-only metric
 
-  window.scheduleAdminRefresh = function scheduleAdminRefresh() {
-    if (window.__adminRefreshPending) return;
-    window.__adminRefreshPending = true;
+  const scheduleAdminRefresh = function scheduleAdminRefresh() {
+    if (getAdminRefreshPending()) return;
+    setAdminRefreshPending(true);
 
     setTimeout(() => {
       try {
-        window.__adminCoalesceHits++;
+        incrementAdminCoalesceHits();
         const fn = getRefreshAdminView() || getLoadData() || null;
 
         if (typeof fn === 'function') {
@@ -29,16 +38,18 @@ import { getRefreshAdminView, getLoadData } from '../../platform/windowBridge.js
         // bridge path
         window.dispatchEvent(new Event('ADMIN_REFRESH'));
       } finally {
-        window.__adminRefreshPending = false;
+        setAdminRefreshPending(false);
       }
     }, 0);
   };
+
+  setScheduleAdminRefreshGlobal(scheduleAdminRefresh);
 })();
 
 // Idempotent wiring (window + document, just in case) - executes immediately at module load
 (function wireAdminListenersOnce() {
-  if (window.__wiredAdminListeners) return;
-  window.__wiredAdminListeners = true;
+  if (getWiredAdminListeners()) return;
+  setWiredAdminListeners(true);
 
   const h = window.scheduleAdminRefresh;
   if (typeof h !== 'function') return;

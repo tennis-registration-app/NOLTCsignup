@@ -7,6 +7,9 @@
  *   import { getTennisService } from './services'; // For backend-aware service
  */
 
+// WP4-3: Window global setters
+import { setNoltcUseApiGlobal } from '../../platform/registerGlobals.js';
+
 // ============================================================
 // Re-export shared services from @lib
 // These have been promoted to the shared library for use by both
@@ -116,7 +119,7 @@ export function isUsingApiBackend() {
  */
 export function enableApiBackend() {
   if (typeof window !== 'undefined') {
-    window.NOLTC_USE_API = true;
+    setNoltcUseApiGlobal(true);
     localStorage.setItem('NOLTC_USE_API', 'true');
   }
   resetTennisService();
@@ -127,7 +130,7 @@ export function enableApiBackend() {
  */
 export function disableApiBackend() {
   if (typeof window !== 'undefined') {
-    window.NOLTC_USE_API = false;
+    setNoltcUseApiGlobal(false);
     localStorage.removeItem('NOLTC_USE_API');
   }
   resetTennisService();

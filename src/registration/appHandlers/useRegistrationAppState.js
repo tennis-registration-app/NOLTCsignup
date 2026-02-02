@@ -13,6 +13,9 @@ import { API_CONFIG } from '../../lib/apiConfig.js';
 // Platform bridge for window global access
 import { getTennisDataStore, getTennisUI } from '../../platform/windowBridge.js';
 
+// WP4-3: Window global setters
+import { setLoadDataGlobal } from '../../platform/registerGlobals.js';
+
 // TennisBackend interface layer
 import { createBackend } from '../backend/index.js';
 
@@ -350,7 +353,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   // Expose loadData for tests
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.loadData = loadData;
+      setLoadDataGlobal(loadData);
     }
   }, [loadData]);
 

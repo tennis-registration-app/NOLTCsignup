@@ -14,9 +14,12 @@ import { RegistrationRouter } from './router';
 // Registration state and handlers hooks (WP5.9.3, WP5.9.4)
 import { useRegistrationHandlers, useRegistrationAppState } from './appHandlers';
 
+// WP4-3: Window global setters
+import { ensureTennisGlobal, setGeolocationServiceGlobal } from '../platform/registerGlobals.js';
+
 // Global service aliases for backward compatibility with other scripts
-window.Tennis = window.Tennis || {};
-window.GeolocationService = window.GeolocationService || GeolocationService;
+ensureTennisGlobal();
+if (!window.GeolocationService) setGeolocationServiceGlobal(GeolocationService);
 
 // Main TennisRegistration Component
 const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {

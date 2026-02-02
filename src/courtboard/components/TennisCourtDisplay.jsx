@@ -4,6 +4,7 @@ import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import { logger } from '../../lib/logger.js';
 import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
+import { setRefreshBoardGlobal } from '../../platform/registerGlobals.js';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../../registration/backend/index.js';
@@ -338,7 +339,7 @@ export function TennisCourtDisplay() {
     }
   }, [courts, courtBlocks, waitlist, isMobileView, mobileState]);
 
-  window.refreshBoard = loadData;
+  setRefreshBoardGlobal(loadData);
 
   // Build status map using courts state from API (no localStorage fallback)
   let statusByCourt = {};

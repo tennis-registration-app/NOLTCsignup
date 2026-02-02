@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
+import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
 import './utils/adminRefresh.js';
@@ -205,7 +206,7 @@ const AdminPanelV2 = ({ onExit }) => {
   const setSuspendedBlocks = () => {};
 
   // Export for coalescer & tests
-  window.refreshAdminView = reloadSettings;
+  setRefreshAdminViewGlobal(reloadSettings);
 
   const handleEditBlockFromStatus = (block) => {
     setBlockToEdit(block);
