@@ -65,18 +65,24 @@ import { SystemSection } from './tabs/SystemSection';
 import { AIAssistantSection } from './tabs/AIAssistantSection';
 
 // Handler modules
-import { removeFromWaitlistOp, moveInWaitlistOp } from './handlers/waitlistOperations';
+import {
+  removeFromWaitlistOp,
+  moveInWaitlistOp,
+  clearWaitlistOp,
+} from './handlers/waitlistOperations';
 import { clearCourtOp, moveCourtOp, clearAllCourtsOp } from './handlers/courtOperations';
 import { applyBlocksOp } from './handlers/applyBlocksOperation';
 
 // Wet courts hook (WP5.2)
 import { useWetCourts } from './wetCourts/useWetCourts';
 
-// Settings hook (WP-HR6)
+// Admin hooks (WP-HR6)
+import { useNotification } from './hooks/useNotification';
 import { useAdminSettings } from './hooks/useAdminSettings';
-
-// Board subscription hook (WP-HR6)
 import { useBoardSubscription } from './hooks/useBoardSubscription';
+
+// Timer utilities (WP-HR6)
+import { addTimer, clearAllTimers } from './utils/timerRegistry';
 
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
@@ -102,31 +108,13 @@ const assert = (cond, msg, obj) => {
   if (DEV && !cond) logger.warn('AdminApp', `ASSERT: ${msg}`, obj || '');
 };
 
-// central registry for timers in this view
-const _timers = [];
-const addTimer = (id, type = 'interval') => {
-  _timers.push({ id, type });
-  return id;
-};
-const clearAllTimers = () => {
-  _timers.forEach(({ id, type }) => {
-    try {
-      if (type === 'interval') clearInterval(id);
-      else clearTimeout(id);
-    } catch {
-      // Intentionally ignored (Phase 3.5 lint): timer may already be cleared
-    }
-  });
-  _timers.length = 0;
-};
-
-// Global cleanup on page unload
+// Global cleanup on page unload (uses timerRegistry)
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
     try {
       clearAllTimers();
     } catch {
-      // Intentionally ignored (Phase 3.5 lint): cleanup on unload
+      // Intentionally ignored: cleanup on unload
     }
   });
 }
@@ -154,7 +142,6 @@ const AdminPanelV2 = ({ onExit }) => {
   // AdminPanelV2 component initializing
 
   const [activeTab, setActiveTab] = useState('status');
-  const [notification, setNotification] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [blockingView, setBlockingView] = useState('create');
   const [blockToEdit, setBlockToEdit] = useState(null);
@@ -164,16 +151,12 @@ const AdminPanelV2 = ({ onExit }) => {
 
   const ENABLE_WET_COURTS = true;
 
-  // Show notification (defined before hooks so it can be passed as dep)
-  const showNotification = (message, type = 'info') => {
-    setNotification({ message, type });
-    addTimer(
-      setTimeout(() => setNotification(null), 3000),
-      'timeout'
-    );
-  };
+  // IMPORTANT: Hook call order:
+  // 1. useNotification — provides showNotification for settings hook
+  // 2. useAdminSettings — settings effects (original #1/#2)
+  // 3. useBoardSubscription — subscription effect (original #3)
+  const { notification, showNotification } = useNotification();
 
-  // IMPORTANT: Hook call order preserves effect ordering (settings before subscription)
   // Settings hook (WP-HR6) - owns settings, operatingHours, hoursOverrides, blockTemplates state
   // Hook also returns operatingHours and blockTemplates (not destructured here)
   const {
@@ -279,12 +262,6 @@ const AdminPanelV2 = ({ onExit }) => {
   const handleRefreshData = () => {
     reloadSettings();
     bumpRefreshTrigger();
-  };
-
-  // Callback for MockAIAdmin to clear waitlist
-  const handleClearWaitlist = async () => {
-    const res = await backend.commands.clearWaitlist();
-    return res;
   };
 
   // AdminPanelV2 rendering complete
@@ -426,7 +403,7 @@ const AdminPanelV2 = ({ onExit }) => {
         updateBallPrice={updateBallPrice}
         waitingGroups={waitingGroups}
         refreshData={handleRefreshData}
-        clearWaitlist={handleClearWaitlist}
+        clearWaitlist={() => clearWaitlistOp(backend)}
       />
     </div>
   );

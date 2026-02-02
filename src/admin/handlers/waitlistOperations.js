@@ -53,3 +53,15 @@ export async function moveInWaitlistOp(ctx, from, to) {
     showNotification(result.error || 'Failed to reorder waitlist', 'error');
   }
 }
+
+/**
+ * Clear entire waitlist via backend command.
+ * Pure passthrough - no toast, no notification.
+ *
+ * @param {Object} backend - Backend API client
+ * @returns {Promise<Object>} API result
+ */
+export async function clearWaitlistOp(backend) {
+  const res = await backend.commands.clearWaitlist();
+  return res;
+}
