@@ -124,7 +124,7 @@ const WeekView = memo(
               >
                 <div
                   className={`relative group h-12 p-2 text-center border-b border-gray-300 sticky top-0 z-20 ${
-                    override?.is_closed
+                    override?.isClosed
                       ? 'bg-red-100'
                       : override
                         ? 'bg-orange-50'
@@ -137,12 +137,12 @@ const WeekView = memo(
                     {day.toLocaleDateString('en-US', { weekday: 'short' })}
                     {override && (
                       <span
-                        className={`w-2 h-2 rounded-full ${override.is_closed ? 'bg-red-500' : 'bg-orange-400'}`}
+                        className={`w-2 h-2 rounded-full ${override.isClosed ? 'bg-red-500' : 'bg-orange-400'}`}
                       />
                     )}
                   </div>
                   <div
-                    className={`text-sm font-medium ${override?.is_closed ? 'text-red-600' : isToday ? 'text-blue-600' : ''}`}
+                    className={`text-sm font-medium ${override?.isClosed ? 'text-red-600' : isToday ? 'text-blue-600' : ''}`}
                   >
                     {day.getDate()}
                   </div>
@@ -150,9 +150,9 @@ const WeekView = memo(
                   {override && (
                     <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 top-full left-1/2 -translate-x-1/2 mt-1 whitespace-nowrap z-50 shadow-lg">
                       {override.reason || 'Special Hours'}
-                      {override.is_closed
+                      {override.isClosed
                         ? ' (CLOSED)'
-                        : `: ${override.opens_at?.slice(0, 5)} - ${override.closes_at?.slice(0, 5)}`}
+                        : `: ${override.opensAt?.slice(0, 5)} - ${override.closesAt?.slice(0, 5)}`}
                     </div>
                   )}
                 </div>

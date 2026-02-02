@@ -86,17 +86,17 @@ const DayViewEnhanced = memo(
         {override && (
           <div
             className={`px-4 py-2 text-sm font-medium flex items-center gap-2 ${
-              override.is_closed ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
+              override.isClosed ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
             }`}
           >
             <span
-              className={`w-3 h-3 rounded-full ${override.is_closed ? 'bg-red-500' : 'bg-orange-400'}`}
+              className={`w-3 h-3 rounded-full ${override.isClosed ? 'bg-red-500' : 'bg-orange-400'}`}
             />
-            {override.is_closed ? (
+            {override.isClosed ? (
               <span>CLOSED{override.reason ? ` — ${override.reason}` : ''}</span>
             ) : (
               <span>
-                Modified Hours: {override.opens_at?.slice(0, 5)} - {override.closes_at?.slice(0, 5)}
+                Modified Hours: {override.opensAt?.slice(0, 5)} - {override.closesAt?.slice(0, 5)}
                 {override.reason ? ` — ${override.reason}` : ''}
               </span>
             )}

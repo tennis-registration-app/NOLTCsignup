@@ -82,16 +82,17 @@ describe('adminSettingsLogic', () => {
       mockDeps.backend.admin.getSettings.mockResolvedValue({
         ok: true,
         settings: { ball_price_cents: 500 },
-        operating_hours: [{ day: 'Monday', open: '08:00' }],
-        upcoming_overrides: [{ date: '2025-01-01' }],
+        operating_hours: [{ day_of_week: 1, opens_at: '08:00', closes_at: '21:00', is_closed: false }],
+        upcoming_overrides: [{ date: '2025-01-01', opens_at: '09:00', closes_at: '17:00', is_closed: false, reason: 'Holiday' }],
       });
 
       const result = await loadSettingsData(mockDeps);
 
       expect(result.blockTemplates).toEqual([{ id: 1, name: 'Template 1' }]);
       expect(result.settings.tennisBallPrice).toBe(5.0);
-      expect(result.operatingHours).toEqual([{ day: 'Monday', open: '08:00' }]);
-      expect(result.hoursOverrides).toEqual([{ date: '2025-01-01' }]);
+      // Normalized to camelCase
+      expect(result.operatingHours).toEqual([{ dayOfWeek: 1, dayName: 'Monday', opensAt: '08:00', closesAt: '21:00', isClosed: false }]);
+      expect(result.hoursOverrides).toEqual([{ date: '2025-01-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'Holiday' }]);
     });
 
     it('loads blockTemplates from localStorage', async () => {
@@ -213,15 +214,16 @@ describe('adminSettingsLogic', () => {
       mockDeps.backend.admin.getSettings.mockResolvedValue({
         ok: true,
         settings: { ball_price_cents: 600 },
-        operating_hours: [{ day: 'Monday' }],
-        upcoming_overrides: [{ date: '2025-01-01' }],
+        operating_hours: [{ day_of_week: 1, opens_at: '08:00', closes_at: '21:00', is_closed: false }],
+        upcoming_overrides: [{ date: '2025-01-01', opens_at: '09:00', closes_at: '17:00', is_closed: false, reason: 'Test' }],
       });
 
       const result = await refreshSettingsApi(mockDeps);
 
       expect(result.settings.tennisBallPrice).toBe(6.0);
-      expect(result.operatingHours).toEqual([{ day: 'Monday' }]);
-      expect(result.hoursOverrides).toEqual([{ date: '2025-01-01' }]);
+      // Normalized to camelCase
+      expect(result.operatingHours).toEqual([{ dayOfWeek: 1, dayName: 'Monday', opensAt: '08:00', closesAt: '21:00', isClosed: false }]);
+      expect(result.hoursOverrides).toEqual([{ date: '2025-01-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'Test' }]);
     });
 
     it('returns null on API failure (no throw)', async () => {
@@ -260,13 +262,14 @@ describe('adminSettingsLogic', () => {
       mockDeps.backend.admin.getSettings.mockResolvedValue({
         ok: true,
         settings: { ball_price_cents: 800 },
-        upcoming_overrides: [{ date: '2025-02-01' }],
+        upcoming_overrides: [{ date: '2025-02-01', opens_at: '09:00', closes_at: '17:00', is_closed: false, reason: 'AI Test' }],
       });
 
       const result = await refreshAISettingsApi(mockDeps);
 
       expect(result.settings.tennisBallPrice).toBe(8.0);
-      expect(result.hoursOverrides).toEqual([{ date: '2025-02-01' }]);
+      // Normalized to camelCase
+      expect(result.hoursOverrides).toEqual([{ date: '2025-02-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'AI Test' }]);
     });
 
     it('does NOT return operatingHours (unlike refreshSettingsApi)', async () => {

@@ -76,13 +76,13 @@ export const MonthView = memo(function MonthView({
               key={index}
               className={`relative group bg-white p-2 min-h-[100px] ${
                 !date ? 'bg-gray-50' : ''
-              } ${override?.is_closed ? 'bg-red-50' : override ? 'bg-orange-50' : isToday ? 'bg-blue-50' : ''}`}
+              } ${override?.isClosed ? 'bg-red-50' : override ? 'bg-orange-50' : isToday ? 'bg-blue-50' : ''}`}
             >
               {date && (
                 <>
                   <div
                     className={`text-sm font-medium mb-1 flex items-center gap-1 ${
-                      override?.is_closed
+                      override?.isClosed
                         ? 'text-red-600'
                         : isToday
                           ? 'text-blue-600'
@@ -92,7 +92,7 @@ export const MonthView = memo(function MonthView({
                     {date.getDate()}
                     {override && (
                       <span
-                        className={`w-2 h-2 rounded-full ${override.is_closed ? 'bg-red-500' : 'bg-orange-400'}`}
+                        className={`w-2 h-2 rounded-full ${override.isClosed ? 'bg-red-500' : 'bg-orange-400'}`}
                       />
                     )}
                   </div>
@@ -100,9 +100,9 @@ export const MonthView = memo(function MonthView({
                   {override && (
                     <div className="absolute hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 top-1 right-1 whitespace-nowrap z-50 shadow-lg">
                       {override.reason || 'Special Hours'}
-                      {override.is_closed
+                      {override.isClosed
                         ? ' (CLOSED)'
-                        : `: ${override.opens_at?.slice(0, 5)} - ${override.closes_at?.slice(0, 5)}`}
+                        : `: ${override.opensAt?.slice(0, 5)} - ${override.closesAt?.slice(0, 5)}`}
                     </div>
                   )}
                   <div className="space-y-1">

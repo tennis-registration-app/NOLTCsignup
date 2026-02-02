@@ -6,9 +6,12 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { logger } from '../../lib/logger.js';
-
-// Day names for operating hours (module scope for stable reference)
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import {
+  normalizeOperatingHours,
+  normalizeOverrides,
+  denormalizeOperatingHours,
+  denormalizeOverride,
+} from '../../lib/normalize/normalizeAdminSettings.js';
 
 const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Settings state
@@ -79,18 +82,16 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
         setCheckStatusMinutes(result.settings?.check_status_minutes || '150');
         setBlockWarningMinutes(result.settings?.block_warning_minutes || '60');
 
-        // Update operating hours
-        if (result.operating_hours) {
-          const hours = result.operating_hours.map((h) => ({
-            ...h,
-            day_name: dayNames[h.day_of_week],
-          }));
-          setOperatingHours(hours);
+        // Update operating hours (normalized to camelCase)
+        const normalizedHours = normalizeOperatingHours(result.operating_hours);
+        if (normalizedHours) {
+          setOperatingHours(normalizedHours);
         }
 
-        // Update overrides
-        if (result.upcoming_overrides) {
-          setHoursOverrides(result.upcoming_overrides);
+        // Update overrides (normalized to camelCase)
+        const normalizedOverrides = normalizeOverrides(result.upcoming_overrides);
+        if (normalizedOverrides) {
+          setHoursOverrides(normalizedOverrides);
         }
       }
     } catch (err) {
@@ -243,11 +244,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
   // Update operating hours locally (doesn't save immediately)
   const handleHoursChange = (dayOfWeek, opensAt, closesAt, isClosed) => {
     setOperatingHours((prev) =>
-      prev.map((h) =>
-        h.day_of_week === dayOfWeek
-          ? { ...h, opens_at: opensAt, closes_at: closesAt, is_closed: isClosed }
-          : h
-      )
+      prev.map((h) => (h.dayOfWeek === dayOfWeek ? { ...h, opensAt, closesAt, isClosed } : h))
     );
     setHoursChanged(true);
   };
@@ -259,12 +256,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     setHoursSaveStatus('saving');
     try {
       const result = await backend.admin.updateSettings({
-        operatingHours: operatingHours.map((h) => ({
-          day_of_week: h.day_of_week,
-          opens_at: h.opens_at,
-          closes_at: h.closes_at,
-          is_closed: h.is_closed,
-        })),
+        operatingHours: denormalizeOperatingHours(operatingHours),
       });
 
       if (result.ok) {
@@ -286,13 +278,13 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     setOverrideSaveStatus('saving');
     try {
       const result = await backend.admin.updateSettings({
-        operatingHoursOverride: {
+        operatingHoursOverride: denormalizeOverride({
           date,
-          opens_at: opensAt,
-          closes_at: closesAt,
-          is_closed: isClosed,
+          opensAt,
+          closesAt,
+          isClosed,
           reason,
-        },
+        }),
       });
 
       if (result.ok) {
@@ -442,38 +434,33 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
           <div className="flex flex-col gap-2">
             {operatingHours.map((day) => (
               <div
-                key={day.day_of_week}
+                key={day.dayOfWeek}
                 className={`flex items-center gap-4 p-2 rounded-md ${
-                  day.is_closed ? 'bg-red-50' : 'bg-gray-50'
+                  day.isClosed ? 'bg-red-50' : 'bg-gray-50'
                 }`}
               >
-                <span className="w-24 font-medium">{day.day_name}</span>
+                <span className="w-24 font-medium">{day.dayName}</span>
                 <label className="flex items-center gap-1 text-sm">
                   <input
                     type="checkbox"
-                    checked={day.is_closed}
+                    checked={day.isClosed}
                     onChange={(e) =>
-                      handleHoursChange(
-                        day.day_of_week,
-                        day.opens_at,
-                        day.closes_at,
-                        e.target.checked
-                      )
+                      handleHoursChange(day.dayOfWeek, day.opensAt, day.closesAt, e.target.checked)
                     }
                   />
                   Closed
                 </label>
-                {!day.is_closed && (
+                {!day.isClosed && (
                   <>
                     <input
                       type="time"
-                      value={day.opens_at?.slice(0, 5) || '06:00'}
+                      value={day.opensAt?.slice(0, 5) || '06:00'}
                       onChange={(e) =>
                         e.target.value &&
                         handleHoursChange(
-                          day.day_of_week,
+                          day.dayOfWeek,
                           e.target.value + ':00',
-                          day.closes_at,
+                          day.closesAt,
                           false
                         )
                       }
@@ -482,15 +469,10 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                     <span className="text-gray-500">to</span>
                     <input
                       type="time"
-                      value={day.closes_at?.slice(0, 5) || '21:00'}
+                      value={day.closesAt?.slice(0, 5) || '21:00'}
                       onChange={(e) =>
                         e.target.value &&
-                        handleHoursChange(
-                          day.day_of_week,
-                          day.opens_at,
-                          e.target.value + ':00',
-                          false
-                        )
+                        handleHoursChange(day.dayOfWeek, day.opensAt, e.target.value + ':00', false)
                       }
                       className="px-2 py-1 rounded border border-gray-300"
                     />
@@ -706,7 +688,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                 <div
                   key={override.date}
                   className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
-                    override.is_closed ? 'bg-red-50' : 'bg-green-50'
+                    override.isClosed ? 'bg-red-50' : 'bg-green-50'
                   }`}
                 >
                   <span>
@@ -720,11 +702,11 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
                     {override.reason && <span className="text-gray-500"> — {override.reason}</span>}
                   </span>
                   <span className="flex items-center gap-3">
-                    {override.is_closed ? (
+                    {override.isClosed ? (
                       <span className="text-red-600 font-medium">Closed</span>
                     ) : (
                       <span>
-                        {override.opens_at?.slice(0, 5)} - {override.closes_at?.slice(0, 5)}
+                        {override.opensAt?.slice(0, 5)} - {override.closesAt?.slice(0, 5)}
                       </span>
                     )}
                     <button

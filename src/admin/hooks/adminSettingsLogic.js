@@ -5,6 +5,10 @@
  */
 
 import { logger } from '../../lib/logger.js';
+import {
+  normalizeOperatingHours,
+  normalizeOverrides,
+} from '../../lib/normalize/normalizeAdminSettings.js';
 
 /**
  * Default pricing values (fallback when API returns null/undefined)
@@ -70,8 +74,8 @@ export async function loadSettingsData(deps) {
 
     if (settingsResult.ok) {
       const settings = transformSettings(settingsResult.settings);
-      const operatingHours = settingsResult.operating_hours || null;
-      const hoursOverrides = settingsResult.upcoming_overrides || null;
+      const operatingHours = normalizeOperatingHours(settingsResult.operating_hours);
+      const hoursOverrides = normalizeOverrides(settingsResult.upcoming_overrides);
 
       return { blockTemplates, settings, operatingHours, hoursOverrides };
     }
@@ -118,8 +122,8 @@ export async function refreshSettingsApi(deps) {
 
     if (result.ok) {
       const settings = result.settings ? transformSettings(result.settings) : null;
-      const operatingHours = result.operating_hours || null;
-      const hoursOverrides = result.upcoming_overrides || null;
+      const operatingHours = normalizeOperatingHours(result.operating_hours);
+      const hoursOverrides = normalizeOverrides(result.upcoming_overrides);
 
       return { settings, operatingHours, hoursOverrides };
     }
@@ -146,7 +150,7 @@ export async function refreshAISettingsApi(deps) {
 
     if (res.ok) {
       const settings = res.settings ? transformSettings(res.settings) : null;
-      const hoursOverrides = res.upcoming_overrides || null;
+      const hoursOverrides = normalizeOverrides(res.upcoming_overrides);
 
       return { settings, hoursOverrides };
     }
