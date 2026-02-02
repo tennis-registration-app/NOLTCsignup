@@ -527,3 +527,152 @@ Total service calls: 2 (clearSuccessResetTimer at position 1, clearCache at posi
 - **No ordering changes allowed.** The call sequence above is the contract.
 - **No value changes.** Each setter receives the same reset value as currently coded.
 - **No control flow changes.** There are no conditionals in resetFormOrchestrated — pure sequential calls.
+
+---
+
+## AssignCourt Orchestrator — Pre-Refactor Invariants
+
+### Locked Invariants
+
+**Signature:** `assignCourtToGroupOrchestrated(courtNumber, selectableCountAtSelection, deps)`
+
+**Call site:** `courtHandlers.js` (line 186)
+
+**Call-site deps assembly:**
+```javascript
+const assignCourtToGroup = useCallback(
+  async (courtNumber, selectableCountAtSelection = null) => {
+    return assignCourtToGroupOrchestrated(courtNumber, selectableCountAtSelection, {
+      // Read values
+      isAssigning,
+      mobileFlow,
+      preselectedCourt,
+      operatingHours,
+      currentGroup,
+      courts: data.courts,
+      currentWaitlistEntryId,
+      CONSTANTS,
+      // Setters
+      setIsAssigning,
+      setCurrentWaitlistEntryId,
+      setHasWaitlistPriority,
+      setCurrentGroup,
+      setJustAssignedCourt,
+      setAssignedSessionId,
+      setReplacedGroup,
+      setDisplacement,
+      setOriginalCourtData,
+      setIsChangingCourt,
+      setWasOvertimeCourt,
+      setHasAssignedCourt,
+      setCanChangeCourt,
+      setChangeTimeRemaining,
+      setIsTimeLimited,
+      setTimeLimitReason,
+      setShowSuccess,
+      setGpsFailedPrompt,
+      // Services
+      backend,
+      // Helpers
+      getCourtBlockStatus,
+      getMobileGeolocation,
+      showAlertMessage,
+      validateGroupCompat,
+      clearSuccessResetTimer,
+      resetForm,
+      successResetTimerRef,
+      dbg,
+      API_CONFIG,
+    });
+  },
+  [/* 36 dependencies */]
+);
+```
+
+### Guard Sequence (in order from code)
+
+These guards execute in this exact order before the main API call. No reordering allowed.
+```
+1. guardNotAssigning(isAssigning) — silent return if already assigning (SILENT-GUARD)
+2. Mobile preselect — if (mobileFlow && preselectedCourt && !courtNumber), use preselectedCourt
+3. guardOperatingHours() — toast if outside operating hours (FEEDBACK)
+4. guardCourtNumber() — alert if invalid court number (FEEDBACK)
+5. guardGroup() — alert if currentGroup empty (FEEDBACK)
+6. guardGroupCompat() — alert if validation fails (FEEDBACK)
+7. Block check — confirm() if upcoming block conflicts with session duration (FEEDBACK)
+```
+
+### Async Operations (in order)
+
+These await calls execute in this exact sequence. No reordering allowed.
+```
+1. await getCourtBlockStatus(courtNumber) — check upcoming blocks
+2. [IF waitlist path] await getMobileGeolocation() — get GPS for geofence
+3. [IF waitlist path] await backend.commands.assignFromWaitlist({...}) — API call
+4. [IF waitlist path, on COURT_OCCUPIED] await backend.queries.refresh() — refresh board
+5. [IF non-waitlist path] await getMobileGeolocation() — get GPS for geofence
+6. [IF non-waitlist path] await backend.commands.assignCourtWithPlayers({...}) — API call
+7. [IF non-waitlist, on COURT_OCCUPIED] await backend.queries.refresh() — refresh board
+```
+
+### Setter Calls After Success — Waitlist Path (lines 296-344)
+```
+ 1. setCurrentWaitlistEntryId(null)
+ 2. setHasWaitlistPriority(false)
+ 3. sessionStorage.removeItem('mobile-waitlist-entry-id')
+ 4. setCurrentGroup(groupFromWaitlist) — if participantDetails present
+ 5. setJustAssignedCourt(courtNumber)
+ 6. setAssignedSessionId(result.session?.id || null)
+ 7. setReplacedGroup(null)
+ 8. setDisplacement(null)
+ 9. setOriginalCourtData(null)
+10. setIsChangingCourt(false)
+11. setWasOvertimeCourt(false)
+12. setHasAssignedCourt(true)
+13. setCanChangeCourt(false)
+14. setShowSuccess(true)
+15. [IF !mobileFlow] clearSuccessResetTimer() then setTimeout → resetForm()
+```
+
+### Setter Calls After Success — Direct Assignment Path (lines 443-516)
+```
+ 1. setIsAssigning(false)
+ 2. setJustAssignedCourt(courtNumber)
+ 3. setAssignedSessionId(result.session?.id || null)
+ 4. setReplacedGroup(replacedGroupFromDisplacement)
+ 5. setDisplacement(result.displacement)
+ 6. setOriginalCourtData(null)
+ 7. setIsChangingCourt(false)
+ 8. setWasOvertimeCourt(false)
+ 9. setHasAssignedCourt(true)
+10. setCanChangeCourt(allowCourtChange)
+11. setChangeTimeRemaining(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC)
+12. setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false)
+13. setTimeLimitReason(result.timeLimitReason || ...)
+14. setShowSuccess(true)
+15. [IF !mobileFlow] clearSuccessResetTimer() then setTimeout → resetForm()
+16. [IF allowCourtChange] setInterval → setChangeTimeRemaining(prev-1), setCanChangeCourt(false)
+```
+
+### Error Handling
+
+**Waitlist path try/catch (lines 265-354):**
+- On `result.code === 'COURT_OCCUPIED'`: toast, setCurrentWaitlistEntryId(null), refresh, return
+- On mobile location error: setGpsFailedPrompt(true), return
+- On other !result.ok: toast, setCurrentWaitlistEntryId(null), return
+- On catch: toast, setCurrentWaitlistEntryId(null), return
+
+**Direct assignment try/catch (lines 387-413):**
+- On catch: toast, setIsAssigning(false), return
+
+**Direct assignment !result.ok (lines 415-440):**
+- On `result.code === 'COURT_OCCUPIED'`: toast, refresh, setIsAssigning(false), return
+- On mobile location error: setGpsFailedPrompt(true), setIsAssigning(false), return
+- On other !result.ok: toast, setIsAssigning(false), return
+
+### Constraints
+- **No await ordering changes.**
+- **No guard sequencing changes.**
+- **No error handling changes.** Try/catch structure stays exactly as-is.
+- **No value changes to any setter or service call.**
+- **No branching changes.** Waitlist vs direct path logic unchanged.
