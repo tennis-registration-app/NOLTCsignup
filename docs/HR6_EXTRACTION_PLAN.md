@@ -1,5 +1,63 @@
 # WP-HR6: Admin Modularization — Extraction Plan
 
+## Final Results (WP-HR6 Complete)
+
+| Metric | Before | After | Target |
+|---|---|---|---|
+| admin/App.jsx lines | 710 | 477 | ≤500 |
+| Unit tests | 406 | 454 | ≥416 |
+| Playwright | 15/15 | 15/15 | 15/15 |
+| New hook modules | 0 | 6 | — |
+| New util modules | 0 | 1 | — |
+| Duplicate state | — | 0 | 0 |
+
+### Files Created
+
+| File | Lines | Purpose |
+|---|---|---|
+| src/admin/hooks/adminSettingsLogic.js | 158 | Pure settings CRUD |
+| src/admin/hooks/useAdminSettings.js | 195 | Settings state + effects |
+| src/admin/hooks/boardSubscriptionLogic.js | 90 | Pure board data transform |
+| src/admin/hooks/useBoardSubscription.js | 88 | Subscription state + effect |
+| src/admin/hooks/notificationLogic.js | 38 | Notification controller |
+| src/admin/hooks/useNotification.js | 38 | Notification state |
+| src/admin/utils/timerRegistry.js | 38 | Shared timer management |
+| tests/unit/admin/adminSettingsLogic.test.js | 293 | Settings logic tests (18 tests) |
+| tests/unit/admin/boardSubscriptionLogic.test.js | 253 | Board transform tests (22 tests) |
+| tests/unit/admin/notificationLogic.test.js | 190 | Notification tests (8 tests) |
+
+### What Stays in App.jsx
+
+- Clock effect (#4): cosmetic 1-second tick, too small to extract
+- currentTime, activeTab, blockEditing state: UI routing
+- showAIAssistant state: UI toggle
+- handleRefreshData: thin glue between settings + subscription hooks
+- JSX orchestration: tab routing, prop passing
+
+### Architecture After HR6
+
+```
+App.jsx (orchestrator, 477 lines)
+  ├── useNotification()        → notification state + showNotification
+  ├── useAdminSettings()       → settings + effects #1/#2 + handlers
+  ├── useBoardSubscription()   → board state + effect #3
+  ├── clock effect (#4)        → currentTime (inline)
+  ├── handleRefreshData()      → thin glue (reloadSettings + bumpRefreshTrigger)
+  └── JSX return               → tab routing + prop passing
+```
+
+### Commit Summary
+
+| Commit | Hash | Description |
+|---|---|---|
+| 1 | cbe4f1c | docs: add HR6 extraction plan with line-level audit |
+| 2 | b675bf2 | refactor(admin): extract settings logic to hook |
+| 3 | a98a1e0 | refactor(admin): extract board subscription into pure module + hook |
+| 4 | c3af106 | refactor(admin): extract timer registry, notification logic, and clearWaitlist handler |
+| 5 | (this) | docs: finalize HR6 extraction plan with actual results |
+
+---
+
 ## Current State
 
 - `admin/App.jsx`: 710 lines
