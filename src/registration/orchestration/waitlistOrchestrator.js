@@ -52,6 +52,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
   // Prevent double-submit
   if (isJoiningWaitlist) {
     logger.debug('Waitlist', 'Waitlist join already in progress, ignoring duplicate request');
+    // SILENT-GUARD: double-submit prevention — no user feedback needed
     return;
   }
 
@@ -67,6 +68,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
 
     if (!group || !group.length) {
       logger.warn('Waitlist', 'no players selected');
+      // EARLY-EXIT: empty group — nothing to do
       return;
     }
 
@@ -109,6 +111,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
         /* Tennis.UI not available */
       }
       showAlertMessage(validation.errors.join('\n'));
+      // FEEDBACK: toast and alert provide user feedback above
       return;
     }
 
@@ -117,6 +120,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
       const playerStatus = isPlayerAlreadyPlaying(player.id);
       if (playerStatus.isPlaying && playerStatus.location !== 'current') {
         showAlertMessage(`${player.name} is already registered elsewhere.`);
+        // FEEDBACK: alert provides user feedback above
         return;
       }
     }
@@ -194,6 +198,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
       // Handle mobile location errors - offer QR fallback
       if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
         setGpsFailedPrompt(true);
+        // FEEDBACK: GPS prompt modal provides user feedback
         return;
       }
       Tennis?.UI?.toast?.(result.message || 'Could not join waitlist', { type: 'error' });

@@ -61,6 +61,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
   // Validate member number exists and is valid
   if (!suggestion || !suggestion.memberNumber || !suggestion.member) {
     showAlertMessage('Invalid member selection. Please try again.');
+    // FEEDBACK: alert provides user feedback above
     return;
   }
 
@@ -75,6 +76,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
       });
       setSearchInput('');
       setShowSuggestions(false);
+      // FEEDBACK: toast provides user feedback above
       return;
     }
   }
@@ -101,7 +103,8 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
   if (!guardAddPlayerEarly(getCourtData, enrichedMember)) {
     setSearchInput('');
     setShowSuggestions(false);
-    return; // Don't navigate to group screen
+    // FEEDBACK: guardAddPlayerEarly shows toast — don't navigate to group screen
+    return;
   }
 
   const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
@@ -126,6 +129,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     }
     setSearchInput('');
     setShowSuggestions(false);
+    // FEEDBACK: toast provides user feedback above
     return;
   }
 
@@ -248,6 +252,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
   // Validate suggestion
   if (!suggestion || !suggestion.member || !suggestion.member.id) {
     showAlertMessage('Invalid player selection. Please try again.');
+    // FEEDBACK: alert provides user feedback above
     return;
   }
 
@@ -265,6 +270,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
     setAddPlayerSearch('');
     setShowAddPlayer(false);
     setShowAddPlayerSuggestions(false);
+    // FEEDBACK: guardAddPlayerEarly shows toast
     return;
   }
 
@@ -274,6 +280,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
     setAddPlayerSearch('');
     setShowAddPlayer(false);
     setShowAddPlayerSuggestions(false);
+    // FEEDBACK: toast provides user feedback above
     return;
   }
 
@@ -282,7 +289,8 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
     setAddPlayerSearch('');
     setShowAddPlayer(false);
     setShowAddPlayerSuggestions(false);
-    return; // Toast message already shown by guardAddPlayerEarly
+    // FEEDBACK: guardAddPlayerEarly shows toast
+    return;
   }
 
   const playerStatus = isPlayerAlreadyPlaying(suggestion.member.id);
@@ -315,6 +323,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
       setAddPlayerSearch('');
       setShowAddPlayer(false);
       setShowAddPlayerSuggestions(false);
+      // EARLY-EXIT: waitlist priority transfer complete — group updated
       return;
     }
   }
@@ -326,6 +335,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
       setAddPlayerSearch('');
       setShowAddPlayer(false);
       setShowAddPlayerSuggestions(false);
+      // FEEDBACK: alert provides user feedback above
       return;
     }
 

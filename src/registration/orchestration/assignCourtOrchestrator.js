@@ -120,6 +120,7 @@ export async function assignCourtToGroupOrchestrated(
   const assigningCheck = guardNotAssigning(isAssigning);
   if (!assigningCheck.ok) {
     logger.debug('AssignCourt', 'Assignment already in progress, ignoring duplicate request');
+    // SILENT-GUARD: double-submit prevention — no user feedback needed
     return;
   }
 
@@ -145,6 +146,7 @@ export async function assignCourtToGroupOrchestrated(
     if (hoursCheck.ui?.action === 'toast') {
       Tennis.UI.toast(...hoursCheck.ui.args);
     }
+    // FEEDBACK: toast provides user feedback above
     return;
   }
 
@@ -157,6 +159,7 @@ export async function assignCourtToGroupOrchestrated(
     if (courtCheck.ui?.action === 'alert') {
       showAlertMessage(...courtCheck.ui.args);
     }
+    // FEEDBACK: alert provides user feedback above
     return;
   }
 
@@ -166,6 +169,7 @@ export async function assignCourtToGroupOrchestrated(
     if (groupCheck.ui?.action === 'alert') {
       showAlertMessage(...groupCheck.ui.args);
     }
+    // FEEDBACK: alert provides user feedback above
     return;
   }
 
@@ -201,6 +205,7 @@ export async function assignCourtToGroupOrchestrated(
     if (compatCheck.ui?.action === 'alert') {
       showAlertMessage(...compatCheck.ui.args);
     }
+    // FEEDBACK: alert provides user feedback above
     return;
   }
 
@@ -227,6 +232,7 @@ export async function assignCourtToGroupOrchestrated(
       const proceed = confirm(confirmMsg);
       if (!proceed) {
         showAlertMessage('Please select a different court or join the waitlist.');
+        // FEEDBACK: alert provides user feedback above
         return; // Exit without assigning
       }
     }
@@ -249,6 +255,7 @@ export async function assignCourtToGroupOrchestrated(
         courtNumber
       );
       Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
+      // FEEDBACK: toast provides user feedback above
       return;
     }
 
@@ -269,17 +276,20 @@ export async function assignCourtToGroupOrchestrated(
           Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
           setCurrentWaitlistEntryId(null);
           await backend.queries.refresh();
+          // FEEDBACK: toast provides user feedback above
           return;
         }
         // Handle mobile location errors - offer QR fallback
         if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
           setGpsFailedPrompt(true);
+          // FEEDBACK: GPS prompt modal provides user feedback
           return;
         }
         Tennis.UI.toast(result.message || 'Failed to assign court from waitlist', {
           type: 'error',
         });
         setCurrentWaitlistEntryId(null);
+        // FEEDBACK: toast provides user feedback above
         return;
       }
 
@@ -333,11 +343,13 @@ export async function assignCourtToGroupOrchestrated(
         }, CONSTANTS.AUTO_RESET_SUCCESS_MS);
       }
 
+      // EARLY-EXIT: waitlist flow complete — success screen shown
       return;
     } catch (error) {
       getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       setCurrentWaitlistEntryId(null);
       Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
+      // FEEDBACK: toast provides user feedback above
       return;
     }
   }
@@ -347,6 +359,7 @@ export async function assignCourtToGroupOrchestrated(
   if (!court) {
     getRuntimeDeps().logger.error('AssignCourt', 'Court not found for number', courtNumber);
     Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
+    // FEEDBACK: toast provides user feedback above
     return;
   }
 
@@ -395,6 +408,7 @@ export async function assignCourtToGroupOrchestrated(
       type: 'error',
     });
     setIsAssigning(false);
+    // FEEDBACK: toast provides user feedback above
     return;
   }
 
@@ -409,16 +423,19 @@ export async function assignCourtToGroupOrchestrated(
       // Board subscription will auto-refresh, but force immediate refresh
       await backend.queries.refresh();
       setIsAssigning(false);
+      // FEEDBACK: toast provides user feedback above
       return;
     }
     // Handle mobile location errors - offer QR fallback
     if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
       setGpsFailedPrompt(true);
       setIsAssigning(false);
+      // FEEDBACK: GPS prompt modal provides user feedback
       return;
     }
     Tennis.UI.toast(result.message || 'Failed to assign court', { type: 'error' });
     setIsAssigning(false);
+    // FEEDBACK: toast provides user feedback above
     return;
   }
 
