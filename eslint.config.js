@@ -58,6 +58,27 @@ export default [
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/immutability': 'off',
 
+      // WP4-4: camelCase enforcement (ratchet - start as warn)
+      camelcase: [
+        'warn',
+        {
+          properties: 'never', // Don't check object property names (API responses)
+          ignoreDestructuring: true, // Allow destructuring snake_case from APIs
+          ignoreImports: true, // Allow importing snake_case from external modules
+        },
+      ],
+    },
+  },
+  // WP4-4: Boundary files exempt from camelcase rule (snake_case allowed)
+  {
+    files: [
+      'src/lib/normalize/**/*.js',
+      'src/lib/ApiAdapter.js',
+      'src/registration/backend/**/*.js',
+      'src/admin/backend/**/*.js',
+    ],
+    rules: {
+      camelcase: 'off',
     },
   },
   // Architecture boundary: UI components should use @lib/api, not raw ApiAdapter
