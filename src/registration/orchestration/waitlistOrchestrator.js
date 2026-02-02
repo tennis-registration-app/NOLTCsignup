@@ -73,12 +73,13 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
     }
 
     // Build the players array (keep guests for waitlist display)
+    // UI state uses camelCase - no snake_case fallback needed
     const players = group
       .map((p) => {
         const mapped = {
           id: String(p.id || '').trim(),
           name: String(p.name || '').trim(),
-          memberNumber: p.memberNumber || p.member_number || p.id,
+          memberNumber: p.memberNumber || p.id,
           ...(p.isGuest !== undefined && { isGuest: p.isGuest }),
           ...(p.sponsor && { sponsor: p.sponsor }),
         };

@@ -9,6 +9,7 @@ import { ApiAdapter } from '@lib/ApiAdapter.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
 import { formatCourtTime } from '@lib/dateUtils.js';
 import { logger } from '../../lib/logger.js';
+import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
 
 /**
  * ApiTennisService
@@ -326,8 +327,8 @@ class ApiTennisService {
       players.map(async (player) => {
         logger.debug('ApiService', 'Processing player', JSON.stringify(player));
 
-        // Try to get account_id and member UUID from various sources
-        let accountId = player.accountId || player.account_id || player.billingAccountId;
+        // Try to get accountId and member UUID from various sources
+        let accountId = player.accountId || player.billingAccountId;
         let memberUuid = null;
 
         // Check if player already has a valid UUID (36 chars with dashes)
@@ -342,19 +343,19 @@ class ApiTennisService {
         }
 
         // If we have a memberNumber, use it to look up the member
-        const memberNumber = player.memberNumber || player.clubNumber || player.account_number;
+        const memberNumber = player.memberNumber || player.clubNumber;
         if (memberNumber && (!accountId || !memberUuid)) {
           try {
             logger.debug(
               'ApiService',
-              `Looking up by member_number: ${memberNumber}, player.name: "${player.name}"`
+              `Looking up by memberNumber: ${memberNumber}, player.name: "${player.name}"`
             );
             const result = await this.api.getMembersByAccount(String(memberNumber));
-            const members = result.members || [];
+            const members = normalizeAccountMembers(result.members);
             logger.debug(
               'ApiService',
               `Found ${members.length} members for account`,
-              members.map((m) => m.display_name)
+              members.map((m) => m.displayName)
             );
 
             if (members.length > 0) {
@@ -362,14 +363,12 @@ class ApiTennisService {
               let member = null;
 
               // Try exact match first (case-insensitive)
-              member = members.find(
-                (m) => m.display_name?.toLowerCase().trim() === playerNameLower
-              );
+              member = members.find((m) => m.displayName?.toLowerCase().trim() === playerNameLower);
 
-              // Try partial match (player name contains or is contained in display_name)
+              // Try partial match (player name contains or is contained in displayName)
               if (!member) {
                 member = members.find((m) => {
-                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  const displayLower = (m.displayName || '').toLowerCase().trim();
                   return (
                     displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower)
                   );
@@ -379,7 +378,7 @@ class ApiTennisService {
               // Try matching by last name only
               if (!member && playerNameLower) {
                 member = members.find((m) => {
-                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  const displayLower = (m.displayName || '').toLowerCase().trim();
                   const playerLastName = playerNameLower.split(' ').pop();
                   const memberLastName = displayLower.split(' ').pop();
                   return playerLastName === memberLastName;
@@ -389,36 +388,36 @@ class ApiTennisService {
               // If only one member on account, use it
               if (!member && members.length === 1) {
                 member = members[0];
-                logger.debug('ApiService', `Using only member on account: ${member.display_name}`);
+                logger.debug('ApiService', `Using only member on account: ${member.displayName}`);
               }
 
               // If multiple members and no match, use primary with warning
               if (!member && members.length > 1) {
-                const primaryMember = members.find((m) => m.is_primary);
+                const primaryMember = members.find((m) => m.isPrimary);
                 if (primaryMember) {
                   logger.warn(
                     'ApiService',
-                    `Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.display_name}"`
+                    `Name mismatch! Player "${player.name}" not found. Using primary: "${primaryMember.displayName}"`
                   );
                   member = primaryMember;
                 }
               }
 
               if (member) {
-                if (!accountId) accountId = member.account_id;
+                if (!accountId) accountId = member.accountId;
                 if (!memberUuid) memberUuid = member.id;
                 logger.debug(
                   'ApiService',
-                  `Matched: "${player.name}" -> "${member.display_name}" (${member.id})`
+                  `Matched: "${player.name}" -> "${member.displayName}" (${member.id})`
                 );
               }
             }
           } catch (e) {
-            logger.warn('ApiService', 'Could not look up member by member_number', e);
+            logger.warn('ApiService', 'Could not look up member by memberNumber', e);
           }
         }
 
-        // If still no account_id, try searching by name
+        // If still no accountId, try searching by name
         if (!accountId || !memberUuid) {
           const searchName = player.name || player.displayName;
           if (searchName) {
@@ -428,19 +427,19 @@ class ApiTennisService {
               logger.debug('ApiService', 'getMembers result', JSON.stringify(result));
 
               if (result.members && result.members.length > 0) {
-                // Find exact match by name
+                // Find exact match by name - normalize for consistent access
+                const members = normalizeAccountMembers(result.members);
                 const normalizedSearch = searchName.toLowerCase().trim();
                 const member =
-                  result.members.find(
-                    (m) => m.display_name?.toLowerCase().trim() === normalizedSearch
-                  ) || result.members[0];
+                  members.find((m) => m.displayName?.toLowerCase().trim() === normalizedSearch) ||
+                  members[0];
 
                 if (member) {
-                  if (!accountId) accountId = member.account_id;
+                  if (!accountId) accountId = member.accountId;
                   if (!memberUuid) memberUuid = member.id;
                   logger.debug(
                     'ApiService',
-                    `Found by name: ${member.display_name}, UUID: ${member.id}, account: ${member.account_id}`
+                    `Found by name: ${member.displayName}, UUID: ${member.id}, account: ${member.accountId}`
                   );
                 }
               }
@@ -623,7 +622,7 @@ class ApiTennisService {
         }
 
         // Try to get existing IDs if they're UUIDs
-        const existingId = player.id || player.memberId || player.member_id;
+        const existingId = player.id || player.memberId;
         const isUUID =
           existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
 
@@ -631,51 +630,50 @@ class ApiTennisService {
           existingId,
           isUUID,
           'player.accountId': player.accountId,
-          'player.account_id': player.account_id,
         });
 
         if (isUUID) {
           memberId = existingId;
-          accountId = player.accountId || player.account_id;
+          accountId = player.accountId;
           logger.debug(
             'ApiService',
             `[${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`
           );
         }
 
-        // If we don't have BOTH UUID and accountId, look up by member_number
+        // If we don't have BOTH UUID and accountId, look up by memberNumber
         if (!memberId || !accountId) {
           logger.debug(
             'ApiService',
             `[${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`
           );
-          const memberNumber = player.memberNumber || player.member_number || player.id;
+          const memberNumber = player.memberNumber || player.id;
 
           if (memberNumber) {
             try {
               logger.debug(
                 'ApiService',
-                `[${traceId}] Looking up member_number: ${memberNumber}, player.name: "${player.name}"`
+                `[${traceId}] Looking up memberNumber: ${memberNumber}, player.name: "${player.name}"`
               );
               const result = await this.api.getMembersByAccount(String(memberNumber));
-              const members = result.members || [];
+              const members = normalizeAccountMembers(result.members);
               logger.debug(
                 'ApiService',
                 `[${traceId}] Found ${members.length} members for account`,
-                members.map((m) => `${m.display_name}(primary=${m.is_primary})`)
+                members.map((m) => `${m.displayName}(primary=${m.isPrimary})`)
               );
 
               const playerNameLower = (player.name || '').toLowerCase().trim();
 
               // Try exact match first (case-insensitive)
               let member = members.find(
-                (m) => m.display_name?.toLowerCase().trim() === playerNameLower
+                (m) => m.displayName?.toLowerCase().trim() === playerNameLower
               );
 
-              // Try partial match (player name contains or is contained in display_name)
+              // Try partial match (player name contains or is contained in displayName)
               if (!member) {
                 member = members.find((m) => {
-                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  const displayLower = (m.displayName || '').toLowerCase().trim();
                   return (
                     displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower)
                   );
@@ -685,7 +683,7 @@ class ApiTennisService {
               // Try matching by last name only (common case: "Sinner" -> "Jannik Sinner")
               if (!member && playerNameLower) {
                 member = members.find((m) => {
-                  const displayLower = (m.display_name || '').toLowerCase().trim();
+                  const displayLower = (m.displayName || '').toLowerCase().trim();
                   const playerLastName = playerNameLower.split(' ').pop();
                   const memberLastName = displayLower.split(' ').pop();
                   return playerLastName === memberLastName;
@@ -697,37 +695,37 @@ class ApiTennisService {
                 member = members[0];
                 logger.debug(
                   'ApiService',
-                  `[${traceId}] Using only member on account: ${member.display_name}`
+                  `[${traceId}] Using only member on account: ${member.displayName}`
                 );
               }
 
               // If multiple members and no match, prefer primary member with warning
               if (!member && members.length > 1) {
-                const primaryMember = members.find((m) => m.is_primary);
+                const primaryMember = members.find((m) => m.isPrimary);
                 if (primaryMember) {
                   logger.warn(
                     'ApiService',
-                    `[${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.display_name}"`
+                    `[${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.displayName}"`
                   );
                   member = primaryMember;
                 } else {
                   logger.error(
                     'ApiService',
                     `[${traceId}] Name mismatch! Player "${player.name}" not found in`,
-                    members.map((m) => m.display_name)
+                    members.map((m) => m.displayName)
                   );
                   throw new Error(
-                    `Could not match "${player.name}" to any member on account ${memberNumber}. Available: ${members.map((m) => m.display_name).join(', ')}`
+                    `Could not match "${player.name}" to any member on account ${memberNumber}. Available: ${members.map((m) => m.displayName).join(', ')}`
                   );
                 }
               }
 
               if (member) {
                 memberId = member.id;
-                accountId = member.account_id;
+                accountId = member.accountId;
                 logger.debug(
                   'ApiService',
-                  `[${traceId}] Matched: "${player.name}" -> "${member.display_name}" (${memberId})`
+                  `[${traceId}] Matched: "${player.name}" -> "${member.displayName}" (${memberId})`
                 );
               }
             } catch (e) {
@@ -744,13 +742,13 @@ class ApiTennisService {
             if (searchName) {
               logger.debug('ApiService', `Searching by name: ${searchName}`);
               const result = await this.api.getMembers(searchName);
-              const members = result.members || [];
+              const members = normalizeAccountMembers(result.members);
               const member = members.find(
-                (m) => m.display_name?.toLowerCase() === searchName.toLowerCase()
+                (m) => m.displayName?.toLowerCase() === searchName.toLowerCase()
               );
               if (member) {
                 memberId = member.id;
-                accountId = member.account_id;
+                accountId = member.accountId;
                 logger.debug('ApiService', `Found by name: ${searchName} -> ${memberId}`);
               }
             }

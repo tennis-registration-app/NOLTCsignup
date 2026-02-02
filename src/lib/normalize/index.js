@@ -12,5 +12,9 @@ export { normalizeBoard } from './normalizeBoard.js';
 
 // Re-export for data access layer only (not for components)
 // These are used by getBoard() and similar data access functions
-export { normalizeMember } from './normalizeMember.js';
+export {
+  normalizeMember,
+  normalizeAccountMember,
+  normalizeAccountMembers,
+} from './normalizeMember.js';
 export { normalizeGroup } from './normalizeGroup.js';

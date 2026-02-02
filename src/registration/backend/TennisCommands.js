@@ -301,7 +301,7 @@ export class TennisCommands {
       if (player.isGuest || player.type === 'guest') {
         guestPlayers.push(player);
       } else {
-        const memberNumber = player.memberNumber || player.member_number || player.clubNumber;
+        const memberNumber = player.memberNumber || player.clubNumber;
         const name = player.name || player.displayName;
 
         if (!memberNumber) {
@@ -345,14 +345,13 @@ export class TennisCommands {
       const nameLower = (player.name || '').toLowerCase().trim();
 
       // Find matching member (exact match, then partial, then last name)
-      let member = members.find(
-        (m) => (m.displayName || m.display_name || '').toLowerCase().trim() === nameLower
-      );
+      // Members are already normalized by TennisDirectory - use camelCase only
+      let member = members.find((m) => (m.displayName || '').toLowerCase().trim() === nameLower);
 
       if (!member) {
         // Partial match
         member = members.find((m) => {
-          const display = (m.displayName || m.display_name || '').toLowerCase().trim();
+          const display = (m.displayName || '').toLowerCase().trim();
           return display.includes(nameLower) || nameLower.includes(display);
         });
       }
@@ -360,10 +359,7 @@ export class TennisCommands {
       if (!member) {
         // Last name match
         member = members.find((m) => {
-          const displayLast = (m.displayName || m.display_name || '')
-            .toLowerCase()
-            .split(' ')
-            .pop();
+          const displayLast = (m.displayName || '').toLowerCase().split(' ').pop();
           const nameLast = nameLower.split(' ').pop();
           return displayLast === nameLast;
         });
@@ -372,7 +368,7 @@ export class TennisCommands {
       if (!member && members.length === 1) {
         // Single member on account - use it with warning
         logger.warn('TennisCommands', 'Using only member on account', {
-          found: members[0].displayName || members[0].display_name,
+          found: members[0].displayName,
           searched: player.name,
         });
         member = members[0];
@@ -385,12 +381,12 @@ export class TennisCommands {
       participants.push({
         kind: 'member',
         memberId: member.id,
-        accountId: member.accountId || member.account_id,
+        accountId: member.accountId,
       });
 
       // Track first member's account for guests
       if (!firstMemberAccount) {
-        firstMemberAccount = member.accountId || member.account_id;
+        firstMemberAccount = member.accountId;
       }
     }
 
@@ -455,10 +451,11 @@ export class TennisCommands {
     });
 
     // 1. Validate command structure (fail-fast)
+    // INPUT-NORMALIZE: Accept either format from UI, normalize to camelCase for validation
     const validPlayers = players.map((p) => ({
-      memberId: p.memberId || p.member_id || p.id || '',
-      displayName: p.displayName || p.display_name || p.name || '',
-      isGuest: p.isGuest ?? p.is_guest ?? false,
+      memberId: p.memberId || p.id || '',
+      displayName: p.displayName || p.name || '',
+      isGuest: p.isGuest ?? false,
     }));
 
     buildAssignCourtCommand({
@@ -508,10 +505,11 @@ export class TennisCommands {
    */
   async joinWaitlistWithPlayers({ players, groupType, latitude, longitude }) {
     // 1. Validate command structure (fail-fast)
+    // INPUT-NORMALIZE: Accept either format from UI, normalize to camelCase for validation
     const validPlayers = players.map((p) => ({
-      memberId: p.memberId || p.member_id || p.id || '',
-      displayName: p.displayName || p.display_name || p.name || '',
-      isGuest: p.isGuest ?? p.is_guest ?? false,
+      memberId: p.memberId || p.id || '',
+      displayName: p.displayName || p.name || '',
+      isGuest: p.isGuest ?? false,
     }));
 
     buildJoinWaitlistCommand({
