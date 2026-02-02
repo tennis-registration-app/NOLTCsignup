@@ -180,54 +180,51 @@ export function useCourtHandlers(deps) {
     [clearViaService]
   );
 
-  // VERBATIM COPY: assignCourtToGroup from line ~416
-  const assignCourtToGroup = useCallback(
-    async (courtNumber, selectableCountAtSelection = null) => {
-      return assignCourtToGroupOrchestrated(courtNumber, selectableCountAtSelection, {
-        // Read values
-        isAssigning,
-        mobileFlow,
-        preselectedCourt,
-        operatingHours,
-        currentGroup,
-        courts: data.courts,
-        currentWaitlistEntryId,
-        CONSTANTS,
-        // Setters
-        setIsAssigning,
-        setCurrentWaitlistEntryId,
-        setHasWaitlistPriority,
-        setCurrentGroup,
-        setJustAssignedCourt,
-        setAssignedSessionId,
-        setReplacedGroup,
-        setDisplacement,
-        setOriginalCourtData,
-        setIsChangingCourt,
-        setWasOvertimeCourt,
-        setHasAssignedCourt,
-        setCanChangeCourt,
-        setChangeTimeRemaining,
-        setIsTimeLimited,
-        setTimeLimitReason,
-        setShowSuccess,
-        setGpsFailedPrompt,
-        // Services
-        backend,
-        // Helpers
-        getCourtBlockStatus,
-        getMobileGeolocation,
-        showAlertMessage,
-        validateGroupCompat,
-        clearSuccessResetTimer,
-        resetForm,
-        successResetTimerRef,
-        dbg,
-        API_CONFIG,
-      });
-    },
+  // WP4-2: Factory function to assemble assignCourt deps
+  const createAssignCourtDeps = useCallback(
+    () => ({
+      // Read values (10)
+      isAssigning,
+      mobileFlow,
+      preselectedCourt,
+      operatingHours,
+      currentGroup,
+      courts: data.courts,
+      currentWaitlistEntryId,
+      CONSTANTS,
+      successResetTimerRef,
+      API_CONFIG,
+      // Setters (18)
+      setIsAssigning,
+      setCurrentWaitlistEntryId,
+      setHasWaitlistPriority,
+      setCurrentGroup,
+      setJustAssignedCourt,
+      setAssignedSessionId,
+      setReplacedGroup,
+      setDisplacement,
+      setOriginalCourtData,
+      setIsChangingCourt,
+      setWasOvertimeCourt,
+      setHasAssignedCourt,
+      setCanChangeCourt,
+      setChangeTimeRemaining,
+      setIsTimeLimited,
+      setTimeLimitReason,
+      setShowSuccess,
+      setGpsFailedPrompt,
+      // Services (7)
+      backend,
+      getCourtBlockStatus,
+      getMobileGeolocation,
+      validateGroupCompat,
+      clearSuccessResetTimer,
+      resetForm,
+      dbg,
+      // UI effects (1)
+      showAlertMessage,
+    }),
     [
-      assignCourtToGroupOrchestrated,
       isAssigning,
       mobileFlow,
       preselectedCourt,
@@ -236,6 +233,8 @@ export function useCourtHandlers(deps) {
       data.courts,
       currentWaitlistEntryId,
       CONSTANTS,
+      successResetTimerRef,
+      API_CONFIG,
       setIsAssigning,
       setCurrentWaitlistEntryId,
       setHasWaitlistPriority,
@@ -257,14 +256,25 @@ export function useCourtHandlers(deps) {
       backend,
       getCourtBlockStatus,
       getMobileGeolocation,
-      showAlertMessage,
       validateGroupCompat,
       clearSuccessResetTimer,
       resetForm,
-      successResetTimerRef,
       dbg,
-      API_CONFIG,
+      showAlertMessage,
     ]
+  );
+
+  // VERBATIM COPY: assignCourtToGroup from line ~416
+  // WP4-2: deps now assembled by createAssignCourtDeps factory
+  const assignCourtToGroup = useCallback(
+    async (courtNumber, selectableCountAtSelection = null) => {
+      return assignCourtToGroupOrchestrated(
+        courtNumber,
+        selectableCountAtSelection,
+        createAssignCourtDeps()
+      );
+    },
+    [assignCourtToGroupOrchestrated, createAssignCourtDeps]
   );
 
   // VERBATIM COPY: changeCourt from line ~503
