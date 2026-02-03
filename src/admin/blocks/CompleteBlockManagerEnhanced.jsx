@@ -21,6 +21,7 @@ import { logger } from '../../lib/logger.js';
 // Conflict Detection Component
 const ConflictDetector = ({
   courts,
+  courtBlocks = [],
   selectedCourts,
   startTime,
   endTime,
@@ -59,32 +60,26 @@ const ConflictDetector = ({
         blockEnd.setDate(blockEnd.getDate() + 1);
       }
 
-      // Check for existing blocks in localStorage
-      try {
-        const courtBlocks = JSON.parse(localStorage.getItem('courtBlocks') || '[]');
+      // Check for existing blocks from props (authoritative source: backend via useBoardSubscription)
+      courtBlocks.forEach((block) => {
+        if (block.courtNumber === courtNum && (!editingBlock || block.id !== editingBlock.id)) {
+          const existingStart = new Date(block.startTime);
+          const existingEnd = new Date(block.endTime);
 
-        courtBlocks.forEach((block) => {
-          if (block.courtNumber === courtNum && (!editingBlock || block.id !== editingBlock.id)) {
-            const existingStart = new Date(block.startTime);
-            const existingEnd = new Date(block.endTime);
-
-            if (
-              (blockStart >= existingStart && blockStart < existingEnd) ||
-              (blockEnd > existingStart && blockEnd <= existingEnd) ||
-              (blockStart <= existingStart && blockEnd >= existingEnd)
-            ) {
-              detectedConflicts.push({
-                courtNumber: courtNum,
-                type: 'block',
-                reason: block.reason,
-                time: `${existingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${existingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-              });
-            }
+          if (
+            (blockStart >= existingStart && blockStart < existingEnd) ||
+            (blockEnd > existingStart && blockEnd <= existingEnd) ||
+            (blockStart <= existingStart && blockEnd >= existingEnd)
+          ) {
+            detectedConflicts.push({
+              courtNumber: courtNum,
+              type: 'block',
+              reason: block.reason,
+              time: `${existingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${existingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+            });
           }
-        });
-      } catch (error) {
-        logger.error('BlockManager', 'Error checking block conflicts', error);
-      }
+        }
+      });
 
       // Check session using Domain format: court.session.group.players
       const sessionPlayers = court?.session?.group?.players;
@@ -108,7 +103,7 @@ const ConflictDetector = ({
     });
 
     setConflicts(detectedConflicts);
-  }, [courts, selectedCourts, startTime, endTime, selectedDate, editingBlock]);
+  }, [courts, courtBlocks, selectedCourts, startTime, endTime, selectedDate, editingBlock]);
 
   if (conflicts.length === 0) return null;
 
@@ -146,6 +141,7 @@ const ConflictDetector = ({
 // Complete Block Manager Component (Enhanced with Interactive Event Calendar)
 const CompleteBlockManagerEnhanced = ({
   courts,
+  courtBlocks = [],
   onApplyBlocks,
   existingBlocks: _existingBlocks,
   wetCourtsActive,
@@ -662,6 +658,7 @@ const CompleteBlockManagerEnhanced = ({
 
             <ConflictDetector
               courts={courts}
+              courtBlocks={courtBlocks}
               selectedCourts={selectedCourts}
               startTime={startTime}
               endTime={endTime}

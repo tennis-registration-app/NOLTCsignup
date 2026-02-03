@@ -339,6 +339,7 @@ const AdminPanelV2 = ({ onExit }) => {
             <BlockingSection
               blockingView={blockingView}
               courts={courts}
+              courtBlocks={courtBlocks}
               onApplyBlocks={applyBlocks}
               existingBlocks={existingBlocks}
               wetCourtsActive={wetCourtsActive}

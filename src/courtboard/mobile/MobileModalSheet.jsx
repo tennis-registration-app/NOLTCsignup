@@ -89,13 +89,12 @@ export function MobileModalSheet({ type, payload, onClose }) {
         // Member roster display
         let rosterData = [];
         try {
+          // WP5-C1: Removed localStorage fallbacks - use wrapper or test data only
           const S = getTennisStorage();
           rosterData =
             window.__memberRoster ||
             (S?.readJSON ? S.readJSON('tennisMembers') : null) ||
             (S?.readJSON ? S.readJSON('members') : null) ||
-            JSON.parse(localStorage.getItem('tennisMembers') || 'null') ||
-            JSON.parse(localStorage.getItem('members') || 'null') ||
             [];
 
           // If no data found, use test data

@@ -92,16 +92,9 @@
         );
       if (same) return;
 
-      // NOTE: Promotions are now computed by backend. This localStorage write is for
-      // backward compatibility with legacy UI components only. Tennis state (courts,
-      // waitlist) is read from React state above, not localStorage.
-      const key = 'tennisClubData';
-      const prevData = JSON.parse(localStorage.getItem(key) || '{}');
-      const nextData = { ...data, waitlistPromotions: nextPromos };
-      const merged = window.APP_UTILS?.preservePromotions?.(prevData, nextData) || nextData;
-
-      localStorage.setItem(key, JSON.stringify(merged));
-
+      // WP5-C1: Removed localStorage write - promotions are now computed by backend
+      // and read from React state via getCourtboardState(). Events still dispatched
+      // for cross-component coordination.
       window.dispatchEvent(new Event('tennisDataUpdate'));
       window.dispatchEvent(new Event('DATA_UPDATED'));
     } catch (e) {

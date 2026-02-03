@@ -3,6 +3,7 @@ import React from 'react';
 export function BlockingSection({
   blockingView,
   courts,
+  courtBlocks,
   onApplyBlocks,
   existingBlocks,
   wetCourtsActive,
@@ -33,6 +34,7 @@ export function BlockingSection({
       {blockingView === 'create' && (
         <CompleteBlockManagerEnhanced
           courts={courts}
+          courtBlocks={courtBlocks}
           onApplyBlocks={onApplyBlocks}
           existingBlocks={existingBlocks}
           wetCourtsActive={wetCourtsActive}
@@ -62,6 +64,7 @@ export function BlockingSection({
       {blockingView === 'future' && (
         <CompleteBlockManagerEnhanced
           courts={courts}
+          courtBlocks={courtBlocks}
           onApplyBlocks={onApplyBlocks}
           existingBlocks={existingBlocks}
           wetCourtsActive={wetCourtsActive}
@@ -89,6 +92,7 @@ export function BlockingSection({
       {blockingView === 'list' && (
         <CompleteBlockManagerEnhanced
           courts={courts}
+          courtBlocks={courtBlocks}
           onApplyBlocks={onApplyBlocks}
           existingBlocks={existingBlocks}
           wetCourtsActive={wetCourtsActive}
