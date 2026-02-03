@@ -1,110 +1,29 @@
-import React, { useMemo } from 'react';
-import {
-  createWetCourtsModel,
-  createWetCourtsActions,
-  createBlockModel,
-  createBlockActions,
-  createBlockComponents,
-  createAdminServices,
-} from '../types/domainObjects.js';
+import React from 'react';
 
+/**
+ * Pass-through wrapper for CompleteBlockManagerEnhanced.
+ * Receives domain objects and forwards them unchanged.
+ *
+ * @param {Object} props
+ * @param {string} props.blockingView - UI view mode
+ * @param {import('../types/domainObjects.js').WetCourtsModel} props.wetCourtsModel
+ * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
+ * @param {import('../types/domainObjects.js').BlockModel} props.blockModel
+ * @param {import('../types/domainObjects.js').BlockActions} props.blockActions
+ * @param {import('../types/domainObjects.js').BlockComponents} props.components
+ * @param {import('../types/domainObjects.js').AdminServices} props.services
+ * @param {import('react').ComponentType<unknown>} props.CompleteBlockManagerEnhanced - Injected component
+ */
 export function BlockingSection({
   blockingView,
-  courts,
-  courtBlocks,
-  onApplyBlocks,
-  wetCourtsActive,
-  setWetCourtsActive,
-  wetCourts,
-  setWetCourts,
-  suspendedBlocks,
-  setSuspendedBlocks,
-  ENABLE_WET_COURTS,
-  onNotification,
-  VisualTimeEntry,
-  MiniCalendar,
-  EventCalendarEnhanced,
-  MonthView,
-  EventSummary,
-  HoverCard,
-  QuickActionsMenu,
-  Tennis,
-  backend,
-  hoursOverrides,
-  initialEditingBlock,
-  onEditingBlockConsumed,
+  wetCourtsModel,
+  wetCourtsActions,
+  blockModel,
+  blockActions,
+  components,
+  services,
   CompleteBlockManagerEnhanced,
 }) {
-  // ⚠️ useMemo prevents new object identity on every render
-  const wetCourtsModel = useMemo(
-    () =>
-      createWetCourtsModel({
-        wetCourtsActive,
-        wetCourts,
-        ENABLE_WET_COURTS,
-      }),
-    [wetCourtsActive, wetCourts, ENABLE_WET_COURTS]
-  );
-
-  const wetCourtsActions = useMemo(
-    () =>
-      createWetCourtsActions({
-        setWetCourtsActive,
-        setWetCourts,
-        setSuspendedBlocks,
-      }),
-    [setWetCourtsActive, setWetCourts, setSuspendedBlocks]
-  );
-
-  const blockModel = useMemo(
-    () =>
-      createBlockModel({
-        courts,
-        courtBlocks,
-        hoursOverrides,
-        initialEditingBlock,
-        suspendedBlocks,
-      }),
-    [courts, courtBlocks, hoursOverrides, initialEditingBlock, suspendedBlocks]
-  );
-
-  const blockActions = useMemo(
-    () =>
-      createBlockActions({
-        onApplyBlocks,
-        onEditingBlockConsumed,
-        setSuspendedBlocks,
-        onNotification,
-      }),
-    [onApplyBlocks, onEditingBlockConsumed, setSuspendedBlocks, onNotification]
-  );
-
-  const blockComponents = useMemo(
-    () =>
-      createBlockComponents({
-        VisualTimeEntry,
-        MiniCalendar,
-        EventCalendarEnhanced,
-        MonthView,
-        EventSummary,
-        HoverCard,
-        QuickActionsMenu,
-        Tennis,
-      }),
-    [
-      VisualTimeEntry,
-      MiniCalendar,
-      EventCalendarEnhanced,
-      MonthView,
-      EventSummary,
-      HoverCard,
-      QuickActionsMenu,
-      Tennis,
-    ]
-  );
-
-  const adminServices = useMemo(() => createAdminServices({ backend }), [backend]);
-
   return (
     <div className="space-y-6 p-6 ">
       {/* Sub-tab Content */}
@@ -114,8 +33,8 @@ export function BlockingSection({
           wetCourtsActions={wetCourtsActions}
           blockModel={blockModel}
           blockActions={blockActions}
-          components={blockComponents}
-          services={adminServices}
+          components={components}
+          services={services}
           defaultView="create"
         />
       )}
@@ -126,8 +45,8 @@ export function BlockingSection({
           wetCourtsActions={wetCourtsActions}
           blockModel={blockModel}
           blockActions={blockActions}
-          components={blockComponents}
-          services={adminServices}
+          components={components}
+          services={services}
           defaultView="calendar"
         />
       )}
@@ -138,8 +57,8 @@ export function BlockingSection({
           wetCourtsActions={wetCourtsActions}
           blockModel={blockModel}
           blockActions={blockActions}
-          components={blockComponents}
-          services={adminServices}
+          components={components}
+          services={services}
           defaultView="timeline"
         />
       )}

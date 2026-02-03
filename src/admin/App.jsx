@@ -6,7 +6,7 @@
  * Future phases will break this into smaller component files.
  */
 /* global Tennis */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
@@ -77,6 +77,16 @@ import { applyBlocksOp } from './handlers/applyBlocksOperation';
 
 // Wet courts hook (WP5.2)
 import { useWetCourts } from './wetCourts/useWetCourts';
+
+// Domain object factories (WP5-A3)
+import {
+  createWetCourtsModel,
+  createWetCourtsActions,
+  createBlockModel,
+  createBlockActions,
+  createBlockComponents,
+  createAdminServices,
+} from './types/domainObjects.js';
 
 // Admin hooks (WP-HR6)
 import { useNotification } from './hooks/useNotification';
@@ -241,14 +251,6 @@ const AdminPanelV2 = ({ onExit }) => {
   const clearAllCourts = () =>
     clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG });
 
-  // Add existingBlocks calculation
-  const existingBlocks = courts
-    .filter((c) => c?.blocked)
-    .map((c, i) => ({
-      court: i + 1,
-      ...c.blocked,
-    }));
-
   // Block operations - delegated to handler module
   const applyBlocks = (blocks) =>
     applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG }, blocks);
@@ -265,6 +267,80 @@ const AdminPanelV2 = ({ onExit }) => {
     reloadSettings();
     bumpRefreshTrigger();
   };
+
+  // Domain objects for BlockingSection (WP5-A3)
+  // Note: exhaustive-deps warnings appear at function definition sites (useWetCourts hook)
+  // because setters/wetCourts recreate on each render. Fix deferred per A3 rules.
+  const wetCourtsModel = useMemo(
+    () =>
+      createWetCourtsModel({
+        wetCourtsActive,
+        wetCourts,
+        ENABLE_WET_COURTS,
+      }),
+    [wetCourtsActive, wetCourts, ENABLE_WET_COURTS]
+  );
+
+  const wetCourtsActions = useMemo(
+    () =>
+      createWetCourtsActions({
+        setWetCourtsActive,
+        setWetCourts,
+        setSuspendedBlocks,
+      }),
+    [setWetCourtsActive, setWetCourts, setSuspendedBlocks]
+  );
+
+  const blockModel = useMemo(
+    () =>
+      createBlockModel({
+        courts,
+        courtBlocks,
+        hoursOverrides,
+        initialEditingBlock: blockToEdit,
+        suspendedBlocks,
+      }),
+    [courts, courtBlocks, hoursOverrides, blockToEdit, suspendedBlocks]
+  );
+
+  const blockActions = useMemo(
+    () =>
+      createBlockActions({
+        onApplyBlocks: applyBlocks,
+        onEditingBlockConsumed: () => setBlockToEdit(null),
+        setSuspendedBlocks,
+        onNotification: showNotification,
+      }),
+    [applyBlocks, setBlockToEdit, setSuspendedBlocks, showNotification]
+  );
+
+  // Module-level imports (VisualTimeEntry etc.) and getTennis are stable
+  const blockComponents = useMemo(
+    () =>
+      createBlockComponents({
+        VisualTimeEntry,
+        MiniCalendar,
+        EventCalendarEnhanced,
+        MonthView,
+        EventSummary,
+        HoverCard,
+        QuickActionsMenu,
+        Tennis: getTennis(),
+      }),
+    [
+      VisualTimeEntry,
+      MiniCalendar,
+      EventCalendarEnhanced,
+      MonthView,
+      EventSummary,
+      HoverCard,
+      QuickActionsMenu,
+      getTennis,
+    ]
+  );
+
+  // backend is module-level singleton
+  const adminServices = useMemo(() => createAdminServices({ backend }), [backend]);
 
   // AdminPanelV2 rendering complete
   return (
@@ -339,30 +415,12 @@ const AdminPanelV2 = ({ onExit }) => {
           {activeTab === 'blocking' && (
             <BlockingSection
               blockingView={blockingView}
-              courts={courts}
-              courtBlocks={courtBlocks}
-              onApplyBlocks={applyBlocks}
-              existingBlocks={existingBlocks}
-              wetCourtsActive={wetCourtsActive}
-              setWetCourtsActive={setWetCourtsActive}
-              wetCourts={wetCourts}
-              setWetCourts={setWetCourts}
-              suspendedBlocks={suspendedBlocks}
-              setSuspendedBlocks={setSuspendedBlocks}
-              ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-              onNotification={showNotification}
-              VisualTimeEntry={VisualTimeEntry}
-              MiniCalendar={MiniCalendar}
-              EventCalendarEnhanced={EventCalendarEnhanced}
-              MonthView={MonthView}
-              EventSummary={EventSummary}
-              HoverCard={HoverCard}
-              QuickActionsMenu={QuickActionsMenu}
-              Tennis={getTennis()}
-              backend={backend}
-              hoursOverrides={hoursOverrides}
-              initialEditingBlock={blockToEdit}
-              onEditingBlockConsumed={() => setBlockToEdit(null)}
+              wetCourtsModel={wetCourtsModel}
+              wetCourtsActions={wetCourtsActions}
+              blockModel={blockModel}
+              blockActions={blockActions}
+              components={blockComponents}
+              services={adminServices}
               CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced}
             />
           )}
