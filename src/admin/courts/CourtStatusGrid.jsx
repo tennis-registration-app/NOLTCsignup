@@ -27,25 +27,46 @@ const getDataStore = () => getTennisDataStore() || window.DataStore;
 
 // Timer registry for cleanup (kept for future implementation)
 
+/**
+ * 12-court status grid with wet court indicators.
+ *
+ * @param {Object} props
+ * @param {import('../types/domainObjects.js').StatusModel} props.statusModel
+ * @param {import('../types/domainObjects.js').StatusActions} props.statusActions
+ * @param {import('../types/domainObjects.js').WetCourtsModel} props.wetCourtsModel
+ * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
+ * @param {import('../types/domainObjects.js').AdminServices} props.services
+ */
 const CourtStatusGrid = ({
-  courts,
-  courtBlocks,
-  selectedDate,
-  onClearCourt,
-  onMoveCourt,
-  currentTime,
+  statusModel,
+  statusActions,
+  wetCourtsModel,
+  wetCourtsActions,
+  services,
+  // DEAD PROPS - kept for now, deferred removal
   onEditBlock: _onEditBlock,
   onEditGame: _onEditGame,
   onEmergencyWetCourt: _onEmergencyWetCourt,
-  onClearAllCourts,
-  wetCourtsActive,
-  handleEmergencyWetCourt,
-  deactivateWetCourts,
-  wetCourts,
-  onClearWetCourt,
-  onClearAllWetCourts,
-  backend, // TennisBackend instance for API calls
 }) => {
+  // Destructure domain objects to preserve original local names
+  const { courts, courtBlocks, selectedDate, currentTime } = statusModel;
+
+  const {
+    clearCourt: onClearCourt,
+    moveCourt: onMoveCourt,
+    clearAllCourts: onClearAllCourts,
+  } = statusActions;
+
+  const { active: wetCourtsActive, courts: wetCourts } = wetCourtsModel;
+
+  const {
+    activateEmergency: handleEmergencyWetCourt,
+    deactivateAll: deactivateWetCourts,
+    clearCourt: onClearWetCourt,
+    clearAllCourts: onClearAllWetCourts,
+  } = wetCourtsActions;
+
+  const { backend } = services;
   const [movingFrom, setMovingFrom] = useState(null);
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);

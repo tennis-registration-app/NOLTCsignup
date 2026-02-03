@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Trash2 } from '../components';
 import { CourtStatusGrid } from '../courts';
+import {
+  createStatusModel,
+  createStatusActions,
+  createWetCourtsModel,
+  createWetCourtsActions,
+  createAdminServices,
+} from '../types/domainObjects.js';
 
 export function StatusSection({
   // State
@@ -23,25 +30,71 @@ export function StatusSection({
   moveInWaitlist,
   removeFromWaitlist,
 }) {
+  const statusModel = useMemo(
+    () =>
+      createStatusModel({
+        courts,
+        courtBlocks,
+        selectedDate,
+        currentTime,
+        waitingGroups,
+      }),
+    [courts, courtBlocks, selectedDate, currentTime, waitingGroups]
+  );
+
+  const statusActions = useMemo(
+    () =>
+      createStatusActions({
+        clearCourt,
+        moveCourt,
+        clearAllCourts,
+        handleEditBlockFromStatus,
+        moveInWaitlist,
+        removeFromWaitlist,
+      }),
+    [
+      clearCourt,
+      moveCourt,
+      clearAllCourts,
+      handleEditBlockFromStatus,
+      moveInWaitlist,
+      removeFromWaitlist,
+    ]
+  );
+
+  const wetCourtsModel = useMemo(
+    () =>
+      createWetCourtsModel({
+        wetCourtsActive,
+        wetCourts,
+      }),
+    [wetCourtsActive, wetCourts]
+  );
+
+  const wetCourtsActions = useMemo(
+    () =>
+      createWetCourtsActions({
+        handleEmergencyWetCourt,
+        deactivateWetCourts,
+        onClearWetCourt: clearWetCourt,
+      }),
+    [handleEmergencyWetCourt, deactivateWetCourts, clearWetCourt]
+  );
+
+  const adminServices = useMemo(() => createAdminServices({ backend }), [backend]);
+
   return (
     <div className="p-6">
       <CourtStatusGrid
-        courts={courts}
-        courtBlocks={courtBlocks}
-        selectedDate={selectedDate}
-        onClearCourt={clearCourt}
-        onMoveCourt={moveCourt}
-        currentTime={currentTime}
+        statusModel={statusModel}
+        statusActions={statusActions}
+        wetCourtsModel={wetCourtsModel}
+        wetCourtsActions={wetCourtsActions}
+        services={adminServices}
+        // DEAD PROPS - still passed for now
         onEditBlock={handleEditBlockFromStatus}
+        onEditGame={undefined}
         onEmergencyWetCourt={handleEmergencyWetCourt}
-        onClearAllCourts={clearAllCourts}
-        wetCourtsActive={wetCourtsActive}
-        handleEmergencyWetCourt={handleEmergencyWetCourt}
-        wetCourts={wetCourts}
-        deactivateWetCourts={deactivateWetCourts}
-        onClearWetCourt={clearWetCourt}
-        onClearAllWetCourts={deactivateWetCourts}
-        backend={backend}
       />
 
       {/* Waitlist Section */}
