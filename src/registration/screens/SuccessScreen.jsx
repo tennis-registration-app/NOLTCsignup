@@ -36,6 +36,7 @@ import { Check } from '../components';
 import { TypedIcon } from '../../components/icons/TypedIcon';
 import { getDataStoreValue, setDataStoreValue } from '../../platform/windowBridge';
 import { logger } from '../../lib/logger.js';
+import { getCache, setCache } from '../../platform/prefsStorage.js';
 
 // Fixed layout card component (internal)
 // Header is outside scroll container to avoid compositor hit-test bugs
@@ -304,12 +305,11 @@ const SuccessScreen = (
         });
       } else {
         try {
-          const stored = localStorage.getItem('tennisBallPurchases');
-          existingPurchases = stored ? JSON.parse(stored) : [];
+          existingPurchases = getCache('ballPurchases') || [];
           existingPurchases.push(purchase);
-          localStorage.setItem('tennisBallPurchases', JSON.stringify(existingPurchases));
+          setCache('ballPurchases', existingPurchases);
         } catch (error) {
-          logger.error('SuccessScreen', 'Error saving to localStorage', error);
+          logger.error('SuccessScreen', 'Error saving to cache', error);
         }
       }
 

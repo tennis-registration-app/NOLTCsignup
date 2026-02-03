@@ -2,6 +2,10 @@
 // Converted from inline Babel to ES module JSX
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+import { migrateOldKeys } from '../platform/prefsStorage.js';
+
+// Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
+migrateOldKeys();
 
 // Browser bridge - exposes window.CourtAvailability for non-bundled scripts (mobile-fallback-bar.js)
 import './browser-bridge.js';

@@ -7,6 +7,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import { migrateOldKeys } from '../platform/prefsStorage.js';
+
+// Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
+migrateOldKeys();
 
 // Wait for shared scripts to be ready
 const waitForDependencies = () => {

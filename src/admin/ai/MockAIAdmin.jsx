@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronRight, Check } from '../components';
+import { getCache } from '../../platform/prefsStorage.js';
 
 // Access global dependencies
 const Storage = window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } };
@@ -227,9 +228,7 @@ const MockAIAdmin = ({
 
         // load/persist using existing key
         const key = Storage.STORAGE.BLOCKS;
-        const existing = Storage.readJSON
-          ? Storage.readJSON(key) || []
-          : JSON.parse(localStorage.getItem(key) || '[]');
+        const existing = Storage.readJSON ? Storage.readJSON(key) || [] : [];
 
         // Prevent conflicts: if any new block overlaps an existing block on the same court, abort with a clear message.
         const conflicts = [];
@@ -257,9 +256,9 @@ const MockAIAdmin = ({
         const next = existing.concat(newBlocks);
         if (Storage.writeJSON) {
           Storage.writeJSON(key, next);
-        } else {
-          localStorage.setItem(key, JSON.stringify(next));
         }
+        // Note: If Storage.writeJSON is unavailable, blocks will not persist
+        // This is acceptable as blocks are domain data managed by backend
         Events.emitDom('tennisDataUpdate', { key, data: next });
         console.log('[Admin] wrote blocks:', newBlocks);
 
@@ -347,7 +346,7 @@ const MockAIAdmin = ({
       case 'showBallSales': {
         let sales = [];
         try {
-          sales = JSON.parse(localStorage.getItem('tennisBallPurchases') || '[]');
+          sales = getCache('ballPurchases') || [];
         } catch {
           /* transient partial write; use empty array */
         }

@@ -2,6 +2,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import { migrateOldKeys } from '../platform/prefsStorage.js';
+
+// Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
+migrateOldKeys();
 
 // Wait for Tennis modules to be available before rendering
 function waitForTennis(callback, maxWait = 10000) {

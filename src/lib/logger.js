@@ -2,9 +2,8 @@
  * Consistent logging wrapper for NOLTC Tennis Registration
  *
  * Level precedence:
- *   1. localStorage override (NOLTC_LOG_LEVEL) — for dev debugging
- *   2. Vite env (VITE_DEBUG_MODE or import.meta.env.DEV)
- *   3. Default fallback: info
+ *   1. Vite env (VITE_DEBUG_MODE or import.meta.env.DEV)
+ *   2. Default fallback: info
  *
  * Usage:
  *   import { logger } from '../lib/logger.js';
@@ -12,8 +11,8 @@
  *   logger.error('API', 'Request failed', { endpoint, error });
  *   logger.debug('CTA', 'State computed', { gateCount, waitlist });
  *
- * Dev override via localStorage:
- *   localStorage.setItem('NOLTC_LOG_LEVEL', 'debug'); // debug|info|warn|error|none
+ * NOTE: Does NOT use localStorage or prefsStorage. Log level is determined
+ * solely by environment configuration for predictable, secure behavior.
  *
  * @module logger
  */
@@ -54,22 +53,10 @@ function getDefaultLogLevel() {
 
 /**
  * Get effective log level.
- * Precedence: localStorage override > env default > info fallback
+ * Precedence: env default > info fallback (no localStorage)
  * @returns {number}
  */
 function getLogLevel() {
-  // SSR safety
-  if (typeof window === 'undefined') {
-    return LOG_LEVELS.info;
-  }
-
-  // 1. Check localStorage override first (dev debugging)
-  const stored = localStorage.getItem('NOLTC_LOG_LEVEL');
-  if (stored && LOG_LEVELS[stored] !== undefined) {
-    return LOG_LEVELS[stored];
-  }
-
-  // 2. Use env-derived default
   return getDefaultLogLevel();
 }
 

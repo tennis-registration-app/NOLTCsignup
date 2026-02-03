@@ -6,6 +6,7 @@
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { getEventColor } from './utils.js';
+import { getPref } from '../../platform/prefsStorage.js';
 
 const BLOCK_TYPES = [
   { value: 'lesson', label: 'Lesson' },
@@ -31,7 +32,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
 
   // Get device ID
   const deviceId = useMemo(() => {
-    return window.Tennis?.deviceId || localStorage.getItem('deviceId') || 'admin-device';
+    return window.Tennis?.deviceId || getPref('deviceId') || 'admin-device';
   }, []);
 
   // Determine if wet block (can't change type)

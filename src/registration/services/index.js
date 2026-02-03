@@ -9,6 +9,7 @@
 
 // WP4-3: Window global setters
 import { setNoltcUseApiGlobal } from '../../platform/registerGlobals.js';
+import { getPref, setPref, removePref } from '../../platform/prefsStorage.js';
 
 // ============================================================
 // Re-export shared services from @lib
@@ -47,7 +48,7 @@ export { ApiTennisService };
  *
  * Can be set via:
  *   - window.NOLTC_USE_API = true
- *   - localStorage.setItem('NOLTC_USE_API', 'true')
+ *   - prefsStorage.getPref('useApi') === true
  *   - URL param: ?useApi=true
  */
 function shouldUseApi() {
@@ -55,9 +56,9 @@ function shouldUseApi() {
     if (window.NOLTC_USE_API === true) return true;
 
     try {
-      if (localStorage.getItem('NOLTC_USE_API') === 'true') return true;
+      if (getPref('useApi') === true) return true;
     } catch (_e) {
-      // localStorage may not be available
+      // prefsStorage may not be available
     }
 
     try {
@@ -120,7 +121,7 @@ export function isUsingApiBackend() {
 export function enableApiBackend() {
   if (typeof window !== 'undefined') {
     setNoltcUseApiGlobal(true);
-    localStorage.setItem('NOLTC_USE_API', 'true');
+    setPref('useApi', true);
   }
   resetTennisService();
 }
@@ -131,7 +132,7 @@ export function enableApiBackend() {
 export function disableApiBackend() {
   if (typeof window !== 'undefined') {
     setNoltcUseApiGlobal(false);
-    localStorage.removeItem('NOLTC_USE_API');
+    removePref('useApi');
   }
   resetTennisService();
 }

@@ -11,6 +11,7 @@ import { createBackend } from '../registration/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
+import { getPref } from '../platform/prefsStorage.js';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
 import './utils/adminRefresh.js';
@@ -20,7 +21,7 @@ const backend = createBackend();
 
 // Get device ID for API calls
 const getDeviceId = () => {
-  return getTennis()?.deviceId || localStorage.getItem('deviceId') || 'admin-device';
+  return getTennis()?.deviceId || getPref('deviceId') || 'admin-device';
 };
 
 // Import extracted components

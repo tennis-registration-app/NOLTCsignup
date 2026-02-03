@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
+import { getCache, setCache } from '../../../platform/prefsStorage.js';
 
 /**
  * Guest Handlers
@@ -34,8 +35,6 @@ export function useGuestHandlers(deps) {
     getCourtData,
     guardAddPlayerEarly,
     guardAgainstGroupDuplicate,
-    // Constants
-    TENNIS_CONFIG,
   } = deps;
 
   // VERBATIM COPY: validateGuestName from line ~366
@@ -171,25 +170,17 @@ export function useGuestHandlers(deps) {
     logger.debug('GuestHandlers', 'Creating guest charge', guestCharge);
 
     try {
-      // Get existing charges from localStorage
-      const existingChargesFromStorage = localStorage.getItem(
-        TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY
-      );
-      const existingCharges = existingChargesFromStorage
-        ? JSON.parse(existingChargesFromStorage)
-        : [];
+      // Get existing charges from prefsStorage cache
+      const existingCharges = getCache('guestCharges') || [];
       logger.debug('GuestHandlers', 'Existing charges before save', existingCharges.length);
 
       // Add new charge
       existingCharges.push(guestCharge);
       logger.debug('GuestHandlers', 'Charges after adding new one', existingCharges.length);
 
-      // Save to localStorage
-      localStorage.setItem(
-        TENNIS_CONFIG.STORAGE.GUEST_CHARGES_KEY,
-        JSON.stringify(existingCharges)
-      );
-      logger.debug('GuestHandlers', 'Guest charge saved to localStorage');
+      // Save to prefsStorage cache
+      setCache('guestCharges', existingCharges);
+      logger.debug('GuestHandlers', 'Guest charge saved to cache');
 
       // Dispatch event for real-time updates
       window.dispatchEvent(
@@ -222,7 +213,6 @@ export function useGuestHandlers(deps) {
     memberNumber,
     memberDatabase,
     setCurrentGroup,
-    TENNIS_CONFIG,
     setShowGuestNameError,
     setShowSponsorError,
     setShowGuestForm,

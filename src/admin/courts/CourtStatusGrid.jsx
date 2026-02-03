@@ -15,6 +15,7 @@ import {
   getTennisUI,
   getTennisDataStore,
 } from '../../platform/windowBridge.js';
+import { getPref } from '../../platform/prefsStorage.js';
 
 // Get dependencies from platform bridge
 const TENNIS_CONFIG = getAppUtils()?.TENNIS_CONFIG || {
@@ -343,7 +344,7 @@ const CourtStatusGrid = ({
 
     setSavingGame(true);
     try {
-      const deviceId = getTennis()?.getDeviceId?.() || localStorage.getItem('deviceId');
+      const deviceId = getTennis()?.getDeviceId?.() || getPref('deviceId');
 
       const result = await backend.admin.updateSession({
         sessionId: updatedGame.sessionId,
