@@ -313,7 +313,10 @@ const AdminPanelV2 = ({ onExit }) => {
     [courts, setBlockToEdit, showNotification] // backend, TENNIS_CONFIG, setSuspendedBlocks are module-level
   );
 
-  // Module-level imports (VisualTimeEntry etc.) and getTennis are stable
+  // Get Tennis reference for consistent semantics with other call sites
+  const tennis = getTennis();
+
+  // Module-level imports (VisualTimeEntry etc.) are stable; tennis tracked in deps
   const blockComponents = useMemo(
     () =>
       createBlockComponents({
@@ -324,9 +327,9 @@ const AdminPanelV2 = ({ onExit }) => {
         EventSummary,
         HoverCard,
         QuickActionsMenu,
-        Tennis: getTennis(),
+        Tennis: tennis,
       }),
-    [] // All inputs are module-level imports or stable functions
+    [tennis]
   );
 
   // backend is module-level singleton
