@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import {
+  createWetCourtsModel,
+  createWetCourtsActions,
+  createBlockModel,
+  createBlockActions,
+  createBlockComponents,
+  createAdminServices,
+} from '../types/domainObjects.js';
 
 export function BlockingSection({
   blockingView,
   courts,
   courtBlocks,
   onApplyBlocks,
-  existingBlocks,
   wetCourtsActive,
   setWetCourtsActive,
   wetCourts,
@@ -28,92 +35,112 @@ export function BlockingSection({
   onEditingBlockConsumed,
   CompleteBlockManagerEnhanced,
 }) {
+  // ⚠️ useMemo prevents new object identity on every render
+  const wetCourtsModel = useMemo(
+    () =>
+      createWetCourtsModel({
+        wetCourtsActive,
+        wetCourts,
+        ENABLE_WET_COURTS,
+      }),
+    [wetCourtsActive, wetCourts, ENABLE_WET_COURTS]
+  );
+
+  const wetCourtsActions = useMemo(
+    () =>
+      createWetCourtsActions({
+        setWetCourtsActive,
+        setWetCourts,
+        setSuspendedBlocks,
+      }),
+    [setWetCourtsActive, setWetCourts, setSuspendedBlocks]
+  );
+
+  const blockModel = useMemo(
+    () =>
+      createBlockModel({
+        courts,
+        courtBlocks,
+        hoursOverrides,
+        initialEditingBlock,
+        suspendedBlocks,
+      }),
+    [courts, courtBlocks, hoursOverrides, initialEditingBlock, suspendedBlocks]
+  );
+
+  const blockActions = useMemo(
+    () =>
+      createBlockActions({
+        onApplyBlocks,
+        onEditingBlockConsumed,
+        setSuspendedBlocks,
+        onNotification,
+      }),
+    [onApplyBlocks, onEditingBlockConsumed, setSuspendedBlocks, onNotification]
+  );
+
+  const blockComponents = useMemo(
+    () =>
+      createBlockComponents({
+        VisualTimeEntry,
+        MiniCalendar,
+        EventCalendarEnhanced,
+        MonthView,
+        EventSummary,
+        HoverCard,
+        QuickActionsMenu,
+        Tennis,
+      }),
+    [
+      VisualTimeEntry,
+      MiniCalendar,
+      EventCalendarEnhanced,
+      MonthView,
+      EventSummary,
+      HoverCard,
+      QuickActionsMenu,
+      Tennis,
+    ]
+  );
+
+  const adminServices = useMemo(() => createAdminServices({ backend }), [backend]);
+
   return (
     <div className="space-y-6 p-6 ">
       {/* Sub-tab Content */}
       {blockingView === 'create' && (
         <CompleteBlockManagerEnhanced
-          courts={courts}
-          courtBlocks={courtBlocks}
-          onApplyBlocks={onApplyBlocks}
-          existingBlocks={existingBlocks}
-          wetCourtsActive={wetCourtsActive}
-          setWetCourtsActive={setWetCourtsActive}
-          wetCourts={wetCourts}
-          setWetCourts={setWetCourts}
-          suspendedBlocks={suspendedBlocks}
-          setSuspendedBlocks={setSuspendedBlocks}
-          ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-          onNotification={onNotification}
+          wetCourtsModel={wetCourtsModel}
+          wetCourtsActions={wetCourtsActions}
+          blockModel={blockModel}
+          blockActions={blockActions}
+          components={blockComponents}
+          services={adminServices}
           defaultView="create"
-          VisualTimeEntry={VisualTimeEntry}
-          MiniCalendar={MiniCalendar}
-          EventCalendarEnhanced={EventCalendarEnhanced}
-          MonthView={MonthView}
-          EventSummary={EventSummary}
-          HoverCard={HoverCard}
-          QuickActionsMenu={QuickActionsMenu}
-          Tennis={Tennis}
-          backend={backend}
-          hoursOverrides={hoursOverrides}
-          initialEditingBlock={initialEditingBlock}
-          onEditingBlockConsumed={onEditingBlockConsumed}
         />
       )}
 
       {blockingView === 'future' && (
         <CompleteBlockManagerEnhanced
-          courts={courts}
-          courtBlocks={courtBlocks}
-          onApplyBlocks={onApplyBlocks}
-          existingBlocks={existingBlocks}
-          wetCourtsActive={wetCourtsActive}
-          setWetCourtsActive={setWetCourtsActive}
-          wetCourts={wetCourts}
-          setWetCourts={setWetCourts}
-          suspendedBlocks={suspendedBlocks}
-          setSuspendedBlocks={setSuspendedBlocks}
-          ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-          onNotification={onNotification}
+          wetCourtsModel={wetCourtsModel}
+          wetCourtsActions={wetCourtsActions}
+          blockModel={blockModel}
+          blockActions={blockActions}
+          components={blockComponents}
+          services={adminServices}
           defaultView="calendar"
-          VisualTimeEntry={VisualTimeEntry}
-          MiniCalendar={MiniCalendar}
-          EventCalendarEnhanced={EventCalendarEnhanced}
-          MonthView={MonthView}
-          EventSummary={EventSummary}
-          HoverCard={HoverCard}
-          QuickActionsMenu={QuickActionsMenu}
-          Tennis={Tennis}
-          backend={backend}
-          hoursOverrides={hoursOverrides}
         />
       )}
 
       {blockingView === 'list' && (
         <CompleteBlockManagerEnhanced
-          courts={courts}
-          courtBlocks={courtBlocks}
-          onApplyBlocks={onApplyBlocks}
-          existingBlocks={existingBlocks}
-          wetCourtsActive={wetCourtsActive}
-          setWetCourtsActive={setWetCourtsActive}
-          wetCourts={wetCourts}
-          setWetCourts={setWetCourts}
-          suspendedBlocks={suspendedBlocks}
-          setSuspendedBlocks={setSuspendedBlocks}
-          ENABLE_WET_COURTS={ENABLE_WET_COURTS}
-          onNotification={onNotification}
+          wetCourtsModel={wetCourtsModel}
+          wetCourtsActions={wetCourtsActions}
+          blockModel={blockModel}
+          blockActions={blockActions}
+          components={blockComponents}
+          services={adminServices}
           defaultView="timeline"
-          VisualTimeEntry={VisualTimeEntry}
-          MiniCalendar={MiniCalendar}
-          EventCalendarEnhanced={EventCalendarEnhanced}
-          MonthView={MonthView}
-          EventSummary={EventSummary}
-          HoverCard={HoverCard}
-          QuickActionsMenu={QuickActionsMenu}
-          Tennis={Tennis}
-          backend={backend}
-          hoursOverrides={hoursOverrides}
         />
       )}
     </div>

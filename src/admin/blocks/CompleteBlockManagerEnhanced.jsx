@@ -139,35 +139,55 @@ const ConflictDetector = ({
 };
 
 // Complete Block Manager Component (Enhanced with Interactive Event Calendar)
+/**
+ * @param {Object} props
+ * @param {import('../types/domainObjects.js').WetCourtsModel} props.wetCourtsModel
+ * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
+ * @param {import('../types/domainObjects.js').BlockModel} props.blockModel
+ * @param {import('../types/domainObjects.js').BlockActions} props.blockActions
+ * @param {import('../types/domainObjects.js').BlockComponents} props.components
+ * @param {import('../types/domainObjects.js').AdminServices} props.services
+ * @param {string} [props.defaultView] - Initial view mode ('timeline', 'calendar', 'create')
+ */
 const CompleteBlockManagerEnhanced = ({
-  courts,
-  courtBlocks = [],
-  onApplyBlocks,
-  existingBlocks: _existingBlocks,
-  wetCourtsActive,
-  setWetCourtsActive,
-  wetCourts,
-  setWetCourts,
-  suspendedBlocks: _suspendedBlocks,
-  setSuspendedBlocks,
-  ENABLE_WET_COURTS,
-  onNotification,
+  wetCourtsModel,
+  wetCourtsActions,
+  blockModel,
+  blockActions,
+  components,
+  services,
   defaultView = 'timeline',
-  // These components are passed from parent
-  VisualTimeEntry,
-  MiniCalendar,
-  EventCalendarEnhanced,
-  // Calendar view components for Month view support
-  MonthView,
-  EventSummary,
-  HoverCard,
-  QuickActionsMenu,
-  Tennis,
-  backend, // TennisBackend for API calls
-  hoursOverrides = [], // Holiday/special hours for calendar indicators
-  initialEditingBlock = null,
-  onEditingBlockConsumed = null,
 }) => {
+  // Destructure domain objects to preserve original variable names
+  const { active: wetCourtsActive, courts: wetCourts, enabled: ENABLE_WET_COURTS } = wetCourtsModel;
+  const {
+    setActive: setWetCourtsActive,
+    setCourts: setWetCourts,
+    setSuspended: setSuspendedBlocks,
+  } = wetCourtsActions;
+  const {
+    courts,
+    blocks: courtBlocks = [],
+    hoursOverrides = [],
+    editingBlock: initialEditingBlock = null,
+    // suspendedBlocks not destructured - unused in this component
+  } = blockModel;
+  const {
+    applyBlocks: onApplyBlocks,
+    onEditingConsumed: onEditingBlockConsumed = null,
+    notify: onNotification,
+  } = blockActions;
+  const {
+    VisualTimeEntry,
+    MiniCalendar,
+    EventCalendar: EventCalendarEnhanced,
+    MonthView,
+    EventSummary,
+    HoverCard,
+    QuickActionsMenu,
+    Tennis,
+  } = components;
+  const { backend } = services;
   const [activeView, setActiveView] = useState(defaultView);
   const [selectedCourts, setSelectedCourts] = useState([]);
   const [blockReason, setBlockReason] = useState('');
