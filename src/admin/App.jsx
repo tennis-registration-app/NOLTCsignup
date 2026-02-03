@@ -99,6 +99,12 @@ import { addTimer, clearAllTimers } from './utils/timerRegistry';
 // Feature flag: use real AI assistant instead of mock
 const USE_REAL_AI = true;
 
+// No-op setters for prop compatibility with children using old hook pattern
+// Defined at module level for stable identity (avoids exhaustive-deps warnings)
+const setWetCourtsActive = () => {};
+const setWetCourts = () => {};
+const setSuspendedBlocks = () => {};
+
 // Access shared utils from platform bridge (loaded via shared scripts in index.html)
 const U = getAppUtils() || {};
 const {
@@ -208,13 +214,8 @@ const AdminPanelV2 = ({ onExit }) => {
   });
 
   // Convert array to Set for compatibility with existing code that expects Set
-  const wetCourts = new Set(wetCourtNumbers);
-
-  // No-op setters for prop compatibility with children using old hook pattern
-  // State is now managed by useWetCourts hook
-  const setWetCourtsActive = () => {};
-  const setWetCourts = () => {};
-  const setSuspendedBlocks = () => {};
+  // Memoize to avoid new Set identity on each render
+  const wetCourts = useMemo(() => new Set(wetCourtNumbers), [wetCourtNumbers]);
 
   // Export for coalescer & tests
   setRefreshAdminViewGlobal(reloadSettings);
@@ -251,10 +252,6 @@ const AdminPanelV2 = ({ onExit }) => {
   const clearAllCourts = () =>
     clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG });
 
-  // Block operations - delegated to handler module
-  const applyBlocks = (blocks) =>
-    applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG }, blocks);
-
   // Waitlist operations - delegated to handler module
   const removeFromWaitlist = (index) =>
     removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index);
@@ -286,9 +283,9 @@ const AdminPanelV2 = ({ onExit }) => {
       createWetCourtsActions({
         setWetCourtsActive,
         setWetCourts,
-        setSuspendedBlocks,
+        // Note: setSuspendedBlocks not in WetCourtsActions per A1 typedef
       }),
-    [setWetCourtsActive, setWetCourts, setSuspendedBlocks]
+    [] // setWetCourtsActive, setWetCourts are module-level stable no-ops
   );
 
   const blockModel = useMemo(
@@ -306,12 +303,14 @@ const AdminPanelV2 = ({ onExit }) => {
   const blockActions = useMemo(
     () =>
       createBlockActions({
-        onApplyBlocks: applyBlocks,
+        // Inline applyBlocks to capture courts/backend/showNotification at memoization time
+        onApplyBlocks: (blocks) =>
+          applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG }, blocks),
         onEditingBlockConsumed: () => setBlockToEdit(null),
         setSuspendedBlocks,
         onNotification: showNotification,
       }),
-    [applyBlocks, setBlockToEdit, setSuspendedBlocks, showNotification]
+    [courts, setBlockToEdit, showNotification] // backend, TENNIS_CONFIG, setSuspendedBlocks are module-level
   );
 
   // Module-level imports (VisualTimeEntry etc.) and getTennis are stable
@@ -327,20 +326,11 @@ const AdminPanelV2 = ({ onExit }) => {
         QuickActionsMenu,
         Tennis: getTennis(),
       }),
-    [
-      VisualTimeEntry,
-      MiniCalendar,
-      EventCalendarEnhanced,
-      MonthView,
-      EventSummary,
-      HoverCard,
-      QuickActionsMenu,
-      getTennis,
-    ]
+    [] // All inputs are module-level imports or stable functions
   );
 
   // backend is module-level singleton
-  const adminServices = useMemo(() => createAdminServices({ backend }), [backend]);
+  const adminServices = useMemo(() => createAdminServices({ backend }), []);
 
   // AdminPanelV2 rendering complete
   return (
