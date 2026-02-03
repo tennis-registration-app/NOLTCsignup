@@ -6,6 +6,8 @@ import {
   createBlockActions,
   createBlockComponents,
   createAdminServices,
+  createStatusModel,
+  createStatusActions,
 } from '../../../../src/admin/types/domainObjects.js';
 
 describe('domainObjects', () => {
@@ -17,6 +19,8 @@ describe('domainObjects', () => {
       expect(typeof createBlockActions).toBe('function');
       expect(typeof createBlockComponents).toBe('function');
       expect(typeof createAdminServices).toBe('function');
+      expect(typeof createStatusModel).toBe('function');
+      expect(typeof createStatusActions).toBe('function');
     });
   });
 
@@ -253,6 +257,67 @@ describe('domainObjects', () => {
       expect(services).not.toHaveProperty('dataStore');
       expect(services).not.toHaveProperty('extra');
       expect(Object.keys(services)).toEqual(['backend']);
+    });
+  });
+
+  describe('createStatusModel', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createStatusModel(undefined)).not.toThrow();
+      expect(() => createStatusModel()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const model = createStatusModel({});
+      expect(model.courts).toBeUndefined();
+      expect(model.courtBlocks).toBeUndefined();
+      expect(model.selectedDate).toBeUndefined();
+      expect(model.currentTime).toBeUndefined();
+      expect(model.waitingGroups).toBeUndefined();
+    });
+
+    it('preserves provided values', () => {
+      const courts = [{ id: 1 }];
+      const waitingGroups = [{ id: 'g1' }];
+      const model = createStatusModel({ courts, waitingGroups, selectedDate: '2025-01-15' });
+      expect(model.courts).toBe(courts);
+      expect(model.waitingGroups).toBe(waitingGroups);
+      expect(model.selectedDate).toBe('2025-01-15');
+    });
+
+    it('preserves null values', () => {
+      const model = createStatusModel({ courts: null });
+      expect(model.courts).toBeNull();
+    });
+  });
+
+  describe('createStatusActions', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createStatusActions(undefined)).not.toThrow();
+      expect(() => createStatusActions()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const actions = createStatusActions({});
+      expect(actions.clearCourt).toBeUndefined();
+      expect(actions.moveCourt).toBeUndefined();
+      expect(actions.clearAllCourts).toBeUndefined();
+      expect(actions.editBlock).toBeUndefined();
+      expect(actions.moveInWaitlist).toBeUndefined();
+      expect(actions.removeFromWaitlist).toBeUndefined();
+    });
+
+    it('preserves provided functions', () => {
+      const clearCourt = vi.fn();
+      const moveCourt = vi.fn();
+      const actions = createStatusActions({ clearCourt, moveCourt });
+      expect(actions.clearCourt).toBe(clearCourt);
+      expect(actions.moveCourt).toBe(moveCourt);
+    });
+
+    it('maps handleEditBlockFromStatus to editBlock field', () => {
+      const handler = vi.fn();
+      const actions = createStatusActions({ handleEditBlockFromStatus: handler });
+      expect(actions.editBlock).toBe(handler);
     });
   });
 });

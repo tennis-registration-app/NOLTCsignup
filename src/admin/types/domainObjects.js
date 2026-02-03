@@ -243,3 +243,75 @@ export function createAdminServices(params = {}) {
     backend,
   };
 }
+
+// ============================================================
+// STATUS DISPLAY (StatusSection, CourtStatusGrid)
+// ============================================================
+
+/**
+ * Status display state - court grid and waitlist data.
+ * @typedef {Object} StatusModel
+ * @property {Array<Object>|undefined} courts - Court data array
+ * @property {Array<Object>|undefined} courtBlocks - Court block definitions
+ * @property {unknown|undefined} selectedDate - Currently selected date
+ * @property {unknown|undefined} currentTime - Current time reference
+ * @property {Array<Object>|undefined} waitingGroups - Waitlist entries
+ */
+
+/**
+ * Creates StatusModel - preserves undefined values.
+ * @param {Object} [params={}]
+ * @returns {StatusModel}
+ */
+export function createStatusModel(params = {}) {
+  const { courts, courtBlocks, selectedDate, currentTime, waitingGroups } = params;
+  return {
+    courts,
+    courtBlocks,
+    selectedDate,
+    currentTime,
+    waitingGroups,
+  };
+}
+
+/**
+ * Status display actions - court and waitlist operations.
+ *
+ * Note: Factory input keys match existing prop names.
+ * Field names are curated for stable domain object interface.
+ *
+ * @typedef {Object} StatusActions
+ * @property {((...args: any[]) => void)|undefined} clearCourt - Clear single court
+ * @property {((...args: any[]) => void)|undefined} moveCourt - Move between courts
+ * @property {((...args: any[]) => void)|undefined} clearAllCourts - Clear all courts
+ * @property {((...args: any[]) => void)|undefined} editBlock - Edit a block from status view
+ * @property {((...args: any[]) => void)|undefined} moveInWaitlist - Reorder waitlist
+ * @property {((...args: any[]) => void)|undefined} removeFromWaitlist - Remove from waitlist
+ */
+
+/**
+ * Creates StatusActions - preserves undefined values.
+ *
+ * Input keys match prop names; field names are curated.
+ *
+ * @param {Object} [params={}]
+ * @returns {StatusActions}
+ */
+export function createStatusActions(params = {}) {
+  const {
+    clearCourt,
+    moveCourt,
+    clearAllCourts,
+    handleEditBlockFromStatus, // input key matches prop name
+    moveInWaitlist,
+    removeFromWaitlist,
+  } = params;
+  return {
+    clearCourt,
+    moveCourt,
+    clearAllCourts,
+    editBlock: handleEditBlockFromStatus, // curated field name
+    moveInWaitlist,
+    removeFromWaitlist,
+  };
+}
