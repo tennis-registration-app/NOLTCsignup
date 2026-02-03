@@ -149,3 +149,20 @@ Keys discovered in direct localStorage calls:
 ### Keep (Infrastructure)
 - `storage.js`, `TennisCourtDataStore.js` — these ARE the wrappers
 - Gradually migrate callers to use API state instead
+
+## Guardrail Added (C3)
+
+ESLint rules `no-restricted-globals` and `no-restricted-properties` now ban raw `localStorage` (including `window.localStorage`, `globalThis.localStorage`, and `self.localStorage`) in application layers:
+- `src/admin/**`
+- `src/registration/**`
+- `src/courtboard/**`
+- `src/mobile/**`
+
+Allowed in:
+- `src/platform/**` — prefsStorage wrapper
+- `src/lib/**` — infrastructure modules
+- `tests/**` — top-level test directory
+- `src/**/__tests__/**` — test files within app folders
+- `src/**/*.test.*`, `src/**/*.spec.*` — test files by naming convention
+
+To add a new preference or cache key, update `PREF_KEYS` or `CACHE_KEYS` in `src/platform/prefsStorage.js`.

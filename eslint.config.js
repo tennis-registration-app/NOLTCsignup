@@ -100,5 +100,57 @@ export default [
       ],
     },
   },
+  // WP5-C3: Ban raw localStorage in application layers
+  {
+    files: [
+      'src/admin/**/*.{js,jsx,ts,tsx}',
+      'src/registration/**/*.{js,jsx,ts,tsx}',
+      'src/courtboard/**/*.{js,jsx,ts,tsx}',
+      'src/mobile/**/*.{js,jsx,ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'localStorage',
+          message:
+            'Use src/platform/prefsStorage.js instead. Raw localStorage is banned in application layers. See docs/WP5-C_LOCALSTORAGE_INVENTORY.md',
+        },
+      ],
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'window',
+          property: 'localStorage',
+          message:
+            'Use src/platform/prefsStorage.js instead. Raw localStorage is banned in application layers.',
+        },
+        {
+          object: 'globalThis',
+          property: 'localStorage',
+          message:
+            'Use src/platform/prefsStorage.js instead. Raw localStorage is banned in application layers.',
+        },
+        {
+          object: 'self',
+          property: 'localStorage',
+          message:
+            'Use src/platform/prefsStorage.js instead. Raw localStorage is banned in application layers.',
+        },
+      ],
+    },
+  },
+  // Exempt test files - MUST come AFTER the ban above
+  {
+    files: [
+      'src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+      'src/**/*.test.{js,jsx,ts,tsx}',
+      'src/**/*.spec.{js,jsx,ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-globals': 'off',
+      'no-restricted-properties': 'off',
+    },
+  },
   prettier,
 ];

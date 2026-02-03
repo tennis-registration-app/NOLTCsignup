@@ -1,6 +1,8 @@
 /**
  * UI Preferences & Session Cache Storage — localStorage wrapper
  *
+ * App layers must not call localStorage directly; enforced by ESLint (WP5-C3).
+ *
  * Two namespaces with separate key sets:
  *
  * PREF_KEYS (UI preferences — persist indefinitely):
