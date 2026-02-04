@@ -6,7 +6,7 @@
  * Future phases will break this into smaller component files.
  */
 /* global Tennis */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
@@ -222,6 +222,15 @@ const AdminPanelV2 = ({ onExit }) => {
   // Export for coalescer & tests
   setRefreshAdminViewGlobal(reloadSettings);
 
+  const handleEditBlockFromStatus = useCallback(
+    (block) => {
+      setBlockToEdit(block);
+      setActiveTab('blocking');
+      setBlockingView('create');
+    },
+    [setBlockToEdit, setActiveTab, setBlockingView]
+  );
+
   // Update current time every second
   useEffect(() => {
     const timer = addTimer(
@@ -239,21 +248,31 @@ const AdminPanelV2 = ({ onExit }) => {
     };
   }, []);
 
-  // Court operations - delegated to handler module
-  const clearCourt = (courtNumber) =>
-    clearCourtOp({ courts, backend, showNotification, TENNIS_CONFIG }, courtNumber);
+  // Court operations - delegated to handler module (useCallback for identity stability)
+  const clearCourt = useCallback(
+    (courtNumber) =>
+      clearCourtOp({ courts, backend, showNotification, TENNIS_CONFIG }, courtNumber),
+    [courts, showNotification]
+  );
 
-  const moveCourt = (from, to) => moveCourtOp({ backend }, from, to);
+  const moveCourt = useCallback((from, to) => moveCourtOp({ backend }, from, to), []);
 
-  const clearAllCourts = () =>
-    clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG });
+  const clearAllCourts = useCallback(
+    () => clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG }),
+    [courts, showNotification]
+  );
 
-  // Waitlist operations - delegated to handler module
-  const removeFromWaitlist = (index) =>
-    removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index);
+  // Waitlist operations - delegated to handler module (useCallback for identity stability)
+  const removeFromWaitlist = useCallback(
+    (index) =>
+      removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index),
+    [waitingGroups, showNotification]
+  );
 
-  const moveInWaitlist = (from, to) =>
-    moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to);
+  const moveInWaitlist = useCallback(
+    (from, to) => moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to),
+    [waitingGroups, showNotification]
+  );
 
   // Callback for MockAIAdmin to refresh data
   const handleRefreshData = () => {
@@ -351,24 +370,21 @@ const AdminPanelV2 = ({ onExit }) => {
   const statusActions = useMemo(
     () =>
       createStatusActions({
-        // Inline operations to capture closures at memoization time
-        clearCourt: (courtNumber) =>
-          clearCourtOp({ courts, backend, showNotification, TENNIS_CONFIG }, courtNumber),
-        moveCourt: (from, to) => moveCourtOp({ backend }, from, to),
-        clearAllCourts: () =>
-          clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG }),
-        handleEditBlockFromStatus: (block) => {
-          setBlockToEdit(block);
-          setActiveTab('blocking');
-          setBlockingView('create');
-        },
-        moveInWaitlist: (from, to) =>
-          moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to),
-        removeFromWaitlist: (index) =>
-          removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index),
+        clearCourt,
+        moveCourt,
+        clearAllCourts,
+        handleEditBlockFromStatus,
+        moveInWaitlist,
+        removeFromWaitlist,
       }),
-    [courts, waitingGroups, setBlockToEdit, setActiveTab, setBlockingView, showNotification]
-    // backend, dataStore, TENNIS_CONFIG, *Op functions are module-level stable
+    [
+      clearCourt,
+      moveCourt,
+      clearAllCourts,
+      handleEditBlockFromStatus,
+      moveInWaitlist,
+      removeFromWaitlist,
+    ]
   );
 
   // AdminPanelV2 rendering complete
@@ -410,9 +426,9 @@ const AdminPanelV2 = ({ onExit }) => {
               wetCourtsModel={wetCourtsModel}
               wetCourtsActions={wetCourtsActions}
               services={adminServices}
-              // Dead prop pass-through - extract from domain objects for reference equality
-              handleEditBlockFromStatus={statusActions.editBlock}
-              handleEmergencyWetCourt={wetCourtsActions.activateEmergency}
+              // dead props pass-through (same refs as pre-A7)
+              handleEditBlockFromStatus={handleEditBlockFromStatus}
+              handleEmergencyWetCourt={handleEmergencyWetCourt}
             />
           )}
           {activeTab === 'calendar' && (
