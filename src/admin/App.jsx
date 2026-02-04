@@ -78,7 +78,7 @@ import { applyBlocksOp } from './handlers/applyBlocksOperation';
 // Wet courts hook (WP5.2)
 import { useWetCourts } from './wetCourts/useWetCourts';
 
-// Domain object factories (WP5-A3)
+// Domain object factories (WP5-A3, WP5-A7)
 import {
   createWetCourtsModel,
   createWetCourtsActions,
@@ -86,6 +86,8 @@ import {
   createBlockActions,
   createBlockComponents,
   createAdminServices,
+  createStatusModel,
+  createStatusActions,
 } from './types/domainObjects.js';
 
 // Admin hooks (WP-HR6)
@@ -220,12 +222,6 @@ const AdminPanelV2 = ({ onExit }) => {
   // Export for coalescer & tests
   setRefreshAdminViewGlobal(reloadSettings);
 
-  const handleEditBlockFromStatus = (block) => {
-    setBlockToEdit(block);
-    setActiveTab('blocking');
-    setBlockingView('create');
-  };
-
   // Update current time every second
   useEffect(() => {
     const timer = addTimer(
@@ -283,9 +279,13 @@ const AdminPanelV2 = ({ onExit }) => {
       createWetCourtsActions({
         setWetCourtsActive,
         setWetCourts,
+        handleEmergencyWetCourt,
+        deactivateWetCourts,
+        onClearWetCourt: clearWetCourt,
         // Note: setSuspendedBlocks not in WetCourtsActions per A1 typedef
       }),
-    [] // setWetCourtsActive, setWetCourts are module-level stable no-ops
+    [handleEmergencyWetCourt, deactivateWetCourts, clearWetCourt]
+    // setWetCourtsActive, setWetCourts are module-level stable no-ops
   );
 
   const blockModel = useMemo(
@@ -335,6 +335,42 @@ const AdminPanelV2 = ({ onExit }) => {
   // backend is module-level singleton
   const adminServices = useMemo(() => createAdminServices({ backend }), []);
 
+  // StatusSection domain objects (WP5-A7)
+  const statusModel = useMemo(
+    () =>
+      createStatusModel({
+        courts,
+        courtBlocks,
+        selectedDate,
+        currentTime,
+        waitingGroups,
+      }),
+    [courts, courtBlocks, selectedDate, currentTime, waitingGroups]
+  );
+
+  const statusActions = useMemo(
+    () =>
+      createStatusActions({
+        // Inline operations to capture closures at memoization time
+        clearCourt: (courtNumber) =>
+          clearCourtOp({ courts, backend, showNotification, TENNIS_CONFIG }, courtNumber),
+        moveCourt: (from, to) => moveCourtOp({ backend }, from, to),
+        clearAllCourts: () =>
+          clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG }),
+        handleEditBlockFromStatus: (block) => {
+          setBlockToEdit(block);
+          setActiveTab('blocking');
+          setBlockingView('create');
+        },
+        moveInWaitlist: (from, to) =>
+          moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to),
+        removeFromWaitlist: (index) =>
+          removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index),
+      }),
+    [courts, waitingGroups, setBlockToEdit, setActiveTab, setBlockingView, showNotification]
+    // backend, dataStore, TENNIS_CONFIG, *Op functions are module-level stable
+  );
+
   // AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
@@ -369,23 +405,14 @@ const AdminPanelV2 = ({ onExit }) => {
           {/* ADD THIS LINE */}
           {activeTab === 'status' && (
             <StatusSection
-              courts={courts}
-              courtBlocks={courtBlocks}
-              selectedDate={selectedDate}
-              currentTime={currentTime}
-              wetCourtsActive={wetCourtsActive}
-              wetCourts={wetCourts}
-              waitingGroups={waitingGroups}
-              backend={backend}
-              clearCourt={clearCourt}
-              moveCourt={moveCourt}
-              handleEditBlockFromStatus={handleEditBlockFromStatus}
-              handleEmergencyWetCourt={handleEmergencyWetCourt}
-              clearAllCourts={clearAllCourts}
-              deactivateWetCourts={deactivateWetCourts}
-              clearWetCourt={clearWetCourt}
-              moveInWaitlist={moveInWaitlist}
-              removeFromWaitlist={removeFromWaitlist}
+              statusModel={statusModel}
+              statusActions={statusActions}
+              wetCourtsModel={wetCourtsModel}
+              wetCourtsActions={wetCourtsActions}
+              services={adminServices}
+              // Dead prop pass-through - extract from domain objects for reference equality
+              handleEditBlockFromStatus={statusActions.editBlock}
+              handleEmergencyWetCourt={wetCourtsActions.activateEmergency}
             />
           )}
           {activeTab === 'calendar' && (

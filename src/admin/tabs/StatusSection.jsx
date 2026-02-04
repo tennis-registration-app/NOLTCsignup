@@ -1,87 +1,36 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ChevronLeft, ChevronRight, Trash2 } from '../components';
 import { CourtStatusGrid } from '../courts';
-import {
-  createStatusModel,
-  createStatusActions,
-  createWetCourtsModel,
-  createWetCourtsActions,
-  createAdminServices,
-} from '../types/domainObjects.js';
 
+/**
+ * StatusSection - Pass-through wrapper for court status display.
+ *
+ * Receives domain objects constructed by App.jsx and forwards to CourtStatusGrid.
+ * Renders waitlist UI directly (not delegated).
+ *
+ * @param {Object} props
+ * @param {import('../types/domainObjects.js').StatusModel} props.statusModel
+ * @param {import('../types/domainObjects.js').StatusActions} props.statusActions
+ * @param {import('../types/domainObjects.js').WetCourtsModel} props.wetCourtsModel
+ * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
+ * @param {import('../types/domainObjects.js').AdminServices} props.services
+ * @param {Function} props.handleEditBlockFromStatus - Dead prop pass-through for reference equality
+ * @param {Function} props.handleEmergencyWetCourt - Dead prop pass-through for reference equality
+ */
 export function StatusSection({
-  // State
-  courts,
-  courtBlocks,
-  selectedDate,
-  currentTime,
-  wetCourtsActive,
-  wetCourts,
-  waitingGroups,
-  backend,
-  // Handlers
-  clearCourt,
-  moveCourt,
+  // Domain objects (pass-through)
+  statusModel,
+  statusActions,
+  wetCourtsModel,
+  wetCourtsActions,
+  services,
+  // Dead prop pass-through for reference equality
   handleEditBlockFromStatus,
   handleEmergencyWetCourt,
-  clearAllCourts,
-  deactivateWetCourts,
-  clearWetCourt,
-  moveInWaitlist,
-  removeFromWaitlist,
 }) {
-  const statusModel = useMemo(
-    () =>
-      createStatusModel({
-        courts,
-        courtBlocks,
-        selectedDate,
-        currentTime,
-        waitingGroups,
-      }),
-    [courts, courtBlocks, selectedDate, currentTime, waitingGroups]
-  );
-
-  const statusActions = useMemo(
-    () =>
-      createStatusActions({
-        clearCourt,
-        moveCourt,
-        clearAllCourts,
-        handleEditBlockFromStatus,
-        moveInWaitlist,
-        removeFromWaitlist,
-      }),
-    [
-      clearCourt,
-      moveCourt,
-      clearAllCourts,
-      handleEditBlockFromStatus,
-      moveInWaitlist,
-      removeFromWaitlist,
-    ]
-  );
-
-  const wetCourtsModel = useMemo(
-    () =>
-      createWetCourtsModel({
-        wetCourtsActive,
-        wetCourts,
-      }),
-    [wetCourtsActive, wetCourts]
-  );
-
-  const wetCourtsActions = useMemo(
-    () =>
-      createWetCourtsActions({
-        handleEmergencyWetCourt,
-        deactivateWetCourts,
-        onClearWetCourt: clearWetCourt,
-      }),
-    [handleEmergencyWetCourt, deactivateWetCourts, clearWetCourt]
-  );
-
-  const adminServices = useMemo(() => createAdminServices({ backend }), [backend]);
+  // Extract values needed for local waitlist UI
+  const { waitingGroups } = statusModel;
+  const { moveInWaitlist, removeFromWaitlist } = statusActions;
 
   return (
     <div className="p-6">
@@ -90,8 +39,8 @@ export function StatusSection({
         statusActions={statusActions}
         wetCourtsModel={wetCourtsModel}
         wetCourtsActions={wetCourtsActions}
-        services={adminServices}
-        // DEAD PROPS - still passed for now
+        services={services}
+        // DEAD PROPS - pass-through for reference equality
         onEditBlock={handleEditBlockFromStatus}
         onEditGame={undefined}
         onEmergencyWetCourt={handleEmergencyWetCourt}
