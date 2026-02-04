@@ -43,10 +43,6 @@ const CourtStatusGrid = ({
   wetCourtsModel,
   wetCourtsActions,
   services,
-  // DEAD PROPS - kept for now, deferred removal
-  onEditBlock: _onEditBlock,
-  onEditGame: _onEditGame,
-  onEmergencyWetCourt: _onEmergencyWetCourt,
 }) => {
   // Destructure domain objects to preserve original local names
   const { courts, courtBlocks, selectedDate, currentTime } = statusModel;
