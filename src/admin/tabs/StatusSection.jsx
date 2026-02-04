@@ -40,10 +40,6 @@ export function StatusSection({
         wetCourtsModel={wetCourtsModel}
         wetCourtsActions={wetCourtsActions}
         services={services}
-        // DEAD PROPS - pass-through for reference equality
-        onEditBlock={handleEditBlockFromStatus}
-        onEditGame={undefined}
-        onEmergencyWetCourt={handleEmergencyWetCourt}
       />
 
       {/* Waitlist Section */}
