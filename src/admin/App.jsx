@@ -426,9 +426,6 @@ const AdminPanelV2 = ({ onExit }) => {
               wetCourtsModel={wetCourtsModel}
               wetCourtsActions={wetCourtsActions}
               services={adminServices}
-              // dead props pass-through (same refs as pre-A7)
-              handleEditBlockFromStatus={handleEditBlockFromStatus}
-              handleEmergencyWetCourt={handleEmergencyWetCourt}
             />
           )}
           {activeTab === 'calendar' && (

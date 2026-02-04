@@ -14,19 +14,13 @@ import { CourtStatusGrid } from '../courts';
  * @param {import('../types/domainObjects.js').WetCourtsModel} props.wetCourtsModel
  * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
  * @param {import('../types/domainObjects.js').AdminServices} props.services
- * @param {Function} props.handleEditBlockFromStatus - Dead prop pass-through for reference equality
- * @param {Function} props.handleEmergencyWetCourt - Dead prop pass-through for reference equality
  */
 export function StatusSection({
-  // Domain objects (pass-through)
   statusModel,
   statusActions,
   wetCourtsModel,
   wetCourtsActions,
   services,
-  // Dead prop pass-through for reference equality
-  handleEditBlockFromStatus,
-  handleEmergencyWetCourt,
 }) {
   // Extract values needed for local waitlist UI
   const { waitingGroups } = statusModel;
