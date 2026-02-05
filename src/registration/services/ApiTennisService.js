@@ -13,6 +13,7 @@ import { createCourtsService } from './modules/courtsService.js';
 import { createWaitlistService } from './modules/waitlistService.js';
 import { createMembersService } from './modules/membersService.js';
 import { createSettingsService } from './modules/settingsService.js';
+import { createPurchasesService } from './modules/purchasesService.js';
 
 /**
  * ApiTennisService
@@ -81,6 +82,12 @@ class ApiTennisService {
       setSettingsCache: (v) => {
         this.settings = v;
       },
+    });
+
+    // Wire purchases service module (WP5-D7a)
+    this.purchasesService = createPurchasesService({
+      api: this.api,
+      logger,
     });
 
     // Start realtime subscriptions
@@ -325,18 +332,7 @@ class ApiTennisService {
   // ===========================================
 
   async purchaseBalls(sessionId, accountId, options = {}) {
-    logger.debug('ApiService', `Purchasing balls for session: ${sessionId}, account: ${accountId}`);
-
-    const result = await this.api.purchaseBalls(sessionId, accountId, {
-      splitBalls: options.split || options.splitBalls || false,
-      splitAccountIds: options.splitAccountIds || options.split_account_ids || null,
-    });
-
-    return {
-      success: result.ok,
-      transactions: result.transactions,
-      totalCents: result.total_cents,
-    };
+    return this.purchasesService.purchaseBalls(sessionId, accountId, options);
   }
 
   // ===========================================
