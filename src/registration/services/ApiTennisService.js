@@ -10,6 +10,7 @@ import { getRealtimeClient } from '@lib/RealtimeClient.js';
 import { formatCourtTime } from '@lib/dateUtils.js';
 import { logger } from '../../lib/logger.js';
 import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
+import { createCourtsService } from './modules/courtsService.js';
 
 /**
  * ApiTennisService
@@ -36,6 +37,18 @@ class ApiTennisService {
 
     // Get realtime client
     this.realtimeClient = getRealtimeClient({ debug: options.debug || false });
+
+    // Wire courts service module (WP5-D1)
+    this.courtsService = createCourtsService({
+      api: this.api,
+      notifyListeners: this._notifyListeners.bind(this),
+      transformCourts: this._transformCourts.bind(this),
+      getCourtData: () => this.courtData,
+      setCourtData: (v) => {
+        this.courtData = v;
+      },
+      logger,
+    });
 
     // Start realtime subscriptions
     this._setupRealtime();
@@ -113,14 +126,7 @@ class ApiTennisService {
   }
 
   async refreshCourtData() {
-    try {
-      this.courtData = await this.api.getCourtStatus(true);
-      this._notifyListeners('courts');
-      return this._transformCourts(this.courtData.courts);
-    } catch (error) {
-      logger.error('ApiService', 'Failed to refresh court data', error);
-      throw error;
-    }
+    return this.courtsService.refreshCourtData();
   }
 
   async refreshWaitlist() {
@@ -269,22 +275,15 @@ class ApiTennisService {
   // ===========================================
 
   async getAvailableCourts() {
-    if (!this.courtData) {
-      await this.refreshCourtData();
-    }
-    return this._transformCourts(this.courtData.courts).filter((c) => c.isAvailable);
+    return this.courtsService.getAvailableCourts();
   }
 
   async getAllCourts() {
-    if (!this.courtData) {
-      await this.refreshCourtData();
-    }
-    return this._transformCourts(this.courtData.courts);
+    return this.courtsService.getAllCourts();
   }
 
   async getCourtByNumber(courtNumber) {
-    const courts = await this.getAllCourts();
-    return courts.find((c) => c.number === courtNumber);
+    return this.courtsService.getCourtByNumber(courtNumber);
   }
 
   async assignCourt(courtNumber, playersOrGroup, optionsOrDuration = {}) {
