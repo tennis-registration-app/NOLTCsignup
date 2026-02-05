@@ -90,6 +90,10 @@ import {
   createStatusActions,
   createCalendarModel,
   createCalendarActions,
+  createAIAssistantModel,
+  createAIAssistantActions,
+  createAIAssistantServices,
+  createAIAssistantComponents,
 } from './types/domainObjects.js';
 
 // Admin hooks (WP-HR6)
@@ -276,12 +280,6 @@ const AdminPanelV2 = ({ onExit }) => {
     [waitingGroups, showNotification]
   );
 
-  // Callback for MockAIAdmin to refresh data
-  const handleRefreshData = () => {
-    reloadSettings();
-    bumpRefreshTrigger();
-  };
-
   // Domain objects for BlockingSection (WP5-A3)
   // Note: exhaustive-deps warnings appear at function definition sites (useWetCourts hook)
   // because setters/wetCourts recreate on each render. Fix deferred per A3 rules.
@@ -407,6 +405,69 @@ const AdminPanelV2 = ({ onExit }) => {
     [bumpRefreshTrigger]
   );
 
+  // AIAssistantSection domain objects (WP5-A11.3)
+  const aiModel = useMemo(
+    () =>
+      createAIAssistantModel({
+        activeTab,
+        showAIAssistant,
+        USE_REAL_AI,
+        courts,
+        settings,
+        waitingGroups,
+      }),
+    [activeTab, showAIAssistant, courts, settings, waitingGroups]
+    // USE_REAL_AI is module-level constant, excluded per exhaustive-deps
+  );
+
+  const aiActions = useMemo(
+    () =>
+      createAIAssistantActions({
+        setShowAIAssistant,
+        onAISettingsChanged: handleAISettingsChanged,
+        loadData: reloadSettings,
+        clearCourt,
+        clearAllCourts,
+        moveCourt,
+        updateBallPrice,
+        // Inline refreshData to avoid dependency on handleRefreshData which recreates each render
+        refreshData: () => {
+          reloadSettings();
+          bumpRefreshTrigger();
+        },
+      }),
+    [
+      setShowAIAssistant,
+      handleAISettingsChanged,
+      reloadSettings,
+      clearCourt,
+      clearAllCourts,
+      moveCourt,
+      updateBallPrice,
+      bumpRefreshTrigger,
+    ]
+  );
+
+  const aiServices = useMemo(
+    () =>
+      createAIAssistantServices({
+        backend,
+        dataStore,
+      }),
+    []
+    // backend, dataStore are module-level singletons
+  );
+
+  const aiComponents = useMemo(
+    () =>
+      createAIAssistantComponents({
+        AIAssistant,
+        MockAIAdmin,
+      }),
+    []
+    // AIAssistant, MockAIAdmin are module-level imports
+  );
+
   // AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
@@ -490,24 +551,10 @@ const AdminPanelV2 = ({ onExit }) => {
 
       {/* AI Assistant Button and Modal */}
       <AIAssistantSection
-        activeTab={activeTab}
-        showAIAssistant={showAIAssistant}
-        setShowAIAssistant={setShowAIAssistant}
-        USE_REAL_AI={USE_REAL_AI}
-        backend={backend}
-        onAISettingsChanged={handleAISettingsChanged}
-        AIAssistant={AIAssistant}
-        MockAIAdmin={MockAIAdmin}
-        dataStore={dataStore}
-        courts={courts}
-        loadData={reloadSettings}
-        clearCourt={clearCourt}
-        clearAllCourts={clearAllCourts}
-        moveCourt={moveCourt}
-        settings={settings}
-        updateBallPrice={updateBallPrice}
-        waitingGroups={waitingGroups}
-        refreshData={handleRefreshData}
+        aiModel={aiModel}
+        aiActions={aiActions}
+        services={aiServices}
+        components={aiComponents}
         clearWaitlist={() => clearWaitlistOp(backend)}
       />
     </div>

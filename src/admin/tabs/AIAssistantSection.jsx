@@ -1,28 +1,34 @@
 import React from 'react';
 
-export function AIAssistantSection({
-  activeTab,
-  showAIAssistant,
-  setShowAIAssistant,
-  USE_REAL_AI,
-  // For AIAssistant
-  backend,
-  onAISettingsChanged,
-  AIAssistant,
-  // For MockAIAdmin
-  MockAIAdmin,
-  dataStore,
-  courts,
-  loadData,
-  clearCourt,
-  clearAllCourts,
-  moveCourt,
-  settings,
-  updateBallPrice,
-  waitingGroups,
-  refreshData,
-  clearWaitlist,
-}) {
+/**
+ * AI Assistant admin section.
+ * Domain-object wrapper: receives bundles from App.jsx.
+ *
+ * @param {Object} props
+ * @param {import('../types/domainObjects.js').AIAssistantModel} props.aiModel
+ * @param {import('../types/domainObjects.js').AIAssistantActions} props.aiActions
+ * @param {import('../types/domainObjects.js').AIAssistantServices} props.services
+ * @param {import('../types/domainObjects.js').AIAssistantComponents} props.components
+ * @param {Function} props.clearWaitlist - pass-through (preserve existing inline lambda behavior)
+ */
+export function AIAssistantSection({ aiModel, aiActions, services, components, clearWaitlist }) {
+  // Destructure domain objects to preserve original local names
+  const { activeTab, showAIAssistant, USE_REAL_AI, courts, settings, waitingGroups } = aiModel;
+
+  const {
+    setShowAIAssistant,
+    onAISettingsChanged,
+    loadData,
+    clearCourt,
+    clearAllCourts,
+    moveCourt,
+    updateBallPrice,
+    refreshData,
+  } = aiActions;
+
+  const { backend, dataStore } = services;
+  const { AIAssistant, MockAIAdmin } = components;
+
   // Only show on specific tabs
   const showOnTabs = ['calendar', 'blocking', 'analytics', 'system', 'history'];
   if (!showOnTabs.includes(activeTab)) {
