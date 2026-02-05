@@ -11,6 +11,7 @@ import { formatCourtTime } from '@lib/dateUtils.js';
 import { logger } from '../../lib/logger.js';
 import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
 import { createCourtsService } from './modules/courtsService.js';
+import { createWaitlistService } from './modules/waitlistService.js';
 
 /**
  * ApiTennisService
@@ -46,6 +47,18 @@ class ApiTennisService {
       getCourtData: () => this.courtData,
       setCourtData: (v) => {
         this.courtData = v;
+      },
+      logger,
+    });
+
+    // Wire waitlist service module (WP5-D2)
+    this.waitlistService = createWaitlistService({
+      api: this.api,
+      notifyListeners: this._notifyListeners.bind(this),
+      transformWaitlist: this._transformWaitlist.bind(this),
+      getWaitlistData: () => this.waitlistData,
+      setWaitlistData: (v) => {
+        this.waitlistData = v;
       },
       logger,
     });
@@ -130,14 +143,7 @@ class ApiTennisService {
   }
 
   async refreshWaitlist() {
-    try {
-      this.waitlistData = await this.api.getWaitlist();
-      this._notifyListeners('waitlist');
-      return this._transformWaitlist(this.waitlistData.waitlist);
-    } catch (error) {
-      logger.error('ApiService', 'Failed to refresh waitlist', error);
-      throw error;
-    }
+    return this.waitlistService.refreshWaitlist();
   }
 
   // ===========================================
@@ -583,10 +589,7 @@ class ApiTennisService {
   // ===========================================
 
   async getWaitlist() {
-    if (!this.waitlistData) {
-      await this.refreshWaitlist();
-    }
-    return this._transformWaitlist(this.waitlistData.waitlist);
+    return this.waitlistService.getWaitlist();
   }
 
   async addToWaitlist(players, options = {}) {
@@ -813,24 +816,7 @@ class ApiTennisService {
   }
 
   async removeFromWaitlist(waitlistId) {
-    // If passed an index (legacy), we need to look up the actual ID
-    if (typeof waitlistId === 'number') {
-      const waitlist = await this.getWaitlist();
-      const entry = waitlist[waitlistId];
-      if (!entry) {
-        throw new Error(`Waitlist entry at index ${waitlistId} not found`);
-      }
-      waitlistId = entry.id;
-    }
-
-    await this.api.cancelWaitlist(waitlistId);
-
-    // Refresh waitlist
-    await this.refreshWaitlist();
-
-    return {
-      success: true,
-    };
+    return this.waitlistService.removeFromWaitlist(waitlistId);
   }
 
   async assignFromWaitlist(waitlistId, courtNumber, options = {}) {
