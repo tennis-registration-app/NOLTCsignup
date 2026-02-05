@@ -538,52 +538,7 @@ class ApiTennisService {
   }
 
   async clearCourt(courtNumber, options = {}) {
-    const courts = await this.getAllCourts();
-    const court = courts.find((c) => c.number === courtNumber);
-
-    if (!court) {
-      throw new Error(`Court ${courtNumber} not found`);
-    }
-
-    // Map legacy clearReason to valid API end_reason values
-    // Valid API values: 'completed', 'cleared_early', 'admin_override'
-    const legacyReason = options.clearReason || options.reason || '';
-    let endReason = 'completed';
-
-    if (legacyReason) {
-      const reasonLower = String(legacyReason).toLowerCase();
-      if (
-        reasonLower.includes('early') ||
-        reasonLower.includes('left') ||
-        reasonLower.includes('done') ||
-        reasonLower === 'cleared'
-      ) {
-        endReason = 'cleared_early';
-      } else if (reasonLower.includes('observed') || reasonLower.includes('empty')) {
-        endReason = 'completed';
-      } else if (
-        reasonLower.includes('admin') ||
-        reasonLower.includes('override') ||
-        reasonLower.includes('force')
-      ) {
-        endReason = 'admin_override';
-      }
-    }
-
-    logger.debug(
-      'ApiService',
-      `Clearing court ${courtNumber} with reason: ${endReason} (legacy: ${legacyReason})`
-    );
-
-    const result = await this.api.endSessionByCourt(court.id, endReason);
-
-    // Refresh court data
-    await this.refreshCourtData();
-
-    return {
-      success: true,
-      session: result.session,
-    };
+    return this.courtsService.clearCourt(courtNumber, options);
   }
 
   // ===========================================

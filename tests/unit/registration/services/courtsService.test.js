@@ -137,4 +137,99 @@ describe('courtsService', () => {
       expect(result).toBeUndefined();
     });
   });
+
+  describe('clearCourt', () => {
+    const mockTransformedCourtsWithIds = [
+      { number: 1, id: 'court-uuid-1', isAvailable: true },
+      { number: 2, id: 'court-uuid-2', isAvailable: false },
+      { number: 3, id: 'court-uuid-3', isAvailable: true },
+    ];
+
+    beforeEach(() => {
+      transformCourts.mockReturnValue(mockTransformedCourtsWithIds);
+      api.endSessionByCourt = vi.fn().mockResolvedValue({
+        session: { id: 'session-1' },
+      });
+      logger.debug = vi.fn();
+    });
+
+    it('calls endSessionByCourt with court id and default reason', async () => {
+      courtDataCache = mockApiCourts;
+
+      const result = await service.clearCourt(2);
+
+      expect(api.endSessionByCourt).toHaveBeenCalledWith('court-uuid-2', 'completed');
+      expect(result).toEqual({
+        success: true,
+        session: { id: 'session-1' },
+      });
+    });
+
+    it('throws error for invalid court number', async () => {
+      courtDataCache = mockApiCourts;
+
+      await expect(service.clearCourt(99)).rejects.toThrow('Court 99 not found');
+    });
+
+    it('maps "early" reason to cleared_early', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2, { clearReason: 'Left early' });
+
+      expect(api.endSessionByCourt).toHaveBeenCalledWith('court-uuid-2', 'cleared_early');
+    });
+
+    it('maps "done" reason to cleared_early', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2, { reason: 'done playing' });
+
+      expect(api.endSessionByCourt).toHaveBeenCalledWith('court-uuid-2', 'cleared_early');
+    });
+
+    it('maps "observed empty" reason to completed', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2, { clearReason: 'Observed empty' });
+
+      expect(api.endSessionByCourt).toHaveBeenCalledWith('court-uuid-2', 'completed');
+    });
+
+    it('maps "admin override" reason to admin_override', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2, { clearReason: 'Admin override' });
+
+      expect(api.endSessionByCourt).toHaveBeenCalledWith('court-uuid-2', 'admin_override');
+    });
+
+    it('maps "force" reason to admin_override', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2, { reason: 'Force clear' });
+
+      expect(api.endSessionByCourt).toHaveBeenCalledWith('court-uuid-2', 'admin_override');
+    });
+
+    it('refreshes court data after clearing', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2);
+
+      // refreshCourtData calls getCourtStatus
+      expect(api.getCourtStatus).toHaveBeenCalledWith(true);
+      expect(notifyListeners).toHaveBeenCalledWith('courts');
+    });
+
+    it('logs debug message with mapped reason', async () => {
+      courtDataCache = mockApiCourts;
+
+      await service.clearCourt(2, { clearReason: 'Left early' });
+
+      expect(logger.debug).toHaveBeenCalledWith(
+        'ApiService',
+        'Clearing court 2 with reason: cleared_early (legacy: Left early)'
+      );
+    });
+  });
 });
