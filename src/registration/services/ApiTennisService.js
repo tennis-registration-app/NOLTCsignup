@@ -12,6 +12,8 @@ import { logger } from '../../lib/logger.js';
 import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
 import { createCourtsService } from './modules/courtsService.js';
 import { createWaitlistService } from './modules/waitlistService.js';
+import { createMembersService } from './modules/membersService.js';
+import { createSettingsService } from './modules/settingsService.js';
 
 /**
  * ApiTennisService
@@ -61,6 +63,24 @@ class ApiTennisService {
         this.waitlistData = v;
       },
       logger,
+    });
+
+    // Wire members service module (WP5-D3)
+    this.membersService = createMembersService({
+      api: this.api,
+      getMembersCache: () => this.membersCache,
+      setMembersCache: (v) => {
+        this.membersCache = v;
+      },
+    });
+
+    // Wire settings service module (WP5-D3)
+    this.settingsService = createSettingsService({
+      api: this.api,
+      getSettingsCache: () => this.settings,
+      setSettingsCache: (v) => {
+        this.settings = v;
+      },
     });
 
     // Start realtime subscriptions
@@ -856,38 +876,28 @@ class ApiTennisService {
   // Member Operations
   // ===========================================
 
-  async searchMembers(query) {
-    const result = await this.api.getMembers(query);
-    return result.members || [];
+  searchMembers(query) {
+    return this.membersService.searchMembers(query);
   }
 
-  async getMembersByAccount(memberNumber) {
-    const result = await this.api.getMembersByAccount(memberNumber);
-    return result.members || [];
+  getMembersByAccount(memberNumber) {
+    return this.membersService.getMembersByAccount(memberNumber);
   }
 
-  async getAllMembers() {
-    if (!this.membersCache) {
-      const result = await this.api.getMembers();
-      this.membersCache = result;
-    }
-    return this.membersCache.members || [];
+  getAllMembers() {
+    return this.membersService.getAllMembers();
   }
 
   // ===========================================
   // Settings
   // ===========================================
 
-  async getSettings() {
-    if (!this.settings) {
-      this.settings = await this.api.getSettings();
-    }
-    return this.settings;
+  getSettings() {
+    return this.settingsService.getSettings();
   }
 
-  async refreshSettings() {
-    this.settings = await this.api.getSettings(true);
-    return this.settings;
+  refreshSettings() {
+    return this.settingsService.refreshSettings();
   }
 
   // ===========================================
