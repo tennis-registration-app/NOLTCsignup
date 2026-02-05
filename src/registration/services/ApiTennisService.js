@@ -7,13 +7,14 @@
 
 import { ApiAdapter } from '@lib/ApiAdapter.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
-import { formatCourtTime } from '@lib/dateUtils.js';
 import { logger } from '../../lib/logger.js';
 import { createCourtsService } from './modules/courtsService.js';
 import { createWaitlistService } from './modules/waitlistService.js';
 import { createMembersService } from './modules/membersService.js';
 import { createSettingsService } from './modules/settingsService.js';
 import { createPurchasesService } from './modules/purchasesService.js';
+import { transformCourts } from './legacy/courtTransforms.js';
+import { transformWaitlist } from './legacy/waitlistTransforms.js';
 
 /**
  * ApiTennisService
@@ -41,11 +42,11 @@ class ApiTennisService {
     // Get realtime client
     this.realtimeClient = getRealtimeClient({ debug: options.debug || false });
 
-    // Wire courts service module (WP5-D1)
+    // Wire courts service module (WP5-D1, WP5-D9)
     this.courtsService = createCourtsService({
       api: this.api,
       notifyListeners: this._notifyListeners.bind(this),
-      transformCourts: this._transformCourts.bind(this),
+      transformCourts: (courts) => transformCourts(courts, { logger }),
       getCourtData: () => this.courtData,
       setCourtData: (v) => {
         this.courtData = v;
@@ -53,11 +54,11 @@ class ApiTennisService {
       logger,
     });
 
-    // Wire waitlist service module (WP5-D2, WP5-D4)
+    // Wire waitlist service module (WP5-D2, WP5-D4, WP5-D9)
     this.waitlistService = createWaitlistService({
       api: this.api,
       notifyListeners: this._notifyListeners.bind(this),
-      transformWaitlist: this._transformWaitlist.bind(this),
+      transformWaitlist,
       getWaitlistData: () => this.waitlistData,
       setWaitlistData: (v) => {
         this.waitlistData = v;
@@ -153,8 +154,8 @@ class ApiTennisService {
       this.membersCache = members;
 
       return {
-        courts: this._transformCourts(courtStatus.courts),
-        waitlist: this._transformWaitlist(waitlist.waitlist),
+        courts: transformCourts(courtStatus.courts, { logger }),
+        waitlist: transformWaitlist(waitlist.waitlist),
         settings: settings.settings,
         operatingHours: settings.operating_hours,
         members: members.members,
@@ -171,136 +172,6 @@ class ApiTennisService {
 
   async refreshWaitlist() {
     return this.waitlistService.refreshWaitlist();
-  }
-
-  // ===========================================
-  // Data Transformers (API -> Legacy Format)
-  // ===========================================
-
-  _transformCourts(apiCourts) {
-    if (!apiCourts) return [];
-
-    return apiCourts.map((court) => {
-      // Transform session data
-      // Note: API returns participants as array of strings (names) or objects
-      const session = court.session
-        ? {
-            id: court.session.id,
-            type: court.session.type,
-            players: (court.session.participants || []).map((p) => {
-              // Handle both string (just name) and object formats
-              if (typeof p === 'string') {
-                return { id: null, name: p, isGuest: false };
-              }
-              return {
-                id: p.member_id || p.id,
-                name: p.display_name || p.guest_name || p.name,
-                isGuest: p.type === 'guest',
-              };
-            }),
-            startTime: new Date(court.session.started_at).getTime(),
-            endTime: new Date(court.session.scheduled_end_at).getTime(),
-            timeRemaining: (court.session.minutes_remaining || 0) * 60 * 1000,
-            duration: court.session.duration_minutes,
-            // Formatted times in Central Time for display
-            startTimeFormatted: formatCourtTime(court.session.started_at),
-            endTimeFormatted: formatCourtTime(court.session.scheduled_end_at),
-          }
-        : null;
-
-      // Transform block data
-      const block = court.block
-        ? {
-            id: court.block.id,
-            type: court.block.type,
-            title: court.block.title,
-            reason: court.block.title,
-            startTime: new Date(court.block.starts_at).getTime(),
-            endTime: new Date(court.block.ends_at).getTime(),
-            // Formatted times in Central Time for display
-            startTimeFormatted: formatCourtTime(court.block.starts_at),
-            endTimeFormatted: formatCourtTime(court.block.ends_at),
-          }
-        : null;
-
-      // Determine court availability status
-      // - isUnoccupied: No session AND no block - always selectable first
-      // - isOvertime: Has session but time expired (timeRemaining <= 0) - selectable when no unoccupied
-      // - isActive: Has session with time remaining - never selectable
-      // - isBlocked: Has active block - never selectable
-      const hasSession = !!court.session;
-      const hasBlock = !!court.block;
-      const timeRemaining = session?.timeRemaining || 0;
-
-      const isUnoccupied = !hasSession && !hasBlock;
-      const isOvertime = hasSession && timeRemaining <= 0;
-      const isActive = hasSession && timeRemaining > 0;
-      const isBlocked = hasBlock;
-
-      logger.debug('ApiService', `Court ${court.court_number} transform`, {
-        hasSession,
-        hasBlock,
-        apiMinutesRemaining: court.session?.minutes_remaining,
-        transformedTimeRemaining: timeRemaining,
-        isUnoccupied,
-        isOvertime,
-        isActive,
-        isBlocked,
-      });
-
-      // Build legacy-compatible court object
-      // Legacy UI expects: court.current.endTime, court.current.players, court.endTime
-      return {
-        number: court.court_number,
-        id: court.court_id,
-        name: court.court_name,
-        status: court.status,
-        // New availability flags
-        isUnoccupied, // No session, no block - always selectable first
-        isOvertime, // Has session but time expired - conditionally selectable
-        isActive, // Has session with time remaining - never selectable
-        isBlocked, // Has active block - never selectable
-        // Legacy compatibility
-        isAvailable: isUnoccupied, // Legacy: true if unoccupied (for backward compat)
-        isOccupied: hasSession,
-        // New API format
-        session,
-        block,
-        // Legacy format compatibility
-        current: session
-          ? {
-              players: session.players,
-              startTime: session.startTime,
-              endTime: session.endTime,
-              duration: session.duration,
-            }
-          : null,
-        // Also add top-level for some legacy code paths
-        players: session?.players || [],
-        startTime: session?.startTime || block?.startTime,
-        endTime: session?.endTime || block?.endTime,
-        blocked: block
-          ? {
-              startTime: block.startTime,
-              endTime: block.endTime,
-              reason: block.reason,
-            }
-          : null,
-      };
-    });
-  }
-
-  _transformWaitlist(apiWaitlist) {
-    if (!apiWaitlist) return [];
-
-    return apiWaitlist.map((entry) => ({
-      id: entry.id,
-      position: entry.position,
-      type: entry.group_type,
-      players: entry.participants || [],
-      joinedAt: new Date(entry.joined_at).getTime(),
-      waitTime: (entry.minutes_waiting || 0) * 60 * 1000,
-    }));
   }
 
   // ===========================================
