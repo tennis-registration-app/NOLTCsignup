@@ -1,4 +1,4 @@
-import { normalizeAccountMembers } from '../../../lib/normalize/normalizeMember.js';
+import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
 
 /**
  * Waitlist operations extracted from ApiTennisService.
