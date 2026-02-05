@@ -232,4 +232,296 @@ describe('courtsService', () => {
       );
     });
   });
+
+  describe('assignCourt', () => {
+    const mockTransformedCourtsWithIds = [
+      { number: 1, id: 'court-uuid-1', isAvailable: true },
+      { number: 2, id: 'court-uuid-2', isAvailable: false },
+      { number: 3, id: 'court-uuid-3', isAvailable: true },
+    ];
+
+    beforeEach(() => {
+      transformCourts.mockReturnValue(mockTransformedCourtsWithIds);
+      api.assignCourt = vi.fn().mockResolvedValue({
+        session: { id: 'session-123' },
+      });
+      api.getMembersByAccount = vi.fn();
+      api.getMembers = vi.fn();
+      logger.debug = vi.fn();
+      logger.warn = vi.fn();
+    });
+
+    it('calls api.assignCourt with correct court id derived from courts list', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+      ];
+
+      const result = await service.assignCourt(1, players);
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        expect.any(Array),
+        { addBalls: false, splitBalls: false }
+      );
+      expect(result).toEqual({
+        success: true,
+        session: { id: 'session-123' },
+        court: 1,
+      });
+    });
+
+    it('throws error for invalid court number', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [{ id: 'uuid-1', accountId: 'account-1', name: 'John' }];
+
+      await expect(service.assignCourt(99, players)).rejects.toThrow('Court 99 not found');
+    });
+
+    it('passes UUID player directly without lookup', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+      ];
+
+      await service.assignCourt(1, players);
+
+      expect(api.getMembersByAccount).not.toHaveBeenCalled();
+      expect(api.getMembers).not.toHaveBeenCalled();
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        [
+          {
+            type: 'member',
+            member_id: '11111111-2222-3333-4444-555555555555',
+            account_id: 'account-1',
+          },
+        ],
+        expect.any(Object)
+      );
+    });
+
+    it('looks up member by memberNumber when UUID not provided', async () => {
+      courtDataCache = mockApiCourts;
+      api.getMembersByAccount.mockResolvedValue({
+        members: [
+          {
+            id: 'looked-up-uuid',
+            account_id: 'looked-up-account',
+            first_name: 'John',
+            last_name: 'Doe',
+            is_primary: true,
+          },
+        ],
+      });
+
+      const players = [{ memberNumber: '12345', name: 'John Doe' }];
+
+      await service.assignCourt(1, players);
+
+      expect(api.getMembersByAccount).toHaveBeenCalledWith('12345');
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        [
+          {
+            type: 'member',
+            member_id: 'looked-up-uuid',
+            account_id: 'looked-up-account',
+          },
+        ],
+        expect.any(Object)
+      );
+    });
+
+    it('falls back to name search when memberNumber lookup fails', async () => {
+      courtDataCache = mockApiCourts;
+      api.getMembersByAccount.mockRejectedValue(new Error('Not found'));
+      api.getMembers.mockResolvedValue({
+        members: [
+          {
+            id: 'name-search-uuid',
+            account_id: 'name-search-account',
+            first_name: 'Jane',
+            last_name: 'Smith',
+          },
+        ],
+      });
+
+      const players = [{ memberNumber: '99999', name: 'Jane Smith' }];
+
+      await service.assignCourt(1, players);
+
+      expect(api.getMembers).toHaveBeenCalledWith('Jane Smith');
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        [
+          {
+            type: 'member',
+            member_id: 'name-search-uuid',
+            account_id: 'name-search-account',
+          },
+        ],
+        expect.any(Object)
+      );
+    });
+
+    it('handles guest players correctly', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+        { isGuest: true, name: 'Guest Player' },
+      ];
+
+      await service.assignCourt(1, players);
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        [
+          {
+            type: 'member',
+            member_id: '11111111-2222-3333-4444-555555555555',
+            account_id: 'account-1',
+          },
+          {
+            type: 'guest',
+            guest_name: 'Guest Player',
+            account_id: 'account-1',
+            charged_to_account_id: 'account-1',
+          },
+        ],
+        expect.any(Object)
+      );
+    });
+
+    it('determines singles session type for 1-2 players', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+        { id: '22222222-3333-4444-5555-666666666666', accountId: 'account-2', name: 'Jane' },
+      ];
+
+      await service.assignCourt(1, players);
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        expect.any(Array),
+        expect.any(Object)
+      );
+    });
+
+    it('determines doubles session type for 3+ players', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+        { id: '22222222-3333-4444-5555-666666666666', accountId: 'account-2', name: 'Jane' },
+        { id: '33333333-4444-5555-6666-777777777777', accountId: 'account-3', name: 'Bob' },
+      ];
+
+      await service.assignCourt(1, players);
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'doubles',
+        expect.any(Array),
+        expect.any(Object)
+      );
+    });
+
+    it('passes addBalls option through to API', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+      ];
+
+      await service.assignCourt(1, players, { addBalls: true });
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        expect.any(Array),
+        { addBalls: true, splitBalls: false }
+      );
+    });
+
+    it('passes legacy balls option through to API', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+      ];
+
+      await service.assignCourt(1, players, { balls: true });
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        expect.any(Array),
+        { addBalls: true, splitBalls: false }
+      );
+    });
+
+    it('refreshes court data after assignment', async () => {
+      courtDataCache = mockApiCourts;
+
+      const players = [
+        { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+      ];
+
+      await service.assignCourt(1, players);
+
+      expect(api.getCourtStatus).toHaveBeenCalledWith(true);
+      expect(notifyListeners).toHaveBeenCalledWith('courts');
+    });
+
+    it('throws error when participant missing account_id', async () => {
+      courtDataCache = mockApiCourts;
+      api.getMembersByAccount.mockResolvedValue({ members: [] });
+      api.getMembers.mockResolvedValue({ members: [] });
+
+      const players = [{ memberNumber: '12345', name: 'Unknown Player' }];
+
+      await expect(service.assignCourt(1, players)).rejects.toThrow(
+        'Could not determine account_id for participant'
+      );
+    });
+
+    it('handles legacy group format with players array', async () => {
+      courtDataCache = mockApiCourts;
+
+      const group = {
+        players: [
+          { id: '11111111-2222-3333-4444-555555555555', accountId: 'account-1', name: 'John' },
+        ],
+        guests: 0,
+      };
+
+      await service.assignCourt(1, group, 60);
+
+      expect(api.assignCourt).toHaveBeenCalledWith(
+        'court-uuid-1',
+        'singles',
+        expect.any(Array),
+        expect.any(Object)
+      );
+    });
+
+    it('throws error for invalid players format', async () => {
+      courtDataCache = mockApiCourts;
+
+      await expect(service.assignCourt(1, 'invalid')).rejects.toThrow('Invalid players format');
+    });
+  });
 });
