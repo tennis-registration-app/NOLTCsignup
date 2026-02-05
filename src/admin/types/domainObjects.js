@@ -315,3 +315,61 @@ export function createStatusActions(params = {}) {
     removeFromWaitlist,
   };
 }
+
+// ============================================================
+// CALENDAR DISPLAY (CalendarSection, EventCalendarEnhanced)
+// ============================================================
+
+/**
+ * Calendar display state - court and scheduling data.
+ * Maps to actual props: courts, currentTime, hoursOverrides, calendarView, refreshTrigger
+ *
+ * @typedef {Object} CalendarModel
+ * @property {Array<Object>|undefined} courts - Court data array (from courts)
+ * @property {unknown|undefined} currentTime - Current time reference (from currentTime)
+ * @property {Array<Object>|undefined} hoursOverrides - Holiday/special hours (from hoursOverrides)
+ * @property {string|undefined} calendarView - Current calendar view mode (from calendarView)
+ * @property {number|undefined} refreshTrigger - Trigger for calendar refresh (from refreshTrigger)
+ */
+
+/**
+ * Creates CalendarModel - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {Array<Object>} [params.courts] - Court data array
+ * @param {unknown} [params.currentTime] - Current time reference
+ * @param {Array<Object>} [params.hoursOverrides] - Holiday/special hours
+ * @param {string} [params.calendarView] - Calendar view mode
+ * @param {number} [params.refreshTrigger] - Refresh trigger value
+ * @returns {CalendarModel}
+ */
+export function createCalendarModel(params = {}) {
+  const { courts, currentTime, hoursOverrides, calendarView, refreshTrigger } = params;
+  return {
+    courts,
+    currentTime,
+    hoursOverrides,
+    calendarView,
+    refreshTrigger,
+  };
+}
+
+/**
+ * Calendar display actions - refresh operations.
+ * Maps to actual props: onRefresh
+ *
+ * @typedef {Object} CalendarActions
+ * @property {(() => void)|undefined} onRefresh - Trigger calendar refresh (from onRefresh)
+ */
+
+/**
+ * Creates CalendarActions - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {Function} [params.onRefresh] - Refresh callback
+ * @returns {CalendarActions}
+ */
+export function createCalendarActions(params = {}) {
+  const { onRefresh } = params;
+  return {
+    onRefresh,
+  };
+}

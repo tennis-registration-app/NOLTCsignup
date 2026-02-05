@@ -8,6 +8,8 @@ import {
   createAdminServices,
   createStatusModel,
   createStatusActions,
+  createCalendarModel,
+  createCalendarActions,
 } from '../../../../src/admin/types/domainObjects.js';
 
 describe('domainObjects', () => {
@@ -318,6 +320,73 @@ describe('domainObjects', () => {
       const handler = vi.fn();
       const actions = createStatusActions({ handleEditBlockFromStatus: handler });
       expect(actions.editBlock).toBe(handler);
+    });
+  });
+
+  describe('createCalendarModel', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createCalendarModel(undefined)).not.toThrow();
+      expect(() => createCalendarModel()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const model = createCalendarModel({});
+      expect(model.courts).toBeUndefined();
+      expect(model.currentTime).toBeUndefined();
+      expect(model.hoursOverrides).toBeUndefined();
+      expect(model.calendarView).toBeUndefined();
+      expect(model.refreshTrigger).toBeUndefined();
+    });
+
+    it('preserves provided values', () => {
+      const courts = [{ id: 1 }];
+      const currentTime = new Date();
+      const hoursOverrides = [{ date: '2026-01-01' }];
+      const calendarView = 'month';
+      const refreshTrigger = 42;
+
+      const model = createCalendarModel({
+        courts,
+        currentTime,
+        hoursOverrides,
+        calendarView,
+        refreshTrigger,
+      });
+
+      expect(model.courts).toBe(courts);
+      expect(model.currentTime).toBe(currentTime);
+      expect(model.hoursOverrides).toBe(hoursOverrides);
+      expect(model.calendarView).toBe(calendarView);
+      expect(model.refreshTrigger).toBe(refreshTrigger);
+    });
+
+    it('preserves null values', () => {
+      const model = createCalendarModel({ courts: null, hoursOverrides: null });
+      expect(model.courts).toBeNull();
+      expect(model.hoursOverrides).toBeNull();
+    });
+
+    it('preserves zero values', () => {
+      const model = createCalendarModel({ refreshTrigger: 0 });
+      expect(model.refreshTrigger).toBe(0);
+    });
+  });
+
+  describe('createCalendarActions', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createCalendarActions(undefined)).not.toThrow();
+      expect(() => createCalendarActions()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const actions = createCalendarActions({});
+      expect(actions.onRefresh).toBeUndefined();
+    });
+
+    it('preserves provided function', () => {
+      const onRefresh = vi.fn();
+      const actions = createCalendarActions({ onRefresh });
+      expect(actions.onRefresh).toBe(onRefresh);
     });
   });
 });
