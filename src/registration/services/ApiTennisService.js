@@ -13,6 +13,7 @@ import { createWaitlistService } from './modules/waitlistService.js';
 import { createMembersService } from './modules/membersService.js';
 import { createSettingsService } from './modules/settingsService.js';
 import { createPurchasesService } from './modules/purchasesService.js';
+import { createLifecycleService } from './modules/lifecycleService.js';
 import { transformCourts } from './legacy/courtTransforms.js';
 import { transformWaitlist } from './legacy/waitlistTransforms.js';
 
@@ -91,6 +92,24 @@ class ApiTennisService {
       logger,
     });
 
+    // Wire lifecycle service module (WP5-D-closeout)
+    this.lifecycleService = createLifecycleService({
+      api: this.api,
+      setCourtData: (v) => {
+        this.courtData = v;
+      },
+      setWaitlistData: (v) => {
+        this.waitlistData = v;
+      },
+      setSettingsCache: (v) => {
+        this.settings = v;
+      },
+      setMembersCache: (v) => {
+        this.membersCache = v;
+      },
+      logger,
+    });
+
     // Start realtime subscriptions
     this._setupRealtime();
   }
@@ -140,30 +159,7 @@ class ApiTennisService {
   // ===========================================
 
   async loadInitialData() {
-    try {
-      const [courtStatus, waitlist, settings, members] = await Promise.all([
-        this.api.getCourtStatus(),
-        this.api.getWaitlist(),
-        this.api.getSettings(),
-        this.api.getMembers(),
-      ]);
-
-      this.courtData = courtStatus;
-      this.waitlistData = waitlist;
-      this.settings = settings;
-      this.membersCache = members;
-
-      return {
-        courts: transformCourts(courtStatus.courts, { logger }),
-        waitlist: transformWaitlist(waitlist.waitlist),
-        settings: settings.settings,
-        operatingHours: settings.operating_hours,
-        members: members.members,
-      };
-    } catch (error) {
-      logger.error('ApiService', 'Failed to load initial data', error);
-      throw error;
-    }
+    return this.lifecycleService.loadInitialData();
   }
 
   async refreshCourtData() {
