@@ -60,8 +60,6 @@ describe('normalizeServiceError', () => {
     const supabaseErr = {
       code: 'PGRST116',
       message: 'No rows found',
-      details: null,
-      hint: null,
     };
     const result = normalizeServiceError(supabaseErr);
 

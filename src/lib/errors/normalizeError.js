@@ -67,7 +67,7 @@ function detectErrorCode(err) {
 
   // Supabase-like error shape: { code, message, details?, hint? }
   if (typeof err === 'object' && err !== null) {
-    if ('code' in err && ('details' in err || 'hint' in err)) {
+    if ('code' in err && 'message' in err) {
       return ErrorCodes.DB_ERROR;
     }
 
