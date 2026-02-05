@@ -88,6 +88,8 @@ import {
   createAdminServices,
   createStatusModel,
   createStatusActions,
+  createCalendarModel,
+  createCalendarActions,
 } from './types/domainObjects.js';
 
 // Admin hooks (WP-HR6)
@@ -387,6 +389,24 @@ const AdminPanelV2 = ({ onExit }) => {
     ]
   );
 
+  // CalendarSection domain objects (WP5-A9.3)
+  const calendarModel = useMemo(
+    () =>
+      createCalendarModel({
+        courts,
+        currentTime,
+        hoursOverrides,
+        calendarView,
+        refreshTrigger,
+      }),
+    [courts, currentTime, hoursOverrides, calendarView, refreshTrigger]
+  );
+
+  const calendarActions = useMemo(
+    () => createCalendarActions({ onRefresh: bumpRefreshTrigger }),
+    [bumpRefreshTrigger]
+  );
+
   // AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
@@ -430,19 +450,10 @@ const AdminPanelV2 = ({ onExit }) => {
           )}
           {activeTab === 'calendar' && (
             <CalendarSection
-              courts={courts}
-              currentTime={currentTime}
-              refreshTrigger={refreshTrigger}
-              onRefresh={bumpRefreshTrigger}
-              calendarView={calendarView}
-              backend={backend}
-              hoursOverrides={hoursOverrides}
-              MonthView={MonthView}
-              EventSummary={EventSummary}
-              HoverCard={HoverCard}
-              QuickActionsMenu={QuickActionsMenu}
-              Tennis={getTennis()}
-              EventCalendarEnhanced={EventCalendarEnhanced}
+              calendarModel={calendarModel}
+              calendarActions={calendarActions}
+              services={adminServices}
+              components={blockComponents}
             />
           )}
           {activeTab === 'blocking' && (
