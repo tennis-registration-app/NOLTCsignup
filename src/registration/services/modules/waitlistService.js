@@ -1,4 +1,5 @@
 import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
+import { resolveParticipants, WAITLIST_PROFILE } from './participantResolution.js';
 
 /**
  * Waitlist operations extracted from ApiTennisService.
@@ -6,6 +7,7 @@ import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
  *
  * WP5-D2: Safe read/refresh/remove slice.
  * WP5-D4: Added addToWaitlist and assignFromWaitlist mutations.
+ * WP5-D8: Uses shared participantResolution helper.
  *
  * @param {Object} deps
  * @param {Object} deps.api - ApiAdapter instance
@@ -76,189 +78,16 @@ export function createWaitlistService({
     );
     logger.debug('ApiService', `[${traceId}] Options`, options);
 
-    // Transform players to API format (same logic as assignCourt)
-    const participants = await Promise.all(
-      players.map(async (player, idx) => {
-        logger.debug(
-          'ApiService',
-          `[${traceId}] Processing player[${idx}]: name="${player.name}", id="${player.id}", memberNumber="${player.memberNumber}"`
-        );
-
-        let memberId = null;
-        let accountId = null;
-
-        // Check if this is a guest
-        if (player.isGuest || player.type === 'guest') {
-          return {
-            type: 'guest',
-            guest_name: player.name || player.displayName || player.guest_name || 'Guest',
-            account_id: '__NEEDS_ACCOUNT__',
-          };
-        }
-
-        // Try to get existing IDs if they're UUIDs
-        const existingId = player.id || player.memberId;
-        const isUUID =
-          existingId && existingId.includes && existingId.includes('-') && existingId.length > 30;
-
-        logger.debug('ApiService', `[${traceId}] Player UUID check`, {
-          existingId,
-          isUUID,
-          'player.accountId': player.accountId,
-        });
-
-        if (isUUID) {
-          memberId = existingId;
-          accountId = player.accountId;
-          logger.debug(
-            'ApiService',
-            `[${traceId}] Using UUID directly: memberId=${memberId}, accountId=${accountId}`
-          );
-        }
-
-        // If we don't have BOTH UUID and accountId, look up by memberNumber
-        if (!memberId || !accountId) {
-          logger.debug(
-            'ApiService',
-            `[${traceId}] Missing data, need lookup: memberId=${memberId}, accountId=${accountId}`
-          );
-          const memberNumber = player.memberNumber || player.id;
-
-          if (memberNumber) {
-            try {
-              logger.debug(
-                'ApiService',
-                `[${traceId}] Looking up memberNumber: ${memberNumber}, player.name: "${player.name}"`
-              );
-              const result = await api.getMembersByAccount(String(memberNumber));
-              const members = normalizeAccountMembers(result.members);
-              logger.debug(
-                'ApiService',
-                `[${traceId}] Found ${members.length} members for account`,
-                members.map((m) => `${m.displayName}(primary=${m.isPrimary})`)
-              );
-
-              const playerNameLower = (player.name || '').toLowerCase().trim();
-
-              // Try exact match first (case-insensitive)
-              let member = members.find(
-                (m) => m.displayName?.toLowerCase().trim() === playerNameLower
-              );
-
-              // Try partial match (player name contains or is contained in displayName)
-              if (!member) {
-                member = members.find((m) => {
-                  const displayLower = (m.displayName || '').toLowerCase().trim();
-                  return (
-                    displayLower.includes(playerNameLower) || playerNameLower.includes(displayLower)
-                  );
-                });
-              }
-
-              // Try matching by last name only (common case: "Sinner" -> "Jannik Sinner")
-              if (!member && playerNameLower) {
-                member = members.find((m) => {
-                  const displayLower = (m.displayName || '').toLowerCase().trim();
-                  const playerLastName = playerNameLower.split(' ').pop();
-                  const memberLastName = displayLower.split(' ').pop();
-                  return playerLastName === memberLastName;
-                });
-              }
-
-              // If only one member on account, use it (single-member accounts)
-              if (!member && members.length === 1) {
-                member = members[0];
-                logger.debug(
-                  'ApiService',
-                  `[${traceId}] Using only member on account: ${member.displayName}`
-                );
-              }
-
-              // If multiple members and no match, prefer primary member with warning
-              if (!member && members.length > 1) {
-                const primaryMember = members.find((m) => m.isPrimary);
-                if (primaryMember) {
-                  logger.warn(
-                    'ApiService',
-                    `[${traceId}] Name mismatch! Player "${player.name}" not found in account members. Using primary: "${primaryMember.displayName}"`
-                  );
-                  member = primaryMember;
-                } else {
-                  logger.error(
-                    'ApiService',
-                    `[${traceId}] Name mismatch! Player "${player.name}" not found in`,
-                    members.map((m) => m.displayName)
-                  );
-                  throw new Error(
-                    `Could not match "${player.name}" to any member on account ${memberNumber}. Available: ${members.map((m) => m.displayName).join(', ')}`
-                  );
-                }
-              }
-
-              if (member) {
-                memberId = member.id;
-                accountId = member.accountId;
-                logger.debug(
-                  'ApiService',
-                  `[${traceId}] Matched: "${player.name}" -> "${member.displayName}" (${memberId})`
-                );
-              }
-            } catch (e) {
-              logger.error('ApiService', 'Error looking up member', e);
-              throw e; // Re-throw to prevent wrong member assignment
-            }
-          }
-        }
-
-        // Fallback: search by name
-        if (!memberId || !accountId) {
-          try {
-            const searchName = player.name || player.displayName;
-            if (searchName) {
-              logger.debug('ApiService', `Searching by name: ${searchName}`);
-              const result = await api.getMembers(searchName);
-              const members = normalizeAccountMembers(result.members);
-              const member = members.find(
-                (m) => m.displayName?.toLowerCase() === searchName.toLowerCase()
-              );
-              if (member) {
-                memberId = member.id;
-                accountId = member.accountId;
-                logger.debug('ApiService', `Found by name: ${searchName} -> ${memberId}`);
-              }
-            }
-          } catch (e) {
-            logger.error('ApiService', 'Error searching by name', e);
-          }
-        }
-
-        if (!memberId || !accountId) {
-          logger.error('ApiService', 'Could not resolve member', player);
-          throw new Error(
-            `Could not find member in database: ${player.name} (${player.memberNumber || player.id})`
-          );
-        }
-
-        return {
-          type: 'member',
-          member_id: memberId,
-          account_id: accountId,
-        };
-      })
+    // Resolve players to participants using shared helper (WAITLIST_PROFILE)
+    const { participants, groupType: resolvedGroupType } = await resolveParticipants(
+      players,
+      { api, logger, normalizeAccountMembers },
+      WAITLIST_PROFILE,
+      { traceId }
     );
 
-    // Handle guests needing account
-    const memberWithAccount = participants.find((p) => p.type === 'member' && p.account_id);
-    if (memberWithAccount) {
-      participants.forEach((p) => {
-        if (p.account_id === '__NEEDS_ACCOUNT__') {
-          p.account_id = memberWithAccount.account_id;
-        }
-      });
-    }
-
-    const groupType =
-      options.type || options.groupType || (participants.length <= 2 ? 'singles' : 'doubles');
+    // Options override groupType
+    const groupType = options.type || options.groupType || resolvedGroupType;
 
     logger.debug('ApiService', 'Calling API with', { groupType, participants });
 
