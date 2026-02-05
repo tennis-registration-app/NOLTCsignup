@@ -10,6 +10,10 @@ import {
   createStatusActions,
   createCalendarModel,
   createCalendarActions,
+  createAIAssistantModel,
+  createAIAssistantActions,
+  createAIAssistantServices,
+  createAIAssistantComponents,
 } from '../../../../src/admin/types/domainObjects.js';
 
 describe('domainObjects', () => {
@@ -23,6 +27,12 @@ describe('domainObjects', () => {
       expect(typeof createAdminServices).toBe('function');
       expect(typeof createStatusModel).toBe('function');
       expect(typeof createStatusActions).toBe('function');
+      expect(typeof createCalendarModel).toBe('function');
+      expect(typeof createCalendarActions).toBe('function');
+      expect(typeof createAIAssistantModel).toBe('function');
+      expect(typeof createAIAssistantActions).toBe('function');
+      expect(typeof createAIAssistantServices).toBe('function');
+      expect(typeof createAIAssistantComponents).toBe('function');
     });
   });
 
@@ -387,6 +397,165 @@ describe('domainObjects', () => {
       const onRefresh = vi.fn();
       const actions = createCalendarActions({ onRefresh });
       expect(actions.onRefresh).toBe(onRefresh);
+    });
+  });
+
+  describe('createAIAssistantModel', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createAIAssistantModel(undefined)).not.toThrow();
+      expect(() => createAIAssistantModel()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const model = createAIAssistantModel({});
+      expect(model.activeTab).toBeUndefined();
+      expect(model.showAIAssistant).toBeUndefined();
+      expect(model.USE_REAL_AI).toBeUndefined();
+      expect(model.courts).toBeUndefined();
+      expect(model.settings).toBeUndefined();
+      expect(model.waitingGroups).toBeUndefined();
+    });
+
+    it('preserves provided values', () => {
+      const courts = [{ id: 1 }];
+      const settings = { ballPrice: 5 };
+      const waitingGroups = [{ id: 'g1' }];
+
+      const model = createAIAssistantModel({
+        activeTab: 'calendar',
+        showAIAssistant: true,
+        USE_REAL_AI: false,
+        courts,
+        settings,
+        waitingGroups,
+      });
+
+      expect(model.activeTab).toBe('calendar');
+      expect(model.showAIAssistant).toBe(true);
+      expect(model.USE_REAL_AI).toBe(false);
+      expect(model.courts).toBe(courts);
+      expect(model.settings).toBe(settings);
+      expect(model.waitingGroups).toBe(waitingGroups);
+    });
+
+    it('preserves null values', () => {
+      const model = createAIAssistantModel({ courts: null, settings: null });
+      expect(model.courts).toBeNull();
+      expect(model.settings).toBeNull();
+    });
+
+    it('preserves false values', () => {
+      const model = createAIAssistantModel({ showAIAssistant: false, USE_REAL_AI: false });
+      expect(model.showAIAssistant).toBe(false);
+      expect(model.USE_REAL_AI).toBe(false);
+    });
+  });
+
+  describe('createAIAssistantActions', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createAIAssistantActions(undefined)).not.toThrow();
+      expect(() => createAIAssistantActions()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const actions = createAIAssistantActions({});
+      expect(actions.setShowAIAssistant).toBeUndefined();
+      expect(actions.onAISettingsChanged).toBeUndefined();
+      expect(actions.loadData).toBeUndefined();
+      expect(actions.clearCourt).toBeUndefined();
+      expect(actions.clearAllCourts).toBeUndefined();
+      expect(actions.moveCourt).toBeUndefined();
+      expect(actions.updateBallPrice).toBeUndefined();
+      expect(actions.refreshData).toBeUndefined();
+    });
+
+    it('preserves provided functions', () => {
+      const setShowAIAssistant = vi.fn();
+      const onAISettingsChanged = vi.fn();
+      const loadData = vi.fn();
+      const clearCourt = vi.fn();
+      const clearAllCourts = vi.fn();
+      const moveCourt = vi.fn();
+      const updateBallPrice = vi.fn();
+      const refreshData = vi.fn();
+
+      const actions = createAIAssistantActions({
+        setShowAIAssistant,
+        onAISettingsChanged,
+        loadData,
+        clearCourt,
+        clearAllCourts,
+        moveCourt,
+        updateBallPrice,
+        refreshData,
+      });
+
+      expect(actions.setShowAIAssistant).toBe(setShowAIAssistant);
+      expect(actions.onAISettingsChanged).toBe(onAISettingsChanged);
+      expect(actions.loadData).toBe(loadData);
+      expect(actions.clearCourt).toBe(clearCourt);
+      expect(actions.clearAllCourts).toBe(clearAllCourts);
+      expect(actions.moveCourt).toBe(moveCourt);
+      expect(actions.updateBallPrice).toBe(updateBallPrice);
+      expect(actions.refreshData).toBe(refreshData);
+    });
+  });
+
+  describe('createAIAssistantServices', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createAIAssistantServices(undefined)).not.toThrow();
+      expect(() => createAIAssistantServices()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const services = createAIAssistantServices({});
+      expect(services.backend).toBeUndefined();
+      expect(services.dataStore).toBeUndefined();
+    });
+
+    it('preserves provided values', () => {
+      const backend = { admin: { getBlocks: vi.fn() } };
+      const dataStore = { getData: vi.fn() };
+
+      const services = createAIAssistantServices({ backend, dataStore });
+
+      expect(services.backend).toBe(backend);
+      expect(services.dataStore).toBe(dataStore);
+    });
+
+    it('preserves null values', () => {
+      const services = createAIAssistantServices({ backend: null, dataStore: null });
+      expect(services.backend).toBeNull();
+      expect(services.dataStore).toBeNull();
+    });
+  });
+
+  describe('createAIAssistantComponents', () => {
+    it('does not throw if called with undefined', () => {
+      expect(() => createAIAssistantComponents(undefined)).not.toThrow();
+      expect(() => createAIAssistantComponents()).not.toThrow();
+    });
+
+    it('preserves undefined values (no defaults)', () => {
+      const components = createAIAssistantComponents({});
+      expect(components.AIAssistant).toBeUndefined();
+      expect(components.MockAIAdmin).toBeUndefined();
+    });
+
+    it('preserves provided components', () => {
+      const AIAssistant = () => null;
+      const MockAIAdmin = () => null;
+
+      const components = createAIAssistantComponents({ AIAssistant, MockAIAdmin });
+
+      expect(components.AIAssistant).toBe(AIAssistant);
+      expect(components.MockAIAdmin).toBe(MockAIAdmin);
+    });
+
+    it('preserves null values', () => {
+      const components = createAIAssistantComponents({ AIAssistant: null, MockAIAdmin: null });
+      expect(components.AIAssistant).toBeNull();
+      expect(components.MockAIAdmin).toBeNull();
     });
   });
 });

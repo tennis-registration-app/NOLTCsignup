@@ -373,3 +373,147 @@ export function createCalendarActions(params = {}) {
     onRefresh,
   };
 }
+
+// ============================================================
+// AI ASSISTANT (AIAssistantSection)
+// ============================================================
+
+/**
+ * AI Assistant display state - modal visibility and data context.
+ * Maps to actual props: activeTab, showAIAssistant, USE_REAL_AI, courts, settings, waitingGroups
+ *
+ * @typedef {Object} AIAssistantModel
+ * @property {string|undefined} activeTab - Current admin tab (from activeTab)
+ * @property {boolean|undefined} showAIAssistant - Modal visibility (from showAIAssistant)
+ * @property {boolean|undefined} USE_REAL_AI - Feature flag for real AI (from USE_REAL_AI)
+ * @property {Array<Object>|undefined} courts - Court data array (from courts)
+ * @property {Object|undefined} settings - Admin settings (from settings)
+ * @property {Array<Object>|undefined} waitingGroups - Waitlist entries (from waitingGroups)
+ */
+
+/**
+ * Creates AIAssistantModel - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {string} [params.activeTab] - Current admin tab
+ * @param {boolean} [params.showAIAssistant] - Modal visibility
+ * @param {boolean} [params.USE_REAL_AI] - Feature flag
+ * @param {Array<Object>} [params.courts] - Court data array
+ * @param {Object} [params.settings] - Admin settings
+ * @param {Array<Object>} [params.waitingGroups] - Waitlist entries
+ * @returns {AIAssistantModel}
+ */
+export function createAIAssistantModel(params = {}) {
+  const { activeTab, showAIAssistant, USE_REAL_AI, courts, settings, waitingGroups } = params;
+  return {
+    activeTab,
+    showAIAssistant,
+    USE_REAL_AI,
+    courts,
+    settings,
+    waitingGroups,
+  };
+}
+
+/**
+ * AI Assistant actions - handlers for AI operations and data manipulation.
+ * Maps to actual props: setShowAIAssistant, onAISettingsChanged, loadData, clearCourt,
+ * clearAllCourts, moveCourt, updateBallPrice, refreshData
+ *
+ * Note: clearWaitlist is NOT included here; it is passed as a separate prop
+ * because the call site uses an inline lambda.
+ *
+ * @typedef {Object} AIAssistantActions
+ * @property {((show: boolean) => void)|undefined} setShowAIAssistant - Toggle modal (from setShowAIAssistant)
+ * @property {(() => void)|undefined} onAISettingsChanged - Settings change handler (from onAISettingsChanged)
+ * @property {(() => void)|undefined} loadData - Reload settings (from loadData)
+ * @property {((courtNum: number) => void)|undefined} clearCourt - Clear single court (from clearCourt)
+ * @property {(() => void)|undefined} clearAllCourts - Clear all courts (from clearAllCourts)
+ * @property {((from: number, to: number) => void)|undefined} moveCourt - Move between courts (from moveCourt)
+ * @property {((price: number) => void)|undefined} updateBallPrice - Update ball price (from updateBallPrice)
+ * @property {(() => void)|undefined} refreshData - Refresh data (from refreshData)
+ */
+
+/**
+ * Creates AIAssistantActions - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {Function} [params.setShowAIAssistant] - Toggle modal
+ * @param {Function} [params.onAISettingsChanged] - Settings change handler
+ * @param {Function} [params.loadData] - Reload settings
+ * @param {Function} [params.clearCourt] - Clear single court
+ * @param {Function} [params.clearAllCourts] - Clear all courts
+ * @param {Function} [params.moveCourt] - Move between courts
+ * @param {Function} [params.updateBallPrice] - Update ball price
+ * @param {Function} [params.refreshData] - Refresh data
+ * @returns {AIAssistantActions}
+ */
+export function createAIAssistantActions(params = {}) {
+  const {
+    setShowAIAssistant,
+    onAISettingsChanged,
+    loadData,
+    clearCourt,
+    clearAllCourts,
+    moveCourt,
+    updateBallPrice,
+    refreshData,
+  } = params;
+  return {
+    setShowAIAssistant,
+    onAISettingsChanged,
+    loadData,
+    clearCourt,
+    clearAllCourts,
+    moveCourt,
+    updateBallPrice,
+    refreshData,
+  };
+}
+
+/**
+ * AI Assistant services - backend and data store for AI operations.
+ * Separate from AdminServices to avoid breaking existing consumers.
+ * Maps to actual props: backend, dataStore
+ *
+ * @typedef {Object} AIAssistantServices
+ * @property {Object|undefined} backend - TennisBackend instance (from backend)
+ * @property {Object|undefined} dataStore - TennisCourtDataStore instance (from dataStore)
+ */
+
+/**
+ * Creates AIAssistantServices - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {Object} [params.backend] - TennisBackend instance
+ * @param {Object} [params.dataStore] - TennisCourtDataStore instance
+ * @returns {AIAssistantServices}
+ */
+export function createAIAssistantServices(params = {}) {
+  const { backend, dataStore } = params;
+  return {
+    backend,
+    dataStore,
+  };
+}
+
+/**
+ * AI Assistant components - injected React components for AI UI.
+ * Maps to actual props: AIAssistant, MockAIAdmin
+ *
+ * @typedef {Object} AIAssistantComponents
+ * @property {ComponentType|undefined} AIAssistant - Real AI assistant component (from AIAssistant)
+ * @property {ComponentType|undefined} MockAIAdmin - Mock AI admin component (from MockAIAdmin)
+ */
+
+/**
+ * Creates AIAssistantComponents - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {ComponentType} [params.AIAssistant] - Real AI assistant
+ * @param {ComponentType} [params.MockAIAdmin] - Mock AI admin
+ * @returns {AIAssistantComponents}
+ */
+export function createAIAssistantComponents(params = {}) {
+  const { AIAssistant, MockAIAdmin } = params;
+  return {
+    AIAssistant,
+    MockAIAdmin,
+  };
+}
