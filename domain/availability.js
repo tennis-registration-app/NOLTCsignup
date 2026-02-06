@@ -235,17 +235,6 @@
       // If not overtime and has session, it's occupied (not free or overtime)
     }
 
-    // DEBUG: Log when we get suspicious results
-    if (free.length >= 11) {
-      console.log('🔍 getFreeCourtsInfo - ALL COURTS FREE detected:', {
-        dataSnapshot,
-        freeCount: free.length,
-        overtimeCount: overtime.length,
-        wetCount: wet.length,
-        callerStack: new Error().stack.split('\n').slice(1, 4)
-      });
-    }
-
     const freeSet = new Set(free);
     const occupied = all.filter(n => !freeSet.has(n) && !overtime.includes(n) && !wet.includes(n)).sort((a,b)=>a-b);
     
@@ -412,52 +401,6 @@
     const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
     const free = info.free || [];
     const overtime = info.overtime || [];
-
-    // DEBUG: Log what we're returning to catch inappropriate selections
-    const courtDetails = data?.courts?.map((c, i) => {
-      const courtNum = i + 1;
-      // Domain format: court.session
-      const session = c?.session;
-      const endTime = session?.scheduledEndAt;
-      const endDate = endTime ? new Date(endTime) : null;
-      const isActive = endDate ? endDate > now : false;
-
-      return {
-        court: courtNum,
-        hasSession: !!session,
-        endTime: endTime ? endDate.toLocaleTimeString() : null,
-        isActive,
-        players: session?.group?.players?.length || 0,
-        inFreeList: free.includes(courtNum),
-        inOvertimeList: overtime.includes(courtNum)
-      };
-    });
-
-    // Only log when something suspicious happens (all courts free or occupied courts in free list)
-    const suspiciousLog = free.length >= 11 || courtDetails.some(c => c.isActive && c.inFreeList);
-
-    if (suspiciousLog) {
-      console.log('🚨 [getSelectableCourtsStrict] SUSPICIOUS - ALL COURTS FREE!', {
-        now: now.toLocaleTimeString(),
-        free,
-        overtime,
-        courtDetails: courtDetails.map(c => ({
-          court: c.court,
-          hasSession: c.hasSession,
-          endTime: c.endTime,
-          isActive: c.isActive,
-          players: c.players
-        })),
-        dataPointer: data === null ? 'NULL' : typeof data,
-        courtsPointer: data?.courts === null ? 'NULL' : Array.isArray(data?.courts) ? `Array(${data.courts.length})` : typeof data?.courts
-      });
-    } else {
-      console.log('[getSelectableCourtsStrict] Normal:', {
-        now: now.toLocaleTimeString(),
-        freeCount: free.length,
-        occupiedCourts: courtDetails.filter(c => c.isActive).map(c => `Court ${c.court} (until ${c.endTime})`)
-      });
-    }
 
     return free.length > 0 ? free : overtime;
   }
