@@ -1,81 +1,31 @@
-# NOLTC Tennis Registration
+# NOLTC Tennis Registration System
 
-## Overview
+A web-based court registration system for the New Orleans Lawn Tennis Club, managing 12 courts for approximately 2,500 members. The system provides kiosk-based check-in, real-time court status display, waitlist management, and administrative controls.
 
-The NOLTC Tennis Court Registration System is a kiosk-based application for the New Orleans Lawn Tennis Club. It manages court registration for ~2,500 members across 12 courts, handling player check-in, waitlist management, court assignments, and administrative functions. The system runs on physical kiosks at the club, with mobile and admin interfaces.
+## Applications
 
-**Three applications:**
-- **Registration** — User-facing court sign-up (kiosk + mobile)
-- **Courtboard** — Real-time court status display
-- **Admin** — Administrative management panel
+| App | Purpose | Primary Use |
+|-----|---------|-------------|
+| **Registration** | Member check-in and court assignment | iPad kiosk at club entrance |
+| **Courtboard** | Real-time court status display | Wall-mounted display in clubhouse |
+| **Admin** | Settings, blocks, analytics, calendar | Staff management interface |
+| **Mobile** | Location-verified registration | Member smartphones (QR-based) |
 
-## Quick Start for Developers
+## Tech Stack
 
-1. **Clone and install**
-```bash
-git clone <repo>
-npm install
-```
+- **Frontend:** React 18, Vite, TailwindCSS
+- **Backend:** Supabase (PostgreSQL + Edge Functions)
+- **Testing:** Vitest (683 unit tests), Playwright (15 E2E tests)
+- **Deployment:** Vercel (frontend), Supabase (backend)
 
-2. **Run locally**
-```bash
-npm run dev
-```
+## Quick Start
 
-3. **Run tests**
-```bash
-npm run verify          # Full gate: lint + unit + build + e2e
-npm run test:unit       # Unit tests only (Vitest, 267 tests)
-npm run test:e2e        # E2E tests only (Playwright, 15 tests)
-```
-
-4. **Read the docs**
-   - [CONTRIBUTING.md](./CONTRIBUTING.md) — Development workflow and conventions
-   - [ARCHITECTURE.md](./ARCHITECTURE.md) — System architecture and module structure
-   - [docs/RUNBOOK.md](./docs/RUNBOOK.md) — Operations and troubleshooting
-
-## Recent Major Milestones
-
-### Phase 3: Globals & Event Cleanup (Complete)
-- Eliminated all `window.__*` globals from registration app (9 globals removed)
-- Replaced with React state, props, and explicit dependency injection
-- `window.__registrationData`, `__mobileFlow`, `__mobileSuccessHandler` all removed
-- Improved testability and eliminated cross-component coupling
-
-### Phase 2.2: Admin BlockManager Decomposition (Complete)
-- Decomposed `CompleteBlockManagerEnhanced.jsx` from 1,076 to 832 lines (~23% reduction)
-- Extracted: `useWetCourts` hook, `CourtSelectionGrid`, `BlockReasonSelector`, `expandRecurrenceDates` utility
-- Improved maintainability for admin block management features
-
-### Phase 2.X: Overtime Eligibility Centralization (Complete)
-- Created `src/shared/courts/overtimeEligibility.js` as single source of truth
-- Registration and courtboard now use same policy module
-- Eliminated duplicate inline filtering logic
-
-### Phase 2.1: Registration App Hooks (Complete)
-- Extracted 7 custom hooks from `App.jsx` (~485 lines)
-- Includes: `useBoardState`, `useActivityTimeout`, `useSessionTracking`, etc.
-
-### Test Coverage
-- 267 Vitest unit tests
-- 15 Playwright E2E tests covering critical flows
-- All phases maintained green tests throughout refactoring
-
-## Repo Boundaries
-
-> **Important:** This repository contains the **frontend only**. The backend (Supabase Edge Functions + database migrations) lives in a separate repository: `noltc-backend/`.
->
-> Frontend deployment: Vercel
-> Backend deployment: Supabase (Edge Functions + PostgreSQL)
-
-## Prerequisites
+### Prerequisites
 
 - Node.js 18+
 - npm 9+
-- Access to Supabase project (for full functionality)
-- For backend work: Access to `noltc-backend/` repository
 
-## Installation
+### Setup
 
 ```bash
 git clone <repository-url>
@@ -83,83 +33,121 @@ cd NOLTCsignup
 npm install
 ```
 
-## Running Locally
+### Environment Variables
+
+Copy the example file and add your Supabase credentials:
 
 ```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+cp .env.example .env.local
 ```
 
-Opens at http://localhost:5173/src/registration/index.html
+Required variables:
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — Supabase anonymous key
 
-## Verification
+See [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) for detailed configuration.
 
-Run the full verification suite (lint + build + tests):
+### Development
 
 ```bash
-npm run verify
+npm run dev          # Start dev server (http://localhost:5173)
+npm run build        # Production build
+npm run preview      # Preview production build
 ```
 
-This command is also run by CI on all pull requests and pushes to main.
+### Verification
 
-## Documentation
+```bash
+npm run verify       # Full gate: lint + typecheck + unit + build + e2e
+```
 
-| Document | Description |
-|----------|-------------|
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Development workflow and conventions |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, data flow, architectural decisions |
-| [DEPLOYMENT.md](./DEPLOYMENT.md) | Vercel hosting, URLs, deployment process |
-| [docs/RUNBOOK.md](./docs/RUNBOOK.md) | Operations and troubleshooting |
-| [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) | Environment configuration, staging setup |
-| [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) | Critical user flows for regression testing |
-| [docs/TESTING.md](./docs/TESTING.md) | Testing strategy and guidelines |
-| [docs/verification-checklist.md](./docs/verification-checklist.md) | Pre-deployment verification checklist |
-
-## Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start Vite development server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Run ESLint with auto-fix |
-| `npm run format` | Format code with Prettier |
-| `npm run test` | Run tests (Playwright in Phase 1) |
-| `npm run verify` | Full verification: lint + build + test |
-
-## Live Demo
-
-**Vercel:** https://courtboard-noltc.vercel.app
-
-| Component | URL |
-|-----------|-----|
-| Registration | https://courtboard-noltc.vercel.app/src/registration/index.html |
-| Admin | https://courtboard-noltc.vercel.app/src/admin/index.html |
-| Courtboard | https://courtboard-noltc.vercel.app/src/courtboard/index.html |
-| Mobile | https://courtboard-noltc.vercel.app/Mobile.html |
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment documentation.
+This is the same command run by CI on all pull requests.
 
 ## Project Structure
 
 ```
 src/
-├── registration/   # Main registration app
-├── courtboard/     # Court display app
-├── admin/          # Admin panel
-├── lib/            # Shared utilities and API layer
-└── test-*/         # Test pages
+├── registration/       # Registration kiosk app
+│   ├── screens/        # Route components
+│   ├── backend/        # API layer (TennisBackend façade)
+│   ├── services/       # Service modules
+│   └── hooks/          # React hooks
+├── courtboard/         # Court display app
+├── admin/              # Admin panel
+├── lib/                # Shared utilities (API, errors, logging)
+├── shared/             # Shared React components
+└── config/             # Runtime configuration
+shared/                 # Cross-app utilities (legacy)
+domain/                 # Domain logic modules
 ```
 
-## Tech Stack
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation.
 
-- React 18 + Vite
-- TailwindCSS
-- Supabase (Realtime + Edge Functions)
+## Testing
+
+```bash
+npm run test:unit       # Unit tests (Vitest)
+npm run test:unit:watch # Unit tests in watch mode
+npm run test:e2e        # E2E tests (Playwright)
+npm run lint            # ESLint
+npm run typecheck       # TypeScript checking
+```
+
+## Key Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run verify` | Full verification gate |
+| `npm run test:unit` | Run unit tests |
+| `npm run test:e2e` | Run E2E tests |
+| `npm run lint` | Run ESLint |
+| `npm run lint:fix` | ESLint with auto-fix |
+| `npm run format` | Format with Prettier |
+
+## Repository Boundaries
+
+This repository contains the **frontend only**. The backend (Supabase Edge Functions and database migrations) is in a separate repository: `noltc-backend/`.
+
+| Component | Repository | Deployment |
+|-----------|------------|------------|
+| Frontend apps | `NOLTCsignup/` (this repo) | Vercel |
+| Edge Functions | `noltc-backend/` | Supabase |
+| Database | `noltc-backend/` | Supabase |
+
+## Demo Mode
+
+The system is currently configured for demo/development use:
+
+- Sample data is available in the Supabase instance
+- No user authentication is enforced
+- Admin access is URL-based (no password)
+
+See [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) for security considerations.
+
+## Live URLs
+
+**Production:** https://courtboard-noltc.vercel.app
+
+| Application | URL |
+|-------------|-----|
+| Registration | [/src/registration/index.html](https://courtboard-noltc.vercel.app/src/registration/index.html) |
+| Courtboard | [/src/courtboard/index.html](https://courtboard-noltc.vercel.app/src/courtboard/index.html) |
+| Admin | [/src/admin/index.html](https://courtboard-noltc.vercel.app/src/admin/index.html) |
+| Mobile | [/Mobile.html](https://courtboard-noltc.vercel.app/Mobile.html) |
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | System design and architectural decisions |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Development workflow and conventions |
+| [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) | Environment configuration |
+| [docs/TESTING.md](./docs/TESTING.md) | Testing strategy and guidelines |
+| [docs/RUNBOOK.md](./docs/RUNBOOK.md) | Operations and troubleshooting |
+| [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) | Critical user flows |
+
+## License
+
+Private — New Orleans Lawn Tennis Club
