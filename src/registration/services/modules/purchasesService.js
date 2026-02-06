@@ -1,3 +1,5 @@
+import { normalizeServiceError } from '@lib/errors';
+
 /**
  * Purchases operations extracted from ApiTennisService.
  *
@@ -9,18 +11,25 @@
  */
 export function createPurchasesService({ api, logger }) {
   async function purchaseBalls(sessionId, accountId, options = {}) {
-    logger.debug('ApiService', `Purchasing balls for session: ${sessionId}, account: ${accountId}`);
+    try {
+      logger.debug(
+        'ApiService',
+        `Purchasing balls for session: ${sessionId}, account: ${accountId}`
+      );
 
-    const result = await api.purchaseBalls(sessionId, accountId, {
-      splitBalls: options.split || options.splitBalls || false,
-      splitAccountIds: options.splitAccountIds || options.split_account_ids || null,
-    });
+      const result = await api.purchaseBalls(sessionId, accountId, {
+        splitBalls: options.split || options.splitBalls || false,
+        splitAccountIds: options.splitAccountIds || options.split_account_ids || null,
+      });
 
-    return {
-      success: result.ok,
-      transactions: result.transactions,
-      totalCents: result.total_cents,
-    };
+      return {
+        success: result.ok,
+        transactions: result.transactions,
+        totalCents: result.total_cents,
+      };
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'purchasesService', op: 'purchaseBalls' });
+    }
   }
 
   return {
