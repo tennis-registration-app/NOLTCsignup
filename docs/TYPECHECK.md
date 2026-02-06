@@ -82,7 +82,7 @@ function durationMinutes(start, end) {
 
 Use only when the runtime contract is correct AND the correct typing would require cross-file churn (out of current scope):
 ```javascript
-// @ts-expect-error -- legacy prop typing mismatch; runtime contract verified; fix in WP-HRx
+// @ts-expect-error -- legacy prop typing mismatch; runtime contract verified
 const result = someFunction(untypedArg);
 ```
 
@@ -90,7 +90,7 @@ const result = someFunction(untypedArg);
 
 `@ts-ignore` suppresses errors silently and permanently. Always use `@ts-expect-error` instead — it alerts you when the suppression is no longer needed.
 
-## Current Coverage (WP-HR5)
+## Current Coverage
 
 To verify: run `grep -rl "@ts-check" src/ | wc -l`
 
@@ -107,9 +107,9 @@ To verify: run `grep -rl "@ts-check" src/ | wc -l`
 | Module | Reason |
 |--------|--------|
 | `src/platform/windowBridge.js` | 18+ errors from untyped `window.*` properties; requires extending `global.d.ts` |
-| `src/registration/orchestration/` | Recently refactored (WP-HR4); let settle before type enforcement |
+| `src/registration/orchestration/` | Recently refactored; let settle before type enforcement |
 | `src/registration/services/` | Complex API layer; high churn risk |
-| `src/admin/` | Large; modularization pending (WP-HR6) |
+| `src/admin/` | Large; modularization pending |
 
 ## Global Type Declarations
 
@@ -142,6 +142,6 @@ Key settings:
 ## Future Work
 
 - Expand @ts-check to platform layer (after extending global.d.ts for window.* properties)
-- Expand @ts-check to orchestration layer (after patterns stabilize post WP-HR4)
+- Expand @ts-check to orchestration layer (after patterns stabilize)
 - Consider `strict: true` once coverage is sufficient
 - Upgrade `no-undef` ESLint rule from warning to error

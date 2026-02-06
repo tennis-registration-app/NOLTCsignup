@@ -2,17 +2,16 @@
 
 ## Overview
 
-This document describes error handling patterns across the application and the contracts established in **WP-HR8**.
-
-WP-HR8 was a **consistency and contract normalization** phase. It introduced structured error metadata at the API boundary, formalized result envelope types, documented propagation paths, and locked contracts with tests — without changing runtime behavior or error flow.
+This document describes error handling patterns across the application.
 
 ## Error Propagation Flow
+
 ```text
 Commands (Zod validate → throw Error)
     ↓
-ApiAdapter (fetch → check .ok → throw AppError)  ← HR8 change
+ApiAdapter (fetch → check .ok → throw AppError)
     ↓
-Services (catch/rethrow or check .ok — unchanged)
+Services (catch/rethrow or check .ok)
     ↓
 Orchestrators (guard returns + try/catch → toast/alert)
     ↓
@@ -25,13 +24,11 @@ UI (useState error state, toast, showAlertMessage)
 
 **Pattern:** Validate input with Zod, throw on failure.
 
-Commands are pure validation gates — they do not catch errors. This pattern is consistent across all command files and was not changed in HR8.
+Commands are pure validation gates — they do not catch errors.
 
 ### ApiAdapter
 
 **Pattern:** Fetch, check response, throw `AppError` on failure.
-
-HR8 replaced `throw new Error(...)` with `throw new AppError(...)` at two throw sites. This adds structured metadata (category, code) while remaining backwards compatible — all callers catch `Error`, and `AppError extends Error`.
 
 Throw sites:
 
@@ -46,7 +43,7 @@ Already-wrapped `AppError` instances pass through without re-wrapping.
 
 **Pattern:** Mixed throw and return-based.
 
-Some services re-throw errors from ApiAdapter (which are now `AppError` instances). Others catch and return `{ ok, error }` envelopes. This variance is **documented but not changed** — service contract unification is deferred to a future work package.
+Some services re-throw errors from ApiAdapter (which are `AppError` instances). Others catch and return `{ ok, error }` envelopes.
 
 The consistent envelope shape is: `{ ok: boolean, message?, error?, data? }`
 
@@ -54,13 +51,13 @@ The consistent envelope shape is: `{ ok: boolean, message?, error?, data? }`
 
 **Pattern:** Guards + try/catch + UI feedback.
 
-Orchestrators use the WP-HR4 guard pattern for validation and wrap backend operations in try/catch blocks. All bare `return;` statements are annotated with one of three categories (see Silent Return Inventory below).
+Orchestrators use a guard pattern for validation and wrap backend operations in try/catch blocks. All bare `return;` statements are annotated with one of three categories (see Silent Return Inventory below).
 
 ### UI
 
 **Pattern:** `useState` + `Tennis.UI.toast()` + `showAlertMessage()`.
 
-Components typically read `.message` from caught errors for display. HR8 did **not** change UI behavior. It only ensured richer metadata exists at throw sites for future improvements.
+Components typically read `.message` from caught errors for display.
 
 ## AppError Class
 
@@ -115,6 +112,7 @@ Implementation details:
 **Location:** `src/lib/types/result.js`
 
 These formalize the existing `{ ok, data }` / `{ ok, error }` envelope pattern:
+
 ```javascript
 import { okResult, errResult } from '../lib/types/result.js';
 
@@ -131,8 +129,6 @@ The orchestrator helpers in `src/registration/orchestration/helpers/resultNormal
 (`success`, `failure`, `wrapAsync`) produce the same shapes and are typed against these definitions.
 
 ## UI Feedback Decision Table
-
-This documents the **current** behavior (unchanged by HR8):
 
 | Scenario | Method | Type |
 |----------|--------|------|
@@ -164,7 +160,7 @@ Error handling contracts are locked by 24 tests in `tests/unit/errors/`:
 | `resultTypes.test.js` | 6 | okResult/errResult shapes |
 | `resultNormalizerShapes.test.js` | 8 | success/failure/wrapAsync conformance |
 
-## Future Work (Not in HR8)
+## Future Work
 
 - Service layer contract unification (standardize throw vs return)
 - React error boundaries

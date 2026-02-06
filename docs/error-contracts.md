@@ -49,21 +49,21 @@ Current minimal set defined in `src/lib/errors.js`:
 ### Facade Layer
 
 **ApiTennisService** (`src/registration/services/ApiTennisService.js`):
-- 13 public async methods wrapped at boundary (WP5-B.3)
+- 13 public async methods wrapped at boundary
 
 ### Service Modules
 
-| Module | Methods Normalized | Commit |
-|--------|-------------------|--------|
-| `courtsService` | 6 (`refreshCourtData`, `getAllCourts`, `getAvailableCourts`, `getCourtByNumber`, `clearCourt`, `assignCourt`) | B.4a |
-| `waitlistService` | 5 (`refreshWaitlist`, `getWaitlist`, `removeFromWaitlist`, `addToWaitlist`, `assignFromWaitlist`) | B.4b |
-| `membersService` | 3 (`searchMembers`, `getMembersByAccount`, `getAllMembers`) | B.4c |
-| `settingsService` | 2 (`getSettings`, `refreshSettings`) | B.4d |
-| `purchasesService` | 1 (`purchaseBalls`) | B.4e |
-| `lifecycleService` | 1 (`loadInitialData`) | B.4f |
-| `participantResolution` | 1 (`resolveParticipants`) | B.4g |
+| Module | Methods Normalized |
+|--------|-------------------|
+| `courtsService` | 6 (`refreshCourtData`, `getAllCourts`, `getAvailableCourts`, `getCourtByNumber`, `clearCourt`, `assignCourt`) |
+| `waitlistService` | 5 (`refreshWaitlist`, `getWaitlist`, `removeFromWaitlist`, `addToWaitlist`, `assignFromWaitlist`) |
+| `membersService` | 3 (`searchMembers`, `getMembersByAccount`, `getAllMembers`) |
+| `settingsService` | 2 (`getSettings`, `refreshSettings`) |
+| `purchasesService` | 1 (`purchaseBalls`) |
+| `lifecycleService` | 1 (`loadInitialData`) |
+| `participantResolution` | 1 (`resolveParticipants`) |
 
-**Totals**: 19 module methods/functions normalized across 7 commits
+**Totals**: 19 module methods/functions normalized across 7 service modules
 
 ## 6. Usage Examples
 
@@ -107,6 +107,6 @@ try {
 
 ## 7. Non-Goals / Follow-Ons
 
-- **TRANSFORM_ERROR**: Apply at transform call sites (deferred; B.5 skipped)
+- **TRANSFORM_ERROR**: Apply at transform call sites (deferred)
 - **Finer domain codes**: Map specific Supabase error codes to more granular domain codes
 - **UI error component**: Standardize error presentation pattern across the application

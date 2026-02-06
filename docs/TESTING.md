@@ -6,7 +6,7 @@ This project uses two test frameworks:
 
 | Type | Framework | Count | Location | Command |
 |------|-----------|-------|----------|---------|
-| Unit | Vitest | 267 | `tests/unit/` | `npm run test:unit` |
+| Unit | Vitest | 683 | `tests/unit/` | `npm run test:unit` |
 | E2E | Playwright | 15 | `e2e/` | `npm run test:e2e` |
 
 ## Verification Gate
@@ -18,7 +18,7 @@ npm run verify
 
 This runs in order:
 1. `npm run lint` — ESLint (0 errors required)
-2. `npm run test:unit` — Vitest unit tests (267 tests)
+2. `npm run test:unit` — Vitest unit tests
 3. `npm run build` — Production build
 4. `npm run test:e2e` — Playwright E2E tests (15/15 required)
 
@@ -98,7 +98,7 @@ npx playwright test e2e/registration-happy-path.spec.js
 
 ### Test Files
 
-#### Existing Tests (Phase 1)
+#### Core Tests
 | Test | Flow Covered | Entry Point |
 |------|--------------|-------------|
 | `registration-happy-path.spec.js` | Registration Happy Path | `/src/registration/index.html` |
@@ -106,7 +106,7 @@ npx playwright test e2e/registration-happy-path.spec.js
 | `admin-settings-override.spec.js` | System Settings | `/src/admin/index.html` |
 | `admin-block-create.spec.js` | Block Management | `/src/admin/index.html` |
 
-#### Added Tests (Phase 2 Checkpoint)
+#### Additional Tests
 | Test | Flow Covered | Entry Point | Fixture |
 |------|--------------|-------------|---------|
 | `waitlist-cta-flow.spec.js` | Waitlist "Court Available" CTA | `/src/registration/index.html` | `board-state-waitlist.json` |
@@ -289,5 +289,5 @@ After each flow, verify:
 
 ## Known Issues / Warnings
 
-- 366 ESLint warnings (non-blocking, to burn down)
+- ESLint warnings tracked in lint ratchet baseline (non-blocking)
 - `TennisDataService.js` is deprecated (legacy localStorage)

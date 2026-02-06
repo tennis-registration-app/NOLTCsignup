@@ -1,8 +1,5 @@
 # Window Globals Policy
 
-**Date:** 2026-02-02
-**Work Package:** WP4-3
-
 ---
 
 ## Overview
@@ -160,6 +157,5 @@ Any other matches indicate policy violations.
 
 ## Related Documentation
 
-- [WP4-3_WINDOW_GLOBALS.md](./WP4-3_WINDOW_GLOBALS.md) - Original inventory
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
+- [ARCHITECTURE.md](../ARCHITECTURE.md) - System architecture
 - [ENVIRONMENT.md](./ENVIRONMENT.md) - Environment configuration

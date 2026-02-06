@@ -8,7 +8,7 @@ This document describes the ESLint ratchet mechanism that prevents lint regressi
 
 Warnings accumulate silently over time. A ratchet:
 - **Prevents growth** — new code cannot introduce additional warnings
-- **Allows gradual cleanup** — warnings can be fixed incrementally in later WPs
+- **Allows gradual cleanup** — warnings can be fixed incrementally
 - **Makes progress measurable** — baseline tracks improvement over time
 - **Doesn't block current work** — existing warnings are grandfathered
 
@@ -19,7 +19,7 @@ Warnings accumulate silently over time. A ratchet:
 3. **Fails on regression** — Any increase in warnings/errors fails the build
 4. **Allows improvement** — Decreases are allowed (and baseline can be updated)
 
-## Current Baseline (WP-HR7)
+## Current Baseline
 
 Captured on: 2026-02-01 (see git history for exact commit)
 
@@ -108,25 +108,22 @@ No timestamps in baseline (determinism).
 - **FAIL** if `currentWarnings > baseline.warnings`
 - **PASS** if counts are equal or lower (improvement allowed)
 
-### Proposed CLI Interface
+### CLI Interface
 
-*(To be implemented in Commit 2)*
 ```bash
 # Run ratchet check
 npm run lint:ratchet
 
-# Update baseline after fixing warnings (proposed)
+# Update baseline after fixing warnings
 npm run lint:ratchet -- --update-baseline
 
-# View current counts vs baseline without failing (proposed)
+# View current counts vs baseline without failing
 npm run lint:ratchet -- --dry-run
 ```
 
 ### Integration
 
-*(To be wired in Commit 3)*
-
-The ratchet will be integrated into `npm run verify`:
+The ratchet is integrated into `npm run verify`:
 ```json
 "verify": "npm run -s lint:ratchet && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
 ```
@@ -151,4 +148,4 @@ When fixing lint warnings:
 - Upgrade `no-undef` from warning to error
 - Consider adding `@typescript-eslint` for gradual type checking
 - Integrate with CI status checks (if not already)
-- Reduce baseline incrementally in follow-on WPs
+- Reduce baseline incrementally

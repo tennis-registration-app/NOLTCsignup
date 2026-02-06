@@ -2,7 +2,7 @@
 
 These are the critical user flows that must work correctly at all times. They serve as:
 1. Manual regression test checklist
-2. Input for automated Playwright tests (Phase 1)
+2. Input for automated Playwright tests
 
 Each flow includes preconditions, steps, and observable results.
 
@@ -10,7 +10,7 @@ Each flow includes preconditions, steps, and observable results.
 
 ## Flow 1: Registration Happy Path
 
-**Entry Point:** Registration app (`/src/registration/` or `/NOLTCsignup/src/registration/`)
+**Entry Point:** Registration app (`/src/registration/`)
 
 ### Preconditions
 - At least one court available (not blocked, not wet)
@@ -145,8 +145,8 @@ Each flow includes preconditions, steps, and observable results.
 ### Manual Testing
 Run through each flow before deployments or after significant changes.
 
-### Automated Testing (Phase 1)
-These flows will be converted to Playwright tests with:
+### Automated Testing
+These flows are implemented as Playwright tests with:
 - `data-testid` selectors for reliable element targeting
 - API response assertions
 - Visual state verification
@@ -160,11 +160,11 @@ When a golden flow fails:
 
 ---
 
-## Regression Tripwires (Grep-Based Invariants)
+## Regression Tripwires
 
-These commands should return the expected results. Failure indicates regression.
+These grep commands verify architectural invariants. Failure indicates regression.
 
-### Phase 3: Globals Eliminated
+### Window Globals Eliminated
 ```bash
 # Must return 0 results
 rg "window.__" src/registration
@@ -175,22 +175,22 @@ rg "__registrationData" src/registration
 # Expected: 0
 ```
 
-### Phase 2.X: Overtime Eligibility Centralized
+### Overtime Eligibility Centralized
 ```bash
 # Policy module exists and exports both functions
 rg "export function compute" src/shared/courts/overtimeEligibility.js
 # Expected: computeRegistrationCourtSelection, computePlayableCourts
 
-# listPlayableCourts is now a wrapper
+# listPlayableCourts delegates to policy module
 rg "computePlayableCourts" src/shared/courts/courtAvailability.js
-# Expected: 1+ results (delegates to policy module)
+# Expected: 1+ results
 
 # No inline court filtering in registration App.jsx
 rg "filter\(\(c\) => c\.isAvailable\)" src/registration/App.jsx
 # Expected: 0
 ```
 
-### Phase 2.2: BlockManager Decomposition
+### BlockManager Decomposition
 ```bash
 # Extracted modules exist
 ls src/admin/blocks/hooks/useWetCourts.js
@@ -199,29 +199,19 @@ ls src/admin/blocks/BlockReasonSelector.jsx
 ls src/admin/blocks/utils/expandRecurrenceDates.js
 # Expected: All files exist
 
-# Wet court handlers not defined in main component
+# Wet court handlers moved to hook
 rg "const handleEmergencyWetCourt|const deactivateWetCourts|const clearWetCourt" src/admin/blocks/CompleteBlockManagerEnhanced.jsx
-# Expected: 0 (moved to hook)
+# Expected: 0
 
-# Recurrence expansion not inline in handler
+# Recurrence expansion moved to utility
 rg "pattern.*daily|pattern.*weekly|pattern.*monthly" src/admin/blocks/CompleteBlockManagerEnhanced.jsx
-# Expected: 0 (moved to utility)
-```
-
-### Phase 3.3: Timeout Reset Parity
-```bash
-# Timeout function includes privacy resets
-rg "setGuestName\|setGuestSponsor\|setRegistrantStreak" src/registration/App.jsx
-# Expected: These setters appear in applyInactivityTimeoutExitSequence function
+# Expected: 0
 ```
 
 ### Navigation Performance Invariant
 ```bash
 # No awaited network call before setCurrentScreen('group', ...) when adding first player
-# Navigation must be immediate; fresh-data fetches (streak/partners) run AFTER navigation
-#
-# To verify: In handleSuggestionClick, any 'await' must appear AFTER setCurrentGroup/setCurrentScreen
-# The async IIFE pattern (async () => { await ... })() is acceptable as it doesn't block
+# Navigation must be immediate; fresh-data fetches run AFTER navigation
 ```
 
 **Rule:** When adding the first player, the Group Management screen must render immediately. Any fresh-data fetches (registrant streak, frequent partners) must:
@@ -229,11 +219,11 @@ rg "setGuestName\|setGuestSponsor\|setRegistrantStreak" src/registration/App.jsx
 2. Update state when complete (background enrichment pattern)
 3. NOT block the navigation with `await`
 
-### Court Array Null Safety Invariant
+### Court Array Null Safety
 
 **Invariant:** `board.courts` may contain `null` entries for courts without active sessions.
 
-**Rule:** All iterations, filters, and finds over `board.courts` (or any courts array) must defensively guard against nulls.
+**Rule:** All iterations, filters, and finds over courts arrays must guard against nulls.
 
 ```javascript
 // ✅ Correct
@@ -246,8 +236,6 @@ courts.filter((c) => c.isAvailable)
 courts.find((c) => c.number === courtNumber)
 ```
 
-**Discovered:** During mobile waitlist testing (Jan 2026). Null entries occur when court slots have no active session.
-
 **Files affected:**
-- `src/shared/courts/overtimeEligibility.js` - Fixed in commit 50dfd33
-- `src/courtboard/main.jsx` - Fixed in commit 89998ac
+- `src/shared/courts/overtimeEligibility.js`
+- `src/courtboard/main.jsx`

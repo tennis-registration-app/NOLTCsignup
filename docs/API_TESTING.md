@@ -2,17 +2,17 @@
 
 ## Overview
 
-WP-HR9 added integration tests for the API facade layer — the code between orchestrators and the network. These tests verify endpoint routing, payload construction, response normalization, caching behavior, and error propagation without network access.
+The codebase includes integration tests for the API facade layer — the code between orchestrators and the network. These tests verify endpoint routing, payload construction, response normalization, caching behavior, and error propagation without network access.
 
 ## Where This Boundary Sits
 
 The application has three test layers:
 
-1. **Orchestrator unit tests** (WP-HR4) test business logic with mocked `deps` objects. They do not exercise the API facade.
-2. **API facade integration tests** (WP-HR9, this layer) test the real ApiAdapter, backend classes, normalization, and caching with only `globalThis.fetch` stubbed. They verify that the facade correctly translates between orchestrator calls and network requests.
+1. **Orchestrator unit tests** test business logic with mocked `deps` objects. They do not exercise the API facade.
+2. **API facade integration tests** (this layer) test the real ApiAdapter, backend classes, normalization, and caching with only `globalThis.fetch` stubbed. They verify that the facade correctly translates between orchestrator calls and network requests.
 3. **E2E tests** (Playwright) test full user flows with Playwright route interception at the HTTP layer.
 
-HR9 fills the gap between orchestrator mocks and E2E flows, ensuring the API facade layer — which has real logic (payload mapping, normalization, caching, error wrapping) — is covered by fast, deterministic tests.
+This layer fills the gap between orchestrator mocks and E2E flows, ensuring the API facade layer — which has real logic (payload mapping, normalization, caching, error wrapping) — is covered by fast, deterministic tests.
 
 ## Test Architecture
 ```text
@@ -59,7 +59,7 @@ afterEach(() => {
 
 Tests the core network boundary and the **dual-semantics contract**:
 
-- `_fetch()` **throws** `AppError` on envelope `ok:false` or network failure (HR8 contract)
+- `_fetch()` **throws** `AppError` on envelope `ok:false` or network failure (per error contract)
 - `get()` **returns** raw envelope on `ok:false` without throwing
 - `post()` **returns** raw envelope on `ok:false` without throwing
 - Both `get()`/`post()` **throw** on network failure (fetch itself rejects)
@@ -147,7 +147,7 @@ function getParam(url, name) {
 | Realtime subscriptions | Depends on Supabase WebSocket client. Separate concern from API facade. |
 | E2E API behavior | Covered by Playwright tests with route interception. |
 
-## Error Handling Contracts (Cross-Reference with HR8)
+## Error Handling Contracts
 
 | Layer | On `ok:false` envelope | On network failure |
 |-------|------------------------|-------------------|
@@ -166,7 +166,4 @@ function getParam(url, name) {
 | TennisCommands.test.js | 13 |
 | TennisQueries.test.js | 14 |
 | TennisDirectory.test.js | 33 |
-| **Total HR9 tests** | **75** |
-
-Unit tests before HR9: 331
-Unit tests after HR9: 406
+| **Total API facade tests** | **75** |

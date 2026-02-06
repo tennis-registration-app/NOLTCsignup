@@ -1,7 +1,5 @@
 # Legacy Field Migration Checklist
 
-## Deadline: End of Phase 1
-
 ## Overview
 
 The normalize layer now returns pure Domain objects. Legacy components use `toLegacyBoard()`

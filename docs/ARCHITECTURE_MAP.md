@@ -89,9 +89,9 @@ src/registration/
 
 | Zone | Reason | Required Before Change |
 |------|--------|----------------------|
-| `assignCourtToGroup` | 370-line orchestrator | Overseer approval + decomposition plan |
-| `sendGroupToWaitlist` | GPS + validation coupling | Overseer approval |
-| `handleSuggestionClick` | Crosses 5+ clusters | Overseer approval |
+| `assignCourtToGroup` | 370-line orchestrator | Approval + decomposition plan |
+| `sendGroupToWaitlist` | GPS + validation coupling | Approval |
+| `handleSuggestionClick` | Crosses 5+ clusters | Approval |
 | `Tennis.Domain.*` | Shared business logic | Unit test coverage |
 | Backend adapters | API contract | Integration tests |
 
@@ -120,20 +120,20 @@ src/registration/
 ### Medium Risk Pattern
 1. Inventory existing coupling
 2. Document in PR
-3. Overseer review
+3. Review required
 4. Playwright + manual QA
 
 ### High Risk Pattern (Requires Strategy)
 1. Write BEFORE/AFTER behavior spec
-2. Get Overseer approval
+2. Get approval
 3. Incremental implementation with gates
 4. Full regression testing
 
 ---
 
-## Phase 4 Hardening Completed — Guardrails in Place
+## Architectural Guardrails
 
-Phase 4 established architectural boundaries and enforcement mechanisms to prevent common drift patterns. These guardrails are treated as **hard constraints**: any change that violates them requires an explicit charter + test evidence.
+Architectural boundaries and enforcement mechanisms prevent common drift patterns. These guardrails are treated as **hard constraints**: any change that violates them requires explicit approval + test evidence.
 
 ### 1. Config Validation + Freeze
 - **Location:** `src/config/` (see referenced docs)
@@ -150,7 +150,6 @@ Phase 4 established architectural boundaries and enforcement mechanisms to preve
 - **Pattern:** Large dependency objects grouped into `{ state, actions, services, ui }`
 - **resetOrchestrator:** 36 → 2 top-level keys (`actions`, `services`)
 - **assignCourtOrchestrator:** 36 → 4 top-level keys
-- **Docs:** `docs/WP4-2_DEPS_REFACTOR.md`
 
 ### 4. Boundary Normalization Rule
 - **Rule:** snake_case allowed only at boundaries; internal UI/services use camelCase
