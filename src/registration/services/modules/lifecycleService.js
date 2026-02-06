@@ -1,3 +1,4 @@
+import { normalizeServiceError } from '@lib/errors';
 import { transformCourts } from '../legacy/courtTransforms.js';
 import { transformWaitlist } from '../legacy/waitlistTransforms.js';
 
@@ -49,7 +50,7 @@ export function createLifecycleService({
       };
     } catch (error) {
       logger.error('ApiService', 'Failed to load initial data', error);
-      throw error;
+      throw normalizeServiceError(error, { service: 'lifecycleService', op: 'loadInitialData' });
     }
   }
 
