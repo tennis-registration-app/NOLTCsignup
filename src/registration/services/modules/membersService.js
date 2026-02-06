@@ -1,3 +1,5 @@
+import { normalizeServiceError } from '@lib/errors';
+
 /**
  * Members operations extracted from ApiTennisService.
  *
@@ -8,21 +10,33 @@
  */
 export function createMembersService({ api, getMembersCache, setMembersCache }) {
   async function searchMembers(query) {
-    const result = await api.getMembers(query);
-    return result.members || [];
+    try {
+      const result = await api.getMembers(query);
+      return result.members || [];
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'membersService', op: 'searchMembers' });
+    }
   }
 
   async function getMembersByAccount(memberNumber) {
-    const result = await api.getMembersByAccount(memberNumber);
-    return result.members || [];
+    try {
+      const result = await api.getMembersByAccount(memberNumber);
+      return result.members || [];
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'membersService', op: 'getMembersByAccount' });
+    }
   }
 
   async function getAllMembers() {
-    if (!getMembersCache()) {
-      const result = await api.getMembers();
-      setMembersCache(result);
+    try {
+      if (!getMembersCache()) {
+        const result = await api.getMembers();
+        setMembersCache(result);
+      }
+      return getMembersCache().members || [];
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'membersService', op: 'getAllMembers' });
     }
-    return getMembersCache().members || [];
   }
 
   return { searchMembers, getMembersByAccount, getAllMembers };
