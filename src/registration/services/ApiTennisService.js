@@ -7,6 +7,7 @@
 
 import { ApiAdapter } from '@lib/ApiAdapter.js';
 import { getRealtimeClient } from '@lib/RealtimeClient.js';
+import { normalizeServiceError } from '@lib/errors';
 import { logger } from '../../lib/logger.js';
 import { createCourtsService } from './modules/courtsService.js';
 import { createWaitlistService } from './modules/waitlistService.js';
@@ -159,15 +160,27 @@ class ApiTennisService {
   // ===========================================
 
   async loadInitialData() {
-    return this.lifecycleService.loadInitialData();
+    try {
+      return await this.lifecycleService.loadInitialData();
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'loadInitialData' });
+    }
   }
 
   async refreshCourtData() {
-    return this.courtsService.refreshCourtData();
+    try {
+      return await this.courtsService.refreshCourtData();
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'refreshCourtData' });
+    }
   }
 
   async refreshWaitlist() {
-    return this.waitlistService.refreshWaitlist();
+    try {
+      return await this.waitlistService.refreshWaitlist();
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'refreshWaitlist' });
+    }
   }
 
   // ===========================================
@@ -175,23 +188,43 @@ class ApiTennisService {
   // ===========================================
 
   async getAvailableCourts() {
-    return this.courtsService.getAvailableCourts();
+    try {
+      return await this.courtsService.getAvailableCourts();
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'getAvailableCourts' });
+    }
   }
 
   async getAllCourts() {
-    return this.courtsService.getAllCourts();
+    try {
+      return await this.courtsService.getAllCourts();
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'getAllCourts' });
+    }
   }
 
   async getCourtByNumber(courtNumber) {
-    return this.courtsService.getCourtByNumber(courtNumber);
+    try {
+      return await this.courtsService.getCourtByNumber(courtNumber);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'getCourtByNumber' });
+    }
   }
 
   async assignCourt(courtNumber, playersOrGroup, optionsOrDuration = {}) {
-    return this.courtsService.assignCourt(courtNumber, playersOrGroup, optionsOrDuration);
+    try {
+      return await this.courtsService.assignCourt(courtNumber, playersOrGroup, optionsOrDuration);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'assignCourt' });
+    }
   }
 
   async clearCourt(courtNumber, options = {}) {
-    return this.courtsService.clearCourt(courtNumber, options);
+    try {
+      return await this.courtsService.clearCourt(courtNumber, options);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'clearCourt' });
+    }
   }
 
   // ===========================================
@@ -199,7 +232,11 @@ class ApiTennisService {
   // ===========================================
 
   async purchaseBalls(sessionId, accountId, options = {}) {
-    return this.purchasesService.purchaseBalls(sessionId, accountId, options);
+    try {
+      return await this.purchasesService.purchaseBalls(sessionId, accountId, options);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'purchaseBalls' });
+    }
   }
 
   // ===========================================
@@ -207,19 +244,35 @@ class ApiTennisService {
   // ===========================================
 
   async getWaitlist() {
-    return this.waitlistService.getWaitlist();
+    try {
+      return await this.waitlistService.getWaitlist();
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'getWaitlist' });
+    }
   }
 
   async addToWaitlist(players, options = {}) {
-    return this.waitlistService.addToWaitlist(players, options);
+    try {
+      return await this.waitlistService.addToWaitlist(players, options);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'addToWaitlist' });
+    }
   }
 
   async removeFromWaitlist(waitlistId) {
-    return this.waitlistService.removeFromWaitlist(waitlistId);
+    try {
+      return await this.waitlistService.removeFromWaitlist(waitlistId);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'removeFromWaitlist' });
+    }
   }
 
   async assignFromWaitlist(waitlistId, courtNumber, options = {}) {
-    return this.waitlistService.assignFromWaitlist(waitlistId, courtNumber, options);
+    try {
+      return await this.waitlistService.assignFromWaitlist(waitlistId, courtNumber, options);
+    } catch (e) {
+      throw normalizeServiceError(e, { service: 'ApiTennisService', op: 'assignFromWaitlist' });
+    }
   }
 
   // ===========================================
