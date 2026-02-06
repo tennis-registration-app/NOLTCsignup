@@ -1,3 +1,5 @@
+import { normalizeServiceError } from '@lib/errors';
+
 /**
  * Settings operations extracted from ApiTennisService.
  *
@@ -8,15 +10,23 @@
  */
 export function createSettingsService({ api, getSettingsCache, setSettingsCache }) {
   async function getSettings() {
-    if (!getSettingsCache()) {
-      setSettingsCache(await api.getSettings());
+    try {
+      if (!getSettingsCache()) {
+        setSettingsCache(await api.getSettings());
+      }
+      return getSettingsCache();
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'settingsService', op: 'getSettings' });
     }
-    return getSettingsCache();
   }
 
   async function refreshSettings() {
-    setSettingsCache(await api.getSettings(true));
-    return getSettingsCache();
+    try {
+      setSettingsCache(await api.getSettings(true));
+      return getSettingsCache();
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'settingsService', op: 'refreshSettings' });
+    }
   }
 
   return { getSettings, refreshSettings };
