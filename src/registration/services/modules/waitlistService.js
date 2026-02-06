@@ -1,4 +1,5 @@
 import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
+import { normalizeServiceError } from '@lib/errors';
 import { resolveParticipants, WAITLIST_PROFILE } from './participantResolution.js';
 
 /**
@@ -35,63 +36,71 @@ export function createWaitlistService({
       return transformWaitlist(waitlistData.waitlist);
     } catch (error) {
       logger.error('ApiService', 'Failed to refresh waitlist', error);
-      throw error;
+      throw normalizeServiceError(error, { service: 'waitlistService', op: 'refreshWaitlist' });
     }
   }
 
   async function getWaitlist() {
-    if (!getWaitlistData()) {
-      await refreshWaitlist();
+    try {
+      if (!getWaitlistData()) {
+        await refreshWaitlist();
+      }
+      return transformWaitlist(getWaitlistData().waitlist);
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'waitlistService', op: 'getWaitlist' });
     }
-    return transformWaitlist(getWaitlistData().waitlist);
   }
 
   async function removeFromWaitlist(waitlistId) {
-    // If passed an index (legacy), we need to look up the actual ID
-    if (typeof waitlistId === 'number') {
-      const waitlist = await getWaitlist();
-      const entry = waitlist[waitlistId];
-      if (!entry) {
-        throw new Error(`Waitlist entry at index ${waitlistId} not found`);
+    try {
+      // If passed an index (legacy), we need to look up the actual ID
+      if (typeof waitlistId === 'number') {
+        const waitlist = await getWaitlist();
+        const entry = waitlist[waitlistId];
+        if (!entry) {
+          throw new Error(`Waitlist entry at index ${waitlistId} not found`);
+        }
+        waitlistId = entry.id;
       }
-      waitlistId = entry.id;
+
+      await api.cancelWaitlist(waitlistId);
+
+      // Refresh waitlist
+      await refreshWaitlist();
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'waitlistService', op: 'removeFromWaitlist' });
     }
-
-    await api.cancelWaitlist(waitlistId);
-
-    // Refresh waitlist
-    await refreshWaitlist();
-
-    return {
-      success: true,
-    };
   }
 
   async function addToWaitlist(players, options = {}) {
-    const traceId = options.traceId || `API-${Date.now()}`;
-    logger.debug('ApiService', `[${traceId}] addToWaitlist ENTRY`);
-    logger.debug('ApiService', `[${traceId}] Input players`, JSON.stringify(players, null, 2));
-    logger.debug(
-      'ApiService',
-      `[${traceId}] Players summary`,
-      players.map((p) => `${p.name}(id=${p.id},mn=${p.memberNumber})`)
-    );
-    logger.debug('ApiService', `[${traceId}] Options`, options);
-
-    // Resolve players to participants using shared helper (WAITLIST_PROFILE)
-    const { participants, groupType: resolvedGroupType } = await resolveParticipants(
-      players,
-      { api, logger, normalizeAccountMembers },
-      WAITLIST_PROFILE,
-      { traceId }
-    );
-
-    // Options override groupType
-    const groupType = options.type || options.groupType || resolvedGroupType;
-
-    logger.debug('ApiService', 'Calling API with', { groupType, participants });
-
     try {
+      const traceId = options.traceId || `API-${Date.now()}`;
+      logger.debug('ApiService', `[${traceId}] addToWaitlist ENTRY`);
+      logger.debug('ApiService', `[${traceId}] Input players`, JSON.stringify(players, null, 2));
+      logger.debug(
+        'ApiService',
+        `[${traceId}] Players summary`,
+        players.map((p) => `${p.name}(id=${p.id},mn=${p.memberNumber})`)
+      );
+      logger.debug('ApiService', `[${traceId}] Options`, options);
+
+      // Resolve players to participants using shared helper (WAITLIST_PROFILE)
+      const { participants, groupType: resolvedGroupType } = await resolveParticipants(
+        players,
+        { api, logger, normalizeAccountMembers },
+        WAITLIST_PROFILE,
+        { traceId }
+      );
+
+      // Options override groupType
+      const groupType = options.type || options.groupType || resolvedGroupType;
+
+      logger.debug('ApiService', 'Calling API with', { groupType, participants });
+
       const result = await api.joinWaitlist(groupType, participants);
       logger.debug('ApiService', 'API response', JSON.stringify(result, null, 2));
 
@@ -113,41 +122,45 @@ export function createWaitlistService({
       };
     } catch (error) {
       logger.error('ApiService', 'API error', error);
-      throw error;
+      throw normalizeServiceError(error, { service: 'waitlistService', op: 'addToWaitlist' });
     }
   }
 
   async function assignFromWaitlist(waitlistId, courtNumber, options = {}) {
-    // If passed an index (legacy), look up the actual ID
-    if (typeof waitlistId === 'number') {
-      const waitlist = await getWaitlist();
-      const entry = waitlist[waitlistId];
-      if (!entry) {
-        throw new Error(`Waitlist entry at index ${waitlistId} not found`);
+    try {
+      // If passed an index (legacy), look up the actual ID
+      if (typeof waitlistId === 'number') {
+        const waitlist = await getWaitlist();
+        const entry = waitlist[waitlistId];
+        if (!entry) {
+          throw new Error(`Waitlist entry at index ${waitlistId} not found`);
+        }
+        waitlistId = entry.id;
       }
-      waitlistId = entry.id;
+
+      // Get court ID from court number
+      const courts = await courtsService.getAllCourts();
+      const court = courts.find((c) => c.number === courtNumber);
+
+      if (!court) {
+        throw new Error(`Court ${courtNumber} not found`);
+      }
+
+      const result = await api.assignFromWaitlist(waitlistId, court.id, {
+        addBalls: options.addBalls || options.balls || false,
+        splitBalls: options.splitBalls || false,
+      });
+
+      // Refresh both
+      await Promise.all([courtsService.refreshCourtData(), refreshWaitlist()]);
+
+      return {
+        success: true,
+        session: result.session,
+      };
+    } catch (error) {
+      throw normalizeServiceError(error, { service: 'waitlistService', op: 'assignFromWaitlist' });
     }
-
-    // Get court ID from court number
-    const courts = await courtsService.getAllCourts();
-    const court = courts.find((c) => c.number === courtNumber);
-
-    if (!court) {
-      throw new Error(`Court ${courtNumber} not found`);
-    }
-
-    const result = await api.assignFromWaitlist(waitlistId, court.id, {
-      addBalls: options.addBalls || options.balls || false,
-      splitBalls: options.splitBalls || false,
-    });
-
-    // Refresh both
-    await Promise.all([courtsService.refreshCourtData(), refreshWaitlist()]);
-
-    return {
-      success: true,
-      session: result.session,
-    };
   }
 
   return {
