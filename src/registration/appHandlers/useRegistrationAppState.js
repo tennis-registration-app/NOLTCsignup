@@ -255,6 +255,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
       setIsChangingCourt,
       setWasOvertimeCourt,
       clearSuccessResetTimer,
+      refresh: () => backend.queries.refresh(),
     });
   }
 

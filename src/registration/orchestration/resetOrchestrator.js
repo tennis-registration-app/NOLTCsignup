@@ -46,7 +46,10 @@
  *   - clearCache
  *   - clearSuccessResetTimer
  *
- * Returns: void (same as original)
+ * Calls (services):
+ *   - refresh (board data refresh after reset)
+ *
+ * Returns: Promise<void>
  *
  * ---
  *
@@ -57,11 +60,12 @@
  *
  * Calls (helpers):
  *   - clearSuccessResetTimer
+ *   - refresh (board data refresh after timeout)
  *
- * Returns: void (same as original)
+ * Returns: Promise<void>
  */
 
-export function resetFormOrchestrated(deps) {
+export async function resetFormOrchestrated(deps) {
   // WP4-2: Grouped deps structure — { actions, services }
   const {
     actions: {
@@ -149,9 +153,18 @@ export function resetFormOrchestrated(deps) {
   setShowStreakModal(false);
   setStreakAcknowledged(false);
   // ===== END ORIGINAL FUNCTION BODY =====
+
+  // Force-refresh board data so HomeScreen shows fresh state immediately
+  if (deps.services.refresh) {
+    try {
+      await deps.services.refresh();
+    } catch (e) {
+      console.warn('[RESET] Board refresh after reset failed:', e);
+    }
+  }
 }
 
-export function applyInactivityTimeoutOrchestrated(deps) {
+export async function applyInactivityTimeoutOrchestrated(deps) {
   const {
     // Setters
     setCurrentGroup,
@@ -233,4 +246,13 @@ export function applyInactivityTimeoutOrchestrated(deps) {
   setIsChangingCourt(false);
   setWasOvertimeCourt(false);
   // ===== END ORIGINAL FUNCTION BODY =====
+
+  // Force-refresh board data so HomeScreen shows fresh state immediately
+  if (deps.refresh) {
+    try {
+      await deps.refresh();
+    } catch (e) {
+      console.warn('[TIMEOUT] Board refresh after inactivity timeout failed:', e);
+    }
+  }
 }

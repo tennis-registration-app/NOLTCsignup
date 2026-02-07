@@ -183,6 +183,7 @@ export function useRegistrationHandlers({ app }) {
       services: {
         clearCache,
         clearSuccessResetTimer,
+        refresh: () => backend.queries.refresh(),
       },
     }),
     [
@@ -223,6 +224,7 @@ export function useRegistrationHandlers({ app }) {
       setStreakAcknowledged,
       clearCache,
       clearSuccessResetTimer,
+      backend.queries,
     ]
   );
 
