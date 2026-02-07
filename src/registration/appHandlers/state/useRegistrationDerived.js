@@ -52,7 +52,8 @@ export function useRegistrationDerived({
     ).length;
 
     const live1 = eligibleForFirst >= 1 && firstGroup !== null;
-    const live2 = eligibleForSecond >= 2 && secondGroup !== null;
+    const courtsNeededForSecond = live1 ? 2 : 1;
+    const live2 = eligibleForSecond >= courtsNeededForSecond && secondGroup !== null;
 
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
