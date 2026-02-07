@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
 
 /**
  * useRegistrationDerived
@@ -39,10 +40,19 @@ export function useRegistrationDerived({
 
     const firstGroup = normalizedWaitlist[0] || null;
     const secondGroup = normalizedWaitlist[1] || null;
-    const gateCount = availableCourts.length;
 
-    const live1 = gateCount >= 1 && firstGroup !== null;
-    const live2 = gateCount >= 2 && secondGroup !== null;
+    // Filter available courts by singles-only eligibility for each group
+    const firstGroupPlayerCount = firstGroup?.players?.length || 0;
+    const secondGroupPlayerCount = secondGroup?.players?.length || 0;
+    const eligibleForFirst = availableCourts.filter((courtNum) =>
+      isCourtEligibleForGroup(courtNum, firstGroupPlayerCount)
+    ).length;
+    const eligibleForSecond = availableCourts.filter((courtNum) =>
+      isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
+    ).length;
+
+    const live1 = eligibleForFirst >= 1 && firstGroup !== null;
+    const live2 = eligibleForSecond >= 2 && secondGroup !== null;
 
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
