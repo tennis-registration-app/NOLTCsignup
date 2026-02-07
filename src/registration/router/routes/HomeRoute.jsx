@@ -44,6 +44,9 @@ export function HomeRoute({ app, handlers }) {
     secondWaitlistEntry,
     firstWaitlistEntryData,
     secondWaitlistEntryData,
+    canPassThroughGroupPlay,
+    passThroughEntry,
+    passThroughEntryData,
     isMobileView,
   } = derived;
   const { showAlert, alertMessage } = alert;
@@ -88,6 +91,9 @@ export function HomeRoute({ app, handlers }) {
         secondWaitlistEntry={secondWaitlistEntry}
         firstWaitlistEntryData={firstWaitlistEntryData}
         secondWaitlistEntryData={secondWaitlistEntryData}
+        canPassThroughGroupPlay={canPassThroughGroupPlay}
+        passThroughEntry={passThroughEntry}
+        passThroughEntryData={passThroughEntryData}
         // UI state
         showAlert={showAlert}
         alertMessage={alertMessage}

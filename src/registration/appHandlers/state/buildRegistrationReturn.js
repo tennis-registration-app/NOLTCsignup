@@ -119,6 +119,9 @@ export function buildRegistrationReturn({
       secondWaitlistEntry: derived.secondWaitlistEntry,
       firstWaitlistEntryData: derived.firstWaitlistEntryData,
       secondWaitlistEntryData: derived.secondWaitlistEntryData,
+      canPassThroughGroupPlay: derived.canPassThroughGroupPlay,
+      passThroughEntry: derived.passThroughEntry,
+      passThroughEntryData: derived.passThroughEntryData,
       memberDatabase: derived.memberDatabase,
     },
 

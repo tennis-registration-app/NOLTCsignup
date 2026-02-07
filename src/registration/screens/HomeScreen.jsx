@@ -41,6 +41,9 @@ const HomeScreen = ({
   secondWaitlistEntry,
   firstWaitlistEntryData,
   secondWaitlistEntryData,
+  canPassThroughGroupPlay,
+  passThroughEntry,
+  passThroughEntryData,
   // UI state
   showAlert,
   alertMessage,
@@ -236,6 +239,50 @@ const HomeScreen = ({
           >
             {(() => {
               const g = secondWaitlistEntryData;
+              const names = Array.isArray(g?.players)
+                ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
+                : [];
+              return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
+            })()}
+          </button>
+        )}
+
+        {/* CTA #3 — pass-through group (when no group ahead can use available courts) */}
+        {canPassThroughGroupPlay && (
+          <button
+            onClick={() => {
+              // Guard: ensure waitlist entry has players
+              if (!passThroughEntry?.players?.length) {
+                console.warn('[CTA] No pass-through waitlist entry or players available');
+                return;
+              }
+
+              // Load the pass-through waiting group (use memberId, not id)
+              setCurrentGroup(
+                passThroughEntry.players.map((player) => ({
+                  ...player,
+                  memberNumber: findMemberNumber(player.memberId),
+                }))
+              );
+
+              // Set member number to first player in pass-through group
+              const firstPlayerMemberNum = findMemberNumber(passThroughEntry.players[0].memberId);
+              setMemberNumber(firstPlayerMemberNum);
+
+              // Set waitlist priority flag and store entry ID for assignFromWaitlist
+              setHasWaitlistPriority(true);
+              if (setCurrentWaitlistEntryId && passThroughEntry?.id) {
+                setCurrentWaitlistEntryId(passThroughEntry.id);
+              }
+
+              // Navigate to court selection
+              setCurrentScreen('court');
+            }}
+            className="pulse-cta cta-secondary w-full bg-green-500 text-white py-4 sm:py-5 px-6 rounded-xl text-xl sm:text-2xl font-semibold hover:bg-green-600 transition-colors mb-3 animate-pulse"
+            aria-live="polite"
+          >
+            {(() => {
+              const g = passThroughEntryData;
               const names = Array.isArray(g?.players)
                 ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
                 : [];

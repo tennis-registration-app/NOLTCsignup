@@ -27,6 +27,9 @@ export function useRegistrationDerived({
     canSecondGroupPlay,
     firstWaitlistEntryData,
     secondWaitlistEntryData,
+    canPassThroughGroupPlay,
+    passThroughEntry,
+    passThroughEntryData,
   } = useMemo(() => {
     const normalizedWaitlist = (data.waitlist || []).map((entry) => ({
       id: entry.id,
@@ -62,6 +65,27 @@ export function useRegistrationDerived({
       ? { id: secondGroup.id, position: secondGroup.position ?? 2, players: secondGroup.players }
       : null;
 
+    // Pass-through: if neither position 0 nor 1 can play,
+    // find the first group from position 2+ that CAN play
+    let passThrough = null;
+    if (!live1 && !live2 && availableCourts.length > 0) {
+      for (let i = 2; i < normalizedWaitlist.length; i++) {
+        const entry = normalizedWaitlist[i];
+        const playerCount = entry?.players?.length || 0;
+        const eligible = availableCourts.filter((courtNum) =>
+          isCourtEligibleForGroup(courtNum, playerCount)
+        ).length;
+        if (eligible >= 1) {
+          passThrough = {
+            id: entry.id,
+            position: entry.position ?? i + 1,
+            players: entry.players,
+          };
+          break;
+        }
+      }
+    }
+
     return {
       firstWaitlistEntry: first,
       secondWaitlistEntry: second,
@@ -69,6 +93,9 @@ export function useRegistrationDerived({
       canSecondGroupPlay: !!live2,
       firstWaitlistEntryData: first,
       secondWaitlistEntryData: second,
+      canPassThroughGroupPlay: passThrough !== null,
+      passThroughEntry: passThrough,
+      passThroughEntryData: passThrough,
     };
   }, [data.waitlist, availableCourts]);
 
@@ -146,6 +173,9 @@ export function useRegistrationDerived({
     secondWaitlistEntry,
     firstWaitlistEntryData,
     secondWaitlistEntryData,
+    canPassThroughGroupPlay,
+    passThroughEntry,
+    passThroughEntryData,
     memberDatabase,
   };
 }
