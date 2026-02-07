@@ -13,6 +13,7 @@ const backend = createBackend();
 
 // Court availability helper - single source of truth for free/playable courts
 import { countPlayableCourts, listPlayableCourts } from '../../shared/courts/courtAvailability.js';
+import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
 
 // Window bridge - single writer for window.CourtboardState
 import { writeCourtboardState } from '../bridge/window-bridge';
@@ -316,12 +317,18 @@ export function TennisCourtDisplay() {
 
     // Use shared helper for consistent free court calculation
     const now = new Date().toISOString();
-    const freeCourtCount = countPlayableCourts(courts, courtBlocks, now);
     const freeCourtList = listPlayableCourts(courts, courtBlocks, now);
+
+    // Filter by singles-only eligibility for this group's player count
+    const groupPlayerCount = firstGroup?.players?.length || 0;
+    const eligibleCourtList = freeCourtList.filter((courtNum) =>
+      isCourtEligibleForGroup(courtNum, groupPlayerCount)
+    );
+    const freeCourtCount = eligibleCourtList.length;
 
     logger.debug('CourtDisplay', 'WaitlistNotice check', {
       freeCourts: freeCourtCount,
-      freeCourtList: freeCourtList,
+      freeCourtList: eligibleCourtList,
       waitlistLength: waitlist?.length,
       isMobileView: isMobileView,
       mobileWaitlistEntryId: mobileWaitlistEntryId,
