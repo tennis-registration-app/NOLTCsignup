@@ -7,21 +7,13 @@
  * Uses the normalize layer for consistent Domain objects.
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { API_CONFIG } from '../../lib/apiConfig.js';
 import { normalizeBoard } from '../../lib/normalize/index.js';
 import { validateBoardResponse, validateBoard } from '../../lib/schemas/index.js';
 import { logger } from '../../lib/logger.js';
 
-// Feature flag: set to true to test broadcast-only mode (simulates postgres_changes disabled)
-const BROADCAST_ONLY_MODE = false;
-
 export class TennisQueries {
   constructor(apiAdapter) {
     this.api = apiAdapter;
-    this.supabase = createClient(API_CONFIG.SUPABASE_URL, API_CONFIG.ANON_KEY);
-    this.subscription = null;
-    this.broadcastSubscription = null;
     this._refreshTimeout = null;
     this._lastBoard = null;
     // Debug counters for verifying one-refresh-per-mutation
@@ -29,7 +21,7 @@ export class TennisQueries {
     this._refreshCount = 0;
     // Regression guard: track last refresh time to detect double-refreshes
     this._lastRefreshTime = 0;
-    // E2E test mode: skip realtime subscriptions when ?e2e=1
+    // E2E test mode: skip polling when ?e2e=1
     this.isE2ETest =
       typeof window !== 'undefined' &&
       new URLSearchParams(window.location.search).get('e2e') === '1';
@@ -77,14 +69,14 @@ export class TennisQueries {
 
   /**
    * Subscribe to board changes
-   * Uses board_change_signals table as a lightweight trigger
+   * Uses polling and visibility-based refresh for state updates.
    * @param {(board: import('./types').BoardState) => void} callback
    * @returns {() => void} Unsubscribe function
    */
   subscribeToBoardChanges(callback) {
-    // E2E test mode: skip realtime, just fetch once
+    // E2E test mode: skip polling, just fetch once
     if (this.isE2ETest) {
-      logger.debug('TennisQueries', 'E2E mode: skipping realtime subscription');
+      logger.debug('TennisQueries', 'E2E mode: skipping polling subscription');
       this.getBoard().then((board) => {
         if (board) callback(board);
       });
@@ -108,43 +100,10 @@ export class TennisQueries {
       })
       .catch((e) => logger.error('TennisQueries', 'Initial fetch failed', e));
 
-    // Set up realtime subscriptions
-    this._setupRealtimeSubscriptions(callback);
-
     // Refresh board when tab becomes visible (handles sleep/wake, tab switching)
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        logger.debug('TennisQueries', 'Tab visible, checking subscriptions...');
-
-        // Check if channels are still connected
-        const postgresState = this.subscription?.state;
-        const broadcastState = this.broadcastSubscription?.state;
-
-        logger.debug(
-          'TennisQueries',
-          `Channel states - postgres: ${postgresState}, broadcast: ${broadcastState}`
-        );
-
-        // If either channel is not joined, reconnect
-        // Supabase channel states: 'closed', 'errored', 'joined', 'joining', 'leaving'
-        if ((this.subscription && postgresState !== 'joined') || broadcastState !== 'joined') {
-          logger.debug('TennisQueries', 'Channels disconnected, resubscribing...');
-
-          // Remove old channels
-          if (this.subscription) {
-            this.supabase.removeChannel(this.subscription);
-            this.subscription = null;
-          }
-          if (this.broadcastSubscription) {
-            this.supabase.removeChannel(this.broadcastSubscription);
-            this.broadcastSubscription = null;
-          }
-
-          // Resubscribe
-          this._setupRealtimeSubscriptions(callback);
-        }
-
-        // Always refresh data when becoming visible
+        logger.debug('TennisQueries', 'Tab visible, refreshing data...');
         this._handleSignal(callback, 'visibility_change');
       }
     };
@@ -160,48 +119,21 @@ export class TennisQueries {
       }
     }, BLOCK_EXPIRY_POLL_INTERVAL);
 
-    // Periodic health check for WebSocket connections (handles silent disconnects on always-visible displays)
-    const HEALTH_CHECK_INTERVAL = 60000; // 60 seconds
-    const healthCheckInterval = setInterval(() => {
-      const postgresState = this.subscription?.state;
-      const broadcastState = this.broadcastSubscription?.state;
-
-      // Only log if there's an issue
-      if ((this.subscription && postgresState !== 'joined') || broadcastState !== 'joined') {
-        logger.debug(
-          'TennisQueries',
-          `[health-check] Channel states - postgres: ${postgresState}, broadcast: ${broadcastState}`
-        );
-        logger.debug('TennisQueries', '[health-check] Reconnecting...');
-
-        // Remove old channels
-        if (this.subscription) {
-          this.supabase.removeChannel(this.subscription);
-          this.subscription = null;
-        }
-        if (this.broadcastSubscription) {
-          this.supabase.removeChannel(this.broadcastSubscription);
-          this.broadcastSubscription = null;
-        }
-
-        // Resubscribe
-        this._setupRealtimeSubscriptions(callback);
+    // Periodic refresh as backup (every 60 seconds)
+    // Ensures state stays fresh on always-visible displays
+    const BACKUP_POLL_INTERVAL = 60000; // 60 seconds
+    const backupPollInterval = setInterval(() => {
+      if (!document.hidden) {
+        logger.debug('TennisQueries', '[backup-poll] Periodic refresh...');
+        this._handleSignal(callback, 'backup_poll');
       }
-    }, HEALTH_CHECK_INTERVAL);
+    }, BACKUP_POLL_INTERVAL);
 
     // Return unsubscribe function
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(pollInterval);
-      clearInterval(healthCheckInterval);
-      if (this.subscription) {
-        this.supabase.removeChannel(this.subscription);
-        this.subscription = null;
-      }
-      if (this.broadcastSubscription) {
-        this.supabase.removeChannel(this.broadcastSubscription);
-        this.broadcastSubscription = null;
-      }
+      clearInterval(backupPollInterval);
       if (this._refreshTimeout) {
         clearTimeout(this._refreshTimeout);
         this._refreshTimeout = null;
@@ -257,71 +189,6 @@ export class TennisQueries {
         logger.error('TennisQueries', 'Failed to refresh board', error);
       }
     }, 100);
-  }
-
-  /**
-   * Set up realtime channel subscriptions
-   * Extracted to allow re-subscription on visibility change when channels disconnect
-   * @private
-   */
-  _setupRealtimeSubscriptions(callback) {
-    logger.debug(
-      'TennisQueries',
-      `Setting up Realtime subscriptions... ${BROADCAST_ONLY_MODE ? '(BROADCAST_ONLY_MODE)' : ''}`
-    );
-
-    // Method 1: postgres_changes (database replication) - skip if BROADCAST_ONLY_MODE
-    if (!BROADCAST_ONLY_MODE) {
-      this.subscription = this.supabase
-        .channel('board-signals')
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'board_change_signals' },
-          (payload) => {
-            logger.debug(
-              'TennisQueries',
-              `[postgres_changes] Signal received: ${payload.new?.change_type}`
-            );
-            this._handleSignal(callback, 'postgres_changes');
-          }
-        )
-        .subscribe((status, err) => {
-          logger.debug(
-            'TennisQueries',
-            `[postgres_changes] Status: ${status}${err ? ` Error: ${err.message}` : ''}`
-          );
-          if (status === 'SUBSCRIBED') {
-            logger.debug('TennisQueries', '[postgres_changes] Connected');
-          } else if (status === 'CHANNEL_ERROR') {
-            logger.warn(
-              'TennisQueries',
-              '[postgres_changes] Error - may need to enable Replication in Supabase Dashboard'
-            );
-          }
-        });
-    } else {
-      logger.debug('TennisQueries', '[postgres_changes] SKIPPED (BROADCAST_ONLY_MODE enabled)');
-    }
-
-    // Method 2: broadcast (more reliable, doesn't need database replication)
-    this.broadcastSubscription = this.supabase
-      .channel('board-updates')
-      .on('broadcast', { event: 'board_changed' }, (payload) => {
-        logger.debug(
-          'TennisQueries',
-          `[broadcast] Signal received: ${payload.payload?.change_type}`
-        );
-        this._handleSignal(callback, 'broadcast');
-      })
-      .subscribe((status, err) => {
-        logger.debug(
-          'TennisQueries',
-          `[broadcast] Status: ${status}${err ? ` Error: ${err.message}` : ''}`
-        );
-        if (status === 'SUBSCRIBED') {
-          logger.debug('TennisQueries', '[broadcast] Connected - ready for real-time updates');
-        }
-      });
   }
 
   /**
