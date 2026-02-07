@@ -65,39 +65,42 @@ export function useRegistrationDataLayer({
   // VERBATIM COPY: subscription effect (lines 700-747) — KEEP [] DEPS EXACTLY
   useEffect(() => {
     logger.debug('DataLayer', '[TennisBackend] Setting up board subscription...');
-    const unsubscribe = backend.queries.subscribeToBoardChanges((domainBoard) => {
-      const board = domainBoard;
-      logger.debug('DataLayer', '[TennisBackend] Board update received', {
-        serverNow: board.serverNow,
-        courts: board.courts?.length,
-        waitlist: board.waitlist?.length,
-      });
-      setData((prev) => ({
-        ...prev,
-        courts: board.courts || [],
-        waitlist: board.waitlist || [],
-        blocks: board.blocks || [],
-        upcomingBlocks: board.upcomingBlocks || [],
-      }));
-      if (board.operatingHours) {
-        setOperatingHours(board.operatingHours);
-      }
-      const selectable = (board.courts || [])
-        .filter((c) => (c.isAvailable || c.isOvertime) && !c.isBlocked)
-        .map((c) => c.number);
-      setAvailableCourts(selectable);
-      logger.debug(
-        'DataLayer',
-        '[Registration CTA Debug] Courts from API',
-        board.courts?.map((c) => ({
-          num: c.number,
-          isBlocked: c.isBlocked,
-          isAvailable: c.isAvailable,
-          isOvertime: c.isOvertime,
-          block: c.block ? { id: c.block.id, reason: c.block.reason } : null,
-        }))
-      );
-    });
+    const unsubscribe = backend.queries.subscribeToBoardChanges(
+      (domainBoard) => {
+        const board = domainBoard;
+        logger.debug('DataLayer', '[TennisBackend] Board update received', {
+          serverNow: board.serverNow,
+          courts: board.courts?.length,
+          waitlist: board.waitlist?.length,
+        });
+        setData((prev) => ({
+          ...prev,
+          courts: board.courts || [],
+          waitlist: board.waitlist || [],
+          blocks: board.blocks || [],
+          upcomingBlocks: board.upcomingBlocks || [],
+        }));
+        if (board.operatingHours) {
+          setOperatingHours(board.operatingHours);
+        }
+        const selectable = (board.courts || [])
+          .filter((c) => (c.isAvailable || c.isOvertime) && !c.isBlocked)
+          .map((c) => c.number);
+        setAvailableCourts(selectable);
+        logger.debug(
+          'DataLayer',
+          '[Registration CTA Debug] Courts from API',
+          board.courts?.map((c) => ({
+            num: c.number,
+            isBlocked: c.isBlocked,
+            isAvailable: c.isAvailable,
+            isOvertime: c.isOvertime,
+            block: c.block ? { id: c.block.id, reason: c.block.reason } : null,
+          }))
+        );
+      },
+      { pollIntervalMs: 5000 }
+    );
     logger.debug('DataLayer', '[TennisBackend] Board subscription active');
     return () => {
       logger.debug('DataLayer', '[TennisBackend] Unsubscribing from board updates');
