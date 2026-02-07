@@ -127,7 +127,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
     }
 
     // Determine group type from player count
-    const groupType = players.length <= 2 ? 'singles' : 'doubles';
+    const groupType = players.length <= 3 ? 'singles' : 'doubles';
 
     // Get geolocation for mobile (required by backend for geofence validation)
     const mobileLocation = await getMobileGeolocation();

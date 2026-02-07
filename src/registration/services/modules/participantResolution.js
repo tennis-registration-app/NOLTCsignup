@@ -272,7 +272,7 @@ export async function resolveParticipants(players, deps, profile, options = {}) 
     }
 
     // Determine group type
-    const groupType = participants.length <= 2 ? 'singles' : 'doubles';
+    const groupType = participants.length <= 3 ? 'singles' : 'doubles';
 
     return { participants, groupType };
   } catch (e) {

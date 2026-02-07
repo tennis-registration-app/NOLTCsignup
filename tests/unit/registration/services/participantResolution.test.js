@@ -220,7 +220,7 @@ describe('participantResolution', () => {
       expect(result.groupType).toBe('singles');
     });
 
-    it('returns doubles for 3+ players', async () => {
+    it('returns singles for 3 players', async () => {
       const players = [
         { id: '11111111-2222-3333-4444-555555555555', accountId: 'acc-1', name: 'A' },
         { id: '22222222-3333-4444-5555-666666666666', accountId: 'acc-2', name: 'B' },
@@ -229,7 +229,7 @@ describe('participantResolution', () => {
 
       const result = await resolveParticipants(players, deps, COURTS_PROFILE);
 
-      expect(result.groupType).toBe('doubles');
+      expect(result.groupType).toBe('singles');
     });
   });
 });

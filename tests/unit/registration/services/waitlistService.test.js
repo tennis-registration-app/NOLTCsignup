@@ -246,7 +246,7 @@ describe('waitlistService', () => {
       ]);
     });
 
-    it('uses doubles groupType for 3+ players', async () => {
+    it('uses singles groupType for 3 players', async () => {
       const players = [
         { id: 'uuid-1-aaaa-bbbb-cccc-dddddddddddd', accountId: 'acc-1', name: 'P1' },
         { id: 'uuid-2-aaaa-bbbb-cccc-dddddddddddd', accountId: 'acc-2', name: 'P2' },
@@ -255,7 +255,7 @@ describe('waitlistService', () => {
 
       await serviceWithLogger.addToWaitlist(players);
 
-      expect(api.joinWaitlist).toHaveBeenCalledWith('doubles', expect.any(Array));
+      expect(api.joinWaitlist).toHaveBeenCalledWith('singles', expect.any(Array));
     });
 
     it('refreshes waitlist after successful add', async () => {

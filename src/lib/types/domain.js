@@ -25,7 +25,7 @@
  * @typedef {Object} Group
  * @property {string} id - Group identifier
  * @property {Member[]} players - Array of 1-4 members
- * @property {'singles'|'doubles'|'foursome'} type - Group type based on player count
+ * @property {'singles'|'doubles'} type - Group type based on player count
  */
 
 /**
@@ -98,5 +98,5 @@
 // Export constants for runtime validation
 export const END_REASONS = ['completed', 'cleared_early', 'admin_override'];
 export const WAITLIST_STATUSES = ['waiting', 'assigned', 'cancelled'];
-export const GROUP_TYPES = ['singles', 'doubles', 'foursome'];
+export const GROUP_TYPES = ['singles', 'doubles'];
 export const COURT_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];

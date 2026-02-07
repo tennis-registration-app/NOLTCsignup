@@ -33,9 +33,8 @@ export function normalizeGroup(raw) {
   // Determine group type from player count
   let type = raw.type || raw.group_type || raw.groupType;
   if (!type || !GROUP_TYPES.includes(type)) {
-    if (players.length <= 1) type = 'singles';
-    else if (players.length <= 2) type = 'doubles';
-    else type = 'foursome';
+    if (players.length <= 3) type = 'singles';
+    else type = 'doubles';
   }
 
   return {

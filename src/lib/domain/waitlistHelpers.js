@@ -51,8 +51,6 @@ export function getGroupTypeLabel(entry) {
       return 'Singles';
     case 'doubles':
       return 'Doubles';
-    case 'foursome':
-      return 'Foursome';
     default:
       return 'Group';
   }

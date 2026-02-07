@@ -420,7 +420,7 @@ describe('courtsService', () => {
       );
     });
 
-    it('determines doubles session type for 3+ players', async () => {
+    it('determines singles session type for 3 players', async () => {
       courtDataCache = mockApiCourts;
 
       const players = [
@@ -433,7 +433,7 @@ describe('courtsService', () => {
 
       expect(api.assignCourt).toHaveBeenCalledWith(
         'court-uuid-1',
-        'doubles',
+        'singles',
         expect.any(Array),
         expect.any(Object)
       );
