@@ -407,7 +407,7 @@ export async function assignCourtToGroupOrchestrated(
   // Success - clear the assigning flag
   actions.setIsAssigning(false);
 
-  // Success! Board subscription will auto-refresh from signal
+  // Success! Update UI state, then refresh board for fresh data
   const successTime = Math.round(performance.now() - assignStartTime);
   getRuntimeDeps().logger.debug(
     'AssignCourt',
@@ -423,6 +423,13 @@ export async function assignCourtToGroupOrchestrated(
   actions.setJustAssignedCourt(courtNumber);
   actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
   actions.setAssignedEndTime(result.session?.scheduledEndAt || null); // Capture end time for immediate display
+  getRuntimeDeps().logger.debug(
+    'AssignCourt',
+    'scheduledEndAt value:',
+    result.session?.scheduledEndAt,
+    'full session:',
+    result.session
+  );
 
   // Construct replacedGroup from displacement.participants for SuccessScreen messaging
   const replacedGroupFromDisplacement =
@@ -480,5 +487,8 @@ export async function assignCourtToGroupOrchestrated(
       });
     }, 1000);
   }
+
+  // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
+  await services.backend.queries.refresh();
   // ===== END ORIGINAL FUNCTION BODY =====
 }
