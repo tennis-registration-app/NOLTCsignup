@@ -279,8 +279,14 @@ export function CourtRoute({ app, handlers }) {
               return;
             }
 
-            // Find first available court
-            const availableCourt = board?.courts?.find((c) => c.isAvailable && !c.isBlocked);
+            // Find first available court (respecting singles-only restrictions)
+            const waitlistPlayerCount = firstWaiting.group?.players?.length || 0;
+            const availableCourt = board?.courts?.find(
+              (c) =>
+                c.isAvailable &&
+                !c.isBlocked &&
+                isCourtEligibleForGroup(c.number, waitlistPlayerCount)
+            );
             if (!availableCourt) {
               showAlertMessage('No courts available');
               return;
