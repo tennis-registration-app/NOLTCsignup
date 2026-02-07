@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, AlertCircle } from './Icons';
 import { getTennisDomain, getTennisNamespaceConfig } from '../../platform/windowBridge.js';
+import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
 
 /**
  * WaitingList - Display panel for groups waiting to play
@@ -81,15 +82,23 @@ export function WaitingList({
 
       if (A.getFreeCourtsInfo) {
         const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-        const freeCount = info.free?.length || 0;
-        const overtimeCount = info.overtime?.length || 0;
-        const availableCount = freeCount > 0 ? freeCount : overtimeCount;
+
+        // Filter courts by singles-only eligibility for this group's player count
+        const groupPlayerCount = waitlist[idx]?.players?.length || 0;
+        const eligibleFree = (info.free || []).filter((courtNum) =>
+          isCourtEligibleForGroup(courtNum, groupPlayerCount)
+        );
+        const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
+          isCourtEligibleForGroup(courtNum, groupPlayerCount)
+        );
+        const availableCount =
+          eligibleFree.length > 0 ? eligibleFree.length : eligibleOvertime.length;
 
         if (idx === 0) {
-          // First group can register if any courts available
+          // First group can register if any eligible courts available
           return availableCount > 0;
         } else if (idx === 1) {
-          // Second group can register if 2+ courts available
+          // Second group can register if 2+ eligible courts available
           return availableCount >= 2;
         }
       }
