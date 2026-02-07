@@ -4,7 +4,7 @@
  * Modal for editing court blocks/events.
  * All fields are always editable - no view/edit toggle.
  */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { getEventColor } from './utils.js';
 import { getPref } from '../../platform/prefsStorage.js';
 
@@ -29,6 +29,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [originalValues, setOriginalValues] = useState(null);
+  const initialBlockTypeRef = useRef('other');
 
   // Get device ID
   const deviceId = useMemo(() => {
@@ -52,7 +53,9 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       // WP4-4: event is pre-normalized, use camelCase only
       const initialCourtId = event.courtId || '';
       const initialTitle = event.title || event.reason || event.eventDetails?.title || '';
-      const initialBlockType = event.blockType || event.reason?.toLowerCase() || 'other';
+      const derived = event.blockType || event.reason?.toLowerCase() || 'other';
+      const initialBlockType = BLOCK_TYPES.some((t) => t.value === derived) ? derived : 'other';
+      initialBlockTypeRef.current = initialBlockType;
       const initialDate = start.toISOString().slice(0, 10);
       const initialStartTime = start.toTimeString().slice(0, 5);
       const initialEndTime = end.toTimeString().slice(0, 5);
@@ -132,10 +135,11 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
     try {
       const { startsAt, endsAt } = buildTimestamps();
 
+      const blockTypeChanged = blockType !== initialBlockTypeRef.current;
       const result = await backend.admin.updateBlock({
         blockId: event.id,
         courtId,
-        blockType,
+        ...(blockTypeChanged ? { blockType } : {}),
         title: title.trim(),
         startsAt,
         endsAt,

@@ -61,11 +61,14 @@ export function normalizeCourt(raw, serverNow) {
     blockInput = raw.block;
   } else if (raw.block_id) {
     // Flattened format from get_court_board RPC
+    // TODO: reason is set to block_title because get_court_board
+    // RPC does not return block_type. Fix when backend adds
+    // block_type to RPC response.
     blockInput = {
       id: raw.block_id,
       court_number: number,
       title: raw.block_title,
-      reason: raw.block_title, // block_title is used as reason
+      reason: raw.block_title,
       starts_at: raw.block_starts_at,
       ends_at: raw.block_ends_at,
     };
