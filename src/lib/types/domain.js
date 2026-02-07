@@ -100,3 +100,18 @@ export const END_REASONS = ['completed', 'cleared_early', 'admin_override'];
 export const WAITLIST_STATUSES = ['waiting', 'assigned', 'cancelled'];
 export const GROUP_TYPES = ['singles', 'doubles'];
 export const COURT_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+export const SINGLES_ONLY_COURT_NUMBERS = [8];
+
+/**
+ * Check if a court is eligible for a group of the given size.
+ * Singles-only courts reject groups of 4+ (doubles).
+ * @param {number} courtNumber
+ * @param {number} playerCount
+ * @returns {boolean}
+ */
+export function isCourtEligibleForGroup(courtNumber, playerCount) {
+  if (SINGLES_ONLY_COURT_NUMBERS.includes(courtNumber) && playerCount >= 4) {
+    return false;
+  }
+  return true;
+}
