@@ -2,6 +2,8 @@
   "name": "noltc-tennis-signup",
   "version": "1.0.0",
   "description": "Tennis court management system with registration, court board, and admin panel",
+  "author": "Claude Williams",
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "vite",

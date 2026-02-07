@@ -150,4 +150,4 @@ See [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) for security considerations.
 
 ## License
 
-Private — New Orleans Lawn Tennis Club
+Copyright (c) 2024-2025 Claude Williams. All rights reserved.
