@@ -12,6 +12,7 @@
  *   - setCurrentMemberId
  *   - setJustAssignedCourt
  *   - setAssignedSessionId
+ *   - setAssignedEndTime
  *   - setReplacedGroup
  *   - setDisplacement
  *   - setOriginalCourtData
@@ -70,6 +71,7 @@ export function resetFormOrchestrated(deps) {
       setCurrentMemberId,
       setJustAssignedCourt,
       setAssignedSessionId,
+      setAssignedEndTime,
       setReplacedGroup,
       setDisplacement,
       setOriginalCourtData,
@@ -113,6 +115,7 @@ export function resetFormOrchestrated(deps) {
   setCurrentMemberId(null);
   setJustAssignedCourt(null);
   setAssignedSessionId(null); // Clear session ID from previous assignment
+  setAssignedEndTime(null); // Clear end time from previous assignment
   setReplacedGroup(null);
   setDisplacement(null);
   setOriginalCourtData(null);
@@ -163,6 +166,7 @@ export function applyInactivityTimeoutOrchestrated(deps) {
     setIsTimeLimited,
     setCurrentScreen,
     setAssignedSessionId,
+    setAssignedEndTime,
     setCurrentWaitlistEntryId,
     setWaitlistPosition,
     setCourtToMove,
@@ -205,6 +209,7 @@ export function applyInactivityTimeoutOrchestrated(deps) {
 
   // Phase 3.3b: Clear privacy-sensitive and flow state after navigation
   setAssignedSessionId(null);
+  setAssignedEndTime(null);
   setCurrentWaitlistEntryId(null);
   setWaitlistPosition(0);
   setCourtToMove(null);

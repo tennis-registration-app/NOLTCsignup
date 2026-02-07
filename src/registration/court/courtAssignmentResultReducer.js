@@ -6,6 +6,7 @@
 export const initialCourtAssignmentResultState = {
   justAssignedCourt: null,
   assignedSessionId: null,
+  assignedEndTime: null,
   hasAssignedCourt: false,
 };
 
@@ -16,6 +17,9 @@ export function courtAssignmentResultReducer(state, action) {
 
     case 'ASSIGNED_SESSION_ID_SET':
       return { ...state, assignedSessionId: action.value };
+
+    case 'ASSIGNED_END_TIME_SET':
+      return { ...state, assignedEndTime: action.value };
 
     case 'HAS_ASSIGNED_COURT_SET':
       return { ...state, hasAssignedCourt: action.value };

@@ -93,9 +93,11 @@ export function useRegistrationDomainHooks({
   const {
     justAssignedCourt: courtAssignmentJustAssigned,
     assignedSessionId,
+    assignedEndTime,
     hasAssignedCourt,
     setJustAssignedCourt,
     setAssignedSessionId,
+    setAssignedEndTime,
     setHasAssignedCourt,
   } = useCourtAssignmentResult();
 
@@ -261,9 +263,11 @@ export function useRegistrationDomainHooks({
     // Court assignment result (WP5.4 R9a-1.3)
     justAssignedCourt: courtAssignmentJustAssigned,
     assignedSessionId,
+    assignedEndTime,
     hasAssignedCourt,
     setJustAssignedCourt,
     setAssignedSessionId,
+    setAssignedEndTime,
     setHasAssignedCourt,
 
     // Clear court flow (WP5.4 R9a-2.3)

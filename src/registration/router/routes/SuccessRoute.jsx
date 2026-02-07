@@ -43,7 +43,7 @@ export function SuccessRoute({ app, handlers }) {
     timeLimitReason,
   } = state;
   const { blockWarningMinutes } = blockAdmin;
-  const { justAssignedCourt, assignedSessionId } = courtAssignment;
+  const { justAssignedCourt, assignedSessionId, assignedEndTime } = courtAssignment;
   const { registrantStreak } = streak;
   const { currentGroup } = groupGuest;
   const { showAlert, alertMessage } = alert;
@@ -143,6 +143,7 @@ export function SuccessRoute({ app, handlers }) {
         justAssignedCourt={justAssignedCourt}
         assignedCourt={assignedCourt}
         sessionId={assignedSessionId}
+        assignedEndTime={assignedEndTime}
         replacedGroup={replacedGroup}
         canChangeCourt={canChangeCourt}
         changeTimeRemaining={changeTimeRemaining}

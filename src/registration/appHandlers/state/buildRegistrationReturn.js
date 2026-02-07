@@ -197,6 +197,8 @@ export function buildRegistrationReturn({
       setJustAssignedCourt: domain.setJustAssignedCourt,
       assignedSessionId: domain.assignedSessionId,
       setAssignedSessionId: domain.setAssignedSessionId,
+      assignedEndTime: domain.assignedEndTime,
+      setAssignedEndTime: domain.setAssignedEndTime,
       hasAssignedCourt: domain.hasAssignedCourt,
       setHasAssignedCourt: domain.setHasAssignedCourt,
     },

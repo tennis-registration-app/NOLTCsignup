@@ -73,6 +73,7 @@ const SuccessScreen = (
     justAssignedCourt,
     assignedCourt,
     sessionId: sessionIdProp, // Direct session ID from assignment (preferred)
+    assignedEndTime, // Direct end time from assignment (avoids Invalid Date flash)
     replacedGroup,
     canChangeCourt,
     changeTimeRemaining,
@@ -372,81 +373,87 @@ const SuccessScreen = (
           >
             Court {justAssignedCourt}
           </p>
-          {assignedCourt && (
-            <>
-              <p className="text-base sm:text-lg text-gray-600 mt-3">
-                Priority until{' '}
-                <strong>
-                  {new Date(
-                    assignedCourt.session?.scheduledEndAt || assignedCourt.endTime
-                  ).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </strong>
-              </p>
-              {isTimeLimited && (
-                <p className="text-sm text-gray-500 mt-1">
-                  {timeLimitReason === 'rereg'
-                    ? '(Remaining time from previous session)'
-                    : '(Time limited due to upcoming court reservation)'}
-                </p>
-              )}
-
-              {/* Upcoming block warning */}
-              {(() => {
-                const upcomingWarning = getUpcomingBlockWarningFromBlocks(
-                  justAssignedCourt,
-                  0,
-                  upcomingBlocks
-                );
-                if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= blockWarningMinutes)
-                  return null;
-                return (
-                  <p className="text-sm text-orange-500 mt-2">
-                    Note: Court reserved for {upcomingWarning.reason} at{' '}
-                    {new Date(upcomingWarning.startTime).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
+          {assignedCourt &&
+            (assignedEndTime || assignedCourt.session?.scheduledEndAt || assignedCourt.endTime) && (
+              <>
+                <p className="text-base sm:text-lg text-gray-600 mt-3">
+                  Priority until{' '}
+                  <strong>
+                    {new Date(
+                      assignedEndTime ||
+                        assignedCourt.session?.scheduledEndAt ||
+                        assignedCourt.endTime
+                    ).toLocaleTimeString([], {
+                      hour: '2-digit',
                       minute: '2-digit',
                     })}
-                  </p>
-                );
-              })()}
-
-              {(() => {
-                const courtBlockStatus = getCourtBlockStatus(justAssignedCourt);
-                const sessionEndTime = new Date(
-                  assignedCourt.session?.scheduledEndAt || assignedCourt.endTime
-                );
-
-                return courtBlockStatus &&
-                  courtBlockStatus.isBlocked &&
-                  new Date(courtBlockStatus.startTime) <= sessionEndTime ? (
-                  <span className="text-orange-600 ml-2 block sm:inline">
-                    (Limited due to {courtBlockStatus.reason})
-                  </span>
-                ) : null;
-              })()}
-              {replacedGroup && replacedGroup.players && replacedGroup.players.length > 0 && (
-                <p className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
-                  Please courteously request {replacedGroup.players[0].name} and partners conclude
-                  their play
+                  </strong>
                 </p>
-              )}
-              {/* Uncleared session warning for streak 1-2 */}
-              {registrantStreak >= 1 && registrantStreak <= 2 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3 mx-4">
-                  <p className="text-amber-800 text-base">
-                    ⚠️{' '}
-                    {registrantStreak === 1
-                      ? "Your last session was ended without using 'Clear Court'."
-                      : `Your last ${registrantStreak} sessions were ended without using 'Clear Court'.`}{' '}
-                    Please tap Clear Court when you finish this session so others can get on faster.
+                {isTimeLimited && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    {timeLimitReason === 'rereg'
+                      ? '(Remaining time from previous session)'
+                      : '(Time limited due to upcoming court reservation)'}
                   </p>
-                </div>
-              )}
-            </>
-          )}
+                )}
+
+                {/* Upcoming block warning */}
+                {(() => {
+                  const upcomingWarning = getUpcomingBlockWarningFromBlocks(
+                    justAssignedCourt,
+                    0,
+                    upcomingBlocks
+                  );
+                  if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= blockWarningMinutes)
+                    return null;
+                  return (
+                    <p className="text-sm text-orange-500 mt-2">
+                      Note: Court reserved for {upcomingWarning.reason} at{' '}
+                      {new Date(upcomingWarning.startTime).toLocaleTimeString('en-US', {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  );
+                })()}
+
+                {(() => {
+                  const courtBlockStatus = getCourtBlockStatus(justAssignedCourt);
+                  const sessionEndTime = new Date(
+                    assignedEndTime ||
+                      assignedCourt.session?.scheduledEndAt ||
+                      assignedCourt.endTime
+                  );
+
+                  return courtBlockStatus &&
+                    courtBlockStatus.isBlocked &&
+                    new Date(courtBlockStatus.startTime) <= sessionEndTime ? (
+                    <span className="text-orange-600 ml-2 block sm:inline">
+                      (Limited due to {courtBlockStatus.reason})
+                    </span>
+                  ) : null;
+                })()}
+                {replacedGroup && replacedGroup.players && replacedGroup.players.length > 0 && (
+                  <p className="text-xs sm:text-sm text-orange-600 font-medium mt-2">
+                    Please courteously request {replacedGroup.players[0].name} and partners conclude
+                    their play
+                  </p>
+                )}
+                {/* Uncleared session warning for streak 1-2 */}
+                {registrantStreak >= 1 && registrantStreak <= 2 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3 mx-4">
+                    <p className="text-amber-800 text-base">
+                      ⚠️{' '}
+                      {registrantStreak === 1
+                        ? "Your last session was ended without using 'Clear Court'."
+                        : `Your last ${registrantStreak} sessions were ended without using 'Clear Court'.`}{' '}
+                      Please tap Clear Court when you finish this session so others can get on
+                      faster.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
         </div>
       </>
     );

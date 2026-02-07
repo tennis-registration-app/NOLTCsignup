@@ -24,6 +24,10 @@ export function useCourtAssignmentResult() {
     dispatch({ type: 'ASSIGNED_SESSION_ID_SET', value });
   }, []);
 
+  const setAssignedEndTime = useCallback((value) => {
+    dispatch({ type: 'ASSIGNED_END_TIME_SET', value });
+  }, []);
+
   const setHasAssignedCourt = useCallback((value) => {
     dispatch({ type: 'HAS_ASSIGNED_COURT_SET', value });
   }, []);
@@ -37,11 +41,13 @@ export function useCourtAssignmentResult() {
     // State
     justAssignedCourt: state.justAssignedCourt,
     assignedSessionId: state.assignedSessionId,
+    assignedEndTime: state.assignedEndTime,
     hasAssignedCourt: state.hasAssignedCourt,
 
     // Setters
     setJustAssignedCourt,
     setAssignedSessionId,
+    setAssignedEndTime,
     setHasAssignedCourt,
 
     // Reset

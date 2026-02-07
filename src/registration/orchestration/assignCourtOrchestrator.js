@@ -31,6 +31,7 @@ import {
  *   - setCurrentGroup
  *   - setJustAssignedCourt
  *   - setAssignedSessionId
+ *   - setAssignedEndTime
  *   - setReplacedGroup
  *   - setDisplacement
  *   - setOriginalCourtData
@@ -279,6 +280,7 @@ export async function assignCourtToGroupOrchestrated(
       // Update UI state
       actions.setJustAssignedCourt(courtNumber);
       actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
+      actions.setAssignedEndTime(result.session?.scheduledEndAt || null); // Capture end time for immediate display
       actions.setReplacedGroup(null);
       actions.setDisplacement(null);
       actions.setOriginalCourtData(null);
@@ -420,6 +422,7 @@ export async function assignCourtToGroupOrchestrated(
   // Update UI state based on result
   actions.setJustAssignedCourt(courtNumber);
   actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
+  actions.setAssignedEndTime(result.session?.scheduledEndAt || null); // Capture end time for immediate display
 
   // Construct replacedGroup from displacement.participants for SuccessScreen messaging
   const replacedGroupFromDisplacement =
