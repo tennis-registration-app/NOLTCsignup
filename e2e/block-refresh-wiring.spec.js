@@ -39,9 +39,10 @@ test.describe('Block Refresh Wiring', () => {
     // Click the "List" sub-tab to view existing blocks
     await page.click('button:has-text("List")');
 
-    // Assert NO block time range initially (empty blocks)
+    // Assert NO blocks initially (empty blocks)
     // When empty, the list shows "No blocks scheduled for this day"
-    await expect(page.getByText(/04:00.*AM.*06:00.*AM/i)).toHaveCount(0, { timeout: 5000 });
+    // Timezone-agnostic: match on block reason from fixture, not formatted time
+    await expect(page.getByText('Court Maintenance')).toHaveCount(0, { timeout: 5000 });
 
     // Reload to trigger second get-blocks (returns block with "Court Maintenance")
     await page.reload();
@@ -60,9 +61,9 @@ test.describe('Block Refresh Wiring', () => {
     await page.click('button:has-text("List")');
 
     // Assert the new block is now visible
-    // The list view shows court number and time range, not the reason
-    // Look for Court 1 with a time range (block was for Court 1)
-    await expect(page.getByText(/04:00.*AM.*06:00.*AM/i)).toBeVisible({ timeout: 5000 });
+    // Timezone-agnostic: match on block reason from fixture (reason: "Court Maintenance")
+    // instead of formatted time which varies by CI runner timezone
+    await expect(page.getByText('Court Maintenance')).toBeVisible({ timeout: 5000 });
 
     // Assert no crashes
     const crashErrors = pageErrors.filter(e =>

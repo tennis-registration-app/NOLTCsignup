@@ -322,7 +322,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
               return freeCount > 0 || overtimeCount > 0;
             }
             return false;
-          } catch (_error) {
+          } catch {
             return false;
           }
         };
