@@ -98,8 +98,10 @@ export function WaitingList({
           // First group can register if any eligible courts available
           return availableCount > 0;
         } else if (idx === 1) {
-          // Second group can register if 2+ eligible courts available
-          return availableCount >= 2;
+          // If first group has no eligible courts, second group only needs 1
+          const firstGroupCanPlay = canGroupRegisterNow(0);
+          const courtsNeeded = firstGroupCanPlay ? 2 : 1;
+          return availableCount >= courtsNeeded;
         }
       }
       return false;
