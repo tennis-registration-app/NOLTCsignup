@@ -166,20 +166,9 @@
     <div id="ai-result" class="result"></div>
   </div>
 
-  <!-- Realtime Updates -->
-  <div class="test-section">
-    <h2>9. Realtime Updates</h2>
-    <p>Subscribe to live database changes. Events will appear below when data changes.</p>
-    <button onclick="connectRealtime()">Connect</button>
-    <button onclick="disconnectRealtime()" class="danger">Disconnect</button>
-    <span id="realtime-status" class="status">Not connected</span>
-    <div id="realtime-events" class="result" style="min-height: 200px; max-height: 400px;"></div>
-  </div>
-
   <script type="module">
     import { ApiAdapter } from '../lib/ApiAdapter.js';
     import { API_CONFIG } from '../lib/apiConfig.js';
-    import { RealtimeClient } from '../lib/RealtimeClient.js';
 
     // Create adapter instances
     const kioskApi = new ApiAdapter({
@@ -433,73 +422,6 @@
         result.textContent = `Error: ${error.message}`;
         result.className = 'result error';
       }
-    };
-
-    // =========================================
-    // Realtime Functions
-    // =========================================
-
-    let realtimeClient = null;
-    let eventCount = 0;
-
-    function addRealtimeEvent(type, payload) {
-      const eventsDiv = document.getElementById('realtime-events');
-      const timestamp = new Date().toLocaleTimeString();
-      eventCount++;
-
-      const eventHtml = `<div style="border-bottom: 1px solid #ddd; padding: 8px 0;">
-        <strong>#${eventCount} [${timestamp}] ${type.toUpperCase()}</strong>
-        <br><code>${payload.eventType}: ${payload.table}</code>
-        <br><small>${JSON.stringify(payload.new || payload.old || {}, null, 2)}</small>
-      </div>`;
-
-      eventsDiv.innerHTML = eventHtml + eventsDiv.innerHTML;
-    }
-
-    function updateRealtimeStatus(connected) {
-      const status = document.getElementById('realtime-status');
-      if (connected) {
-        status.textContent = 'Connected';
-        status.className = 'status ok';
-      } else {
-        status.textContent = 'Not connected';
-        status.className = 'status fail';
-      }
-    }
-
-    window.connectRealtime = function() {
-      if (realtimeClient) {
-        realtimeClient.disconnect();
-      }
-
-      realtimeClient = new RealtimeClient({ debug: true });
-
-      // Subscribe to all changes
-      realtimeClient.onAnyChange((payload) => {
-        addRealtimeEvent(payload.table, payload);
-        // Auto-refresh court status on session changes
-        if (payload.table === 'sessions') {
-          getCourtStatus();
-        }
-      });
-
-      // Check connection status after a short delay
-      setTimeout(() => {
-        updateRealtimeStatus(realtimeClient.isConnected());
-      }, 2000);
-
-      const eventsDiv = document.getElementById('realtime-events');
-      eventsDiv.innerHTML = '<em>Listening for database changes...</em>\n\n' + eventsDiv.innerHTML;
-    };
-
-    window.disconnectRealtime = function() {
-      if (realtimeClient) {
-        realtimeClient.disconnect();
-        realtimeClient = null;
-      }
-      updateRealtimeStatus(false);
-      const eventsDiv = document.getElementById('realtime-events');
-      eventsDiv.innerHTML = '<em>Disconnected</em>\n\n' + eventsDiv.innerHTML;
     };
 
     // Initial load
