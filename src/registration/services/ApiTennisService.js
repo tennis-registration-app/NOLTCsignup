@@ -6,7 +6,6 @@
  */
 
 import { ApiAdapter } from '@lib/ApiAdapter.js';
-import { getRealtimeClient } from '@lib/RealtimeClient.js';
 import { normalizeServiceError } from '@lib/errors';
 import { logger } from '../../lib/logger.js';
 import { createCourtsService } from './modules/courtsService.js';
@@ -40,9 +39,6 @@ class ApiTennisService {
     this.waitlistData = null;
     this.membersCache = null;
     this.settings = null;
-
-    // Get realtime client
-    this.realtimeClient = getRealtimeClient({ debug: options.debug || false });
 
     // Wire courts service module (WP5-D1, WP5-D9)
     this.courtsService = createCourtsService({
@@ -109,30 +105,6 @@ class ApiTennisService {
         this.membersCache = v;
       },
       logger,
-    });
-
-    // Start realtime subscriptions
-    this._setupRealtime();
-  }
-
-  // ===========================================
-  // Realtime Setup
-  // ===========================================
-
-  _setupRealtime() {
-    this.realtimeClient.onSessionChange(() => {
-      this._notifyListeners('sessions');
-      this.refreshCourtData();
-    });
-
-    this.realtimeClient.onWaitlistChange(() => {
-      this._notifyListeners('waitlist');
-      this.refreshWaitlist();
-    });
-
-    this.realtimeClient.onBlockChange(() => {
-      this._notifyListeners('blocks');
-      this.refreshCourtData();
     });
   }
 
@@ -309,7 +281,6 @@ class ApiTennisService {
 
   destroy() {
     this.listeners.clear();
-    this.realtimeClient.disconnect();
   }
 }
 
