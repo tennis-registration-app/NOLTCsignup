@@ -280,7 +280,9 @@ export async function assignCourtToGroupOrchestrated(
       // Update UI state
       actions.setJustAssignedCourt(courtNumber);
       actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
-      actions.setAssignedEndTime(result.session?.scheduledEndAt || null); // Capture end time for immediate display
+      actions.setAssignedEndTime(
+        result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
+      ); // Capture end time from API (snake_case) or normalized (camelCase)
       actions.setReplacedGroup(null);
       actions.setDisplacement(null);
       actions.setOriginalCourtData(null);
@@ -422,14 +424,9 @@ export async function assignCourtToGroupOrchestrated(
   // Update UI state based on result
   actions.setJustAssignedCourt(courtNumber);
   actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
-  actions.setAssignedEndTime(result.session?.scheduledEndAt || null); // Capture end time for immediate display
-  getRuntimeDeps().logger.info(
-    'AssignCourt',
-    'scheduledEndAt value:',
-    result.session?.scheduledEndAt,
-    'full session:',
-    result.session
-  );
+  actions.setAssignedEndTime(
+    result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
+  ); // Capture end time from API (snake_case) or normalized (camelCase)
 
   // Construct replacedGroup from displacement.participants for SuccessScreen messaging
   const replacedGroupFromDisplacement =
@@ -491,9 +488,8 @@ export async function assignCourtToGroupOrchestrated(
   // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
   try {
     await services.backend.queries.refresh();
-    getRuntimeDeps().logger.info('AssignCourt', 'refresh completed');
-  } catch (err) {
-    getRuntimeDeps().logger.info('AssignCourt', 'refresh failed:', err);
+  } catch {
+    // Refresh is best-effort; board subscription will catch up
   }
   // ===== END ORIGINAL FUNCTION BODY =====
 }
