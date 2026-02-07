@@ -102,6 +102,13 @@ export function WaitingList({
           const firstGroupCanPlay = canGroupRegisterNow(0);
           const courtsNeeded = firstGroupCanPlay ? 2 : 1;
           return availableCount >= courtsNeeded;
+        } else {
+          // Position 2+: only show "You're Up!" if NO group ahead can play
+          const anyAheadCanPlay = Array.from({ length: idx }, (_, i) => i).some((i) =>
+            canGroupRegisterNow(i)
+          );
+          if (anyAheadCanPlay) return false;
+          return availableCount >= 1;
         }
       }
       return false;
