@@ -41,6 +41,7 @@ export const BlockSchema = z.object({
   startsAt: z.string(),
   endsAt: z.string(),
   reason: z.string(),
+  blockType: z.string().optional(),
   isActive: z.boolean(),
 });
 

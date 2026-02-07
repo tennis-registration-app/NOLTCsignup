@@ -49,6 +49,7 @@
  * @property {string} startsAt - ISO string when block starts
  * @property {string} endsAt - ISO string when block ends
  * @property {string} reason - Why the court is blocked
+ * @property {string} [blockType] - Block type enum (lesson, clinic, maintenance, wet, other)
  * @property {boolean} isActive - True if block is currently in effect
  */
 

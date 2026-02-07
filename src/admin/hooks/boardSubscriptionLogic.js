@@ -36,6 +36,7 @@ export function extractCourtBlocks(courts) {
       courtId: c.id,
       courtNumber: c.number,
       reason: c.block.reason,
+      blockType: c.block.blockType || c.block.block_type,
       startTime: c.block?.startsAt || c.block?.startTime || new Date().toISOString(),
       endTime: c.block?.endsAt || c.block?.endTime,
     }));

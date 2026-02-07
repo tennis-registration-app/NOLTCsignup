@@ -22,6 +22,7 @@ export function normalizeBlock(raw, serverNow) {
     startsAt,
     endsAt,
     reason: raw.reason || raw.description || '',
+    blockType: raw.blockType || raw.block_type || raw.type || undefined,
     isActive,
   };
 }
