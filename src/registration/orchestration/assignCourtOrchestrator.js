@@ -423,7 +423,7 @@ export async function assignCourtToGroupOrchestrated(
   actions.setJustAssignedCourt(courtNumber);
   actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
   actions.setAssignedEndTime(result.session?.scheduledEndAt || null); // Capture end time for immediate display
-  getRuntimeDeps().logger.debug(
+  getRuntimeDeps().logger.info(
     'AssignCourt',
     'scheduledEndAt value:',
     result.session?.scheduledEndAt,
@@ -489,6 +489,11 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
-  await services.backend.queries.refresh();
+  try {
+    await services.backend.queries.refresh();
+    getRuntimeDeps().logger.info('AssignCourt', 'refresh completed');
+  } catch (err) {
+    getRuntimeDeps().logger.info('AssignCourt', 'refresh failed:', err);
+  }
   // ===== END ORIGINAL FUNCTION BODY =====
 }
