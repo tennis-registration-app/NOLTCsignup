@@ -1,6 +1,7 @@
 // @ts-check
 import React, { useRef, useEffect } from 'react';
 import { ToastHost, AlertDisplay } from '../components';
+import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
 
 /**
  * GroupScreen - Player group builder screen
@@ -545,8 +546,11 @@ const GroupScreen = (
                   }
                 }
 
-                // Use availableCourts state (already set from API data)
-                const courtsToCheck = availableCourts;
+                // Use availableCourts state, filtered for singles-only court restrictions
+                const groupSize = currentGroup?.length || 0;
+                const courtsToCheck = availableCourts?.filter((courtNum) =>
+                  isCourtEligibleForGroup(courtNum, groupSize)
+                );
 
                 // Check if there are actually any courts available to select
                 const hasAvailableCourts = courtsToCheck && courtsToCheck.length > 0;

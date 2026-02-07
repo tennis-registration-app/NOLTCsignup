@@ -4,6 +4,7 @@ import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
 import { API_CONFIG } from '../../../lib/apiConfig.js';
 import { logger } from '../../../lib/logger.js';
+import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
 
 // Platform bridge
 import { getTennisUI } from '../../../platform';
@@ -87,7 +88,13 @@ export function CourtRoute({ app, handlers }) {
 
   // Selectable: unoccupied first, then overtime if no unoccupied
   const selectableCourts = courtSelection.showingOvertimeCourts ? overtimeCourts : unoccupiedCourts;
-  const selectable = selectableCourts.map((c) => c.number);
+
+  // Filter out singles-only courts for doubles groups
+  const playerCount = currentGroup?.length || 0;
+  const eligibleCourts = selectableCourts.filter((c) =>
+    isCourtEligibleForGroup(c.number, playerCount)
+  );
+  const selectable = eligibleCourts.map((c) => c.number);
 
   const hasWaiters = (courtData.waitlist?.length || 0) > 0;
 
@@ -96,8 +103,12 @@ export function CourtRoute({ app, handlers }) {
   let computedAvailableCourts = [];
   if (hasWaitlistPriority) {
     // For waitlist priority users, prefer unoccupied courts, fallback to overtime
-    const unoccupiedNumbers = unoccupiedCourts.map((c) => c.number);
-    const overtimeNumbers = overtimeCourts.map((c) => c.number);
+    const unoccupiedNumbers = unoccupiedCourts
+      .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
+      .map((c) => c.number);
+    const overtimeNumbers = overtimeCourts
+      .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
+      .map((c) => c.number);
 
     if (unoccupiedNumbers.length > 0) {
       computedAvailableCourts = unoccupiedNumbers;
