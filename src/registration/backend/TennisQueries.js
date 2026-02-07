@@ -73,7 +73,7 @@ export class TennisQueries {
    * @param {(board: import('./types').BoardState) => void} callback
    * @returns {() => void} Unsubscribe function
    */
-  subscribeToBoardChanges(callback) {
+  subscribeToBoardChanges(callback, options = {}) {
     // E2E test mode: skip polling, just fetch once
     if (this.isE2ETest) {
       logger.debug('TennisQueries', 'E2E mode: skipping polling subscription');
@@ -109,25 +109,28 @@ export class TennisQueries {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Periodic refresh to catch expired blocks (every 30 seconds)
+    // Periodic refresh to catch expired blocks (default: every 30 seconds)
     // Blocks don't trigger database signals when they expire naturally
     const BLOCK_EXPIRY_POLL_INTERVAL = 30000; // 30 seconds
+    const pollMs = options.pollIntervalMs || BLOCK_EXPIRY_POLL_INTERVAL;
+    const backupMs = options.pollIntervalMs
+      ? Math.max(options.pollIntervalMs, BLOCK_EXPIRY_POLL_INTERVAL)
+      : 60000; // default backup: 60 seconds
     const pollInterval = setInterval(() => {
       if (!document.hidden) {
         logger.debug('TennisQueries', '[poll] Checking for expired blocks...');
         this._handleSignal(callback, 'block_expiry_poll');
       }
-    }, BLOCK_EXPIRY_POLL_INTERVAL);
+    }, pollMs);
 
-    // Periodic refresh as backup (every 60 seconds)
+    // Periodic refresh as backup (never faster than 30s)
     // Ensures state stays fresh on always-visible displays
-    const BACKUP_POLL_INTERVAL = 60000; // 60 seconds
     const backupPollInterval = setInterval(() => {
       if (!document.hidden) {
         logger.debug('TennisQueries', '[backup-poll] Periodic refresh...');
         this._handleSignal(callback, 'backup_poll');
       }
-    }, BACKUP_POLL_INTERVAL);
+    }, backupMs);
 
     // Return unsubscribe function
     return () => {
