@@ -303,6 +303,9 @@ export async function assignCourtToGroupOrchestrated(
         }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
       }
 
+      // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
+      await services.backend.queries.refresh();
+
       // EARLY-EXIT: waitlist flow complete — success screen shown
       return;
     } catch (error) {
