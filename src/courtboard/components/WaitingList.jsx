@@ -180,13 +180,16 @@ export function WaitingList({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {showAlert && (
+                  {group.deferred ? (
+                    <div className="courtboard-text-xs text-blue-400 font-medium text-right">
+                      Waiting for full court
+                    </div>
+                  ) : showAlert ? (
                     <div className="flex items-center text-yellow-400 animate-pulse">
                       <AlertCircle className="mr-1" size={16} />
                       <span className="courtboard-text-xs font-bold">You&apos;re Up!</span>
                     </div>
-                  )}
-                  {!showAlert && (
+                  ) : (
                     <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
                       {estimatedWait} min
                     </div>
