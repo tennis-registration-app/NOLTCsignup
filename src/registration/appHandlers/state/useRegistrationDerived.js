@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
-import { logger } from '../../../lib/logger.js';
 
 /**
  * useRegistrationDerived
@@ -77,47 +76,6 @@ export function useRegistrationDerived({
     const eligibleForSecond = availableCourts.filter((courtNum) =>
       isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
     ).length;
-
-    // ── CTA-DEBUG: temporary logging for deferral investigation ──
-    logger.info('CTA-DEBUG', {
-      availableCourts,
-      upcomingBlocks: data.upcomingBlocks,
-      upcomingBlocksLocal: upcomingBlocks,
-      firstGroup: firstGroup
-        ? {
-            id: firstGroup.id,
-            deferred: firstGroup.deferred,
-            playerCount: firstGroup.players?.length,
-          }
-        : null,
-      secondGroup: secondGroup
-        ? {
-            id: secondGroup.id,
-            deferred: secondGroup.deferred,
-            playerCount: secondGroup.players?.length,
-          }
-        : null,
-      eligibleForFirst,
-      eligibleForSecond,
-    });
-    if (firstGroup?.deferred) {
-      const playerCount = firstGroupPlayerCount;
-      const sessionDuration = playerCount >= 4 ? 90 : 60;
-      const eligible = availableCourts.filter((courtNum) =>
-        isCourtEligibleForGroup(courtNum, playerCount)
-      );
-      const courtWarnings = eligible.map((courtNum) => ({
-        court: courtNum,
-        warning: getUpcomingBlockWarningFromBlocks(courtNum, sessionDuration + 5, upcomingBlocks),
-      }));
-      logger.info('CTA-DEBUG-DEFERRED', {
-        hasFullTime: hasFullTimeCourt(playerCount),
-        sessionDuration,
-        eligibleCourts: eligible,
-        courtWarnings,
-      });
-    }
-    // ── end CTA-DEBUG ──
 
     // Deferred groups: skip only when no full-time court available
     const firstDeferred = firstGroup?.deferred && !hasFullTimeCourt(firstGroupPlayerCount);
