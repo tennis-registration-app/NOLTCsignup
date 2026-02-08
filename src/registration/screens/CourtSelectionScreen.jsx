@@ -47,6 +47,7 @@ const CourtSelectionScreen = ({
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
   const [loadingCourt, setLoadingCourt] = useState(null);
+  const [showDeferConfirm, setShowDeferConfirm] = useState(false);
 
   // Determine session duration based on group size
   const getSessionDuration = (group) => {
@@ -206,7 +207,7 @@ const CourtSelectionScreen = ({
               All available courts have upcoming reservations that limit your play time.
             </p>
             <button
-              onClick={() => onDeferWaitlist(currentWaitlistEntryId)}
+              onClick={() => setShowDeferConfirm(true)}
               className="bg-blue-500 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
             >
               Stay on Waitlist
@@ -236,6 +237,36 @@ const CourtSelectionScreen = ({
           onConfirm={handleConfirmSelection}
           onCancel={handleCancelSelection}
         />
+
+        {/* Defer / Stay on Waitlist Confirmation Modal */}
+        {showDeferConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-3">Stay on Waitlist?</h3>
+              <p className="text-gray-600 mb-6">
+                You will keep your place in line and be notified when a court with full session time
+                becomes available.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeferConfirm(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeferConfirm(false);
+                    onDeferWaitlist(currentWaitlistEntryId);
+                  }}
+                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

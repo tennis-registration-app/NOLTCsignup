@@ -218,9 +218,27 @@ export function CourtRoute({ app, handlers }) {
         upcomingBlocks={courtData.upcomingBlocks}
         hasWaitlistPriority={hasWaitlistPriority}
         currentWaitlistEntryId={currentWaitlistEntryId}
-        onDeferWaitlist={(entryId) => {
-          // Placeholder — confirmation modal wired in Commit 7
-          logger.debug('CourtRoute', 'onDeferWaitlist called', { entryId });
+        onDeferWaitlist={async (entryId) => {
+          try {
+            const res = await backend.commands.deferWaitlistEntry({
+              entryId,
+              deferred: true,
+            });
+            if (res?.ok) {
+              getTennisUI()?.toast?.(
+                'Staying on waitlist — we will notify you when a full court opens',
+                {
+                  type: 'success',
+                }
+              );
+            } else {
+              getTennisUI()?.toast?.(res?.message || 'Failed to defer', { type: 'error' });
+            }
+          } catch (err) {
+            logger.error('CourtRoute', 'deferWaitlistEntry failed', err);
+            getTennisUI()?.toast?.('Failed to defer — please try again', { type: 'error' });
+          }
+          resetForm();
         }}
         onCourtSelect={async (courtNum) => {
           // If changing courts, handle the court change
