@@ -75,6 +75,7 @@
  * @property {string} joinedAt - ISO string when joined waitlist
  * @property {number} minutesWaiting - Derived: minutes since joinedAt
  * @property {string|null} estimatedCourtTime - ISO string of estimated court availability
+ * @property {boolean} deferred - True if group is deferred (skipped by CTA/You're Up logic)
  */
 
 /**

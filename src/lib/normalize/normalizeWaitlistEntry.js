@@ -18,6 +18,7 @@ export function normalizeWaitlistEntry(raw, serverNow) {
       joinedAt: '',
       minutesWaiting: 0,
       estimatedCourtTime: null,
+      deferred: false,
     };
   }
 
@@ -37,5 +38,6 @@ export function normalizeWaitlistEntry(raw, serverNow) {
     joinedAt,
     minutesWaiting,
     estimatedCourtTime: raw.estimatedCourtTime || raw.estimated_court_time || null,
+    deferred: raw.deferred ?? false,
   };
 }

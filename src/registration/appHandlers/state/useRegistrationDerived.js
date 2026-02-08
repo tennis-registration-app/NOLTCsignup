@@ -39,6 +39,7 @@ export function useRegistrationDerived({
       minutesWaiting: entry.minutesWaiting,
       names: (entry.group?.players || []).map((p) => p.displayName || p.name || 'Unknown'),
       players: entry.group?.players || [],
+      deferred: entry.deferred ?? false,
     }));
 
     const firstGroup = normalizedWaitlist[0] || null;
