@@ -79,3 +79,10 @@ export {
   buildPurchaseBallsCommand,
   toPurchaseBallsPayload,
 } from './purchaseBalls.js';
+
+export {
+  DeferWaitlistCommandSchema,
+  buildDeferWaitlistCommand,
+  preflightDeferWaitlist,
+  toDeferWaitlistPayload,
+} from './deferWaitlist.js';

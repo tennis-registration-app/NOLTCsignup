@@ -237,3 +237,15 @@ export function toPurchaseBallsPayload(input) {
     split_account_ids: input.splitAccountIds || null,
   };
 }
+
+/**
+ * Map DeferWaitlistInput to current defer-waitlist payload
+ * @param {import('./types').DeferWaitlistInput} input
+ * @returns {Object} Wire payload for /defer-waitlist
+ */
+export function toDeferWaitlistPayload(input) {
+  return {
+    waitlist_id: input.entryId,
+    deferred: input.deferred,
+  };
+}

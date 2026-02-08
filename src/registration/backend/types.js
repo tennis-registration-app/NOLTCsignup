@@ -1,9 +1,9 @@
 /**
  * @fileoverview Type definitions for TennisBackend
- * 
+ *
  * These JSDoc types define the interface between the UI and backend.
  * All communication goes through this layer.
- * 
+ *
  * IMPORTANT: The UI must use these types exclusively.
  * Any legacy wire format mapping happens in TennisCommands/wire.js, not here.
  */
@@ -54,6 +54,12 @@
 /**
  * @typedef {Object} CancelWaitlistInput
  * @property {string} entryId
+ */
+
+/**
+ * @typedef {Object} DeferWaitlistInput
+ * @property {string} entryId
+ * @property {boolean} deferred
  */
 
 /**

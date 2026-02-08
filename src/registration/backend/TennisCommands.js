@@ -11,6 +11,7 @@ import {
   toEndSessionPayload,
   toJoinWaitlistPayload,
   toCancelWaitlistPayload,
+  toDeferWaitlistPayload,
   toAssignFromWaitlistPayload,
   toCreateBlockPayload,
   toCancelBlockPayload,
@@ -32,6 +33,7 @@ import {
   buildAssignFromWaitlistCommand,
   buildPurchaseBallsCommand,
   toPurchaseBallsPayload,
+  buildDeferWaitlistCommand,
 } from '../../lib/commands/index.js';
 
 export class TennisCommands {
@@ -105,6 +107,23 @@ export class TennisCommands {
 
     const payload = toCancelWaitlistPayload(input);
     const response = await this.api.post('/cancel-waitlist', payload);
+    return response;
+  }
+
+  /**
+   * Defer or undefer a waitlist entry
+   * @param {import('./types').DeferWaitlistInput} input
+   * @returns {Promise<import('./types').CommandResponse>}
+   */
+  async deferWaitlistEntry(input) {
+    // Validate command structure (fail-fast)
+    buildDeferWaitlistCommand({
+      waitlistEntryId: input.entryId,
+      deferred: input.deferred,
+    });
+
+    const payload = toDeferWaitlistPayload(input);
+    const response = await this.api.post('/defer-waitlist', payload);
     return response;
   }
 
