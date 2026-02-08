@@ -286,7 +286,7 @@ const GroupScreen = (
 
           {/* Add Another Player section */}
           {currentGroup.length < CONSTANTS.MAX_PLAYERS && (
-            <div className="bg-green-50 border border-green-100 rounded-xl p-4 mb-4 relative">
+            <div className="bg-green-50 border border-green-300 rounded-xl p-4 mb-4 relative">
               <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
                 {showGuestForm ? (
                   <>
