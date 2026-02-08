@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
+import { getUpcomingBlockWarningFromBlocks } from '@lib';
 
 /**
  * useRegistrationDerived
@@ -42,6 +43,24 @@ export function useRegistrationDerived({
       deferred: entry.deferred ?? false,
     }));
 
+    const upcomingBlocks = data.upcomingBlocks || [];
+
+    // Check if any eligible court offers full session time for a given player count
+    const hasFullTimeCourt = (playerCount) => {
+      const sessionDuration = playerCount >= 4 ? 90 : 60;
+      const eligible = availableCourts.filter((courtNum) =>
+        isCourtEligibleForGroup(courtNum, playerCount)
+      );
+      return eligible.some((courtNum) => {
+        const warning = getUpcomingBlockWarningFromBlocks(
+          courtNum,
+          sessionDuration + 5,
+          upcomingBlocks
+        );
+        return warning == null; // null = no restriction = full time
+      });
+    };
+
     const firstGroup = normalizedWaitlist[0] || null;
     const secondGroup = normalizedWaitlist[1] || null;
 
@@ -55,10 +74,14 @@ export function useRegistrationDerived({
       isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
     ).length;
 
-    const live1 = eligibleForFirst >= 1 && firstGroup !== null && !firstGroup?.deferred;
+    // Deferred groups: skip only when no full-time court available
+    const firstDeferred = firstGroup?.deferred && !hasFullTimeCourt(firstGroupPlayerCount);
+    const secondDeferred = secondGroup?.deferred && !hasFullTimeCourt(secondGroupPlayerCount);
+
+    const live1 = eligibleForFirst >= 1 && firstGroup !== null && !firstDeferred;
     const courtsNeededForSecond = live1 ? 2 : 1;
     const live2 =
-      eligibleForSecond >= courtsNeededForSecond && secondGroup !== null && !secondGroup?.deferred;
+      eligibleForSecond >= courtsNeededForSecond && secondGroup !== null && !secondDeferred;
 
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
@@ -73,8 +96,9 @@ export function useRegistrationDerived({
     if (!live1 && !live2 && availableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];
-        if (entry.deferred) continue;
+        // Deferred groups: skip only when no full-time court available
         const playerCount = entry?.players?.length || 0;
+        if (entry.deferred && !hasFullTimeCourt(playerCount)) continue;
         const eligible = availableCourts.filter((courtNum) =>
           isCourtEligibleForGroup(courtNum, playerCount)
         ).length;
@@ -100,7 +124,7 @@ export function useRegistrationDerived({
       passThroughEntry: passThrough,
       passThroughEntryData: passThrough,
     };
-  }, [data.waitlist, availableCourts]);
+  }, [data.waitlist, data.upcomingBlocks, availableCourts]);
 
   // Member database (simplified for autocomplete)
   const memberDatabase = useMemo(() => {

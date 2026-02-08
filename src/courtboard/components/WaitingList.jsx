@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, AlertCircle } from './Icons';
 import { getTennisDomain, getTennisNamespaceConfig } from '../../platform/windowBridge.js';
 import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
+import { getUpcomingBlockWarningFromBlocks } from '@lib';
 
 /**
  * WaitingList - Display panel for groups waiting to play
@@ -65,11 +66,50 @@ export function WaitingList({
     }
   };
 
+  // Check if any eligible court offers full session time for a group
+  const hasFullTimeCourt = (groupPlayerCount) => {
+    const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
+    const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
+    const now = new Date();
+    const data = courtsToData(courts);
+    const blocks = allBlocks;
+    const wetSet = new Set(
+      blocks
+        .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+        .map((b) => b.courtNumber)
+    );
+
+    if (!A?.getFreeCourtsInfo) return false;
+    const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+    const eligibleFree = (info.free || []).filter((courtNum) =>
+      isCourtEligibleForGroup(courtNum, groupPlayerCount)
+    );
+    const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
+      isCourtEligibleForGroup(courtNum, groupPlayerCount)
+    );
+    const eligibleCourts = eligibleFree.length > 0 ? eligibleFree : eligibleOvertime;
+
+    return eligibleCourts.some((courtNum) => {
+      const warning = getUpcomingBlockWarningFromBlocks(
+        courtNum,
+        sessionDuration + 5,
+        allBlocks,
+        now
+      );
+      return warning == null; // null = no restriction = full time
+    });
+  };
+
   // Check if a group can register now (courts are available)
   const canGroupRegisterNow = (idx) => {
     try {
       if (!A) return false;
-      if (waitlist[idx]?.deferred) return false;
+
+      // Deferred groups only get CTA when a full-time court is available
+      if (waitlist[idx]?.deferred) {
+        const groupPlayerCount = waitlist[idx]?.players?.length || 0;
+        if (!hasFullTimeCourt(groupPlayerCount)) return false;
+      }
 
       const now = new Date();
       const data = courtsToData(courts); // Use React state instead of localStorage
@@ -180,7 +220,7 @@ export function WaitingList({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {group.deferred ? (
+                  {group.deferred && !canRegisterNow ? (
                     <div className="courtboard-text-xs text-blue-400 font-medium text-right">
                       Waiting for full court
                     </div>

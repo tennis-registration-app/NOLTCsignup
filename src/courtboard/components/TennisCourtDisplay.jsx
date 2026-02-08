@@ -19,7 +19,7 @@ import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
 import { writeCourtboardState } from '../bridge/window-bridge';
 
 // Import shared utilities from @lib
-import { TENNIS_CONFIG as _sharedTennisConfig } from '@lib';
+import { TENNIS_CONFIG as _sharedTennisConfig, getUpcomingBlockWarningFromBlocks } from '@lib';
 
 // ---- Debounce helper (no UI change) ----
 const debounce = (fn, ms = 150) => {
@@ -314,8 +314,31 @@ export function TennisCourtDisplay() {
     // Use mobileState (React state) instead of sessionStorage for reactivity
     const mobileWaitlistEntryId = mobileState.waitlistEntryId;
     const firstGroup = waitlist[0];
+
+    // Deferred groups: only skip when no full-time court available
+    let deferredBlocked = false;
+    if (firstGroup?.deferred) {
+      const groupPlayerCount = firstGroup?.players?.length || 0;
+      const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
+      const nowDate = new Date();
+      const freeForDeferred = listPlayableCourts(courts, courtBlocks, nowDate.toISOString());
+      const eligibleForDeferred = freeForDeferred.filter((courtNum) =>
+        isCourtEligibleForGroup(courtNum, groupPlayerCount)
+      );
+      const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
+      deferredBlocked = !eligibleForDeferred.some((courtNum) => {
+        const warning = getUpcomingBlockWarningFromBlocks(
+          courtNum,
+          sessionDuration + 5,
+          allBlocks,
+          nowDate
+        );
+        return warning == null;
+      });
+    }
+
     const isUserFirstInWaitlist =
-      mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId && !firstGroup?.deferred;
+      mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId && !deferredBlocked;
 
     // Use shared helper for consistent free court calculation
     const now = new Date().toISOString();
@@ -349,7 +372,7 @@ export function TennisCourtDisplay() {
       // Not first, no free courts, or no waitlist - close notice if it's currently showing
       mobileModal?.close?.();
     }
-  }, [courts, courtBlocks, waitlist, isMobileView, mobileState]);
+  }, [courts, courtBlocks, upcomingBlocks, waitlist, isMobileView, mobileState]);
 
   setRefreshBoardGlobal(loadData);
 
