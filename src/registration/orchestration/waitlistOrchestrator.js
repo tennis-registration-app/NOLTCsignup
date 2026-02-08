@@ -29,7 +29,7 @@ import { logger } from '../../lib/logger.js';
 
 /* global Tennis */
 
-export async function sendGroupToWaitlistOrchestrated(group, deps) {
+export async function sendGroupToWaitlistOrchestrated(group, deps, options = {}) {
   const {
     // Read values
     isJoiningWaitlist,
@@ -145,6 +145,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps) {
       players,
       groupType,
       ...(mobileLocation || {}), // Spread latitude/longitude if available
+      ...(options.deferred ? { deferred: true } : {}),
     });
     const apiDuration = Math.round(performance.now() - waitlistStartTime);
     setIsJoiningWaitlist(false);

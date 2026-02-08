@@ -21,6 +21,7 @@
  * @param {boolean} [props.hasWaitlistPriority] - Whether user came from waitlist
  * @param {string|null} [props.currentWaitlistEntryId] - Waitlist entry UUID if from waitlist
  * @param {Function} [props.onDeferWaitlist] - Handler to defer and stay on waitlist
+ * @param {Function} [props.onJoinWaitlistDeferred] - Handler to join waitlist with deferred flag
  */
 import React, { useState } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
@@ -43,11 +44,13 @@ const CourtSelectionScreen = ({
   hasWaitlistPriority = false,
   currentWaitlistEntryId = null,
   onDeferWaitlist,
+  onJoinWaitlistDeferred,
 }) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
   const [loadingCourt, setLoadingCourt] = useState(null);
   const [showDeferConfirm, setShowDeferConfirm] = useState(false);
+  const [showWaitForFullTimeConfirm, setShowWaitForFullTimeConfirm] = useState(false);
 
   // Determine session duration based on group size
   const getSessionDuration = (group) => {
@@ -106,6 +109,16 @@ const CourtSelectionScreen = ({
   const allCourtsRestricted =
     hasWaitlistPriority &&
     currentWaitlistEntryId &&
+    availableCourts.length > 0 &&
+    availableCourts.every((courtNum) => {
+      const duration = getSessionDuration(currentGroup);
+      const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks);
+      return warning != null;
+    });
+
+  // Same restriction check for fresh registrations (not from waitlist)
+  const freshAllCourtsRestricted =
+    !hasWaitlistPriority &&
     availableCourts.length > 0 &&
     availableCourts.every((courtNum) => {
       const duration = getSessionDuration(currentGroup);
@@ -200,7 +213,7 @@ const CourtSelectionScreen = ({
           })}
         </div>
 
-        {/* Stay on Waitlist option when all courts are time-restricted */}
+        {/* Stay on Waitlist option when all courts are time-restricted (waitlist priority users) */}
         {allCourtsRestricted && onDeferWaitlist && (
           <div className="text-center mb-4">
             <p className="text-gray-600 text-sm mb-2">
@@ -212,6 +225,24 @@ const CourtSelectionScreen = ({
             >
               Stay on Waitlist
             </button>
+          </div>
+        )}
+
+        {/* Wait for Full Time option when all courts are time-restricted (fresh registration) */}
+        {freshAllCourtsRestricted && onJoinWaitlistDeferred && (
+          <div className="text-center mb-4">
+            <p className="text-gray-600 text-sm mb-2">
+              All available courts have upcoming reservations that limit your play time.
+            </p>
+            <button
+              onClick={() => setShowWaitForFullTimeConfirm(true)}
+              className="bg-blue-500 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
+            >
+              Wait for Full Time
+            </button>
+            <p className="text-gray-500 text-xs mt-1">
+              Join the waitlist for an unrestricted court
+            </p>
           </div>
         )}
 
@@ -258,6 +289,36 @@ const CourtSelectionScreen = ({
                   onClick={() => {
                     setShowDeferConfirm(false);
                     onDeferWaitlist(currentWaitlistEntryId);
+                  }}
+                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Wait for Full Time Confirmation Modal (fresh registration) */}
+        {showWaitForFullTimeConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+              <h3 className="text-xl font-bold text-gray-800 mb-3">Wait for Full Time?</h3>
+              <p className="text-gray-600 mb-6">
+                Your group will be added to the waitlist until a court with full session time is
+                available.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowWaitForFullTimeConfirm(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowWaitForFullTimeConfirm(false);
+                    onJoinWaitlistDeferred();
                   }}
                   className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
                 >

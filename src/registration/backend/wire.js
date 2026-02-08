@@ -155,6 +155,11 @@ export function toJoinWaitlistPayload(input) {
     payload.location_token = input.location_token;
   }
 
+  // Add deferred flag for "Wait for Full Time" flow
+  if (input.deferred) {
+    payload.deferred = true;
+  }
+
   return payload;
 }
 

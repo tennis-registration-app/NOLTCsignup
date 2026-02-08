@@ -310,24 +310,28 @@ export function useCourtHandlers(deps) {
 
   // VERBATIM COPY: sendGroupToWaitlist from line ~527
   const sendGroupToWaitlist = useCallback(
-    async (group) => {
-      await sendGroupToWaitlistOrchestrated(group, {
-        // Read values
-        isJoiningWaitlist,
-        currentGroup,
-        mobileFlow,
-        // Setters
-        setIsJoiningWaitlist,
-        setWaitlistPosition,
-        setGpsFailedPrompt,
-        // Services/helpers
-        backend,
-        getMobileGeolocation,
-        validateGroupCompat,
-        isPlayerAlreadyPlaying,
-        showAlertMessage,
-        API_CONFIG,
-      });
+    async (group, options) => {
+      await sendGroupToWaitlistOrchestrated(
+        group,
+        {
+          // Read values
+          isJoiningWaitlist,
+          currentGroup,
+          mobileFlow,
+          // Setters
+          setIsJoiningWaitlist,
+          setWaitlistPosition,
+          setGpsFailedPrompt,
+          // Services/helpers
+          backend,
+          getMobileGeolocation,
+          validateGroupCompat,
+          isPlayerAlreadyPlaying,
+          showAlertMessage,
+          API_CONFIG,
+        },
+        options
+      );
     },
     [
       sendGroupToWaitlistOrchestrated,

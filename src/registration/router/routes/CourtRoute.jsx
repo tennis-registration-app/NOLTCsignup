@@ -361,6 +361,18 @@ export function CourtRoute({ app, handlers }) {
           }
         }}
         onStartOver={resetForm}
+        onJoinWaitlistDeferred={async () => {
+          try {
+            await sendGroupToWaitlist(currentGroup, { deferred: true });
+            getTennisUI()?.toast?.("You'll be notified when a full-time court is available", {
+              type: 'success',
+            });
+          } catch (err) {
+            logger.error('CourtRoute', 'joinWaitlistDeferred failed', err);
+            getTennisUI()?.toast?.('Failed to join waitlist — please try again', { type: 'error' });
+          }
+          resetForm();
+        }}
       />
     </>
   );

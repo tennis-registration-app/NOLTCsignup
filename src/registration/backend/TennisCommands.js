@@ -522,7 +522,7 @@ export class TennisCommands {
    * @param {number} [params.longitude] - For mobile geofence validation
    * @returns {Promise<import('./types').CommandResponse & { entry?: Object, position?: number }>}
    */
-  async joinWaitlistWithPlayers({ players, groupType, latitude, longitude }) {
+  async joinWaitlistWithPlayers({ players, groupType, latitude, longitude, deferred }) {
     // 1. Validate command structure (fail-fast)
     // INPUT-NORMALIZE: Accept either format from UI, normalize to camelCase for validation
     const validPlayers = players.map((p) => ({
@@ -545,6 +545,7 @@ export class TennisCommands {
       groupType,
       latitude,
       longitude,
+      deferred,
     });
   }
 
