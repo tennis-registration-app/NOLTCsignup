@@ -39,7 +39,7 @@ export function useRegistrationDataLayer({
         waitlist: waitlist,
         recentlyCleared: data.recentlyCleared || [],
       };
-      setData(updatedData);
+      setData((prev) => ({ ...prev, ...updatedData }));
       if (initialData.operatingHours) {
         setOperatingHours(initialData.operatingHours);
       }
