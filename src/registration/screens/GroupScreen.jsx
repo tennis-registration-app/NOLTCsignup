@@ -466,65 +466,64 @@ const GroupScreen = (
                   )}
                 </div>
               </div>
+
+              {/* Frequent partners section - inline within Add Another Player card */}
+              {memberNumber &&
+                (() => {
+                  const availablePartners = (frequentPartners || []).filter(
+                    (partner) =>
+                      !isPlayerAlreadyPlaying(partner.player?.id || partner.player?.memberId)
+                        .isPlaying
+                  );
+
+                  if (!frequentPartnersLoading && availablePartners.length === 0) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="border-t border-green-200 mt-4 pt-4">
+                      <h4 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">
+                        Frequent Partners
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                        {frequentPartnersLoading ? (
+                          <>
+                            {[...Array(6)].map((_, i) => (
+                              <div
+                                key={i}
+                                className="h-10 sm:h-12 bg-green-200/60 rounded-lg animate-pulse"
+                              />
+                            ))}
+                          </>
+                        ) : (
+                          availablePartners
+                            .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
+                            .map((partner, idx) => {
+                              const names = partner.player.name.split(' ');
+                              const displayName =
+                                names.join(' ').length > 20
+                                  ? `${names[0].charAt(0)}. ${names[1] || names[0]}`
+                                  : partner.player.name;
+
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => onAddFrequentPartner(partner.player)}
+                                  className="bg-white p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-green-100 transition-colors text-left"
+                                >
+                                  <div className="font-medium text-xs sm:text-sm">
+                                    {displayName}
+                                  </div>
+                                </button>
+                              );
+                            })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
             </div>
           )}
-
-          {/* Frequent partners - always show section when member selected and room in group */}
-          {memberNumber &&
-            currentGroup.length < CONSTANTS.MAX_PLAYERS &&
-            (() => {
-              const availablePartners = (frequentPartners || []).filter(
-                (partner) =>
-                  !isPlayerAlreadyPlaying(partner.player?.id || partner.player?.memberId).isPlaying
-              );
-
-              // Show section if loading OR has available partners
-              if (!frequentPartnersLoading && availablePartners.length === 0) {
-                return null;
-              }
-
-              return (
-                <div className="p-3 sm:p-4 bg-green-50 rounded-xl">
-                  <h4 className="font-medium text-sm sm:text-base mb-2 sm:mb-3">
-                    Frequent Partners
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                    {frequentPartnersLoading ? (
-                      // Skeleton loading state
-                      <>
-                        {[...Array(6)].map((_, i) => (
-                          <div
-                            key={i}
-                            className="h-10 sm:h-12 bg-green-200/60 rounded-lg animate-pulse"
-                          />
-                        ))}
-                      </>
-                    ) : (
-                      // Ready with data
-                      availablePartners
-                        .slice(0, CONSTANTS.MAX_FREQUENT_PARTNERS)
-                        .map((partner, idx) => {
-                          const names = partner.player.name.split(' ');
-                          const displayName =
-                            names.join(' ').length > 20
-                              ? `${names[0].charAt(0)}. ${names[1] || names[0]}`
-                              : partner.player.name;
-
-                          return (
-                            <button
-                              key={idx}
-                              onClick={() => onAddFrequentPartner(partner.player)}
-                              className="bg-white p-2 sm:p-3 rounded-lg border border-gray-200 hover:bg-green-100 transition-colors text-left"
-                            >
-                              <div className="font-medium text-xs sm:text-sm">{displayName}</div>
-                            </button>
-                          );
-                        })
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
         </div>
         <div
           className={`absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex ${isMobileView ? 'justify-between' : 'justify-between gap-2'} items-end bottom-nav-buttons`}
