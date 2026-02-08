@@ -315,26 +315,32 @@ export function TennisCourtDisplay() {
     const mobileWaitlistEntryId = mobileState.waitlistEntryId;
     const firstGroup = waitlist[0];
 
-    // Deferred groups: only skip when no full-time court available
+    // Deferred groups: only skip when no full-time court available.
+    // Empty block data means it hasn't loaded yet — treat as blocked
+    // so deferred groups stay suppressed until we have real data.
     let deferredBlocked = false;
     if (firstGroup?.deferred) {
-      const groupPlayerCount = firstGroup?.players?.length || 0;
-      const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
-      const nowDate = new Date();
-      const freeForDeferred = listPlayableCourts(courts, courtBlocks, nowDate.toISOString());
-      const eligibleForDeferred = freeForDeferred.filter((courtNum) =>
-        isCourtEligibleForGroup(courtNum, groupPlayerCount)
-      );
       const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
-      deferredBlocked = !eligibleForDeferred.some((courtNum) => {
-        const warning = getUpcomingBlockWarningFromBlocks(
-          courtNum,
-          sessionDuration + 5,
-          allBlocks,
-          nowDate
+      if (allBlocks.length === 0) {
+        deferredBlocked = true;
+      } else {
+        const groupPlayerCount = firstGroup?.players?.length || 0;
+        const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
+        const nowDate = new Date();
+        const freeForDeferred = listPlayableCourts(courts, courtBlocks, nowDate.toISOString());
+        const eligibleForDeferred = freeForDeferred.filter((courtNum) =>
+          isCourtEligibleForGroup(courtNum, groupPlayerCount)
         );
-        return warning == null;
-      });
+        deferredBlocked = !eligibleForDeferred.some((courtNum) => {
+          const warning = getUpcomingBlockWarningFromBlocks(
+            courtNum,
+            sessionDuration + 5,
+            allBlocks,
+            nowDate
+          );
+          return warning == null;
+        });
+      }
     }
 
     const isUserFirstInWaitlist =
