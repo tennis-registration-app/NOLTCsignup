@@ -36,7 +36,13 @@ export function CourtRoute({ app, handlers }) {
     computeRegistrationCourtSelection,
     CONSTANTS,
   } = app;
-  const { isChangingCourt, hasWaitlistPriority, displacement, originalCourtData } = state;
+  const {
+    isChangingCourt,
+    hasWaitlistPriority,
+    currentWaitlistEntryId,
+    displacement,
+    originalCourtData,
+  } = state;
   const { hasAssignedCourt, isMobileView } = derived;
   const { justAssignedCourt } = courtAssignment;
   const { currentGroup } = groupGuest;
@@ -210,6 +216,12 @@ export function CourtRoute({ app, handlers }) {
         currentGroup={currentGroup}
         isMobileView={isMobileView}
         upcomingBlocks={courtData.upcomingBlocks}
+        hasWaitlistPriority={hasWaitlistPriority}
+        currentWaitlistEntryId={currentWaitlistEntryId}
+        onDeferWaitlist={(entryId) => {
+          // Placeholder — confirmation modal wired in Commit 7
+          logger.debug('CourtRoute', 'onDeferWaitlist called', { entryId });
+        }}
         onCourtSelect={async (courtNum) => {
           // If changing courts, handle the court change
           if (isChangingCourt && justAssignedCourt) {

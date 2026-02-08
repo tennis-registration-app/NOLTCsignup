@@ -18,6 +18,9 @@
  * @param {number} [props.waitingGroupsCount] - Number of groups waiting
  * @param {Function} [props.onJoinWaitlist] - Join waitlist handler
  * @param {Function} [props.onAssignNext] - Assign next handler
+ * @param {boolean} [props.hasWaitlistPriority] - Whether user came from waitlist
+ * @param {string|null} [props.currentWaitlistEntryId] - Waitlist entry UUID if from waitlist
+ * @param {Function} [props.onDeferWaitlist] - Handler to defer and stay on waitlist
  */
 import React, { useState } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
@@ -37,6 +40,9 @@ const CourtSelectionScreen = ({
   waitingGroupsCount: _waitingGroupsCount,
   onJoinWaitlist: _onJoinWaitlist,
   onAssignNext: _onAssignNext,
+  hasWaitlistPriority = false,
+  currentWaitlistEntryId = null,
+  onDeferWaitlist,
 }) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
@@ -94,6 +100,17 @@ const CourtSelectionScreen = ({
     const duration = getSessionDuration(currentGroup);
     return getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks);
   };
+
+  // Determine if ALL available courts are time-restricted for this group
+  const allCourtsRestricted =
+    hasWaitlistPriority &&
+    currentWaitlistEntryId &&
+    availableCourts.length > 0 &&
+    availableCourts.every((courtNum) => {
+      const duration = getSessionDuration(currentGroup);
+      const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks);
+      return warning != null;
+    });
 
   return (
     <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
@@ -181,6 +198,21 @@ const CourtSelectionScreen = ({
             );
           })}
         </div>
+
+        {/* Stay on Waitlist option when all courts are time-restricted */}
+        {allCourtsRestricted && onDeferWaitlist && (
+          <div className="text-center mb-4">
+            <p className="text-gray-600 text-sm mb-2">
+              All available courts have upcoming reservations that limit your play time.
+            </p>
+            <button
+              onClick={() => onDeferWaitlist(currentWaitlistEntryId)}
+              className="bg-blue-500 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
+            >
+              Stay on Waitlist
+            </button>
+          </div>
+        )}
 
         <div className="absolute bottom-4 sm:bottom-8 left-4 sm:left-8 right-4 sm:right-8 flex justify-between">
           <button
