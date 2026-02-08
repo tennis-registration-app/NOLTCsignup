@@ -250,7 +250,7 @@ const GroupScreen = (
               {!mobileFlow && (
                 <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
               )}
-              <div className={`space-y-2 ${!mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
+              <div className={`grid grid-cols-2 gap-2 ${!mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
                 {currentGroup.map((player, idx) => (
                   <div
                     key={idx}
@@ -269,12 +269,15 @@ const GroupScreen = (
                         </span>
                       )}
                     </div>
-                    <button
-                      onClick={() => onRemovePlayer(idx)}
-                      className="text-red-500 hover:bg-red-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-sm sm:text-base"
-                    >
-                      Remove
-                    </button>
+                    {idx > 0 && (
+                      <button
+                        onClick={() => onRemovePlayer(idx)}
+                        className="text-red-500 hover:bg-red-50 w-8 h-8 flex items-center justify-center rounded-full transition-colors text-lg font-bold flex-shrink-0"
+                        aria-label={`Remove ${player.name}`}
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
