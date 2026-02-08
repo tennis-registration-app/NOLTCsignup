@@ -69,6 +69,7 @@ export function WaitingList({
   const canGroupRegisterNow = (idx) => {
     try {
       if (!A) return false;
+      if (waitlist[idx]?.deferred) return false;
 
       const now = new Date();
       const data = courtsToData(courts); // Use React state instead of localStorage

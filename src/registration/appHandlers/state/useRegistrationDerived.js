@@ -55,9 +55,10 @@ export function useRegistrationDerived({
       isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
     ).length;
 
-    const live1 = eligibleForFirst >= 1 && firstGroup !== null;
+    const live1 = eligibleForFirst >= 1 && firstGroup !== null && !firstGroup?.deferred;
     const courtsNeededForSecond = live1 ? 2 : 1;
-    const live2 = eligibleForSecond >= courtsNeededForSecond && secondGroup !== null;
+    const live2 =
+      eligibleForSecond >= courtsNeededForSecond && secondGroup !== null && !secondGroup?.deferred;
 
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
@@ -72,6 +73,7 @@ export function useRegistrationDerived({
     if (!live1 && !live2 && availableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];
+        if (entry.deferred) continue;
         const playerCount = entry?.players?.length || 0;
         const eligible = availableCourts.filter((courtNum) =>
           isCourtEligibleForGroup(courtNum, playerCount)

@@ -314,7 +314,8 @@ export function TennisCourtDisplay() {
     // Use mobileState (React state) instead of sessionStorage for reactivity
     const mobileWaitlistEntryId = mobileState.waitlistEntryId;
     const firstGroup = waitlist[0];
-    const isUserFirstInWaitlist = mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId;
+    const isUserFirstInWaitlist =
+      mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId && !firstGroup?.deferred;
 
     // Use shared helper for consistent free court calculation
     const now = new Date().toISOString();
