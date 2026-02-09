@@ -58,6 +58,10 @@ export function NextAvailablePanel({
     // Check each court for availability
     courts.forEach((court, index) => {
       const courtNumber = index + 1;
+
+      // Tournament courts have no predictable end time — exclude entirely
+      if (court?.session?.isTournament) return;
+
       let endTime = null;
 
       // Check for blocks that affect this court's availability
