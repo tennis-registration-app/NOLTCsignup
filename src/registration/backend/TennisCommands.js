@@ -550,6 +550,21 @@ export class TennisCommands {
   }
 
   /**
+   * Update the tournament flag on an active session
+   * @param {Object} input
+   * @param {string} input.sessionId - UUID of the session
+   * @param {boolean} input.isTournament - Whether this is a tournament match
+   * @returns {Promise<import('./types').CommandResponse>}
+   */
+  async updateSessionTournament({ sessionId, isTournament }) {
+    const response = await this.api.post('/update-session-tournament', {
+      session_id: sessionId,
+      is_tournament: isTournament,
+    });
+    return response;
+  }
+
+  /**
    * Generate a location verification token for QR code display
    * Used on kiosk when mobile users need alternative to GPS
    *
