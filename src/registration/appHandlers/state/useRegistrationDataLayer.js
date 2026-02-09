@@ -84,7 +84,7 @@ export function useRegistrationDataLayer({
           setOperatingHours(board.operatingHours);
         }
         const selectable = (board.courts || [])
-          .filter((c) => (c.isAvailable || c.isOvertime) && !c.isBlocked)
+          .filter((c) => (c.isAvailable || (c.isOvertime && !c.isTournament)) && !c.isBlocked)
           .map((c) => c.number);
         setAvailableCourts(selectable);
         logger.debug(

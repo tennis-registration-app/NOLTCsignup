@@ -35,7 +35,9 @@ export function computeRegistrationCourtSelection(courts) {
   // primaryCourts: courts.filter((c) => c.isAvailable && !c.isBlocked)
   // fallbackOvertimeCourts: courts.filter((c) => c.isOvertime && !c.isBlocked)
   const primaryCourts = courts.filter((c) => c && c.isAvailable && !c.isBlocked);
-  const fallbackOvertimeCourts = courts.filter((c) => c && c.isOvertime && !c.isBlocked);
+  const fallbackOvertimeCourts = courts.filter(
+    (c) => c && c.isOvertime && !c.isBlocked && !c.isTournament
+  );
   const showingOvertimeCourts = primaryCourts.length === 0 && fallbackOvertimeCourts.length > 0;
 
   // Build eligibility map
