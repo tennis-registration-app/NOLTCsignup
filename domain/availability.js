@@ -354,7 +354,9 @@
       // but are excluded from availability lists
       const court = data.courts[n - 1];
       const isTournament = court?.session?.isTournament ?? false;
-      if (status === 'occupied' && isTournament && isOvertime(court?.session, now)) {
+      if (status === 'occupied' && isTournament &&
+          court?.session?.scheduledEndAt &&
+          new Date(court.session.scheduledEndAt) <= now) {
         status = 'overtime';
       }
 
