@@ -31,7 +31,7 @@
  * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
  * - onUpdateSessionTournament: (sessionId, isTournament) => Promise - Tournament flag update handler
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 import { Check } from '../components';
 import { TypedIcon } from '../../components/icons/TypedIcon';
@@ -105,6 +105,11 @@ const SuccessScreen = (
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
   const [isTournament, setIsTournament] = useState(false);
   const [showTournamentConfirm, setShowTournamentConfirm] = useState(false);
+
+  // Reset tournament state when session changes (e.g., after Change Court round trip)
+  useEffect(() => {
+    setIsTournament(false);
+  }, [sessionIdProp]);
 
   // Ball price from API (passed as prop in cents, converted to dollars)
   const ballPrice = ballPriceCents ? ballPriceCents / 100 : TENNIS_CONFIG.PRICING.TENNIS_BALLS;
@@ -496,7 +501,7 @@ const SuccessScreen = (
             <span>Add Balls</span>
           </button>
         </div>
-        {!isTournament && canChangeCourt && changeTimeRemaining > 0 && (
+        {!isTournament && (
           <div className="mt-3 text-left">
             <button
               onClick={() => setShowTournamentConfirm(true)}
