@@ -539,13 +539,15 @@ const GroupScreen = (
             <div className={isMobileView ? 'flex-1 flex justify-center' : ''}>
               {(() => {
                 // Check if there's a waitlist and if this group is not the first waiting group
+                // Filter out deferred entries - they're transparent to queue logic
                 const waitlistEntries = data?.waitlist || [];
-                const hasWaitlist = waitlistEntries.length > 0;
+                const activeWaitlistEntries = waitlistEntries.filter((e) => !e.deferred);
+                const hasWaitlist = activeWaitlistEntries.length > 0;
 
                 // Check if current group is in the allowed positions (1st or 2nd when 2+ courts)
                 let groupWaitlistPosition = 0;
-                for (let i = 0; i < waitlistEntries.length; i++) {
-                  if (sameGroup(waitlistEntries[i]?.players || [], currentGroup)) {
+                for (let i = 0; i < activeWaitlistEntries.length; i++) {
+                  if (sameGroup(activeWaitlistEntries[i]?.players || [], currentGroup)) {
                     groupWaitlistPosition = i + 1; // 1-based position
                     break;
                   }
