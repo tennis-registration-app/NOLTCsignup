@@ -229,7 +229,7 @@
         continue;
       }
 
-      if (isOvertime(session, now) && !(session.isTournament)) {
+      if (isOvertime(session, now)) {
         overtime.push(n);
       }
       // If not overtime and has session, it's occupied (not free or overtime)
