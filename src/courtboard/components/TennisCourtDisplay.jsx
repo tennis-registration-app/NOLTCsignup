@@ -157,6 +157,7 @@ export function TennisCourtDisplay() {
                       group: { players },
                       scheduledEndAt: apiCourt.session.scheduledEndAt,
                       startedAt: apiCourt.session.startedAt,
+                      isTournament: apiCourt.session.isTournament ?? false,
                     }
                   : null,
               };

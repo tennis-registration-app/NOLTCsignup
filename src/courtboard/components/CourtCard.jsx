@@ -299,12 +299,14 @@ export function CourtCard({
                 )}
                 {status === 'occupied' && cObj?.session?.scheduledEndAt && (
                   <div className="mt-auto text-sm opacity-90 text-center">
-                    Until {formatTime(cObj.session.scheduledEndAt)}
+                    {cObj?.session?.isTournament
+                      ? 'Tournament'
+                      : `Until ${formatTime(cObj.session.scheduledEndAt)}`}
                   </div>
                 )}
-                {status === 'overtime' && secondary && (
+                {status === 'overtime' && (
                   <div className="mt-auto text-sm text-center" style={{ color: 'yellow' }}>
-                    {secondary}
+                    {cObj?.session?.isTournament ? 'Tournament' : secondary}
                   </div>
                 )}
               </>
