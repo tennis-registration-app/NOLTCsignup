@@ -229,7 +229,7 @@
         continue;
       }
 
-      if (isOvertime(session, now)) {
+      if (isOvertime(session, now) && !(session.isTournament)) {
         overtime.push(n);
       }
       // If not overtime and has session, it's occupied (not free or overtime)
@@ -350,10 +350,16 @@
       else if (isOccupied) status = 'occupied';
       else if (isFree)     status = 'free';
 
-      // strict selectable policy: free OR overtime (when no free exists)
-      // Tournament overtime courts are NEVER selectable (they play until completion)
+      // Tournament courts past end time display as overtime (dark blue)
+      // but are excluded from availability lists
       const court = data.courts[n - 1];
       const isTournament = court?.session?.isTournament ?? false;
+      if (status === 'occupied' && isTournament && isOvertime(court?.session, now)) {
+        status = 'overtime';
+      }
+
+      // strict selectable policy: free OR overtime (when no free exists)
+      // Tournament overtime courts are NEVER selectable (they play until completion)
       const selectable = (!isWet && !isBlocked) &&
                          ((status === 'free') || (status === 'overtime' && !hasTrueFree && !isTournament));
       
