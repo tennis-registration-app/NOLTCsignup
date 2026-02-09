@@ -477,7 +477,7 @@ const SuccessScreen = (
 
     // Court assignment footer content
     const courtFooterContent = !ballsPurchased ? (
-      <div className="bg-yellow-50 rounded-2xl p-3 sm:p-4 h-full flex items-center">
+      <div className="bg-yellow-50 rounded-2xl p-3 sm:p-4 h-full flex flex-col justify-center">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
           {canChangeCourt && changeTimeRemaining > 0 && !isMobile && window.top === window.self && (
             <button
