@@ -39,6 +39,7 @@
  * @property {string|null} actualEndAt - ISO string when session actually ended, null if active
  * @property {'completed'|'cleared_early'|'admin_override'|null} endReason - Why session ended
  * @property {boolean} isOvertime - True if past scheduledEndAt and still active
+ * @property {boolean} isTournament - True if this is a tournament match (plays until completion)
  */
 
 /**
@@ -62,6 +63,7 @@
  * @property {boolean} isBlocked - True if has active block
  * @property {boolean} isOvertime - True if session is past scheduled end
  * @property {boolean} isAvailable - True if can be assigned (not occupied, not blocked)
+ * @property {boolean} isTournament - True if current session is a tournament match
  * @property {Session|null} session - Current session if occupied
  * @property {Block|null} block - Current block if blocked
  */

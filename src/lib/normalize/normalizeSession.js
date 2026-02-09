@@ -37,5 +37,6 @@ export function normalizeSession(raw, serverNow) {
     actualEndAt,
     endReason,
     isOvertime,
+    isTournament: raw.is_tournament ?? raw.isTournament ?? false,
   };
 }

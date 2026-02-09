@@ -50,6 +50,7 @@ export function normalizeCourt(raw, serverNow) {
       session_type: raw.session_type,
       participants: raw.participants,
       minutes_remaining: raw.minutes_remaining,
+      is_tournament: raw.is_tournament,
     };
   }
   const session = sessionInput ? normalizeSession(sessionInput, serverNow) : null;
@@ -94,6 +95,7 @@ export function normalizeCourt(raw, serverNow) {
     isBlocked,
     isOvertime,
     isAvailable,
+    isTournament: session?.isTournament ?? false,
     session,
     block,
   };
