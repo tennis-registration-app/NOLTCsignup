@@ -181,6 +181,13 @@ export function SuccessRoute({ app, handlers }) {
         getCourtBlockStatus={getCourtBlockStatus}
         upcomingBlocks={data.upcomingBlocks}
         blockWarningMinutes={blockWarningMinutes}
+        onUpdateSessionTournament={async (sessionId, isTournamentFlag) => {
+          const result = await backend.commands.updateSessionTournament({
+            sessionId,
+            isTournament: isTournamentFlag,
+          });
+          return result;
+        }}
       />
     </>
   );

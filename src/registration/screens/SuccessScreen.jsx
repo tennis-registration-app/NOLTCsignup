@@ -29,6 +29,7 @@
  * - getCourtBlockStatus: (courtNumber) => BlockStatus - Court block status checker
  * - upcomingBlocks: array - Upcoming block data for warning checks
  * - blockWarningMinutes: number - Minutes threshold for showing block warnings (default: 60)
+ * - onUpdateSessionTournament: (sessionId, isTournament) => Promise - Tournament flag update handler
  */
 import React, { useState, useCallback } from 'react';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
@@ -94,6 +95,7 @@ const SuccessScreen = (
     getCourtBlockStatus,
     upcomingBlocks = [],
     blockWarningMinutes = 60,
+    onUpdateSessionTournament,
   }
 ) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
@@ -101,6 +103,8 @@ const SuccessScreen = (
   const [ballsPurchased, setBallsPurchased] = useState(false);
   const [purchaseDetails, setPurchaseDetails] = useState(null);
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
+  const [isTournament, setIsTournament] = useState(false);
+  const [showTournamentConfirm, setShowTournamentConfirm] = useState(false);
 
   // Ball price from API (passed as prop in cents, converted to dollars)
   const ballPrice = ballPriceCents ? ballPriceCents / 100 : TENNIS_CONFIG.PRICING.TENNIS_BALLS;
@@ -376,19 +380,27 @@ const SuccessScreen = (
           {assignedCourt &&
             (assignedEndTime || assignedCourt.session?.scheduledEndAt || assignedCourt.endTime) && (
               <>
-                <p className="text-base sm:text-lg text-gray-600 mt-3">
-                  Priority until{' '}
-                  <strong>
-                    {new Date(
-                      assignedEndTime ||
-                        assignedCourt.session?.scheduledEndAt ||
-                        assignedCourt.endTime
-                    ).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </strong>
-                </p>
+                {isTournament ? (
+                  <div className="mt-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                    <span className="text-sm font-semibold text-blue-700">
+                      Tournament Match — plays until completion
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-base sm:text-lg text-gray-600 mt-3">
+                    Priority until{' '}
+                    <strong>
+                      {new Date(
+                        assignedEndTime ||
+                          assignedCourt.session?.scheduledEndAt ||
+                          assignedCourt.endTime
+                      ).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </strong>
+                  </p>
+                )}
                 {isTimeLimited && (
                   <p className="text-sm text-gray-500 mt-1">
                     {timeLimitReason === 'rereg'
@@ -484,6 +496,24 @@ const SuccessScreen = (
             <span>Add Balls</span>
           </button>
         </div>
+        {!isTournament && canChangeCourt && changeTimeRemaining > 0 && (
+          <div className="mt-3 text-left">
+            <button
+              onClick={() => setShowTournamentConfirm(true)}
+              className="text-sm font-medium underline decoration-1 underline-offset-2"
+              style={{
+                color: '#7a9aba',
+                textDecorationColor: 'rgba(122,154,186,0.4)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              Tournament match?
+            </button>
+          </div>
+        )}
       </div>
     ) : (
       <div className="bg-green-50 rounded-2xl p-3 sm:p-4 h-full flex items-center justify-center">
@@ -515,6 +545,55 @@ const SuccessScreen = (
           mainContent={courtMainContent}
           footerContent={courtFooterContent}
         />
+
+        {/* Tournament Confirmation Modal */}
+        {showTournamentConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-[420px] mx-4">
+              <h3 className="text-xl sm:text-2xl font-bold text-center mb-4">Tournament Match</h3>
+              <p className="text-sm sm:text-base text-gray-600 text-center mb-6">
+                We are registering for a Club tournament match and may play until completion.
+              </p>
+              <div className="flex gap-2 sm:gap-3">
+                <button
+                  onClick={async () => {
+                    const sid = sessionIdProp || assignedCourt?.session?.id;
+                    if (!sid || !onUpdateSessionTournament) {
+                      logger.error(
+                        'SuccessScreen',
+                        'Cannot set tournament - missing session ID or handler'
+                      );
+                      setShowTournamentConfirm(false);
+                      return;
+                    }
+                    try {
+                      const result = await onUpdateSessionTournament(sid, true);
+                      if (result?.ok) {
+                        setIsTournament(true);
+                        setShowTournamentConfirm(false);
+                      } else {
+                        logger.error('SuccessScreen', 'Tournament update failed', result?.error);
+                        setShowTournamentConfirm(false);
+                      }
+                    } catch (e) {
+                      logger.error('SuccessScreen', 'Tournament update error', e);
+                      setShowTournamentConfirm(false);
+                    }
+                  }}
+                  className="flex-1 bg-blue-500 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-full font-medium hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setShowTournamentConfirm(false)}
+                  className="flex-1 bg-gray-200 text-gray-700 py-2.5 sm:py-3 px-4 sm:px-6 rounded-full font-medium hover:bg-gray-300 transition-colors text-sm sm:text-base"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Ball Purchase Modal */}
         {showBallPurchaseModal && (
