@@ -102,7 +102,8 @@ export function CourtRoute({ app, handlers }) {
   );
   const selectable = eligibleCourts.map((c) => c.number);
 
-  const hasWaiters = (courtData.waitlist?.length || 0) > 0;
+  // Only count active (non-deferred) waitlist entries as waiters
+  const hasWaiters = courtData.waitlist?.some((e) => !e.deferred) ?? false;
 
   // If user has waitlist priority, they should ONLY see FREE courts (not overtime)
   // Otherwise, only show courts when no one is waiting
