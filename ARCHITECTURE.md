@@ -136,6 +136,12 @@ router/
     └── SilentAssignRoute.jsx — Direct assignment
 ```
 
+### Business Features
+
+**Tournament Matches** — Players can designate a session as a tournament match from the success screen. Tournament sessions play until completion with no time enforcement. They are never selectable or offered to waitlisted groups. The flag is stored on the session record via `/update-session-tournament`.
+
+**Deferred Waitlist** — When all available courts have upcoming blocks that restrict full session time, players can choose to wait for a full-time court. Deferred entries are invisible to queue position logic and only receive CTAs when a court with no time restriction opens. The flag is stored on the waitlist entry via `/defer-waitlist`.
+
 ### Props Pattern
 
 Routes receive two grouped objects instead of individual props:
@@ -265,6 +271,10 @@ src/courtboard/
 
 `window.CourtboardState` is written ONLY by `bridge/window-bridge.js`. This prevents race conditions from multiple components updating shared state.
 
+### Court Status Logic
+
+Court display status is computed client-side by `availability.js`. Tournament courts use a two-layer approach: excluded from the availability overtime list (preventing waitlist offers) but overridden to display as overtime (dark blue) on the courtboard. Tournament courts never turn dark green (selectable).
+
 ## Error Handling
 
 ### DomainError Contract
@@ -336,13 +346,13 @@ function GroupRoute({ app, handlers }) {
 
 ### Unit Tests (Vitest)
 
-- **683 tests** across 46 test files
+- **718 tests** across 49 test files
 - Cover: reducers, services, transforms, error handling
 - Mock external dependencies (API, storage)
 
 ### E2E Tests (Playwright)
 
-- **15 tests** covering critical user flows
+- **18 tests** covering critical user flows
 - Golden flows: registration, court assignment, waitlist, blocks
 - Run against preview server with mock API
 
@@ -461,22 +471,3 @@ These are candidates for future decomposition.
 - [docs/TESTING.md](./docs/TESTING.md) — Testing strategy
 - [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) — Critical user flows
 - [docs/RUNBOOK.md](./docs/RUNBOOK.md) — Operations guide
-
-## Recent Features
-
-### Tournament Match (WP6-E)
-
-Players can designate their session as a tournament match from the success screen. Tournament sessions:
-- Display a "Tournament" badge instead of priority end time
-- Extend their session to match the tournament schedule
-- Are excluded from "Next Available" court predictions
-- Persist the `is_tournament` flag via the `/update-session-tournament` endpoint
-
-### Deferred Waitlist (WP6-D)
-
-When all available courts have upcoming blocks, players can choose to wait for a full-time court:
-- "Wait for Full-Time Court" option appears on court selection
-- Deferred entries are marked with `deferred: true` in the waitlist
-- Deferred groups are only offered courts without time restrictions
-- Two-layer availability check: `getFullTimeAvailableCourts()` for deferred groups
-- Deferred status persists via the `/defer-waitlist` endpoint
