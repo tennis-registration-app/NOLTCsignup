@@ -221,7 +221,7 @@ const CourtSelectionScreen = ({
             </p>
             <button
               onClick={() => setShowDeferConfirm(true)}
-              className="bg-blue-500 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
+              className="bg-blue-500 text-white min-h-[48px] py-4 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
             >
               Stay on Waitlist
             </button>
@@ -236,7 +236,7 @@ const CourtSelectionScreen = ({
             </p>
             <button
               onClick={() => setShowWaitForFullTimeConfirm(true)}
-              className="bg-blue-500 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
+              className="bg-blue-500 text-white min-h-[48px] py-4 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
             >
               Wait for Full Time
             </button>
@@ -281,7 +281,7 @@ const CourtSelectionScreen = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeferConfirm(false)}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 min-h-[48px] px-4 py-4 bg-gray-100 text-gray-700 rounded-xl text-lg hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
@@ -290,7 +290,7 @@ const CourtSelectionScreen = ({
                     setShowDeferConfirm(false);
                     onDeferWaitlist(currentWaitlistEntryId);
                   }}
-                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
+                  className="flex-1 min-h-[48px] px-4 py-4 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
                 >
                   Confirm
                 </button>
@@ -311,7 +311,7 @@ const CourtSelectionScreen = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowWaitForFullTimeConfirm(false)}
-                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 min-h-[48px] px-4 py-4 bg-gray-100 text-gray-700 rounded-xl text-lg hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
@@ -320,7 +320,7 @@ const CourtSelectionScreen = ({
                     setShowWaitForFullTimeConfirm(false);
                     onJoinWaitlistDeferred();
                   }}
-                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
+                  className="flex-1 min-h-[48px] px-4 py-4 bg-blue-500 text-white rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors"
                 >
                   Confirm
                 </button>
