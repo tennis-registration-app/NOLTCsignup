@@ -67,11 +67,10 @@ export function WaitingList({
   };
 
   // Check if any eligible court offers full session time for a group.
-  // Empty block data means it hasn't loaded yet — treat as unknown
-  // (not unrestricted) so deferred groups stay blocked until we have real data.
+  // No blocks means no restrictions — all courts have full time available.
   const hasFullTimeCourt = (groupPlayerCount) => {
     const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
-    if (allBlocks.length === 0) return false;
+    if (allBlocks.length === 0) return true;
     const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
     const now = new Date();
     const data = courtsToData(courts);

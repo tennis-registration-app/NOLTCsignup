@@ -46,10 +46,9 @@ export function useRegistrationDerived({
     const upcomingBlocks = data.upcomingBlocks || [];
 
     // Check if any eligible court offers full session time for a given player count.
-    // Empty upcomingBlocks means block data hasn't loaded yet — treat as unknown
-    // (not unrestricted) so deferred groups stay blocked until we have real data.
+    // No upcoming blocks means no restrictions — all courts have full time available.
     const hasFullTimeCourt = (playerCount) => {
-      if (upcomingBlocks.length === 0) return false;
+      if (upcomingBlocks.length === 0) return true;
       const sessionDuration = playerCount >= 4 ? 90 : 60;
       const eligible = availableCourts.filter((courtNum) =>
         isCourtEligibleForGroup(courtNum, playerCount)

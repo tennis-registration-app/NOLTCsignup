@@ -317,13 +317,12 @@ export function TennisCourtDisplay() {
     const firstGroup = waitlist[0];
 
     // Deferred groups: only skip when no full-time court available.
-    // Empty block data means it hasn't loaded yet — treat as blocked
-    // so deferred groups stay suppressed until we have real data.
+    // No blocks means no restrictions — all courts have full time available.
     let deferredBlocked = false;
     if (firstGroup?.deferred) {
       const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
       if (allBlocks.length === 0) {
-        deferredBlocked = true;
+        deferredBlocked = false; // No blocks = all courts have full time
       } else {
         const groupPlayerCount = firstGroup?.players?.length || 0;
         const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
