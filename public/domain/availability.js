@@ -211,6 +211,14 @@
         continue;
       }
 
+      // Tournament Exclusion (WP6-E):
+      // Tournament courts are excluded from the overtime list even when past scheduledEndAt.
+      // This prevents them from appearing in:
+      //   - Waitlist CTAs (no "court available" notifications for deferred groups)
+      //   - NextAvailablePanel (no "first available at" time shown)
+      //   - Fallback court selection (overtime courts shown when no free courts)
+      // Tournament matches play until completion and should never be treated as "available".
+      // See also: getCourtStatuses() for display-layer override (shows "overtime" color).
       if (isOvertime(session, now) && !(session.isTournament)) {
         overtime.push(n);
       }
@@ -332,8 +340,17 @@
       else if (isOccupied) status = 'occupied';
       else if (isFree)     status = 'free';
 
-      // Tournament courts past end time display as overtime (dark blue)
-      // but are excluded from availability lists
+      // Tournament Display Override (WP6-E):
+      // Two-layer approach for tournament courts:
+      //   Layer 1 (getFreeCourtsInfo): Excludes tournament courts from overtime[] array
+      //            → They won't trigger waitlist CTAs or appear in NextAvailablePanel
+      //   Layer 2 (here): Overrides status to 'overtime' for visual display
+      //            → Courtboard shows dark blue color (overtime) instead of light blue (occupied)
+      //
+      // This ensures tournament courts:
+      //   - Display correctly on courtboard (dark blue = "past end time")
+      //   - Never appear in availability calculations
+      //   - Are never selectable (line 348: !isTournament check)
       const court = data.courts[n - 1];
       const isTournament = court?.session?.isTournament ?? false;
       if (status === 'occupied' && isTournament &&
@@ -342,8 +359,10 @@
         status = 'overtime';
       }
 
-      // strict selectable policy: free OR overtime (when no free exists)
-      // Tournament overtime courts are NEVER selectable (they play until completion)
+      // Selectable Policy (WP6-E enhanced):
+      // - Free courts are always selectable (unless wet/blocked)
+      // - Overtime courts are selectable ONLY when no free courts exist (fallback)
+      // - Tournament overtime courts are NEVER selectable (they play until completion)
       const selectable = (!isWet && !isBlocked) &&
                          ((status === 'free') || (status === 'overtime' && !hasTrueFree && !isTournament));
       
