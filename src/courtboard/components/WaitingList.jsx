@@ -66,23 +66,19 @@ export function WaitingList({
     }
   };
 
-  // Check if any eligible court offers full session time for a group.
-  // No blocks means no restrictions — all courts have full time available.
-  const hasFullTimeCourt = (groupPlayerCount) => {
+  // Count full-time courts for a group (used by deferred groups for CTA eligibility)
+  const countFullTimeCourts = (groupPlayerCount) => {
     const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
-    if (allBlocks.length === 0) return true;
-    const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
     const now = new Date();
     const data = courtsToData(courts);
-    const blocks = allBlocks;
     const wetSet = new Set(
-      blocks
+      allBlocks
         .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
         .map((b) => b.courtNumber)
     );
 
-    if (!A?.getFreeCourtsInfo) return false;
-    const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+    if (!A?.getFreeCourtsInfo) return 0;
+    const info = A.getFreeCourtsInfo({ data, now, blocks: allBlocks, wetSet });
     const eligibleFree = (info.free || []).filter((courtNum) =>
       isCourtEligibleForGroup(courtNum, groupPlayerCount)
     );
@@ -91,7 +87,11 @@ export function WaitingList({
     );
     const eligibleCourts = eligibleFree.length > 0 ? eligibleFree : eligibleOvertime;
 
-    return eligibleCourts.some((courtNum) => {
+    // No blocks = all courts have full time
+    if (allBlocks.length === 0) return eligibleCourts.length;
+
+    const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
+    return eligibleCourts.filter((courtNum) => {
       const warning = getUpcomingBlockWarningFromBlocks(
         courtNum,
         sessionDuration + 5,
@@ -99,19 +99,13 @@ export function WaitingList({
         now
       );
       return warning == null; // null = no restriction = full time
-    });
+    }).length;
   };
 
   // Check if a group can register now (courts are available)
   const canGroupRegisterNow = (idx) => {
     try {
       if (!A) return false;
-
-      // Deferred groups only get CTA when a full-time court is available
-      if (waitlist[idx]?.deferred) {
-        const groupPlayerCount = waitlist[idx]?.players?.length || 0;
-        if (!hasFullTimeCourt(groupPlayerCount)) return false;
-      }
 
       const now = new Date();
       const data = courtsToData(courts); // Use React state instead of localStorage
@@ -128,14 +122,18 @@ export function WaitingList({
 
         // Filter courts by singles-only eligibility for this group's player count
         const groupPlayerCount = waitlist[idx]?.players?.length || 0;
+        const isDeferred = waitlist[idx]?.deferred ?? false;
         const eligibleFree = (info.free || []).filter((courtNum) =>
           isCourtEligibleForGroup(courtNum, groupPlayerCount)
         );
         const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
           isCourtEligibleForGroup(courtNum, groupPlayerCount)
         );
-        const availableCount =
+        const totalAvailable =
           eligibleFree.length > 0 ? eligibleFree.length : eligibleOvertime.length;
+
+        // Deferred groups count only full-time courts
+        const availableCount = isDeferred ? countFullTimeCourts(groupPlayerCount) : totalAvailable;
 
         if (idx === 0) {
           // First group can register if any eligible courts available

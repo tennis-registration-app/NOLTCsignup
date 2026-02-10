@@ -45,22 +45,21 @@ export function useRegistrationDerived({
 
     const upcomingBlocks = data.upcomingBlocks || [];
 
-    // Check if any eligible court offers full session time for a given player count.
-    // No upcoming blocks means no restrictions — all courts have full time available.
-    const hasFullTimeCourt = (playerCount) => {
-      if (upcomingBlocks.length === 0) return true;
-      const sessionDuration = playerCount >= 4 ? 90 : 60;
+    // Count full-time courts for deferred group CTA logic
+    const countFullTimeCourts = (playerCount) => {
       const eligible = availableCourts.filter((courtNum) =>
         isCourtEligibleForGroup(courtNum, playerCount)
       );
-      return eligible.some((courtNum) => {
+      if (upcomingBlocks.length === 0) return eligible.length;
+      const sessionDuration = playerCount >= 4 ? 90 : 60;
+      return eligible.filter((courtNum) => {
         const warning = getUpcomingBlockWarningFromBlocks(
           courtNum,
           sessionDuration + 5,
           upcomingBlocks
         );
-        return warning == null; // null = no restriction = full time
-      });
+        return warning == null;
+      }).length;
     };
 
     const firstGroup = normalizedWaitlist[0] || null;
@@ -76,14 +75,24 @@ export function useRegistrationDerived({
       isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
     ).length;
 
-    // Deferred groups: skip only when no full-time court available
-    const firstDeferred = firstGroup?.deferred && !hasFullTimeCourt(firstGroupPlayerCount);
-    const secondDeferred = secondGroup?.deferred && !hasFullTimeCourt(secondGroupPlayerCount);
+    // Deferred groups count only full-time courts for CTA eligibility
+    const firstIsDeferred = firstGroup?.deferred ?? false;
+    const secondIsDeferred = secondGroup?.deferred ?? false;
 
-    const live1 = eligibleForFirst >= 1 && firstGroup !== null && !firstDeferred;
+    const effectiveFirst = firstIsDeferred
+      ? countFullTimeCourts(firstGroupPlayerCount)
+      : eligibleForFirst;
+    const live1 =
+      effectiveFirst >= 1 && firstGroup !== null && !(firstIsDeferred && effectiveFirst === 0);
+
     const courtsNeededForSecond = live1 ? 2 : 1;
+    const effectiveSecond = secondIsDeferred
+      ? countFullTimeCourts(secondGroupPlayerCount)
+      : eligibleForSecond;
     const live2 =
-      eligibleForSecond >= courtsNeededForSecond && secondGroup !== null && !secondDeferred;
+      effectiveSecond >= courtsNeededForSecond &&
+      secondGroup !== null &&
+      !(secondIsDeferred && effectiveSecond < courtsNeededForSecond);
 
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
@@ -98,12 +107,13 @@ export function useRegistrationDerived({
     if (!live1 && !live2 && availableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];
-        // Deferred groups: skip only when no full-time court available
+        // Deferred groups count only full-time courts
         const playerCount = entry?.players?.length || 0;
-        if (entry.deferred && !hasFullTimeCourt(playerCount)) continue;
-        const eligible = availableCourts.filter((courtNum) =>
-          isCourtEligibleForGroup(courtNum, playerCount)
-        ).length;
+        const isDeferred = entry.deferred ?? false;
+        const eligible = isDeferred
+          ? countFullTimeCourts(playerCount)
+          : availableCourts.filter((courtNum) => isCourtEligibleForGroup(courtNum, playerCount))
+              .length;
         if (eligible >= 1) {
           passThrough = {
             id: entry.id,
