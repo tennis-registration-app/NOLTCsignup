@@ -235,6 +235,7 @@ const CourtSelectionScreen = ({
               All available courts have upcoming reservations that limit your play time.
             </p>
             <button
+              data-testid="wait-full-time-btn"
               onClick={() => setShowWaitForFullTimeConfirm(true)}
               className="bg-blue-500 text-white min-h-[48px] py-4 px-8 rounded-xl text-lg font-semibold hover:bg-blue-600 transition-colors shadow-md"
             >
@@ -302,7 +303,10 @@ const CourtSelectionScreen = ({
         {/* Wait for Full Time Confirmation Modal (fresh registration) */}
         {showWaitForFullTimeConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div
+              data-testid="wait-full-time-modal"
+              className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+            >
               <h3 className="text-xl font-bold text-gray-800 mb-3">Wait for Full Time?</h3>
               <p className="text-gray-600 mb-6">
                 Your group will be added to the waitlist until a court with full session time is

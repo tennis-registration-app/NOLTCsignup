@@ -221,11 +221,17 @@ export function WaitingList({
                 </div>
                 <div className="flex items-center gap-2">
                   {group.deferred && !canRegisterNow ? (
-                    <div className="courtboard-text-xs text-blue-400 font-medium text-right">
+                    <div
+                      data-testid="deferred-label"
+                      className="courtboard-text-xs text-blue-400 font-medium text-right"
+                    >
                       Waiting for full court
                     </div>
                   ) : showAlert ? (
-                    <div className="flex items-center text-yellow-400 animate-pulse">
+                    <div
+                      data-testid="you-are-up"
+                      className="flex items-center text-yellow-400 animate-pulse"
+                    >
                       <AlertCircle className="mr-1" size={16} />
                       <span className="courtboard-text-xs font-bold">You&apos;re Up!</span>
                     </div>
