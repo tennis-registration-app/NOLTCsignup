@@ -228,6 +228,18 @@ export function NextAvailablePanel({
   const openingTime = isWeekend ? 7 : 6.5; // 7:00 AM weekend, 6:30 AM weekday
   const openingTimeString = isWeekend ? '7:00 AM' : '6:30 AM';
 
+  // Get closing time for display (uses same logic as getCourtAvailabilityTimeline)
+  const todayHours = operatingHours?.find((h) => h.dayOfWeek === dayOfWeek);
+  const closingHour = todayHours?.closesAt ? parseInt(todayHours.closesAt.split(':')[0], 10) : 23;
+  const closingDisplay = todayHours?.closesAt
+    ? todayHours.closesAt.replace(/^(\d{1,2}):(\d{2}).*$/, (_, h, m) => {
+        const hour = parseInt(h, 10);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        return `${displayHour}:${m} ${ampm}`;
+      })
+    : `${closingHour > 12 ? closingHour - 12 : closingHour}:00 PM`;
+
   // Show opening message when courts are available but club is closed
   const isInEarlyHours = currentTimeDecimal >= 4 && currentTimeDecimal < openingTime;
   const shouldShowOpeningMessage = hasAvailableNow && isInEarlyHours;
@@ -291,7 +303,9 @@ export function NextAvailablePanel({
                 )
               ) : (
                 <div className="text-center mt-8">
-                  <p className="text-gray-400 courtboard-text-lg">No availability data</p>
+                  <p className="text-gray-400 courtboard-text-lg">
+                    The Club closes at {closingDisplay}
+                  </p>
                 </div>
               )}
             </div>
