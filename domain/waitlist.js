@@ -220,6 +220,240 @@
   // Add new function to existing Waitlist object
   Waitlist.estimateWaitForPositions = estimateWaitForPositions;
 
+  // Constants for simulation
+  const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;  // 15 minutes
+  const MIN_USEFUL_SESSION_MS = 20 * 60 * 1000;   // 20 minutes
+  const SINGLES_ONLY_COURT_NUMBER = 8;
+
+  /**
+   * Check if a court is eligible for a group of the given size.
+   * Court 8 is singles-only and rejects groups of 4+ players.
+   * @param {number} courtNumber
+   * @param {number} playerCount
+   * @returns {boolean}
+   */
+  function isCourtEligibleForGroup(courtNumber, playerCount) {
+    if (courtNumber === SINGLES_ONLY_COURT_NUMBER && playerCount >= 4) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * simulateWaitlistEstimates - Proper simulation of waitlist wait times
+   *
+   * @param {Object} params
+   * @param {Array} params.courts - Court[] (length 12, court state objects)
+   * @param {Array} params.waitlist - Array<{ players: [], deferred: boolean }>
+   * @param {Array} params.blocks - Array<{ courtNumber, startTime, endTime, isWetCourt }>
+   * @param {Date} params.now - Current time
+   * @param {number} [params.avgGameMinutes=75] - Average game duration
+   * @param {number} [params.closingHour=22] - Club closing hour (for wet court fallback)
+   * @returns {number[]} - Estimated minutes for each waitlist position
+   */
+  function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinutes, closingHour }) {
+    const avg = Number.isFinite(avgGameMinutes) && avgGameMinutes > 0
+      ? avgGameMinutes : (window.Tennis?.Config?.Timing?.AVG_GAME || 75);
+    const closing = Number.isFinite(closingHour) ? closingHour : 22;
+    const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || 12;
+    const normalizedBlocks = Array.isArray(blocks) ? blocks : [];
+    const normalizedCourts = Array.isArray(courts) ? courts : [];
+    const normalizedWaitlist = Array.isArray(waitlist) ? waitlist : [];
+
+    if (normalizedWaitlist.length === 0) {
+      return [];
+    }
+
+    // Build closing time for wet court fallback
+    const closingTime = new Date(now);
+    closingTime.setHours(closing, 0, 0, 0);
+
+    // PHASE A: Build court availability timeline
+    const timeline = [];
+
+    for (let n = 1; n <= total; n++) {
+      const court = normalizedCourts[n - 1];
+
+      // Skip tournament courts - they have no predictable end time
+      if (court?.session?.isTournament) {
+        continue;
+      }
+
+      // Check if court is currently wet
+      const isWet = normalizedBlocks.some(b => {
+        if (!b.isWetCourt || Number(b.courtNumber) !== n) return false;
+        const start = new Date(b.startTime);
+        const end = new Date(b.endTime);
+        return start <= now && now < end;
+      });
+
+      if (isWet) {
+        // Wet courts available at closing time (effectively removed from pool)
+        timeline.push({ courtNumber: n, availableAt: new Date(closingTime) });
+        continue;
+      }
+
+      // Start with base = now
+      let base = new Date(now);
+
+      // If court has active session, advance to scheduledEndAt
+      if (court?.session?.scheduledEndAt) {
+        const sessionEnd = new Date(court.session.scheduledEndAt);
+        if (sessionEnd > base) {
+          base = sessionEnd;
+        }
+      }
+
+      // Walk through overlapping blocks (with 15-min registration buffer)
+      // Keep advancing until no more overlapping blocks
+      let advanced = true;
+      while (advanced) {
+        advanced = false;
+        for (const b of normalizedBlocks) {
+          if (Number(b.courtNumber) !== n) continue;
+          if (b.isWetCourt) continue; // Wet already handled above
+
+          const blockStart = new Date(b.startTime);
+          const blockEnd = new Date(b.endTime);
+          const effectiveStart = new Date(blockStart.getTime() - REGISTRATION_BUFFER_MS);
+
+          if (effectiveStart <= base && base < blockEnd) {
+            base = new Date(blockEnd);
+            advanced = true;
+          }
+        }
+      }
+
+      // Check minimum useful session (20 min)
+      // Find next block after base
+      let needsRecheck = true;
+      while (needsRecheck) {
+        needsRecheck = false;
+
+        let nextBlock = null;
+        let nextBlockStart = Infinity;
+
+        for (const b of normalizedBlocks) {
+          if (Number(b.courtNumber) !== n) continue;
+          if (b.isWetCourt) continue;
+
+          const blockStart = new Date(b.startTime);
+          if (blockStart > base && blockStart.getTime() < nextBlockStart) {
+            nextBlock = b;
+            nextBlockStart = blockStart.getTime();
+          }
+        }
+
+        if (nextBlock) {
+          const usableMs = nextBlockStart - base.getTime();
+          if (usableMs < MIN_USEFUL_SESSION_MS) {
+            // Not enough time - advance past this block
+            base = new Date(nextBlock.endTime);
+            needsRecheck = true;
+
+            // Re-walk overlapping blocks from new base
+            let advancedAgain = true;
+            while (advancedAgain) {
+              advancedAgain = false;
+              for (const b of normalizedBlocks) {
+                if (Number(b.courtNumber) !== n) continue;
+                if (b.isWetCourt) continue;
+
+                const blockStart = new Date(b.startTime);
+                const blockEnd = new Date(b.endTime);
+                const effectiveStart = new Date(blockStart.getTime() - REGISTRATION_BUFFER_MS);
+
+                if (effectiveStart <= base && base < blockEnd) {
+                  base = new Date(blockEnd);
+                  advancedAgain = true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      timeline.push({ courtNumber: n, availableAt: base });
+    }
+
+    // Sort timeline by availableAt ascending
+    timeline.sort((a, b) => a.availableAt.getTime() - b.availableAt.getTime());
+
+    // PHASE B: Simulate waitlist assignment
+    const results = [];
+    const mutableTimeline = timeline.map(t => ({ ...t }));
+
+    for (let i = 0; i < normalizedWaitlist.length; i++) {
+      const group = normalizedWaitlist[i];
+      const playerCount = Array.isArray(group.players) ? group.players.length : 0;
+      const isDeferred = group.deferred === true;
+      const sessionDuration = playerCount >= 4 ? 90 : 60;
+
+      // Find earliest eligible court
+      let foundIdx = -1;
+
+      for (let j = 0; j < mutableTimeline.length; j++) {
+        const entry = mutableTimeline[j];
+
+        // Check Court 8 eligibility
+        if (!isCourtEligibleForGroup(entry.courtNumber, playerCount)) {
+          continue;
+        }
+
+        // For deferred groups, check full session time available
+        if (isDeferred) {
+          // Find next block for this court after availableAt
+          let nextBlockStart = Infinity;
+          for (const b of normalizedBlocks) {
+            if (Number(b.courtNumber) !== entry.courtNumber) continue;
+            if (b.isWetCourt) continue;
+
+            const blockStart = new Date(b.startTime);
+            if (blockStart > entry.availableAt && blockStart.getTime() < nextBlockStart) {
+              nextBlockStart = blockStart.getTime();
+            }
+          }
+
+          const requiredMs = (sessionDuration + 5) * 60 * 1000;
+          const availableMs = nextBlockStart - entry.availableAt.getTime();
+
+          if (availableMs < requiredMs) {
+            continue; // Not enough time for deferred group
+          }
+        }
+
+        foundIdx = j;
+        break;
+      }
+
+      if (foundIdx >= 0) {
+        const entry = mutableTimeline[foundIdx];
+        const estimatedMinutes = Math.max(0, Math.ceil((entry.availableAt.getTime() - now.getTime()) / 60000));
+        results.push(estimatedMinutes);
+
+        // Remove this entry and re-insert with new availability
+        const courtNumber = entry.courtNumber;
+        const newAvailableAt = new Date(entry.availableAt.getTime() + avg * 60000);
+
+        mutableTimeline.splice(foundIdx, 1);
+
+        // Insert in sorted position
+        let insertIdx = mutableTimeline.findIndex(t => t.availableAt > newAvailableAt);
+        if (insertIdx === -1) insertIdx = mutableTimeline.length;
+        mutableTimeline.splice(insertIdx, 0, { courtNumber, availableAt: newAvailableAt });
+      } else {
+        // Fallback: rough estimate when no court found
+        const fallback = Math.ceil((i + 1) * avg / Math.max(total, 1));
+        results.push(fallback);
+      }
+    }
+
+    return results;
+  }
+
+  // Add new function to Waitlist object
+  Waitlist.simulateWaitlistEstimates = simulateWaitlistEstimates;
+
   // Attach to window.Tennis.Domain
   window.Tennis.Domain.Waitlist = Waitlist;
 

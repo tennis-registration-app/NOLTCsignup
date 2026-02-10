@@ -21,50 +21,34 @@ export function WaitingList({
   const W = domain?.waitlist || domain?.Waitlist;
 
   // Convert React courts state to the data format expected by availability functions
-  // This uses the passed props instead of reading from localStorage
   const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
 
-  // Calculate estimated wait time using domain functions
-  const calculateEstimatedWaitTime = (position) => {
+  // Calculate all estimated wait times using new simulation function
+  const calculateAllEstimatedWaitTimes = () => {
     try {
-      if (!A || !W) {
-        return position * 15; // Fallback to simple estimate
+      if (!W?.simulateWaitlistEstimates) {
+        // Fallback to simple estimate if function not available
+        return waitlist.map((_, idx) => (idx + 1) * 15);
       }
 
       const now = new Date();
-      const data = courtsToData(courts); // Use React state instead of localStorage
-      // Combine active blocks and future blocks for accurate availability calculation
-      const blocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
+      const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
 
-      // Derive wetSet for current moment
-      const wetSet = new Set(
-        blocks
-          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-          .map((b) => b.courtNumber)
-      );
-
-      // Get availability info
-      const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-      const nextTimes = A.getNextFreeTimes ? A.getNextFreeTimes({ data, now, blocks, wetSet }) : [];
-
-      // Calculate ETA using domain waitlist function
-      if (W.estimateWaitForPositions) {
-        const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || 75;
-        const etas = W.estimateWaitForPositions({
-          positions: [position],
-          currentFreeCount: info.free?.length || 0,
-          nextFreeTimes: nextTimes,
-          avgGameMinutes: avgGame,
-        });
-        return etas[0] || 0;
-      }
-
-      return position * 15; // Fallback
+      return W.simulateWaitlistEstimates({
+        courts: courts || [],
+        waitlist: waitlist || [],
+        blocks: allBlocks,
+        now,
+        avgGameMinutes: getTennisNamespaceConfig()?.Timing?.AVG_GAME || 75,
+      });
     } catch (error) {
-      console.error('Error calculating wait time:', error);
-      return position * 15; // Fallback
+      console.error('Error calculating wait times:', error);
+      return waitlist.map((_, idx) => (idx + 1) * 15);
     }
   };
+
+  // Calculate all wait times once before rendering
+  const estimatedWaitTimes = calculateAllEstimatedWaitTimes();
 
   // Count full-time courts for a group (used by deferred groups for CTA eligibility)
   const countFullTimeCourts = (groupPlayerCount) => {
@@ -186,11 +170,8 @@ export function WaitingList({
             // Check if this group can actually register now
             const canRegisterNow = canGroupRegisterNow(idx);
 
-            // Calculate proper estimated wait time
-            let estimatedWait = 0;
-            if (!canRegisterNow) {
-              estimatedWait = calculateEstimatedWaitTime(idx + 1);
-            }
+            // Get pre-calculated estimated wait time for this position
+            const estimatedWait = canRegisterNow ? 0 : estimatedWaitTimes[idx] || 0;
 
             // Show "You're Up!" only if they can actually register now
             const showAlert = canRegisterNow;
