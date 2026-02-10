@@ -140,6 +140,80 @@ Each flow includes preconditions, steps, and observable results.
 
 ---
 
+## Flow 6: Tournament Match Registration
+
+**Entry Point:** Registration app (`/src/registration/`) → Success screen
+
+### Preconditions
+- Player has successfully registered on a court
+- Success screen is displayed
+
+### Steps
+1. Complete registration → Success screen appears
+2. Tap "Tournament match?" link (below "Change Court" button)
+3. Confirmation modal appears with text:
+   "We are registering for a Club tournament match and may play until completion."
+4. Tap "Confirm" to mark as tournament match
+5. Observe courtboard display
+
+### Observable Results
+
+| Check | What to Observe |
+|-------|-----------------|
+| Primary (UI - Step 4) | "Priority until {time}" replaced by "✓ Tournament Match — plays until completion" |
+| Secondary (Courtboard) | Court shows "Tournament" instead of "Until {time}" |
+| Secondary (Courtboard) | Court color changes from light blue (occupied) to dark blue (overtime) when past scheduled end |
+| API | Network tab: update-session-tournament endpoint returns HTTP 200 |
+
+### Behavioral Invariants
+- Tournament court NEVER turns dark green (selectable)
+- Tournament court excluded from: waitlist CTAs, NextAvailablePanel, overtime availability
+- Match cleared normally by players or admin
+
+---
+
+## Flow 7: Deferred Waitlist (Wait for Full Court Time)
+
+**Entry Point:** Registration app (`/src/registration/`) → Court Selection screen
+
+### Preconditions
+- All available courts have upcoming blocks restricting full session time
+- Session duration + 5 minute buffer exceeds time until block
+
+### Steps (New Registration)
+1. Complete player selection → Court Selection screen
+2. All courts show time warnings (upcoming blocks)
+3. "Wait for Full Time" button appears
+4. Tap "Wait for Full Time"
+5. Confirmation modal: "Your group will be added to the waitlist until a court with full session time is available."
+6. Tap "Confirm"
+
+### Steps (From Waitlist CTA)
+1. Receive "court available" notification
+2. Navigate to Court Selection screen
+3. All courts show time warnings
+4. "Stay on Waitlist" button appears
+5. Tap "Stay on Waitlist"
+6. Confirmation modal: "You will keep your place in line and be notified when a court with full session time becomes available."
+7. Tap "Confirm"
+
+### Observable Results
+
+| Check | What to Observe |
+|-------|-----------------|
+| Primary (UI) | Toast: "You'll be notified when a full-time court is available" |
+| Secondary (Courtboard) | Group shows "Waiting for full court" (blue text) |
+| Behavior | Deferred group does NOT block new registrations from seeing courts |
+| Behavior | CTA fires only when full-time court available (no upcoming block within session + 5 min) |
+
+### Behavioral Invariants
+- Deferred entries are invisible to queue logic
+- Don't count as active waiters
+- Don't block fresh registrations from seeing available courts
+- Multiple deferred groups: each needs its own full-time court
+
+---
+
 ## Using These Flows
 
 ### Manual Testing
