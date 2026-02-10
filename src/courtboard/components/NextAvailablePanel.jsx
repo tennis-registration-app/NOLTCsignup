@@ -30,8 +30,11 @@ export function NextAvailablePanel({
     const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;
 
     // Get today's closing time from admin-configured operating hours
+    // Handle both array format [{ dayOfWeek, closesAt }] and legacy object { opensAt, closesAt }
     const todayDayOfWeek = currentTime.getDay(); // 0=Sun, 1=Mon, etc.
-    const todayHours = operatingHours?.find((h) => h.dayOfWeek === todayDayOfWeek);
+    const todayHours = Array.isArray(operatingHours)
+      ? operatingHours.find((h) => h.dayOfWeek === todayDayOfWeek)
+      : operatingHours;
     // closesAt format is "HH:MM:SS" (e.g., "21:00:00") or "HH:MM"
     const closingHour = todayHours?.closesAt ? parseInt(todayHours.closesAt.split(':')[0], 10) : 23; // fallback to 11pm if no config
     const closingTime = new Date(currentTime);
@@ -229,7 +232,10 @@ export function NextAvailablePanel({
   const openingTimeString = isWeekend ? '7:00 AM' : '6:30 AM';
 
   // Get closing time for display (uses same logic as getCourtAvailabilityTimeline)
-  const todayHours = operatingHours?.find((h) => h.dayOfWeek === dayOfWeek);
+  // Handle both array format [{ dayOfWeek, closesAt }] and legacy object { opensAt, closesAt }
+  const todayHours = Array.isArray(operatingHours)
+    ? operatingHours.find((h) => h.dayOfWeek === dayOfWeek)
+    : operatingHours;
   const closingHour = todayHours?.closesAt ? parseInt(todayHours.closesAt.split(':')[0], 10) : 23;
   const closingDisplay = todayHours?.closesAt
     ? todayHours.closesAt.replace(/^(\d{1,2}):(\d{2}).*$/, (_, h, m) => {
