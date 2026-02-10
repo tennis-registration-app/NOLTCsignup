@@ -12,6 +12,7 @@ export function NextAvailablePanel({
   waitlist = [],
   courtBlocks = [],
   upcomingBlocks = [],
+  operatingHours = [],
   maxDisplay,
 }) {
   const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
@@ -28,8 +29,11 @@ export function NextAvailablePanel({
     // Registration buffer: 15 minutes before block starts
     const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;
 
-    // Closing time check - default 9pm, exclude courts available within buffer of closing
-    const closingHour = 21; // 9pm - could be made configurable
+    // Get today's closing time from admin-configured operating hours
+    const todayDayOfWeek = currentTime.getDay(); // 0=Sun, 1=Mon, etc.
+    const todayHours = operatingHours?.find((h) => h.dayOfWeek === todayDayOfWeek);
+    // closesAt format is "HH:MM:SS" (e.g., "21:00:00") or "HH:MM"
+    const closingHour = todayHours?.closesAt ? parseInt(todayHours.closesAt.split(':')[0], 10) : 23; // fallback to 11pm if no config
     const closingTime = new Date(currentTime);
     closingTime.setHours(closingHour, 0, 0, 0);
     const closingBufferTime = new Date(closingTime.getTime() - REGISTRATION_BUFFER_MS);
@@ -138,7 +142,7 @@ export function NextAvailablePanel({
       if (finalEndTime) {
         try {
           const parsedEndTime = new Date(finalEndTime);
-          // Exclude if availability is within 15 min of closing time
+          // Exclude if availability is within buffer of closing time
           if (
             !isNaN(parsedEndTime.getTime()) &&
             parsedEndTime > currentTime &&
@@ -153,6 +157,7 @@ export function NextAvailablePanel({
           console.error(`Error parsing end time for court ${courtNumber}:`, error);
         }
       }
+      // Empty courts (no finalEndTime) are silently skipped
     });
 
     // Sort future availability by time

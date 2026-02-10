@@ -43,6 +43,7 @@ export function TennisCourtDisplay() {
   const [waitlist, setWaitlist] = useState([]);
   const [courtBlocks, setCourtBlocks] = useState([]); // Active blocks only (for availability)
   const [upcomingBlocks, setUpcomingBlocks] = useState([]); // Future blocks today (for display)
+  const [operatingHours, setOperatingHours] = useState([]); // Admin-configured operating hours
   const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
   const [blockWarningMinutes, setBlockWarningMinutes] = useState(60); // Default 60, loaded from settings
 
@@ -210,6 +211,11 @@ export function TennisCourtDisplay() {
         }));
         logger.debug('CourtDisplay', 'Transformed waitlist', normalized);
         setWaitlist(normalized);
+
+        // Set operating hours from board data
+        if (board.operatingHours) {
+          setOperatingHours(board.operatingHours);
+        }
       },
       { pollIntervalMs: 5000 }
     );
@@ -579,6 +585,7 @@ export function TennisCourtDisplay() {
             waitlist={waitlist}
             courtBlocks={courtBlocks}
             upcomingBlocks={upcomingBlocks}
+            operatingHours={operatingHours}
             maxDisplay={_sharedTennisConfig?.DISPLAY?.MAX_WAITING_DISPLAY || 6}
           />
         </div>

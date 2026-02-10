@@ -75,7 +75,7 @@ const DayViewEnhanced = memo(
     const { showNowLine, nowLinePosition } = useMemo(() => {
       const isToday = selectedDate.toDateString() === new Date().toDateString();
       const nowHour = currentTime.getHours() + currentTime.getMinutes() / 60;
-      const showNowLine = isToday && nowHour >= 6 && nowHour <= 21;
+      const showNowLine = isToday && nowHour >= 6 && nowHour <= 23;
       const nowLinePosition = (nowHour - 6) * 60 + 48; // +48 for header height
       return { showNowLine, nowLinePosition };
     }, [selectedDate, currentTime]);
