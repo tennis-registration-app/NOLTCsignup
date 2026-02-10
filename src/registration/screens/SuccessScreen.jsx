@@ -386,13 +386,19 @@ const SuccessScreen = (
             (assignedEndTime || assignedCourt.session?.scheduledEndAt || assignedCourt.endTime) && (
               <>
                 {isTournament ? (
-                  <div className="mt-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                  <div
+                    data-testid="tournament-badge"
+                    className="mt-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-center"
+                  >
                     <span className="text-sm font-semibold text-blue-700">
                       Tournament Match — plays until completion
                     </span>
                   </div>
                 ) : (
-                  <p className="text-base sm:text-lg text-gray-600 mt-3">
+                  <p
+                    data-testid="priority-until"
+                    className="text-base sm:text-lg text-gray-600 mt-3"
+                  >
                     Priority until{' '}
                     <strong>
                       {new Date(
@@ -504,6 +510,7 @@ const SuccessScreen = (
         {!isTournament && (
           <div className="mt-3 text-left">
             <button
+              data-testid="tournament-match-link"
               onClick={() => setShowTournamentConfirm(true)}
               className="text-sm font-medium underline decoration-1 underline-offset-2"
               style={{
@@ -554,7 +561,10 @@ const SuccessScreen = (
         {/* Tournament Confirmation Modal */}
         {showTournamentConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-[420px] mx-4">
+            <div
+              data-testid="tournament-confirm-modal"
+              className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-[420px] mx-4"
+            >
               <h3 className="text-xl sm:text-2xl font-bold text-center mb-4">Tournament Match</h3>
               <p className="text-sm sm:text-base text-gray-600 text-center mb-6">
                 We are registering for a Club tournament match and may play until completion.

@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "serverNow": "2025-01-23T10:00:00Z",
+  "courts": [
+    { "number": 1, "status": "occupied", "session": { "id": "s1", "players": [{"name": "Player 1", "memberId": "M001"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 2, "status": "occupied", "session": { "id": "s2", "players": [{"name": "Player 2", "memberId": "M002"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 3, "status": "occupied", "session": { "id": "s3", "players": [{"name": "Player 3", "memberId": "M003"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 4, "status": "occupied", "session": { "id": "s4", "players": [{"name": "Player 4", "memberId": "M004"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 5, "status": "available", "session": null, "block": null },
+    { "number": 6, "status": "occupied", "session": { "id": "s6", "players": [{"name": "Player 6", "memberId": "M006"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 7, "status": "occupied", "session": { "id": "s7", "players": [{"name": "Player 7", "memberId": "M007"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 8, "status": "occupied", "session": { "id": "s8", "players": [{"name": "Player 8", "memberId": "M008"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 9, "status": "occupied", "session": { "id": "s9", "players": [{"name": "Player 9", "memberId": "M009"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 10, "status": "occupied", "session": { "id": "s10", "players": [{"name": "Player 10", "memberId": "M010"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 11, "status": "occupied", "session": { "id": "s11", "players": [{"name": "Player 11", "memberId": "M011"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null },
+    { "number": 12, "status": "occupied", "session": { "id": "s12", "players": [{"name": "Player 12", "memberId": "M012"}], "startedAt": "2025-01-23T09:30:00Z", "scheduledEndAt": "2025-01-23T10:30:00Z" }, "block": null }
+  ],
+  "waitlist": [],
+  "upcomingBlocks": [],
+  "operatingHours": { "opensAt": "07:00", "closesAt": "21:00" }
+}

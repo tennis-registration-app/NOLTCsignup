@@ -53,6 +53,67 @@ function adjustBlockDatesToToday(blocksData) {
 }
 
 /**
+ * Adjusts board state dates to be relative to current time.
+ * Makes tests time-independent by shifting fixture dates to today.
+ */
+function adjustBoardDatesToToday(boardData) {
+  if (!boardData) return boardData;
+
+  const now = new Date();
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayDateStr = `${year}-${month}-${day}`;
+
+  const adjustDate = (dateStr) => {
+    if (!dateStr) return dateStr;
+    const originalTime = dateStr.split('T')[1];
+    return `${todayDateStr}T${originalTime}`;
+  };
+
+  const adjusted = {
+    ...boardData,
+    serverNow: now.toISOString(),
+  };
+
+  // Adjust court session dates
+  if (adjusted.courts) {
+    adjusted.courts = adjusted.courts.map((court) => {
+      if (!court || !court.session) return court;
+      return {
+        ...court,
+        session: {
+          ...court.session,
+          startedAt: adjustDate(court.session.startedAt),
+          scheduledEndAt: adjustDate(court.session.scheduledEndAt),
+        },
+      };
+    });
+  }
+
+  // Adjust upcomingBlocks dates
+  if (adjusted.upcomingBlocks) {
+    adjusted.upcomingBlocks = adjusted.upcomingBlocks.map((block) => ({
+      ...block,
+      startTime: adjustDate(block.startTime),
+      endTime: adjustDate(block.endTime),
+    }));
+  }
+
+  // Adjust waitlist dates
+  if (adjusted.waitlist) {
+    adjusted.waitlist = adjusted.waitlist.map((entry) => ({
+      ...entry,
+      joinedAt: adjustDate(entry.joinedAt),
+      deferredAt: adjustDate(entry.deferredAt),
+    }));
+  }
+
+  return adjusted;
+}
+
+/**
  * Sets up API route interception for E2E tests.
  * Intercepts all Supabase Edge Function calls and returns fixture data.
  */
@@ -102,10 +163,12 @@ export async function setupMockApi(page, options = {}) {
           ? boardStateQueue[boardCallCount]
           : boardStateQueue[boardStateQueue.length - 1];
         boardCallCount++;
+        // Adjust dates to today for time-independent tests
+        const adjustedBoardState = adjustBoardDatesToToday(boardState);
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(boardState),
+          body: JSON.stringify(adjustedBoardState),
         });
       }
 
@@ -124,7 +187,10 @@ export async function setupMockApi(page, options = {}) {
             ok: true,
             serverNow: new Date().toISOString(),
             court: 1,
-            sessionId: 'session-new-123',
+            session: {
+              id: 'session-new-123',
+              scheduled_end_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+            },
             message: 'Court assigned successfully',
           }),
         });
@@ -214,6 +280,30 @@ export async function setupMockApi(page, options = {}) {
           body: JSON.stringify({
             ok: true,
             message: 'Session ended',
+          }),
+        });
+
+      case 'update-session-tournament':
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: true,
+            serverNow: new Date().toISOString(),
+            message: 'Tournament flag updated',
+          }),
+        });
+
+      case 'join-waitlist':
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ok: true,
+            serverNow: new Date().toISOString(),
+            position: 1,
+            waitlistId: 'waitlist-new-123',
+            message: 'Added to waitlist',
           }),
         });
 
