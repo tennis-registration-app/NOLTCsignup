@@ -15,6 +15,9 @@
 | Change block admin behavior | `src/registration/blocks/useBlockAdmin.js` |
 | Modify waitlist admin | `src/registration/waitlist/useWaitlistAdmin.js` |
 | Change frequent partners | `src/registration/memberIdentity/useMemberIdentity.js` |
+| Modify tournament match logic | `src/lib/commands/updateSessionTournament.js` |
+| Change deferred waitlist behavior | `src/lib/commands/deferWaitlist.js` |
+| Modify court availability logic | `public/domain/availability.js` + `src/shared/courts/overtimeEligibility.js` |
 | **Touch court assignment flow** | ⚠️ READ ORCHESTRATION.md FIRST |
 | **Touch navigation/screens** | ⚠️ App.jsx — high coupling zone |
 
@@ -182,3 +185,76 @@ rg -n "accountId\s*\|\|.*account_id|isPrimary\s*\|\|.*is_primary" src/
 ```
 
 All checks should return empty (or only documented boundary exceptions).
+
+---
+
+## Feature Data Flows
+
+### Tournament Match Flow
+
+Tournament matches allow sessions to play until completion, bypassing scheduled end times.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Database: sessions.is_tournament (boolean, default false)               │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        ▼                       ▼                       ▼
+┌───────────────┐      ┌───────────────┐       ┌───────────────┐
+│ update-session│      │ get-courts    │       │ get-board     │
+│ -tournament   │      │ RPC           │       │ RPC           │
+│ (Edge Fn)     │      └───────┬───────┘       └───────┬───────┘
+└───────────────┘              │                       │
+                               ▼                       ▼
+                      ┌───────────────────────────────────────┐
+                      │ src/lib/normalize/normalizeSession.js │
+                      │ is_tournament → isTournament          │
+                      └───────────────────┬───────────────────┘
+                                          │
+                      ┌───────────────────┼───────────────────┐
+                      ▼                   ▼                   ▼
+             ┌─────────────┐    ┌─────────────────┐   ┌──────────────┐
+             │ Registration│    │ availability.js │   │ Courtboard   │
+             │ Success     │    │ getFreeCourts   │   │ Display      │
+             │ Screen      │    │ (exclusion)     │   │ (override)   │
+             └─────────────┘    └─────────────────┘   └──────────────┘
+```
+
+**Key files:**
+- `supabase/functions/update-session-tournament/` — Edge Function to toggle flag
+- `src/lib/commands/updateSessionTournament.js` — Frontend command wrapper
+- `src/lib/normalize/normalizeSession.js` — snake_case → camelCase conversion
+- `public/domain/availability.js` — Two-layer exclusion (see below)
+- `src/shared/courts/overtimeEligibility.js` — Excludes from fallback courts
+
+**Two-layer availability approach:**
+1. `getFreeCourtsInfo()` — Excludes tournament courts from "free" count (no waitlist CTA triggers)
+2. `getCourtStatuses()` — Overrides display to show "Tournament" instead of end time
+
+### Deferred Waitlist Flow
+
+Players can defer their waitlist position until a full-time court becomes available.
+
+```
+Waitlist entry: { id, players[], deferred: boolean, deferredAt: timestamp }
+
+Active queue logic:
+  const active = waitlist.filter(e => !e.deferred)
+  const hasWaiters = waitlist.some(e => !e.deferred)
+
+Full-time court detection:
+  const hasFullTimeCourt = availableCourts.some(courtNum =>
+    !upcomingBlocks.some(b => b.courtNumber === courtNum)
+  )
+```
+
+**Key files:**
+- `src/lib/commands/deferWaitlist.js` — Marks entry as deferred
+- `public/domain/availability.js` — Full-time court detection
+
+**Behavioral invariants:**
+- Deferred entries are invisible to queue position calculation
+- Don't count as active waiters
+- Don't block fresh registrations from seeing available courts
+- CTA fires only when full-time court available (no block within session + 5 min buffer)
