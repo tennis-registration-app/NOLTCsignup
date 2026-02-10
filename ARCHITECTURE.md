@@ -421,6 +421,8 @@ When leaving demo mode:
 | `/assign-from-waitlist` | Assign court from waitlist |
 | `/update-system-settings` | Update settings |
 | `/purchase-balls` | Record ball purchase |
+| `/update-session-tournament` | Toggle is_tournament flag on active session |
+| `/defer-waitlist` | Mark waitlist entry as deferred (waiting for full-time court) |
 
 ### Query Endpoints (GET)
 
@@ -459,3 +461,22 @@ These are candidates for future decomposition.
 - [docs/TESTING.md](./docs/TESTING.md) — Testing strategy
 - [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) — Critical user flows
 - [docs/RUNBOOK.md](./docs/RUNBOOK.md) — Operations guide
+
+## Recent Features
+
+### Tournament Match (WP6-E)
+
+Players can designate their session as a tournament match from the success screen. Tournament sessions:
+- Display a "Tournament" badge instead of priority end time
+- Extend their session to match the tournament schedule
+- Are excluded from "Next Available" court predictions
+- Persist the `is_tournament` flag via the `/update-session-tournament` endpoint
+
+### Deferred Waitlist (WP6-D)
+
+When all available courts have upcoming blocks, players can choose to wait for a full-time court:
+- "Wait for Full-Time Court" option appears on court selection
+- Deferred entries are marked with `deferred: true` in the waitlist
+- Deferred groups are only offered courts without time restrictions
+- Two-layer availability check: `getFullTimeAvailableCourts()` for deferred groups
+- Deferred status persists via the `/defer-waitlist` endpoint
