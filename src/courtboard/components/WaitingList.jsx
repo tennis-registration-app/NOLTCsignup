@@ -206,7 +206,10 @@ export function WaitingList({
                       data-testid="deferred-label"
                       className="courtboard-text-xs text-blue-400 font-medium text-right"
                     >
-                      Waiting for full court
+                      <div>Waiting for full court</div>
+                      {estimatedWaitTimes[idx] > 0 && (
+                        <div className="text-gray-400">~{estimatedWaitTimes[idx]} min</div>
+                      )}
                     </div>
                   ) : showAlert ? (
                     <div
