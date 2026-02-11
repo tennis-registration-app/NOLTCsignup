@@ -319,7 +319,7 @@ export function NextAvailablePanel({
                         </div>
                         <div className="courtboard-text-base font-semibold text-white">
                           {availability.isEmpty ? (
-                            <span className="text-green-400 font-bold">
+                            <span className="text-white font-bold">
                               Now
                               {availability.minutesUntilBlock
                                 ? ` (${availability.minutesUntilBlock}m)`

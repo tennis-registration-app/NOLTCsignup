@@ -221,7 +221,7 @@ export function WaitingList({
                     </div>
                   ) : (
                     <div className="courtboard-text-xs text-gray-300 font-medium min-w-[40px] text-right">
-                      {estimatedWait} min
+                      {estimatedWait === 0 ? 'Next' : `${estimatedWait} min`}
                     </div>
                   )}
                 </div>
