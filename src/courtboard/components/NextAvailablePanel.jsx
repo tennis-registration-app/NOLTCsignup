@@ -43,6 +43,7 @@ export function NextAvailablePanel({
 
     const courtAvailability = [];
     const overtimeCourts = [];
+    const emptyCourts = [];
 
     // Use courtBlocks from props instead of localStorage
     const blocks = courtBlocks || [];
@@ -159,8 +160,31 @@ export function NextAvailablePanel({
         } catch (error) {
           console.error(`Error parsing end time for court ${courtNumber}:`, error);
         }
+      } else {
+        // Empty court (no session, no active block) - available now
+        // Check for upcoming blocks that would limit available time
+        const hasSession = court?.session?.group?.players?.length > 0;
+        if (!hasSession && !activeBlock) {
+          const upcomingBlock = blocks.find(
+            (block) =>
+              block.courtNumber === courtNumber &&
+              new Date(block.startTime) > currentTime &&
+              new Date(block.startTime) <= closingBufferTime
+          );
+
+          // Calculate minutes until block starts (if any)
+          const minutesUntilBlock = upcomingBlock
+            ? Math.floor((new Date(upcomingBlock.startTime) - currentTime) / 60000)
+            : null;
+
+          emptyCourts.push({
+            courtNumber,
+            endTime: null,
+            isEmpty: true,
+            minutesUntilBlock,
+          });
+        }
       }
-      // Empty courts (no finalEndTime) are silently skipped
     });
 
     // Sort future availability by time
@@ -194,8 +218,10 @@ export function NextAvailablePanel({
       console.error('Error filtering overtime courts:', error);
     }
 
-    // Combine filtered overtime courts (first) with future availability
-    return [...filteredOvertimeCourts, ...courtAvailability];
+    // Combine: empty courts first, then overtime, then future availability
+    // Sort empty courts by court number for consistent display
+    emptyCourts.sort((a, b) => a.courtNumber - b.courtNumber);
+    return [...emptyCourts, ...filteredOvertimeCourts, ...courtAvailability];
   };
 
   const timeline = getCourtAvailabilityTimeline(waitlist);
@@ -292,7 +318,14 @@ export function NextAvailablePanel({
                           </span>
                         </div>
                         <div className="courtboard-text-base font-semibold text-white">
-                          {availability.isOvertime ? (
+                          {availability.isEmpty ? (
+                            <span className="text-green-400 font-bold">
+                              Now
+                              {availability.minutesUntilBlock
+                                ? ` (${availability.minutesUntilBlock}m)`
+                                : ''}
+                            </span>
+                          ) : availability.isOvertime ? (
                             <span className="text-white font-bold">Now</span>
                           ) : availability.endTime ? (
                             availability.endTime.toLocaleTimeString([], {
