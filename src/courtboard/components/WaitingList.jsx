@@ -18,7 +18,7 @@ export function WaitingList({
 }) {
   const domain = getTennisDomain();
   const A = domain?.availability || domain?.Availability;
-  const W = domain?.waitlist || domain?.Waitlist;
+  const W = domain?.Waitlist || domain?.waitlist;
 
   // Convert React courts state to the data format expected by availability functions
   const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
