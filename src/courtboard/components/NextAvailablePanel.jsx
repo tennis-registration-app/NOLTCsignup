@@ -28,6 +28,8 @@ export function NextAvailablePanel({
 
     // Registration buffer: 15 minutes before block starts
     const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;
+    // Minimum useful session: 20 minutes
+    const MIN_USEFUL_SESSION_MS = 20 * 60 * 1000;
 
     // Get today's closing time from admin-configured operating hours
     // Handle both array format [{ dayOfWeek, closesAt }] and legacy object { opensAt, closesAt }
@@ -93,13 +95,18 @@ export function NextAvailablePanel({
           endTime = court.endTime;
         }
 
-        // Check for future blocks that would overlap with game availability (with buffer)
+        // Check for future blocks that would overlap with game availability
+        // Extend to block end if:
+        // 1. Block starts before or within buffer of session end, OR
+        // 2. Gap between session end and block start < 20 min (not useful)
         if (endTime) {
           const gameEndTime = new Date(endTime).getTime();
           const futureBlock = blocks.find(
             (block) =>
               block.courtNumber === courtNumber &&
-              new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS < gameEndTime &&
+              new Date(block.startTime).getTime() > currentTime.getTime() &&
+              (new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS < gameEndTime ||
+                new Date(block.startTime).getTime() - gameEndTime < MIN_USEFUL_SESSION_MS) &&
               new Date(block.endTime).getTime() > currentTime.getTime()
           );
 
@@ -115,13 +122,15 @@ export function NextAvailablePanel({
           const hasPlayers = court.session?.group?.players?.length > 0;
 
           if (hasPlayers && parsedEndTime <= currentTime) {
-            // Check if a block starts within the buffer period
+            // Check if a block starts within buffer OR within 20 min (not useful session)
             const imminentBlock = blocks.find(
               (block) =>
                 block.courtNumber === courtNumber &&
                 new Date(block.startTime).getTime() > currentTime.getTime() &&
-                new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <=
-                  currentTime.getTime()
+                (new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <=
+                  currentTime.getTime() ||
+                  new Date(block.startTime).getTime() - currentTime.getTime() <
+                    MIN_USEFUL_SESSION_MS)
             );
 
             if (imminentBlock) {
