@@ -46,9 +46,10 @@ export function useRegistrationDataLayer({
       if (initialData.members && Array.isArray(initialData.members)) {
         setApiMembers(initialData.members);
       }
-      const selection = computeRegistrationCourtSelection(courts);
+      // Initial load doesn't have upcomingBlocks, pass empty array
+      const selection = computeRegistrationCourtSelection(courts, []);
       const selectableCourts = selection.showingOvertimeCourts
-        ? selection.fallbackOvertimeCourts
+        ? [...selection.primaryCourts, ...selection.fallbackOvertimeCourts]
         : selection.primaryCourts;
       const selectableNumbers = selectableCourts.map((c) => c.number);
       setAvailableCourts(selectableNumbers);
@@ -83,9 +84,15 @@ export function useRegistrationDataLayer({
         if (board.operatingHours) {
           setOperatingHours(board.operatingHours);
         }
-        const selectable = (board.courts || [])
-          .filter((c) => (c.isAvailable || (c.isOvertime && !c.isTournament)) && !c.isBlocked)
-          .map((c) => c.number);
+        // Use centralized court selection with upcomingBlocks for 20-min threshold
+        const selection = computeRegistrationCourtSelection(
+          board.courts || [],
+          board.upcomingBlocks || []
+        );
+        const selectableCourts = selection.showingOvertimeCourts
+          ? [...selection.primaryCourts, ...selection.fallbackOvertimeCourts]
+          : selection.primaryCourts;
+        const selectable = selectableCourts.map((c) => c.number);
         setAvailableCourts(selectable);
         logger.debug(
           'DataLayer',

@@ -87,13 +87,15 @@ export function CourtRoute({ app, handlers }) {
   const courtData = reactData;
   const courts = courtData.courts || [];
 
-  // Compute court selection using centralized policy
-  const courtSelection = computeRegistrationCourtSelection(courts);
+  // Compute court selection using centralized policy (with 20-min threshold for blocks)
+  const courtSelection = computeRegistrationCourtSelection(courts, courtData.upcomingBlocks || []);
   const unoccupiedCourts = courtSelection.primaryCourts;
   const overtimeCourts = courtSelection.fallbackOvertimeCourts;
 
-  // Selectable: unoccupied first, then overtime if no unoccupied
-  const selectableCourts = courtSelection.showingOvertimeCourts ? overtimeCourts : unoccupiedCourts;
+  // Selectable: when showingOvertimeCourts, include BOTH primary and overtime so player can choose
+  const selectableCourts = courtSelection.showingOvertimeCourts
+    ? [...unoccupiedCourts, ...overtimeCourts]
+    : unoccupiedCourts;
 
   // Filter out singles-only courts for doubles groups
   const playerCount = currentGroup?.length || 0;

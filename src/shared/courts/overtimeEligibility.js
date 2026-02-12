@@ -19,9 +19,10 @@ import { isOccupiedNow, isBlockedNow } from './courtAvailability.js';
  * This function uses the stricter pattern (with isBlocked check) for consistency.
  *
  * @param {Array} courts - Normalized court objects from board state
+ * @param {Array} upcomingBlocks - Upcoming blocks for filtering usable courts
  * @returns {Object} Selection result
  */
-export function computeRegistrationCourtSelection(courts) {
+export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
   if (!courts?.length) {
     return {
       primaryCourts: [],
@@ -38,7 +39,23 @@ export function computeRegistrationCourtSelection(courts) {
   const fallbackOvertimeCourts = courts.filter(
     (c) => c && c.isOvertime && !c.isBlocked && !c.isTournament
   );
-  const showingOvertimeCourts = primaryCourts.length === 0 && fallbackOvertimeCourts.length > 0;
+
+  // Filter primary courts to those with >= 20 min before next block
+  const MIN_USEFUL_MINUTES = 20;
+  const usablePrimaryCourts = primaryCourts.filter((court) => {
+    if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
+    const now = new Date();
+    const nextBlock = upcomingBlocks.find(
+      (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > now
+    );
+    if (!nextBlock) return true;
+    const minutesUntilBlock = (new Date(nextBlock.startTime) - now) / 60000;
+    return minutesUntilBlock >= MIN_USEFUL_MINUTES;
+  });
+
+  // Show overtime courts when no usable primary courts exist
+  const showingOvertimeCourts =
+    usablePrimaryCourts.length === 0 && fallbackOvertimeCourts.length > 0;
 
   // Build eligibility map
   const eligibilityByCourtNumber = {};
