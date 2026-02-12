@@ -391,7 +391,7 @@ const SuccessScreen = (
                     className="mt-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-center"
                   >
                     <span className="text-sm font-semibold text-blue-700">
-                      Tournament Match — plays until completion
+                      ✓ Tournament Match — play until completion
                     </span>
                   </div>
                 ) : (
@@ -512,7 +512,7 @@ const SuccessScreen = (
             <button
               data-testid="tournament-match-link"
               onClick={() => setShowTournamentConfirm(true)}
-              className="text-sm font-medium underline decoration-1 underline-offset-2"
+              className="text-lg font-medium underline decoration-1 underline-offset-2"
               style={{
                 color: '#7a9aba',
                 textDecorationColor: 'rgba(122,154,186,0.4)',
