@@ -60,9 +60,22 @@ export function useRegistrationDerived({
     // Mirror CourtRoute: prefer free courts, fallback to overtime only if no free
     const effectiveAvailableCourts = freeCourts.length > 0 ? freeCourts : overtimeCourts;
 
+    // Filter out courts with < 20 min before upcoming block
+    const MIN_USEFUL_MINUTES = 20;
+    const usableAvailableCourts = effectiveAvailableCourts.filter((courtNum) => {
+      if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
+      const now = new Date();
+      const nextBlock = upcomingBlocks.find(
+        (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
+      );
+      if (!nextBlock) return true;
+      const minutesUntilBlock = (new Date(nextBlock.startTime) - now) / 60000;
+      return minutesUntilBlock >= MIN_USEFUL_MINUTES;
+    });
+
     // Count full-time courts for deferred group CTA logic
     const countFullTimeCourts = (playerCount) => {
-      const eligible = effectiveAvailableCourts.filter((courtNum) =>
+      const eligible = usableAvailableCourts.filter((courtNum) =>
         isCourtEligibleForGroup(courtNum, playerCount)
       );
       if (upcomingBlocks.length === 0) return eligible.length;
@@ -81,13 +94,13 @@ export function useRegistrationDerived({
     const secondGroup = normalizedWaitlist[1] || null;
 
     // Filter available courts by singles-only eligibility for each group
-    // Use effectiveAvailableCourts to match what CourtRoute will actually show
+    // Use usableAvailableCourts to match what CourtRoute will actually show
     const firstGroupPlayerCount = firstGroup?.players?.length || 0;
     const secondGroupPlayerCount = secondGroup?.players?.length || 0;
-    const eligibleForFirst = effectiveAvailableCourts.filter((courtNum) =>
+    const eligibleForFirst = usableAvailableCourts.filter((courtNum) =>
       isCourtEligibleForGroup(courtNum, firstGroupPlayerCount)
     ).length;
-    const eligibleForSecond = effectiveAvailableCourts.filter((courtNum) =>
+    const eligibleForSecond = usableAvailableCourts.filter((courtNum) =>
       isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
     ).length;
 
@@ -120,7 +133,7 @@ export function useRegistrationDerived({
     // Pass-through: if neither position 0 nor 1 can play,
     // find the first group from position 2+ that CAN play
     let passThrough = null;
-    if (!live1 && !live2 && effectiveAvailableCourts.length > 0) {
+    if (!live1 && !live2 && usableAvailableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];
         // Deferred groups count only full-time courts
@@ -128,7 +141,7 @@ export function useRegistrationDerived({
         const isDeferred = entry.deferred ?? false;
         const eligible = isDeferred
           ? countFullTimeCourts(playerCount)
-          : effectiveAvailableCourts.filter((courtNum) =>
+          : usableAvailableCourts.filter((courtNum) =>
               isCourtEligibleForGroup(courtNum, playerCount)
             ).length;
         if (eligible >= 1) {
