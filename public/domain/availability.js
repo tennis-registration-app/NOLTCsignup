@@ -5,6 +5,10 @@
   window.Tennis = window.Tennis || {};
   window.Tennis.Domain = window.Tennis.Domain || {};
 
+  // Registration buffer: treat blocks as starting this many minutes earlier
+  const REGISTRATION_BUFFER_MINUTES = 15;
+  const REGISTRATION_BUFFER_MS = REGISTRATION_BUFFER_MINUTES * 60 * 1000;
+
   // Helper functions for robust date/block handling
   function coerceDate(d) {
     // Accept Date or string; never NaN
@@ -116,18 +120,19 @@
   };
 
   /**
-   * getNextFreeTimes({ data, now, blocks }) -> Date[]
+   * getNextFreeTimes({ data, now, blocks, wetSet }) -> Date[]
    * Returns an array of length Tennis.Config.Courts.TOTAL_COUNT (1-indexed → index n-1),
    * where each entry is the earliest Date that court n is free.
    * Rules:
    *  - Coerce any stored times with new Date(...)
+   *  - If court is in wetSet, treat as unavailable until 10pm closing
    *  - Start base = now
    *  - If the court is occupied and session.scheduledEndAt > base, set base = session.scheduledEndAt
    *  - While there exists a block for this court where block.startTime <= base < block.endTime,
    *    set base = block.endTime (and re-check; blocks can be adjacent/stacked)
    *  - Result for court n is that base
    */
-  function getNextFreeTimes({ data, now, blocks }) {
+  function getNextFreeTimes({ data, now, blocks, wetSet }) {
     const total = (window.Tennis?.Config?.Courts?.TOTAL_COUNT) || 12;
     const out = new Array(total);
     const byCourt = (blocks || []).map(b => ({
@@ -135,7 +140,18 @@
       start: new Date(b.startTime),
       end: new Date(b.endTime)
     }));
+    // Normalize wetSet
+    const wet = wetSet instanceof Set ? wetSet : new Set();
+
     for (let n = 1; n <= total; n++) {
+      // If court is wet, treat as unavailable until 10pm closing
+      if (wet.has(n)) {
+        const closingTime = new Date(now);
+        closingTime.setHours(22, 0, 0, 0); // 10pm closing
+        out[n - 1] = closingTime;
+        continue;
+      }
+
       let base = new Date(now);
       const c = data?.courts?.[n - 1];
       // Domain format: session.scheduledEndAt
@@ -143,14 +159,16 @@
         const end = new Date(c.session.scheduledEndAt);
         if (end > base) base = end;
       }
-      // advance through overlapping blocks
+      // advance through overlapping blocks (with registration buffer)
       let advanced = true;
       while (advanced) {
         advanced = false;
         for (const b of byCourt) {
           if (b.courtNumber !== n) continue;
-          // overlap when b.start <= base < b.end
-          if (b.start <= base && base < b.end) {
+          // overlap when (b.start - buffer) <= base < b.end
+          // This treats blocks as starting 15 min earlier for availability purposes
+          const effectiveStart = new Date(b.start.getTime() - REGISTRATION_BUFFER_MS);
+          if (effectiveStart <= base && base < b.end) {
             base = new Date(b.end);
             advanced = true;
           }
@@ -211,14 +229,6 @@
         continue;
       }
 
-      // Tournament Exclusion (WP6-E):
-      // Tournament courts are excluded from the overtime list even when past scheduledEndAt.
-      // This prevents them from appearing in:
-      //   - Waitlist CTAs (no "court available" notifications for deferred groups)
-      //   - NextAvailablePanel (no "first available at" time shown)
-      //   - Fallback court selection (overtime courts shown when no free courts)
-      // Tournament matches play until completion and should never be treated as "available".
-      // See also: getCourtStatuses() for display-layer override (shows "overtime" color).
       if (isOvertime(session, now) && !(session.isTournament)) {
         overtime.push(n);
       }
@@ -287,7 +297,7 @@
            st <= now && now < et;
   }
 
-  function getCourtStatuses({ data, now, blocks, wetSet }) {
+  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }) {
     const Av = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
     const info = Av.getFreeCourtsInfo({ data, now, blocks, wetSet });
 
@@ -308,6 +318,18 @@
 
     // selection policy: free first, else overtime
     const hasTrueFree = freeSet.size > 0;
+
+    // Check if any free court has >= 20 min of usable time before next block
+    const MIN_USEFUL_MS = 20 * 60 * 1000;
+    const hasUsableFree = hasTrueFree && [...freeSet].some(courtNum => {
+      if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
+      const nextBlock = upcomingBlocks.find(
+        b => Number(b.courtNumber || b.court) === courtNum &&
+             new Date(b.startTime || b.start) > now
+      );
+      if (!nextBlock) return true;
+      return (new Date(nextBlock.startTime || nextBlock.start) - now) >= MIN_USEFUL_MS;
+    });
 
     const total = (data?.courts || []).length || (info.meta?.total || 0);
     const out = [];
@@ -340,17 +362,8 @@
       else if (isOccupied) status = 'occupied';
       else if (isFree)     status = 'free';
 
-      // Tournament Display Override (WP6-E):
-      // Two-layer approach for tournament courts:
-      //   Layer 1 (getFreeCourtsInfo): Excludes tournament courts from overtime[] array
-      //            → They won't trigger waitlist CTAs or appear in NextAvailablePanel
-      //   Layer 2 (here): Overrides status to 'overtime' for visual display
-      //            → Courtboard shows dark blue color (overtime) instead of light blue (occupied)
-      //
-      // This ensures tournament courts:
-      //   - Display correctly on courtboard (dark blue = "past end time")
-      //   - Never appear in availability calculations
-      //   - Are never selectable (line 348: !isTournament check)
+      // Tournament courts past end time display as overtime (dark blue)
+      // but are excluded from availability lists
       const court = data.courts[n - 1];
       const isTournament = court?.session?.isTournament ?? false;
       if (status === 'occupied' && isTournament &&
@@ -359,12 +372,10 @@
         status = 'overtime';
       }
 
-      // Selectable Policy (WP6-E enhanced):
-      // - Free courts are always selectable (unless wet/blocked)
-      // - Overtime courts are selectable ONLY when no free courts exist (fallback)
-      // - Tournament overtime courts are NEVER selectable (they play until completion)
+      // strict selectable policy: free OR overtime (when no usable free exists)
+      // Tournament overtime courts are NEVER selectable (they play until completion)
       const selectable = (!isWet && !isBlocked) &&
-                         ((status === 'free') || (status === 'overtime' && !hasTrueFree && !isTournament));
+                         ((status === 'free') || (status === 'overtime' && !hasUsableFree && !isTournament));
       
       // selectable reason for styling
       const selectableReason = selectable
@@ -413,26 +424,6 @@
     const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
     const free = info.free || [];
     const overtime = info.overtime || [];
-
-    // DEBUG: Log what we're returning to catch inappropriate selections
-    const courtDetails = data?.courts?.map((c, i) => {
-      const courtNum = i + 1;
-      // Domain format: court.session
-      const session = c?.session;
-      const endTime = session?.scheduledEndAt;
-      const endDate = endTime ? new Date(endTime) : null;
-      const isActive = endDate ? endDate > now : false;
-
-      return {
-        court: courtNum,
-        hasSession: !!session,
-        endTime: endTime ? endDate.toLocaleTimeString() : null,
-        isActive,
-        players: session?.group?.players?.length || 0,
-        inFreeList: free.includes(courtNum),
-        inOvertimeList: overtime.includes(courtNum)
-      };
-    });
 
     return free.length > 0 ? free : overtime;
   }

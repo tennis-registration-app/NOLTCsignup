@@ -419,7 +419,10 @@ export function TennisCourtDisplay() {
           )
           .map((b) => b.courtNumber)
       );
-      const _statuses = A.getCourtStatuses({ data, now, blocks, wetSet }) || [];
+      // Merge courtBlocks + upcomingBlocks for 20-min threshold check
+      const allBlocks = [...(blocks || []), ...(upcomingBlocks || [])];
+      const _statuses =
+        A.getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks: allBlocks }) || [];
       statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
       selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));
       statusObjectByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s]));
