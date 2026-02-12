@@ -69,7 +69,20 @@ export function WaitingList({
     const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
       isCourtEligibleForGroup(courtNum, groupPlayerCount)
     );
-    const eligibleCourts = [...eligibleFree, ...eligibleOvertime];
+
+    // Filter free courts to those with >= 20 min before next block
+    const MIN_USEFUL_MINUTES = 20;
+    const usableFree = eligibleFree.filter((courtNum) => {
+      const nextBlock = allBlocks.find(
+        (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
+      );
+      if (!nextBlock) return true;
+      return (new Date(nextBlock.startTime) - now) / 60000 >= MIN_USEFUL_MINUTES;
+    });
+
+    // Only include overtime courts if no usable free courts exist
+    const eligibleCourts =
+      usableFree.length > 0 ? usableFree : [...eligibleFree, ...eligibleOvertime];
 
     // No blocks = all courts have full time
     if (allBlocks.length === 0) return eligibleCourts.length;
