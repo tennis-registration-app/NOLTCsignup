@@ -111,19 +111,11 @@ export function CourtRoute({ app, handlers }) {
   // Otherwise, only show courts when no one is waiting
   let computedAvailableCourts = [];
   if (hasWaitlistPriority) {
-    // For waitlist priority users, prefer unoccupied courts, fallback to overtime
-    const unoccupiedNumbers = unoccupiedCourts
+    // Trust upstream: selectableCourts already includes
+    // both free and overtime when appropriate
+    computedAvailableCourts = selectableCourts
       .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
       .map((c) => c.number);
-    const overtimeNumbers = overtimeCourts
-      .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
-      .map((c) => c.number);
-
-    if (unoccupiedNumbers.length > 0) {
-      computedAvailableCourts = unoccupiedNumbers;
-    } else if (overtimeNumbers.length > 0) {
-      computedAvailableCourts = overtimeNumbers;
-    }
   } else if (!hasWaiters && selectable.length > 0) {
     // Normal users get all selectable courts when no waitlist
     computedAvailableCourts = selectable;
