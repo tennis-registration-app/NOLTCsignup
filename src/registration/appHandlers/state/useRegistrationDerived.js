@@ -44,21 +44,10 @@ export function useRegistrationDerived({
     }));
 
     const upcomingBlocks = data.upcomingBlocks; // null = not loaded, [] = loaded empty
-    const courts = data.courts || [];
 
-    // Split available courts by type to mirror CourtRoute priority
-    // CourtRoute shows EITHER free courts OR overtime courts, never mixed
-    const freeCourts = availableCourts.filter((courtNum) => {
-      const court = courts.find((c) => c?.number === courtNum) || courts[courtNum - 1];
-      return court && !court.isOvertime;
-    });
-    const overtimeCourts = availableCourts.filter((courtNum) => {
-      const court = courts.find((c) => c?.number === courtNum) || courts[courtNum - 1];
-      return court?.isOvertime;
-    });
-
-    // Mirror CourtRoute: prefer free courts, fallback to overtime only if no free
-    const effectiveAvailableCourts = freeCourts.length > 0 ? freeCourts : overtimeCourts;
+    // Trust upstream court selection (computeRegistrationCourtSelection already
+    // decided which courts to include based on free/overtime availability)
+    const effectiveAvailableCourts = availableCourts;
 
     // Filter out courts with < 20 min before upcoming block
     const MIN_USEFUL_MINUTES = 20;
