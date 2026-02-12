@@ -30,7 +30,7 @@ export function useRegistrationUiState({ CONSTANTS }) {
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
     waitlist: [],
     blocks: [],
-    upcomingBlocks: [],
+    upcomingBlocks: null,
     recentlyCleared: [],
   }));
 

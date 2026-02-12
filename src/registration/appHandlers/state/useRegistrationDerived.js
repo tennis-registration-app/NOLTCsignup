@@ -43,7 +43,7 @@ export function useRegistrationDerived({
       deferred: entry.deferred ?? false,
     }));
 
-    const upcomingBlocks = data.upcomingBlocks || [];
+    const upcomingBlocks = data.upcomingBlocks; // null = not loaded, [] = loaded empty
     const courts = data.courts || [];
 
     // Split available courts by type to mirror CourtRoute priority
@@ -63,7 +63,10 @@ export function useRegistrationDerived({
     // Filter out courts with < 20 min before upcoming block
     const MIN_USEFUL_MINUTES = 20;
     const usableAvailableCourts = effectiveAvailableCourts.filter((courtNum) => {
-      if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
+      if (upcomingBlocks === null || upcomingBlocks === undefined) {
+        return false; // Block data not loaded — be conservative
+      }
+      if (upcomingBlocks.length === 0) return true; // Loaded, no blocks
       const now = new Date();
       const nextBlock = upcomingBlocks.find(
         (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
@@ -78,7 +81,7 @@ export function useRegistrationDerived({
       const eligible = usableAvailableCourts.filter((courtNum) =>
         isCourtEligibleForGroup(courtNum, playerCount)
       );
-      if (upcomingBlocks.length === 0) return eligible.length;
+      if (!upcomingBlocks || upcomingBlocks.length === 0) return eligible.length;
       const sessionDuration = playerCount >= 4 ? 90 : 60;
       return eligible.filter((courtNum) => {
         const warning = getUpcomingBlockWarningFromBlocks(
