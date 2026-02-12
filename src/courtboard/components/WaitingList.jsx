@@ -69,7 +69,7 @@ export function WaitingList({
     const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
       isCourtEligibleForGroup(courtNum, groupPlayerCount)
     );
-    const eligibleCourts = eligibleFree.length > 0 ? eligibleFree : eligibleOvertime;
+    const eligibleCourts = [...eligibleFree, ...eligibleOvertime];
 
     // No blocks = all courts have full time
     if (allBlocks.length === 0) return eligibleCourts.length;
