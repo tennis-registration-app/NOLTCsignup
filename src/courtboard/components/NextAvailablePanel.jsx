@@ -48,7 +48,7 @@ export function NextAvailablePanel({
     const emptyCourts = [];
 
     // Use courtBlocks from props instead of localStorage
-    const blocks = courtBlocks || [];
+    const blocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
 
     // Check if ALL courts are currently wet
     const activeWetBlocks = blocks.filter(
