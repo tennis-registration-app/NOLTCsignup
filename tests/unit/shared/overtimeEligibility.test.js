@@ -261,6 +261,297 @@ describe('computeRegistrationCourtSelection', () => {
       expect(result.eligibilityByCourtNumber[3]).toMatchObject({ eligible: false });
     });
   });
+
+  // Tests for the new enriched API (selectableCourts, getSelectableForGroup, etc.)
+  describe('selectableCourts metadata', () => {
+    it('free court with no block has null minutesAvailable', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0]).toMatchObject({
+        number: 1,
+        reason: 'free',
+        minutesAvailable: null,
+        isUsable: true,
+      });
+    });
+
+    it('free court with block has correct minutesAvailable', () => {
+      const now = new Date();
+      const in30Minutes = new Date(now.getTime() + 30 * 60000).toISOString();
+      const in90Minutes = new Date(now.getTime() + 90 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in30Minutes, endTime: in90Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0].number).toBe(1);
+      expect(result.selectableCourts[0].reason).toBe('free');
+      // Allow 1 minute margin for test execution time
+      expect(result.selectableCourts[0].minutesAvailable).toBeGreaterThanOrEqual(29);
+      expect(result.selectableCourts[0].minutesAvailable).toBeLessThanOrEqual(31);
+      expect(result.selectableCourts[0].isUsable).toBe(true);
+    });
+
+    it('free court with block in < 20 min marked as not usable', () => {
+      const now = new Date();
+      const in10Minutes = new Date(now.getTime() + 10 * 60000).toISOString();
+      const in90Minutes = new Date(now.getTime() + 90 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in10Minutes, endTime: in90Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0].isUsable).toBe(false);
+    });
+
+    it('overtime court included when no usable free courts', () => {
+      const now = new Date();
+      const in5Minutes = new Date(now.getTime() + 5 * 60000).toISOString();
+      const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 5 min
+        { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in5Minutes, endTime: in60Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Both courts in selectableCourts since showingOvertimeCourts is true
+      expect(result.showingOvertimeCourts).toBe(true);
+      expect(result.selectableCourts).toHaveLength(2);
+
+      const freeCourt = result.selectableCourts.find((sc) => sc.number === 1);
+      const overtimeCourt = result.selectableCourts.find((sc) => sc.number === 2);
+
+      expect(freeCourt.reason).toBe('free');
+      expect(freeCourt.isUsable).toBe(false);
+      expect(overtimeCourt.reason).toBe('overtime_fallback');
+      expect(overtimeCourt.minutesAvailable).toBe(null);
+      expect(overtimeCourt.isUsable).toBe(true);
+    });
+
+    it('overtime court NOT included when usable free court exists', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.showingOvertimeCourts).toBe(false);
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0].number).toBe(1);
+    });
+  });
+
+  describe('getSelectableForGroup (singles-only Court 8 filtering)', () => {
+    it('filters out Court 8 for doubles (4 players)', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Both courts in selectableCourts
+      expect(result.selectableCourts).toHaveLength(2);
+
+      // But for 4 players (doubles), Court 8 is filtered out
+      const doublesSelectable = result.getSelectableForGroup(4);
+      expect(doublesSelectable).toHaveLength(1);
+      expect(doublesSelectable[0].number).toBe(1);
+    });
+
+    it('includes Court 8 for singles (2 players)', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // For 2 players (singles), Court 8 is included
+      const singlesSelectable = result.getSelectableForGroup(2);
+      expect(singlesSelectable).toHaveLength(2);
+      expect(singlesSelectable.map((sc) => sc.number)).toContain(8);
+    });
+
+    it('returns all selectable for doubles on non-Court-8 courts', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 3, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      const doublesSelectable = result.getSelectableForGroup(4);
+      expect(doublesSelectable).toHaveLength(3);
+    });
+  });
+
+  describe('countFullTimeForGroup', () => {
+    it('singles needs 65 min (60 + 5 buffer)', () => {
+      const now = new Date();
+      const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
+      const in70Minutes = new Date(now.getTime() + 70 * 60000).toISOString();
+      const in120Minutes = new Date(now.getTime() + 120 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 60 min
+        { number: 2, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 70 min
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in60Minutes, endTime: in120Minutes },
+        { courtNumber: 2, startTime: in70Minutes, endTime: in120Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // For singles (2 players), need 65 min
+      // Court 1: ~60 min available → NOT full time
+      // Court 2: ~70 min available → full time
+      expect(result.countFullTimeForGroup(2)).toBe(1);
+    });
+
+    it('doubles needs 95 min (90 + 5 buffer)', () => {
+      const now = new Date();
+      const in90Minutes = new Date(now.getTime() + 90 * 60000).toISOString();
+      const in100Minutes = new Date(now.getTime() + 100 * 60000).toISOString();
+      const in150Minutes = new Date(now.getTime() + 150 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 90 min
+        { number: 2, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 100 min
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in90Minutes, endTime: in150Minutes },
+        { courtNumber: 2, startTime: in100Minutes, endTime: in150Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // For doubles (4 players), need 95 min
+      // Court 1: ~90 min available → NOT full time
+      // Court 2: ~100 min available → full time
+      expect(result.countFullTimeForGroup(4)).toBe(1);
+    });
+
+    it('court with no block is always full time', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.countFullTimeForGroup(2)).toBe(1);
+      expect(result.countFullTimeForGroup(4)).toBe(1);
+    });
+
+    it('filters Court 8 for doubles in full time count', () => {
+      const courts = [
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Court 8 available with no block
+      expect(result.countFullTimeForGroup(2)).toBe(1); // Singles OK
+      expect(result.countFullTimeForGroup(4)).toBe(0); // Doubles not allowed on Court 8
+    });
+  });
+
+  describe('CTA scenarios', () => {
+    it('deferred group with restricted free + unrestricted overtime → overtime counts', () => {
+      const now = new Date();
+      const in30Minutes = new Date(now.getTime() + 30 * 60000).toISOString();
+      const in120Minutes = new Date(now.getTime() + 120 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 30 min
+        { number: 2, isAvailable: false, isBlocked: false, isOvertime: true }, // no block
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in30Minutes, endTime: in120Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Free court has 30 min (usable for 20 min threshold but not full time for doubles 95 min)
+      // showingOvertimeCourts should be false since free court is usable
+      expect(result.showingOvertimeCourts).toBe(false);
+
+      // For deferred doubles group (4 players), need full-time courts (95 min)
+      // Court 1: 30 min → NOT full time
+      // So no full-time courts available in selectable
+      expect(result.countFullTimeForGroup(4)).toBe(0);
+    });
+
+    it('non-deferred group can use time-restricted court', () => {
+      const now = new Date();
+      const in25Minutes = new Date(now.getTime() + 25 * 60000).toISOString();
+      const in120Minutes = new Date(now.getTime() + 120 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 25 min
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in25Minutes, endTime: in120Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // 25 min >= 20 min threshold, so court is usable
+      expect(result.countSelectableForGroup(4)).toBe(1);
+
+      // But not full time for doubles (needs 95 min)
+      expect(result.countFullTimeForGroup(4)).toBe(0);
+
+      // Full time for nothing actually since 25 < 65 (singles) and 25 < 95 (doubles)
+      expect(result.countFullTimeForGroup(2)).toBe(0);
+    });
+
+    it('countSelectableForGroup returns correct count', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.countSelectableForGroup(2)).toBe(3); // Singles can use all 3
+      expect(result.countSelectableForGroup(4)).toBe(2); // Doubles can't use Court 8
+    });
+  });
 });
 
 describe('computePlayableCourts', () => {

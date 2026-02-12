@@ -270,7 +270,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   // ===== DERIVED VALUES MODULE (WP5.9.6.6b) =====
   const derived = useRegistrationDerived({
     data,
-    availableCourts,
     CONSTANTS,
     isMobileView,
   });

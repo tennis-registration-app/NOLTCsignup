@@ -28,7 +28,6 @@ export function CourtRoute({ app, handlers }) {
     groupGuest,
     alert,
     mobile,
-    blockAdmin,
     refs,
     setters,
     services,
@@ -56,7 +55,6 @@ export function CourtRoute({ app, handlers }) {
     openQRScanner,
     dismissGpsPrompt,
   } = mobile;
-  const { getCourtBlockStatus } = blockAdmin;
   const { successResetTimerRef } = refs;
   const {
     setDisplacement,
@@ -79,9 +77,6 @@ export function CourtRoute({ app, handlers }) {
     saveCourtData,
   } = handlers;
 
-  // When a group has already been assigned a court, treat it like changing courts
-  const isSelectingDifferentCourt = isChangingCourt || hasAssignedCourt;
-
   // Get court data from React state
   const reactData = getCourtData();
   const courtData = reactData;
@@ -89,66 +84,25 @@ export function CourtRoute({ app, handlers }) {
 
   // Compute court selection using centralized policy (with 20-min threshold for blocks)
   const courtSelection = computeRegistrationCourtSelection(courts, courtData.upcomingBlocks || []);
-  const unoccupiedCourts = courtSelection.primaryCourts;
-  const overtimeCourts = courtSelection.fallbackOvertimeCourts;
-
-  // Selectable: when showingOvertimeCourts, include BOTH primary and overtime so player can choose
-  const selectableCourts = courtSelection.showingOvertimeCourts
-    ? [...unoccupiedCourts, ...overtimeCourts]
-    : unoccupiedCourts;
 
   // Filter out singles-only courts for doubles groups
   const playerCount = currentGroup?.length || 0;
-  const eligibleCourts = selectableCourts.filter((c) =>
-    isCourtEligibleForGroup(c.number, playerCount)
-  );
-  const selectable = eligibleCourts.map((c) => c.number);
 
   // Only count active (non-deferred) waitlist entries as waiters
   const hasWaiters = courtData.waitlist?.some((e) => !e.deferred) ?? false;
 
-  // If user has waitlist priority, they should ONLY see FREE courts (not overtime)
-  // Otherwise, only show courts when no one is waiting
+  // Waitlist priority users and normal users (when no waitlist) get selectable courts
   let computedAvailableCourts = [];
-  if (hasWaitlistPriority) {
-    // Trust upstream: selectableCourts already includes
-    // both free and overtime when appropriate
-    computedAvailableCourts = selectableCourts
-      .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
-      .map((c) => c.number);
-  } else if (!hasWaiters && selectable.length > 0) {
-    // Normal users get all selectable courts when no waitlist
-    computedAvailableCourts = selectable;
+  if (hasWaitlistPriority || (!hasWaiters && courtSelection.selectableCourts.length > 0)) {
+    computedAvailableCourts = courtSelection
+      .getSelectableForGroup(playerCount)
+      .map((sc) => sc.number);
   }
 
   const hasWaitlistEntries = courtData.waitlist.length > 0;
 
-  // Check if showing overtime courts
-  // Only count truly free courts as unoccupied (not blocked or wet courts)
-  const hasUnoccupiedCourts = courtData.courts.some((court, index) => {
-    const courtNumber = index + 1;
-
-    // Check if court is blocked or wet
-    const blockStatus = getCourtBlockStatus(courtNumber);
-    if (blockStatus && blockStatus.isCurrent) {
-      return false; // Blocked courts are not unoccupied
-    }
-
-    // Only count as unoccupied if it's truly free AND selectable
-    // Domain format: court.session.group.players
-    const isTrulyFree =
-      !court ||
-      court.wasCleared ||
-      (!court.session && court.history) ||
-      !court.session?.group?.players?.length;
-
-    // Additional check: must also be in the selectable courts list
-    const isSelectable = computedAvailableCourts.includes(courtNumber);
-
-    return isTrulyFree && isSelectable;
-  });
-  const showingOvertimeCourts =
-    computedAvailableCourts.length > 0 && !hasUnoccupiedCourts && !isSelectingDifferentCourt;
+  // Pass showingOvertimeCourts to CourtSelectionScreen for the "overtime" messaging
+  const showingOvertimeCourts = courtSelection.showingOvertimeCourts;
 
   return (
     <>

@@ -1,18 +1,15 @@
 import { useMemo } from 'react';
-import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
-import { getUpcomingBlockWarningFromBlocks } from '@lib';
 
 /**
  * useRegistrationDerived
  * Extracted from useRegistrationAppState — WP5.9.6.6b
  *
  * Owns computed/derived values (useMemo blocks).
- * Verbatim extraction — no logic changes.
+ * Now uses courtSelection from data for canonical court availability.
  */
 export function useRegistrationDerived({
   // Dependencies for waitlist CTA computation
   data,
-  availableCourts,
   // Dependencies for member database
   CONSTANTS,
   // Passed through from parent
@@ -20,7 +17,7 @@ export function useRegistrationDerived({
 }) {
   // ===== DERIVED VALUES (useMemo) =====
 
-  // CTA state derived from waitlist and available courts
+  // CTA state derived from waitlist and courtSelection
   const {
     firstWaitlistEntry,
     secondWaitlistEntry,
@@ -43,77 +40,32 @@ export function useRegistrationDerived({
       deferred: entry.deferred ?? false,
     }));
 
-    const upcomingBlocks = data.upcomingBlocks; // null = not loaded, [] = loaded empty
-
-    // Trust upstream court selection (computeRegistrationCourtSelection already
-    // decided which courts to include based on free/overtime availability)
-    const effectiveAvailableCourts = availableCourts;
-
-    // Filter out courts with < 20 min before upcoming block
-    const MIN_USEFUL_MINUTES = 20;
-    const usableAvailableCourts = effectiveAvailableCourts.filter((courtNum) => {
-      if (upcomingBlocks === null || upcomingBlocks === undefined) {
-        return false; // Block data not loaded — be conservative
-      }
-      if (upcomingBlocks.length === 0) return true; // Loaded, no blocks
-      const now = new Date();
-      const nextBlock = upcomingBlocks.find(
-        (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
-      );
-      if (!nextBlock) return true;
-      const minutesUntilBlock = (new Date(nextBlock.startTime) - now) / 60000;
-      return minutesUntilBlock >= MIN_USEFUL_MINUTES;
-    });
-
-    // Count full-time courts for deferred group CTA logic
-    const countFullTimeCourts = (playerCount) => {
-      const eligible = usableAvailableCourts.filter((courtNum) =>
-        isCourtEligibleForGroup(courtNum, playerCount)
-      );
-      if (!upcomingBlocks || upcomingBlocks.length === 0) return eligible.length;
-      const sessionDuration = playerCount >= 4 ? 90 : 60;
-      return eligible.filter((courtNum) => {
-        const warning = getUpcomingBlockWarningFromBlocks(
-          courtNum,
-          sessionDuration + 5,
-          upcomingBlocks
-        );
-        return warning == null;
-      }).length;
-    };
+    const courtSelection = data.courtSelection;
 
     const firstGroup = normalizedWaitlist[0] || null;
     const secondGroup = normalizedWaitlist[1] || null;
 
-    // Filter available courts by singles-only eligibility for each group
-    // Use usableAvailableCourts to match what CourtRoute will actually show
-    const firstGroupPlayerCount = firstGroup?.players?.length || 0;
-    const secondGroupPlayerCount = secondGroup?.players?.length || 0;
-    const eligibleForFirst = usableAvailableCourts.filter((courtNum) =>
-      isCourtEligibleForGroup(courtNum, firstGroupPlayerCount)
-    ).length;
-    const eligibleForSecond = usableAvailableCourts.filter((courtNum) =>
-      isCourtEligibleForGroup(courtNum, secondGroupPlayerCount)
-    ).length;
-
-    // Deferred groups count only full-time courts for CTA eligibility
+    const firstPlayerCount = firstGroup?.players?.length || 0;
     const firstIsDeferred = firstGroup?.deferred ?? false;
+    const secondPlayerCount = secondGroup?.players?.length || 0;
     const secondIsDeferred = secondGroup?.deferred ?? false;
 
-    const effectiveFirst = firstIsDeferred
-      ? countFullTimeCourts(firstGroupPlayerCount)
-      : eligibleForFirst;
-    const live1 =
-      effectiveFirst >= 1 && firstGroup !== null && !(firstIsDeferred && effectiveFirst === 0);
+    let live1 = false;
+    let live2 = false;
 
-    const courtsNeededForSecond = live1 ? 2 : 1;
-    const effectiveSecond = secondIsDeferred
-      ? countFullTimeCourts(secondGroupPlayerCount)
-      : eligibleForSecond;
-    const live2 =
-      effectiveSecond >= courtsNeededForSecond &&
-      secondGroup !== null &&
-      !(secondIsDeferred && effectiveSecond < courtsNeededForSecond);
+    if (courtSelection && firstGroup) {
+      const firstAvailable = firstIsDeferred
+        ? courtSelection.countFullTimeForGroup(firstPlayerCount)
+        : courtSelection.countSelectableForGroup(firstPlayerCount);
+      live1 = firstAvailable > 0;
+    }
+
+    if (courtSelection && secondGroup) {
+      const secondAvailable = secondIsDeferred
+        ? courtSelection.countFullTimeForGroup(secondPlayerCount)
+        : courtSelection.countSelectableForGroup(secondPlayerCount);
+      live2 = secondAvailable >= (live1 ? 2 : 1);
+    }
 
     const first = firstGroup
       ? { id: firstGroup.id, position: firstGroup.position ?? 1, players: firstGroup.players }
@@ -125,17 +77,14 @@ export function useRegistrationDerived({
     // Pass-through: if neither position 0 nor 1 can play,
     // find the first group from position 2+ that CAN play
     let passThrough = null;
-    if (!live1 && !live2 && usableAvailableCourts.length > 0) {
+    if (!live1 && !live2 && courtSelection && courtSelection.selectableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];
-        // Deferred groups count only full-time courts
         const playerCount = entry?.players?.length || 0;
         const isDeferred = entry.deferred ?? false;
         const eligible = isDeferred
-          ? countFullTimeCourts(playerCount)
-          : usableAvailableCourts.filter((courtNum) =>
-              isCourtEligibleForGroup(courtNum, playerCount)
-            ).length;
+          ? courtSelection.countFullTimeForGroup(playerCount)
+          : courtSelection.countSelectableForGroup(playerCount);
         if (eligible >= 1) {
           passThrough = {
             id: entry.id,
@@ -158,7 +107,7 @@ export function useRegistrationDerived({
       passThroughEntry: passThrough,
       passThroughEntryData: passThrough,
     };
-  }, [data.waitlist, data.upcomingBlocks, data.courts, availableCourts]);
+  }, [data.waitlist, data.courtSelection]);
 
   // Member database (simplified for autocomplete)
   const memberDatabase = useMemo(() => {

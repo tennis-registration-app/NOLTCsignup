@@ -48,11 +48,9 @@ export function useRegistrationDataLayer({
       }
       // Initial load doesn't have upcomingBlocks, pass empty array
       const selection = computeRegistrationCourtSelection(courts, []);
-      const selectableCourts = selection.showingOvertimeCourts
-        ? [...selection.primaryCourts, ...selection.fallbackOvertimeCourts]
-        : selection.primaryCourts;
-      const selectableNumbers = selectableCourts.map((c) => c.number);
+      const selectableNumbers = selection.selectableCourts.map((sc) => sc.number);
       setAvailableCourts(selectableNumbers);
+      setData((prev) => ({ ...prev, courtSelection: selection }));
       logger.debug('DataLayer', 'Initial load complete', {
         waitlistLength: initialData.waitlist?.length,
       });
@@ -89,11 +87,9 @@ export function useRegistrationDataLayer({
           board.courts || [],
           board.upcomingBlocks || []
         );
-        const selectableCourts = selection.showingOvertimeCourts
-          ? [...selection.primaryCourts, ...selection.fallbackOvertimeCourts]
-          : selection.primaryCourts;
-        const selectable = selectableCourts.map((c) => c.number);
+        const selectable = selection.selectableCourts.map((sc) => sc.number);
         setAvailableCourts(selectable);
+        setData((prev) => ({ ...prev, courtSelection: selection }));
         logger.debug(
           'DataLayer',
           '[Registration CTA Debug] Courts from API',

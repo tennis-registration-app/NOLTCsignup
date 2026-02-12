@@ -6,6 +6,7 @@
  */
 
 import { isOccupiedNow, isBlockedNow } from './courtAvailability.js';
+import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
 
 /**
  * REGISTRATION COURT SELECTION
@@ -29,6 +30,11 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
       fallbackOvertimeCourts: [],
       showingOvertimeCourts: false,
       eligibilityByCourtNumber: {},
+      selectableCourts: [],
+      getSelectableForGroup: () => [],
+      getFullTimeForGroup: () => [],
+      countSelectableForGroup: () => 0,
+      countFullTimeForGroup: () => 0,
     };
   }
 
@@ -70,11 +76,73 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
     };
   }
 
+  // Build selectableCourts with metadata
+  const selectableCourts = [];
+
+  for (const court of primaryCourts) {
+    const nextBlock = (upcomingBlocks || []).find(
+      (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > new Date()
+    );
+    const minutesAvailable = nextBlock
+      ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
+      : null;
+    selectableCourts.push({
+      number: court.number,
+      reason: 'free',
+      minutesAvailable,
+      isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,
+    });
+  }
+
+  if (showingOvertimeCourts) {
+    for (const court of fallbackOvertimeCourts) {
+      const nextBlock = (upcomingBlocks || []).find(
+        (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > new Date()
+      );
+      const minutesAvailable = nextBlock
+        ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
+        : null;
+      selectableCourts.push({
+        number: court.number,
+        reason: 'overtime_fallback',
+        minutesAvailable,
+        isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,
+      });
+    }
+  }
+
+  function getSelectableForGroup(playerCount) {
+    return selectableCourts.filter((sc) => isCourtEligibleForGroup(sc.number, playerCount));
+  }
+
+  function getFullTimeForGroup(playerCount) {
+    const sessionDuration = playerCount >= 4 ? 90 : 60;
+    const minMinutes = sessionDuration + 5;
+    return getSelectableForGroup(playerCount).filter(
+      (sc) => sc.minutesAvailable === null || sc.minutesAvailable >= minMinutes
+    );
+  }
+
+  function countSelectableForGroup(playerCount) {
+    return getSelectableForGroup(playerCount).length;
+  }
+
+  function countFullTimeForGroup(playerCount) {
+    return getFullTimeForGroup(playerCount).length;
+  }
+
   return {
+    // Keep ALL existing properties
     primaryCourts, // Court objects (not just numbers)
     fallbackOvertimeCourts, // Court objects (not just numbers)
     showingOvertimeCourts, // Boolean flag for UI warning
     eligibilityByCourtNumber, // Map for per-court eligibility lookup
+    // New canonical API
+    selectableCourts,
+    getSelectableForGroup,
+    getFullTimeForGroup,
+    countSelectableForGroup,
+    countFullTimeForGroup,
   };
 }
 

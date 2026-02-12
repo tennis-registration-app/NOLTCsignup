@@ -1,8 +1,7 @@
 import React from 'react';
 import { Users, AlertCircle } from './Icons';
 import { getTennisDomain, getTennisNamespaceConfig } from '../../platform/windowBridge.js';
-import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
-import { getUpcomingBlockWarningFromBlocks } from '@lib';
+import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
 
 /**
  * WaitingList - Display panel for groups waiting to play
@@ -50,123 +49,58 @@ export function WaitingList({
   // Calculate all wait times once before rendering
   const estimatedWaitTimes = calculateAllEstimatedWaitTimes();
 
-  // Count full-time courts for a group (used by deferred groups for CTA eligibility)
-  const countFullTimeCourts = (groupPlayerCount) => {
-    const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
-    const now = new Date();
-    const data = courtsToData(courts);
-    const wetSet = new Set(
-      allBlocks
-        .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-        .map((b) => b.courtNumber)
-    );
-
-    if (!A?.getFreeCourtsInfo) return 0;
-    const info = A.getFreeCourtsInfo({ data, now, blocks: allBlocks, wetSet });
-    const eligibleFree = (info.free || []).filter((courtNum) =>
-      isCourtEligibleForGroup(courtNum, groupPlayerCount)
-    );
-    const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
-      isCourtEligibleForGroup(courtNum, groupPlayerCount)
-    );
-
-    // Filter free courts to those with >= 20 min before next block
-    const MIN_USEFUL_MINUTES = 20;
-    const usableFree = eligibleFree.filter((courtNum) => {
-      const nextBlock = allBlocks.find(
-        (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
-      );
-      if (!nextBlock) return true;
-      return (new Date(nextBlock.startTime) - now) / 60000 >= MIN_USEFUL_MINUTES;
-    });
-
-    // Only include overtime courts if no usable free courts exist
-    const eligibleCourts =
-      usableFree.length > 0 ? usableFree : [...eligibleFree, ...eligibleOvertime];
-
-    // No blocks = all courts have full time
-    if (allBlocks.length === 0) return eligibleCourts.length;
-
-    const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
-    return eligibleCourts.filter((courtNum) => {
-      const warning = getUpcomingBlockWarningFromBlocks(
-        courtNum,
-        sessionDuration + 5,
-        allBlocks,
-        now
-      );
-      return warning == null; // null = no restriction = full time
-    }).length;
-  };
-
   // Check if a group can register now (courts are available)
   const canGroupRegisterNow = (idx) => {
     try {
       if (!A) return false;
 
       const now = new Date();
-      const data = courtsToData(courts); // Use React state instead of localStorage
-      // Combine active blocks and future blocks for accurate availability calculation
-      const blocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
+      const data = courtsToData(courts);
+      const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
       const wetSet = new Set(
-        blocks
+        allBlocks
           .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
           .map((b) => b.courtNumber)
       );
 
-      if (A.getFreeCourtsInfo) {
-        const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
+      if (!A.getFreeCourtsInfo) return false;
+      const info = A.getFreeCourtsInfo({ data, now, blocks: allBlocks, wetSet });
 
-        // Filter courts by singles-only eligibility for this group's player count
-        const groupPlayerCount = waitlist[idx]?.players?.length || 0;
-        const isDeferred = waitlist[idx]?.deferred ?? false;
-        const eligibleFree = (info.free || []).filter((courtNum) =>
-          isCourtEligibleForGroup(courtNum, groupPlayerCount)
+      // Build court objects for computeRegistrationCourtSelection
+      const courtObjects = (courts || []).map((court, i) => {
+        const num = court?.number || i + 1;
+        return {
+          number: num,
+          isAvailable: (info.free || []).includes(num),
+          isOvertime: (info.overtime || []).includes(num),
+          isBlocked: !(info.free || []).includes(num) && !(info.overtime || []).includes(num),
+          isTournament: court?.session?.isTournament ?? false,
+        };
+      });
+
+      const selection = computeRegistrationCourtSelection(courtObjects, allBlocks);
+      const group = waitlist[idx];
+      const playerCount = group?.players?.length || 0;
+      const isDeferred = group?.deferred ?? false;
+
+      const available = isDeferred
+        ? selection.countFullTimeForGroup(playerCount)
+        : selection.countSelectableForGroup(playerCount);
+
+      if (idx === 0) {
+        return available > 0;
+      } else if (idx === 1) {
+        const firstCanPlay = canGroupRegisterNow(0);
+        return available >= (firstCanPlay ? 2 : 1);
+      } else {
+        const anyAheadCanPlay = Array.from({ length: idx }, (_, i) => i).some((i) =>
+          canGroupRegisterNow(i)
         );
-        const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
-          isCourtEligibleForGroup(courtNum, groupPlayerCount)
-        );
-
-        // Filter out courts with < 20 min before upcoming block (match kiosk CTA threshold)
-        const MIN_USEFUL_MINUTES = 20;
-        const filterUsableCourts = (courtList) =>
-          courtList.filter((courtNum) => {
-            if (blocks.length === 0) return true;
-            const nextBlock = blocks.find(
-              (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
-            );
-            if (!nextBlock) return true;
-            const minutesUntilBlock = (new Date(nextBlock.startTime) - now) / 60000;
-            return minutesUntilBlock >= MIN_USEFUL_MINUTES;
-          });
-
-        const usableFree = filterUsableCourts(eligibleFree);
-        const usableOvertime = filterUsableCourts(eligibleOvertime);
-        const totalAvailable = usableFree.length > 0 ? usableFree.length : usableOvertime.length;
-
-        // Deferred groups count only full-time courts
-        const availableCount = isDeferred ? countFullTimeCourts(groupPlayerCount) : totalAvailable;
-
-        if (idx === 0) {
-          // First group can register if any eligible courts available
-          return availableCount > 0;
-        } else if (idx === 1) {
-          // If first group has no eligible courts, second group only needs 1
-          const firstGroupCanPlay = canGroupRegisterNow(0);
-          const courtsNeeded = firstGroupCanPlay ? 2 : 1;
-          return availableCount >= courtsNeeded;
-        } else {
-          // Position 2+: only show "You're Up!" if NO group ahead can play
-          const anyAheadCanPlay = Array.from({ length: idx }, (_, i) => i).some((i) =>
-            canGroupRegisterNow(i)
-          );
-          if (anyAheadCanPlay) return false;
-          return availableCount >= 1;
-        }
+        if (anyAheadCanPlay) return false;
+        return available >= 1;
       }
-      return false;
     } catch (error) {
-      console.warn('Error checking if group can register:', error);
+      console.warn('Error checking group registration:', error);
       return false;
     }
   };
