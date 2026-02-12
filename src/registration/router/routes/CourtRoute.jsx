@@ -121,16 +121,6 @@ export function CourtRoute({ app, handlers }) {
     computedAvailableCourts = selectable;
   }
 
-  const showCourtTiles = computedAvailableCourts.length > 0;
-
-  logger.debug('CourtRoute', 'Debug', {
-    hasWaiters,
-    hasWaitlistPriority,
-    selectableLength: selectable.length,
-    showCourtTiles,
-    availableCourtsLength: computedAvailableCourts.length,
-  });
-
   const hasWaitlistEntries = courtData.waitlist.length > 0;
 
   // Check if showing overtime courts
@@ -266,10 +256,6 @@ export function CourtRoute({ app, handlers }) {
             }
             setDisplacement(null); // Clear ONLY after court change is complete
           }
-          logger.debug('CourtRoute', 'availableCourts at selection', {
-            courts: computedAvailableCourts,
-            length: computedAvailableCourts.length,
-          });
           await assignCourtToGroup(courtNum, computedAvailableCourts.length);
           // setDisplacement(null) removed from here - it was clearing the state prematurely
           setIsChangingCourt(false);
