@@ -113,8 +113,23 @@ export function WaitingList({
         const eligibleOvertime = (info.overtime || []).filter((courtNum) =>
           isCourtEligibleForGroup(courtNum, groupPlayerCount)
         );
-        const totalAvailable =
-          eligibleFree.length > 0 ? eligibleFree.length : eligibleOvertime.length;
+
+        // Filter out courts with < 20 min before upcoming block (match kiosk CTA threshold)
+        const MIN_USEFUL_MINUTES = 20;
+        const filterUsableCourts = (courtList) =>
+          courtList.filter((courtNum) => {
+            if (blocks.length === 0) return true;
+            const nextBlock = blocks.find(
+              (b) => Number(b.courtNumber) === courtNum && new Date(b.startTime) > now
+            );
+            if (!nextBlock) return true;
+            const minutesUntilBlock = (new Date(nextBlock.startTime) - now) / 60000;
+            return minutesUntilBlock >= MIN_USEFUL_MINUTES;
+          });
+
+        const usableFree = filterUsableCourts(eligibleFree);
+        const usableOvertime = filterUsableCourts(eligibleOvertime);
+        const totalAvailable = usableFree.length > 0 ? usableFree.length : usableOvertime.length;
 
         // Deferred groups count only full-time courts
         const availableCount = isDeferred ? countFullTimeCourts(groupPlayerCount) : totalAvailable;
