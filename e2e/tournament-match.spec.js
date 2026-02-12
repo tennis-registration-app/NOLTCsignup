@@ -70,7 +70,7 @@ test.describe('Tournament Match', () => {
 
     // Verify tournament badge appears
     await expect(page.locator('[data-testid="tournament-badge"]')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text=✓ Tournament Match — play until completion')).toBeVisible();
+    await expect(page.locator('text=✓ Tournament Match — plays until completion')).toBeVisible();
 
     // Verify "Priority until" is gone
     await expect(page.locator('[data-testid="priority-until"]')).not.toBeVisible();

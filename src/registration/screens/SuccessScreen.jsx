@@ -391,7 +391,7 @@ const SuccessScreen = (
                     className="mt-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-center"
                   >
                     <span className="text-sm font-semibold text-blue-700">
-                      ✓ Tournament Match — play until completion
+                      ✓ Tournament Match — plays until completion
                     </span>
                   </div>
                 ) : (
