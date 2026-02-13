@@ -415,6 +415,76 @@ describe('computeRegistrationCourtSelection', () => {
       const doublesSelectable = result.getSelectableForGroup(4);
       expect(doublesSelectable).toHaveLength(3);
     });
+
+    it('Court 8 free, doubles group → overtime courts offered', () => {
+      const courts = [
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Court 8 is free, so showingOvertimeCourts is false
+      expect(result.showingOvertimeCourts).toBe(false);
+
+      // But for doubles, Court 8 is not eligible, so overtime should be offered
+      const doublesSelectable = result.getSelectableForGroup(4);
+      expect(doublesSelectable).toHaveLength(1);
+      expect(doublesSelectable[0].number).toBe(2);
+      expect(doublesSelectable[0].reason).toBe('overtime_fallback');
+    });
+
+    it('Court 8 free, singles group → Court 8 offered, no overtime', () => {
+      const courts = [
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // For singles, Court 8 is eligible
+      const singlesSelectable = result.getSelectableForGroup(2);
+      expect(singlesSelectable).toHaveLength(1);
+      expect(singlesSelectable[0].number).toBe(8);
+      expect(singlesSelectable[0].reason).toBe('free');
+    });
+
+    it('Court 8 free + other free court, doubles → other free court offered', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
+        { number: 3, isAvailable: false, isBlocked: false, isOvertime: true },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // For doubles, Court 1 is eligible (Court 8 is not)
+      const doublesSelectable = result.getSelectableForGroup(4);
+      expect(doublesSelectable).toHaveLength(1);
+      expect(doublesSelectable[0].number).toBe(1);
+      expect(doublesSelectable[0].reason).toBe('free');
+    });
+
+    it('No free courts, doubles → overtime offered (existing behavior)', () => {
+      const courts = [
+        { number: 1, isAvailable: false, isBlocked: false, isOvertime: true },
+        { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // No free courts, so overtime is shown
+      expect(result.showingOvertimeCourts).toBe(true);
+
+      // Both overtime courts are offered for doubles
+      const doublesSelectable = result.getSelectableForGroup(4);
+      expect(doublesSelectable).toHaveLength(2);
+      expect(doublesSelectable.every((sc) => sc.reason === 'overtime_fallback')).toBe(true);
+    });
   });
 
   describe('countFullTimeForGroup', () => {

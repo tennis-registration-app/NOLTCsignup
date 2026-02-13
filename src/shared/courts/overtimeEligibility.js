@@ -110,7 +110,38 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
   }
 
   function getSelectableForGroup(playerCount) {
-    return selectableCourts.filter((sc) => isCourtEligibleForGroup(sc.number, playerCount));
+    // First check: any selectable courts eligible for this group?
+    const eligible = selectableCourts.filter((sc) =>
+      isCourtEligibleForGroup(sc.number, playerCount)
+    );
+
+    // If eligible courts exist, return them
+    if (eligible.length > 0) return eligible;
+
+    // If no eligible selectable courts, check if overtime
+    // courts exist that ARE eligible for this group
+    // (handles: Court 8 free but doubles can't use it)
+    if (!showingOvertimeCourts) {
+      const eligibleOvertime = fallbackOvertimeCourts
+        .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
+        .map((c) => {
+          const nextBlock = (upcomingBlocks || []).find(
+            (b) => Number(b.courtNumber) === c.number && new Date(b.startTime) > new Date()
+          );
+          const minutesAvailable = nextBlock
+            ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
+            : null;
+          return {
+            number: c.number,
+            reason: 'overtime_fallback',
+            minutesAvailable,
+            isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,
+          };
+        });
+      if (eligibleOvertime.length > 0) return eligibleOvertime;
+    }
+
+    return eligible;
   }
 
   function getFullTimeForGroup(playerCount) {
