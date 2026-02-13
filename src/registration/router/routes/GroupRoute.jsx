@@ -28,6 +28,7 @@ export function GroupRoute({ app, handlers }) {
     CONSTANTS,
   } = app;
   const { data, showAddPlayer, isAssigning, isJoiningWaitlist, availableCourts } = state;
+  const { courtSelection } = data;
   const {
     currentGroup,
     showGuestForm,
@@ -85,6 +86,7 @@ export function GroupRoute({ app, handlers }) {
         currentGroup={currentGroup}
         memberNumber={memberNumber}
         availableCourts={availableCourts}
+        courtSelection={courtSelection}
         frequentPartners={frequentPartners}
         frequentPartnersLoading={frequentPartnersLoading}
         // UI state

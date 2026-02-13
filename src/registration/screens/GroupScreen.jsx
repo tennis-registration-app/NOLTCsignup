@@ -14,6 +14,7 @@ const GroupScreen = (
     currentGroup,
     memberNumber,
     availableCourts,
+    courtSelection,
     frequentPartners,
     frequentPartnersLoading,
 
@@ -553,11 +554,13 @@ const GroupScreen = (
                   }
                 }
 
-                // Use availableCourts state, filtered for singles-only court restrictions
+                // Use courtSelection for doubles eligibility (handles Court 8 + overtime fallback)
                 const groupSize = currentGroup?.length || 0;
-                const courtsToCheck = availableCourts?.filter((courtNum) =>
-                  isCourtEligibleForGroup(courtNum, groupSize)
-                );
+                const courtsToCheck = courtSelection
+                  ? courtSelection.getSelectableForGroup(groupSize).map((sc) => sc.number)
+                  : availableCourts?.filter((courtNum) =>
+                      isCourtEligibleForGroup(courtNum, groupSize)
+                    );
 
                 // Check if there are actually any courts available to select
                 const hasAvailableCourts = courtsToCheck && courtsToCheck.length > 0;
