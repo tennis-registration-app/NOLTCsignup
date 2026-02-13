@@ -199,7 +199,7 @@ describe('canGroupRegisterNow scenarios', () => {
   });
 
   describe('20-min threshold', () => {
-    it('free court with block in 5 min still selectable (warning shown)', () => {
+    it('free court with block in <= 5 min NOT selectable (excluded entirely)', () => {
       const now = new Date();
       const in5Minutes = new Date(now.getTime() + 5 * 60000).toISOString();
       const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
@@ -212,10 +212,9 @@ describe('canGroupRegisterNow scenarios', () => {
       ];
       const waitlist = [makeGroup(2)];
 
-      // Court has < 20 min usable time, but is still selectable (player can choose)
-      // The 20-min threshold determines overtime fallback, not selectability
+      // Court with <= 5 min is excluded from selectableCourts entirely
       const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('free court with block in 25 min counted', () => {

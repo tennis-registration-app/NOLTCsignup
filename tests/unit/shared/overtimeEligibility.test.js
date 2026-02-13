@@ -136,7 +136,7 @@ describe('computeRegistrationCourtSelection', () => {
 
   // Tests for upcomingBlocks and 20-minute threshold
   describe('with upcomingBlocks (20-min threshold)', () => {
-    it('shows overtime when free court has block starting in < 20 minutes', () => {
+    it('shows overtime when free court has block starting in <= 5 minutes (excluded from selectable)', () => {
       const now = new Date();
       const in5Minutes = new Date(now.getTime() + 5 * 60000).toISOString();
       const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
@@ -151,13 +151,11 @@ describe('computeRegistrationCourtSelection', () => {
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
-      // Free court exists but has block in 5 min, so showingOvertimeCourts should be true
-      expect(result.selectableCourts).toHaveLength(2);
+      // Free court has <= 5 min, excluded from selectableCourts entirely
+      // Only overtime court is in selectableCourts
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0].number).toBe(2);
       expect(result.showingOvertimeCourts).toBe(true);
-
-      // Both courts should be eligible (player can choose)
-      expect(result.eligibilityByCourtNumber[1]).toMatchObject({ eligible: true });
-      expect(result.eligibilityByCourtNumber[2]).toMatchObject({ eligible: true });
     });
 
     it('does NOT show overtime when free court has block starting in > 20 minutes', () => {
@@ -324,7 +322,7 @@ describe('computeRegistrationCourtSelection', () => {
       expect(result.selectableCourts[0].isUsable).toBe(false);
     });
 
-    it('overtime court included when no usable free courts', () => {
+    it('overtime court included when free court has <= 5 min (excluded)', () => {
       const now = new Date();
       const in5Minutes = new Date(now.getTime() + 5 * 60000).toISOString();
       const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
@@ -339,15 +337,12 @@ describe('computeRegistrationCourtSelection', () => {
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
-      // Both courts in selectableCourts since showingOvertimeCourts is true
+      // Free court with <= 5 min is excluded, only overtime in selectableCourts
       expect(result.showingOvertimeCourts).toBe(true);
-      expect(result.selectableCourts).toHaveLength(2);
+      expect(result.selectableCourts).toHaveLength(1);
 
-      const freeCourt = result.selectableCourts.find((sc) => sc.number === 1);
       const overtimeCourt = result.selectableCourts.find((sc) => sc.number === 2);
 
-      expect(freeCourt.reason).toBe('free');
-      expect(freeCourt.isUsable).toBe(false);
       expect(overtimeCourt.reason).toBe('overtime_fallback');
       expect(overtimeCourt.minutesAvailable).toBe(null);
       expect(overtimeCourt.isUsable).toBe(true);
@@ -365,6 +360,77 @@ describe('computeRegistrationCourtSelection', () => {
       expect(result.showingOvertimeCourts).toBe(false);
       expect(result.selectableCourts).toHaveLength(1);
       expect(result.selectableCourts[0].number).toBe(1);
+    });
+
+    it('court with 3 min before block → not in selectableCourts', () => {
+      const now = new Date();
+      const in3Minutes = new Date(now.getTime() + 3 * 60000).toISOString();
+      const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in3Minutes, endTime: in60Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Court with <= 5 min is excluded from selectableCourts entirely
+      expect(result.selectableCourts).toHaveLength(0);
+    });
+
+    it('court with 5 min before block → not in selectableCourts', () => {
+      const now = new Date();
+      const in5Minutes = new Date(now.getTime() + 5 * 60000).toISOString();
+      const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in5Minutes, endTime: in60Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Court with <= 5 min is excluded from selectableCourts entirely
+      expect(result.selectableCourts).toHaveLength(0);
+    });
+
+    it('court with 6 min before block → in selectableCourts', () => {
+      const now = new Date();
+      const in6Minutes = new Date(now.getTime() + 6 * 60000).toISOString();
+      const in60Minutes = new Date(now.getTime() + 60 * 60000).toISOString();
+
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [
+        { courtNumber: 1, startTime: in6Minutes, endTime: in60Minutes },
+      ];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      // Court with > 5 min is included in selectableCourts
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0].number).toBe(1);
+      // But not usable (< 20 min)
+      expect(result.selectableCourts[0].isUsable).toBe(false);
+    });
+
+    it('court with no block → in selectableCourts', () => {
+      const courts = [
+        { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
+      ];
+      const upcomingBlocks = [];
+
+      const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
+
+      expect(result.selectableCourts).toHaveLength(1);
+      expect(result.selectableCourts[0].number).toBe(1);
+      expect(result.selectableCourts[0].minutesAvailable).toBe(null);
+      expect(result.selectableCourts[0].isUsable).toBe(true);
     });
   });
 

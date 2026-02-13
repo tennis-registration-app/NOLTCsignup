@@ -76,6 +76,7 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
 
   // Build selectableCourts with metadata
   const selectableCourts = [];
+  const MIN_SELECTABLE_MINUTES = 5;
 
   for (const court of primaryCourts) {
     const nextBlock = (upcomingBlocks || []).find(
@@ -84,6 +85,12 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
     const minutesAvailable = nextBlock
       ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
       : null;
+
+    // Skip courts with <= 5 min — unselectable by backend rules
+    if (minutesAvailable !== null && minutesAvailable <= MIN_SELECTABLE_MINUTES) {
+      continue;
+    }
+
     selectableCourts.push({
       number: court.number,
       reason: 'free',
@@ -100,6 +107,12 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
       const minutesAvailable = nextBlock
         ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
         : null;
+
+      // Skip courts with <= 5 min — unselectable by backend rules
+      if (minutesAvailable !== null && minutesAvailable <= MIN_SELECTABLE_MINUTES) {
+        continue;
+      }
+
       selectableCourts.push({
         number: court.number,
         reason: 'overtime_fallback',
@@ -137,7 +150,11 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
             minutesAvailable,
             isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,
           };
-        });
+        })
+        // Skip courts with <= 5 min — unselectable by backend rules
+        .filter(
+          (sc) => sc.minutesAvailable === null || sc.minutesAvailable > MIN_SELECTABLE_MINUTES
+        );
       if (eligibleOvertime.length > 0) return eligibleOvertime;
     }
 
