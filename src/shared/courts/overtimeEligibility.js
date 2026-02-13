@@ -26,8 +26,6 @@ import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
 export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
   if (!courts?.length) {
     return {
-      primaryCourts: [],
-      fallbackOvertimeCourts: [],
       showingOvertimeCourts: false,
       eligibilityByCourtNumber: {},
       selectableCourts: [],
@@ -132,12 +130,8 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
   }
 
   return {
-    // Keep ALL existing properties
-    primaryCourts, // Court objects (not just numbers)
-    fallbackOvertimeCourts, // Court objects (not just numbers)
     showingOvertimeCourts, // Boolean flag for UI warning
     eligibilityByCourtNumber, // Map for per-court eligibility lookup
-    // New canonical API
     selectableCourts,
     getSelectableForGroup,
     getFullTimeForGroup,

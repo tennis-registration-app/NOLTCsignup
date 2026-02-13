@@ -11,8 +11,10 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.fallbackOvertimeCourts.map((c) => c.number)).toContain(2);
-    expect(result.fallbackOvertimeCourts.map((c) => c.number)).not.toContain(3);
+    // Only non-tournament overtime court should be selectable
+    const selectableNumbers = result.selectableCourts.map((sc) => sc.number);
+    expect(selectableNumbers).toContain(2);
+    expect(selectableNumbers).not.toContain(3);
   });
 
   it('includes non-tournament overtime courts in fallback', () => {
@@ -22,7 +24,7 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.fallbackOvertimeCourts.map((c) => c.number)).toContain(1);
+    expect(result.selectableCourts.map((sc) => sc.number)).toContain(1);
   });
 
   it('excludes blocked overtime courts from fallback', () => {
@@ -32,7 +34,7 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.fallbackOvertimeCourts).toHaveLength(0);
+    expect(result.selectableCourts).toHaveLength(0);
   });
 
   it('shows overtime courts when no primary courts available', () => {
@@ -43,9 +45,11 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.primaryCourts).toHaveLength(0);
+    // No free courts, so overtime becomes selectable
+    expect(result.selectableCourts).toHaveLength(1);
+    expect(result.selectableCourts[0].number).toBe(1);
+    expect(result.selectableCourts[0].reason).toBe('overtime_fallback');
     expect(result.showingOvertimeCourts).toBe(true);
-    expect(result.fallbackOvertimeCourts).toHaveLength(1);
   });
 
   it('does not show overtime when primary courts exist', () => {
@@ -56,7 +60,9 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.primaryCourts).toHaveLength(1);
+    // Only free court is selectable
+    expect(result.selectableCourts).toHaveLength(1);
+    expect(result.selectableCourts[0].number).toBe(1);
     expect(result.showingOvertimeCourts).toBe(false);
   });
 
@@ -69,8 +75,9 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.primaryCourts.map((c) => c.number)).not.toContain(1);
-    expect(result.primaryCourts.map((c) => c.number)).toContain(2);
+    const selectableNumbers = result.selectableCourts.map((sc) => sc.number);
+    expect(selectableNumbers).not.toContain(1);
+    expect(selectableNumbers).toContain(2);
   });
 
   it('handles null court entries gracefully', () => {
@@ -83,22 +90,21 @@ describe('Tournament — overtimeEligibility', () => {
 
     const result = computeRegistrationCourtSelection(courts);
 
-    expect(result.primaryCourts).toHaveLength(1);
-    expect(result.fallbackOvertimeCourts).toHaveLength(1);
+    // Free court is selectable, overtime is not (because free court exists)
+    expect(result.selectableCourts).toHaveLength(1);
+    expect(result.selectableCourts[0].number).toBe(2);
   });
 
   it('returns empty arrays when no courts provided', () => {
     const result = computeRegistrationCourtSelection([]);
 
-    expect(result.primaryCourts).toHaveLength(0);
-    expect(result.fallbackOvertimeCourts).toHaveLength(0);
+    expect(result.selectableCourts).toHaveLength(0);
     expect(result.showingOvertimeCourts).toBe(false);
   });
 
   it('returns empty arrays when courts is null', () => {
     const result = computeRegistrationCourtSelection(null);
 
-    expect(result.primaryCourts).toHaveLength(0);
-    expect(result.fallbackOvertimeCourts).toHaveLength(0);
+    expect(result.selectableCourts).toHaveLength(0);
   });
 });

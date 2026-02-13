@@ -297,7 +297,7 @@
            st <= now && now < et;
   }
 
-  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }) {
+  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [], showingOvertimeCourts }) {
     const Av = window.Tennis.Domain.availability || window.Tennis.Domain.Availability;
     const info = Av.getFreeCourtsInfo({ data, now, blocks, wetSet });
 
@@ -319,17 +319,11 @@
     // selection policy: free first, else overtime
     const hasTrueFree = freeSet.size > 0;
 
-    // Check if any free court has >= 20 min of usable time before next block
-    const MIN_USEFUL_MS = 20 * 60 * 1000;
-    const hasUsableFree = hasTrueFree && [...freeSet].some(courtNum => {
-      if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
-      const nextBlock = upcomingBlocks.find(
-        b => Number(b.courtNumber || b.court) === courtNum &&
-             new Date(b.startTime || b.start) > now
-      );
-      if (!nextBlock) return true;
-      return (new Date(nextBlock.startTime || nextBlock.start) - now) >= MIN_USEFUL_MS;
-    });
+    // If showingOvertimeCourts not provided, fall back
+    // to old logic (shouldn't happen in practice)
+    if (showingOvertimeCourts === undefined) {
+      showingOvertimeCourts = !hasTrueFree;
+    }
 
     const total = (data?.courts || []).length || (info.meta?.total || 0);
     const out = [];
@@ -375,7 +369,7 @@
       // strict selectable policy: free OR overtime (when no usable free exists)
       // Tournament overtime courts are NEVER selectable (they play until completion)
       const selectable = (!isWet && !isBlocked) &&
-                         ((status === 'free') || (status === 'overtime' && !hasUsableFree && !isTournament));
+                         ((status === 'free') || (status === 'overtime' && showingOvertimeCourts && !isTournament));
       
       // selectable reason for styling
       const selectableReason = selectable

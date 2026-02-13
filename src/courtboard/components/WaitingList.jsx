@@ -1,7 +1,6 @@
 import React from 'react';
 import { Users, AlertCircle } from './Icons';
 import { getTennisDomain, getTennisNamespaceConfig } from '../../platform/windowBridge.js';
-import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
 
 /**
  * WaitingList - Display panel for groups waiting to play
@@ -14,13 +13,10 @@ export function WaitingList({
   courtBlocks = [],
   upcomingBlocks = [],
   maxWaitingDisplay,
+  courtSelection,
 }) {
   const domain = getTennisDomain();
-  const A = domain?.availability || domain?.Availability;
   const W = domain?.Waitlist || domain?.waitlist;
-
-  // Convert React courts state to the data format expected by availability functions
-  const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
 
   // Calculate all estimated wait times using new simulation function
   const calculateAllEstimatedWaitTimes = () => {
@@ -52,40 +48,15 @@ export function WaitingList({
   // Check if a group can register now (courts are available)
   const canGroupRegisterNow = (idx) => {
     try {
-      if (!A) return false;
+      if (!courtSelection) return false;
 
-      const now = new Date();
-      const data = courtsToData(courts);
-      const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
-      const wetSet = new Set(
-        allBlocks
-          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
-          .map((b) => b.courtNumber)
-      );
-
-      if (!A.getFreeCourtsInfo) return false;
-      const info = A.getFreeCourtsInfo({ data, now, blocks: allBlocks, wetSet });
-
-      // Build court objects for computeRegistrationCourtSelection
-      const courtObjects = (courts || []).map((court, i) => {
-        const num = court?.number || i + 1;
-        return {
-          number: num,
-          isAvailable: (info.free || []).includes(num),
-          isOvertime: (info.overtime || []).includes(num),
-          isBlocked: !(info.free || []).includes(num) && !(info.overtime || []).includes(num),
-          isTournament: court?.session?.isTournament ?? false,
-        };
-      });
-
-      const selection = computeRegistrationCourtSelection(courtObjects, allBlocks);
       const group = waitlist[idx];
       const playerCount = group?.players?.length || 0;
       const isDeferred = group?.deferred ?? false;
 
       const available = isDeferred
-        ? selection.countFullTimeForGroup(playerCount)
-        : selection.countSelectableForGroup(playerCount);
+        ? courtSelection.countFullTimeForGroup(playerCount)
+        : courtSelection.countSelectableForGroup(playerCount);
 
       if (idx === 0) {
         return available > 0;

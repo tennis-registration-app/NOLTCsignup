@@ -209,7 +209,6 @@ describe('kiosk and courtboard agreement', () => {
       const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
       // No free courts, but tournament overtime should still be excluded
-      expect(selection.fallbackOvertimeCourts).toHaveLength(0);
       expect(selection.selectableCourts).toHaveLength(0);
     });
   });

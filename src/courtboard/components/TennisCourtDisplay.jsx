@@ -14,6 +14,7 @@ const backend = createBackend();
 // Court availability helper - single source of truth for free/playable courts
 import { countPlayableCourts, listPlayableCourts } from '../../shared/courts/courtAvailability.js';
 import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
+import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
 
 // Window bridge - single writer for window.CourtboardState
 import { writeCourtboardState } from '../bridge/window-bridge';
@@ -43,6 +44,7 @@ export function TennisCourtDisplay() {
   const [waitlist, setWaitlist] = useState([]);
   const [courtBlocks, setCourtBlocks] = useState([]); // Active blocks only (for availability)
   const [upcomingBlocks, setUpcomingBlocks] = useState([]); // Future blocks today (for display)
+  const [courtSelection, setCourtSelection] = useState(null); // Computed court selection from canonical API
   const [operatingHours, setOperatingHours] = useState([]); // Admin-configured operating hours
   const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
   const [blockWarningMinutes, setBlockWarningMinutes] = useState(60); // Default 60, loaded from settings
@@ -195,6 +197,11 @@ export function TennisCourtDisplay() {
             isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
           }));
           setUpcomingBlocks(futureBlocks);
+
+          // Compute court selection using canonical API
+          const allBlocks = [...activeBlocks, ...futureBlocks];
+          const selection = computeRegistrationCourtSelection(board.courts || [], allBlocks);
+          setCourtSelection(selection);
         }
 
         // Transform already-normalized waitlist from TennisQueries
@@ -422,7 +429,14 @@ export function TennisCourtDisplay() {
       // Merge courtBlocks + upcomingBlocks for 20-min threshold check
       const allBlocks = [...(blocks || []), ...(upcomingBlocks || [])];
       const _statuses =
-        A.getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks: allBlocks }) || [];
+        A.getCourtStatuses({
+          data,
+          now,
+          blocks,
+          wetSet,
+          upcomingBlocks: allBlocks,
+          showingOvertimeCourts: courtSelection?.showingOvertimeCourts ?? false,
+        }) || [];
       statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
       selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));
       statusObjectByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s]));
@@ -519,6 +533,7 @@ export function TennisCourtDisplay() {
                 courtBlocks={courtBlocks}
                 upcomingBlocks={upcomingBlocks}
                 maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
+                courtSelection={courtSelection}
               />
               <div className="courts-grid-bottom">
                 {[12, 11, 10, 9].map((num) => (
@@ -573,6 +588,7 @@ export function TennisCourtDisplay() {
                     courtBlocks={courtBlocks}
                     upcomingBlocks={upcomingBlocks}
                     maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
+                    courtSelection={courtSelection}
                   />
                 </div>
               )}
