@@ -215,7 +215,7 @@ const CourtSelectionScreen = ({
 
         {/* Stay on Waitlist option when all courts are time-restricted (waitlist priority users) */}
         {allCourtsRestricted && onDeferWaitlist && (
-          <div className="text-center mb-4">
+          <div className="text-center mb-20 relative z-20">
             <p className="text-gray-600 text-sm mb-2">
               All available courts have upcoming reservations that limit your play time.
             </p>
@@ -230,7 +230,7 @@ const CourtSelectionScreen = ({
 
         {/* Wait for Full Time option when all courts are time-restricted (fresh registration) */}
         {freshAllCourtsRestricted && onJoinWaitlistDeferred && (
-          <div className="text-center mb-4">
+          <div className="text-center mb-20 relative z-20">
             <p className="text-gray-600 text-sm mb-2">
               All available courts have upcoming reservations that limit your play time.
             </p>

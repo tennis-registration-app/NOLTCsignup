@@ -634,7 +634,7 @@ const GroupScreen = (
                 <button
                   onClick={onJoinWaitlist}
                   disabled={joiningWaitlist || showGuestForm}
-                  className={`relative overflow-visible ${isMobileView ? 'px-6' : ''} py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl transition-colors text-white ${
+                  className={`relative overflow-visible z-10 min-h-[48px] ${isMobileView ? 'px-6' : ''} py-2 sm:py-4 px-4 sm:px-8 rounded-xl text-base sm:text-xl transition-colors text-white ${
                     showGuestForm
                       ? 'bg-blue-300 cursor-not-allowed opacity-60'
                       : joiningWaitlist
