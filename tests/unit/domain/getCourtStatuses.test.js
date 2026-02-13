@@ -431,3 +431,202 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     expect(statuses[1].selectable).toBe(false);
   });
 });
+
+describe('overtime selectability with upcoming blocks', () => {
+  it('overtime stays blue when usable free court exists', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: null }, // Court 1 - free (no block)
+        { session: { scheduledEndAt: '2025-01-15T09:00:00Z' } }, // Court 2 - overtime
+      ],
+    };
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks: [],
+      wetSet: new Set(),
+      upcomingBlocks: [],
+    });
+
+    // Free court available, so overtime should NOT be selectable (stays "blue")
+    expect(statuses[1].status).toBe('overtime');
+    expect(statuses[1].selectable).toBe(false);
+  });
+
+  it('overtime turns green when all free courts have blocks < 20 min', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: null }, // Court 1 - free (block in 10 min)
+        { session: { scheduledEndAt: '2025-01-15T09:00:00Z' } }, // Court 2 - overtime
+      ],
+    };
+
+    const upcomingBlocks = [
+      {
+        courtNumber: 1,
+        startTime: '2025-01-15T10:10:00Z', // 10 min
+        endTime: '2025-01-15T11:00:00Z',
+      },
+    ];
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks: [],
+      wetSet: new Set(),
+      upcomingBlocks,
+    });
+
+    // No usable free court, so overtime becomes selectable (turns "green")
+    expect(statuses[1].status).toBe('overtime');
+    expect(statuses[1].selectable).toBe(true);
+  });
+
+  it('overtime turns green when no free courts at all', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: { scheduledEndAt: '2025-01-15T11:00:00Z' } }, // Court 1 - occupied
+        { session: { scheduledEndAt: '2025-01-15T09:00:00Z' } }, // Court 2 - overtime
+      ],
+    };
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks: [],
+      wetSet: new Set(),
+      upcomingBlocks: [],
+    });
+
+    // No free courts, so overtime becomes selectable
+    expect(statuses[1].status).toBe('overtime');
+    expect(statuses[1].selectable).toBe(true);
+  });
+
+  it('tournament overtime never turns green', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: { scheduledEndAt: '2025-01-15T11:00:00Z' } }, // Court 1 - occupied
+        { session: { scheduledEndAt: '2025-01-15T09:00:00Z', isTournament: true } }, // Court 2 - tournament overtime
+      ],
+    };
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks: [],
+      wetSet: new Set(),
+      upcomingBlocks: [],
+    });
+
+    // Tournament overtime should NOT be selectable even when no free courts
+    expect(statuses[1].status).toBe('overtime');
+    expect(statuses[1].selectable).toBe(false);
+  });
+
+  it('wet court not counted as usable free', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: null }, // Court 1 - would be free but is wet
+        { session: { scheduledEndAt: '2025-01-15T09:00:00Z' } }, // Court 2 - overtime
+      ],
+    };
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks: [],
+      wetSet: new Set([1]), // Court 1 is wet
+      upcomingBlocks: [],
+    });
+
+    // Court 1 is wet, not counted as free
+    expect(statuses[0].status).toBe('wet');
+    expect(statuses[0].selectable).toBe(false);
+
+    // Overtime should be selectable since no usable free courts
+    expect(statuses[1].status).toBe('overtime');
+    expect(statuses[1].selectable).toBe(true);
+  });
+});
+
+describe('court coloring consistency', () => {
+  it('free court with block warning still shows as free', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: null }, // Court 1 - free with upcoming block
+      ],
+    };
+
+    const upcomingBlocks = [
+      {
+        courtNumber: 1,
+        startTime: '2025-01-15T10:15:00Z', // 15 min - will show warning
+        endTime: '2025-01-15T11:00:00Z',
+      },
+    ];
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks: [],
+      wetSet: new Set(),
+      upcomingBlocks,
+    });
+
+    // Court should still show as "free" status, just with warning
+    expect(statuses[0].status).toBe('free');
+    expect(statuses[0].selectable).toBe(true);
+  });
+
+  it('blocked court never shows as selectable', () => {
+    const { getCourtStatuses } = loadAvailabilityModule();
+    const now = new Date('2025-01-15T10:00:00Z');
+
+    const data = {
+      courts: [
+        { session: null }, // Court 1 - free but blocked
+      ],
+    };
+
+    const blocks = [
+      {
+        courtNumber: 1,
+        startTime: '2025-01-15T09:00:00Z',
+        endTime: '2025-01-15T11:00:00Z',
+        reason: 'Maintenance',
+      },
+    ];
+
+    const statuses = getCourtStatuses({
+      data,
+      now,
+      blocks,
+      wetSet: new Set(),
+      upcomingBlocks: [],
+    });
+
+    // Blocked court should never be selectable
+    expect(statuses[0].status).toBe('blocked');
+    expect(statuses[0].selectable).toBe(false);
+  });
+});
