@@ -4,6 +4,7 @@
  * This is the Vite-bundled version of the Admin panel.
  * The React code is extracted from Admin.html into App.jsx.
  */
+import '../platform/attachLegacyConfig.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
