@@ -1,5 +1,5 @@
 // @ts-check
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { getRuntimeConfig } from '../../../src/config/runtimeConfig.js';
 
 /**
@@ -9,18 +9,42 @@ import { getRuntimeConfig } from '../../../src/config/runtimeConfig.js';
  * mutating import.meta.env (which is read-only in Vite/Vitest).
  *
  * Validation matrix:
- * - env.PROD falsy: falls back to DEV_DEFAULTS silently
- * - env.PROD truthy: throws on missing env vars (empty values)
+ * - env.PROD falsy: falls back to DEV_DEFAULTS (placeholders), warns in console
+ * - env.PROD truthy: throws on placeholder or missing credentials
  */
 
 describe('getRuntimeConfig', () => {
   describe('dev/test mode (PROD falsy)', () => {
-    it('returns config with dev defaults when no env vars set', () => {
+    it('returns config with placeholder defaults when no env vars set', () => {
       const config = getRuntimeConfig({ PROD: false });
 
-      expect(config.SUPABASE_URL).toBeTruthy();
-      expect(config.SUPABASE_ANON_KEY).toBeTruthy();
-      expect(config.BASE_URL).toBeTruthy();
+      expect(config.SUPABASE_URL).toBe('https://your-project.supabase.co');
+      expect(config.SUPABASE_ANON_KEY).toBe('your-anon-key-here');
+      expect(config.BASE_URL).toBe('https://your-project.supabase.co/functions/v1');
+    });
+
+    it('logs warning when using placeholder credentials', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      getRuntimeConfig({ PROD: false });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Using placeholder credentials')
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('does not warn when real credentials provided', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      getRuntimeConfig({
+        PROD: false,
+        VITE_SUPABASE_URL: 'https://real-project.supabase.co',
+        VITE_SUPABASE_ANON_KEY: 'real-key-123',
+      });
+
+      expect(warnSpy).not.toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
 
     it('returns a frozen object', () => {
@@ -52,9 +76,20 @@ describe('getRuntimeConfig', () => {
   });
 
   describe('production mode (PROD truthy)', () => {
-    it('does not throw when dev defaults are used (they are valid credentials)', () => {
-      // Dev defaults are working credentials, so production builds should succeed
-      expect(() => getRuntimeConfig({ PROD: true })).not.toThrow();
+    it('throws when placeholder URL is used', () => {
+      expect(() => getRuntimeConfig({ PROD: true })).toThrow(
+        /VITE_SUPABASE_URL \(still placeholder\)/
+      );
+    });
+
+    it('throws when placeholder anon key is used', () => {
+      expect(() =>
+        getRuntimeConfig({
+          PROD: true,
+          VITE_SUPABASE_URL: 'https://real-project.supabase.co',
+          // No anon key - falls back to placeholder
+        })
+      ).toThrow(/VITE_SUPABASE_ANON_KEY \(still placeholder\)/);
     });
 
     it('does not throw when valid production env vars are set', () => {
@@ -68,19 +103,10 @@ describe('getRuntimeConfig', () => {
       ).not.toThrow();
     });
 
-    it('falls back to dev defaults when env vars are empty strings', () => {
-      // Empty string triggers || fallback to DEV_DEFAULTS, which are valid
-      const config = getRuntimeConfig({
-        PROD: true,
-        VITE_SUPABASE_URL: '',
-        VITE_SUPABASE_ANON_KEY: '',
-        VITE_BASE_URL: '',
-      });
-
-      // Should get dev defaults, not empty strings
-      expect(config.SUPABASE_URL).toContain('supabase.co');
-      expect(config.SUPABASE_ANON_KEY).toContain('eyJ');
-      expect(config.BASE_URL).toContain('/functions/v1');
+    it('throws helpful error message with docs reference', () => {
+      expect(() => getRuntimeConfig({ PROD: true })).toThrow(
+        /See docs\/ENVIRONMENT\.md/
+      );
     });
 
     it('uses provided values over dev defaults', () => {

@@ -15,10 +15,9 @@
 
 /** @type {Record<string, string>} */
 const DEV_DEFAULTS = {
-  SUPABASE_URL: 'https://dncjloqewjubodkoruou.supabase.co',
-  SUPABASE_ANON_KEY:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuY2psb3Fld2p1Ym9ka29ydW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwNDc4MTEsImV4cCI6MjA4MTYyMzgxMX0.JwK7d01-MH57UD80r7XD2X3kv5W5JFBZecmXsrAiTP4',
-  BASE_URL: 'https://dncjloqewjubodkoruou.supabase.co/functions/v1',
+  SUPABASE_URL: 'https://your-project.supabase.co',
+  SUPABASE_ANON_KEY: 'your-anon-key-here',
+  BASE_URL: 'https://your-project.supabase.co/functions/v1',
 };
 
 /**
@@ -42,17 +41,31 @@ export function getRuntimeConfig(env = import.meta.env) {
     BASE_URL: String(env.VITE_BASE_URL || `${supabaseUrl}/functions/v1`),
   };
 
+  // Warn when using placeholder credentials (dev mode only)
+  if (!env.PROD && config.SUPABASE_URL.includes('your-project')) {
+    console.warn(
+      '[Config] Using placeholder credentials. ' +
+        'Copy .env.example to .env and add your Supabase credentials.'
+    );
+  }
+
+  // Production: fail on placeholder or missing credentials
   if (env.PROD) {
-    const missing = [];
+    const problems = [];
+    if (config.SUPABASE_URL.includes('your-project')) {
+      problems.push('VITE_SUPABASE_URL (still placeholder)');
+    }
+    if (config.SUPABASE_ANON_KEY === 'your-anon-key-here') {
+      problems.push('VITE_SUPABASE_ANON_KEY (still placeholder)');
+    }
     for (const [key, value] of Object.entries(config)) {
-      // Only fail if value is empty/falsy — dev defaults are valid working credentials
       if (!value) {
-        missing.push(`VITE_${key}`);
+        problems.push(`VITE_${key} (missing)`);
       }
     }
-    if (missing.length > 0) {
+    if (problems.length > 0) {
       throw new Error(
-        `Missing required environment variables for production build: ${missing.join(', ')}. ` +
+        `Invalid environment configuration for production: ${problems.join(', ')}. ` +
           'See docs/ENVIRONMENT.md for required configuration.'
       );
     }
