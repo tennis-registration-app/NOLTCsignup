@@ -10,6 +10,7 @@ import '../platform/attachLegacyEvents.js';
 import '../platform/attachLegacyStorage.js';
 import '../platform/attachLegacyDataStore.js';
 import '../platform/attachLegacyRoster.js';
+import '../platform/attachLegacyAvailability.js';
 import '../platform/attachLegacyBlocks.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
