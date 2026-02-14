@@ -326,6 +326,10 @@ export {
   findEngagementFor,
 };
 
+// Explicit contract aliases
+export { normalizeName as normalizeNameString };
+export { findEngagementFor as findEngagementForDataStoreShape };
+
 // ============================================================
 // Legacy Window Attachment
 // ============================================================

@@ -9,6 +9,9 @@
  * Normalize a player name for comparison
  * Handles various input formats (string, object with name property)
  *
+ * Domain-shape helper: accepts objects ({name, fullName, playerName}) or strings
+ * Do NOT replace with roster.js normalizeName (string-only, NFKC)
+ *
  * @param {string|object} n - Name or player object
  * @returns {string} - Normalized lowercase name
  */
@@ -22,6 +25,9 @@ export function normalizeName(n) {
 
 /**
  * Find if a player is already engaged (playing or on waitlist)
+ *
+ * Domain-shape engagement lookup: uses court.session.group.players, displayName
+ * Do NOT replace with roster.js findEngagementFor (DataStore shape, memberId)
  *
  * @param {string|object} name - Player name or object
  * @param {object} data - Court data with courts and waitlist arrays (Domain format)

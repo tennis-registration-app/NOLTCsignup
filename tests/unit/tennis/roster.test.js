@@ -11,6 +11,8 @@ import {
   enrichPlayersWithIds,
   buildActiveIndex,
   buildWaitlistIndex,
+  normalizeNameString,
+  findEngagementForDataStoreShape,
 } from '../../../src/tennis/domain/roster.js';
 
 describe('roster', () => {
@@ -356,6 +358,23 @@ describe('roster', () => {
 
       expect(index.get('alice')).toEqual({ position: 1 });
       expect(index.get('bob')).toEqual({ position: 2 });
+    });
+  });
+
+  describe('contract aliases', () => {
+    it('normalizeNameString only handles strings', () => {
+      expect(normalizeNameString('John Smith')).toBe('john smith');
+      expect(normalizeNameString('')).toBe('');
+      // Document: does NOT extract from objects
+    });
+
+    it('findEngagementForDataStoreShape expects DataStore shape', () => {
+      const state = {
+        courts: [{ current: { players: [{ name: 'John' }] } }],
+        waitingGroups: [],
+      };
+      const result = findEngagementForDataStoreShape({ name: 'John' }, state);
+      expect(result).toBeTruthy();
     });
   });
 
