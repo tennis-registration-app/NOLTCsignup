@@ -94,11 +94,12 @@ export function normalizeData(data) {
  * @returns {Object} Normalized copy
  */
 export function normalizeDataShapePure(raw) {
-  const data = raw && typeof raw === 'object'
-    ? (typeof structuredClone === 'function'
+  const data =
+    raw && typeof raw === 'object'
+      ? typeof structuredClone === 'function'
         ? structuredClone(raw)
-        : JSON.parse(JSON.stringify(raw)))
-    : { courts: [], waitingGroups: [], recentlyCleared: [] };
+        : JSON.parse(JSON.stringify(raw))
+      : { courts: [], waitingGroups: [], recentlyCleared: [] };
 
   data.courts = Array.isArray(data.courts) ? data.courts : [];
   data.waitingGroups = Array.isArray(data.waitingGroups) ? data.waitingGroups : [];
@@ -120,7 +121,7 @@ export function normalizeDataShapePure(raw) {
  * @returns {Object} Normalized copy (no persistence)
  */
 export function normalizeDataShape(data, courtsCount = COURT_COUNT) {
-  const d = (data && typeof data === 'object') ? data : {};
+  const d = data && typeof data === 'object' ? data : {};
   const out = { ...d };
   out.courts = Array.isArray(d.courts)
     ? d.courts.slice()
@@ -315,4 +316,97 @@ export function preservePromotions(prev, next) {
     return { ...(next || {}), waitlistPromotions: prevPromos };
   }
   return next || {};
+}
+
+// ============================================================
+// Deep Freeze Helper
+// ============================================================
+
+/**
+ * Recursively freeze an object (makes it immutable)
+ * @param {any} obj - Object to freeze
+ * @returns {any} The frozen object
+ */
+export function deepFreeze(obj) {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date || typeof obj === 'function') return obj;
+
+  // Freeze the object itself
+  Object.freeze(obj);
+
+  // Recursively freeze properties
+  Object.values(obj).forEach((val) => deepFreeze(val));
+
+  return obj;
+}
+
+// ============================================================
+// List All Keys
+// ============================================================
+
+/**
+ * List all tennis-related localStorage keys
+ * @returns {string[]} Array of matching key names
+ */
+export function listAllKeys() {
+  const keywords = ['tennis', 'court', 'ball', 'guest', 'analytics'];
+  const allKeys = [];
+
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && keywords.some((keyword) => key.toLowerCase().includes(keyword))) {
+        allKeys.push(key);
+      }
+    }
+  } catch (e) {
+    console.error('Error listing localStorage keys:', e);
+  }
+
+  return allKeys;
+}
+
+// ============================================================
+// Read Data Clone (for mutations)
+// ============================================================
+
+/**
+ * Get a mutable deep clone of the data
+ * Use this for write operations that need to modify data
+ * @returns {Object} Mutable clone of the data
+ */
+export function readDataClone() {
+  const data = readJSON(STORAGE.DATA) || getEmptyData();
+
+  // Use structuredClone if available, fallback to JSON clone
+  const cloned =
+    typeof structuredClone === 'function'
+      ? structuredClone(data)
+      : JSON.parse(JSON.stringify(data));
+
+  // Ensure proper structure on the clone
+  if (!Array.isArray(cloned.courts)) {
+    cloned.courts = Array.from({ length: COURT_COUNT }, () => ({ history: [], current: null }));
+  }
+
+  // Ensure each court has proper structure
+  cloned.courts = cloned.courts.map((court) =>
+    court
+      ? {
+          history: Array.isArray(court.history) ? court.history : [],
+          current: court.current || null,
+          ...court,
+        }
+      : { history: [], current: null }
+  );
+
+  if (!Array.isArray(cloned.waitingGroups)) {
+    cloned.waitingGroups = [];
+  }
+
+  if (!Array.isArray(cloned.recentlyCleared)) {
+    cloned.recentlyCleared = [];
+  }
+
+  return cloned;
 }
