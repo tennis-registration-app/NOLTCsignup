@@ -5,6 +5,7 @@ import '../platform/attachLegacyTime.js';
 import '../platform/attachLegacyEvents.js';
 import '../platform/attachLegacyStorage.js';
 import '../platform/attachLegacyDataStore.js';
+import '../platform/attachLegacyRoster.js';
 import '../platform/attachLegacyBlocks.js';
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
