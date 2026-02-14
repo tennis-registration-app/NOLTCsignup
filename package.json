@@ -21,7 +21,8 @@
     "test:unit:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "type:ratchet": "node scripts/type-ratchet.mjs",
-    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
+    "check:sync": "bash scripts/check-domain-sync.sh",
+    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s check:sync && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
