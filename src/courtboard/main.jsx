@@ -2,6 +2,7 @@
 // Converted from inline Babel to ES module JSX
 import '../platform/attachLegacyConfig.js';
 import '../platform/attachLegacyTime.js';
+import '../platform/attachLegacyEvents.js';
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { migrateOldKeys } from '../platform/prefsStorage.js';
