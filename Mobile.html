@@ -10,7 +10,7 @@
     iframe{width:100%;height:100%;border:0;background:#111}
     .overlay{position:absolute;inset:0;display:none;background:rgba(0,0,0,.45);backdrop-filter:blur(6px)}
     .overlay.show{display:block}
-    
+
     /* Force iframe to properly render court colors */
     #iframeBoard {
       opacity: 1;
@@ -18,19 +18,19 @@
       filter: none;
       color-scheme: normal;
     }
-    
+
     /* Ensure court colors are preserved on all screen sizes */
     @media (max-width: 768px) {
       #iframeBoard {
         background: transparent !important;
       }
     }
-    
+
     /* Make the Registration iframe transparent when overlay is visible */
     #regOverlay.show #iframeReg {
       background: transparent !important;
     }
-    
+
     /* The overlay itself applies the blur, so the court grid underneath shows through */
     #regOverlay.show {
       background: rgba(0, 0, 0, 0.4); /* tweak opacity as needed */
@@ -38,117 +38,9 @@
       backdrop-filter: blur(6px);
     }
   </style>
-  
-  <!-- Shared modules - use import.meta.env.BASE_URL aware paths -->
-  <script src="./shared-utils.js"></script>
-  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
-  <script type="module" src="./src/lib/browser-bridge.js"></script>
-  <script src="./shared/config.js"></script>
-  <script src="./shared/storage.js"></script>
-  <script src="./shared/events.js"></script>
-  <script src="./shared/datastore.js"></script>
-  <script src="./domain/time.js"></script>
-  <script src="./domain/availability.js"></script>
-  <script src="./domain/blocks.js"></script>
-  <script src="./domain/wetCourts.js"></script>
-  <script src="./domain/waitlist.js"></script>
-  <script src="./domain/selfTest.js"></script>
-  
-  <!-- Health check script -->
-  <script>
-    console.log('🏥 Mobile Shell: Running health check...');
-    
-    function checkModuleAvailability() {
-      const modules = [
-        'window.Tennis.Config',
-        'window.Tennis.Storage',
-        'window.Tennis.Events',
-        'window.Tennis.DataStore',
-        'window.Tennis.Domain.Time',
-        'window.Tennis.Domain.Availability',
-        'window.Tennis.Domain.Blocks',
-        'window.Tennis.Domain.WetCourts',
-        'window.Tennis.Domain.Waitlist',
-        'window.Tennis.selfTest'
-      ];
-      
-      const missing = modules.filter(mod => {
-        try {
-          return !eval(mod);
-        } catch {
-          return true;
-        }
-      });
-      
-      if (missing.length === 0) {
-        console.log('✅ All modules loaded successfully');
-        if (window.Tennis.selfTest) {
-          const results = window.Tennis.selfTest.runAll();
-          console.log(`🧪 Self-tests completed: ${results.passed}/${results.total} passed (${Math.round(results.successRate * 100)}%)`);
-        }
-      } else {
-        console.warn('⚠️ Missing modules:', missing);
-      }
-    }
-    
-    // Check iframes when they load
-    (function () {
-      function getRegFrame() {
-        return document.getElementById('iframeReg') || document.getElementById('iframeRegistration');
-      }
-      function getBoardFrame() {
-        return document.getElementById('iframeBoard');
-      }
-      function checkFrame(frameEl) {
-        const f = frameEl;
-        if (!f || !f.contentWindow) return { ok:false, reason: 'iframe missing' };
-        const w = f.contentWindow;
-        const T = w.Tennis || {};
-        const D = (T.Domain || {});
-        return {
-          ok: !!(T.Config && T.Storage && T.Events && T.DataStore && (D.time || D.Time) && (D.availability || D.Availability)),
-          keys: Object.keys(D || {})
-        };
-      }
-      function logHealth() {
-        const reg = checkFrame(getRegFrame());
-        const brd = checkFrame(getBoardFrame());
-        console.log('[Mobile Health] Registration:', reg);
-        console.log('[Mobile Health] Board:', brd);
-      }
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', logHealth);
-      } else {
-        logHealth();
-      }
-      (window.Tennis && window.Tennis.Events && window.Tennis.Events.onDom) &&
-        window.Tennis.Events.onDom('tennisDataUpdate', logHealth);
-    })();
-    
-    // Run checks
-    document.addEventListener('DOMContentLoaded', () => {
-      checkModuleAvailability();
-      
-      // Ensure iframe content renders colors correctly
-      const boardFrame = document.getElementById('iframeBoard');
-      if (boardFrame) {
-        boardFrame.addEventListener('load', () => {
-          try {
-            // Force the iframe to recalculate styles
-            const iframeDoc = boardFrame.contentDocument || boardFrame.contentWindow.document;
-            if (iframeDoc && iframeDoc.body) {
-              // Trigger a reflow to ensure styles are applied
-              iframeDoc.body.style.display = 'none';
-              iframeDoc.body.offsetHeight; // Force reflow
-              iframeDoc.body.style.display = '';
-            }
-          } catch (e) {
-            console.warn('Could not access iframe content:', e);
-          }
-        });
-      }
-    });
-  </script>
+
+  <!-- ESM bootstrap (replaces all legacy IIFE scripts) -->
+  <script type="module" src="/src/mobile-shell/main.js"></script>
 </head>
 <body>
   <main class="host">
@@ -160,178 +52,5 @@
       <iframe id="iframeReg" src="./src/registration/index.html?view=mobile" title="Registration"></iframe>
     </div>
   </main>
-
-  <script>
-    const overlay   = document.getElementById('regOverlay');
-    const iframeReg = document.getElementById('iframeReg');
-    const iframeBoard = document.getElementById('iframeBoard');
-
-    // Mobile State Bridge - single place for state updates that broadcasts to iframes
-    const MobileBridge = {
-      setRegisteredCourt(courtNumber) {
-        if (courtNumber) {
-          sessionStorage.setItem('mobile-registered-court', String(courtNumber));
-        } else {
-          sessionStorage.removeItem('mobile-registered-court');
-        }
-        this.broadcastState();
-      },
-
-      setWaitlistEntryId(entryId) {
-        if (entryId) {
-          sessionStorage.setItem('mobile-waitlist-entry-id', entryId);
-        } else {
-          sessionStorage.removeItem('mobile-waitlist-entry-id');
-        }
-        this.broadcastState();
-      },
-
-      getState() {
-        return {
-          registeredCourt: sessionStorage.getItem('mobile-registered-court'),
-          waitlistEntryId: sessionStorage.getItem('mobile-waitlist-entry-id'),
-        };
-      },
-
-      broadcastState() {
-        const payload = this.getState();
-        console.log('[MobileBridge] Broadcasting state:', payload);
-
-        // Broadcast to courtboard iframe
-        try {
-          if (iframeBoard?.contentWindow) {
-            iframeBoard.contentWindow.postMessage({
-              type: 'mobile:state-updated',
-              payload
-            }, '*');
-          }
-        } catch (e) {
-          console.warn('[MobileBridge] Could not broadcast to board:', e);
-        }
-
-        // Broadcast to registration iframe
-        try {
-          if (iframeReg?.contentWindow) {
-            iframeReg.contentWindow.postMessage({
-              type: 'mobile:state-updated',
-              payload
-            }, '*');
-          }
-        } catch (e) {
-          console.warn('[MobileBridge] Could not broadcast to registration:', e);
-        }
-      }
-    };
-
-    // Expose MobileBridge globally for debugging
-    window.MobileBridge = MobileBridge;
-
-    function showReg(courtNumber){
-      overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden','false');
-      // ask Registration to start (no reload)
-      try { iframeReg.contentWindow.postMessage({ type:'register', courtNumber:Number(courtNumber) }, '*'); } catch {}
-    }
-
-    function showRegOverlayOnly(){
-      // Show overlay without sending register message (for silent assign)
-      overlay.classList.add('show');
-      overlay.setAttribute('aria-hidden','false');
-    }
-
-    function hideReg(){
-      overlay.classList.remove('show');
-      overlay.setAttribute('aria-hidden','true');
-    }
-
-    // Receive events from child iframes
-    window.addEventListener('message', e => {
-      const d = e?.data; if (!d) return;
-      console.log('Mobile Shell: Received message:', d);
-
-      if (d.type === 'register') {
-        console.log('Mobile Shell: Opening registration for court', d.courtNumber);
-        showReg(d.courtNumber);
-      } else if (d.type === 'register:closed') {
-        console.log('Mobile Shell: Registration closed by user');
-        hideReg();
-      } else if (d.type === 'registration:success') {
-        console.log('Mobile Shell: Registration success for court', d.courtNumber, '- closing overlay in 15 seconds');
-        // Use MobileBridge to store and broadcast state
-        MobileBridge.setRegisteredCourt(d.courtNumber);
-        // Only clear waitlist entry ID if an actual court was assigned (not waitlist join)
-        if (d.courtNumber) {
-          MobileBridge.setWaitlistEntryId(null);
-        }
-        // Show success screen for 8 seconds before closing (synced with App.jsx countdown)
-        window._registrationTimeout = setTimeout(() => {
-          hideReg();
-          console.log('Mobile Shell: Closing overlay after 8 second delay');
-          window._registrationTimeout = null;
-        }, 8000);
-        // visual confirmation on the board immediately
-        try {
-          iframeBoard.contentWindow.postMessage({ type:'highlight', courtNumber: Number(d.courtNumber) }, '*');
-          // Also notify the board about the mobile registration
-          iframeBoard.contentWindow.postMessage({ type:'mobile:registrationSuccess', courtNumber: Number(d.courtNumber) }, '*');
-          // Force reload of the board to pick up the new session data
-          iframeBoard.contentWindow.location.reload();
-          // Wait for iframe to reload and React to render, then update button
-          iframeBoard.onload = function() {
-            console.log('Mobile Shell: Board iframe reloaded, waiting for React to render...');
-            // Give React time to render and populate CourtboardState
-            setTimeout(function() {
-              try {
-                if (iframeBoard.contentWindow.updateJoinButtonForMobile) {
-                  iframeBoard.contentWindow.updateJoinButtonForMobile();
-                  console.log('Mobile Shell: Called updateJoinButtonForMobile after reload');
-                }
-              } catch (e) {
-                console.warn('Mobile Shell: Could not call updateJoinButtonForMobile:', e);
-              }
-            }, 1500);
-          };
-        } catch {}
-      } else if (d.type === 'resetRegistration') {
-        console.log('Mobile Shell: Resetting registration overlay');
-        // Clear any pending timeout
-        if (window._registrationTimeout) {
-          clearTimeout(window._registrationTimeout);
-          window._registrationTimeout = null;
-        }
-        // Hide the registration overlay immediately
-        hideReg();
-        // Reload the registration iframe to reset its state
-        try {
-          iframeReg.src = iframeReg.src; // Force reload
-        } catch {}
-      } else if (d.type === 'assign-from-waitlist') {
-        // Silent assign mode - show overlay but don't send 'register' message
-        console.log('Mobile Shell: Assigning waitlist entry', d.waitlistEntryId, 'to court', d.courtNumber);
-        showRegOverlayOnly(); // Show overlay (registration will show loading state)
-        try {
-          iframeReg.contentWindow.postMessage({
-            type: 'assign-from-waitlist',
-            courtNumber: Number(d.courtNumber),
-            waitlistEntryId: d.waitlistEntryId,
-          }, '*');
-        } catch (e) {
-          console.error('Mobile Shell: Failed to forward assign-from-waitlist:', e);
-        }
-      } else if (d.type === 'waitlist:joined') {
-        // User joined waitlist - store entry ID and broadcast
-        console.log('Mobile Shell: User joined waitlist with entry ID:', d.entryId);
-        MobileBridge.setWaitlistEntryId(d.entryId);
-        // Trigger immediate board refresh to check for waitlist-available notice
-        try {
-          if (iframeBoard?.contentWindow) {
-            iframeBoard.contentWindow.postMessage({ type: 'refresh-board' }, '*');
-          }
-        } catch (e) {
-          console.warn('Mobile Shell: Could not trigger board refresh:', e);
-        }
-      }
-    });
-  </script>
 </body>
 </html>
