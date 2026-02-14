@@ -14,12 +14,6 @@
   <script src="../../shared-utils.js"></script>
   <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
   <script type="module" src="../lib/browser-bridge.js"></script>
-  <script src="../../shared/config.js"></script>
-  <script src="../../shared/storage.js"></script>
-  <script src="../../shared/events.js"></script>
-  <script src="../../shared/datastore.js"></script>
-  <script src="../../shared/blocks.js"></script>
-
   <script>
 (function () {
   if (location.protocol !== 'file:') return;
@@ -40,11 +34,6 @@
 })();
 </script>
 
-  <script src="../../domain/time.js"></script>
-  <script src="../../domain/blocks.js"></script>
-  <script src="../../domain/wetCourts.js"></script>
-  <script src="../../domain/availability.js"></script>
-  <script src="../../shared/domain/roster.js"></script>
   <!-- Preflight self-heal (normalize storage shape before app code runs) -->
   <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
 
