@@ -1,4 +1,10 @@
 import { logger } from '../../lib/logger.js';
+import {
+  ALREADY_IN_GROUP,
+  ALREADY_ON_COURT,
+  ALREADY_ON_WAITLIST,
+  COURT_READY,
+} from '../../shared/constants/toastMessages.js';
 
 /**
  * Member Selection Orchestrators
@@ -71,8 +77,8 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     const playerStatus = isPlayerAlreadyPlaying(memberId);
     if (playerStatus.isPlaying && playerStatus.location === 'court') {
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      Tennis.UI.toast(`${playerName} is already on Court ${playerStatus.courtNumber}`, {
-        type: 'error',
+      Tennis.UI.toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber), {
+        type: 'warning',
       });
       setSearchInput('');
       setShowSuggestions(false);
@@ -118,14 +124,11 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
 
     if (hasCourtReady) {
       // Court is available for this waitlist player - direct them to use the CTA button
-      Tennis.UI.toast(`A court is ready for you! Tap the green button below.`, { type: 'info' });
+      Tennis.UI.toast(COURT_READY, { type: 'info' });
     } else {
       // Player is on waitlist but no court available yet
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      Tennis.UI.toast(
-        `${playerName} is already on the waitlist (position ${playerStatus.position})`,
-        { type: 'error' }
-      );
+      Tennis.UI.toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position), { type: 'warning' });
     }
     setSearchInput('');
     setShowSuggestions(false);
@@ -276,7 +279,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
 
   // Check for duplicate in current group
   if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
-    Tennis.UI.toast(`${enrichedMember.name} is already in this group`);
+    Tennis.UI.toast(ALREADY_IN_GROUP(enrichedMember.name), { type: 'warning' });
     setAddPlayerSearch('');
     setShowAddPlayer(false);
     setShowAddPlayerSuggestions(false);

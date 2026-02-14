@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { DataValidation } from '@lib';
 import { logger } from '../../../lib/logger.js';
 import { getTennisUI, getUI } from '../../../platform/windowBridge.js';
+import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 
 /**
  * Group Handlers
@@ -130,7 +131,7 @@ export function useGroupHandlers(deps) {
       // Check for duplicate in current group
       if (!guardAgainstGroupDuplicate(enriched, currentGroup)) {
         const tennisUI = getTennisUI();
-        tennisUI?.toast(`${enriched.name} is already in this group`);
+        tennisUI?.toast(ALREADY_IN_GROUP(enriched.name), { type: 'warning' });
         return;
       }
 

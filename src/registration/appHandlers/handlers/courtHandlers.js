@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
 import { getTennisDomain, getTennisStorage, getTennisUI } from '../../../platform/windowBridge.js';
+import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
 
 /**
  * Court Handlers
@@ -171,7 +172,7 @@ export function useCourtHandlers(deps) {
       const res = await clearViaService(courtNumber, clearReason);
       if (!res?.success) {
         const tennisUI = getTennisUI();
-        tennisUI?.toast(res?.error || 'Failed to clear court');
+        tennisUI?.toast(COURT_CLEAR_FAILED, { type: 'error' });
         return;
       }
       logger.debug('CourtHandlers', `Court ${courtNumber} cleared successfully`);

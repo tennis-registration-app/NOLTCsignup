@@ -15,6 +15,7 @@
  */
 import React from 'react';
 import { ToastHost, AlertDisplay } from '../components';
+import { NO_MEMBER_FOUND } from '../../shared/constants/toastMessages.js';
 
 const HomeScreen = ({
   // Search functionality
@@ -109,7 +110,7 @@ const HomeScreen = ({
                     e.preventDefault();
                     // Show toast for no member found
                     if (window.Tennis?.UI?.toast) {
-                      window.Tennis.UI.toast('No member found', { type: 'error' });
+                      window.Tennis.UI.toast(NO_MEMBER_FOUND, { type: 'error' });
                     }
                   }
                 }

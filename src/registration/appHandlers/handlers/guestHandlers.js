@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
 import { getCache, setCache } from '../../../platform/prefsStorage.js';
+import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 
 /**
  * Guest Handlers
@@ -123,7 +124,7 @@ export function useGuestHandlers(deps) {
 
     // Check for duplicate in current group
     if (!guardAgainstGroupDuplicate(guestName.trim(), currentGroup)) {
-      window.Tennis?.UI?.toast(`${guestName.trim()} is already in this group`);
+      window.Tennis?.UI?.toast(ALREADY_IN_GROUP(guestName.trim()), { type: 'warning' });
       setShowGuestForm(false);
       setShowAddPlayer(false);
       setGuestName('');
