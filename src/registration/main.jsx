@@ -3,6 +3,7 @@ import '../platform/attachLegacyConfig.js';
 import '../platform/attachLegacyTime.js';
 import '../platform/attachLegacyEvents.js';
 import '../platform/attachLegacyStorage.js';
+import '../platform/attachLegacyBlocks.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
