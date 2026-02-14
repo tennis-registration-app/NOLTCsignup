@@ -68,13 +68,12 @@ export function SuccessRoute({ app, handlers }) {
     // Position in queue - use API position if available
     position = waitlistPosition > 0 ? waitlistPosition : courtData.waitlist.length;
 
-    // Calculate estimated wait time using domain functions
+    // Calculate estimated wait time using domain simulation function
     try {
       const Domain = getTennisDomain();
-      const A = Domain?.Availability;
       const W = Domain?.Waitlist;
 
-      if (A && W && A.getFreeCourtsInfo && A.getNextFreeTimes && W.estimateWaitForPositions) {
+      if (W?.simulateWaitlistEstimates) {
         const now = new Date();
 
         // Build blocks array from court-level blocks (active) and upcomingBlocks (future)
@@ -94,38 +93,22 @@ export function SuccessRoute({ app, handlers }) {
         }));
         const allBlocks = [...activeBlocks, ...upcomingBlocks];
 
-        // Build wetSet from currently active wet blocks
-        const wetSet = new Set(
-          allBlocks
-            .filter(
-              (b) => b.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
-            )
-            .map((b) => b.courtNumber)
-        );
+        // Build a minimal waitlist up to current position for simulation
+        const waitlistUpToPosition = (courtData.waitlist || []).slice(0, position);
 
-        // Convert data to domain format
-        const domainData = { courts: courtData.courts };
-
-        // Get availability info
-        const info = A.getFreeCourtsInfo({ data: domainData, now, blocks: allBlocks, wetSet });
-        const nextTimes = A.getNextFreeTimes({
-          data: domainData,
-          now,
-          blocks: allBlocks,
-          wetSet,
-        });
-
-        // Calculate ETA using domain function
+        // Calculate ETA using domain simulation function
         const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || CONSTANTS.AVG_GAME_TIME_MIN;
-        const etas = W.estimateWaitForPositions({
-          positions: [position],
-          currentFreeCount: info.free?.length || 0,
-          nextFreeTimes: nextTimes,
+        const etas = W.simulateWaitlistEstimates({
+          courts: courtData.courts || [],
+          waitlist: waitlistUpToPosition,
+          blocks: allBlocks,
+          now,
           avgGameMinutes: avgGame,
         });
-        estimatedWait = etas[0] || 0;
+        // Get the last position's estimate (our position)
+        estimatedWait = etas[position - 1] || 0;
       } else {
-        // Domain functions not available - fallback to simple calculation
+        // Domain function not available - fallback to simple calculation
         estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
       }
     } catch (e) {

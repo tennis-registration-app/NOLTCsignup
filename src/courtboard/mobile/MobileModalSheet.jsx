@@ -255,41 +255,29 @@ export function MobileModalSheet({ type, payload, onClose }) {
         const calculateMobileWaitTime = (position) => {
           try {
             const domain = getTennisDomain();
-            const A = domain?.availability || domain?.Availability;
             const W = domain?.waitlist || domain?.Waitlist;
 
-            if (!A || !W) {
+            if (!W?.simulateWaitlistEstimates) {
               return position * 15;
             }
 
             const now = new Date();
-            const data = courtsToDataModal(modalCourts); // Use payload data
             // Combine active blocks and future blocks for accurate availability calculation
             const blocks = [...modalCourtBlocks, ...modalUpcomingBlocks];
-            const wetSet = new Set(
-              blocks
-                .filter(
-                  (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
-                )
-                .map((b) => b.courtNumber)
-            );
 
-            const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
-            const nextTimes = A.getNextFreeTimes
-              ? A.getNextFreeTimes({ data, now, blocks, wetSet })
-              : [];
+            // Build a minimal waitlist up to current position for simulation
+            const waitlistUpToPosition = (waitlistData || []).slice(0, position);
 
-            if (W.estimateWaitForPositions) {
-              const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || 75;
-              const etas = W.estimateWaitForPositions({
-                positions: [position],
-                currentFreeCount: info.free?.length || 0,
-                nextFreeTimes: nextTimes,
-                avgGameMinutes: avgGame,
-              });
-              return etas[0] || 0;
-            }
-            return position * 15;
+            const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || 75;
+            const etas = W.simulateWaitlistEstimates({
+              courts: modalCourts || [],
+              waitlist: waitlistUpToPosition,
+              blocks,
+              now,
+              avgGameMinutes: avgGame,
+            });
+            // Get the last position's estimate (our position)
+            return etas[position - 1] || 0;
           } catch (error) {
             console.warn('Error calculating mobile wait time:', error);
             return position * 15;
