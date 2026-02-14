@@ -602,8 +602,7 @@ export function TennisCourtDisplay() {
             courts={courts}
             currentTime={currentTime}
             waitlist={waitlist}
-            courtBlocks={courtBlocks}
-            upcomingBlocks={upcomingBlocks}
+            blocks={[...(courtBlocks || []), ...(upcomingBlocks || [])]}
             operatingHours={operatingHours}
             maxDisplay={_sharedTennisConfig?.DISPLAY?.MAX_WAITING_DISPLAY || 6}
           />

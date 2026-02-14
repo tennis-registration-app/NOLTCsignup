@@ -10,8 +10,7 @@ export function NextAvailablePanel({
   courts,
   currentTime,
   waitlist = [],
-  courtBlocks = [],
-  upcomingBlocks = [],
+  blocks = [],
   operatingHours = [],
   maxDisplay,
 }) {
@@ -47,8 +46,7 @@ export function NextAvailablePanel({
     const overtimeCourts = [];
     const emptyCourts = [];
 
-    // Use courtBlocks from props instead of localStorage
-    const blocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
+    // blocks prop is already merged by parent
 
     // Check if ALL courts are currently wet
     const activeWetBlocks = blocks.filter(
@@ -242,11 +240,11 @@ export function NextAvailablePanel({
       const now = new Date();
       const data = courtsToData(courts); // Use React state instead of localStorage
       const wetSet = new Set(
-        courtBlocks
+        blocks
           .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
           .map((b) => b.courtNumber)
       );
-      const info = A.getFreeCourtsInfo({ data, now, blocks: courtBlocks, wetSet });
+      const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });
       emptyCourtCount = info.free ? info.free.length : 0;
     }
   } catch (error) {
@@ -365,7 +363,7 @@ export function NextAvailablePanel({
         <ReservedCourtsPanel
           className="bg-slate-800/50 rounded-xl shadow-2xl p-4 backdrop-blur"
           items={selectReservedItemsFromBlocks(
-            [...courtBlocks, ...upcomingBlocks].filter((b) => !b.isWetCourt),
+            blocks.filter((b) => !b.isWetCourt),
             currentTime
           )}
         />
