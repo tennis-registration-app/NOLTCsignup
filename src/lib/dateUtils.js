@@ -136,6 +136,37 @@ export function minutesRemaining(endTime) {
   return Math.round((end.getTime() - now.getTime()) / 60000);
 }
 
+/**
+ * Add minutes to a date
+ * @param {Date} date
+ * @param {number} minutes
+ * @returns {Date}
+ */
+export function addMinutes(date, minutes) {
+  return new Date(date.getTime() + minutes * 60000);
+}
+
+/**
+ * Check if current time is past end time
+ * @param {Date} now
+ * @param {Date|string} endTime
+ * @returns {boolean}
+ */
+export function isOverTime(now, endTime) {
+  return now > new Date(endTime);
+}
+
+/**
+ * Return session duration based on group size
+ * @param {number} groupSize
+ * @param {number} [singlesMinutes=60]
+ * @param {number} [doublesMinutes=90]
+ * @returns {number}
+ */
+export function durationForGroupSize(groupSize, singlesMinutes = 60, doublesMinutes = 90) {
+  return groupSize >= 4 ? doublesMinutes : singlesMinutes;
+}
+
 export default {
   formatDateTime,
   formatDate,
@@ -145,5 +176,8 @@ export default {
   minutesRemaining,
   nowCentral,
   toLocalDate,
+  addMinutes,
+  isOverTime,
+  durationForGroupSize,
   CLUB_TIMEZONE,
 };
