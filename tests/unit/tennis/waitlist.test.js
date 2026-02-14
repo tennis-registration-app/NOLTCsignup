@@ -93,4 +93,17 @@ describe('tennis/domain/waitlist', () => {
       expect(result.error).toBeUndefined();
     });
   });
+
+  describe('signature', () => {
+    it('exists and produces v1 format', () => {
+      expect(typeof W.signature).toBe('function');
+      const result = W.signature({
+        players: [{ name: 'Alice' }, { name: 'Bob' }],
+        guests: 1,
+      });
+      expect(result).toMatch(/^v1\|/);
+      expect(result).toContain('alice,bob');
+      expect(result).toContain('guests:1');
+    });
+  });
 });

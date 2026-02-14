@@ -5,6 +5,8 @@
  * Ported from domain/waitlist.js IIFE.
  */
 
+import { waitlistSignature } from '../../lib/storage.js';
+
 // Constants for simulation
 const REGISTRATION_BUFFER_MS = 15 * 60 * 1000; // 15 minutes
 const MIN_USEFUL_SESSION_MS = 20 * 60 * 1000; // 20 minutes
@@ -482,6 +484,7 @@ const Waitlist = {
 };
 Waitlist.estimateWaitForPositions = estimateWaitForPositions;
 Waitlist.simulateWaitlistEstimates = simulateWaitlistEstimates;
+Waitlist.signature = waitlistSignature;
 
 // ============================================================
 // Legacy Window Attachment
