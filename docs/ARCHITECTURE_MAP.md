@@ -17,7 +17,7 @@
 | Change frequent partners | `src/registration/memberIdentity/useMemberIdentity.js` |
 | Modify tournament match logic | `src/lib/commands/updateSessionTournament.js` |
 | Change deferred waitlist behavior | `src/lib/commands/deferWaitlist.js` |
-| Modify court availability logic | `public/domain/availability.js` + `src/shared/courts/overtimeEligibility.js` |
+| Modify court availability logic | `src/tennis/domain/availability.js` + `src/shared/courts/overtimeEligibility.js` |
 | **Touch court assignment flow** | ⚠️ READ ORCHESTRATION.md FIRST |
 | **Touch navigation/screens** | ⚠️ App.jsx — high coupling zone |
 
@@ -95,7 +95,7 @@ src/registration/
 | `assignCourtToGroup` | 370-line orchestrator | Approval + decomposition plan |
 | `sendGroupToWaitlist` | GPS + validation coupling | Approval |
 | `handleSuggestionClick` | Crosses 5+ clusters | Approval |
-| `Tennis.Domain.*` | Shared business logic | Unit test coverage |
+| `src/tennis/domain/*` | Shared business logic | Unit test coverage |
 | Backend adapters | API contract | Integration tests |
 
 ---
@@ -225,7 +225,7 @@ Tournament matches allow sessions to play until completion, bypassing scheduled 
 - `supabase/functions/update-session-tournament/` — Edge Function to toggle flag
 - `src/lib/commands/updateSessionTournament.js` — Frontend command wrapper
 - `src/lib/normalize/normalizeSession.js` — snake_case → camelCase conversion
-- `public/domain/availability.js` — Two-layer exclusion (see below)
+- `src/tennis/domain/availability.js` — Two-layer exclusion (see below)
 - `src/shared/courts/overtimeEligibility.js` — Excludes from fallback courts
 
 **Two-layer availability approach:**
@@ -251,7 +251,7 @@ Full-time court detection:
 
 **Key files:**
 - `src/lib/commands/deferWaitlist.js` — Marks entry as deferred
-- `public/domain/availability.js` — Full-time court detection
+- `src/tennis/domain/availability.js` — Full-time court detection
 
 **Behavioral invariants:**
 - Deferred entries are invisible to queue position calculation
