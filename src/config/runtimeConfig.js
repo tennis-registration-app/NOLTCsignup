@@ -13,6 +13,11 @@
  *   mutating import.meta.env (which is read-only in Vite/Vitest).
  */
 
+// SECURITY NOTE: These are Supabase anon/public keys
+// (not secrets) included for frictionless local dev.
+// Acceptable for this closed club deployment.
+// For public/open-source distribution, remove defaults
+// and require env vars via .env file.
 /** @type {Record<string, string>} */
 const DEV_DEFAULTS = {
   SUPABASE_URL: 'https://dncjloqewjubodkoruou.supabase.co',

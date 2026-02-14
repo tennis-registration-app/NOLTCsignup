@@ -1,14 +1,10 @@
 # Environment Configuration
 
-## Demo Mode Notice
+## Development Defaults
 
-This repository is configured for **demo/development use**:
+This project includes dev-only defaults for rapid local setup. These are Supabase anon/public keys (not secrets) and are acceptable for this closed club deployment. Row Level Security (RLS) on the Supabase backend provides the real access control.
 
-- **Demo dataset**: The Supabase instance contains sample data for testing and development.
-- **Anon key is public**: The Supabase anon key is designed for client-side use. In this demo configuration, database policies may be permissive. Production deployments should validate and tighten RLS.
-- **Open access**: The current build does not enforce user authentication or device restrictions.
-
-For production deployment: validate RLS policies, implement appropriate access controls, and consider rotating credentials.
+For public/open-source distribution or broader internet exposure, remove defaults from `src/config/runtimeConfig.js` and require env vars.
 
 ---
 
