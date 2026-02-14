@@ -101,13 +101,6 @@
       window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg, ...opts }}));
   </script>
 
-  <!-- Load shared modules before app script -->
-  <script src="../../shared/config.js"></script>
-  <script src="../../shared/storage.js"></script>
-  <script src="../../shared/events.js"></script>
-  <script src="../../shared/datastore.js"></script>
-  <script src="../../shared/blocks.js"></script>
-
   <!-- File protocol warning -->
   <script>
 (function () {
@@ -128,15 +121,6 @@
   else window.addEventListener('DOMContentLoaded', addBanner, { once: true });
 })();
 </script>
-
-  <!-- Load domain modules -->
-  <script src="../../domain/time.js"></script>
-  <script src="../../domain/availability.js"></script>
-  <script src="../../domain/waitlist.js"></script>
-  <script src="../../domain/blocks.js"></script>
-  <script src="../../domain/wetCourts.js"></script>
-  <script src="../../domain/selfTest.js"></script>
-  <script src="../../shared/domain/roster.js"></script>
 
   <!-- Vite-bundled React app -->
   <script type="module" src="./main.jsx"></script>
