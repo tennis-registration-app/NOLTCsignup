@@ -1,14 +1,15 @@
 # Environment Configuration
 
-## Demo Mode Notice
+## Quick Start
 
-This repository is configured for **demo/development use**:
+1. Copy `.env.example` to `.env.local`
+2. Add your Supabase credentials
+3. Run `npm run dev`
 
-- **Demo dataset**: The Supabase instance contains sample data for testing and development.
-- **Anon key is public**: The Supabase anon key is designed for client-side use. In this demo configuration, database policies may be permissive. Production deployments should validate and tighten RLS.
-- **Open access**: The current build does not enforce user authentication or device restrictions.
-
-For production deployment: validate RLS policies, implement appropriate access controls, and consider rotating credentials.
+Without credentials, the app will show a console warning:
+```
+[Config] Using placeholder credentials. Copy .env.example to .env and add your Supabase credentials.
+```
 
 ---
 
@@ -24,9 +25,9 @@ All environment variables use the `VITE_` prefix (required by Vite for client-si
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key | Production builds |
 | `VITE_BASE_URL` | API base URL for Edge Functions (optional - derived from SUPABASE_URL if omitted) | Optional |
 
-> **Note:** In development and test modes, built-in defaults are used if env vars are not set.
-> Production builds (with `PROD=true`) will use the defaults if env vars are empty, but
-> it's recommended to set explicit values for production deployments.
+> **Note:** In development mode, placeholder values are used if env vars are not set.
+> A console warning will appear reminding you to configure credentials.
+> Production builds will **fail** if placeholder credentials are detected.
 
 ### Optional Feature Flags
 
@@ -99,8 +100,8 @@ Key files:
 
 The `getRuntimeConfig()` function validates environment variables:
 
-- **Dev/test mode** (`PROD=false`): Falls back to built-in defaults silently
-- **Production mode** (`PROD=true`): Falls back to defaults if env vars are empty (defaults are valid working credentials)
+- **Dev/test mode** (`PROD=false`): Falls back to placeholder values with console warning
+- **Production mode** (`PROD=true`): **Fails build** if placeholder credentials detected
 
 The returned config object is frozen (immutable) for safety.
 
@@ -108,13 +109,21 @@ The returned config object is frozen (immutable) for safety.
 
 ## Troubleshooting
 
-### "Missing required env vars" error
+### "Using placeholder credentials" warning
 
-If you see:
+If you see this console warning in development:
 
-    [runtimeConfig] Missing required environment variables: VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY
+    [Config] Using placeholder credentials. Copy .env.example to .env and add your Supabase credentials.
 
-Ensure `.env.local` exists with valid values, or set the variables in Vercel.
+This means your `.env.local` is missing or doesn't have valid credentials. The app will not connect to any backend.
+
+### "Invalid environment configuration" error (production)
+
+If a production build fails with:
+
+    Invalid environment configuration for production: VITE_SUPABASE_URL (still placeholder)...
+
+This means you haven't configured real Supabase credentials. Set them in Vercel Environment Variables.
 
 ### Changes not taking effect
 
