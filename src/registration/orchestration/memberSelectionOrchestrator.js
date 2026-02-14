@@ -5,6 +5,7 @@ import {
   ALREADY_ON_WAITLIST,
   COURT_READY,
 } from '../../shared/constants/toastMessages.js';
+import { getTennisUI } from '../../platform/windowBridge.js';
 
 /**
  * Member Selection Orchestrators
@@ -37,8 +38,6 @@ import {
  *
  * Returns: void (same as original — may have early returns)
  */
-
-/* global Tennis */
 
 export async function handleSuggestionClickOrchestrated(suggestion, deps) {
   const {
@@ -77,7 +76,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     const playerStatus = isPlayerAlreadyPlaying(memberId);
     if (playerStatus.isPlaying && playerStatus.location === 'court') {
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      Tennis.UI.toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber), {
+      getTennisUI()?.toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber), {
         type: 'warning',
       });
       setSearchInput('');
@@ -124,11 +123,13 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
 
     if (hasCourtReady) {
       // Court is available for this waitlist player - direct them to use the CTA button
-      Tennis.UI.toast(COURT_READY, { type: 'info' });
+      getTennisUI()?.toast(COURT_READY, { type: 'info' });
     } else {
       // Player is on waitlist but no court available yet
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      Tennis.UI.toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position), { type: 'warning' });
+      getTennisUI()?.toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position), {
+        type: 'warning',
+      });
     }
     setSearchInput('');
     setShowSuggestions(false);
@@ -279,7 +280,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
 
   // Check for duplicate in current group
   if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
-    Tennis.UI.toast(ALREADY_IN_GROUP(enrichedMember.name), { type: 'warning' });
+    getTennisUI()?.toast(ALREADY_IN_GROUP(enrichedMember.name), { type: 'warning' });
     setAddPlayerSearch('');
     setShowAddPlayer(false);
     setShowAddPlayerSuggestions(false);

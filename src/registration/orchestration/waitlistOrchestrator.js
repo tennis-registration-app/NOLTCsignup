@@ -26,8 +26,7 @@
  */
 
 import { logger } from '../../lib/logger.js';
-
-/* global Tennis */
+import { getTennisUI } from '../../platform/windowBridge.js';
 
 export async function sendGroupToWaitlistOrchestrated(group, deps, options = {}) {
   const {
@@ -106,11 +105,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps, options = {})
     // Validation check
     const validation = validateGroupCompat(players, guests);
     if (!validation.ok) {
-      try {
-        Tennis.UI.toast(validation.errors.join(' '), { type: 'error' });
-      } catch {
-        /* Tennis.UI not available */
-      }
+      getTennisUI()?.toast(validation.errors.join(' '), { type: 'error' });
       showAlertMessage(validation.errors.join('\n'));
       // FEEDBACK: toast and alert provide user feedback above
       return;
@@ -187,7 +182,7 @@ export async function sendGroupToWaitlistOrchestrated(group, deps, options = {})
       }
 
       // Toast and rely on board subscription for UI refresh
-      Tennis?.UI?.toast?.(`Added to waiting list (position ${position})`, {
+      getTennisUI()?.toast(`Added to waiting list (position ${position})`, {
         type: 'success',
       });
       const successTime = Math.round(performance.now() - waitlistStartTime);
@@ -203,12 +198,12 @@ export async function sendGroupToWaitlistOrchestrated(group, deps, options = {})
         // FEEDBACK: GPS prompt modal provides user feedback
         return;
       }
-      Tennis?.UI?.toast?.(result.message || 'Could not join waitlist', { type: 'error' });
+      getTennisUI()?.toast(result.message || 'Could not join waitlist', { type: 'error' });
     }
   } catch (e) {
     setIsJoiningWaitlist(false);
     logger.error('Waitlist', 'failed', e);
-    Tennis?.UI?.toast?.('Could not join waitlist', { type: 'error' });
+    getTennisUI()?.toast('Could not join waitlist', { type: 'error' });
   }
   // ===== END ORIGINAL FUNCTION BODY =====
 }

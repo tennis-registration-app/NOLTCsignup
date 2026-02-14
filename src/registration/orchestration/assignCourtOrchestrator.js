@@ -7,6 +7,7 @@ import {
   guardGroup,
   guardGroupCompat,
 } from './helpers/index.js';
+import { getTennisUI } from '../../platform/windowBridge.js';
 
 /**
  * Assign Court Orchestrator
@@ -65,8 +66,6 @@ import {
  * Returns: void (same as original — has multiple early returns)
  */
 
-/* global Tennis */
-
 export async function assignCourtToGroupOrchestrated(
   courtNumber,
   selectableCountAtSelection,
@@ -105,7 +104,7 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!hoursCheck.ok) {
     if (hoursCheck.ui?.action === 'toast') {
-      Tennis.UI.toast(...hoursCheck.ui.args);
+      getTennisUI()?.toast(...hoursCheck.ui.args);
     }
     // FEEDBACK: toast provides user feedback above
     return;
@@ -215,7 +214,7 @@ export async function assignCourtToGroupOrchestrated(
         'Court not found for waitlist assignment',
         courtNumber
       );
-      Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
+      getTennisUI()?.toast('Court not found. Please refresh and try again.', { type: 'error' });
       // FEEDBACK: toast provides user feedback above
       return;
     }
@@ -234,7 +233,7 @@ export async function assignCourtToGroupOrchestrated(
       if (!result.ok) {
         // Handle "Court occupied" race condition
         if (result.code === 'COURT_OCCUPIED') {
-          Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
+          getTennisUI()?.toast('This court was just taken. Refreshing...', { type: 'warning' });
           actions.setCurrentWaitlistEntryId(null);
           await services.backend.queries.refresh();
           // FEEDBACK: toast provides user feedback above
@@ -246,7 +245,7 @@ export async function assignCourtToGroupOrchestrated(
           // FEEDBACK: GPS prompt modal provides user feedback
           return;
         }
-        Tennis.UI.toast(result.message || 'Failed to assign court from waitlist', {
+        getTennisUI()?.toast(result.message || 'Failed to assign court from waitlist', {
           type: 'error',
         });
         actions.setCurrentWaitlistEntryId(null);
@@ -315,7 +314,9 @@ export async function assignCourtToGroupOrchestrated(
     } catch (error) {
       getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       actions.setCurrentWaitlistEntryId(null);
-      Tennis.UI.toast(error.message || 'Failed to assign court from waitlist', { type: 'error' });
+      getTennisUI()?.toast(error.message || 'Failed to assign court from waitlist', {
+        type: 'error',
+      });
       // FEEDBACK: toast provides user feedback above
       return;
     }
@@ -325,7 +326,7 @@ export async function assignCourtToGroupOrchestrated(
   const court = state.courts.find((c) => c.number === courtNumber);
   if (!court) {
     getRuntimeDeps().logger.error('AssignCourt', 'Court not found for number', courtNumber);
-    Tennis.UI.toast('Court not found. Please refresh and try again.', { type: 'error' });
+    getTennisUI()?.toast('Court not found. Please refresh and try again.', { type: 'error' });
     // FEEDBACK: toast provides user feedback above
     return;
   }
@@ -371,7 +372,7 @@ export async function assignCourtToGroupOrchestrated(
       `[T+${apiDuration}ms] assignCourtWithPlayers threw error`,
       error
     );
-    Tennis.UI.toast(error.message || 'Failed to assign court. Please try again.', {
+    getTennisUI()?.toast(error.message || 'Failed to assign court. Please try again.', {
       type: 'error',
     });
     actions.setIsAssigning(false);
@@ -386,7 +387,7 @@ export async function assignCourtToGroupOrchestrated(
     });
     // Handle "Court occupied" race condition
     if (result.code === 'COURT_OCCUPIED') {
-      Tennis.UI.toast('This court was just taken. Refreshing...', { type: 'warning' });
+      getTennisUI()?.toast('This court was just taken. Refreshing...', { type: 'warning' });
       // Board subscription will auto-refresh, but force immediate refresh
       await services.backend.queries.refresh();
       actions.setIsAssigning(false);
@@ -400,7 +401,7 @@ export async function assignCourtToGroupOrchestrated(
       // FEEDBACK: GPS prompt modal provides user feedback
       return;
     }
-    Tennis.UI.toast(result.message || 'Failed to assign court', { type: 'error' });
+    getTennisUI()?.toast(result.message || 'Failed to assign court', { type: 'error' });
     actions.setIsAssigning(false);
     // FEEDBACK: toast provides user feedback above
     return;
