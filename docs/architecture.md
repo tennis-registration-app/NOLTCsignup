@@ -99,3 +99,33 @@ Detail payload:
 
 Consumers (logging, monitoring, admin tools) should
 treat this as best-effort diagnostic telemetry.
+
+## Orchestrator Dependency Conventions
+
+Preferred pattern for orchestrator dependencies
+(grouped deps):
+```js
+async function myOrchestrator(input, deps) {
+  const { state, actions, services, ui } = deps;
+}
+```
+
+Current status:
+- assignCourtOrchestrator: grouped deps ✓
+- adminOperations: context objects ✓
+- waitlistOrchestrator: flat deps (legacy,
+  predates grouped convention)
+
+Rule: New orchestrators must use grouped deps
+({ state, actions, services, ui }). Existing flat
+deps will be migrated when those files are next
+modified for functional changes.
+
+### Test Coverage Requirements
+
+Orchestrator tests must verify these sanity checks:
+1. Guard failures reset state (mutation safety)
+2. Backend throw → alert + state reset
+3. Double-click / double-submit guard
+
+See `tests/unit/orchestration/` for reference.
