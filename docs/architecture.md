@@ -129,3 +129,82 @@ Orchestrator tests must verify these sanity checks:
 3. Double-click / double-submit guard
 
 See `tests/unit/orchestration/` for reference.
+
+## Controller Patterns
+
+### Registration: Presenter Pattern
+Registration routes use presenter functions to extract props:
+
+```js
+// Route receives app + handlers
+function GroupRoute({ app, handlers }) {
+  const model = buildGroupModel(app);
+  const actions = buildGroupActions(app, handlers);
+  return <GroupScreen {...model} {...actions} />;
+}
+```
+
+Files:
+- `src/registration/router/presenters/groupPresenter.js`
+- `src/registration/router/presenters/adminPresenter.js`
+- `src/registration/router/presenters/successPresenter.js`
+- `src/registration/router/presenters/homePresenter.js`
+- `src/registration/router/presenters/courtPresenter.js` (model only)
+
+Tests: `tests/unit/registration/*Presenter.equivalence.test.js`
+
+### Admin: Domain Object Factories
+Admin uses factory functions to create domain objects:
+
+```js
+// App.jsx creates domain objects with useMemo
+const wetCourtsModel = useMemo(() =>
+  createWetCourtsModel({ wetCourtsActive, wetCourts, ENABLE_WET_COURTS }),
+[deps]);
+
+// Sections receive domain objects
+<StatusSection statusModel={statusModel} statusActions={statusActions} />
+```
+
+Factory functions in `src/admin/types/domainObjects.js`:
+- `createWetCourtsModel/Actions` — Wet court state
+- `createBlockModel/Actions/Components` — Court blocking
+- `createStatusModel/Actions` — Status display
+- `createCalendarModel/Actions` — Calendar display
+- `createAIAssistantModel/Actions/Services/Components` — AI assistant
+
+Controller assembly: `src/admin/controller/buildAdminController.js`
+Tests: `tests/unit/admin/controller/buildAdminController.contract.test.js`
+
+## State Bridges
+
+### Courtboard: Window Bridge Pattern
+Courtboard shares state with non-React code via window global:
+
+```
+┌─────────────────────────────────────────────────────┐
+│   API (get-board)  ──►  React State (main.jsx)      │
+│                               │                      │
+│                               ▼                      │
+│                    window.CourtboardState            │
+│                    (written by useEffect)            │
+│                               │                      │
+│       ┌───────────────────────┼───────────────┐      │
+│       ▼                       ▼               ▼      │
+│ mobile-fallback-bar.js  mobile-bridge.js  MobileModal│
+│                               │                      │
+│               getCourtboardState() (READ-ONLY)       │
+└─────────────────────────────────────────────────────┘
+```
+
+Contract:
+- **Writer** (exactly one): `main.jsx` useEffect syncs React state
+- **Readers**: `getCourtboardState()` from `courtboardState.js`
+- **Guaranteed fields**: courts, courtBlocks, waitingGroups
+- **Optional fields**: upcomingBlocks, freeCourts, timestamp
+
+Files:
+- `src/courtboard/courtboardState.js` — Read accessor
+- `src/courtboard/bridge/window-bridge.js` — Write function
+
+Tests: `tests/unit/courtboard/courtboardState.contract.test.js`
