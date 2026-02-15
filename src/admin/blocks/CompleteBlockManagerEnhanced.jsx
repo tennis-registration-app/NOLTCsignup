@@ -368,25 +368,21 @@ const CompleteBlockManagerEnhanced = ({
     <div className="space-y-6" data-testid="admin-block-list">
       <div className="flex items-center justify-between">
         {editingBlock && activeView === 'create' && (
-          <div className="flex items-center gap-2 text-sm text-blue-600">
-            <Edit2 size={16} />
-            <span>Editing block on Court {editingBlock.courtNumber}</span>
-            <button
-              onClick={() => {
-                setEditingBlock(null);
-                setOriginalValues(null);
-                setSelectedCourts([]);
-                setBlockReason('');
-                setStartTime('');
-                setEndTime('');
-                setSelectedDate(new Date());
-                setRecurrence(null);
-              }}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X size={16} />
-            </button>
-          </div>
+          <EditModeBanner
+            editingBlock={editingBlock}
+            onCancel={() => {
+              setEditingBlock(null);
+              setOriginalValues(null);
+              setSelectedCourts([]);
+              setBlockReason('');
+              setStartTime('');
+              setEndTime('');
+              setSelectedDate(new Date());
+              setRecurrence(null);
+            }}
+            Edit2Icon={Edit2}
+            XIcon={X}
+          />
         )}
       </div>
 
@@ -489,35 +485,12 @@ const CompleteBlockManagerEnhanced = ({
             className="col-span-2"
             style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
           >
-            <div style={{ order: 4 }}>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-800">Quick Templates</h3>
-                  <button
-                    onClick={() => setShowTemplates(!showTemplates)}
-                    className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                  >
-                    <span>{showTemplates ? 'Hide' : 'Show'}</span>
-                    <span className="text-xs">{showTemplates ? '△' : '▽'}</span>
-                  </button>
-                </div>
-
-                {showTemplates && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {blockTemplates.map((template, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleTemplateSelect(template)}
-                        className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left border border-gray-200"
-                      >
-                        <p className="font-medium text-gray-800">{template.name}</p>
-                        <p className="text-sm text-gray-600">{template.reason}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <QuickTemplatesCard
+              showTemplates={showTemplates}
+              setShowTemplates={setShowTemplates}
+              blockTemplates={blockTemplates}
+              handleTemplateSelect={handleTemplateSelect}
+            />
 
             <CourtSelectionGrid
               selectedCourts={selectedCourts}
@@ -567,116 +540,32 @@ const CompleteBlockManagerEnhanced = ({
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <h3
-                className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2"
-                style={{ marginTop: '0', lineHeight: '1.75rem' }}
-              >
-                Select Date
-              </h3>
-
-              {MiniCalendar && (
-                <MiniCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-              )}
-
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2 text-sm">
-                  <CalendarDays size={16} className="text-gray-600" />
-                  <span className="font-medium">
-                    {selectedDate.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-              </div>
-            </div>
+            <DateSelectionCard
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              MiniCalendar={MiniCalendar}
+              CalendarDaysIcon={CalendarDays}
+            />
 
             {/* Wet Court Management Panel */}
             {wetCourtsActive && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-medium text-red-900">🌧️ Wet Court Conditions</h4>
-                  <span className="text-sm text-red-700">
-                    {12 - wetCourts.size}/12 courts operational
-                  </span>
-                </div>
-
-                <p className="text-sm text-red-800 mb-4">
-                  Click courts below as they dry to resume normal operations.
-                </p>
-
-                {/* Court Grid */}
-                <div className="grid grid-cols-4 gap-2 mb-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((courtNum) => {
-                    const isWet = wetCourts.has(courtNum);
-                    return (
-                      <button
-                        key={courtNum}
-                        onClick={() => clearWetCourt(courtNum)}
-                        className={`p-2 rounded text-sm font-medium transition-all ${
-                          isWet
-                            ? 'bg-blue-500 text-white hover:bg-blue-600'
-                            : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                        }`}
-                      >
-                        Court {courtNum}
-                        <div className="text-xs mt-1">{isWet ? '💧 Wet' : '☀️ Dry'}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Quick Action */}
-                <button
-                  onClick={() => {
-                    deactivateWetCourts();
-                  }}
-                  className="w-full py-2 px-3 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-medium"
-                >
-                  ✅ All Courts Dry - Resume Normal Operations
-                </button>
-              </div>
+              <WetCourtManagementPanel
+                wetCourts={wetCourts}
+                clearWetCourt={clearWetCourt}
+                deactivateWetCourts={deactivateWetCourts}
+              />
             )}
 
             {(selectedCourts.length > 0 || blockReason || startTime || endTime) && (
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-3">Block Summary</h4>
-                <div className="space-y-2 text-sm text-blue-800">
-                  {selectedCourts.length > 0 && (
-                    <div>
-                      <span className="font-medium">Courts:</span>{' '}
-                      {selectedCourts.sort((a, b) => a - b).join(', ')}
-                    </div>
-                  )}
-                  {blockReason && (
-                    <div>
-                      <span className="font-medium">Reason:</span> {blockReason}
-                    </div>
-                  )}
-                  {startTime && endTime && (
-                    <div>
-                      <span className="font-medium">Time:</span>{' '}
-                      {startTime === 'now' ? 'Now' : startTime} - {endTime}
-                    </div>
-                  )}
-                  {recurrence && (
-                    <div>
-                      <span className="font-medium">Repeats:</span> {recurrence.pattern}ly for{' '}
-                      {recurrence.endType === 'after'
-                        ? `${recurrence.occurrences} times`
-                        : `until ${recurrence.endDate}`}
-                    </div>
-                  )}
-                  {isEvent && (
-                    <div>
-                      <span className="font-medium">Event Calendar:</span> Yes ({eventType})
-                    </div>
-                  )}
-                </div>
-              </div>
+              <BlockSummaryCard
+                selectedCourts={selectedCourts}
+                blockReason={blockReason}
+                startTime={startTime}
+                endTime={endTime}
+                recurrence={recurrence}
+                isEvent={isEvent}
+                eventType={eventType}
+              />
             )}
 
             <div>
@@ -716,41 +605,18 @@ const CompleteBlockManagerEnhanced = ({
               <RecurrenceConfig recurrence={recurrence} onRecurrenceChange={setRecurrence} />
             )}
 
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <button
-                onClick={handleBlockCourts}
-                disabled={!isValid}
-                data-testid="admin-block-create-btn"
-                className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                  isValid
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                {editingBlock ? 'Update' : 'Apply'} Block to{' '}
-                {selectedCourts.length <= 3
-                  ? `Court${selectedCourts.length !== 1 ? 's' : ''} ${selectedCourts.sort((a, b) => a - b).join(', ')}`
-                  : `${selectedCourts.length} Courts`}
-                {recurrence && ` (${recurrence.pattern}ly)`}
-              </button>
-
-              <button
-                onClick={wetCourtsActive ? deactivateWetCourts : handleEmergencyWetCourt}
-                className={`w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium transition-all border ${
-                  wetCourtsActive
-                    ? 'bg-gray-600 text-white border-blue-400 ring-1 ring-blue-400 shadow-md'
-                    : 'bg-blue-50 hover:bg-blue-100 text-gray-700 border-blue-300 hover:border-blue-400'
-                }`}
-              >
-                <Droplets size={16} />
-                WET COURTS
-                {wetCourtsActive && wetCourts.size > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-blue-500 text-white text-xs rounded-full">
-                    {wetCourts.size}
-                  </span>
-                )}
-              </button>
-            </div>
+            <BlockActionButtons
+              handleBlockCourts={handleBlockCourts}
+              isValid={isValid}
+              editingBlock={editingBlock}
+              selectedCourts={selectedCourts}
+              recurrence={recurrence}
+              wetCourtsActive={wetCourtsActive}
+              wetCourts={wetCourts}
+              deactivateWetCourts={deactivateWetCourts}
+              handleEmergencyWetCourt={handleEmergencyWetCourt}
+              DropletsIcon={Droplets}
+            />
           </div>
         </div>
       )}
@@ -774,5 +640,236 @@ const CompleteBlockManagerEnhanced = ({
     </div>
   );
 };
+
+/**
+ * BlockActionButtons - Apply block and wet courts buttons
+ */
+const BlockActionButtons = ({
+  handleBlockCourts,
+  isValid,
+  editingBlock,
+  selectedCourts,
+  recurrence,
+  wetCourtsActive,
+  wetCourts,
+  deactivateWetCourts,
+  handleEmergencyWetCourt,
+  DropletsIcon,
+}) => (
+  <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+    <button
+      onClick={handleBlockCourts}
+      disabled={!isValid}
+      data-testid="admin-block-create-btn"
+      className={`w-full py-3 rounded-lg font-medium transition-colors ${
+        isValid
+          ? 'bg-blue-600 text-white hover:bg-blue-700'
+          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+      }`}
+    >
+      {editingBlock ? 'Update' : 'Apply'} Block to{' '}
+      {selectedCourts.length <= 3
+        ? `Court${selectedCourts.length !== 1 ? 's' : ''} ${selectedCourts.sort((a, b) => a - b).join(', ')}`
+        : `${selectedCourts.length} Courts`}
+      {recurrence && ` (${recurrence.pattern}ly)`}
+    </button>
+
+    <button
+      onClick={wetCourtsActive ? deactivateWetCourts : handleEmergencyWetCourt}
+      className={`w-full mt-3 flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-medium transition-all border ${
+        wetCourtsActive
+          ? 'bg-gray-600 text-white border-blue-400 ring-1 ring-blue-400 shadow-md'
+          : 'bg-blue-50 hover:bg-blue-100 text-gray-700 border-blue-300 hover:border-blue-400'
+      }`}
+    >
+      <DropletsIcon size={16} />
+      WET COURTS
+      {wetCourtsActive && wetCourts.size > 0 && (
+        <span className="ml-1 px-1.5 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+          {wetCourts.size}
+        </span>
+      )}
+    </button>
+  </div>
+);
+
+/**
+ * BlockSummaryCard - Summary of current block configuration
+ */
+const BlockSummaryCard = ({
+  selectedCourts,
+  blockReason,
+  startTime,
+  endTime,
+  recurrence,
+  isEvent,
+  eventType,
+}) => (
+  <div className="p-4 bg-blue-50 rounded-lg">
+    <h4 className="font-medium text-blue-900 mb-3">Block Summary</h4>
+    <div className="space-y-2 text-sm text-blue-800">
+      {selectedCourts.length > 0 && (
+        <div>
+          <span className="font-medium">Courts:</span>{' '}
+          {selectedCourts.sort((a, b) => a - b).join(', ')}
+        </div>
+      )}
+      {blockReason && (
+        <div>
+          <span className="font-medium">Reason:</span> {blockReason}
+        </div>
+      )}
+      {startTime && endTime && (
+        <div>
+          <span className="font-medium">Time:</span> {startTime === 'now' ? 'Now' : startTime} -{' '}
+          {endTime}
+        </div>
+      )}
+      {recurrence && (
+        <div>
+          <span className="font-medium">Repeats:</span> {recurrence.pattern}ly for{' '}
+          {recurrence.endType === 'after'
+            ? `${recurrence.occurrences} times`
+            : `until ${recurrence.endDate}`}
+        </div>
+      )}
+      {isEvent && (
+        <div>
+          <span className="font-medium">Event Calendar:</span> Yes ({eventType})
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+/**
+ * WetCourtManagementPanel - Wet court status grid and controls
+ */
+const WetCourtManagementPanel = ({ wetCourts, clearWetCourt, deactivateWetCourts }) => (
+  <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+    <div className="flex items-center justify-between mb-3">
+      <h4 className="font-medium text-red-900">🌧️ Wet Court Conditions</h4>
+      <span className="text-sm text-red-700">{12 - wetCourts.size}/12 courts operational</span>
+    </div>
+
+    <p className="text-sm text-red-800 mb-4">
+      Click courts below as they dry to resume normal operations.
+    </p>
+
+    {/* Court Grid */}
+    <div className="grid grid-cols-4 gap-2 mb-4">
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((courtNum) => {
+        const isWet = wetCourts.has(courtNum);
+        return (
+          <button
+            key={courtNum}
+            onClick={() => clearWetCourt(courtNum)}
+            className={`p-2 rounded text-sm font-medium transition-all ${
+              isWet
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+            }`}
+          >
+            Court {courtNum}
+            <div className="text-xs mt-1">{isWet ? '💧 Wet' : '☀️ Dry'}</div>
+          </button>
+        );
+      })}
+    </div>
+
+    {/* Quick Action */}
+    <button
+      onClick={() => {
+        deactivateWetCourts();
+      }}
+      className="w-full py-2 px-3 bg-green-600 text-white rounded text-sm hover:bg-green-700 font-medium"
+    >
+      ✅ All Courts Dry - Resume Normal Operations
+    </button>
+  </div>
+);
+
+/**
+ * DateSelectionCard - Calendar date picker with selected date display
+ */
+const DateSelectionCard = ({ selectedDate, setSelectedDate, MiniCalendar, CalendarDaysIcon }) => (
+  <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+    <h3
+      className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2"
+      style={{ marginTop: '0', lineHeight: '1.75rem' }}
+    >
+      Select Date
+    </h3>
+
+    {MiniCalendar && <MiniCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />}
+
+    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex items-center gap-2 text-sm">
+        <CalendarDaysIcon size={16} className="text-gray-600" />
+        <span className="font-medium">
+          {selectedDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+/**
+ * QuickTemplatesCard - Collapsible template selection panel
+ */
+const QuickTemplatesCard = ({
+  showTemplates,
+  setShowTemplates,
+  blockTemplates,
+  handleTemplateSelect,
+}) => (
+  <div style={{ order: 4 }}>
+    <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+      <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-800">Quick Templates</h3>
+        <button
+          onClick={() => setShowTemplates(!showTemplates)}
+          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+        >
+          <span>{showTemplates ? 'Hide' : 'Show'}</span>
+          <span className="text-xs">{showTemplates ? '△' : '▽'}</span>
+        </button>
+      </div>
+
+      {showTemplates && (
+        <div className="grid grid-cols-2 gap-3">
+          {blockTemplates.map((template, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleTemplateSelect(template)}
+              className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left border border-gray-200"
+            >
+              <p className="font-medium text-gray-800">{template.name}</p>
+              <p className="text-sm text-gray-600">{template.reason}</p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+/**
+ * EditModeBanner - Shows editing indicator with cancel button
+ */
+const EditModeBanner = ({ editingBlock, onCancel, Edit2Icon, XIcon }) => (
+  <div className="flex items-center gap-2 text-sm text-blue-600">
+    <Edit2Icon size={16} />
+    <span>Editing block on Court {editingBlock.courtNumber}</span>
+    <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+      <XIcon size={16} />
+    </button>
+  </div>
+);
 
 export default CompleteBlockManagerEnhanced;
