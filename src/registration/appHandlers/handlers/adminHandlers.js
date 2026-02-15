@@ -86,8 +86,8 @@ export function useAdminHandlers(deps) {
 
       // Show success message
       showPriceSuccessWithClear();
-      // eslint-disable-next-line no-unused-vars
     } catch (_error) {
+      // Intentional: error details not needed, generic message shown to user
       setPriceError('Failed to save price');
     }
   }, [ballPriceInput, setPriceError, dataStore, TENNIS_CONFIG, showPriceSuccessWithClear]);

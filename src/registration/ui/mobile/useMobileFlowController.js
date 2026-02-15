@@ -217,7 +217,7 @@ export function useMobileFlowController({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: message listener setup, handlers use refs for current values
   }, []);
 
   // Mobile: Watch for success state changes and send signal

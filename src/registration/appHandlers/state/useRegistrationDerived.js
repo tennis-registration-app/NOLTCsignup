@@ -172,7 +172,7 @@ export function useRegistrationDerived({
       };
     }
     return db;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: initialize debug helper once
   }, []);
 
   return {

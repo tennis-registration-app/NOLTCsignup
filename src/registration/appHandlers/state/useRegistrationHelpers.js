@@ -150,9 +150,8 @@ export function validateGroupCompat(players, guests) {
         return norm(out.ok, out.errors);
       }
     }
-    // eslint-disable-next-line no-unused-vars
   } catch (_e) {
-    // fall through to local rules
+    // Intentional: error ignored, fall through to local validation rules
   }
 
   // 2) Local minimal validator (matches club rules)

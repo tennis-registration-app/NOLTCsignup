@@ -58,7 +58,7 @@ export function useRegistrationDataLayer({
     } catch (error) {
       logger.error('DataLayer', 'Failed to load data', error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only re-run when service ref changes, not on state updates
   }, [getDataService]);
 
   // VERBATIM COPY: subscription effect (lines 700-747) — KEEP [] DEPS EXACTLY
@@ -109,7 +109,7 @@ export function useRegistrationDataLayer({
       logger.debug('DataLayer', '[TennisBackend] Unsubscribing from board updates');
       unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: board subscription setup, backend is stable singleton
   }, []);
 
   return {

@@ -61,7 +61,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
       }
     };
     loadMembers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: load members once, backend is stable singleton
   }, []);
 
   // ============================================

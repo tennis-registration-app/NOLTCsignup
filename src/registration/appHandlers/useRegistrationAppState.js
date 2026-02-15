@@ -342,7 +342,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
         });
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: one-time Tennis.Events subscription setup
   }, []);
 
   // Fetch frequent partners when entering group screen

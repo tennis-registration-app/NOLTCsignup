@@ -62,7 +62,7 @@ export function useRegistrationRuntime({
       }
     };
     fetchBallPrice();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: fetch ball price once on init
   }, []);
 
   // VERBATIM COPY: CSS Performance Optimizations (line 750)
