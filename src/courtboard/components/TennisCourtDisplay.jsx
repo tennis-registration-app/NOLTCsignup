@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
+import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
 import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
 import { setRefreshBoardGlobal } from '../../platform/registerGlobals.js';
@@ -526,15 +527,17 @@ export function TennisCourtDisplay() {
 
             {/* Bottom section */}
             <div className="bottom-section min-h-0 overflow-auto">
-              <WaitingList
-                waitlist={waitlist}
-                courts={courts}
-                currentTime={currentTime}
-                courtBlocks={courtBlocks}
-                upcomingBlocks={upcomingBlocks}
-                maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
-                courtSelection={courtSelection}
-              />
+              <ErrorBoundary context="Waitlist Display">
+                <WaitingList
+                  waitlist={waitlist}
+                  courts={courts}
+                  currentTime={currentTime}
+                  courtBlocks={courtBlocks}
+                  upcomingBlocks={upcomingBlocks}
+                  maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
+                  courtSelection={courtSelection}
+                />
+              </ErrorBoundary>
               <div className="courts-grid-bottom">
                 {[12, 11, 10, 9].map((num) => (
                   <div key={num} className="flex justify-center">
@@ -581,15 +584,17 @@ export function TennisCourtDisplay() {
 
               {hasWaiting && (
                 <div className="mobile-waiting-section">
-                  <WaitingList
-                    waitlist={waitlist}
-                    courts={courts}
-                    currentTime={currentTime}
-                    courtBlocks={courtBlocks}
-                    upcomingBlocks={upcomingBlocks}
-                    maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
-                    courtSelection={courtSelection}
-                  />
+                  <ErrorBoundary context="Waitlist Display">
+                    <WaitingList
+                      waitlist={waitlist}
+                      courts={courts}
+                      currentTime={currentTime}
+                      courtBlocks={courtBlocks}
+                      upcomingBlocks={upcomingBlocks}
+                      maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
+                      courtSelection={courtSelection}
+                    />
+                  </ErrorBoundary>
                 </div>
               )}
             </div>
