@@ -60,3 +60,42 @@ Court availability is computed by `src/tennis/domain/availability.js`:
 - `getFreeCourtsInfo()` — Excludes tournament courts from "free" count
 - `getCourtStatuses()` — Overrides display for blocked/tournament courts
 - `src/shared/courts/overtimeEligibility.js` — Excludes from fallback courts
+
+## Error Handling
+
+### Error Boundaries
+App-level boundaries wrap each entry point:
+- Registration: "Court Registration"
+- Courtboard: "Courtboard Display"
+- Admin: "Admin Panel"
+- Mobile Shell: try/catch with fallback HTML
+
+Feature boundaries protect known-risk areas:
+- Court Selection (CourtRoute.jsx)
+- Waitlist Display (TennisCourtDisplay.jsx, both instances)
+
+All boundaries:
+- Log to console
+- Emit 'clientError' via Tennis.Events.emitDom
+  (falls back to raw CustomEvent dispatch)
+- Diagnostic payload: message, stack, context,
+  route, timestamp, deviceId
+- Show Reload + Copy Diagnostic Info buttons
+- Clipboard failure shows selectable textarea
+
+### clientError Event Contract
+
+All error boundaries and the mobile shell bootstrap
+emit a `clientError` CustomEvent via Tennis.Events.emitDom
+(with raw CustomEvent fallback).
+
+Detail payload:
+- message — error message string
+- stack — stack trace (when available)
+- context — boundary label (e.g. "Court Registration")
+- route — window.location.pathname
+- timestamp — ISO 8601 string
+- deviceId — device identifier (when available)
+
+Consumers (logging, monitoring, admin tools) should
+treat this as best-effort diagnostic telemetry.
