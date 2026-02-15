@@ -208,3 +208,23 @@ Files:
 - `src/courtboard/bridge/window-bridge.js` — Write function
 
 Tests: `tests/unit/courtboard/courtboardState.contract.test.js`
+
+## Development Rules
+
+### Contract Tests
+Contract tests (*.contract.test.js, *.equivalence.test.js)
+are non-negotiable CI gates. Any controller, presenter,
+or bridge surface change requires updating inline
+snapshots in the same PR with written rationale.
+
+Files:
+- useRegistrationAppState.contract.test.js
+- buildAdminController.contract.test.js
+- courtboardState.contract.test.js
+- groupPresenter.equivalence.test.js
+- adminPresenter.equivalence.test.js
+- homePresenter.equivalence.test.js
+- successPresenter.equivalence.test.js
+- courtPresenter.equivalence.test.js
+
+Gate: npm run verify
