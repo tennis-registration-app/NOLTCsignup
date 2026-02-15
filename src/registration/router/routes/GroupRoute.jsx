@@ -1,12 +1,13 @@
 // @ts-check
 import React from 'react';
 import { GroupScreen } from '../../screens';
+import { buildGroupModel, buildGroupActions } from '../presenters';
 
 /**
  * GroupRoute
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
- * Verbatim JSX. No behavior change.
+ * Refactored to use presenter functions — WP8.0
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -14,131 +15,18 @@ import { GroupScreen } from '../../screens';
  * }} props
  */
 export function GroupRoute({ app, handlers }) {
-  // Destructure from app
-  const {
-    state,
-    groupGuest,
-    memberIdentity,
-    derived,
-    alert,
-    timeout,
-    mobile,
-    search,
-    streak,
-    CONSTANTS,
-  } = app;
-  const { data, showAddPlayer, isAssigning, isJoiningWaitlist, availableCourts } = state;
-  const { courtSelection } = data;
-  const {
-    currentGroup,
-    showGuestForm,
-    guestName,
-    guestSponsor,
-    showGuestNameError,
-    showSponsorError,
-    handleRemovePlayer,
-    handleSelectSponsor,
-    handleCancelGuest,
-  } = groupGuest;
-  const { memberNumber, frequentPartners, frequentPartnersLoading } = memberIdentity;
-  const { isMobileView } = derived;
-  const { showAlert, alertMessage } = alert;
-  const { showTimeoutWarning } = timeout;
-  const { mobileFlow, preselectedCourt } = mobile;
-  const {
-    searchInput,
-    showSuggestions,
-    effectiveSearchInput,
-    addPlayerSearch,
-    showAddPlayerSuggestions,
-    effectiveAddPlayerSearch,
-    getAutocompleteSuggestions,
-    handleGroupSearchChange,
-    handleGroupSearchFocus,
-    handleAddPlayerSearchChange,
-    handleAddPlayerSearchFocus,
-  } = search;
-  const { registrantStreak, showStreakModal, streakAcknowledged, setStreakAcknowledged } = streak;
+  // Build props via presenter functions
+  const model = buildGroupModel(app);
+  const actions = buildGroupActions(app, handlers);
 
-  // Destructure from handlers
-  const {
-    handleGroupSuggestionClick,
-    handleAddPlayerSuggestionClick,
-    handleToggleAddPlayer,
-    handleToggleGuestForm,
-    handleGuestNameChange,
-    handleAddGuest,
-    addFrequentPartner,
-    handleGroupSelectCourt,
-    handleGroupJoinWaitlist,
-    handleGroupGoBack,
-    resetForm,
-    isPlayerAlreadyPlaying,
-    sameGroup,
-    handleStreakAcknowledge,
-  } = handlers;
+  // Route-internal state for Streak Modal (not passed to GroupScreen)
+  const { streak } = app;
+  const { registrantStreak, showStreakModal, streakAcknowledged, setStreakAcknowledged } = streak;
+  const { handleStreakAcknowledge } = handlers;
 
   return (
     <>
-      <GroupScreen
-        // Data
-        data={data}
-        currentGroup={currentGroup}
-        memberNumber={memberNumber}
-        availableCourts={availableCourts}
-        courtSelection={courtSelection}
-        frequentPartners={frequentPartners}
-        frequentPartnersLoading={frequentPartnersLoading}
-        // UI state
-        showAlert={showAlert}
-        alertMessage={alertMessage}
-        showTimeoutWarning={showTimeoutWarning}
-        isMobileView={isMobileView}
-        // Mobile flow
-        mobileFlow={mobileFlow}
-        preselectedCourt={preselectedCourt}
-        // Search state
-        searchInput={searchInput}
-        showSuggestions={showSuggestions}
-        effectiveSearchInput={effectiveSearchInput}
-        // Add player state
-        showAddPlayer={showAddPlayer}
-        addPlayerSearch={addPlayerSearch}
-        showAddPlayerSuggestions={showAddPlayerSuggestions}
-        effectiveAddPlayerSearch={effectiveAddPlayerSearch}
-        // Guest form state
-        showGuestForm={showGuestForm}
-        guestName={guestName}
-        guestSponsor={guestSponsor}
-        showGuestNameError={showGuestNameError}
-        showSponsorError={showSponsorError}
-        // Callbacks
-        onSearchChange={handleGroupSearchChange}
-        onSearchFocus={handleGroupSearchFocus}
-        onSuggestionClick={handleGroupSuggestionClick}
-        onAddPlayerSearchChange={handleAddPlayerSearchChange}
-        onAddPlayerSearchFocus={handleAddPlayerSearchFocus}
-        onAddPlayerSuggestionClick={handleAddPlayerSuggestionClick}
-        onToggleAddPlayer={handleToggleAddPlayer}
-        onToggleGuestForm={handleToggleGuestForm}
-        onRemovePlayer={handleRemovePlayer}
-        onSelectSponsor={handleSelectSponsor}
-        onGuestNameChange={handleGuestNameChange}
-        onAddGuest={handleAddGuest}
-        onCancelGuest={handleCancelGuest}
-        onAddFrequentPartner={addFrequentPartner}
-        onSelectCourt={handleGroupSelectCourt}
-        isAssigning={isAssigning}
-        onJoinWaitlist={handleGroupJoinWaitlist}
-        joiningWaitlist={isJoiningWaitlist}
-        onGoBack={handleGroupGoBack}
-        onStartOver={resetForm}
-        // Utilities
-        getAutocompleteSuggestions={getAutocompleteSuggestions}
-        isPlayerAlreadyPlaying={isPlayerAlreadyPlaying}
-        sameGroup={sameGroup}
-        CONSTANTS={CONSTANTS}
-      />
+      <GroupScreen {...model} {...actions} />
 
       {/* Uncleared Session Streak Modal (streak >= 3) */}
       {showStreakModal && (
