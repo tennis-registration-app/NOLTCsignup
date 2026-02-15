@@ -3,6 +3,7 @@ import React from 'react';
 import { SuccessScreen } from '../../screens';
 import { AlertDisplay, ToastHost } from '../../components';
 import { logger } from '../../../lib/logger.js';
+import { buildSuccessModel, buildSuccessActions } from '../presenters';
 
 // Platform bridge
 import { getTennisDomain, getTennisNamespaceConfig } from '../../../platform';
@@ -11,7 +12,7 @@ import { getTennisDomain, getTennisNamespaceConfig } from '../../../platform';
  * SuccessRoute
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
- * Verbatim JSX. No behavior change.
+ * Refactored to use presenter functions — WP8.0
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -19,44 +20,18 @@ import { getTennisDomain, getTennisNamespaceConfig } from '../../../platform';
  * }} props
  */
 export function SuccessRoute({ app, handlers }) {
-  // Destructure from app
-  const {
-    state,
-    groupGuest,
-    alert,
-    mobile,
-    blockAdmin,
-    courtAssignment,
-    streak,
-    services,
-    CONSTANTS,
-    TENNIS_CONFIG,
-  } = app;
-  const {
-    replacedGroup,
-    ballPriceCents,
-    waitlistPosition,
-    data,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
-  } = state;
-  const { blockWarningMinutes } = blockAdmin;
-  const { justAssignedCourt, assignedSessionId, assignedEndTime } = courtAssignment;
-  const { registrantStreak } = streak;
-  const { currentGroup } = groupGuest;
+  // Route-internal state for alert display
+  const { alert, state, courtAssignment, CONSTANTS } = app;
   const { showAlert, alertMessage } = alert;
-  const { mobileFlow, mobileCountdown } = mobile;
-  const { getCourtBlockStatus } = blockAdmin;
-  const { backend } = services;
+  const { waitlistPosition } = state;
+  const { justAssignedCourt } = courtAssignment;
 
-  // Destructure from handlers
-  const { changeCourt, resetForm, getCourtData } = handlers;
-
-  const isCourtAssignment = justAssignedCourt !== null;
+  // Get court data for computed values
+  const { getCourtData } = handlers;
   const courtData = getCourtData();
-  // Find court by number (API may return courts in different order than array index)
+
+  // Compute route-level values
+  const isCourtAssignment = justAssignedCourt !== null;
   const courts = courtData.courts || [];
   const assignedCourt = justAssignedCourt
     ? courts.find((c) => c.number === justAssignedCourt) || courts[justAssignedCourt - 1]
@@ -117,61 +92,16 @@ export function SuccessRoute({ app, handlers }) {
     }
   }
 
+  // Build props via presenter functions
+  const computed = { isCourtAssignment, assignedCourt, position, estimatedWait };
+  const model = buildSuccessModel(app, computed);
+  const actions = buildSuccessActions(app, handlers);
+
   return (
     <>
       <ToastHost />
       <AlertDisplay show={showAlert} message={alertMessage} />
-      <SuccessScreen
-        isCourtAssignment={isCourtAssignment}
-        justAssignedCourt={justAssignedCourt}
-        assignedCourt={assignedCourt}
-        sessionId={assignedSessionId}
-        assignedEndTime={assignedEndTime}
-        replacedGroup={replacedGroup}
-        canChangeCourt={canChangeCourt}
-        changeTimeRemaining={changeTimeRemaining}
-        position={position}
-        estimatedWait={estimatedWait}
-        currentGroup={currentGroup}
-        mobileCountdown={mobileFlow ? mobileCountdown : null}
-        isMobile={mobileFlow}
-        isTimeLimited={isTimeLimited}
-        timeLimitReason={timeLimitReason}
-        registrantStreak={registrantStreak}
-        onChangeCourt={changeCourt}
-        onHome={resetForm}
-        ballPriceCents={ballPriceCents}
-        onPurchaseBalls={async (sessionId, accountId, options) => {
-          logger.debug('SuccessRoute', 'Ball purchase handler called', {
-            sessionId,
-            accountId,
-            options,
-          });
-          const result = await backend.commands.purchaseBalls({
-            sessionId,
-            accountId,
-            splitBalls: options?.splitBalls || false,
-            splitAccountIds: options?.splitAccountIds || null,
-          });
-          logger.debug('SuccessRoute', 'Ball purchase API result', result);
-          return result;
-        }}
-        onLookupMemberAccount={async (memberNumber) => {
-          const members = await backend.directory.getMembersByAccount(memberNumber);
-          return members;
-        }}
-        TENNIS_CONFIG={TENNIS_CONFIG}
-        getCourtBlockStatus={getCourtBlockStatus}
-        upcomingBlocks={data.upcomingBlocks}
-        blockWarningMinutes={blockWarningMinutes}
-        onUpdateSessionTournament={async (sessionId, isTournamentFlag) => {
-          const result = await backend.commands.updateSessionTournament({
-            sessionId,
-            isTournament: isTournamentFlag,
-          });
-          return result;
-        }}
-      />
+      <SuccessScreen {...model} {...actions} />
     </>
   );
 }
