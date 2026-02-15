@@ -344,394 +344,516 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       {/* Left column */}
       <div className="space-y-6">
         {/* Pricing card */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
-            <button
-              onClick={savePricing}
-              disabled={!pricingChanged}
-              data-testid="admin-settings-save"
-              className={`px-4 py-2 rounded text-sm font-medium ${
-                pricingChanged
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : pricingSaveStatus === 'saved'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {pricingSaveStatus === 'saving'
-                ? 'Saving...'
-                : pricingSaveStatus === 'saved'
-                  ? '✓ Saved'
-                  : 'Save Pricing'}
-            </button>
-          </div>
-          <div className="flex gap-12">
-            {/* Left: Tennis Ball Can */}
-            <div>
-              <h4 className="text-base font-semibold text-gray-700 mb-2 whitespace-nowrap">
-                Tennis Ball Can
-              </h4>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500">$</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={ballPriceInput}
-                  onChange={(e) => handlePricingChange('ballPrice', e.target.value)}
-                  className="w-20 p-2 border rounded"
-                />
-              </div>
-            </div>
-
-            {/* Right: Guest Fees */}
-            <div>
-              <h4 className="text-base font-semibold text-gray-700 mb-2">Guest Fees</h4>
-              <div className="flex gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">Weekday</label>
-                  <span className="text-gray-500">$</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={weekdayFeeInput}
-                    onChange={(e) => handlePricingChange('weekdayFee', e.target.value)}
-                    className="w-20 p-2 border rounded"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">Weekend</label>
-                  <span className="text-gray-500">$</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={weekendFeeInput}
-                    onChange={(e) => handlePricingChange('weekendFee', e.target.value)}
-                    className="w-20 p-2 border rounded"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PricingSettingsCard
+          ballPriceInput={ballPriceInput}
+          weekdayFeeInput={weekdayFeeInput}
+          weekendFeeInput={weekendFeeInput}
+          pricingChanged={pricingChanged}
+          pricingSaveStatus={pricingSaveStatus}
+          handlePricingChange={handlePricingChange}
+          savePricing={savePricing}
+        />
 
         {/* Regular Hours card */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Regular Tennis Court Hours</h3>
-            <button
-              onClick={saveOperatingHours}
-              disabled={!hoursChanged}
-              className={`px-4 py-2 rounded text-sm font-medium ${
-                hoursChanged
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : hoursSaveStatus === 'saved'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {hoursSaveStatus === 'saving'
-                ? 'Saving...'
-                : hoursSaveStatus === 'saved'
-                  ? '✓ Saved'
-                  : 'Save Hours'}
-            </button>
-          </div>
-          <div className="flex flex-col gap-2">
-            {operatingHours.map((day) => (
-              <div
-                key={day.dayOfWeek}
-                className={`flex items-center gap-4 p-2 rounded-md ${
-                  day.isClosed ? 'bg-red-50' : 'bg-gray-50'
-                }`}
-              >
-                <span className="w-24 font-medium">{day.dayName}</span>
-                <label className="flex items-center gap-1 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={day.isClosed}
-                    onChange={(e) =>
-                      handleHoursChange(day.dayOfWeek, day.opensAt, day.closesAt, e.target.checked)
-                    }
-                  />
-                  Closed
-                </label>
-                {!day.isClosed && (
-                  <>
-                    <input
-                      type="time"
-                      value={day.opensAt?.slice(0, 5) || '06:00'}
-                      onChange={(e) =>
-                        e.target.value &&
-                        handleHoursChange(
-                          day.dayOfWeek,
-                          e.target.value + ':00',
-                          day.closesAt,
-                          false
-                        )
-                      }
-                      className="px-2 py-1 rounded border border-gray-300"
-                    />
-                    <span className="text-gray-500">to</span>
-                    <input
-                      type="time"
-                      value={day.closesAt?.slice(0, 5) || '21:00'}
-                      onChange={(e) =>
-                        e.target.value &&
-                        handleHoursChange(day.dayOfWeek, day.opensAt, e.target.value + ':00', false)
-                      }
-                      className="px-2 py-1 rounded border border-gray-300"
-                    />
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+        <OperatingHoursCard
+          operatingHours={operatingHours}
+          hoursChanged={hoursChanged}
+          hoursSaveStatus={hoursSaveStatus}
+          handleHoursChange={handleHoursChange}
+          saveOperatingHours={saveOperatingHours}
+        />
 
         {/* Auto-Clear card */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Court Auto-Clear</h3>
-            <button
-              onClick={saveAutoClear}
-              disabled={!autoClearChanged}
-              className={`px-4 py-2 rounded text-sm font-medium ${
-                autoClearChanged
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : autoClearSaveStatus === 'saved'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {autoClearSaveStatus === 'saving'
-                ? 'Saving...'
-                : autoClearSaveStatus === 'saved'
-                  ? '✓ Saved'
-                  : 'Save'}
-            </button>
-          </div>
-
-          {/* Enable toggle */}
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              type="button"
-              onClick={() => handleAutoClearChange('enabled', !autoClearEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                autoClearEnabled ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  autoClearEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className="text-sm font-medium text-gray-700">Enable Auto-Clear</span>
-          </div>
-
-          {/* Settings (shown only when enabled) */}
-          {autoClearEnabled && (
-            <div className="space-y-3 pl-1">
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 w-48">
-                  Show &quot;check status&quot; warning after
-                </label>
-                <input
-                  type="number"
-                  min="30"
-                  max="600"
-                  value={checkStatusMinutes}
-                  onChange={(e) => handleAutoClearChange('checkStatusMinutes', e.target.value)}
-                  className="w-20 p-2 border rounded text-center"
-                />
-                <span className="text-sm text-gray-500">minutes</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-600 w-48">Auto-clear session after</label>
-                <input
-                  type="number"
-                  min="60"
-                  max="720"
-                  value={autoClearMinutes}
-                  onChange={(e) => handleAutoClearChange('autoClearMinutes', e.target.value)}
-                  className="w-20 p-2 border rounded text-center"
-                />
-                <span className="text-sm text-gray-500">minutes</span>
-              </div>
-              <p className="text-xs text-gray-400 italic">
-                Warning threshold must be less than auto-clear threshold
-              </p>
-            </div>
-          )}
-
-          {/* Block warning setting - always visible */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-600 w-48">Block warning notification</label>
-              <input
-                type="number"
-                min="15"
-                max="120"
-                value={blockWarningMinutes}
-                onChange={(e) => handleAutoClearChange('blockWarningMinutes', e.target.value)}
-                className="w-20 p-2 border rounded text-center"
-              />
-              <span className="text-sm text-gray-500">minutes</span>
-            </div>
-            <p className="text-xs text-gray-400 italic mt-1">
-              Display upcoming block warnings on courtboard and registration
-            </p>
-          </div>
-
-          {/* Error message */}
-          {autoClearError && <p className="text-red-600 text-sm mt-2">{autoClearError}</p>}
-        </div>
+        <AutoClearSettingsCard
+          autoClearEnabled={autoClearEnabled}
+          autoClearMinutes={autoClearMinutes}
+          checkStatusMinutes={checkStatusMinutes}
+          blockWarningMinutes={blockWarningMinutes}
+          autoClearChanged={autoClearChanged}
+          autoClearSaveStatus={autoClearSaveStatus}
+          autoClearError={autoClearError}
+          handleAutoClearChange={handleAutoClearChange}
+          saveAutoClear={saveAutoClear}
+        />
       </div>
 
       {/* Right column - Holiday card spans full height */}
       <div>
-        {/* Holiday & Special Hours card */}
-        <div className="bg-white rounded-lg shadow-sm p-6 h-full">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Holiday & Special Hours</h3>
-
-          {/* Add Override Form */}
-          <div className="mb-4 p-3 bg-blue-50 rounded-md">
-            <div className="flex flex-wrap gap-2 items-start">
-              <div>
-                <input
-                  type="date"
-                  value={overrideDate}
-                  onChange={(e) => {
-                    setOverrideDate(e.target.value);
-                    clearOverrideError('date');
-                  }}
-                  min={new Date().toISOString().split('T')[0]}
-                  className={`px-2 py-1 rounded border ${overrideErrors.date ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {overrideErrors.date && (
-                  <p className="text-red-600 text-xs mt-1">{overrideErrors.date}</p>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="time"
-                    value={overrideOpens}
-                    onChange={(e) => {
-                      setOverrideOpens(e.target.value);
-                      clearOverrideError('times');
-                    }}
-                    className={`px-2 py-1 rounded border ${overrideErrors.times ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                  <span className="text-gray-500">to</span>
-                  <input
-                    type="time"
-                    value={overrideCloses}
-                    onChange={(e) => {
-                      setOverrideCloses(e.target.value);
-                      clearOverrideError('times');
-                    }}
-                    className={`px-2 py-1 rounded border ${overrideErrors.times ? 'border-red-500' : 'border-gray-300'}`}
-                  />
-                </div>
-                {overrideErrors.times && (
-                  <p className="text-red-600 text-xs mt-1">{overrideErrors.times}</p>
-                )}
-              </div>
-              <div className="flex-1 min-w-[150px]">
-                <input
-                  type="text"
-                  value={overrideReason}
-                  onChange={(e) => {
-                    setOverrideReason(e.target.value);
-                    clearOverrideError('reason');
-                  }}
-                  placeholder="Reason (e.g., Holiday)"
-                  className={`w-full px-2 py-1 rounded border ${overrideErrors.reason ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {overrideErrors.reason && (
-                  <p className="text-red-600 text-xs mt-1">{overrideErrors.reason}</p>
-                )}
-              </div>
-              <label className="flex items-center gap-1 text-sm py-1">
-                <input
-                  type="checkbox"
-                  checked={overrideClosed}
-                  onChange={(e) => setOverrideClosed(e.target.checked)}
-                />
-                Closed
-              </label>
-              <button
-                onClick={async () => {
-                  if (!validateOverrideForm()) return;
-                  await addHoursOverride(
-                    overrideDate,
-                    overrideClosed ? null : overrideOpens + ':00',
-                    overrideClosed ? null : overrideCloses + ':00',
-                    overrideClosed,
-                    overrideReason
-                  );
-                  // Reset form after successful add
-                  setOverrideDate('');
-                  setOverrideOpens('06:00');
-                  setOverrideCloses('21:00');
-                  setOverrideReason('');
-                  setOverrideClosed(false);
-                  setOverrideErrors({});
-                }}
-                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-
-          {/* Existing Overrides */}
-          {hoursOverrides.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {hoursOverrides.map((override) => (
-                <div
-                  key={override.date}
-                  className={`flex items-center justify-between px-3 py-2 rounded-md text-sm ${
-                    override.isClosed ? 'bg-red-50' : 'bg-green-50'
-                  }`}
-                >
-                  <span>
-                    <strong>
-                      {new Date(override.date + 'T12:00:00').toLocaleDateString('en-US', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </strong>
-                    {override.reason && <span className="text-gray-500"> — {override.reason}</span>}
-                  </span>
-                  <span className="flex items-center gap-3">
-                    {override.isClosed ? (
-                      <span className="text-red-600 font-medium">Closed</span>
-                    ) : (
-                      <span>
-                        {override.opensAt?.slice(0, 5)} - {override.closesAt?.slice(0, 5)}
-                      </span>
-                    )}
-                    <button
-                      onClick={() => deleteHoursOverride(override.date)}
-                      className="px-2 py-0.5 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm italic">No upcoming schedule overrides</p>
-          )}
-        </div>
+        <HoursOverridesCard
+          hoursOverrides={hoursOverrides}
+          overrideDate={overrideDate}
+          setOverrideDate={setOverrideDate}
+          overrideOpens={overrideOpens}
+          setOverrideOpens={setOverrideOpens}
+          overrideCloses={overrideCloses}
+          setOverrideCloses={setOverrideCloses}
+          overrideReason={overrideReason}
+          setOverrideReason={setOverrideReason}
+          overrideClosed={overrideClosed}
+          setOverrideClosed={setOverrideClosed}
+          overrideErrors={overrideErrors}
+          setOverrideErrors={setOverrideErrors}
+          clearOverrideError={clearOverrideError}
+          validateOverrideForm={validateOverrideForm}
+          addHoursOverride={addHoursOverride}
+          deleteHoursOverride={deleteHoursOverride}
+        />
       </div>
     </div>
   );
 };
+
+/**
+ * OperatingHoursCard - Weekly operating hours settings
+ */
+const OperatingHoursCard = ({
+  operatingHours,
+  hoursChanged,
+  hoursSaveStatus,
+  handleHoursChange,
+  saveOperatingHours,
+}) => (
+  <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold text-gray-800">Regular Tennis Court Hours</h3>
+      <button
+        onClick={saveOperatingHours}
+        disabled={!hoursChanged}
+        className={`px-4 py-2 rounded text-sm font-medium ${
+          hoursChanged
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : hoursSaveStatus === 'saved'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+        }`}
+      >
+        {hoursSaveStatus === 'saving'
+          ? 'Saving...'
+          : hoursSaveStatus === 'saved'
+            ? '✓ Saved'
+            : 'Save Hours'}
+      </button>
+    </div>
+    <div className="flex flex-col gap-2">
+      {operatingHours.map((day) => (
+        <div
+          key={day.dayOfWeek}
+          className={`flex items-center gap-4 p-2 rounded-md ${
+            day.isClosed ? 'bg-red-50' : 'bg-gray-50'
+          }`}
+        >
+          <span className="w-24 font-medium">{day.dayName}</span>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="checkbox"
+              checked={day.isClosed}
+              onChange={(e) =>
+                handleHoursChange(day.dayOfWeek, day.opensAt, day.closesAt, e.target.checked)
+              }
+            />
+            Closed
+          </label>
+          {!day.isClosed && (
+            <>
+              <input
+                type="time"
+                value={day.opensAt?.slice(0, 5) || '06:00'}
+                onChange={(e) =>
+                  e.target.value &&
+                  handleHoursChange(day.dayOfWeek, e.target.value + ':00', day.closesAt, false)
+                }
+                className="px-2 py-1 rounded border border-gray-300"
+              />
+              <span className="text-gray-500">to</span>
+              <input
+                type="time"
+                value={day.closesAt?.slice(0, 5) || '21:00'}
+                onChange={(e) =>
+                  e.target.value &&
+                  handleHoursChange(day.dayOfWeek, day.opensAt, e.target.value + ':00', false)
+                }
+                className="px-2 py-1 rounded border border-gray-300"
+              />
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/**
+ * AutoClearSettingsCard - Auto-clear and block warning settings
+ */
+const AutoClearSettingsCard = ({
+  autoClearEnabled,
+  autoClearMinutes,
+  checkStatusMinutes,
+  blockWarningMinutes,
+  autoClearChanged,
+  autoClearSaveStatus,
+  autoClearError,
+  handleAutoClearChange,
+  saveAutoClear,
+}) => (
+  <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold text-gray-900">Court Auto-Clear</h3>
+      <button
+        onClick={saveAutoClear}
+        disabled={!autoClearChanged}
+        className={`px-4 py-2 rounded text-sm font-medium ${
+          autoClearChanged
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : autoClearSaveStatus === 'saved'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+        }`}
+      >
+        {autoClearSaveStatus === 'saving'
+          ? 'Saving...'
+          : autoClearSaveStatus === 'saved'
+            ? '✓ Saved'
+            : 'Save'}
+      </button>
+    </div>
+
+    {/* Enable toggle */}
+    <div className="flex items-center gap-3 mb-4">
+      <button
+        type="button"
+        onClick={() => handleAutoClearChange('enabled', !autoClearEnabled)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          autoClearEnabled ? 'bg-blue-600' : 'bg-gray-300'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            autoClearEnabled ? 'translate-x-6' : 'translate-x-1'
+          }`}
+        />
+      </button>
+      <span className="text-sm font-medium text-gray-700">Enable Auto-Clear</span>
+    </div>
+
+    {/* Settings (shown only when enabled) */}
+    {autoClearEnabled && (
+      <div className="space-y-3 pl-1">
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-gray-600 w-48">
+            Show &quot;check status&quot; warning after
+          </label>
+          <input
+            type="number"
+            min="30"
+            max="600"
+            value={checkStatusMinutes}
+            onChange={(e) => handleAutoClearChange('checkStatusMinutes', e.target.value)}
+            className="w-20 p-2 border rounded text-center"
+          />
+          <span className="text-sm text-gray-500">minutes</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-sm text-gray-600 w-48">Auto-clear session after</label>
+          <input
+            type="number"
+            min="60"
+            max="720"
+            value={autoClearMinutes}
+            onChange={(e) => handleAutoClearChange('autoClearMinutes', e.target.value)}
+            className="w-20 p-2 border rounded text-center"
+          />
+          <span className="text-sm text-gray-500">minutes</span>
+        </div>
+        <p className="text-xs text-gray-400 italic">
+          Warning threshold must be less than auto-clear threshold
+        </p>
+      </div>
+    )}
+
+    {/* Block warning setting - always visible */}
+    <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="flex items-center gap-3">
+        <label className="text-sm text-gray-600 w-48">Block warning notification</label>
+        <input
+          type="number"
+          min="15"
+          max="120"
+          value={blockWarningMinutes}
+          onChange={(e) => handleAutoClearChange('blockWarningMinutes', e.target.value)}
+          className="w-20 p-2 border rounded text-center"
+        />
+        <span className="text-sm text-gray-500">minutes</span>
+      </div>
+      <p className="text-xs text-gray-400 italic mt-1">
+        Display upcoming block warnings on courtboard and registration
+      </p>
+    </div>
+
+    {/* Error message */}
+    {autoClearError && <p className="text-red-600 text-sm mt-2">{autoClearError}</p>}
+  </div>
+);
+
+/**
+ * HoursOverridesCard - Holiday and special hours overrides
+ */
+const HoursOverridesCard = ({
+  hoursOverrides,
+  overrideDate,
+  setOverrideDate,
+  overrideOpens,
+  setOverrideOpens,
+  overrideCloses,
+  setOverrideCloses,
+  overrideReason,
+  setOverrideReason,
+  overrideClosed,
+  setOverrideClosed,
+  overrideErrors,
+  setOverrideErrors,
+  clearOverrideError,
+  validateOverrideForm,
+  addHoursOverride,
+  deleteHoursOverride,
+}) => (
+  <div className="bg-white rounded-lg shadow-sm p-6 h-full">
+    <h3 className="text-lg font-semibold text-gray-800 mb-4">Holiday &amp; Special Hours</h3>
+
+    {/* Add Override Form */}
+    <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+      <h4 className="text-sm font-medium text-gray-700 mb-3">Add Override</h4>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Date</label>
+          <input
+            type="date"
+            value={overrideDate}
+            onChange={(e) => {
+              setOverrideDate(e.target.value);
+              clearOverrideError('date');
+            }}
+            className={`w-full p-2 border rounded ${overrideErrors.date ? 'border-red-500' : 'border-gray-300'}`}
+          />
+          {overrideErrors.date && (
+            <p className="text-red-500 text-xs mt-1">{overrideErrors.date}</p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="overrideClosed"
+            checked={overrideClosed}
+            onChange={(e) => setOverrideClosed(e.target.checked)}
+          />
+          <label htmlFor="overrideClosed" className="text-sm text-gray-600">
+            Closed all day
+          </label>
+        </div>
+
+        {!overrideClosed && (
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-sm text-gray-600 mb-1">Opens</label>
+              <input
+                type="time"
+                value={overrideOpens}
+                onChange={(e) => {
+                  setOverrideOpens(e.target.value);
+                  clearOverrideError('times');
+                }}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm text-gray-600 mb-1">Closes</label>
+              <input
+                type="time"
+                value={overrideCloses}
+                onChange={(e) => {
+                  setOverrideCloses(e.target.value);
+                  clearOverrideError('times');
+                }}
+                className="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+          </div>
+        )}
+        {overrideErrors.times && <p className="text-red-500 text-xs">{overrideErrors.times}</p>}
+
+        <div>
+          <label className="block text-sm text-gray-600 mb-1">Reason</label>
+          <input
+            type="text"
+            value={overrideReason}
+            onChange={(e) => {
+              setOverrideReason(e.target.value);
+              clearOverrideError('reason');
+            }}
+            placeholder="e.g., Christmas Day, Club Tournament"
+            className={`w-full p-2 border rounded ${overrideErrors.reason ? 'border-red-500' : 'border-gray-300'}`}
+          />
+          {overrideErrors.reason && (
+            <p className="text-red-500 text-xs mt-1">{overrideErrors.reason}</p>
+          )}
+        </div>
+
+        <button
+          onClick={() => {
+            if (validateOverrideForm()) {
+              addHoursOverride(
+                overrideDate,
+                overrideClosed ? null : overrideOpens + ':00',
+                overrideClosed ? null : overrideCloses + ':00',
+                overrideClosed,
+                overrideReason
+              );
+              // Clear form
+              setOverrideDate('');
+              setOverrideOpens('06:00');
+              setOverrideCloses('21:00');
+              setOverrideReason('');
+              setOverrideClosed(false);
+              setOverrideErrors({});
+            }
+          }}
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+        >
+          Add Override
+        </button>
+      </div>
+    </div>
+
+    {/* Existing Overrides */}
+    <div>
+      <h4 className="text-sm font-medium text-gray-700 mb-3">Upcoming Overrides</h4>
+      {hoursOverrides.length === 0 ? (
+        <p className="text-gray-500 text-sm italic">No overrides scheduled</p>
+      ) : (
+        <div className="space-y-2">
+          {hoursOverrides.map((override) => (
+            <div
+              key={override.date}
+              className={`flex items-center justify-between p-3 rounded-lg ${
+                override.isClosed ? 'bg-red-50' : 'bg-gray-50'
+              }`}
+            >
+              <div>
+                <span className="font-medium">
+                  {new Date(override.date + 'T12:00:00').toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+                <span className="text-gray-500 mx-2">—</span>
+                <span className="text-gray-600">{override.reason}</span>
+                {!override.isClosed && (
+                  <span className="text-gray-400 ml-2 text-sm">
+                    ({override.opensAt?.slice(0, 5)} - {override.closesAt?.slice(0, 5)})
+                  </span>
+                )}
+                {override.isClosed && (
+                  <span className="text-red-600 ml-2 text-sm font-medium">CLOSED</span>
+                )}
+              </div>
+              <button
+                onClick={() => deleteHoursOverride(override.date)}
+                className="text-red-500 hover:text-red-700 text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+/**
+ * PricingSettingsCard - Ball price and guest fees settings
+ */
+const PricingSettingsCard = ({
+  ballPriceInput,
+  weekdayFeeInput,
+  weekendFeeInput,
+  pricingChanged,
+  pricingSaveStatus,
+  handlePricingChange,
+  savePricing,
+}) => (
+  <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="flex items-center justify-between mb-4">
+      <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>
+      <button
+        onClick={savePricing}
+        disabled={!pricingChanged}
+        data-testid="admin-settings-save"
+        className={`px-4 py-2 rounded text-sm font-medium ${
+          pricingChanged
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : pricingSaveStatus === 'saved'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+        }`}
+      >
+        {pricingSaveStatus === 'saving'
+          ? 'Saving...'
+          : pricingSaveStatus === 'saved'
+            ? '✓ Saved'
+            : 'Save Pricing'}
+      </button>
+    </div>
+    <div className="flex gap-12">
+      {/* Left: Tennis Ball Can */}
+      <div>
+        <h4 className="text-base font-semibold text-gray-700 mb-2 whitespace-nowrap">
+          Tennis Ball Can
+        </h4>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">$</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            value={ballPriceInput}
+            onChange={(e) => handlePricingChange('ballPrice', e.target.value)}
+            className="w-20 p-2 border rounded"
+          />
+        </div>
+      </div>
+
+      {/* Right: Guest Fees */}
+      <div>
+        <h4 className="text-base font-semibold text-gray-700 mb-2">Guest Fees</h4>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Weekday</label>
+            <span className="text-gray-500">$</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={weekdayFeeInput}
+              onChange={(e) => handlePricingChange('weekdayFee', e.target.value)}
+              className="w-20 p-2 border rounded"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Weekend</label>
+            <span className="text-gray-500">$</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={weekendFeeInput}
+              onChange={(e) => handlePricingChange('weekendFee', e.target.value)}
+              className="w-20 p-2 border rounded"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 export default SystemSettings;
