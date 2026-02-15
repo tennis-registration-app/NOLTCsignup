@@ -6,6 +6,7 @@ import ErrorBoundary from '../../../shared/components/ErrorBoundary.jsx';
 import { API_CONFIG } from '../../../lib/apiConfig.js';
 import { logger } from '../../../lib/logger.js';
 import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
+import { buildCourtModel } from '../presenters';
 
 // Platform bridge
 import { getTennisUI } from '../../../platform';
@@ -14,7 +15,7 @@ import { getTennisUI } from '../../../platform';
  * CourtRoute
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
- * Verbatim JSX. No behavior change.
+ * Refactored to use presenter functions — WP8.0
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -25,25 +26,17 @@ export function CourtRoute({ app, handlers }) {
   // Destructure from app
   const {
     state,
-    derived,
-    groupGuest,
     alert,
     mobile,
     refs,
     setters,
     services,
     courtAssignment,
+    groupGuest,
     computeRegistrationCourtSelection,
     CONSTANTS,
   } = app;
-  const {
-    isChangingCourt,
-    hasWaitlistPriority,
-    currentWaitlistEntryId,
-    displacement,
-    originalCourtData,
-  } = state;
-  const { hasAssignedCourt, isMobileView } = derived;
+  const { isChangingCourt, hasWaitlistPriority, displacement, originalCourtData } = state;
   const { justAssignedCourt } = courtAssignment;
   const { currentGroup } = groupGuest;
   const { showAlert, alertMessage, showAlertMessage } = alert;
@@ -79,8 +72,7 @@ export function CourtRoute({ app, handlers }) {
   } = handlers;
 
   // Get court data from React state
-  const reactData = getCourtData();
-  const courtData = reactData;
+  const courtData = getCourtData();
   const courts = courtData.courts || [];
 
   // Compute court selection using centralized policy (with 20-min threshold for blocks)
@@ -101,9 +93,17 @@ export function CourtRoute({ app, handlers }) {
   }
 
   const hasWaitlistEntries = courtData.waitlist.length > 0;
-
-  // Pass showingOvertimeCourts to CourtSelectionScreen for the "overtime" messaging
   const showingOvertimeCourts = courtSelection.showingOvertimeCourts;
+
+  // Build model props via presenter
+  const computed = {
+    availableCourts: computedAvailableCourts,
+    showingOvertimeCourts,
+    hasWaitingGroups: hasWaitlistEntries,
+    waitingGroupsCount: courtData.waitlist.length,
+    upcomingBlocks: courtData.upcomingBlocks,
+  };
+  const model = buildCourtModel(app, computed);
 
   return (
     <>
@@ -150,15 +150,7 @@ export function CourtRoute({ app, handlers }) {
 
       <ErrorBoundary context="Court Selection">
         <CourtSelectionScreen
-          availableCourts={computedAvailableCourts}
-          showingOvertimeCourts={showingOvertimeCourts}
-          hasWaitingGroups={hasWaitlistEntries}
-          waitingGroupsCount={courtData.waitlist.length}
-          currentGroup={currentGroup}
-          isMobileView={isMobileView}
-          upcomingBlocks={courtData.upcomingBlocks}
-          hasWaitlistPriority={hasWaitlistPriority}
-          currentWaitlistEntryId={currentWaitlistEntryId}
+          {...model}
           onDeferWaitlist={async (entryId) => {
             try {
               const res = await backend.commands.deferWaitlistEntry({
