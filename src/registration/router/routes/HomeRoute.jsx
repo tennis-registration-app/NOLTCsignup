@@ -1,12 +1,13 @@
 // @ts-check
 import React from 'react';
 import { HomeScreen } from '../../screens';
+import { buildHomeModel, buildHomeActions } from '../presenters';
 
 /**
  * HomeRoute
  * Extracted from RegistrationRouter — WP6.0.1
  * Collapsed to app/handlers only — WP6.0.2b
- * Verbatim JSX. No behavior change.
+ * Refactored to use presenter functions — WP8.0
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -14,48 +15,13 @@ import { HomeScreen } from '../../screens';
  * }} props
  */
 export function HomeRoute({ app, handlers }) {
-  // Destructure from app
-  const {
-    search,
-    setters,
-    memberIdentity,
-    derived,
-    alert,
-    mobile,
-    groupGuest,
-    CONSTANTS,
-    TENNIS_CONFIG,
-  } = app;
-  const {
-    searchInput,
-    setSearchInput,
-    showSuggestions,
-    setShowSuggestions,
-    isSearching,
-    effectiveSearchInput,
-    getAutocompleteSuggestions,
-  } = search;
-  const { setCurrentScreen, setHasWaitlistPriority, setCurrentWaitlistEntryId } = setters;
-  const { setMemberNumber } = memberIdentity;
-  const {
-    canFirstGroupPlay,
-    canSecondGroupPlay,
-    firstWaitlistEntry,
-    secondWaitlistEntry,
-    firstWaitlistEntryData,
-    secondWaitlistEntryData,
-    canPassThroughGroupPlay,
-    passThroughEntry,
-    passThroughEntryData,
-    isMobileView,
-  } = derived;
-  const { showAlert, alertMessage } = alert;
-  const { checkingLocation } = mobile;
-  const { setCurrentGroup } = groupGuest;
+  // Build props via presenter functions
+  const model = buildHomeModel(app);
+  const actions = buildHomeActions(app, handlers);
 
-  // Destructure from handlers
-  const { handleSuggestionClick, markUserTyping, findMemberNumber, checkLocationAndProceed } =
-    handlers;
+  // Route-internal state for location checking overlay
+  const { mobile, TENNIS_CONFIG } = app;
+  const { checkingLocation } = mobile;
 
   return (
     <>
@@ -66,44 +32,7 @@ export function HomeRoute({ app, handlers }) {
           </div>
         </div>
       )}
-      <HomeScreen
-        // Search functionality
-        searchInput={searchInput}
-        setSearchInput={setSearchInput}
-        showSuggestions={showSuggestions}
-        setShowSuggestions={setShowSuggestions}
-        isSearching={isSearching}
-        effectiveSearchInput={effectiveSearchInput}
-        getAutocompleteSuggestions={getAutocompleteSuggestions}
-        handleSuggestionClick={handleSuggestionClick}
-        markUserTyping={markUserTyping}
-        // Navigation
-        setCurrentScreen={setCurrentScreen}
-        setCurrentGroup={setCurrentGroup}
-        setMemberNumber={setMemberNumber}
-        setHasWaitlistPriority={setHasWaitlistPriority}
-        setCurrentWaitlistEntryId={setCurrentWaitlistEntryId}
-        findMemberNumber={findMemberNumber}
-        // CTA state
-        canFirstGroupPlay={canFirstGroupPlay}
-        canSecondGroupPlay={canSecondGroupPlay}
-        firstWaitlistEntry={firstWaitlistEntry}
-        secondWaitlistEntry={secondWaitlistEntry}
-        firstWaitlistEntryData={firstWaitlistEntryData}
-        secondWaitlistEntryData={secondWaitlistEntryData}
-        canPassThroughGroupPlay={canPassThroughGroupPlay}
-        passThroughEntry={passThroughEntry}
-        passThroughEntryData={passThroughEntryData}
-        // UI state
-        showAlert={showAlert}
-        alertMessage={alertMessage}
-        isMobileView={isMobileView}
-        CONSTANTS={CONSTANTS}
-        // Clear court
-        onClearCourtClick={() => {
-          checkLocationAndProceed(() => setCurrentScreen('clearCourt', 'homeClearCourtClick'));
-        }}
-      />
+      <HomeScreen {...model} {...actions} />
     </>
   );
 }
