@@ -16,6 +16,7 @@ import '../platform/attachLegacyBlocks.js';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';
 import { migrateOldKeys } from '../platform/prefsStorage.js';
 
 // Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
@@ -42,7 +43,9 @@ waitForDependencies().then(() => {
   const root = ReactDOM.createRoot(document.getElementById('root'));
   root.render(
     <React.StrictMode>
-      <App />
+      <ErrorBoundary context="Admin Panel">
+        <App />
+      </ErrorBoundary>
     </React.StrictMode>
   );
 });
