@@ -218,7 +218,7 @@ const CourtStatusGrid = ({
 
     try {
       const blocks = (await dataStore.get('courtBlocks')) || [];
-      const activeWetCourts = wetCourts || null; // TODO(WP4): Consider defaulting to new Set() if wetCourts should be optional
+      const activeWetCourts = wetCourts || new Set();
 
       if (activeWetCourts.has(courtNum)) {
         // Remove wet court block

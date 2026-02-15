@@ -113,7 +113,6 @@ export function clearAll() {
 }
 
 // === Migration helper ===
-// TODO: Remove after one release cycle (WP5-C2a cleanup)
 // Migrates old keys to new prefixed keys. Safe and idempotent.
 // Call ONCE at application boot in a single init module.
 export function migrateOldKeys() {
