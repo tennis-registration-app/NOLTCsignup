@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 // Import shared utilities from @lib
 import {
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
@@ -12,9 +10,6 @@ import { API_CONFIG } from '../../lib/apiConfig.js';
 
 // Platform bridge for window global access
 import { getTennisDataStore, getTennisUI } from '../../platform/windowBridge.js';
-
-// WP4-3: Window global setters
-import { setLoadDataGlobal } from '../../platform/registerGlobals.js';
 
 // TennisBackend interface layer
 import { createBackend } from '../backend/index.js';
@@ -45,6 +40,9 @@ import { useRegistrationHelpers, validateGroupCompat } from './state/useRegistra
 
 // Return object builder (WP5.9.6.6a)
 import { buildRegistrationReturn } from './state/buildRegistrationReturn';
+
+// Effects module (WP5.9.6.7)
+import { useRegistrationEffects } from './effects/useRegistrationEffects';
 
 // Orchestration facade (WP5.5)
 import {
@@ -287,77 +285,18 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   });
   const { loadData } = dataLayer;
 
-  // ===== USE EFFECTS =====
-  // Note: Most effects are now handled by Runtime and DataLayer modules
-
-  // Load admin settings when entering admin screen
-  useEffect(() => {
-    const loadAdminSettings = async () => {
-      if (currentScreen === 'admin') {
-        try {
-          const settings = await dataStore?.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY);
-          if (settings) {
-            const parsed = settings || {};
-            setBallPriceInput(
-              (parsed.tennisBallPrice || TENNIS_CONFIG.PRICING.TENNIS_BALLS).toFixed(2)
-            );
-          } else {
-            setBallPriceInput(TENNIS_CONFIG.PRICING.TENNIS_BALLS.toFixed(2));
-          }
-        } catch (_error) {
-          setBallPriceInput(TENNIS_CONFIG.PRICING.TENNIS_BALLS.toFixed(2));
-        }
-      }
-    };
-    loadAdminSettings();
-  }, [currentScreen]);
-
-  // Mobile Bridge Integration
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.RegistrationUI) {
-      window.RegistrationUI.setSelectedCourt = (courtNumber) => {
-        console.log('Mobile: Setting selected court to', courtNumber);
-        setPreselectedCourt(courtNumber);
-      };
-
-      window.RegistrationUI.startRegistration = (courtNumber) => {
-        console.log('Mobile: Starting registration for court', courtNumber);
-        setCurrentScreen('group', 'mobileStartRegistration');
-        requestAnimationFrame(() => {
-          const input =
-            document.querySelector('#mobile-group-search-input') ||
-            document.querySelector('#main-search-input') ||
-            document.querySelector('[data-role="player-input"]') ||
-            document.querySelector('#playerNameInput') ||
-            document.querySelector('input[type="text"]');
-          if (input) {
-            input.focus({ preventScroll: true });
-            try {
-              const v = input.value || '';
-              input.setSelectionRange(v.length, v.length);
-            } catch {
-              /* setSelectionRange not supported */
-            }
-          }
-        });
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: one-time Tennis.Events subscription setup
-  }, []);
-
-  // Fetch frequent partners when entering group screen
-  useEffect(() => {
-    if (currentScreen === 'group' && currentMemberId) {
-      fetchFrequentPartners(currentMemberId);
-    }
-  }, [currentScreen, currentMemberId, fetchFrequentPartners]);
-
-  // Expose loadData for tests
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setLoadDataGlobal(loadData);
-    }
-  }, [loadData]);
+  // ===== USE EFFECTS MODULE (WP5.9.6.7) =====
+  useRegistrationEffects({
+    currentScreen,
+    currentMemberId,
+    dataStore,
+    TENNIS_CONFIG,
+    setBallPriceInput: ui.setBallPriceInput,
+    setPreselectedCourt: domain.setPreselectedCourt,
+    setCurrentScreen: ui.setCurrentScreen,
+    fetchFrequentPartners,
+    loadData,
+  });
 
   // ===== GROUP HELPERS (WP5.9.6.6a2) =====
   const helpers = {
