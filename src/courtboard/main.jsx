@@ -11,6 +11,7 @@ import '../platform/attachLegacyWaitlist.js';
 import '../platform/attachLegacyBlocks.js';
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
+import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';
 import { migrateOldKeys } from '../platform/prefsStorage.js';
 
 // Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
@@ -106,7 +107,11 @@ function App() {
 const rootElement = document.getElementById('root');
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
-  root.render(<App />);
+  root.render(
+    <ErrorBoundary context="Courtboard Display">
+      <App />
+    </ErrorBoundary>
+  );
 }
 
 // ============================================
