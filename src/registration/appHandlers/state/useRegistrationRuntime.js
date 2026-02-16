@@ -126,10 +126,11 @@ export function useRegistrationRuntime({
     return () => clearInterval(timer);
   }, [setCurrentTime]);
 
-  // VERBATIM COPY: Cleanup typing timeout on unmount (line 866)
+  // Cleanup typing timeout on unmount
   useEffect(() => {
+    const timeoutId = typingTimeoutRef.current;
     return () => {
-      clearTimeout(typingTimeoutRef.current);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 
