@@ -7,7 +7,7 @@ import {
 } from '../../lib/normalize/adminAnalytics.js';
 
 /**
- * Production AI Assistant - replaces MockAIAdmin
+ * Production AI Assistant - replaces AIAssistantAdmin
  * Uses propose → confirm → execute pattern with real Claude API
  */
 export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
