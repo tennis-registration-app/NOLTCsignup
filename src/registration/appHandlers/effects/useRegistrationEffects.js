@@ -32,27 +32,29 @@ export function useRegistrationEffects({
   fetchFrequentPartners,
   loadData,
 }) {
+  // Stable primitives for effect deps (avoids object identity churn)
+  const ballPriceCents = TENNIS_CONFIG.PRICING.TENNIS_BALLS;
+  const settingsKey = TENNIS_CONFIG.STORAGE.SETTINGS_KEY;
+
   // Load admin settings when entering admin screen
   useEffect(() => {
     const loadAdminSettings = async () => {
       if (currentScreen === 'admin') {
         try {
-          const settings = await dataStore?.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY);
+          const settings = await dataStore?.get(settingsKey);
           if (settings) {
             const parsed = settings || {};
-            setBallPriceInput(
-              (parsed.tennisBallPrice || TENNIS_CONFIG.PRICING.TENNIS_BALLS).toFixed(2)
-            );
+            setBallPriceInput((parsed.tennisBallPrice || ballPriceCents).toFixed(2));
           } else {
-            setBallPriceInput(TENNIS_CONFIG.PRICING.TENNIS_BALLS.toFixed(2));
+            setBallPriceInput(ballPriceCents.toFixed(2));
           }
         } catch (_error) {
-          setBallPriceInput(TENNIS_CONFIG.PRICING.TENNIS_BALLS.toFixed(2));
+          setBallPriceInput(ballPriceCents.toFixed(2));
         }
       }
     };
     loadAdminSettings();
-  }, [currentScreen]);
+  }, [currentScreen, ballPriceCents, settingsKey, dataStore, setBallPriceInput]);
 
   // Mobile Bridge Integration
   useEffect(() => {
