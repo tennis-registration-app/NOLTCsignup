@@ -1,7 +1,7 @@
 /**
  * UI Preferences & Session Cache Storage — localStorage wrapper
  *
- * App layers must not call localStorage directly; enforced by ESLint (WP5-C3).
+ * App layers must not call localStorage directly; enforced by ESLint.
  *
  * Two namespaces with separate key sets:
  *

@@ -18,7 +18,7 @@ const validCodes = new Set(Object.values(ErrorCodes));
  * 1. IDEMPOTENT: If already DomainError, return unchanged
  * 2. PRESERVE MESSAGE: Use original error.message by default (UI safety)
  *    - Scrubbing intentionally deferred; preserve message to avoid UI contract breaks.
- *    - Message scrubbing logged as follow-on for WP5-B.6.
+ *    - Message scrubbing logged as a follow-on task.
  * 3. ALWAYS ATTACH CAUSE: Original error goes in cause for debugging
  * 4. SANITIZE CONTEXT: Only service/op go in safeDetails
  *

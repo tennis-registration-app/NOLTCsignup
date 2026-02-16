@@ -1,8 +1,8 @@
 /**
  * Platform Module
  *
- * WP7.2: Exports for window/environment bridge utilities.
- * WP4-3: Exports for window global setters (registerGlobals).
+ * Exports for window/environment bridge utilities
+ * and window global setters (registerGlobals).
  */
 
 export {
@@ -25,7 +25,7 @@ export {
   getTennisEvents,
 } from './windowBridge.js';
 
-// WP4-3: Window global setters
+// Window global setters
 export {
   setTennisGlobal,
   ensureTennisGlobal,

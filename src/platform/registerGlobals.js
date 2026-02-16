@@ -1,7 +1,7 @@
 /**
  * Register Globals
  *
- * WP4-3: Single module that owns all window.* global writes from ES modules.
+ * Single module that owns all window.* global writes from ES modules.
  * Application code imports setters from here instead of writing to window directly.
  *
  * Benefits:
@@ -89,7 +89,7 @@ export function setRefreshAdminViewGlobal(fn) {
 }
 
 // ============================================
-// ADMIN REFRESH INTERNALS (WP4-3 W18-W21)
+// ADMIN REFRESH INTERNALS
 // ============================================
 
 /**

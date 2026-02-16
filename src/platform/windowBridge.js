@@ -1,7 +1,7 @@
 /**
  * Window Bridge
  *
- * WP7.2: Single module that owns all window.* global access.
+ * Single module that owns all window.* global access.
  * Application code imports from here instead of accessing window directly.
  *
  * Benefits:
@@ -213,7 +213,7 @@ export function isGlobalAvailable(globalName) {
 }
 
 // =============================================================================
-// UI Component Accessors (WP-HR3)
+// UI Component Accessors
 // =============================================================================
 
 /**
@@ -235,7 +235,7 @@ export function getUI() {
 }
 
 // =============================================================================
-// Refresh Function Accessors (WP-HR3)
+// Refresh Function Accessors
 // =============================================================================
 
 /**
