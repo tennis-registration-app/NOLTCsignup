@@ -1,5 +1,6 @@
 // CourtBoard - Vite-bundled React Entry Point
 // Converted from inline Babel to ES module JSX
+import './styles/index.css';
 import '../platform/attachLegacyConfig.js';
 import '../platform/attachLegacyTime.js';
 import '../platform/attachLegacyEvents.js';
