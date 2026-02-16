@@ -57,14 +57,14 @@ function shouldUseApi() {
 
     try {
       if (getPref('useApi') === true) return true;
-    } catch (_e) {
+    } catch {
       // prefsStorage may not be available
     }
 
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('useApi') === 'true') return true;
-    } catch (_e) {
+    } catch {
       // URL parsing may fail
     }
   }

@@ -140,13 +140,9 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setCourtToMove,
     setHasWaitlistPriority,
     setCurrentWaitlistEntryId,
-    setIsAssigning,
-    setIsJoiningWaitlist,
-    setBallPriceInput,
     setBallPriceCents,
     setIsUserTyping,
     setWaitlistPosition,
-    setTimeLimitReason,
   } = ui;
 
   // ===== RUNTIME MODULE =====
@@ -210,7 +206,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setClearCourtStep,
     setMemberNumber,
     setCurrentMemberId,
-    setPreselectedCourt,
     setApiMembers,
     currentMemberId,
     fetchFrequentPartners,

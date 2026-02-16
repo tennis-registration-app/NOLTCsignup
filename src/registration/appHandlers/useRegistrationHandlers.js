@@ -68,7 +68,6 @@ export function useRegistrationHandlers({ app }) {
       operatingHours,
       replacedGroup,
       canChangeCourt,
-      isChangingCourt: _isChangingCourt,
       showAddPlayer,
       currentWaitlistEntryId,
       isAssigning,
@@ -80,7 +79,6 @@ export function useRegistrationHandlers({ app }) {
       setJustAssignedCourt,
       setAssignedSessionId,
       setAssignedEndTime,
-      hasAssignedCourt: _hasAssignedCourt,
       setHasAssignedCourt,
     },
     groupGuest: {
@@ -96,7 +94,6 @@ export function useRegistrationHandlers({ app }) {
       setShowSponsorError,
     },
     memberIdentity: {
-      currentMemberId: _currentMemberId,
       setCurrentMemberId,
       memberNumber,
       setMemberNumber,
@@ -119,7 +116,7 @@ export function useRegistrationHandlers({ app }) {
       decrementClearCourtStep,
     },
     adminPriceFeedback: { setPriceError, showPriceSuccessWithClear },
-    refs: { successResetTimerRef, typingTimeoutRef: _typingTimeoutRef },
+    refs: { successResetTimerRef },
     blockAdmin: { getCourtBlockStatus },
     CONSTANTS,
     TENNIS_CONFIG,

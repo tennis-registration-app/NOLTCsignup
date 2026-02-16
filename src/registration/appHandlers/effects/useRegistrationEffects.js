@@ -48,7 +48,7 @@ export function useRegistrationEffects({
           } else {
             setBallPriceInput(ballPriceCents.toFixed(2));
           }
-        } catch (_error) {
+        } catch {
           setBallPriceInput(ballPriceCents.toFixed(2));
         }
       }

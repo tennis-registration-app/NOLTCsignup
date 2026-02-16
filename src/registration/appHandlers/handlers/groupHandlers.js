@@ -62,7 +62,6 @@ export function useGroupHandlers(deps) {
     handleAddPlayerSuggestionClickOrchestrated,
     // Constants
     CONSTANTS,
-    API_CONFIG,
   } = deps;
 
   // VERBATIM COPY: findMemberNumber from line ~366

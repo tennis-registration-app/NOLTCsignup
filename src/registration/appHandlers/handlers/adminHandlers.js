@@ -86,7 +86,7 @@ export function useAdminHandlers(deps) {
 
       // Show success message
       showPriceSuccessWithClear();
-    } catch (_error) {
+    } catch {
       // Intentional: error details not needed, generic message shown to user
       setPriceError('Failed to save price');
     }

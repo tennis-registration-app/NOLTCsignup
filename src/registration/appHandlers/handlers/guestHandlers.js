@@ -27,7 +27,6 @@ export function useGuestHandlers(deps) {
     memberNumber,
     memberDatabase,
     // Add player state
-    showAddPlayer,
     setShowAddPlayer,
     setShowAddPlayerSuggestions,
     setAddPlayerSearch,

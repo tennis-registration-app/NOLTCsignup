@@ -2,7 +2,6 @@
 // Converted from inline Babel to ES module JSX
 // Streamlined to use useRegistrationAppState and useRegistrationHandlers
 // Collapsed prop enumeration - handlers now receive { app } directly
-/* global Tennis */
 import React from 'react';
 
 // Import registration-specific services

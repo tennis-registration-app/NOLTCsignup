@@ -150,7 +150,7 @@ export function validateGroupCompat(players, guests) {
         return norm(out.ok, out.errors);
       }
     }
-  } catch (_e) {
+  } catch {
     // Intentional: error ignored, fall through to local validation rules
   }
 
