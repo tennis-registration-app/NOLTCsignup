@@ -3,7 +3,7 @@ import { normalizeServiceError } from '@lib/errors';
 /**
  * Purchases operations extracted from ApiTennisService.
  *
- * WP5-D7a: purchaseBalls mutation.
+ * purchaseBalls mutation.
  *
  * @param {Object} deps
  * @param {Object} deps.api - ApiAdapter instance

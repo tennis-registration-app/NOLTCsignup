@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 /**
  * useRegistrationDerived
- * Extracted from useRegistrationAppState — WP5.9.6.6b
+ * Extracted from useRegistrationAppState
  *
  * Owns computed/derived values (useMemo blocks).
  * Now uses courtSelection from data for canonical court availability.

@@ -1,6 +1,6 @@
 /**
  * useRegistrationEffects
- * Extracted from useRegistrationAppState — WP5.9.6.7
+ * Extracted from useRegistrationAppState
  *
  * Contains all useEffect hooks from useRegistrationAppState.
  * Pure extraction — no logic changes, same dependency arrays.

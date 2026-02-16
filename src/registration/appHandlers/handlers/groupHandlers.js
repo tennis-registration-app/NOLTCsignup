@@ -8,7 +8,7 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 
 /**
  * Group Handlers
- * Extracted from useRegistrationHandlers — WP5.9.5.3
+ * Extracted from useRegistrationHandlers
  * Verbatim function bodies, no logic changes.
  *
  * Handles group management: player selection, frequent partners,

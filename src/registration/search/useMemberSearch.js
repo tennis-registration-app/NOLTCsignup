@@ -81,7 +81,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
       }
 
       state.apiMembers.forEach((apiMember) => {
-        // WP4-4: Use camelCase properties (normalized by TennisDirectory)
+        // Use camelCase properties (normalized by TennisDirectory)
         const displayName = apiMember.displayName || apiMember.name || '';
         const memberNumber = apiMember.memberNumber || '';
 

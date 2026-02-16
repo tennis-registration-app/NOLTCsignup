@@ -9,7 +9,7 @@ import { getTennisUI } from '../../platform/windowBridge.js';
 
 /**
  * Member Selection Orchestrators
- * Moved from App.jsx — WP5.5 facade extraction
+ * Moved from App.jsx
  *
  * DEPENDENCY CHECKLIST for handleSuggestionClickOrchestrated:
  * Reads:

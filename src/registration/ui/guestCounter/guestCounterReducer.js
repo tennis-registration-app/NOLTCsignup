@@ -1,6 +1,6 @@
 /**
  * Guest Counter Reducer
- * Extracted from App.jsx — WP5.6 R6a-3
+ * Extracted from App.jsx
  *
  * State:
  *   - guestCounter: number (starts at 1)

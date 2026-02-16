@@ -4,7 +4,7 @@ import { logger } from '../../../lib/logger.js';
 
 /**
  * useRegistrationDataLayer
- * Extracted from useRegistrationAppState — WP5.9.6.3
+ * Extracted from useRegistrationAppState
  *
  * Owns real-time subscription and initial data loading callbacks.
  * Backend is a module-level singleton in the app; it is passed in here.

@@ -1,6 +1,6 @@
 /**
  * Waitlist Orchestrator
- * Moved from App.jsx — WP5.5 facade extraction
+ * Moved from App.jsx
  *
  * DEPENDENCY CHECKLIST for sendGroupToWaitlistOrchestrated:
  * Reads:

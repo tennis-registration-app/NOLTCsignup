@@ -4,7 +4,7 @@
  * This module provides a single import point for all registration orchestrators.
  * Orchestrators are moved here from App.jsx to centralize coordination logic.
  *
- * WP5.5 Phase: Moving functions verbatim, no behavior changes.
+ * Functions moved verbatim, no behavior changes.
  * Future phases may standardize return shapes and add unit tests.
  */
 

@@ -1,7 +1,7 @@
 /**
  * buildRegistrationReturn
- * Extracted from useRegistrationAppState — WP5.9.6.6a
- * Refactored to accept grouped objects — WP5.9.6.6a2
+ * Extracted from useRegistrationAppState
+ * Refactored to accept grouped objects
  *
  * Assembles the return object for useRegistrationAppState.
  * Accepts grouped module objects instead of 150+ individual params.
@@ -320,7 +320,7 @@ export function buildRegistrationReturn({
     // Overtime eligibility helper
     computeRegistrationCourtSelection,
 
-    // Orchestrators (WP5.5)
+    // Orchestrators
     assignCourtToGroupOrchestrated,
     sendGroupToWaitlistOrchestrated,
     handleSuggestionClickOrchestrated,

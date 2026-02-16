@@ -20,11 +20,11 @@ import { transformWaitlist } from './legacy/waitlistTransforms.js';
 /**
  * ApiTennisService
  *
- * WP7.1: This service is being refactored to extract legacy transformation
+ * This service is being refactored to extract legacy transformation
  * logic into src/registration/services/legacy/ modules.
  *
  * Public method surface and return shapes will remain unchanged.
- * Canonical shape documentation will be added after extraction (WP7.1.5).
+ * Canonical shape documentation will be added after extraction.
  */
 
 class ApiTennisService {
@@ -40,7 +40,7 @@ class ApiTennisService {
     this.membersCache = null;
     this.settings = null;
 
-    // Wire courts service module (WP5-D1, WP5-D9)
+    // Wire courts service module
     this.courtsService = createCourtsService({
       api: this.api,
       notifyListeners: this._notifyListeners.bind(this),
@@ -52,7 +52,7 @@ class ApiTennisService {
       logger,
     });
 
-    // Wire waitlist service module (WP5-D2, WP5-D4, WP5-D9)
+    // Wire waitlist service module
     this.waitlistService = createWaitlistService({
       api: this.api,
       notifyListeners: this._notifyListeners.bind(this),
@@ -65,7 +65,7 @@ class ApiTennisService {
       courtsService: this.courtsService,
     });
 
-    // Wire members service module (WP5-D3)
+    // Wire members service module
     this.membersService = createMembersService({
       api: this.api,
       getMembersCache: () => this.membersCache,
@@ -74,7 +74,7 @@ class ApiTennisService {
       },
     });
 
-    // Wire settings service module (WP5-D3)
+    // Wire settings service module
     this.settingsService = createSettingsService({
       api: this.api,
       getSettingsCache: () => this.settings,
@@ -83,13 +83,13 @@ class ApiTennisService {
       },
     });
 
-    // Wire purchases service module (WP5-D7a)
+    // Wire purchases service module
     this.purchasesService = createPurchasesService({
       api: this.api,
       logger,
     });
 
-    // Wire lifecycle service module (WP5-D-closeout)
+    // Wire lifecycle service module
     this.lifecycleService = createLifecycleService({
       api: this.api,
       setCourtData: (v) => {

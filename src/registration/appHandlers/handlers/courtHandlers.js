@@ -5,7 +5,7 @@ import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
 
 /**
  * Court Handlers
- * Extracted from useRegistrationHandlers — WP5.9.5.4
+ * Extracted from useRegistrationHandlers
  * Verbatim function bodies, no logic changes.
  */
 export function useCourtHandlers(deps) {
@@ -182,7 +182,7 @@ export function useCourtHandlers(deps) {
     [clearViaService]
   );
 
-  // WP4-2: Factory function to assemble assignCourt deps (grouped structure)
+  // Factory function to assemble assignCourt deps (grouped structure)
   const createAssignCourtDeps = useCallback(
     () => ({
       state: {
@@ -273,7 +273,7 @@ export function useCourtHandlers(deps) {
   );
 
   // VERBATIM COPY: assignCourtToGroup from line ~416
-  // WP4-2: deps now assembled by createAssignCourtDeps factory
+  // deps now assembled by createAssignCourtDeps factory
   const assignCourtToGroup = useCallback(
     async (courtNumber, selectableCountAtSelection = null) => {
       return assignCourtToGroupOrchestrated(

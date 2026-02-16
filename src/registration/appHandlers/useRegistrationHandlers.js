@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-// Extracted handler modules (WP5.9.5)
+// Extracted handler modules
 import {
   useAdminHandlers,
   useGuestHandlers,
@@ -14,8 +14,8 @@ import { TennisBusinessLogic } from '@lib';
 
 /**
  * useRegistrationHandlers
- * Extracted from App.jsx — WP5.9.3
- * Refactored to accept { app } — WP7.0
+ * Extracted from App.jsx
+ * Refactored to accept { app }
  *
  * Contains all handler functions for the registration flow.
  * Handlers are thin wrappers around orchestrators or direct state manipulations.
@@ -140,7 +140,7 @@ export function useRegistrationHandlers({ app }) {
     }
   }, [successResetTimerRef]);
 
-  // WP4-2: Factory function to assemble reset deps (grouped structure)
+  // Factory function to assemble reset deps (grouped structure)
   const createResetDeps = useCallback(
     () => ({
       actions: {
@@ -228,8 +228,8 @@ export function useRegistrationHandlers({ app }) {
     ]
   );
 
-  // Reset form (moved to orchestration layer - WP5.5)
-  // WP4-2: deps now assembled by createResetDeps factory
+  // Reset form (moved to orchestration layer)
+  // deps now assembled by createResetDeps factory
   const resetForm = useCallback(() => {
     resetFormOrchestrated(createResetDeps());
   }, [resetFormOrchestrated, createResetDeps]);
@@ -245,7 +245,7 @@ export function useRegistrationHandlers({ app }) {
   );
 
   // ============================================
-  // Admin Screen Handlers (extracted to adminHandlers.js - WP5.9.5.1)
+  // Admin Screen Handlers (extracted to adminHandlers.js)
   // ============================================
   const adminHandlers = useAdminHandlers({
     backend,
@@ -262,7 +262,7 @@ export function useRegistrationHandlers({ app }) {
   });
 
   // ============================================
-  // Guest Handlers (extracted to guestHandlers.js - WP5.9.5.2)
+  // Guest Handlers (extracted to guestHandlers.js)
   // ============================================
   const guestHandlers = useGuestHandlers({
     guestName,
@@ -291,7 +291,7 @@ export function useRegistrationHandlers({ app }) {
   });
 
   // ============================================
-  // Court Handlers (extracted to courtHandlers.js - WP5.9.5.4)
+  // Court Handlers (extracted to courtHandlers.js)
   // ============================================
   const courtHandlers = useCourtHandlers({
     // State
@@ -353,7 +353,7 @@ export function useRegistrationHandlers({ app }) {
   });
 
   // ============================================================
-  // Group Handlers (extracted to groupHandlers.js - WP5.9.5.3)
+  // Group Handlers (extracted to groupHandlers.js)
   // ============================================================
   const groupHandlers = useGroupHandlers({
     // State
@@ -406,7 +406,7 @@ export function useRegistrationHandlers({ app }) {
   });
 
   // ============================================================
-  // Navigation Handlers (extracted to navigationHandlers.js - WP5.9.5.4)
+  // Navigation Handlers (extracted to navigationHandlers.js)
   // ============================================================
   const navigationHandlers = useNavigationHandlers({
     // State
@@ -437,15 +437,15 @@ export function useRegistrationHandlers({ app }) {
 
   // ===== RETURN ALL HANDLERS =====
   return {
-    // Admin handlers (extracted - WP5.9.5.1)
+    // Admin handlers
     ...adminHandlers,
-    // Guest handlers (extracted - WP5.9.5.2)
+    // Guest handlers
     ...guestHandlers,
-    // Group handlers (extracted - WP5.9.5.3)
+    // Group handlers
     ...groupHandlers,
-    // Court handlers (extracted - WP5.9.5.4)
+    // Court handlers
     ...courtHandlers,
-    // Navigation handlers (extracted - WP5.9.5.4)
+    // Navigation handlers
     ...navigationHandlers,
     // Core handlers (shared across modules)
     markUserTyping,

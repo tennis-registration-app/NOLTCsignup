@@ -11,7 +11,7 @@ import { getTennisUI } from '../../platform/windowBridge.js';
 
 /**
  * Assign Court Orchestrator
- * Moved from App.jsx — WP5.5 facade extraction
+ * Moved from App.jsx
  *
  * DEPENDENCY CHECKLIST (call-site parity):
  *
@@ -71,10 +71,10 @@ export async function assignCourtToGroupOrchestrated(
   selectableCountAtSelection,
   deps
 ) {
-  // WP4-2: Grouped deps structure — { state, actions, services, ui }
+  // Grouped deps structure — { state, actions, services, ui }
   const { state, actions, services, ui } = deps;
 
-  // ===== GUARD SECTION (WP-HR4: wired to helpers) =====
+  // ===== GUARD SECTION =====
 
   // Guard 1: Prevent double-submit (silent)
   const assigningCheck = guardNotAssigning(state.isAssigning);

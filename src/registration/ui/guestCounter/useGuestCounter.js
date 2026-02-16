@@ -7,7 +7,7 @@ import {
 
 /**
  * useGuestCounter Hook
- * Extracted from App.jsx — WP5.6 R6a-3
+ * Extracted from App.jsx
  *
  * Provides guest counter state for generating unique negative guest IDs.
  *

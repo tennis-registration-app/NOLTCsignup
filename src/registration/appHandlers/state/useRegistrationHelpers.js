@@ -1,6 +1,6 @@
 /**
  * useRegistrationHelpers
- * Extracted from useRegistrationAppState — WP5.9.6.6c
+ * Extracted from useRegistrationAppState
  *
  * Owns helper functions used by the registration flow.
  * Verbatim extraction — no logic changes.

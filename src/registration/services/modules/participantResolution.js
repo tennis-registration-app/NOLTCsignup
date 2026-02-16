@@ -3,7 +3,7 @@ import { normalizeServiceError } from '@lib/errors';
 /**
  * Participant resolution helper extracted from courtsService and waitlistService.
  *
- * WP5-D8: Profiled extraction preserving exact behavior divergences.
+ * Profiled extraction preserving exact behavior divergences.
  *
  * Each caller passes a profile that controls the specific behavioral differences.
  */

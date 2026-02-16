@@ -1,8 +1,8 @@
 /**
  * Court Transforms (Legacy Compatibility)
  *
- * WP7.1: Extracted from ApiTennisService._transformCourts
- * WP5-D9: Updated to accept logger injection.
+ * Extracted from ApiTennisService._transformCourts
+ * Updated to accept logger injection.
  *
  * Transforms API court data to app-facing canonical format.
  *

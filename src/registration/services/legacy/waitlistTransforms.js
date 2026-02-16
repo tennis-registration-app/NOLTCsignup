@@ -1,7 +1,7 @@
 /**
  * Waitlist Transforms (Legacy Compatibility)
  *
- * WP7.1: Extracted from ApiTennisService._transformWaitlist
+ * Extracted from ApiTennisService._transformWaitlist
  * Transforms API waitlist entries to app-facing canonical format.
  */
 

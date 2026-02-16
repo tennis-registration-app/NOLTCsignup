@@ -3,7 +3,7 @@ import { TENNIS_CONFIG } from '@lib';
 
 /**
  * useRegistrationUiState
- * Extracted from useRegistrationAppState — WP5.9.6.1
+ * Extracted from useRegistrationAppState
  *
  * Owns all UI state declarations (useState) for the registration flow.
  * Verbatim extraction, no logic changes.

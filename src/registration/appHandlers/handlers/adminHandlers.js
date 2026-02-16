@@ -9,7 +9,7 @@ import {
 
 /**
  * Admin Handlers
- * Extracted from useRegistrationHandlers — WP5.9.5.1
+ * Extracted from useRegistrationHandlers
  * Verbatim function bodies, no logic changes.
  */
 export function useAdminHandlers(deps) {

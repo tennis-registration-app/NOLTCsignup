@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * SilentAssignRoute
- * Extracted from RegistrationRouter — WP6.0.1
+ * Extracted from RegistrationRouter
  * Verbatim JSX. No behavior change.
  */
 export function SilentAssignRoute() {

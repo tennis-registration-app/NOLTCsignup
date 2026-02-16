@@ -7,7 +7,7 @@
  *   import { getTennisService } from './services'; // For backend-aware service
  */
 
-// WP4-3: Window global setters
+// Window global setters
 import { setNoltcUseApiGlobal } from '../../platform/registerGlobals.js';
 import { getPref, setPref, removePref } from '../../platform/prefsStorage.js';
 
