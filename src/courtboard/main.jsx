@@ -23,7 +23,6 @@ import './browser-bridge.js';
 
 // Platform bridge for window global access
 import {
-  getTennis,
   getTennisStorage,
   getTennisDomain,
   getTennisNamespaceConfig,

@@ -20,7 +20,7 @@ window.Tennis.UI.toast = (msg, opts = {}) =>
 // ---- Preflight self-heal ----
 try {
   window.APP_UTILS && window.APP_UTILS.readDataSafe();
-} catch (_e) {
+} catch {
   // Intentionally swallowed — storage may not be loaded yet
 }
 

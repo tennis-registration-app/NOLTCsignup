@@ -16,7 +16,7 @@ export function CourtCard({
   courtNumber,
   currentTime: _currentTime,
   statusByCourt,
-  selectableByCourt,
+  selectableByCourt: _selectableByCourt,
   statusObjectByCourt,
   data,
   isMobileView,
@@ -27,16 +27,16 @@ export function CourtCard({
   courtBlocks = [],
 }) {
   const status = statusByCourt[courtNumber] || 'free';
-  const _selectable = selectableByCourt[courtNumber] || false; // Unused, kept for prop consistency
   const statusObj = statusObjectByCourt?.[courtNumber] || {};
   const cObj = data?.courts?.[courtNumber - 1] || {};
 
   const now = new Date();
-  const {
-    primary,
-    secondary,
-    secondaryColor: _secondaryColor,
-  } = computeClock(status, status === 'blocked' ? statusObj : cObj, now, checkStatusMinutes);
+  const { primary, secondary } = computeClock(
+    status,
+    status === 'blocked' ? statusObj : cObj,
+    now,
+    checkStatusMinutes
+  );
   const nm = namesFor(cObj);
 
   const base =

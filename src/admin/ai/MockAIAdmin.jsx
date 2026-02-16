@@ -302,7 +302,7 @@ const MockAIAdmin = ({
         try {
           await updateBallPrice(action.price.toString());
           return `✓ Ball price set to $${action.price.toFixed(2)}`;
-        } catch (_e) {
+        } catch {
           return '✗ Failed to update ball price';
         }
 

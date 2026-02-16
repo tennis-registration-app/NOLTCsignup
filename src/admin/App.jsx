@@ -5,7 +5,6 @@
  * This is the initial monolithic extraction (~7,100 lines).
  * Future phases will break this into smaller component files.
  */
-/* global Tennis */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../registration/backend/index.js';
 import { logger } from '../lib/logger.js';
@@ -171,9 +170,9 @@ const AdminPanelV2 = ({ onExit }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [blockingView, setBlockingView] = useState('create');
   const [blockToEdit, setBlockToEdit] = useState(null);
-  const [calendarView, _setCalendarView] = useState('day'); // Setter unused
+  const [calendarView] = useState('day');
   const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const [selectedDate, _setSelectedDate] = useState(new Date()); // Setter unused
+  const [selectedDate] = useState(new Date());
 
   const ENABLE_WET_COURTS = true;
 
@@ -212,7 +211,6 @@ const AdminPanelV2 = ({ onExit }) => {
     activateWet: handleEmergencyWetCourt,
     deactivateWet: deactivateWetCourts,
     clearWetCourt,
-    clearAllWet: _removeAllWetCourtBlocks,
   } = useWetCourts({
     backend,
     getDeviceId,
