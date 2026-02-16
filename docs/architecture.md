@@ -228,3 +228,44 @@ Files:
 - courtPresenter.equivalence.test.js
 
 Gate: npm run verify
+
+## Courtboard Legacy Script Exceptions
+
+The courtboard `index.html` loads 6 IIFE `<script>` tags that cannot be
+converted to ESM imports. Each is a self-executing function that uses
+`window.*` globals and/or DOM access at parse time, before the Vite
+module entry (`main.jsx`) evaluates.
+
+| Script | Writes | Reads | Why not ESM |
+|--------|--------|-------|-------------|
+| `shared-utils.js` | `window.APP_UTILS`, `window.Tennis` | `localStorage` | IIFE; consumed by other IIFE scripts before React |
+| `bootstrap/courtboardPreInit.js` | `window.Tennis.UI.toast`, `window.IS_MOBILE_VIEW`, `window.MobileModal` | `window.APP_UTILS`, `document.body` | Must run before React and before mobile-fallback-bar.js |
+| `mobile-bridge.js` | `window.mobileTapToRegister` | `window.CourtboardState`, `sessionStorage`, `document.querySelector` | Tap handler + click listener on body; reads React state bridge |
+| `sync-promotions.js` | (none) | `window.Tennis.Domain.availability`, `window.CourtboardState` | Reads domain module set by attachLegacy*.js; DOMContentLoaded |
+| `mobile-fallback-bar.js` | `window.updateJoinButtonForMobile` | `#mobile-bottom-bar-fallback`, `window.IS_MOBILE_VIEW`, `window.MobileModal` | Reads DOM element + globals set by courtboardPreInit.js |
+| `debug-panel.js` | (none) | `window.Tennis.Events`, `document.body` | Creates overlay on body; gated by `?debug=1` |
+
+### Deletion conditions
+
+Each script can be deleted when its consumers are migrated:
+
+- **shared-utils.js**: Delete when all IIFE scripts above are converted to ESM,
+  and registration/admin HTML files no longer reference it.
+- **courtboardPreInit.js**: Delete when toast bridge, mobile detection, and modal
+  bus are initialized in main.jsx (requires all IIFE consumers to be ESM).
+- **mobile-bridge.js**: Delete when tap-to-register is handled by a React component.
+- **sync-promotions.js**: Delete when waitlist sync is handled inside the React tree.
+- **mobile-fallback-bar.js**: Delete when the fallback bar is a React component.
+- **debug-panel.js**: Delete when replaced by a React-based debug overlay.
+
+### Load order (required)
+
+```
+shared-utils.js          → window.APP_UTILS (IIFE, sync)
+courtboardPreInit.js     → window.IS_MOBILE_VIEW, window.MobileModal (IIFE, sync)
+mobile-bridge.js         → window.mobileTapToRegister (IIFE, sync)
+sync-promotions.js       → DOMContentLoaded listener (IIFE, sync)
+mobile-fallback-bar.js   → reads IS_MOBILE_VIEW + MobileModal (IIFE, sync)
+main.jsx                 → React app + attachLegacy*.js (ESM, deferred)
+debug-panel.js           → dev overlay (IIFE, sync, after body)
+```

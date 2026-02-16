@@ -16,7 +16,7 @@
   <!-- Third React root for mobile bottom bar (body level to avoid stacking contexts) -->
   <div id="mobile-bottom-bar-root"></div>
 
-  <!-- Plain-JS fallback bar -->
+  <!-- Plain-JS fallback bar (shown only on mobile; styled by courtboard.css) -->
   <div id="mobile-bottom-bar-fallback" hidden>
     <button type="button" data-action="conditions">🌦️<span class="lbl">Conditions</span></button>
     <button type="button" data-action="roster">📖<span class="lbl">Roster</span></button>
@@ -25,27 +25,35 @@
     <button type="button" data-action="join" disabled aria-disabled="true">🎾<span class="lbl">Join Waitlist</span></button>
   </div>
 
-  <!-- Shared utils (schema + helpers; loaded before pre-init for readDataSafe) -->
-  <script src="../../shared-utils.js"></script>
-  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
-  <script type="module" src="../lib/browser-bridge.js"></script>
+  <!--
+    ============================================================
+    Legacy IIFE scripts (cannot be ESM-imported)
+    These are plain JS files that use window.* globals and DOM
+    access at parse time. They run before main.jsx (module).
+    See docs/architecture.md "Courtboard Legacy Script Exceptions"
+    for classification and deletion conditions.
+    ============================================================
+  -->
 
-  <!-- Pre-init: toast bridge, mobile detection, modal bus (must run before React) -->
+  <!-- IIFE: sets window.APP_UTILS (storage helpers for other IIFE scripts) -->
+  <script src="../../shared-utils.js"></script>
+
+  <!-- IIFE: sets window.Tennis.UI.toast, window.IS_MOBILE_VIEW, window.MobileModal -->
   <script src="./bootstrap/courtboardPreInit.js"></script>
 
-  <!-- Mobile Bridge Script -->
+  <!-- IIFE: sets window.mobileTapToRegister; reads window.CourtboardState -->
   <script src="./mobile-bridge.js"></script>
 
-  <!-- Sync waitlist promotions -->
+  <!-- IIFE: syncs waitlist promotions; reads window.Tennis.Domain.availability -->
   <script src="./sync-promotions.js"></script>
 
-  <!-- Mobile fallback bar script -->
+  <!-- IIFE: reads #mobile-bottom-bar-fallback, window.IS_MOBILE_VIEW, window.MobileModal -->
   <script src="./mobile-fallback-bar.js?v=5"></script>
 
-  <!-- Vite-bundled React app -->
+  <!-- Vite-bundled React app (ESM entry point) -->
   <script type="module" src="./main.jsx"></script>
 
-  <!-- Debug Panel - Only visible when ?debug=1 -->
+  <!-- IIFE: dev-only debug overlay; reads window.Tennis.Events; gated by ?debug=1 -->
   <script src="./debug-panel.js"></script>
 
 </body>
