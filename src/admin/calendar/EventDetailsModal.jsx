@@ -37,7 +37,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
   }, []);
 
   // Determine if wet block (can't change type)
-  // WP4-4: event is pre-normalized by EventCalendarEnhanced, use camelCase
+  // event is pre-normalized by EventCalendarEnhanced, use camelCase
   const isWetBlock = useMemo(() => {
     if (!event) return false;
     const type = event.blockType || event.reason;
@@ -50,7 +50,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
       const start = new Date(event.startTime || event.startsAt);
       const end = new Date(event.endTime || event.endsAt);
 
-      // WP4-4: event is pre-normalized, use camelCase only
+      // event is pre-normalized, use camelCase only
       const initialCourtId = event.courtId || '';
       const initialTitle = event.title || event.reason || event.eventDetails?.title || '';
       const derived = event.blockType || event.reason?.toLowerCase() || 'other';

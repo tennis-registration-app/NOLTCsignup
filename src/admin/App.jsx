@@ -75,10 +75,10 @@ import {
 import { clearCourtOp, moveCourtOp, clearAllCourtsOp } from './handlers/courtOperations';
 import { applyBlocksOp } from './handlers/applyBlocksOperation';
 
-// Wet courts hook (WP5.2)
+// Wet courts hook
 import { useWetCourts } from './wetCourts/useWetCourts';
 
-// Domain object factories (WP5-A3, WP5-A7)
+// Domain object factories
 import {
   createWetCourtsModel,
   createWetCourtsActions,
@@ -96,12 +96,12 @@ import {
   createAIAssistantComponents,
 } from './types/domainObjects.js';
 
-// Admin hooks (WP-HR6)
+// Admin hooks
 import { useNotification } from './hooks/useNotification';
 import { useAdminSettings } from './hooks/useAdminSettings';
 import { useBoardSubscription } from './hooks/useBoardSubscription';
 
-// Timer utilities (WP-HR6)
+// Timer utilities
 import { addTimer, clearAllTimers } from './utils/timerRegistry';
 
 // Feature flag: use real AI assistant instead of mock
@@ -183,7 +183,7 @@ const AdminPanelV2 = ({ onExit }) => {
   // 3. useBoardSubscription — subscription effect (original #3)
   const { notification, showNotification } = useNotification();
 
-  // Settings hook (WP-HR6) - owns settings, operatingHours, hoursOverrides, blockTemplates state
+  // Settings hook - owns settings, operatingHours, hoursOverrides, blockTemplates state
   // Hook also returns operatingHours and blockTemplates (not destructured here)
   const {
     settings,
@@ -200,11 +200,11 @@ const AdminPanelV2 = ({ onExit }) => {
     clearAllTimers,
   });
 
-  // Board subscription hook (WP-HR6) - owns courts, waitingGroups, courtBlocks, refreshTrigger state
+  // Board subscription hook - owns courts, waitingGroups, courtBlocks, refreshTrigger state
   const { courts, waitingGroups, courtBlocks, refreshTrigger, bumpRefreshTrigger } =
     useBoardSubscription({ backend });
 
-  // Wet courts hook (WP5.2) - manages state + backend ops + side effects
+  // Wet courts hook - manages state + backend ops + side effects
   const {
     isActive: wetCourtsActive,
     wetCourtNumbers,
@@ -280,7 +280,7 @@ const AdminPanelV2 = ({ onExit }) => {
     [waitingGroups, showNotification]
   );
 
-  // Domain objects for BlockingSection (WP5-A3)
+  // Domain objects for BlockingSection
   // Note: exhaustive-deps warnings appear at function definition sites (useWetCourts hook)
   // because setters/wetCourts recreate on each render. Fix deferred per A3 rules.
   const wetCourtsModel = useMemo(
@@ -354,7 +354,7 @@ const AdminPanelV2 = ({ onExit }) => {
   // backend is module-level singleton
   const adminServices = useMemo(() => createAdminServices({ backend }), []);
 
-  // StatusSection domain objects (WP5-A7)
+  // StatusSection domain objects
   const statusModel = useMemo(
     () =>
       createStatusModel({
@@ -387,7 +387,7 @@ const AdminPanelV2 = ({ onExit }) => {
     ]
   );
 
-  // CalendarSection domain objects (WP5-A9.3)
+  // CalendarSection domain objects
   const calendarModel = useMemo(
     () =>
       createCalendarModel({
@@ -405,7 +405,7 @@ const AdminPanelV2 = ({ onExit }) => {
     [bumpRefreshTrigger]
   );
 
-  // AIAssistantSection domain objects (WP5-A11.3)
+  // AIAssistantSection domain objects
   const aiModel = useMemo(
     () =>
       createAIAssistantModel({

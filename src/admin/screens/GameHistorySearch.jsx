@@ -54,7 +54,7 @@ const GameHistorySearch = ({ backend }) => {
       });
 
       if (response.ok && response.sessions) {
-        // WP4-4: Normalize at ingestion, use camelCase
+        // Normalize at ingestion, use camelCase
         let results = response.sessions.map((session) => {
           const normalized = normalizeGameSession(session);
           return {

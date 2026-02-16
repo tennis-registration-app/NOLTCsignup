@@ -55,7 +55,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
         prompt: userMessage,
         mode: mode,
       });
-      // WP4-4: Normalize at ingestion
+      // Normalize at ingestion
       const response = normalizeAiResponse(rawResponse);
 
       if (!response.ok) {
@@ -94,7 +94,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
         actions_token: actionsToken, // API parameter (snake_case intentional)
         confirm_destructive: confirmed, // API parameter (snake_case intentional)
       });
-      // WP4-4: Normalize response at ingestion
+      // Normalize response at ingestion
       const response = normalizeAiResponse(rawResponse);
 
       if (!response.ok) {

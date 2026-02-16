@@ -68,7 +68,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
     try {
       const result = await backend.admin.getSettings();
       if (result.ok) {
-        // WP4-4: Normalize settings at ingestion
+        // Normalize settings at ingestion
         const normalizedSettings = normalizeSettings(result.settings);
 
         // Update pricing settings
@@ -158,7 +158,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       const weekdayFee = parseFloat(weekdayFeeInput) || 0;
       const weekendFee = parseFloat(weekendFeeInput) || 0;
 
-      // WP4-4: API expects snake_case for write operations (denormalization)
+      // API expects snake_case for write operations (denormalization)
       const result = await backend.admin.updateSettings({
         settings: {
           ball_price_cents: Math.round(ballPrice * 100),
@@ -225,7 +225,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
 
     setAutoClearSaveStatus('saving');
     try {
-      // WP4-4: API expects snake_case for write operations (denormalization)
+      // API expects snake_case for write operations (denormalization)
       const result = await backend.admin.updateSettings({
         settings: {
           auto_clear_enabled: autoClearEnabled ? 'true' : 'false',
