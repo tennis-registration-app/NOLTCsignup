@@ -1,0 +1,74 @@
+# Repo Context
+
+## Git
+/Users/claudewilliams/Desktop/NOLTCsignup
+3b2e6d663393100c6796a66a43b65cbddf1d0c98
+## main...origin/main
+?? handoff_audit/
+
+## Node / NPM
+v22.13.1
+10.9.2
+
+## Package scripts
+{
+  "name": "noltc-tennis-signup",
+  "version": "1.0.0",
+  "description": "Tennis court management system with registration, court board, and admin panel",
+  "author": "Claude Williams",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src/ --ext .js,.jsx",
+    "lint:ratchet": "node scripts/lint-ratchet.mjs",
+    "format": "prettier --write src/",
+    "lint:fix": "eslint src/ --ext .js,.jsx --fix",
+    "prepare": "husky",
+    "test": "npm run test:e2e",
+    "test:e2e": "playwright test",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:unit:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "type:ratchet": "node scripts/type-ratchet.mjs",
+    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "html5-qrcode": "^2.3.8",
+    "qrcode.react": "^4.2.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.57.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "jsdom": "^28.0.0",
+    "lint-staged": "^16.2.7",
+    "postcss": "^8.4.32",
+    "prettier": "^3.7.4",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.9.3",
+    "vite": "^5.0.10",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,8 +1,5 @@
 {
   "errors": 0,
-  "warnings": 36,
-  "byRule": {
-    "no-unused-vars": 34,
-    "react-hooks/exhaustive-deps": 2
-  }
+  "warnings": 0,
+  "byRule": {}
 }
