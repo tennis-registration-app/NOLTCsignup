@@ -1,31 +1,14 @@
 /**
- * Icon Components - Emoji-based icons for the Registration UI
+ * Registration Icons — re-exports shared adapter with local overrides.
  *
- * These are simple wrapper components that render emoji icons
- * with configurable size. Matches the AdminPanelV2 pattern.
+ * Divergences from shared defaults (preserved from original):
+ *   Check → ✅ (checkmark circle, not bare checkmark ✔️)
  */
 import React from 'react';
+export { Users, Bell, Clock, UserPlus, ChevronRight } from '../../shared/ui/icons/Icons.jsx';
 
-export const Users = ({ size = 24 }) => (
-  <span style={{ fontSize: `${size}px` }}>👥</span>
-);
-
-export const Bell = ({ size = 24 }) => (
-  <span style={{ fontSize: `${size}px` }}>🔔</span>
-);
-
-export const Clock = ({ size = 24 }) => (
-  <span style={{ fontSize: `${size}px` }}>⏰</span>
-);
-
-export const UserPlus = ({ size = 24 }) => (
-  <span style={{ fontSize: `${size}px` }}>👤➕</span>
-);
-
-export const ChevronRight = ({ size = 24 }) => (
-  <span style={{ fontSize: `${size}px` }}>▶️</span>
-);
-
-export const Check = ({ size = 24 }) => (
-  <span style={{ fontSize: `${size}px` }}>✅</span>
+export const Check = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px` }} className={className}>
+    ✅
+  </span>
 );
