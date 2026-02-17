@@ -12,7 +12,7 @@ import {
   normalizeSettings,
   denormalizeOperatingHours,
   denormalizeOverride,
-} from '../../lib/normalize/normalizeAdminSettings.js';
+} from '../../lib/normalize/index.js';
 import PricingSettingsCard from './system/PricingSettingsCard.jsx';
 import AutoClearSettingsCard from './system/AutoClearSettingsCard.jsx';
 import OperatingHoursCard from './system/OperatingHoursCard.jsx';

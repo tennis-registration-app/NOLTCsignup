@@ -6,7 +6,7 @@
  */
 import React, { useState } from 'react';
 import { FileText } from '../components';
-import { normalizeGameSession } from '../../lib/normalize/adminAnalytics.js';
+import { normalizeGameSession } from '../../lib/normalize/index.js';
 
 // Map database endReason to display-friendly values
 // Keys are database values (snake_case literals preserved for mapping)

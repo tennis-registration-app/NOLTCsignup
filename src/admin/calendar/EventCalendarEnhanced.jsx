@@ -12,7 +12,7 @@ import WeekView from './WeekView.jsx';
 import EventDetailsModal from './EventDetailsModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
 import { logger } from '../../lib/logger.js';
-import { normalizeCalendarBlock } from '../../lib/normalize/adminAnalytics.js';
+import { normalizeCalendarBlock } from '../../lib/normalize/index.js';
 
 const EventCalendarEnhanced = ({
   courts,

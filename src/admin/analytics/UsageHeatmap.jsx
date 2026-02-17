@@ -6,7 +6,7 @@
  * Accepts pre-aggregated data from the backend.
  */
 import React, { useMemo } from 'react';
-import { normalizeHeatmapRow } from '../../lib/normalize/adminAnalytics.js';
+import { normalizeHeatmapRow } from '../../lib/normalize/index.js';
 
 const UsageHeatmap = ({ heatmapData = [] }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM

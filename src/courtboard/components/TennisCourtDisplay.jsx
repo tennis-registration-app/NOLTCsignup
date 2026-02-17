@@ -6,7 +6,7 @@ import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
 import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
 import { setRefreshBoardGlobal } from '../../platform/registerGlobals.js';
-import { normalizeSettings } from '../../lib/normalize/normalizeAdminSettings.js';
+import { normalizeSettings } from '../../lib/normalize/index.js';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../../lib/backend/index.js';

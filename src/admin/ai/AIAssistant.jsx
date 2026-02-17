@@ -4,7 +4,7 @@ import {
   normalizeAiResponse,
   normalizeAiAnalyticsSummary,
   normalizeAiHeatmapRow,
-} from '../../lib/normalize/adminAnalytics.js';
+} from '../../lib/normalize/index.js';
 
 /**
  * Production AI Assistant - replaces AIAssistantAdmin

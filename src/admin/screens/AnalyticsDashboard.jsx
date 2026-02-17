@@ -17,7 +17,7 @@ import {
   UsageComparisonChart,
 } from '../analytics';
 import { logger } from '../../lib/logger.js';
-import { normalizeTransaction } from '../../lib/normalize/adminAnalytics.js';
+import { normalizeTransaction } from '../../lib/normalize/index.js';
 
 // Access global dependencies
 const TENNIS_CONFIG = window.TENNIS_CONFIG ||

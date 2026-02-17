@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { normalizeSettings } from '../../../lib/normalize/normalizeAdminSettings.js';
+import { normalizeSettings } from '../../../lib/normalize/index.js';
 
 /**
  * useRegistrationRuntime

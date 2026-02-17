@@ -9,7 +9,7 @@ import {
   normalizeOperatingHours,
   normalizeOverrides,
   normalizeSettings,
-} from '../../lib/normalize/normalizeAdminSettings.js';
+} from '../../lib/normalize/index.js';
 
 /**
  * Default pricing values (fallback when API returns null/undefined)

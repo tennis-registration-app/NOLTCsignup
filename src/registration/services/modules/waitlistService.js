@@ -1,4 +1,4 @@
-import { normalizeAccountMembers } from '@lib/normalize/normalizeMember.js';
+import { normalizeAccountMembers } from '@lib/normalize/index.js';
 import { normalizeServiceError } from '@lib/errors';
 import { resolveParticipants, WAITLIST_PROFILE } from './participantResolution.js';
 
