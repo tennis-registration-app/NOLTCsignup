@@ -27,7 +27,7 @@ export function AIAssistantSection({ aiModel, aiActions, services, components, c
   } = aiActions;
 
   const { backend, dataStore } = services;
-  const { AIAssistant, MockAIAdmin } = components;
+  const { AIAssistant, AIAssistantAdmin } = components;
 
   // Only show on specific tabs
   const showOnTabs = ['calendar', 'blocking', 'analytics', 'system', 'history'];
@@ -59,7 +59,7 @@ export function AIAssistantSection({ aiModel, aiActions, services, components, c
             onSettingsChanged={onAISettingsChanged}
           />
         ) : (
-          <MockAIAdmin
+          <AIAssistantAdmin
             onClose={() => setShowAIAssistant(false)}
             dataStore={dataStore}
             courts={courts}

@@ -539,23 +539,23 @@ describe('domainObjects', () => {
     it('preserves undefined values (no defaults)', () => {
       const components = createAIAssistantComponents({});
       expect(components.AIAssistant).toBeUndefined();
-      expect(components.MockAIAdmin).toBeUndefined();
+      expect(components.AIAssistantAdmin).toBeUndefined();
     });
 
     it('preserves provided components', () => {
       const AIAssistant = () => null;
-      const MockAIAdmin = () => null;
+      const AIAssistantAdmin = () => null;
 
-      const components = createAIAssistantComponents({ AIAssistant, MockAIAdmin });
+      const components = createAIAssistantComponents({ AIAssistant, AIAssistantAdmin });
 
       expect(components.AIAssistant).toBe(AIAssistant);
-      expect(components.MockAIAdmin).toBe(MockAIAdmin);
+      expect(components.AIAssistantAdmin).toBe(AIAssistantAdmin);
     });
 
     it('preserves null values', () => {
-      const components = createAIAssistantComponents({ AIAssistant: null, MockAIAdmin: null });
+      const components = createAIAssistantComponents({ AIAssistant: null, AIAssistantAdmin: null });
       expect(components.AIAssistant).toBeNull();
-      expect(components.MockAIAdmin).toBeNull();
+      expect(components.AIAssistantAdmin).toBeNull();
     });
   });
 });

@@ -42,7 +42,7 @@ import { CompleteBlockManagerEnhanced } from './blocks';
 // Analytics components (re-exported via ./screens/AnalyticsDashboard)
 
 // AI components
-import { MockAIAdmin, AIAssistant } from './ai';
+import { AIAssistantAdmin, AIAssistant } from './ai';
 
 // Screen components
 import { GameHistorySearch, AnalyticsDashboard } from './screens';
@@ -460,10 +460,10 @@ const AdminPanelV2 = ({ onExit }) => {
     () =>
       createAIAssistantComponents({
         AIAssistant,
-        MockAIAdmin,
+        AIAssistantAdmin,
       }),
     []
-    // AIAssistant, MockAIAdmin are module-level imports
+    // AIAssistant, AIAssistantAdmin are module-level imports
   );
 
   // AdminPanelV2 rendering complete

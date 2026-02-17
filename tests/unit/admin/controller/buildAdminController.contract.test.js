@@ -47,7 +47,7 @@ describe('buildAdminController contract', () => {
       QuickActionsMenu: () => null,
       Tennis: {},
       AIAssistant: () => null,
-      MockAIAdmin: () => null,
+      AIAssistantAdmin: () => null,
     },
   };
 
@@ -312,7 +312,7 @@ describe('buildAdminController contract', () => {
           ],
           "components": [
             "AIAssistant",
-            "MockAIAdmin",
+            "AIAssistantAdmin",
           ],
           "model": [
             "USE_REAL_AI",

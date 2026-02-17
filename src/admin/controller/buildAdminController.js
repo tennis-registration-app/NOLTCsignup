@@ -182,7 +182,7 @@ export function buildAdminController(deps) {
   const aiComponents = components
     ? createAIAssistantComponents({
         AIAssistant: components.AIAssistant,
-        MockAIAdmin: components.MockAIAdmin,
+        AIAssistantAdmin: components.AIAssistantAdmin,
       })
     : undefined;
 
@@ -276,7 +276,7 @@ export const CONTROLLER_KEYS = {
       'refreshData',
     ],
     services: ['backend', 'dataStore'],
-    components: ['AIAssistant', 'MockAIAdmin'],
+    components: ['AIAssistant', 'AIAssistantAdmin'],
   },
   services: ['backend'],
 };

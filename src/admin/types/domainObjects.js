@@ -495,24 +495,24 @@ export function createAIAssistantServices(params = {}) {
 
 /**
  * AI Assistant components - injected React components for AI UI.
- * Maps to actual props: AIAssistant, MockAIAdmin
+ * Maps to actual props: AIAssistant, AIAssistantAdmin
  *
  * @typedef {Object} AIAssistantComponents
  * @property {ComponentType|undefined} AIAssistant - Real AI assistant component (from AIAssistant)
- * @property {ComponentType|undefined} MockAIAdmin - Mock AI admin component (from MockAIAdmin)
+ * @property {ComponentType|undefined} AIAssistantAdmin - AI assistant admin component (from AIAssistantAdmin)
  */
 
 /**
  * Creates AIAssistantComponents - preserves undefined values.
  * @param {Object} [params={}]
  * @param {ComponentType} [params.AIAssistant] - Real AI assistant
- * @param {ComponentType} [params.MockAIAdmin] - Mock AI admin
+ * @param {ComponentType} [params.AIAssistantAdmin] - AI assistant admin
  * @returns {AIAssistantComponents}
  */
 export function createAIAssistantComponents(params = {}) {
-  const { AIAssistant, MockAIAdmin } = params;
+  const { AIAssistant, AIAssistantAdmin } = params;
   return {
     AIAssistant,
-    MockAIAdmin,
+    AIAssistantAdmin,
   };
 }
