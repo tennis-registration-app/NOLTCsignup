@@ -7,9 +7,9 @@
 import { TENNIS_CONFIG } from '@lib';
 
 export async function handleClearWaitlistOp(ctx) {
-  const { backend, showAlertMessage, getCourtData } = ctx;
+  const { backend, showAlertMessage, getCourtData, confirm: confirmFn = globalThis.confirm } = ctx;
   const data = getCourtData();
-  const confirmClear = window.confirm('Clear the waitlist? This will remove all waiting groups.');
+  const confirmClear = confirmFn('Clear the waitlist? This will remove all waiting groups.');
   if (confirmClear) {
     let successCount = 0;
     let failCount = 0;
@@ -83,8 +83,8 @@ export async function handleAdminClearCourtOp(ctx, courtNum) {
 }
 
 export async function handleClearAllCourtsOp(ctx) {
-  const { backend, showAlertMessage } = ctx;
-  const confirmClear = window.confirm(
+  const { backend, showAlertMessage, confirm: confirmFn = globalThis.confirm } = ctx;
+  const confirmClear = confirmFn(
     'Clear all courts? This will make all courts immediately available.'
   );
   if (confirmClear) {

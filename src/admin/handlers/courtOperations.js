@@ -93,17 +93,17 @@ export async function moveCourtOp(ctx, from, to) {
 }
 
 export async function clearAllCourtsOp(ctx) {
-  const { courts, backend, dataStore, showNotification, TENNIS_CONFIG } = ctx;
+  const { courts, backend, dataStore, showNotification, confirm, TENNIS_CONFIG } = ctx;
 
   const confirmMessage =
     'Are you sure you want to clear ALL courts?\n\n' +
     'This will remove:\n' +
-    '• All current games\n' +
-    '• All court blocks\n' +
-    '• All wet court statuses\n\n' +
+    'All current games\n' +
+    'All court blocks\n' +
+    'All wet court statuses\n\n' +
     'This action cannot be undone!';
 
-  if (window.confirm(confirmMessage)) {
+  if (await confirm(confirmMessage)) {
     try {
       // Clear all sessions via backend
       const result = await backend.admin.clearAllCourts({

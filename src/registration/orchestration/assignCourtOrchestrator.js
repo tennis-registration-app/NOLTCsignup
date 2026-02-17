@@ -189,7 +189,8 @@ export async function assignCourtToGroupOrchestrated(
       const minutesUntilBlock = Math.ceil((blockStart - nowBlock) / 60000);
       const confirmMsg = `⚠️ This court has a block starting in ${minutesUntilBlock} minutes (${blockStatus.reason}). You may not get your full ${duration} minutes.\n\nDo you want to take this court anyway?`;
 
-      const proceed = confirm(confirmMsg);
+      const confirmFn = ui.confirm || globalThis.confirm;
+      const proceed = confirmFn(confirmMsg);
       if (!proceed) {
         ui.showAlertMessage('Please select a different court or join the waitlist.');
         // FEEDBACK: alert provides user feedback above

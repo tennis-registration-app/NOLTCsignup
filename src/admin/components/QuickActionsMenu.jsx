@@ -5,23 +5,22 @@
  * Appears on right-click or action button click on calendar events.
  */
 import React, { memo } from 'react';
+import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 
 const QuickActionsMenu = memo(({ event, position, onClose, onEdit, onDelete, onDuplicate }) => {
+  const confirm = useAdminConfirm();
   if (!event) return null;
 
   return (
     <>
       {/* Invisible overlay to close menu when clicking outside */}
-      <div
-        className="fixed inset-0 z-40"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40" onClick={onClose} />
 
       <div
         className="fixed z-50 bg-white rounded-lg shadow-lg border border-gray-200 py-1 w-48"
         style={{
           top: `${position.top}px`,
-          left: `${position.left}px`
+          left: `${position.left}px`,
         }}
       >
         <button
@@ -46,8 +45,8 @@ const QuickActionsMenu = memo(({ event, position, onClose, onEdit, onDelete, onD
         </button>
         <div className="border-t border-gray-200 my-1"></div>
         <button
-          onClick={() => {
-            if (window.confirm('Are you sure you want to delete this event?')) {
+          onClick={async () => {
+            if (await confirm('Are you sure you want to delete this event?')) {
               onDelete(event);
               onClose();
             }

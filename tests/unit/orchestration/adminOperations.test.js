@@ -31,7 +31,8 @@ const mockConfirm = vi.fn().mockReturnValue(true);
 describe('adminOperations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock window.confirm - must be on window object since code uses window.confirm
+    // Mock confirm on globalThis (code uses globalThis.confirm fallback)
+    vi.stubGlobal('confirm', mockConfirm);
     vi.stubGlobal('window', {
       ...globalThis.window,
       confirm: mockConfirm,

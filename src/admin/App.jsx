@@ -12,6 +12,7 @@ import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridg
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
 import { getPref } from '../platform/prefsStorage.js';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
+import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext.jsx';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
 import './utils/adminRefresh.js';
@@ -181,6 +182,7 @@ const AdminPanelV2 = ({ onExit }) => {
   // 2. useAdminSettings — settings effects (original #1/#2)
   // 3. useBoardSubscription — subscription effect (original #3)
   const showNotification = useAdminNotification();
+  const confirm = useAdminConfirm();
 
   // Settings hook - owns settings, operatingHours, hoursOverrides, blockTemplates state
   // Hook also returns operatingHours and blockTemplates (not destructured here)
@@ -262,8 +264,9 @@ const AdminPanelV2 = ({ onExit }) => {
   const moveCourt = useCallback((from, to) => moveCourtOp({ backend }, from, to), []);
 
   const clearAllCourts = useCallback(
-    () => clearAllCourtsOp({ courts, backend, dataStore, showNotification, TENNIS_CONFIG }),
-    [courts, showNotification]
+    () =>
+      clearAllCourtsOp({ courts, backend, dataStore, showNotification, confirm, TENNIS_CONFIG }),
+    [courts, showNotification, confirm]
   );
 
   // Waitlist operations - delegated to handler module (useCallback for identity stability)
@@ -573,7 +576,9 @@ export default function App() {
       if (typeof AdminPanelV2 !== 'undefined') {
         return (
           <NotificationProvider>
-            <AdminPanelV2 onExit={() => setView('menu')} />
+            <ConfirmProvider>
+              <AdminPanelV2 onExit={() => setView('menu')} />
+            </ConfirmProvider>
           </NotificationProvider>
         );
       } else {

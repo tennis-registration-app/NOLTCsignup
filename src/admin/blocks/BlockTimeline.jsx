@@ -6,6 +6,7 @@
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Edit2, Copy, Trash2 } from '../components';
+import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 
 const BlockTimeline = ({
   courts: _courts,
@@ -16,6 +17,7 @@ const BlockTimeline = ({
   refreshTrigger,
   backend,
 }) => {
+  const confirm = useAdminConfirm();
   const [viewMode, setViewMode] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filterCourt, setFilterCourt] = useState('all');
@@ -398,8 +400,8 @@ const BlockTimeline = ({
                             </>
                           )}
                           <button
-                            onClick={() => {
-                              if (window.confirm(`Remove block on Court ${block.courtNumber}?`)) {
+                            onClick={async () => {
+                              if (await confirm(`Remove block on Court ${block.courtNumber}?`)) {
                                 onRemoveBlock(block.id);
                               }
                             }}

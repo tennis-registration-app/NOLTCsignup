@@ -7,6 +7,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { getEventColor } from './utils.js';
 import { getPref } from '../../platform/prefsStorage.js';
+import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 
 const BLOCK_TYPES = [
   { value: 'lesson', label: 'Lesson' },
@@ -17,6 +18,7 @@ const BLOCK_TYPES = [
 ];
 
 const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) => {
+  const confirmDialog = useAdminConfirm();
   // Form state
   const [courtId, setCourtId] = useState('');
   const [title, setTitle] = useState('');
@@ -199,7 +201,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
     if (!backend || !event) return;
 
     const courtNum = event.courtNumber || event.courtNumbers?.[0] || 'Unknown';
-    if (!window.confirm(`Delete this block on Court ${courtNum}?`)) {
+    if (!(await confirmDialog(`Delete this block on Court ${courtNum}?`))) {
       return;
     }
 
