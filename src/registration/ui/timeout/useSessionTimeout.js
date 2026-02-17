@@ -3,7 +3,7 @@ import { TENNIS_CONFIG } from '@lib';
 
 /**
  * useSessionTimeout Hook
- * Extracted from App.jsx — WP5.7 Timeout System Containment
+ * Extracted from App.jsx
  *
  * Manages the inactivity timeout system for the group management screen.
  * Shows a warning before timeout, then triggers the exit sequence.

@@ -12,7 +12,7 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // WP4-4: Normalize at ingestion, use camelCase throughout
+  // Normalize at ingestion, use camelCase throughout
   const normalizedData = useMemo(() => {
     return heatmapData.map(normalizeHeatmapRow);
   }, [heatmapData]);

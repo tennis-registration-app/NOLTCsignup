@@ -92,7 +92,7 @@
         );
       if (same) return;
 
-      // WP5-C1: Removed localStorage write - promotions are now computed by backend
+      // Promotions are now computed by backend
       // and read from React state via getCourtboardState(). Events still dispatched
       // for cross-component coordination.
       window.dispatchEvent(new Event('tennisDataUpdate'));

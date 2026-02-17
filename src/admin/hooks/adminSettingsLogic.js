@@ -22,7 +22,7 @@ const PRICING_DEFAULTS = {
 
 /**
  * Transform raw API settings response to UI-friendly shape.
- * WP4-4: Uses normalizeSettings at boundary, then converts cents to dollars.
+ * Uses normalizeSettings at boundary, then converts cents to dollars.
  * @param {Object} apiSettings - Raw settings from backend (snake_case)
  * @returns {Object} Transformed settings object (dollars, nested structure)
  */

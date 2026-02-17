@@ -5,7 +5,7 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 
 /**
  * Guest Handlers
- * Extracted from useRegistrationHandlers — WP5.9.5.2
+ * Extracted from useRegistrationHandlers
  * Verbatim function bodies, no logic changes.
  */
 export function useGuestHandlers(deps) {
@@ -27,7 +27,6 @@ export function useGuestHandlers(deps) {
     memberNumber,
     memberDatabase,
     // Add player state
-    showAddPlayer,
     setShowAddPlayer,
     setShowAddPlayerSuggestions,
     setAddPlayerSearch,

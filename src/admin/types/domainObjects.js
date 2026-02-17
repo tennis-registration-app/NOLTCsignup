@@ -2,7 +2,6 @@
  * @fileoverview Domain object type definitions for Admin components.
  *
  * These objects group related props to reduce component surface area.
- * See docs/WP5-A_PROP_SURFACES_INVENTORY.md for rationale.
  *
  * RULES:
  * - Objects must be curated, not pass-through dumps

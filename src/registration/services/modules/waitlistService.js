@@ -6,9 +6,9 @@ import { resolveParticipants, WAITLIST_PROFILE } from './participantResolution.j
  * Waitlist operations extracted from ApiTennisService.
  * Cache remains on ApiTennisService instance via accessors.
  *
- * WP5-D2: Safe read/refresh/remove slice.
- * WP5-D4: Added addToWaitlist and assignFromWaitlist mutations.
- * WP5-D8: Uses shared participantResolution helper.
+ * Safe read/refresh/remove slice.
+ * Added addToWaitlist and assignFromWaitlist mutations.
+ * Uses shared participantResolution helper.
  *
  * @param {Object} deps
  * @param {Object} deps.api - ApiAdapter instance

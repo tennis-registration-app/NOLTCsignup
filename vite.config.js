@@ -10,6 +10,7 @@ function copyPlainJsFiles() {
     writeBundle() {
       const filesToCopy = [
         // Courtboard plain JS files
+        'src/courtboard/bootstrap/courtboardPreInit.js',
         'src/courtboard/mobile-fallback-bar.js',
         'src/courtboard/mobile-bridge.js',
         'src/courtboard/sync-promotions.js',

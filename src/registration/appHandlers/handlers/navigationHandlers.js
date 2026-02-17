@@ -5,7 +5,7 @@ import { GeolocationService } from '../../services';
 
 /**
  * Navigation Handlers
- * Extracted from useRegistrationHandlers — WP5.9.5.4
+ * Extracted from useRegistrationHandlers
  * Verbatim function bodies, no logic changes.
  */
 export function useNavigationHandlers(deps) {

@@ -12,9 +12,9 @@ import {
 
 /**
  * RegistrationRouter
- * Extracted from App.jsx — WP5.9.1
- * Refactored to delegate to route components — WP6.0.1
- * Collapsed to app/handlers only — WP6.0.2b
+ * Extracted from App.jsx
+ * Refactored to delegate to route components
+ * Collapsed to app/handlers only
  *
  * Handles screen routing based on currentScreen state.
  * Routes receive only { app, handlers }.

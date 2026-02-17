@@ -158,7 +158,7 @@ const ClearCourtScreen = ({
     logger.debug('ClearCourt', 'Step 2 - players array', JSON.stringify(players, null, 2));
 
     // Handle players as array of strings or objects with name/displayName property
-    // WP4-4: Use camelCase only (data is pre-normalized)
+    // Use camelCase only (data is pre-normalized)
     const displayNames = players
       .map((p) => {
         const name = typeof p === 'string' ? p : p.name || p.displayName || 'Unknown';

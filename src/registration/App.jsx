@@ -1,20 +1,19 @@
 // Registration App - Vite-bundled React
 // Converted from inline Babel to ES module JSX
-// WP5.9.4.2: Streamlined to use useRegistrationAppState and useRegistrationHandlers
-// WP7.0: Collapsed prop enumeration - handlers now receive { app } directly
-/* global Tennis */
+// Streamlined to use useRegistrationAppState and useRegistrationHandlers
+// Collapsed prop enumeration - handlers now receive { app } directly
 import React from 'react';
 
 // Import registration-specific services
 import { GeolocationService } from './services';
 
-// Registration router (WP5.9.1)
+// Registration router
 import { RegistrationRouter } from './router';
 
-// Registration state and handlers hooks (WP5.9.3, WP5.9.4)
+// Registration state and handlers hooks
 import { useRegistrationHandlers, useRegistrationAppState } from './appHandlers';
 
-// WP4-3: Window global setters
+// Window global setters
 import { ensureTennisGlobal, setGeolocationServiceGlobal } from '../platform/registerGlobals.js';
 
 // Global service aliases for backward compatibility with other scripts
@@ -26,10 +25,10 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
   // Get all state, effects, hooks, and derived values
   const app = useRegistrationAppState({ isMobileView });
 
-  // Get all handlers, passing the app object (WP7.0)
+  // Get all handlers, passing the app object
   const handlers = useRegistrationHandlers({ app });
 
-  // Render the router with grouped props only (WP6.0.2b)
+  // Render the router with grouped props only
   return <RegistrationRouter app={app} handlers={handlers} />;
 };
 

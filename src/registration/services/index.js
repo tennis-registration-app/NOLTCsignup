@@ -7,7 +7,7 @@
  *   import { getTennisService } from './services'; // For backend-aware service
  */
 
-// WP4-3: Window global setters
+// Window global setters
 import { setNoltcUseApiGlobal } from '../../platform/registerGlobals.js';
 import { getPref, setPref, removePref } from '../../platform/prefsStorage.js';
 
@@ -57,14 +57,14 @@ function shouldUseApi() {
 
     try {
       if (getPref('useApi') === true) return true;
-    } catch (_e) {
+    } catch {
       // prefsStorage may not be available
     }
 
     try {
       const params = new URLSearchParams(window.location.search);
       if (params.get('useApi') === 'true') return true;
-    } catch (_e) {
+    } catch {
       // URL parsing may fail
     }
   }

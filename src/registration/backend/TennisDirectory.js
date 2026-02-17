@@ -172,7 +172,7 @@ export class TennisDirectory {
    * @returns {import('./types').Member}
    */
   _normalizeMember(m) {
-    // WP4-4: Output camelCase only - no dual-format aliases
+    // Output camelCase only - no dual-format aliases
     return {
       id: m.id,
       accountId: m.account_id,

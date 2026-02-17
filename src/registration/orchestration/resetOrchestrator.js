@@ -1,6 +1,6 @@
 /**
  * Reset Orchestrators
- * Moved from App.jsx — WP5.5 facade extraction
+ * Moved from App.jsx
  *
  * DEPENDENCY CHECKLIST for resetFormOrchestrated:
  * Reads: (none - pure reset)
@@ -66,7 +66,7 @@
  */
 
 export async function resetFormOrchestrated(deps) {
-  // WP4-2: Grouped deps structure — { actions, services }
+  // Grouped deps structure — { actions, services }
   const {
     actions: {
       setCurrentGroup,
@@ -142,7 +142,7 @@ export async function resetFormOrchestrated(deps) {
   setWasOvertimeCourt(false);
   setCourtToMove(null);
   setHasAssignedCourt(false);
-  clearCache(); // Clear frequent partners cache (WP5.3 R8b.3)
+  clearCache(); // Clear frequent partners cache
   setShowGuestForm(false);
   setGuestName('');
   setGuestSponsor('');

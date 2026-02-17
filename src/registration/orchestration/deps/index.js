@@ -1,4 +1,4 @@
 /**
- * Orchestration deps (WP-HR4)
+ * Orchestration deps
  */
 export { createOrchestrationDeps } from './createOrchestrationDeps.js';

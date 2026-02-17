@@ -95,7 +95,7 @@ const EventCalendarEnhanced = ({
 
         if (result.ok) {
           // Transform API response to calendar event format
-          // WP4-4: Normalize at ingestion, then use camelCase
+          // Normalize at ingestion, then use camelCase
           const transformedBlocks = result.blocks.map((b) => {
             const normalized = normalizeCalendarBlock(b);
 

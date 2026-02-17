@@ -237,7 +237,7 @@ export function TennisCourtDisplay() {
   }, []);
 
   // Load check_status_minutes from system settings
-  // WP4-4: Normalize settings at boundary
+  // Normalize settings at boundary
   useEffect(() => {
     const loadSettings = async () => {
       try {

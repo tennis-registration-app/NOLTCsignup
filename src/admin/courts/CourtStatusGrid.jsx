@@ -342,7 +342,7 @@ const CourtStatusGrid = ({
       if (res?.success) {
         setMovingFrom(null);
       }
-    } catch (_e) {
+    } catch {
       getTennisUI()?.toast?.('Unexpected error moving court', { type: 'error' });
     }
   };

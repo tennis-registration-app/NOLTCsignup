@@ -5,9 +5,9 @@ import { buildGroupModel, buildGroupActions } from '../presenters';
 
 /**
  * GroupRoute
- * Extracted from RegistrationRouter — WP6.0.1
- * Collapsed to app/handlers only — WP6.0.2b
- * Refactored to use presenter functions — WP8.0
+ * Extracted from RegistrationRouter
+ * Collapsed to app/handlers only
+ * Refactored to use presenter functions
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,

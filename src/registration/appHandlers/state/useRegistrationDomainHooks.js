@@ -1,44 +1,44 @@
 /**
  * useRegistrationDomainHooks - Consolidated domain hook calls
- * Extracted from useRegistrationAppState.js (WP5.9.6.4)
+ * Extracted from useRegistrationAppState.js
  *
  * Contains all 13 domain hook invocations with their destructured returns.
  */
 
-// Alert display hook (WP5.6 R6a-1)
+// Alert display hook
 import { useAlertDisplay } from '../../ui/alert';
 
-// Admin price feedback hook (WP5.6 R6a-2)
+// Admin price feedback hook
 import { useAdminPriceFeedback } from '../../ui/adminPriceFeedback';
 
-// Guest counter hook (WP5.6 R6a-3)
+// Guest counter hook
 import { useGuestCounter } from '../../ui/guestCounter';
 
-// Mobile flow controller hook (WP5.8)
+// Mobile flow controller hook
 import { useMobileFlowController } from '../../ui/mobile';
 
-// Member search hook (WP5.3 R5a.3)
+// Member search hook
 import { useMemberSearch } from '../../search/useMemberSearch.js';
 
-// Court assignment result hook (WP5.4 R9a-1.3)
+// Court assignment result hook
 import { useCourtAssignmentResult } from '../../court/useCourtAssignmentResult';
 
-// Clear court flow hook (WP5.4 R9a-2.3)
+// Clear court flow hook
 import { useClearCourtFlow } from '../../court/useClearCourtFlow';
 
-// Block admin hook (WP5.3 R3.3)
+// Block admin hook
 import { useBlockAdmin } from '../../blocks/useBlockAdmin';
 
-// Waitlist admin hook (WP5.3 R4a.3)
+// Waitlist admin hook
 import { useWaitlistAdmin } from '../../waitlist/useWaitlistAdmin';
 
-// Group/Guest hook (WP5.3 R8a.3)
+// Group/Guest hook
 import { useGroupGuest } from '../../group/useGroupGuest';
 
-// Streak hook (WP5.3 R8c.3)
+// Streak hook
 import { useStreak } from '../../streak/useStreak';
 
-// Member identity hook (WP5.3 R8b.3)
+// Member identity hook
 import { useMemberIdentity } from '../../memberIdentity/useMemberIdentity';
 
 // Debug utilities
@@ -73,11 +73,11 @@ export function useRegistrationDomainHooks({
   getCourtData,
   showAlertMessage: externalShowAlertMessage,
 }) {
-  // Alert display hook (WP5.6 R6a-1)
+  // Alert display hook
   const { showAlert, alertMessage, setShowAlert, setAlertMessage, showAlertMessage } =
     useAlertDisplay({ alertDurationMs: CONSTANTS.ALERT_DISPLAY_MS });
 
-  // Admin price feedback hook (WP5.6 R6a-2)
+  // Admin price feedback hook
   const {
     showPriceSuccess,
     priceError,
@@ -86,10 +86,10 @@ export function useRegistrationDomainHooks({
     showPriceSuccessWithClear,
   } = useAdminPriceFeedback();
 
-  // Guest counter hook (WP5.6 R6a-3)
+  // Guest counter hook
   const { guestCounter, incrementGuestCounter } = useGuestCounter();
 
-  // Court assignment result hook (WP5.4 R9a-1.3)
+  // Court assignment result hook
   const {
     justAssignedCourt: courtAssignmentJustAssigned,
     assignedSessionId,
@@ -101,7 +101,7 @@ export function useRegistrationDomainHooks({
     setHasAssignedCourt,
   } = useCourtAssignmentResult();
 
-  // Clear court flow hook (WP5.4 R9a-2.3)
+  // Clear court flow hook
   const {
     selectedCourtToClear,
     clearCourtStep,
@@ -110,7 +110,7 @@ export function useRegistrationDomainHooks({
     decrementClearCourtStep,
   } = useClearCourtFlow();
 
-  // Group/Guest hook (WP5.3 R8a.3)
+  // Group/Guest hook
   const {
     currentGroup,
     guestName,
@@ -129,7 +129,7 @@ export function useRegistrationDomainHooks({
     handleCancelGuest,
   } = useGroupGuest();
 
-  // Streak hook (WP5.3 R8c.3)
+  // Streak hook
   const {
     registrantStreak,
     showStreakModal,
@@ -139,7 +139,7 @@ export function useRegistrationDomainHooks({
     setStreakAcknowledged,
   } = useStreak();
 
-  // Member identity hook (WP5.3 R8b.3)
+  // Member identity hook
   const {
     memberNumber,
     currentMemberId,
@@ -151,7 +151,7 @@ export function useRegistrationDomainHooks({
     clearCache,
   } = useMemberIdentity({ backend });
 
-  // Member search hook (WP5.3 R5a.3)
+  // Member search hook
   const {
     searchInput,
     showSuggestions,
@@ -177,7 +177,7 @@ export function useRegistrationDomainHooks({
     markUserTyping,
   });
 
-  // Mobile flow controller hook (WP5.8)
+  // Mobile flow controller hook
   const {
     mobileFlow,
     preselectedCourt,
@@ -210,7 +210,7 @@ export function useRegistrationDomainHooks({
     DEBUG,
   });
 
-  // Block admin hook (WP5.3 R3.3)
+  // Block admin hook
   const {
     showBlockModal,
     blockingInProgress,
@@ -234,7 +234,7 @@ export function useRegistrationDomainHooks({
     getCourtData,
   });
 
-  // Waitlist admin hook (WP5.3 R4a.3)
+  // Waitlist admin hook
   const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
     getCourtData,
     showAlertMessage: externalShowAlertMessage || showAlertMessage,
@@ -242,25 +242,25 @@ export function useRegistrationDomainHooks({
 
   // Return all values in a flat object
   return {
-    // Alert display (WP5.6 R6a-1)
+    // Alert display
     showAlert,
     alertMessage,
     setShowAlert,
     setAlertMessage,
     showAlertMessage,
 
-    // Admin price feedback (WP5.6 R6a-2)
+    // Admin price feedback
     showPriceSuccess,
     priceError,
     setShowPriceSuccess,
     setPriceError,
     showPriceSuccessWithClear,
 
-    // Guest counter (WP5.6 R6a-3)
+    // Guest counter
     guestCounter,
     incrementGuestCounter,
 
-    // Court assignment result (WP5.4 R9a-1.3)
+    // Court assignment result
     justAssignedCourt: courtAssignmentJustAssigned,
     assignedSessionId,
     assignedEndTime,
@@ -270,14 +270,14 @@ export function useRegistrationDomainHooks({
     setAssignedEndTime,
     setHasAssignedCourt,
 
-    // Clear court flow (WP5.4 R9a-2.3)
+    // Clear court flow
     selectedCourtToClear,
     clearCourtStep,
     setSelectedCourtToClear,
     setClearCourtStep,
     decrementClearCourtStep,
 
-    // Group/Guest (WP5.3 R8a.3)
+    // Group/Guest
     currentGroup,
     guestName,
     guestSponsor,
@@ -294,7 +294,7 @@ export function useRegistrationDomainHooks({
     handleSelectSponsor,
     handleCancelGuest,
 
-    // Streak (WP5.3 R8c.3)
+    // Streak
     registrantStreak,
     showStreakModal,
     streakAcknowledged,
@@ -302,7 +302,7 @@ export function useRegistrationDomainHooks({
     setShowStreakModal,
     setStreakAcknowledged,
 
-    // Member identity (WP5.3 R8b.3)
+    // Member identity
     memberNumber,
     currentMemberId,
     frequentPartners,
@@ -312,7 +312,7 @@ export function useRegistrationDomainHooks({
     fetchFrequentPartners,
     clearCache,
 
-    // Member search (WP5.3 R5a.3)
+    // Member search
     searchInput,
     showSuggestions,
     addPlayerSearch,
@@ -331,7 +331,7 @@ export function useRegistrationDomainHooks({
     handleAddPlayerSearchFocus,
     getAutocompleteSuggestions,
 
-    // Mobile flow controller (WP5.8)
+    // Mobile flow controller
     mobileFlow,
     preselectedCourt,
     mobileMode,
@@ -354,7 +354,7 @@ export function useRegistrationDomainHooks({
     openQRScanner,
     dismissGpsPrompt,
 
-    // Block admin (WP5.3 R3.3)
+    // Block admin
     showBlockModal,
     blockingInProgress,
     selectedCourtsToBlock,
@@ -372,7 +372,7 @@ export function useRegistrationDomainHooks({
     onBlockCreate,
     onCancelBlock,
 
-    // Waitlist admin (WP5.3 R4a.3)
+    // Waitlist admin
     waitlistMoveFrom,
     setWaitlistMoveFrom,
     onReorderWaitlist,

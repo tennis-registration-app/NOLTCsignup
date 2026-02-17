@@ -7,7 +7,7 @@ import {
 
 /**
  * useAdminPriceFeedback Hook
- * Extracted from App.jsx — WP5.6 R6a-2
+ * Extracted from App.jsx
  *
  * Provides admin price feedback state (success/error display).
  *

@@ -6,7 +6,7 @@
  * - backend (shared TennisBackend instance)
  * - onRefresh (callback to trigger data refresh)
  *
- * WP5.3 R2: Enhanced to centralize dependencies for domain hooks.
+ * Enhanced to centralize dependencies for domain hooks.
  */
 
 import React, { createContext, useContext, useMemo } from 'react';

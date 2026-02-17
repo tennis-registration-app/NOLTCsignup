@@ -2,7 +2,7 @@
 /**
  * @fileoverview Canonical JSDoc type boundaries for the NOLTC registration app.
  *
- * WP6.3: These typedefs lock the runtime shapes of { app } and handlers
+ * These typedefs lock the runtime shapes of { app } and handlers
  * to prevent silent drift. All 34 handler keys are explicitly enumerated.
  *
  * NO EXECUTABLE LOGIC IN THIS FILE — typedefs only.

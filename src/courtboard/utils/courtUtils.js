@@ -141,7 +141,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
         if (!isNaN(endTime)) {
           secondary = `Until ${endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
         }
-      } catch (_e) {
+      } catch {
         // ignore invalid date
       }
     }

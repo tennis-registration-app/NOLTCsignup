@@ -7,7 +7,7 @@ import {
 
 /**
  * useAlertDisplay Hook
- * Extracted from App.jsx — WP5.6 R6a-1
+ * Extracted from App.jsx
  *
  * Provides alert display state and the showAlertMessage helper.
  *

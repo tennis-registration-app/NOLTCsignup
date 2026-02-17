@@ -9,7 +9,7 @@ import {
 
 /**
  * Admin Handlers
- * Extracted from useRegistrationHandlers — WP5.9.5.1
+ * Extracted from useRegistrationHandlers
  * Verbatim function bodies, no logic changes.
  */
 export function useAdminHandlers(deps) {
@@ -86,7 +86,7 @@ export function useAdminHandlers(deps) {
 
       // Show success message
       showPriceSuccessWithClear();
-    } catch (_error) {
+    } catch {
       // Intentional: error details not needed, generic message shown to user
       setPriceError('Failed to save price');
     }

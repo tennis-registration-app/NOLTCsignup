@@ -9,7 +9,7 @@ import { transformWaitlist } from '../legacy/waitlistTransforms.js';
  * - Direct cache population (no notifications during init)
  * - Transform application for return value
  *
- * WP5-D-closeout: Extracted to complete service modularization.
+ * Extracted to complete service modularization.
  *
  * @param {Object} deps
  * @param {Object} deps.api - ApiAdapter instance

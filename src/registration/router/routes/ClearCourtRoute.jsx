@@ -5,8 +5,8 @@ import { TennisBusinessLogic } from '@lib';
 
 /**
  * ClearCourtRoute
- * Extracted from RegistrationRouter — WP6.0.1
- * Collapsed to app/handlers only — WP6.0.2b
+ * Extracted from RegistrationRouter
+ * Collapsed to app/handlers only
  * Verbatim JSX. No behavior change.
  *
  * @param {{

@@ -1,7 +1,7 @@
-# ApiTennisService Public Surface (WP7.1 Reference)
+# ApiTennisService Public Surface
 
 This file documents the public method surface of ApiTennisService.
-Used for parity verification during WP7.1 refactoring.
+Used for parity verification during refactoring.
 
 ## Public Methods (captured before refactor)
 

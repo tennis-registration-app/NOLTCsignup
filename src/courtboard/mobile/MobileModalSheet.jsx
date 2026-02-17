@@ -89,7 +89,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
         // Member roster display
         let rosterData = [];
         try {
-          // WP5-C1: Removed localStorage fallbacks - use wrapper or test data only
+          // Use storage wrapper or test data only (no direct localStorage fallbacks)
           const S = getTennisStorage();
           rosterData =
             window.__memberRoster ||

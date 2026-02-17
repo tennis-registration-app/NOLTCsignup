@@ -3,7 +3,7 @@ import { normalizeSettings } from '../../../lib/normalize/normalizeAdminSettings
 
 /**
  * useRegistrationRuntime
- * Extracted from useRegistrationAppState — WP5.9.6.2
+ * Extracted from useRegistrationAppState
  *
  * Owns runtime effects: timer cleanups, CSS optimizations, time interval.
  * Verbatim extraction, no logic changes.
@@ -40,7 +40,7 @@ export function useRegistrationRuntime({
   }, []);
 
   // VERBATIM COPY: Fetch ball price from API on mount (line 678)
-  // WP4-4: Normalize settings at boundary
+  // Normalize settings at boundary
   useEffect(() => {
     const fetchBallPrice = async () => {
       try {
@@ -126,10 +126,11 @@ export function useRegistrationRuntime({
     return () => clearInterval(timer);
   }, [setCurrentTime]);
 
-  // VERBATIM COPY: Cleanup typing timeout on unmount (line 866)
+  // Cleanup typing timeout on unmount
   useEffect(() => {
+    const timeoutId = typingTimeoutRef.current;
     return () => {
-      clearTimeout(typingTimeoutRef.current);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, []);
 

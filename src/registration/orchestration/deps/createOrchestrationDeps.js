@@ -1,12 +1,12 @@
 /**
- * Orchestration Deps Factory (WP-HR4)
+ * Orchestration Deps Factory
  *
  * This factory creates a small dependency object intended for INTERNAL
- * orchestrator implementation use in WP-HR4+.
+ * orchestrator implementation use.
  *
  * NOTE: This is NOT the same object as the existing v0 `deps` parameter passed
  * into assignCourtToGroupOrchestrated today. It will be introduced behind a
- * wrapper later in WP-HR4 without changing call sites.
+ * wrapper later without changing call sites.
  */
 
 import { logger } from '../../../lib/logger.js';

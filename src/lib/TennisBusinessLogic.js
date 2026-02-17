@@ -17,7 +17,7 @@ import { getCourtBlockStatus as _getCourtBlockStatus } from './court-blocks.js';
 const getCourtBlockStatus = (courtNumber) => {
   try {
     return _getCourtBlockStatus ? _getCourtBlockStatus(courtNumber) : null;
-  } catch (_e) {
+  } catch {
     return null;
   }
 };

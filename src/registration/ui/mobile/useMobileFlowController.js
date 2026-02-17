@@ -3,7 +3,7 @@ import { logger } from '../../../lib/logger.js';
 
 /**
  * useMobileFlowController Hook
- * Extracted from App.jsx — WP5.8 Mobile Flow Containment
+ * Extracted from App.jsx
  *
  * Manages all mobile-specific state, effects, and communication.
  *

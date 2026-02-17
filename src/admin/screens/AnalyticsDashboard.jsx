@@ -133,7 +133,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
           const result = await backend.admin.getTransactions({ type: 'ball_purchase', limit: 500 });
           logger.debug('AdminAnalytics', 'Ball purchases result', result);
           if (result.ok && result.transactions) {
-            // WP4-4: Normalize at ingestion, use camelCase
+            // Normalize at ingestion, use camelCase
             ballPurchasesData = result.transactions.map((t) => {
               const normalized = normalizeTransaction(t);
               return {
@@ -159,7 +159,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
         try {
           const result = await backend.admin.getTransactions({ type: 'guest_fee', limit: 500 });
           if (result.ok && result.transactions) {
-            // WP4-4: Normalize at ingestion, use camelCase
+            // Normalize at ingestion, use camelCase
             guestChargesData = result.transactions.map((t) => {
               const normalized = normalizeTransaction(t);
               return {

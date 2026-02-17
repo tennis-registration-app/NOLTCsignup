@@ -1,5 +1,5 @@
 /**
- * Orchestration Helpers (WP-HR4)
+ * Orchestration Helpers
  * Pure helper functions extracted from orchestrators for testability.
  */
 export {

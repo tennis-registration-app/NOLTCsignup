@@ -1,5 +1,5 @@
 /**
- * WP-HR4: Pure helpers extracted from assignCourtOrchestrator v0 guards.
+ * Pure helpers extracted from assignCourtOrchestrator v0 guards.
  *
  * These helpers are intentionally "dumb": they mirror current v0 logic exactly.
  * NO side effects. NO network. NO timers. NO DOM access.

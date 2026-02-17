@@ -1,6 +1,6 @@
 /**
  * Alert Display Reducer
- * Extracted from App.jsx — WP5.6 R6a-1
+ * Extracted from App.jsx
  *
  * State:
  *   - showAlert: boolean

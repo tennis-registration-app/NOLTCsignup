@@ -1,0 +1,897 @@
+/* Ensure full height layout */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.courts-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 130px));
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.courts-grid-bottom {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 130px));
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.court-card {
+  width: 100%;
+  height: 180px;
+  max-width: 130px;
+  min-width: 80px;
+}
+
+/* Intermediate display scaling - for 1400-1800px */
+@media (min-width: 1401px) and (max-width: 1800px) {
+  .courts-grid {
+    grid-template-columns: repeat(8, minmax(130px, 180px));
+    gap: 0.75rem;
+  }
+
+  .courts-grid-bottom {
+    grid-template-columns: repeat(4, minmax(130px, 180px));
+    gap: 0.75rem;
+  }
+
+  .court-card {
+    max-width: 180px !important;
+    height: clamp(200px, 14vw, 280px) !important;
+  }
+
+  /* Moderate text scaling */
+  .courtboard-text-xl { font-size: 1.5rem; }
+  .courtboard-text-lg { font-size: 1.75rem; }
+  .courtboard-text-base { font-size: 1.5rem; }
+  .courtboard-text-sm { font-size: 1.25rem; }
+  .courtboard-text-xs { font-size: 1.125rem; }
+
+  .courtboard-waiting-number { font-size: 1.125rem; }
+  .space-y-2 > * + * { margin-top: 0.75rem !important; }
+
+  /* Court card text - smaller for this range */
+  .court-text-lg { font-size: clamp(0.875rem, 1.2vw, 1.25rem) !important; }
+  .court-text-base { font-size: clamp(0.75rem, 1vw, 1.125rem) !important; }
+  .court-text-sm { font-size: clamp(0.625rem, 0.9vw, 1rem) !important; }
+  .court-text-xs { font-size: clamp(0.5rem, 0.8vw, 0.875rem) !important; }
+  /* Blocked court labels - 30% larger than Available */
+  .blocked-court-label { font-size: calc(1.3 * clamp(0.75rem, 1vw, 1.125rem)) !important; }
+}
+
+/* Large display scaling - for 1800px+ */
+@media (min-width: 1801px) {
+  .courts-grid {
+    grid-template-columns: repeat(8, minmax(130px, 250px));
+    gap: 1rem;
+  }
+
+  .courts-grid-bottom {
+    grid-template-columns: repeat(4, minmax(130px, 250px));
+    gap: 1rem;
+  }
+
+  .court-card {
+    max-width: 250px !important;
+    height: clamp(220px, 16vw, 380px) !important;
+  }
+
+  /* CourtBoard-specific text scaling for large displays */
+  .courtboard-text-xl { font-size: 2.25rem; }
+  .courtboard-text-lg { font-size: 2.8rem; }
+  .courtboard-text-base { font-size: 2.25rem; }
+  .courtboard-text-sm { font-size: 2rem; }
+  .courtboard-text-xs { font-size: 1.875rem; }
+
+  /* Reduce waiting list numbers specifically */
+  .courtboard-waiting-number { font-size: 1.4rem; }
+
+  /* Increase spacing in waiting and next available lists */
+  .space-y-2 > * + * { margin-top: 1.4rem !important; }
+
+  /* Scale up court card text */
+  .court-text-lg { font-size: clamp(0.75rem, 1.5vw, 2.25rem) !important; }
+  .court-text-base { font-size: clamp(0.625rem, 1.2vw, 2.4rem) !important; }
+  .court-text-sm { font-size: clamp(0.5rem, 1vw, 2rem) !important; }
+  .court-text-xs { font-size: clamp(0.4rem, 0.8vw, 2.55rem) !important; }
+  /* Blocked court labels - 30% larger than Available for large displays */
+  .blocked-court-label { font-size: calc(1.3 * clamp(0.625rem, 1.2vw, 2.4rem)) !important; }
+  /* Scale up header time and date */
+}
+.time-header { font-size: clamp(1.5rem, 4vw, 5.625rem) !important; }
+.date-header { font-size: clamp(0.75rem, 2vw, 2.8rem) !important; }
+
+/* Medium display scaling */
+@media (min-width: 1025px) and (max-width: 1400px) {
+  .courts-grid {
+    grid-template-columns: repeat(8, minmax(110px, 180px));
+    gap: 0.75rem;
+  }
+
+  .courts-grid-bottom {
+    grid-template-columns: repeat(4, minmax(110px, 180px));
+    gap: 0.75rem;
+  }
+
+  .court-card {
+    height: 220px;
+  }
+}
+
+/* Responsive text that scales with container */
+.court-text-lg {
+  font-size: clamp(0.75rem, 1.5vw, 1.5rem);
+}
+
+.court-text-base {
+  font-size: clamp(0.625rem, 1.2vw, 1.2rem);
+}
+
+.court-text-sm {
+  font-size: clamp(0.5rem, 1vw, 1rem);
+}
+
+.court-text-xs {
+  font-size: clamp(0.4rem, 0.8vw, 0.85rem);
+}
+
+/* Main layout grid */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  height: 100%;
+  width: 100%;
+}
+
+.courts-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.next-available-section {
+  width: clamp(250px, 25vw, 400px);
+  flex-shrink: 0;
+}
+
+/* Ensure waiting list and bottom courts share space properly */
+.bottom-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Header responsive sizing */
+.time-header {
+  font-size: clamp(1.5rem, 4vw, 3.75rem);
+}
+
+.date-header {
+  font-size: clamp(0.875rem, 1.5vw, 1.25rem);
+}
+
+/* Prevent text overflow */
+.player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Media query for tablets and small screens */
+@media (max-width: 1200px) {
+  .court-card {
+    height: 150px;
+    max-width: 100px;
+  }
+
+  .courts-grid {
+    grid-template-columns: repeat(8, minmax(0, 100px));
+  }
+
+  .courts-grid-bottom {
+    grid-template-columns: repeat(4, minmax(0, 100px));
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .next-available-section {
+    display: none;
+  }
+
+  .courts-grid {
+    grid-template-columns: repeat(4, minmax(0, 100px));
+  }
+
+  .bottom-section {
+    grid-template-columns: 1fr;
+  }
+
+  .court-card {
+    height: 140px;
+    max-width: 90px;
+  }
+}
+
+/* Add spacing for tennis ball icon on large displays */
+@media (min-width: 1401px) {
+  .next-available-section .mr-3 {
+    margin-right: 1.5rem !important;
+  }
+}
+
+/* Mobile phone layout */
+@media (max-width: 768px) {
+  .courts-section {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .courts-grid {
+    display: none;
+  }
+
+  .courts-grid-bottom {
+    display: none;
+  }
+
+  .right-column {
+    display: none !important;
+  }
+
+  .mobile-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .mobile-courts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    padding: 0.5rem;
+    justify-items: center;
+  }
+
+  .court-card {
+    height: 140px;
+    width: 100%;
+    max-width: 140px;
+  }
+
+  /* But not when in mobile variant mode */
+  .variant-mobile .court-card {
+    height: auto;
+    max-width: none;
+  }
+
+  .bottom-section {
+    display: none;
+  }
+
+  .mobile-waiting-section {
+    display: block;
+    margin-top: 1rem;
+    min-height: 200px;
+  }
+
+  .mobile-next-available {
+    display: block;
+    margin-top: 1rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+  }
+
+  .mobile-next-available.compact {
+    padding: 0.5rem 1rem;
+  }
+
+  .mobile-next-available-empty {
+    text-align: center;
+  }
+
+  .mobile-next-available-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-next-available-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(71, 85, 105, 0.5);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+  }
+
+  /* Ensure Reserved Courts looks good on mobile - larger text, tighter spacing */
+  .mobile-next-available .reserved-courts-text,
+  .mobile-next-available .reserved-courts-empty {
+    font-size: 1.125rem; /* 50% larger: 0.75rem * 1.5 = 1.125rem */
+  }
+
+  .mobile-next-available .reserved-courts-text {
+    line-height: 1.2; /* Tighter line spacing */
+  }
+
+  .time-header {
+    font-size: 2rem;
+  }
+
+  .date-header {
+    font-size: 1rem;
+  }
+
+  /* Hide the green divider line on mobile */
+  .divider-line {
+    display: none;
+  }
+
+  /* Make the main container scrollable on mobile */
+  .main-layout {
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+}
+
+/* Scale up People emoji only for very large displays */
+@media (min-width: 1800px) {
+  h3 .mr-5 {
+    font-size: 3rem !important;
+  }
+}
+
+/* Mobile variant styles - only when ?view=mobile */
+.variant-mobile .mobile-courts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.variant-mobile .court-card {
+  height: auto;      /* let cards size naturally */
+  padding: 8px;      /* compact padding */
+  min-height: 64px;  /* 40% smaller than original, preserve tap target */
+}
+
+/* Compact font sizes for mobile */
+.variant-mobile .court-card h3 {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.variant-mobile .court-card .court-text-sm {
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.variant-mobile .court-card .text-xs,
+.variant-mobile .court-card .court-text-xs {
+  font-size: 0.75rem;
+}
+
+/* 2-line clamp for names to prevent overflow */
+.variant-mobile .court-card .truncate {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hide time/date header in mobile view only */
+.variant-mobile .time-header,
+.variant-mobile .date-header {
+  display: none !important;
+}
+
+/* Mobile: hide secondary panels; grid becomes the focus */
+.variant-mobile .next-available-section,
+.variant-mobile .reserved-courts-panel,
+.variant-mobile .mobile-waiting-section,
+.variant-mobile .mobile-next-available {
+  display: none !important;
+}
+
+/* Extend light grey background to meet green bar with adjusted padding */
+.variant-mobile .bg-gradient-to-br {
+  padding: 6px 16px calc(72px + 6px) 16px !important; /* Top: 6px, Sides: 16px, Bottom: 6px + 72px for bar */
+  min-height: 100vh !important; /* Ensure full coverage to bottom bar */
+}
+
+.variant-mobile .main-layout {
+  padding-bottom: 0; /* Remove extra padding since background handles it */
+}
+
+/* Z-index variables for reliable stacking */
+:root {
+  --modal-z: 2147482000;
+  --bar-z: 2147483000;
+}
+
+/* Modal root must never eat clicks when closed */
+#mobile-modal-root {
+  pointer-events: none;
+  z-index: var(--modal-z);
+}
+#mobile-modal-root.modal-open {
+  pointer-events: auto;
+}
+
+/* Any passive blur/overlay layers must not capture clicks */
+.blur-overlay {
+  pointer-events: none !important;
+}
+
+/* Plain-JS Fallback Bar - Always works, always visible */
+.mbb-fallback {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483000; /* above anything */
+  display: flex;
+  gap: 8px;
+  padding: 12px 8px 8px 8px; /* increased top padding to close seam */
+  padding-bottom: calc(8px + env(safe-area-inset-bottom,0));
+  background: rgba(16, 185, 129, 0.90); /* emerald theme to match courts */
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+/* Buttons: icon + visible label */
+.mbb-fallback button {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 1.5rem;       /* emoji size */
+  line-height: 1;
+  cursor: pointer;
+  color: #e5e7eb; /* gray-200 for dark background */
+}
+
+.mbb-fallback button .lbl {
+  display: block !important;          /* force visible */
+  font-size: 0.72rem;      /* label size */
+  line-height: 1.1;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.mbb-fallback button[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.mbb-fallback button:hover:not([disabled]) {
+  background: rgba(255,255,255,0.1);
+}
+
+.mbb-fallback button:active:not([disabled]) {
+  background: rgba(255,255,255,0.15);
+  transform: scale(0.95);
+}
+
+/* Mobile bottom bar styling - body level mounting */
+.variant-mobile .mobile-bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--bar-z); /* above any overlay */
+  padding: 8px;
+  pointer-events: auto;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.95); /* white with transparency */
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(148, 163, 184, 0.2); /* slate-400 with opacity */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Clear Court button styling - blue to match other clear functions */
+.variant-mobile .mobile-bottom-bar .clear-court-button {
+  background: rgba(59, 130, 246, 0.2) !important; /* blue tinted background */
+  border: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+.variant-mobile .mobile-bottom-bar .clear-court-button:active {
+  background: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Mobile-only court card styling */
+.variant-mobile .court-card {
+  border-width: 1px !important; /* Thin white borders for mobile */
+  border-color: white !important; /* White borders instead of colored */
+}
+
+/* Mobile bottom bar - fallback system styling */
+.variant-mobile .mbb-fallback {
+  background: rgba(255, 255, 255, 0.95) !important; /* white background */
+}
+
+.variant-mobile .mbb-fallback button {
+  color: #000000 !important; /* black text on white background */
+}
+
+/* Clear Court confirmation modal - positioned above mobile bar */
+.modal-clear-court-confirm {
+  align-items: flex-end !important; /* Slide up from bottom */
+}
+
+.modal-clear-court-confirm .mobile-modal-content {
+  margin-bottom: 80px !important; /* Space above mobile bar (72px + 8px) */
+  max-height: calc(100vh - 120px) !important; /* Leave room for mobile bar */
+  border-radius: 16px 16px 0 0 !important; /* Rounded top corners only */
+}
+
+/* Waitlist Available CTA modal - same as clear-court-confirm: bottom, above mobile bar */
+.modal-waitlist-available {
+  align-items: flex-end !important; /* Position at bottom */
+  pointer-events: none !important; /* Allow clicks to pass through backdrop to courts */
+  background: transparent !important; /* No backdrop */
+  backdrop-filter: none !important;
+}
+
+.modal-waitlist-available .mobile-modal-content {
+  pointer-events: auto !important; /* Modal content itself is clickable */
+  margin-bottom: 80px !important; /* Space above mobile bar (72px + 8px) */
+  border-radius: 16px 16px 0 0 !important; /* Rounded top corners only */
+  background: rgba(30, 41, 59, 0.98) !important;
+}
+
+/* Hide the header for waitlist-available - keep it compact */
+.modal-waitlist-available .mobile-modal-header {
+  display: none !important;
+}
+
+.mobile-bottom-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #94a3b8; /* slate-400 */
+  font-size: 1.5rem; /* Larger emoji */
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 6px;
+  border-radius: 8px;
+  position: relative;
+  min-width: 0;
+  flex: 1;
+  transition: all 0.2s ease;
+}
+
+.mobile-bottom-button:active {
+  background: rgba(148, 163, 184, 0.1);
+  transform: scale(0.95);
+}
+
+.mobile-bottom-button span {
+  margin-top: 2px;
+  line-height: 1.1;
+  text-align: center;
+  white-space: normal;
+  font-size: 0.7rem; /* Smaller text for labels */
+}
+
+.mobile-bottom-button.disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.mobile-bottom-button.disabled:active {
+  background: none;
+  transform: none;
+}
+
+.mobile-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  background: #f59e0b; /* amber-500 */
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* Mobile modal styling */
+.mobile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  z-index: 100;
+}
+
+.mobile-modal-content {
+  background: #1e293b; /* slate-800 */
+  width: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.mobile-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.mobile-modal-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: white;
+  margin: 0;
+}
+
+.mobile-modal-close {
+  background: rgba(148, 163, 184, 0.2);
+  border: none;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-modal-close:active {
+  background: rgba(148, 163, 184, 0.3);
+  transform: scale(0.95);
+}
+
+.mobile-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  max-height: 80vh;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-reserved-courts,
+.modal-waitlist {
+  /* Reset some styles that might interfere */
+  position: relative;
+}
+
+.modal-court-conditions {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.modal-court-conditions iframe {
+  flex: 1;
+  border: none;
+  background: white;
+}
+
+/* Ensure modal body has proper overflow */
+.mobile-modal-body {
+  max-height: 80vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-reserved-courts .reserved-courts-text {
+  color: #e2e8f0; /* slate-200 */
+  font-size: 1.125rem !important; /* 50% larger for mobile modal */
+  line-height: 1.2 !important; /* Tighter line spacing */
+}
+
+.modal-reserved-courts .reserved-courts-empty {
+  font-size: 1.3125rem !important; /* 50% larger: 0.875rem * 1.5 */
+}
+
+/* Court conditions needs full height - 100% of screen */
+.modal-court-conditions-full {
+  align-items: flex-end !important; /* Keep at bottom for slide-up animation */
+}
+
+.modal-court-conditions-full .mobile-modal-content {
+  max-height: 100vh;
+  height: 100vh;
+  margin-top: 0; /* Start from top of screen for full coverage */
+  border-radius: 0; /* Remove rounded corners for full screen */
+}
+
+.modal-court-conditions-full .mobile-modal-header {
+  display: none !important; /* Hide header completely */
+}
+
+.modal-court-conditions-full .mobile-modal-body {
+  max-height: 100vh; /* Full height since no header */
+  height: 100vh;
+  padding: 0; /* Remove padding to maximize iframe space */
+}
+
+.modal-court-conditions-full .modal-court-conditions {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+/* Floating close button for court conditions */
+.modal-court-conditions-full .court-conditions-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.modal-court-conditions-full .court-conditions-close:active {
+  transform: scale(0.9);
+}
+
+/* Reserved courts modal - make it bigger to show all content */
+.modal-reserved-large .mobile-modal-content {
+  max-height: 75vh;
+  height: auto;
+  min-height: 400px;
+}
+
+.modal-reserved-large .mobile-modal-body {
+  max-height: 65vh;
+  height: auto;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Waitlist modal - larger sizing to accommodate all entries */
+.modal-waitlist-large .mobile-modal-content {
+  max-height: 80vh;
+  height: auto;
+  min-height: 400px;
+}
+
+.modal-waitlist-large .mobile-modal-body {
+  max-height: 70vh;
+  height: auto;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.mobile-join-button {
+  background: #0ea5e9; /* sky-500 */
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 240px;
+}
+
+.mobile-join-button:active {
+  background: #0284c7; /* sky-600 */
+  transform: scale(0.98);
+}
+
+/* Mobile tap highlight animation */
+@keyframes courtPulse {
+  0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}
+  100%{box-shadow:0 0 0 24px rgba(16,185,129,0)}
+}
+.court-highlight {
+  outline:3px solid #10b981;
+  animation:courtPulse 900ms ease-out 3;
+  border-radius:12px;
+}
+
+/* Hide mobile-specific elements on larger screens */
+@media (min-width: 769px) {
+  .mobile-courts-grid {
+    display: none;
+  }
+  .mobile-layout {
+    display: none;
+  }
+  .mobile-waiting-section {
+    display: none;
+  }
+  .mobile-next-available {
+    display: none;
+  }
+}
+
+.icon-grey {
+  filter: grayscale(100%) opacity(0.5);
+}
+
+/* Reserved Courts responsive text sizing */
+.reserved-courts-text {
+  font-size: 0.75rem; /* text-xs on mobile */
+}
+
+.reserved-courts-empty {
+  font-size: 0.875rem; /* text-sm on mobile */
+}
+
+@media (min-width: 768px) {
+  .reserved-courts-text {
+    font-size: 0.875rem; /* text-sm on tablet+ */
+  }
+
+  .reserved-courts-empty {
+    font-size: 1rem; /* text-base on tablet+ */
+  }
+}

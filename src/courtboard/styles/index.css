@@ -1,0 +1,7 @@
+/* Courtboard CSS entry point — replaces CDN Tailwind <script> */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Extracted inline styles from courtboard/index.html */
+@import './courtboard.css';

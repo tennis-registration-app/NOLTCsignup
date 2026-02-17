@@ -31,7 +31,7 @@
           ev.stopImmediatePropagation && ev.stopImmediatePropagation();
           ev.stopPropagation && ev.stopPropagation();
         }
-      } catch (_e) {
+      } catch {
         /* Intentionally empty */
       }
     }
@@ -42,7 +42,7 @@
       function () {
         try {
           window.removeEventListener('storage', onStorageCapture, { capture: true });
-        } catch (_e) {
+        } catch {
           /* Intentionally empty */
         }
       },
@@ -83,7 +83,7 @@
           ev.stopImmediatePropagation && ev.stopImmediatePropagation();
           ev.stopPropagation && ev.stopPropagation();
         }
-      } catch (_e) {
+      } catch {
         /* Intentionally empty */
       }
     }
@@ -97,7 +97,7 @@
         try {
           window.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
           document.removeEventListener('tennisDataUpdate', onCapture, { capture: true });
-        } catch (_e) {
+        } catch {
           /* Intentionally empty */
         }
       },

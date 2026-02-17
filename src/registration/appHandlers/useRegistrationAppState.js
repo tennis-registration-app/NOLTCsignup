@@ -17,34 +17,34 @@ import { createBackend } from '../backend/index.js';
 // Overtime eligibility policy
 import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
 
-// Session timeout hook (WP5.7)
+// Session timeout hook
 import { useSessionTimeout } from '../ui/timeout';
 
-// UI State module (WP5.9.6.1)
+// UI State module
 import { useRegistrationUiState } from './state/useRegistrationUiState';
 
-// Domain Hooks module (WP5.9.6.4)
+// Domain Hooks module
 import { useRegistrationDomainHooks } from './state/useRegistrationDomainHooks';
 
-// Runtime module (WP5.9.6.2)
+// Runtime module
 import { useRegistrationRuntime } from './state/useRegistrationRuntime';
 
-// Data Layer module (WP5.9.6.3)
+// Data Layer module
 import { useRegistrationDataLayer } from './state/useRegistrationDataLayer';
 
-// Derived values module (WP5.9.6.6b)
+// Derived values module
 import { useRegistrationDerived } from './state/useRegistrationDerived';
 
-// Helpers module (WP5.9.6.6c)
+// Helpers module
 import { useRegistrationHelpers, validateGroupCompat } from './state/useRegistrationHelpers';
 
-// Return object builder (WP5.9.6.6a)
+// Return object builder
 import { buildRegistrationReturn } from './state/buildRegistrationReturn';
 
-// Effects module (WP5.9.6.7)
+// Effects module
 import { useRegistrationEffects } from './effects/useRegistrationEffects';
 
-// Orchestration facade (WP5.5)
+// Orchestration facade
 import {
   applyInactivityTimeoutOrchestrated,
   changeCourtOrchestrated,
@@ -76,7 +76,7 @@ const backend = createBackend();
 
 /**
  * useRegistrationAppState
- * Extracted from App.jsx — WP5.9.4
+ * Extracted from App.jsx
  *
  * Contains all state, effects, and hook initialization for the registration app.
  * This is the main state management hook that orchestrates all other hooks.
@@ -114,7 +114,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     UPDATE_INTERVAL_MS: TENNIS_CONFIG.TIMING.UPDATE_INTERVAL_MS,
   };
 
-  // ===== UI STATE MODULE (WP5.9.6.1) =====
+  // ===== UI STATE MODULE =====
   const ui = useRegistrationUiState({ CONSTANTS });
   // Destructure for internal use
   const {
@@ -140,16 +140,12 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setCourtToMove,
     setHasWaitlistPriority,
     setCurrentWaitlistEntryId,
-    setIsAssigning,
-    setIsJoiningWaitlist,
-    setBallPriceInput,
     setBallPriceCents,
     setIsUserTyping,
     setWaitlistPosition,
-    setTimeLimitReason,
   } = ui;
 
-  // ===== RUNTIME MODULE (WP5.9.6.2) =====
+  // ===== RUNTIME MODULE =====
   // Provides refs and handles timer/CSS/interval effects
   const runtime = useRegistrationRuntime({
     setCurrentTime,
@@ -160,7 +156,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   });
   const { successResetTimerRef, typingTimeoutRef } = runtime;
 
-  // ===== HELPERS MODULE (WP5.9.6.6c) =====
+  // ===== HELPERS MODULE =====
   const {
     getCourtData,
     clearSuccessResetTimer,
@@ -175,7 +171,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     typingTimeoutRef,
   });
 
-  // ===== DOMAIN HOOKS MODULE (WP5.9.6.4) =====
+  // ===== DOMAIN HOOKS MODULE =====
   const domain = useRegistrationDomainHooks({
     backend,
     CONSTANTS,
@@ -210,7 +206,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setClearCourtStep,
     setMemberNumber,
     setCurrentMemberId,
-    setPreselectedCourt,
     setApiMembers,
     currentMemberId,
     fetchFrequentPartners,
@@ -257,7 +252,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     });
   }
 
-  // Session timeout hook (WP5.7)
+  // Session timeout hook
   const { showTimeoutWarning } = useSessionTimeout({
     currentScreen,
     setLastActivity,
@@ -265,14 +260,14 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     onTimeout: applyInactivityTimeoutExitSequence,
   });
 
-  // ===== DERIVED VALUES MODULE (WP5.9.6.6b) =====
+  // ===== DERIVED VALUES MODULE =====
   const derived = useRegistrationDerived({
     data,
     CONSTANTS,
     isMobileView,
   });
 
-  // ===== DATA LAYER MODULE (WP5.9.6.3) =====
+  // ===== DATA LAYER MODULE =====
   // Provides getDataService, loadData and handles board subscription
   const dataLayer = useRegistrationDataLayer({
     backend,
@@ -285,7 +280,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   });
   const { loadData } = dataLayer;
 
-  // ===== USE EFFECTS MODULE (WP5.9.6.7) =====
+  // ===== USE EFFECTS MODULE =====
   useRegistrationEffects({
     currentScreen,
     currentMemberId,
@@ -298,7 +293,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     loadData,
   });
 
-  // ===== GROUP HELPERS (WP5.9.6.6a2) =====
+  // ===== GROUP HELPERS =====
   const helpers = {
     markUserTyping,
     getCourtData,
