@@ -1,287 +1,166 @@
 /**
- * Shared Icon Components (emoji-based)
+ * Shared Icon Components — lucide-react based.
  *
- * Union of all per-app Icons.jsx exports with consistent API.
- * Each component accepts { size, className } props.
- *
- * Per-app shims re-export from here, overriding where emoji
- * or defaults diverge (e.g. courtboard Calendar = building emoji).
+ * Replaces emoji-based icons with lucide-react SVGs.
+ * All export names are preserved so no consumer imports change.
+ * Per-app shims re-export from here, overriding where needed.
  */
 import React from 'react';
+import {
+  Calendar as LuCalendar,
+  CalendarDays as LuCalendarDays,
+  Clock as LuClock,
+  Users as LuUsers,
+  GraduationCap as LuGraduationCap,
+  UserPlus as LuUserPlus,
+  Settings as LuSettings,
+  Copy as LuCopy,
+  Trash2 as LuTrash2,
+  Save as LuSave,
+  X as LuX,
+  Plus as LuPlus,
+  Pencil as LuPencil,
+  PencilLine as LuPencilLine,
+  Download as LuDownload,
+  RefreshCw as LuRefreshCw,
+  Move as LuMove,
+  AlertCircle as LuAlertCircle,
+  AlertTriangle as LuAlertTriangle,
+  CircleCheck as LuCircleCheck,
+  Check as LuCheck,
+  Bell as LuBell,
+  ChevronLeft as LuChevronLeft,
+  ChevronRight as LuChevronRight,
+  ChevronDown as LuChevronDown,
+  ChevronUp as LuChevronUp,
+  Grid as LuGrid,
+  Grid3x3 as LuGrid3x3,
+  List as LuList,
+  Filter as LuFilter,
+  MoreHorizontal as LuMoreHorizontal,
+  BarChart as LuBarChart,
+  FileText as LuFileText,
+  TrendingUp as LuTrendingUp,
+  Activity as LuActivity,
+  Play as LuPlay,
+  Pause as LuPause,
+  Square as LuSquare,
+  Eye as LuEye,
+  EyeOff as LuEyeOff,
+  Wrench as LuWrench,
+  Droplets as LuDroplets,
+  Trophy as LuTrophy,
+  Star as LuStar,
+  Bot as LuBot,
+  MessageCircle as LuMessageCircle,
+  Building2 as LuBuilding2,
+} from 'lucide-react';
+
+const DEFAULT_SIZE = 20;
+const DEFAULT_STROKE = 1.75;
+
+/**
+ * Wrap a lucide-react icon to match the existing { size, className } API.
+ */
+function wrap(LucideIcon) {
+  const Wrapped = ({ size = DEFAULT_SIZE, className = '', ...props }) => (
+    <LucideIcon
+      size={size}
+      strokeWidth={DEFAULT_STROKE}
+      className={`inline-block align-middle ${className}`.trim()}
+      aria-hidden
+      {...props}
+    />
+  );
+  return Wrapped;
+}
 
 // Calendar & Time
-export const Calendar = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📅
-  </span>
-);
-export const Calendar2 = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📅
-  </span>
-);
-export const CalendarDays = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🗓️
-  </span>
-);
-export const Clock = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⏰
-  </span>
-);
+export const Calendar = wrap(LuCalendar);
+export const Calendar2 = wrap(LuCalendar);
+export const CalendarDays = wrap(LuCalendarDays);
+export const Clock = wrap(LuClock);
 
 // Users & People
-export const Users = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    👥
-  </span>
-);
-export const GraduationCap = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🎓
-  </span>
-);
-export const UserPlus = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    👤➕
-  </span>
-);
+export const Users = wrap(LuUsers);
+export const GraduationCap = wrap(LuGraduationCap);
+export const UserPlus = wrap(LuUserPlus);
 
 // UI Actions
-export const Settings = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⚙️
-  </span>
-);
-export const Copy = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📋
-  </span>
-);
-export const Trash2 = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🗑️
-  </span>
-);
-export const Save = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    💾
-  </span>
-);
-export const X = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ❌
-  </span>
-);
-export const Plus = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ➕
-  </span>
-);
-export const Edit = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ✏️
-  </span>
-);
-export const Edit2 = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ✏️
-  </span>
-);
-export const Edit3 = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ✏️
-  </span>
-);
-export const Download = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⬇️
-  </span>
-);
-export const RefreshCw = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔄
-  </span>
-);
-export const Move = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔄
-  </span>
-);
+export const Settings = wrap(LuSettings);
+export const Copy = wrap(LuCopy);
+export const Trash2 = wrap(LuTrash2);
+export const Save = wrap(LuSave);
+export const X = wrap(LuX);
+export const Plus = wrap(LuPlus);
+export const Edit = wrap(LuPencil);
+export const Edit2 = wrap(LuPencilLine);
+export const Edit3 = wrap(LuPencil);
+export const Download = wrap(LuDownload);
+export const RefreshCw = wrap(LuRefreshCw);
+export const Move = wrap(LuMove);
 
 // Alerts & Status
-export const AlertCircle = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⚠️
-  </span>
-);
-export const AlertTriangle = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⚠️
-  </span>
-);
-export const CheckCircle = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ✅
-  </span>
-);
-export const Check = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ✔️
-  </span>
-);
-export const Bell = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔔
-  </span>
-);
+export const AlertCircle = wrap(LuAlertCircle);
+export const AlertTriangle = wrap(LuAlertTriangle);
+export const CheckCircle = wrap(LuCircleCheck);
+export const Check = wrap(LuCheck);
+export const Bell = wrap(LuBell);
 
 // Navigation
-export const ChevronLeft = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ◀️
-  </span>
-);
-export const ChevronRight = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ▶️
-  </span>
-);
-export const ChevronDown = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔽
-  </span>
-);
-export const ChevronUp = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔼
-  </span>
-);
+export const ChevronLeft = wrap(LuChevronLeft);
+export const ChevronRight = wrap(LuChevronRight);
+export const ChevronDown = wrap(LuChevronDown);
+export const ChevronUp = wrap(LuChevronUp);
 
 // Layout & View
-export const Grid = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⊞
-  </span>
-);
-export const Grid3X3 = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⊞
-  </span>
-);
-export const List = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📄
-  </span>
-);
-export const Filter = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔍
-  </span>
-);
-export const MoreHorizontal = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⋯
-  </span>
-);
+export const Grid = wrap(LuGrid);
+export const Grid3X3 = wrap(LuGrid3x3);
+export const List = wrap(LuList);
+export const Filter = wrap(LuFilter);
+export const MoreHorizontal = wrap(LuMoreHorizontal);
 
 // Charts & Data
-export const BarChart = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📊
-  </span>
-);
-export const FileText = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📄
-  </span>
-);
-export const TrendingUp = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    📈
-  </span>
-);
-export const Activity = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⚡
-  </span>
-);
+export const BarChart = wrap(LuBarChart);
+export const FileText = wrap(LuFileText);
+export const TrendingUp = wrap(LuTrendingUp);
+export const Activity = wrap(LuActivity);
 
 // Media Controls
-export const Play = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ▶️
-  </span>
-);
-export const Pause = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⏸️
-  </span>
-);
-export const Square = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⏹️
-  </span>
-);
+export const Play = wrap(LuPlay);
+export const Pause = wrap(LuPause);
+export const Square = wrap(LuSquare);
 
 // Visibility
-export const Eye = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    👁️
-  </span>
-);
-export const EyeOff = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    👁️
-  </span>
-);
+export const Eye = wrap(LuEye);
+export const EyeOff = wrap(LuEyeOff);
 
 // Tools & Maintenance
-export const Wrench = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🔧
-  </span>
-);
-export const Droplets = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    💧
-  </span>
-);
+export const Wrench = wrap(LuWrench);
+export const Droplets = wrap(LuDroplets);
 
-// Tennis-specific
-export const TennisBall = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
+// Tennis-specific (no lucide equivalents — keep as emoji)
+export const TennisBall = ({ size = 20, className = '' }) => (
+  <span style={{ fontSize: `${size}px`, lineHeight: 1 }} className={className}>
     🎾
   </span>
 );
-export const Court = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
+export const Court = ({ size = 20, className = '' }) => (
+  <span style={{ fontSize: `${size}px`, lineHeight: 1 }} className={className}>
     🏟️
   </span>
 );
-export const Trophy = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🏆
-  </span>
-);
-export const Star = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    ⭐
-  </span>
-);
+
+// Awards
+export const Trophy = wrap(LuTrophy);
+export const Star = wrap(LuStar);
 
 // Misc
-export const Bot = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    🤖
-  </span>
-);
-export const MessageCircle = ({ size = 24, className = '' }) => (
-  <span style={{ fontSize: `${size}px` }} className={className}>
-    💬
-  </span>
-);
+export const Bot = wrap(LuBot);
+export const MessageCircle = wrap(LuMessageCircle);
+
+// Building (used by courtboard Calendar override)
+export const Building2 = wrap(LuBuilding2);
 
 // Utility style for greyed-out icons
 export const greyFilter = { filter: 'grayscale(100%) opacity(0.6)' };
