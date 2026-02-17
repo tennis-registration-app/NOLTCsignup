@@ -51,7 +51,7 @@ export default [
       // Disabled: too noisy for existing codebase
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
-      'no-console': 'off',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
       'react-hooks/error-boundaries': 'off',
       'react-hooks/effects': 'off',
       'react-hooks/use-effect-event': 'off',

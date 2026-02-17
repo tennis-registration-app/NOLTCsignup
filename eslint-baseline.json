@@ -1,5 +1,7 @@
 {
   "errors": 0,
-  "warnings": 0,
-  "byRule": {}
+  "warnings": 122,
+  "byRule": {
+    "no-console": 122
+  }
 }
