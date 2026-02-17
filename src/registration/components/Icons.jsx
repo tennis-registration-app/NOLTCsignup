@@ -1,19 +1,20 @@
 /**
- * Icon Components - Emoji-based icons for the Registration UI
- *
- * These are simple wrapper components that render emoji icons
- * with configurable size. Matches the AdminPanelV2 pattern.
+ * Registration Icons — re-exports from shared lucide-react adapter
+ * with local override for Check (uses CircleCheck to match original ✅).
  */
 import React from 'react';
+import { CircleCheck as LuCircleCheck } from 'lucide-react';
 
-export const Users = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>👥</span>;
+export { Users, Bell, Clock, UserPlus, ChevronRight } from '../../shared/ui/icons/Icons.jsx';
 
-export const Bell = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>🔔</span>;
+const STROKE = 1.75;
 
-export const Clock = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>⏰</span>;
-
-export const UserPlus = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>👤➕</span>;
-
-export const ChevronRight = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>▶️</span>;
-
-export const Check = ({ size = 24 }) => <span style={{ fontSize: `${size}px` }}>✅</span>;
+export const Check = ({ size = 20, className = '', ...props }) => (
+  <LuCircleCheck
+    size={size}
+    strokeWidth={STROKE}
+    className={`inline-block align-middle ${className}`.trim()}
+    aria-hidden
+    {...props}
+  />
+);

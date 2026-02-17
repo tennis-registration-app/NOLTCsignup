@@ -55,7 +55,6 @@ const SystemSettingsSection = ({
 
       {showPriceSuccess && (
         <div className="mt-2 text-green-400 text-xs sm:text-sm flex items-center gap-2">
-          {/* @ts-expect-error - lucide-react Check accepts className but types incomplete */}
           <Check size={14} className="sm:w-4 sm:h-4" />
           Price updated successfully
         </div>
