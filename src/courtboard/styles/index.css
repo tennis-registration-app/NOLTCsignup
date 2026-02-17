@@ -1,7 +1,13 @@
 /* Courtboard CSS entry point — replaces CDN Tailwind <script> */
+
+/*
+ * @import MUST come before @tailwind directives per CSS spec.
+ * If placed after, Vite/PostCSS silently drops the import and
+ * all courtboard layout CSS (courts-grid, court-card, main-layout,
+ * media queries) is lost. This ordering is load-bearing.
+ */
+@import './courtboard.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* Extracted inline styles from courtboard/index.html */
-@import './courtboard.css';
