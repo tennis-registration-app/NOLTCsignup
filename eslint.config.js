@@ -139,6 +139,24 @@ export default [
       ],
     },
   },
+  // Architecture boundary: admin and courtboard must not import from registration
+  {
+    files: ['src/admin/**/*.{js,jsx}', 'src/courtboard/**/*.{js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/registration/**'],
+              message:
+                'Admin/Courtboard must not import from registration. Use src/lib/ for shared code.',
+            },
+          ],
+        },
+      ],
+    },
+  },
   // Exempt test files - MUST come AFTER the ban above
   {
     files: [
