@@ -64,16 +64,13 @@ function computeCtaState({ courts, upcomingBlocks, waitlist }) {
 }
 
 describe('CTA Block Filter Logic', () => {
-  let realDate;
-
   beforeEach(() => {
-    // Store real Date
-    realDate = global.Date;
+    // Freeze time so all relative-time calculations are deterministic
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T10:00:00Z'));
   });
 
   afterEach(() => {
-    // Restore real Date
-    global.Date = realDate;
     vi.useRealTimers();
   });
 
