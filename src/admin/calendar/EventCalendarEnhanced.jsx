@@ -13,6 +13,7 @@ import EventDetailsModal from './EventDetailsModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
 import { logger } from '../../lib/logger.js';
 import { normalizeCalendarBlock } from '../../lib/normalize/index.js';
+import { useAdminNotification } from '../context/NotificationContext.jsx';
 
 const EventCalendarEnhanced = ({
   courts,
@@ -32,6 +33,7 @@ const EventCalendarEnhanced = ({
   QuickActionsMenu,
   Tennis: _Tennis,
 }) => {
+  const showNotification = useAdminNotification();
   const [viewMode, setViewMode] = useState(defaultView);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -330,11 +332,11 @@ const EventCalendarEnhanced = ({
           onRefresh();
         } else {
           logger.error('AdminCalendar', 'Failed to delete block', result.message);
-          alert(`Failed to delete block: ${result.message}`);
+          showNotification(`Failed to delete block: ${result.message}`, 'error');
         }
       } catch (error) {
         logger.error('AdminCalendar', 'Error deleting block', error);
-        alert('Error deleting block. Please try again.');
+        showNotification('Error deleting block. Please try again.', 'error');
       }
     },
     [backend, onRefresh]

@@ -11,6 +11,7 @@ import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
 import { getPref } from '../platform/prefsStorage.js';
+import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
 import './utils/adminRefresh.js';
@@ -96,7 +97,6 @@ import {
 } from './types/domainObjects.js';
 
 // Admin hooks
-import { useNotification } from './hooks/useNotification';
 import { useAdminSettings } from './hooks/useAdminSettings';
 import { useBoardSubscription } from './hooks/useBoardSubscription';
 
@@ -177,10 +177,10 @@ const AdminPanelV2 = ({ onExit }) => {
   const ENABLE_WET_COURTS = true;
 
   // IMPORTANT: Hook call order:
-  // 1. useNotification — provides showNotification for settings hook
+  // 1. useAdminNotification — provides showNotification (via NotificationProvider)
   // 2. useAdminSettings — settings effects (original #1/#2)
   // 3. useBoardSubscription — subscription effect (original #3)
-  const { notification, showNotification } = useNotification();
+  const showNotification = useAdminNotification();
 
   // Settings hook - owns settings, operatingHours, hoursOverrides, blockTemplates state
   // Hook also returns operatingHours and blockTemplates (not destructured here)
@@ -478,20 +478,7 @@ const AdminPanelV2 = ({ onExit }) => {
         onExit={onExit}
       />
 
-      {/* Notification */}
-      {notification && (
-        <div
-          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg ${
-            notification.type === 'success'
-              ? 'bg-green-500 text-white'
-              : notification.type === 'error'
-                ? 'bg-red-500 text-white'
-                : 'bg-blue-500 text-white'
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
+      {/* Notification banner is rendered by NotificationProvider */}
 
       {/* Content */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -584,7 +571,11 @@ export default function App() {
   if (view === 'admin') {
     try {
       if (typeof AdminPanelV2 !== 'undefined') {
-        return <AdminPanelV2 onExit={() => setView('menu')} />;
+        return (
+          <NotificationProvider>
+            <AdminPanelV2 onExit={() => setView('menu')} />
+          </NotificationProvider>
+        );
       } else {
         return <div className="p-8">AdminPanelV2 component not found</div>;
       }

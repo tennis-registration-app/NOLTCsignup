@@ -5,6 +5,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Download } from '../components';
+import { useAdminNotification } from '../context/NotificationContext.jsx';
 
 // Helper function for formatting date/time
 const formatDateTime = (timestamp) => {
@@ -13,29 +14,31 @@ const formatDateTime = (timestamp) => {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 };
 
 // Helper function for CSV download
-const downloadCSV = (data, filename) => {
+const downloadCSV = (data, filename, notify) => {
   if (!data || data.length === 0) {
-    alert('No data to export');
+    notify('No data to export', 'error');
     return;
   }
 
   const headers = Object.keys(data[0]);
   const csvHeaders = headers.join(',');
-  const csvRows = data.map(row =>
-    headers.map(header => {
-      const value = row[header];
-      // Escape quotes and wrap in quotes if contains comma or quote
-      const stringValue = String(value ?? '');
-      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    }).join(',')
+  const csvRows = data.map((row) =>
+    headers
+      .map((header) => {
+        const value = row[header];
+        // Escape quotes and wrap in quotes if contains comma or quote
+        const stringValue = String(value ?? '');
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
+      })
+      .join(',')
   );
 
   const csv = [csvHeaders, ...csvRows].join('\n');
@@ -51,11 +54,12 @@ const downloadCSV = (data, filename) => {
 };
 
 const GuestChargeLog = ({ charges, dateRange }) => {
+  const showNotification = useAdminNotification();
   const [sortField, setSortField] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState('desc');
 
   const filteredCharges = useMemo(() => {
-    return charges.filter(charge => {
+    return charges.filter((charge) => {
       const chargeDate = new Date(charge.timestamp);
       return chargeDate >= dateRange.start && chargeDate <= dateRange.end;
     });
@@ -89,16 +93,16 @@ const GuestChargeLog = ({ charges, dateRange }) => {
   };
 
   const handleExport = () => {
-    const exportData = sortedCharges.map(charge => ({
+    const exportData = sortedCharges.map((charge) => ({
       'Date/Time': formatDateTime(charge.timestamp),
       'Guest Name': charge.guestName || 'Unknown',
       'Sponsor Name': charge.sponsorName || 'Unknown',
       'Sponsor #': charge.sponsorNumber || '****',
-      'Amount': `$${(charge.amount || 15.00).toFixed(2)}`
+      Amount: `$${(charge.amount || 15.0).toFixed(2)}`,
     }));
 
     const filename = `guest_charges_${dateRange.start.toISOString().split('T')[0]}_to_${dateRange.end.toISOString().split('T')[0]}.csv`;
-    downloadCSV(exportData, filename);
+    downloadCSV(exportData, filename, showNotification);
   };
 
   return (
@@ -166,7 +170,7 @@ const GuestChargeLog = ({ charges, dateRange }) => {
                   <td className="p-2">{charge.guestName || 'Unknown'}</td>
                   <td className="p-2">{charge.sponsorName || 'Unknown'}</td>
                   <td className="p-2">{charge.sponsorNumber || '****'}</td>
-                  <td className="p-2">${(charge.amount || 15.00).toFixed(2)}</td>
+                  <td className="p-2">${(charge.amount || 15.0).toFixed(2)}</td>
                 </tr>
               ))
             )}

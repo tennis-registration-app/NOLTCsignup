@@ -5,6 +5,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Download } from '../components';
+import { useAdminNotification } from '../context/NotificationContext.jsx';
 
 // Helper function for formatting date/time
 const formatDateTime = (timestamp) => {
@@ -18,9 +19,9 @@ const formatDateTime = (timestamp) => {
 };
 
 // Helper function for CSV download
-const downloadCSV = (data, filename) => {
+const downloadCSV = (data, filename, notify) => {
   if (!data || data.length === 0) {
-    alert('No data to export');
+    notify('No data to export', 'error');
     return;
   }
 
@@ -53,6 +54,7 @@ const downloadCSV = (data, filename) => {
 };
 
 const BallPurchaseLog = ({ purchases, dateRange }) => {
+  const showNotification = useAdminNotification();
   const [sortField, setSortField] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState('desc');
 
@@ -112,7 +114,7 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
     });
 
     const filename = `ball_purchases_${dateRange.start.toISOString().split('T')[0]}_to_${dateRange.end.toISOString().split('T')[0]}.csv`;
-    downloadCSV(exportData, filename);
+    downloadCSV(exportData, filename, showNotification);
   };
 
   return (

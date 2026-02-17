@@ -292,7 +292,7 @@ const CompleteBlockManagerEnhanced = ({
   const handleRemoveBlock = async (blockId) => {
     if (!backend) {
       logger.error('BlockManager', 'No backend available for delete');
-      alert('Backend not available');
+      onNotification('Backend not available', 'error');
       return;
     }
 
@@ -306,11 +306,11 @@ const CompleteBlockManagerEnhanced = ({
         setRefreshTrigger((prev) => prev + 1);
       } else {
         logger.error('BlockManager', 'Failed to delete block', result.message);
-        alert('Failed to delete block: ' + (result.message || 'Unknown error'));
+        onNotification('Failed to delete block: ' + (result.message || 'Unknown error'), 'error');
       }
     } catch (error) {
       logger.error('BlockManager', 'Error deleting block', error);
-      alert('Error deleting block: ' + error.message);
+      onNotification('Error deleting block: ' + error.message, 'error');
     }
   };
 

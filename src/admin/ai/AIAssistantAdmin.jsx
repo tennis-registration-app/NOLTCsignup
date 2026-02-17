@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronRight, Check } from '../components';
 import { getCache } from '../../platform/prefsStorage.js';
+import { useAdminNotification } from '../context/NotificationContext.jsx';
 
 // Access global dependencies
 const Storage = window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } };
@@ -29,6 +30,7 @@ const AIAssistantAdmin = ({
   refreshData,
   clearWaitlist,
 }) => {
+  const showNotification = useAdminNotification();
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -212,7 +214,10 @@ const AIAssistantAdmin = ({
           !Array.isArray(selectedCourts) ||
           selectedCourts.length === 0
         ) {
-          alert('Please provide name, reason, positive duration, and at least one court.');
+          showNotification(
+            'Please provide name, reason, positive duration, and at least one court.',
+            'error'
+          );
           return;
         }
 
@@ -241,8 +246,9 @@ const AIAssistantAdmin = ({
           }
         }
         if (conflicts.length) {
-          alert(
-            `Cannot add blocks. Overlaps on courts: ${[...new Set(conflicts)].sort((a, b) => a - b).join(', ')}`
+          showNotification(
+            `Cannot add blocks. Overlaps on courts: ${[...new Set(conflicts)].sort((a, b) => a - b).join(', ')}`,
+            'error'
           );
           return;
         }

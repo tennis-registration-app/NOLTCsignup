@@ -33,7 +33,10 @@ export async function applyBlocksOp(ctx, blocks) {
       !Array.isArray(selectedCourts) ||
       selectedCourts.length === 0
     ) {
-      alert('Please provide name, reason, positive duration, and at least one court.');
+      showNotification(
+        'Please provide name, reason, positive duration, and at least one court.',
+        'error'
+      );
       return;
     }
 
