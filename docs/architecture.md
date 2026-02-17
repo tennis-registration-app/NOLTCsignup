@@ -229,6 +229,25 @@ Files:
 
 Gate: npm run verify
 
+## Courtboard Icon Contract
+
+Courtboard icons are layout-affecting primitives on the TV passive display.
+They use emoji in `<span>` elements sized via `fontSize` — this is intentional.
+
+SVG icons (lucide-react) break courtboard layout because `<svg>` elements
+have a different sizing model than inline text spans. Admin and Registration
+use lucide-react via `src/shared/ui/icons/Icons.jsx`. Courtboard must never
+import from that shared adapter.
+
+All icon changes must preserve:
+- width and height (set by `fontSize`)
+- baseline alignment (inline text flow)
+- className passthrough (Tailwind spacing/filter classes)
+
+Exported icons: `Users`, `Calendar`, `AlertCircle`, `TennisBall`.
+Do not add, remove, or convert courtboard icons without visual verification
+on the TV display.
+
 ## Courtboard Legacy Script Exceptions
 
 The courtboard `index.html` loads 6 IIFE `<script>` tags that cannot be

@@ -1,43 +1,26 @@
 /**
- * Courtboard Icons — re-exports shared adapter with local overrides.
+ * Courtboard Icons — lucide-react via shared adapter.
  *
- * Divergences from shared defaults (preserved from original):
- *   Calendar    → Building2 icon (not calendar icon)
- *   AlertCircle → Bell icon (not alert-circle icon)
- *   Users       → default size 34 (not 20)
+ * TennisBall stays as emoji (no lucide equivalent).
+ * Default sizes preserved from original courtboard values.
  */
 import React from 'react';
-import { Building2 as LuBuilding2, Bell as LuBell, Users as LuUsers } from 'lucide-react';
-export { TennisBall } from '../../shared/ui/icons/Icons.jsx';
+import {
+  Users as SharedUsers,
+  Calendar as SharedCalendar,
+  AlertCircle as SharedAlertCircle,
+} from '../../shared/ui/icons/Icons.jsx';
 
-const STROKE = 1.75;
+export const Users = ({ size = 34, ...props }) => <SharedUsers size={size} {...props} />;
 
-export const Users = ({ size = 34, className = '', ...props }) => (
-  <LuUsers
-    size={size}
-    strokeWidth={STROKE}
-    className={`inline-block align-middle ${className}`.trim()}
-    aria-hidden
-    {...props}
-  />
+export const Calendar = ({ size = 24, ...props }) => <SharedCalendar size={size} {...props} />;
+
+export const AlertCircle = ({ size = 24, ...props }) => (
+  <SharedAlertCircle size={size} {...props} />
 );
 
-export const Calendar = ({ size = 20, className = '', ...props }) => (
-  <LuBuilding2
-    size={size}
-    strokeWidth={STROKE}
-    className={`inline-block align-middle ${className}`.trim()}
-    aria-hidden
-    {...props}
-  />
-);
-
-export const AlertCircle = ({ size = 20, className = '', ...props }) => (
-  <LuBell
-    size={size}
-    strokeWidth={STROKE}
-    className={`inline-block align-middle ${className}`.trim()}
-    aria-hidden
-    {...props}
-  />
+export const TennisBall = ({ size = 24, className = '' }) => (
+  <span style={{ fontSize: `${size}px`, lineHeight: 1 }} className={className}>
+    🎾
+  </span>
 );

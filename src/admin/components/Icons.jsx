@@ -1,4 +1,5 @@
 /**
- * Admin Icons — re-exports shared adapter (no overrides needed).
+ * Admin Panel Icons — re-exports from shared lucide-react adapter.
+ * All icon names are stable; consumers import unchanged.
  */
 export * from '../../shared/ui/icons/Icons.jsx';

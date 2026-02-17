@@ -1,9 +1,12 @@
 /**
- * Shared Icon Components — lucide-react based.
+ * Shared Icon Adapter — lucide-react SVG icons for Admin + Registration.
  *
- * Replaces emoji-based icons with lucide-react SVGs.
- * All export names are preserved so no consumer imports change.
- * Per-app shims re-export from here, overriding where needed.
+ * COURTBOARD IS EXCLUDED. Courtboard uses emoji-based icons in
+ * src/courtboard/components/Icons.jsx and must never import from here.
+ * See docs/architecture.md "Courtboard Icon Contract".
+ *
+ * All exports preserve the { size, className } API so consumer
+ * imports remain unchanged.
  */
 import React from 'react';
 import {
@@ -12,29 +15,27 @@ import {
   Clock as LuClock,
   Users as LuUsers,
   GraduationCap as LuGraduationCap,
-  UserPlus as LuUserPlus,
   Settings as LuSettings,
   Copy as LuCopy,
   Trash2 as LuTrash2,
   Save as LuSave,
   X as LuX,
   Plus as LuPlus,
-  Pencil as LuPencil,
-  PencilLine as LuPencilLine,
+  Edit as LuEdit,
+  Edit2 as LuEdit2,
+  Edit3 as LuEdit3,
   Download as LuDownload,
   RefreshCw as LuRefreshCw,
   Move as LuMove,
   AlertCircle as LuAlertCircle,
   AlertTriangle as LuAlertTriangle,
-  CircleCheck as LuCircleCheck,
+  CheckCircle as LuCheckCircle,
   Check as LuCheck,
-  Bell as LuBell,
   ChevronLeft as LuChevronLeft,
   ChevronRight as LuChevronRight,
   ChevronDown as LuChevronDown,
   ChevronUp as LuChevronUp,
-  Grid as LuGrid,
-  Grid3x3 as LuGrid3x3,
+  Grid3X3 as LuGrid3X3,
   List as LuList,
   Filter as LuFilter,
   MoreHorizontal as LuMoreHorizontal,
@@ -53,15 +54,13 @@ import {
   Star as LuStar,
   Bot as LuBot,
   MessageCircle as LuMessageCircle,
-  Building2 as LuBuilding2,
+  Bell as LuBell,
+  UserPlus as LuUserPlus,
 } from 'lucide-react';
 
 const DEFAULT_SIZE = 20;
 const DEFAULT_STROKE = 1.75;
 
-/**
- * Wrap a lucide-react icon to match the existing { size, className } API.
- */
 function wrap(LucideIcon) {
   const Wrapped = ({ size = DEFAULT_SIZE, className = '', ...props }) => (
     <LucideIcon
@@ -93,9 +92,9 @@ export const Trash2 = wrap(LuTrash2);
 export const Save = wrap(LuSave);
 export const X = wrap(LuX);
 export const Plus = wrap(LuPlus);
-export const Edit = wrap(LuPencil);
-export const Edit2 = wrap(LuPencilLine);
-export const Edit3 = wrap(LuPencil);
+export const Edit = wrap(LuEdit);
+export const Edit2 = wrap(LuEdit2);
+export const Edit3 = wrap(LuEdit3);
 export const Download = wrap(LuDownload);
 export const RefreshCw = wrap(LuRefreshCw);
 export const Move = wrap(LuMove);
@@ -103,7 +102,7 @@ export const Move = wrap(LuMove);
 // Alerts & Status
 export const AlertCircle = wrap(LuAlertCircle);
 export const AlertTriangle = wrap(LuAlertTriangle);
-export const CheckCircle = wrap(LuCircleCheck);
+export const CheckCircle = wrap(LuCheckCircle);
 export const Check = wrap(LuCheck);
 export const Bell = wrap(LuBell);
 
@@ -114,8 +113,8 @@ export const ChevronDown = wrap(LuChevronDown);
 export const ChevronUp = wrap(LuChevronUp);
 
 // Layout & View
-export const Grid = wrap(LuGrid);
-export const Grid3X3 = wrap(LuGrid3x3);
+export const Grid = wrap(LuGrid3X3);
+export const Grid3X3 = wrap(LuGrid3X3);
 export const List = wrap(LuList);
 export const Filter = wrap(LuFilter);
 export const MoreHorizontal = wrap(LuMoreHorizontal);
@@ -139,7 +138,7 @@ export const EyeOff = wrap(LuEyeOff);
 export const Wrench = wrap(LuWrench);
 export const Droplets = wrap(LuDroplets);
 
-// Tennis-specific (no lucide equivalents — keep as emoji)
+// Tennis-specific (no lucide equivalents — stay as emoji)
 export const TennisBall = ({ size = 20, className = '' }) => (
   <span style={{ fontSize: `${size}px`, lineHeight: 1 }} className={className}>
     🎾
@@ -151,16 +150,11 @@ export const Court = ({ size = 20, className = '' }) => (
   </span>
 );
 
-// Awards
+// Awards & Misc
 export const Trophy = wrap(LuTrophy);
 export const Star = wrap(LuStar);
-
-// Misc
 export const Bot = wrap(LuBot);
 export const MessageCircle = wrap(LuMessageCircle);
-
-// Building (used by courtboard Calendar override)
-export const Building2 = wrap(LuBuilding2);
 
 // Utility style for greyed-out icons
 export const greyFilter = { filter: 'grayscale(100%) opacity(0.6)' };
