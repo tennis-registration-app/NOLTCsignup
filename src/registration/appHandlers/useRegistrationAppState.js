@@ -12,7 +12,7 @@ import { API_CONFIG } from '../../lib/apiConfig.js';
 import { getTennisDataStore, getTennisUI } from '../../platform/windowBridge.js';
 
 // TennisBackend interface layer
-import { createBackend } from '../backend/index.js';
+import { createBackend } from '../../lib/backend/index.js';
 
 // Overtime eligibility policy
 import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';

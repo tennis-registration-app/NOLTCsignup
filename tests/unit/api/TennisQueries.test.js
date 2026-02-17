@@ -17,7 +17,7 @@ vi.mock('@supabase/supabase-js', () => ({
   }),
 }));
 
-import { TennisQueries } from '../../../src/registration/backend/TennisQueries.js';
+import { TennisQueries } from '../../../src/lib/backend/TennisQueries.js';
 
 function createTestStack() {
   const adapter = new ApiAdapter({

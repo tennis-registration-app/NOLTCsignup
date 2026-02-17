@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import backend from '../../registration/backend';
+import backend from '../../lib/backend';
 
 /**
  * Hook for fetching usage comparison data

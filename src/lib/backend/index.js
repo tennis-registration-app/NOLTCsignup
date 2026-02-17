@@ -13,7 +13,7 @@
  * Legacy compatibility is handled internally in TennisCommands/wire.js.
  */
 
-import { ApiAdapter } from '../../lib/ApiAdapter.js';
+import { ApiAdapter } from '../ApiAdapter.js';
 import { TennisQueries } from './TennisQueries.js';
 import { TennisCommands } from './TennisCommands.js';
 import { TennisDirectory } from './TennisDirectory.js';

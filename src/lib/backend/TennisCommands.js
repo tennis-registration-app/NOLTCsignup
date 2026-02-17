@@ -16,7 +16,7 @@ import {
   toCreateBlockPayload,
   toCancelBlockPayload,
 } from './wire.js';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../logger.js';
 
 // Command DTO validation (fail-fast before API call)
 import {
@@ -34,7 +34,7 @@ import {
   buildPurchaseBallsCommand,
   toPurchaseBallsPayload,
   buildDeferWaitlistCommand,
-} from '../../lib/commands/index.js';
+} from '../commands/index.js';
 
 export class TennisCommands {
   constructor(apiAdapter, directory = null) {

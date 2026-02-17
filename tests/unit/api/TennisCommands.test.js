@@ -6,7 +6,7 @@ import ApiAdapter from '../../../src/lib/ApiAdapter.js';
  * TennisCommands has both named and default export.
  * Using named export per pre-check findings.
  */
-import { TennisCommands } from '../../../src/registration/backend/TennisCommands.js';
+import { TennisCommands } from '../../../src/lib/backend/TennisCommands.js';
 
 function createTestStack() {
   const adapter = new ApiAdapter({

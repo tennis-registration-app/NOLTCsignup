@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { stubFetch, stubFetchReject, restoreFetch } from './helpers/mockFetch.js';
 import ApiAdapter from '../../../src/lib/ApiAdapter.js';
-import { TennisDirectory } from '../../../src/registration/backend/TennisDirectory.js';
+import { TennisDirectory } from '../../../src/lib/backend/TennisDirectory.js';
 
 function createTestStack() {
   const adapter = new ApiAdapter({

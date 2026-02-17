@@ -6,7 +6,7 @@
  * Future phases will break this into smaller component files.
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { createBackend } from '../registration/backend/index.js';
+import { createBackend } from '../lib/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';

@@ -1,7 +1,7 @@
 /**
  * @fileoverview TennisDirectory - Member lookup operations
  */
-import { logger } from '../../lib/logger.js';
+import { logger } from '../logger.js';
 
 export class TennisDirectory {
   constructor(apiAdapter) {

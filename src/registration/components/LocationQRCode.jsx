@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { createBackend } from '../backend/index.js';
+import { createBackend } from '../../lib/backend/index.js';
 
 const TOKEN_VALIDITY_MINUTES = 5;
 const REFRESH_BEFORE_EXPIRY_MS = 60 * 1000; // Refresh 1 minute before expiry

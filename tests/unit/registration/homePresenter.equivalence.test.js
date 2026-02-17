@@ -32,7 +32,7 @@ vi.mock('../../../src/platform/registerGlobals.js', () => ({
   setLoadDataGlobal: vi.fn(),
 }));
 
-vi.mock('../../../src/registration/backend/index.js', () => ({
+vi.mock('../../../src/lib/backend/index.js', () => ({
   createBackend: () => ({
     queries: {
       subscribeToBoardChanges: vi.fn(() => () => {}),

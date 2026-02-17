@@ -74,8 +74,7 @@ export default [
     files: [
       'src/lib/normalize/**/*.js',
       'src/lib/ApiAdapter.js',
-      'src/registration/backend/**/*.js',
-      'src/admin/backend/**/*.js',
+      'src/lib/backend/**/*.js',
     ],
     rules: {
       camelcase: 'off',

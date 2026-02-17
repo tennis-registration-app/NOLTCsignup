@@ -7,9 +7,9 @@
  * Uses the normalize layer for consistent Domain objects.
  */
 
-import { normalizeBoard } from '../../lib/normalize/index.js';
-import { validateBoardResponse, validateBoard } from '../../lib/schemas/index.js';
-import { logger } from '../../lib/logger.js';
+import { normalizeBoard } from '../normalize/index.js';
+import { validateBoardResponse, validateBoard } from '../schemas/index.js';
+import { logger } from '../logger.js';
 
 export class TennisQueries {
   constructor(apiAdapter) {

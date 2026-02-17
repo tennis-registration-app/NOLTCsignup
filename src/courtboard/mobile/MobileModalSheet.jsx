@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 
 // TennisBackend for clear court functionality
-import { createBackend } from '../../registration/backend/index.js';
+import { createBackend } from '../../lib/backend/index.js';
 import {
   getTennisStorage,
   getTennisDomain,

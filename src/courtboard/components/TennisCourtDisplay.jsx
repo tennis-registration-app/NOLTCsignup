@@ -9,7 +9,7 @@ import { setRefreshBoardGlobal } from '../../platform/registerGlobals.js';
 import { normalizeSettings } from '../../lib/normalize/normalizeAdminSettings.js';
 
 // TennisBackend for real-time board subscription
-import { createBackend } from '../../registration/backend/index.js';
+import { createBackend } from '../../lib/backend/index.js';
 const backend = createBackend();
 
 // Court availability helper - single source of truth for free/playable courts
