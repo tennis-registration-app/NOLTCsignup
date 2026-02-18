@@ -60,12 +60,6 @@ vi.mock('../../../src/lib/backend/index.js', () => ({
   }),
 }));
 
-vi.mock('../../../src/registration/services/index.js', () => ({
-  getTennisService: () => ({
-    loadInitialData: vi.fn().mockResolvedValue({ courts: [], waitlist: [] }),
-  }),
-}));
-
 // Mock @lib
 vi.mock('@lib', () => ({
   getCourtBlockStatus: vi.fn().mockResolvedValue({ isBlocked: false }),
