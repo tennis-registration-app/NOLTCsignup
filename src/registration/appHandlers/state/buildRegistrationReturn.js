@@ -130,7 +130,6 @@ export function buildRegistrationReturn({
       markUserTyping: helpers.markUserTyping,
       getCourtData: helpers.getCourtData,
       clearSuccessResetTimer: helpers.clearSuccessResetTimer,
-      getDataService: helpers.getDataService,
       loadData: helpers.loadData,
       applyInactivityTimeoutExitSequence: helpers.applyInactivityTimeoutExitSequence,
       getCourtsOccupiedForClearing: helpers.getCourtsOccupiedForClearing,

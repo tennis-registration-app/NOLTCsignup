@@ -1,5 +1,4 @@
 import { useEffect, useCallback } from 'react';
-import { getTennisService } from '../../services/index.js';
 import { logger } from '../../../lib/logger.js';
 
 /**
@@ -8,7 +7,6 @@ import { logger } from '../../../lib/logger.js';
  *
  * Owns real-time subscription and initial data loading callbacks.
  * Backend is a module-level singleton in the app; it is passed in here.
- * Verbatim extraction — no logic changes.
  */
 export function useRegistrationDataLayer({
   backend,
@@ -19,32 +17,26 @@ export function useRegistrationDataLayer({
   data,
   computeRegistrationCourtSelection,
 }) {
-  // VERBATIM COPY: getDataService (lines 209-214)
-  const getDataService = useCallback(() => {
-    return getTennisService({
-      deviceId: 'a0000000-0000-0000-0000-000000000001',
-      deviceType: 'kiosk',
-    });
-  }, []);
-
-  // VERBATIM COPY: loadData (lines 217-257) INCLUDING eslint-disable + deps array
+  // Load initial board + members via TennisBackend (replaces legacy ApiTennisService.loadInitialData)
   const loadData = useCallback(async () => {
     try {
-      const service = getDataService();
-      const initialData = await service.loadInitialData();
-      const courts = initialData.courts || [];
-      const waitlist = initialData.waitlist || [];
+      const [boardData, members] = await Promise.all([
+        backend.queries.getBoard(),
+        backend.directory.getAllMembers(),
+      ]);
+      const courts = boardData.courts || [];
+      const waitlist = boardData.waitlist || [];
       const updatedData = {
         courts: courts,
         waitlist: waitlist,
         recentlyCleared: data.recentlyCleared || [],
       };
       setData((prev) => ({ ...prev, ...updatedData }));
-      if (initialData.operatingHours) {
-        setOperatingHours(initialData.operatingHours);
+      if (boardData.operatingHours) {
+        setOperatingHours(boardData.operatingHours);
       }
-      if (initialData.members && Array.isArray(initialData.members)) {
-        setApiMembers(initialData.members);
+      if (members && Array.isArray(members)) {
+        setApiMembers(members);
       }
       // Initial load doesn't have upcomingBlocks, pass empty array
       const selection = computeRegistrationCourtSelection(courts, []);
@@ -52,14 +44,16 @@ export function useRegistrationDataLayer({
       setAvailableCourts(selectableNumbers);
       setData((prev) => ({ ...prev, courtSelection: selection }));
       logger.debug('DataLayer', 'Initial load complete', {
-        waitlistLength: initialData.waitlist?.length,
+        courts: courts.length,
+        waitlist: waitlist.length,
+        members: members.length,
       });
       return updatedData;
     } catch (error) {
       logger.error('DataLayer', 'Failed to load data', error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only re-run when service ref changes, not on state updates
-  }, [getDataService]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: backend is stable singleton
+  }, [backend]);
 
   // VERBATIM COPY: subscription effect (lines 700-747) — KEEP [] DEPS EXACTLY
   useEffect(() => {
@@ -113,7 +107,6 @@ export function useRegistrationDataLayer({
   }, []);
 
   return {
-    getDataService,
     loadData,
   };
 }

@@ -268,7 +268,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   });
 
   // ===== DATA LAYER MODULE =====
-  // Provides getDataService, loadData and handles board subscription
+  // Provides loadData and handles board subscription
   const dataLayer = useRegistrationDataLayer({
     backend,
     setData,
@@ -298,7 +298,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     markUserTyping,
     getCourtData,
     clearSuccessResetTimer,
-    getDataService: dataLayer.getDataService,
     loadData,
     applyInactivityTimeoutExitSequence,
     getCourtsOccupiedForClearing,
