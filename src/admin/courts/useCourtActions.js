@@ -21,6 +21,14 @@ const TENNIS_CONFIG = getAppUtils()?.TENNIS_CONFIG || {
 // Get dataStore reference
 const getDataStore = () => getTennisDataStore() || window.DataStore;
 
+/** Fire all data-changed events so every listener refreshes. */
+function notifyDataChanged() {
+  window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+  window.dispatchEvent(new Event('DATA_UPDATED'));
+  window.dispatchEvent(new Event('tennisDataUpdate'));
+  document.dispatchEvent(new Event('tennisDataUpdate'));
+}
+
 /**
  * @param {Object} params
  * @param {Object} params.statusActions - { clearCourt, moveCourt }
@@ -85,7 +93,7 @@ export function useCourtActions({
           (block) => !(block.isWetCourt && block.courtNumber === courtNum)
         );
         await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
-        window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+        notifyDataChanged();
       } else {
         // Add wet court block
         const wetBlock = {
@@ -102,7 +110,7 @@ export function useCourtActions({
         await dataStore.set('courtBlocks', blocks, { immediate: true });
       }
 
-      window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+      notifyDataChanged();
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       logger.error('CourtStatusGrid', 'Error toggling wet court', error);
@@ -141,10 +149,7 @@ export function useCourtActions({
       dataStore.cache.delete('courtBlocks');
     }
 
-    // Dispatch events on both window and document for compatibility
-    window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
-    window.dispatchEvent(new Event('DATA_UPDATED'));
-    document.dispatchEvent(new Event('tennisDataUpdate'));
+    notifyDataChanged();
 
     // Force local refresh
     setRefreshTick((t) => t + 1);
@@ -205,9 +210,7 @@ export function useCourtActions({
         getTennisUI()?.toast?.('Game updated successfully', { type: 'success' });
         setEditingGame(null);
         setRefreshKey((prev) => prev + 1);
-        // Trigger data refresh
-        window.dispatchEvent(new Event('DATA_UPDATED'));
-        window.dispatchEvent(new Event('tennisDataUpdate'));
+        notifyDataChanged();
       } else {
         throw new Error(result.message || 'Failed to update game');
       }
@@ -231,7 +234,7 @@ export function useCourtActions({
       const existingBlocks = [...(courtBlocks || [])];
       const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
       await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
-      window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
+      notifyDataChanged();
       logger.debug('CourtStatusGrid', 'All courts marked as dry');
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
