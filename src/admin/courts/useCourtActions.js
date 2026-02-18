@@ -76,7 +76,7 @@ export function useCourtActions({
     if (!dataStore) return;
 
     try {
-      const blocks = (await dataStore.get('courtBlocks')) || [];
+      const blocks = [...(courtBlocks || [])];
       const activeWetCourts = wetCourts || new Set();
 
       if (activeWetCourts.has(courtNum)) {
@@ -114,7 +114,7 @@ export function useCourtActions({
 
     // Only clear ACTIVE blocks, preserve historical ones
     const currentTimeNow = new Date();
-    const existingBlocks = (await dataStore.get('courtBlocks')) || [];
+    const existingBlocks = [...(courtBlocks || [])];
 
     const updatedBlocks = existingBlocks.map((block) => {
       if (block.courtNumber === courtNum) {
@@ -228,7 +228,7 @@ export function useCourtActions({
     if (!dataStore) return;
 
     try {
-      const existingBlocks = (await dataStore.get('courtBlocks')) || [];
+      const existingBlocks = [...(courtBlocks || [])];
       const updatedBlocks = existingBlocks.filter((block) => !block.isWetCourt);
       await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
       window.dispatchEvent(new Event(TENNIS_CONFIG.STORAGE.UPDATE_EVENT));
