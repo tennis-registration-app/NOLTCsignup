@@ -115,6 +115,16 @@ export default [
           message:
             'Use src/platform/prefsStorage.js instead. Raw localStorage is banned in application layers. See docs/WP5-C_LOCALSTORAGE_INVENTORY.md',
         },
+        {
+          name: 'alert',
+          message:
+            'Use useAdminNotification() (admin) or showAlertMessage (registration) instead of alert().',
+        },
+        {
+          name: 'confirm',
+          message:
+            'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of confirm().',
+        },
       ],
       'no-restricted-properties': [
         'error',
@@ -135,6 +145,18 @@ export default [
           property: 'localStorage',
           message:
             'Use src/platform/prefsStorage.js instead. Raw localStorage is banned in application layers.',
+        },
+        {
+          object: 'window',
+          property: 'alert',
+          message:
+            'Use useAdminNotification() (admin) or showAlertMessage (registration) instead of window.alert().',
+        },
+        {
+          object: 'window',
+          property: 'confirm',
+          message:
+            'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of window.confirm().',
         },
       ],
     },
