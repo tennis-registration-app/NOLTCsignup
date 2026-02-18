@@ -5,16 +5,12 @@
  * Handles wet courts, blocks, games, and player movements.
  */
 import React from 'react';
-import { Edit2, X, RefreshCw, Droplets } from '../components';
+import { Droplets } from '../components';
 import { EditGameModal } from '../components';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
-import {
-  getCourtStatus,
-  getStatusColor,
-  formatTimeRemaining,
-  getPlayerNames,
-} from './courtStatusUtils.js';
+import { getCourtStatus } from './courtStatusUtils.js';
 import { useCourtActions } from './useCourtActions.js';
+import CourtCard from './CourtCard.jsx';
 
 /**
  * 12-court status grid with wet court indicators.
@@ -95,142 +91,25 @@ const CourtStatusGrid = ({
               selectedDate,
               currentTime,
             });
-            const isMoving = movingFrom === courtNum;
-            const canReceiveMove = movingFrom && movingFrom !== courtNum && status === 'available';
 
             return (
-              <div
+              <CourtCard
                 key={courtNum}
-                className={`p-3 rounded-lg border-2 ${getStatusColor(status)} ${
-                  isMoving ? 'ring-2 ring-blue-500' : ''
-                } ${canReceiveMove ? 'cursor-pointer hover:bg-green-200' : ''}
-                ${status === 'wet' ? 'cursor-pointer hover:bg-gray-300' : ''}
-                min-h-[120px] h-[120px] flex flex-col justify-between relative`}
-                onClick={
-                  canReceiveMove
-                    ? () => {
-                        handleMoveCourt(Number(movingFrom), Number(courtNum));
-                      }
-                    : status === 'wet'
-                      ? () => {
-                          handleWetCourtToggle(courtNum);
-                        }
-                      : undefined
-                }
-              >
-                <div>
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-bold text-lg">Court {courtNum}</h4>
-                    {status !== 'available' && status !== 'wet' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleActions(courtNum);
-                        }}
-                        className="p-1 hover:bg-white/50 rounded"
-                      >
-                        <span style={{ fontSize: '18px' }}>☰</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {(status === 'occupied' || status === 'overtime') && info && (
-                    <div
-                      className={`text-xs font-medium ${
-                        status === 'overtime' ? 'text-red-600' : 'text-blue-600'
-                      }`}
-                    >
-                      {formatTimeRemaining(info.endTime, currentTime)}
-                    </div>
-                  )}
-
-                  {info && (
-                    <div className="mt-1">
-                      {status === 'wet' && (
-                        <>
-                          <p className="font-medium text-sm">💧 WET COURT</p>
-                          <p className="text-xs text-gray-600">Click to mark dry</p>
-                        </>
-                      )}
-                      {status === 'blocked' && (
-                        <>
-                          <p className="font-medium text-sm truncate">{info.reason}</p>
-                          <p className="text-xs text-gray-600">
-                            Until{' '}
-                            {new Date(info.endTime).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </>
-                      )}
-                      {(status === 'occupied' || status === 'overtime') && (
-                        <>
-                          <p className="font-medium text-sm truncate">
-                            {getPlayerNames(info.players)}
-                          </p>
-                          <p className="text-xs text-gray-600">
-                            Since{' '}
-                            {new Date(info.startTime).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {canReceiveMove && (
-                    <div className="mt-2 text-center">
-                      <p className="text-sm font-medium text-green-700">Click to move here</p>
-                    </div>
-                  )}
-                </div>
-
-                {showActions === courtNum && status !== 'available' && status !== 'wet' && (
-                  <div className="absolute top-12 right-2 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
-                    {status !== 'blocked' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          initiateMove(courtNum);
-                        }}
-                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <RefreshCw size={14} />
-                          Move Players
-                        </div>
-                      </button>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditClick(courtNum, info);
-                      }}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Edit2 size={14} />
-                        Edit {info.type === 'block' ? 'Block' : 'Game'}
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClearCourt(courtNum);
-                      }}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-red-600"
-                    >
-                      <div className="flex items-center gap-2">
-                        <X size={14} />
-                        Clear Court
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </div>
+                courtNum={courtNum}
+                status={status}
+                info={info}
+                currentTime={currentTime}
+                movingFrom={movingFrom}
+                showActionsMenu={showActions === courtNum}
+                handlers={{
+                  onToggleActions: toggleActions,
+                  onWetToggle: handleWetCourtToggle,
+                  onMoveTarget: handleMoveCourt,
+                  onEditClick: handleEditClick,
+                  onClearCourt: handleClearCourt,
+                  onInitiateMove: initiateMove,
+                }}
+              />
             );
           })}
         </div>
