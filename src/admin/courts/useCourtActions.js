@@ -52,7 +52,6 @@ export function useCourtActions({
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
-  const [, setRefreshKey] = useState(0); // Getter unused, setter used
   const [, setRefreshTick] = useState(0); // Getter unused, setter used
   const [savingGame, setSavingGame] = useState(false);
 
@@ -111,7 +110,6 @@ export function useCourtActions({
       }
 
       notifyDataChanged();
-      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       logger.error('CourtStatusGrid', 'Error toggling wet court', error);
     }
@@ -153,7 +151,6 @@ export function useCourtActions({
 
     // Force local refresh
     setRefreshTick((t) => t + 1);
-    setRefreshKey((k) => k + 1);
 
     // Call parent's clear handler which triggers loadData
     onClearCourt(courtNum);
@@ -209,7 +206,6 @@ export function useCourtActions({
       if (result.ok) {
         getTennisUI()?.toast?.('Game updated successfully', { type: 'success' });
         setEditingGame(null);
-        setRefreshKey((prev) => prev + 1);
         notifyDataChanged();
       } else {
         throw new Error(result.message || 'Failed to update game');
@@ -236,7 +232,6 @@ export function useCourtActions({
       await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
       notifyDataChanged();
       logger.debug('CourtStatusGrid', 'All courts marked as dry');
-      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       logger.error('CourtStatusGrid', 'Error removing all wet court blocks', error);
     }
@@ -253,7 +248,6 @@ export function useCourtActions({
 
   const handleBlockSaved = () => {
     setEditingBlock(null);
-    setRefreshKey((k) => k + 1);
   };
 
   return {
