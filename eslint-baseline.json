@@ -1,8 +1,7 @@
 {
   "errors": 0,
-  "warnings": 116,
+  "warnings": 1,
   "byRule": {
-    "no-console": 115,
     "react-hooks/exhaustive-deps": 1
   }
 }
