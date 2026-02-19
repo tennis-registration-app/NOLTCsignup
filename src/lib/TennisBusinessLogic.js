@@ -59,7 +59,7 @@ export const TennisBusinessLogic = {
    * @param {number} avgGameTime - Average game duration in minutes (default: 75)
    * @returns {number} Estimated wait time in minutes
    */
-  calculateEstimatedWaitTime(position, courts, _currentTime, avgGameTime = 75) {
+  calculateEstimatedWaitTime(position, courts, currentTime, avgGameTime = 75) {
     if (!courts || !Array.isArray(courts) || position < 1) return 0;
 
     const courtEndTimes = courts
