@@ -80,17 +80,14 @@
     );
   </script>
 
-  <!-- Shared utils (schema + helpers; no UI changes) -->
-  <script src="../../shared-utils.js"></script>
-  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
-  <script type="module" src="../lib/browser-bridge.js"></script>
-  <!-- Preflight self-heal (normalize storage shape before app code runs) -->
-  <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
-
-  <!-- Add aliases for waitlist debugging -->
+  <!-- Cache warm — runs before modules load -->
   <script>
-    window.WaitlistUtils = window.APP_UTILS;      // shared storage helpers alias
-    window.WaitlistDataService = window.TennisDataService || window.Tennis?.DataService;
+    (function() {
+      try {
+        var raw = localStorage.getItem('tennisClubData');
+        if (raw) JSON.parse(raw);
+      } catch(e) {}
+    })();
   </script>
 
   <!-- Toast bridge (global) -->

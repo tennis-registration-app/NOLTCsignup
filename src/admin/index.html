@@ -10,10 +10,6 @@
 <body>
   <div id="root"></div>
 
-  <!-- Shared utils (schema + helpers; no UI changes) -->
-  <script src="../../shared-utils.js"></script>
-  <!-- ES Module bridge (loads /src/lib/ exports into window.APP_UTILS) -->
-  <script type="module" src="../lib/browser-bridge.js"></script>
   <script>
 (function () {
   if (location.protocol !== 'file:') return;
@@ -34,8 +30,15 @@
 })();
 </script>
 
-  <!-- Preflight self-heal (normalize storage shape before app code runs) -->
-  <script>try{ window.APP_UTILS && window.APP_UTILS.readDataSafe(); }catch(e){}</script>
+  <!-- Cache warm — runs before modules load -->
+  <script>
+    (function() {
+      try {
+        var raw = localStorage.getItem('tennisClubData');
+        if (raw) JSON.parse(raw);
+      } catch(e) {}
+    })();
+  </script>
 
   <!-- Vite-bundled React app -->
   <script type="module" src="./main.jsx"></script>
