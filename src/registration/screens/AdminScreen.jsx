@@ -4,7 +4,7 @@
  * Admin panel for court management, waitlist management, and system settings.
  * All state is managed by parent (App.jsx) - this component receives state and callbacks as props.
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertDisplay, ToastHost } from '../components';
 import BlockCourtsModal from './admin/BlockCourtsModal.jsx';
 import MoveCourtUI from './admin/MoveCourtUI.jsx';
@@ -92,12 +92,13 @@ const AdminScreen = ({
     return now >= blockStartTime && now < blockEndTime;
   });
 
-  logger.info('Admin', 'Admin data loaded', {
-    totalCourts: data.courts.length,
-    occupied: occupiedCourts.length,
-    blocked: blockedCourts.length,
-    blockedDetails: blockedCourts,
-  });
+  useEffect(() => {
+    logger.info('Admin', 'Admin data loaded', {
+      totalCourts: data.courts.length,
+      occupied: occupiedCourts.length,
+      blocked: blockedCourts.length,
+    });
+  }, [data.courts.length, occupiedCourts.length, blockedCourts.length]);
 
   return (
     <div className="w-full h-full bg-gradient-to-br from-gray-900 to-gray-800 p-4 sm:p-8 flex items-center justify-center">

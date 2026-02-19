@@ -152,11 +152,6 @@ const ClearCourtScreen = ({
     // Get players from session.group.players (Domain format) or top-level players (fallback)
     const players = court?.session?.group?.players || court?.players || [];
 
-    // Debug logging
-    logger.debug('ClearCourt', `Step 2 - selectedCourtToClear: ${selectedCourtToClear}`);
-    logger.debug('ClearCourt', 'Step 2 - court found', court);
-    logger.debug('ClearCourt', 'Step 2 - players array', JSON.stringify(players, null, 2));
-
     // Handle players as array of strings or objects with name/displayName property
     // Use camelCase only (data is pre-normalized)
     const displayNames = players
