@@ -14,32 +14,35 @@
  * This preserves existing behavior where code may tolerate undefined.
  */
 
+import { TENNIS_CONFIG } from '../lib/config.js';
+import { EVENTS } from '../lib/constants.js';
+
 // ============================================
-// APP_UTILS
+// CONFIG & EVENTS (ESM canonical sources)
 // ============================================
 
 /**
- * Get APP_UTILS namespace (TENNIS_CONFIG, EVENTS, etc.)
- * @returns {Object|undefined}
+ * Get APP_UTILS namespace (legacy bridge — returns ESM exports for backward compat)
+ * @returns {Object}
  */
 export function getAppUtils() {
-  return window.APP_UTILS;
+  return { TENNIS_CONFIG, EVENTS, ...(window.APP_UTILS || {}) };
 }
 
 /**
- * Get TENNIS_CONFIG from APP_UTILS
- * @returns {Object|undefined}
+ * Get TENNIS_CONFIG
+ * @returns {Object}
  */
 export function getTennisConfig() {
-  return window.APP_UTILS?.TENNIS_CONFIG;
+  return TENNIS_CONFIG;
 }
 
 /**
- * Get EVENTS from APP_UTILS
- * @returns {Object|undefined}
+ * Get EVENTS
+ * @returns {Object}
  */
 export function getAppEvents() {
-  return window.APP_UTILS?.EVENTS;
+  return EVENTS;
 }
 
 // ============================================
