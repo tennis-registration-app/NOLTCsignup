@@ -125,6 +125,11 @@ export default [
           message:
             'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of confirm().',
         },
+        {
+          name: 'APP_UTILS',
+          message:
+            'APP_UTILS global was removed. Import directly from src/lib/ instead.',
+        },
       ],
       'no-restricted-properties': [
         'error',
@@ -157,6 +162,12 @@ export default [
           property: 'confirm',
           message:
             'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of window.confirm().',
+        },
+        {
+          object: 'window',
+          property: 'APP_UTILS',
+          message:
+            'APP_UTILS global was removed. Import directly from src/lib/ instead.',
         },
       ],
     },
