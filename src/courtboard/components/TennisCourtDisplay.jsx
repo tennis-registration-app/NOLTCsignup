@@ -5,6 +5,7 @@ import { NextAvailablePanel } from './NextAvailablePanel';
 import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
 import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
+import { useClockTick } from '../hooks/useClockTick.js';
 import { normalizeSettings } from '../../lib/normalize/index.js';
 
 // TennisBackend for real-time board subscription
@@ -30,7 +31,7 @@ const TENNIS_CONFIG = _sharedTennisConfig;
  */
 export function TennisCourtDisplay() {
   const isMobileView = window.IS_MOBILE_VIEW || false;
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const currentTime = useClockTick();
   const [courts, setCourts] = useState(Array(12).fill(null));
   const [waitlist, setWaitlist] = useState([]);
   const [courtBlocks, setCourtBlocks] = useState([]); // Active blocks only (for availability)
@@ -66,14 +67,6 @@ export function TennisCourtDisplay() {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  // Time update
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
   }, []);
 
   // TennisBackend real-time subscription (primary data source)
