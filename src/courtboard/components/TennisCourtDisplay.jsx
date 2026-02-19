@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
@@ -85,54 +85,52 @@ export function TennisCourtDisplay() {
   });
 
   // Build status map using courts state from API (no localStorage fallback)
-  let statusByCourt = {};
-  let selectableByCourt = {};
-  let statusObjectByCourt = {};
-  // Build data object from React courts state for status computation
-  const data = {
-    courts: courts,
-    waitlist: waitlist.map((g) => ({
-      id: g.id,
-      players: g.names.map((n) => ({ name: n })),
-    })),
-  };
-
-  try {
-    const domain = getTennisDomain();
-    const A = domain?.availability || domain?.Availability;
-    if (A) {
-      const now = new Date();
-      // Use courtBlocks from React state instead of localStorage
-      const blocks = courtBlocks || [];
-
-      const wetSet = new Set(
-        (blocks || [])
-          .filter(
-            (b) =>
-              b?.isWetCourt &&
-              new Date(b.startTime ?? b.start) <= now &&
-              now < new Date(b.endTime ?? b.end)
-          )
-          .map((b) => b.courtNumber)
-      );
-      // Merge courtBlocks + upcomingBlocks for 20-min threshold check
-      const allBlocks = [...(blocks || []), ...(upcomingBlocks || [])];
-      const _statuses =
-        A.getCourtStatuses({
-          data,
-          now,
-          blocks,
-          wetSet,
-          upcomingBlocks: allBlocks,
-          showingOvertimeCourts: courtSelection?.showingOvertimeCourts ?? false,
-        }) || [];
-      statusByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.status]));
-      selectableByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s.selectable]));
-      statusObjectByCourt = Object.fromEntries(_statuses.map((s) => [s.courtNumber, s]));
+  const { statusByCourt, selectableByCourt, statusObjectByCourt, data } = useMemo(() => {
+    const d = {
+      courts: courts,
+      waitlist: waitlist.map((g) => ({
+        id: g.id,
+        players: g.names.map((n) => ({ name: n })),
+      })),
+    };
+    let sByC = {};
+    let selByC = {};
+    let soByC = {};
+    try {
+      const domain = getTennisDomain();
+      const A = domain?.availability || domain?.Availability;
+      if (A) {
+        const now = new Date();
+        const blocks = courtBlocks || [];
+        const wetSet = new Set(
+          blocks
+            .filter(
+              (b) =>
+                b?.isWetCourt &&
+                new Date(b.startTime ?? b.start) <= now &&
+                now < new Date(b.endTime ?? b.end)
+            )
+            .map((b) => b.courtNumber)
+        );
+        const allBlocks = [...blocks, ...(upcomingBlocks || [])];
+        const statuses =
+          A.getCourtStatuses({
+            data: d,
+            now,
+            blocks,
+            wetSet,
+            upcomingBlocks: allBlocks,
+            showingOvertimeCourts: courtSelection?.showingOvertimeCourts ?? false,
+          }) || [];
+        sByC = Object.fromEntries(statuses.map((s) => [s.courtNumber, s.status]));
+        selByC = Object.fromEntries(statuses.map((s) => [s.courtNumber, s.selectable]));
+        soByC = Object.fromEntries(statuses.map((s) => [s.courtNumber, s]));
+      }
+    } catch (e) {
+      logger.warn('CourtDisplay', 'Error building status map', e);
     }
-  } catch (e) {
-    logger.warn('CourtDisplay', 'Error building status map', e);
-  }
+    return { statusByCourt: sByC, selectableByCourt: selByC, statusObjectByCourt: soByC, data: d };
+  }, [courts, waitlist, courtBlocks, upcomingBlocks, courtSelection]);
 
   const hasWaiting = waitlist.length > 0;
 
