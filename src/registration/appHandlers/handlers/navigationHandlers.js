@@ -6,35 +6,33 @@ import { GeolocationService } from '../../services';
 /**
  * Navigation Handlers
  * Extracted from useRegistrationHandlers
- * Verbatim function bodies, no logic changes.
+ * Accepts named slices from the app state object.
  */
-export function useNavigationHandlers(deps) {
+export function useNavigationHandlers({
+  state,
+  setters,
+  groupGuest,
+  memberIdentity,
+  mobile,
+  clearCourtFlow,
+  alert,
+  TENNIS_CONFIG,
+}) {
+  const { showAddPlayer, currentScreen } = state;
+  const { setShowAddPlayer, setCurrentScreen } = setters;
   const {
-    // State
     showGuestForm,
-    showAddPlayer,
-    mobileFlow,
-    currentScreen,
-    clearCourtStep,
-    // Setters
     setShowGuestForm,
     setGuestName,
     setGuestSponsor,
     setShowGuestNameError,
     setShowSponsorError,
-    setShowAddPlayer,
     setCurrentGroup,
-    setMemberNumber,
-    setCurrentMemberId,
-    setCurrentScreen,
-    setCheckingLocation,
-    // Helpers
-    decrementClearCourtStep,
-    requestMobileReset,
-    showAlertMessage,
-    // Constants
-    TENNIS_CONFIG,
-  } = deps;
+  } = groupGuest;
+  const { setMemberNumber, setCurrentMemberId } = memberIdentity;
+  const { mobileFlow, setCheckingLocation, requestMobileReset } = mobile;
+  const { clearCourtStep, decrementClearCourtStep } = clearCourtFlow;
+  const { showAlertMessage } = alert;
 
   // VERBATIM COPY: checkLocationAndProceed from line ~170
   const checkLocationAndProceed = useCallback(

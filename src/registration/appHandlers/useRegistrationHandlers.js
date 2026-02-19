@@ -34,14 +34,7 @@ export function useRegistrationHandlers({ app }) {
     changeCourtOrchestrated,
     resetFormOrchestrated,
     alert: { showAlertMessage, setShowAlert, setAlertMessage },
-    mobile: {
-      getMobileGeolocation,
-      setCheckingLocation,
-      setGpsFailedPrompt,
-      mobileFlow,
-      preselectedCourt,
-      requestMobileReset,
-    },
+    mobile: { getMobileGeolocation, setGpsFailedPrompt, mobileFlow, preselectedCourt },
     setters: {
       setCurrentScreen,
       setShowSuccess,
@@ -63,7 +56,6 @@ export function useRegistrationHandlers({ app }) {
       setCourtToMove,
     },
     state: {
-      currentScreen,
       data,
       operatingHours,
       replacedGroup,
@@ -108,12 +100,7 @@ export function useRegistrationHandlers({ app }) {
       streakAcknowledged,
       setStreakAcknowledged,
     },
-    clearCourtFlow: {
-      clearCourtStep,
-      setSelectedCourtToClear,
-      setClearCourtStep,
-      decrementClearCourtStep,
-    },
+    clearCourtFlow: { setSelectedCourtToClear, setClearCourtStep },
     refs: { successResetTimerRef },
     blockAdmin: { getCourtBlockStatus },
     CONSTANTS,
@@ -403,29 +390,13 @@ export function useRegistrationHandlers({ app }) {
   // Navigation Handlers (extracted to navigationHandlers.js)
   // ============================================================
   const navigationHandlers = useNavigationHandlers({
-    // State
-    showGuestForm,
-    showAddPlayer,
-    mobileFlow,
-    currentScreen,
-    clearCourtStep,
-    // Setters
-    setShowGuestForm,
-    setGuestName,
-    setGuestSponsor,
-    setShowGuestNameError,
-    setShowSponsorError,
-    setShowAddPlayer,
-    setCurrentGroup,
-    setMemberNumber,
-    setCurrentMemberId,
-    setCurrentScreen,
-    setCheckingLocation,
-    // Helpers
-    decrementClearCourtStep,
-    requestMobileReset,
-    showAlertMessage,
-    // Constants
+    state: app.state,
+    setters: app.setters,
+    groupGuest: app.groupGuest,
+    memberIdentity: app.memberIdentity,
+    mobile: app.mobile,
+    clearCourtFlow: app.clearCourtFlow,
+    alert: app.alert,
     TENNIS_CONFIG,
   });
 
