@@ -5,18 +5,9 @@
  */
 import { useState, useEffect } from 'react';
 import { logger } from '../../lib/logger.js';
-import {
-  getAppUtils,
-  getTennis,
-  getTennisUI,
-  getTennisDataStore,
-} from '../../platform/windowBridge.js';
+import { getTennis, getTennisUI, getTennisDataStore } from '../../platform/windowBridge.js';
 import { getPref } from '../../platform/prefsStorage.js';
-
-// Get dependencies from platform bridge
-const TENNIS_CONFIG = getAppUtils()?.TENNIS_CONFIG || {
-  STORAGE: { UPDATE_EVENT: 'tennisDataUpdate' },
-};
+import { TENNIS_CONFIG } from '../../lib/config.js';
 
 // Get dataStore reference
 const getDataStore = () => getTennisDataStore() || window.DataStore;

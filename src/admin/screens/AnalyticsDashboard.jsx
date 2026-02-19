@@ -19,14 +19,9 @@ import {
 import { logger } from '../../lib/logger.js';
 import { normalizeTransaction } from '../../lib/normalize/index.js';
 
-// Access global dependencies
-const TENNIS_CONFIG = window.TENNIS_CONFIG ||
-  window.APP_UTILS?.TENNIS_CONFIG || {
-    STORAGE: {
-      UPDATE_EVENT: 'tennisDataUpdate',
-    },
-  };
-const EVENTS = window.APP_UTILS?.EVENTS || { UPDATE: 'tennisDataUpdate' };
+// Config imports (ESM canonical sources)
+import { TENNIS_CONFIG } from '../../lib/config.js';
+import { EVENTS } from '../../lib/constants.js';
 
 // Debounce helper
 const debounce = (fn, ms = 150) => {

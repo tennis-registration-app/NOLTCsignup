@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../lib/backend/index.js';
 import { logger } from '../lib/logger.js';
-import { getAppUtils, getTennis, getTennisEvents } from '../platform/windowBridge.js';
+import { getTennis, getTennisEvents } from '../platform/windowBridge.js';
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
 import { getPref } from '../platform/prefsStorage.js';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
@@ -113,15 +113,10 @@ const setWetCourtsActive = () => {};
 const setWetCourts = () => {};
 const setSuspendedBlocks = () => {};
 
-// Access shared utils from platform bridge (loaded via shared scripts in index.html)
-const U = getAppUtils() || {};
-const {
-  STORAGE,
-  readJSON,
-  getEmptyData,
-  TennisCourtDataStore,
-  TENNIS_CONFIG: _sharedTennisConfig,
-} = U;
+// ESM canonical imports (replacing window.APP_UTILS reads)
+import { readDataSafe } from '../lib/storage.js';
+import { TennisCourtDataStore } from '../lib/TennisCourtDataStore.js';
+import { TENNIS_CONFIG } from '../lib/config.js';
 
 // Shared domain modules
 const Events = getTennisEvents();
@@ -150,7 +145,7 @@ if (typeof window !== 'undefined') {
 // ============================================================
 
 // Boot data assertion
-const _bootData = U.readDataSafe ? U.readDataSafe() : readJSON(STORAGE?.DATA) || getEmptyData();
+const _bootData = readDataSafe();
 assert(
   !_bootData || Array.isArray(_bootData?.courts),
   'Expected data.courts array on boot',
@@ -158,10 +153,7 @@ assert(
 );
 
 // Initialize DataStore using the shared class
-const dataStore = TennisCourtDataStore ? new TennisCourtDataStore() : null;
-
-// ---- TENNIS_CONFIG: NOW IMPORTED FROM window.APP_UTILS ----
-const TENNIS_CONFIG = _sharedTennisConfig;
+const dataStore = new TennisCourtDataStore();
 
 // Main Admin Panel Component
 const AdminPanelV2 = ({ onExit }) => {

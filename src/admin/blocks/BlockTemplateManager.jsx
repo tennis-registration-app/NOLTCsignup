@@ -6,8 +6,8 @@
 import React, { useState } from 'react';
 import { Plus, CheckCircle, Trash2 } from '../components';
 
-// Get TENNIS_CONFIG from window
-const TENNIS_CONFIG = window.APP_UTILS?.TENNIS_CONFIG || { COURTS: { TOTAL_COUNT: 12 } };
+// Config import (ESM canonical source)
+import { TENNIS_CONFIG } from '../../lib/config.js';
 
 const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
   const [showCreate, setShowCreate] = useState(false);
@@ -15,14 +15,14 @@ const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
     name: '',
     reason: '',
     duration: 60,
-    courts: []
+    courts: [],
   });
 
   const handleSave = () => {
     if (newTemplate.name && newTemplate.reason && newTemplate.courts.length > 0) {
       onSave({
         ...newTemplate,
-        id: Date.now().toString()
+        id: Date.now().toString(),
       });
       setNewTemplate({ name: '', reason: '', duration: 60, courts: [] });
       setShowCreate(false);
@@ -62,7 +62,9 @@ const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
             <input
               type="number"
               value={newTemplate.duration}
-              onChange={(e) => setNewTemplate({ ...newTemplate, duration: parseInt(e.target.value) })}
+              onChange={(e) =>
+                setNewTemplate({ ...newTemplate, duration: parseInt(e.target.value) })
+              }
               className="w-full p-2 border rounded"
             />
           </div>
@@ -74,14 +76,12 @@ const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
                   key={i}
                   onClick={() => {
                     const courts = newTemplate.courts.includes(i + 1)
-                      ? newTemplate.courts.filter(c => c !== i + 1)
+                      ? newTemplate.courts.filter((c) => c !== i + 1)
                       : [...newTemplate.courts, i + 1];
                     setNewTemplate({ ...newTemplate, courts });
                   }}
                   className={`p-1 text-xs rounded ${
-                    newTemplate.courts.includes(i + 1)
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200'
+                    newTemplate.courts.includes(i + 1) ? 'bg-blue-500 text-white' : 'bg-gray-200'
                   }`}
                 >
                   {i + 1}
@@ -107,8 +107,11 @@ const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
       )}
 
       <div className="space-y-2">
-        {templates.map(template => (
-          <div key={template.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+        {templates.map((template) => (
+          <div
+            key={template.id}
+            className="flex items-center justify-between p-2 bg-gray-50 rounded"
+          >
             <div>
               <div className="font-medium text-sm">{template.name}</div>
               <div className="text-xs text-gray-600">
