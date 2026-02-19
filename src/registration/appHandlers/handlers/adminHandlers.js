@@ -10,23 +10,27 @@ import {
 /**
  * Admin Handlers
  * Extracted from useRegistrationHandlers
- * Verbatim function bodies, no logic changes.
+ * Accepts named slices from the app state object.
  */
-export function useAdminHandlers(deps) {
-  const {
-    backend,
-    showAlertMessage,
-    clearCourt,
-    getCourtData,
-    setCourtToMove,
-    ballPriceInput,
-    setPriceError,
-    dataStore,
-    TENNIS_CONFIG,
-    showPriceSuccessWithClear,
-    setCurrentScreen,
-    setSearchInput,
-  } = deps;
+export function useAdminHandlers({
+  services,
+  alert,
+  helpers,
+  setters,
+  search,
+  state,
+  adminPriceFeedback,
+  TENNIS_CONFIG,
+  court,
+}) {
+  const { backend, dataStore } = services;
+  const { showAlertMessage } = alert;
+  const { getCourtData } = helpers;
+  const { setCourtToMove, setCurrentScreen } = setters;
+  const { setSearchInput } = search;
+  const { ballPriceInput } = state;
+  const { setPriceError, showPriceSuccessWithClear } = adminPriceFeedback;
+  const { clearCourt } = court;
 
   // VERBATIM COPY: handleClearAllCourts from line ~731
   const handleClearAllCourts = useCallback(

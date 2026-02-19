@@ -26,7 +26,7 @@ import { TennisBusinessLogic } from '@lib';
 export function useRegistrationHandlers({ app }) {
   // Destructure everything from app that was previously passed as individual props
   const {
-    services: { backend, dataStore },
+    services: { backend },
     assignCourtToGroupOrchestrated,
     sendGroupToWaitlistOrchestrated,
     handleSuggestionClickOrchestrated,
@@ -72,7 +72,6 @@ export function useRegistrationHandlers({ app }) {
       currentWaitlistEntryId,
       isAssigning,
       isJoiningWaitlist,
-      ballPriceInput,
     },
     courtAssignment: {
       justAssignedCourt,
@@ -115,7 +114,6 @@ export function useRegistrationHandlers({ app }) {
       setClearCourtStep,
       decrementClearCourtStep,
     },
-    adminPriceFeedback: { setPriceError, showPriceSuccessWithClear },
     refs: { successResetTimerRef },
     blockAdmin: { getCourtBlockStatus },
     CONSTANTS,
@@ -242,53 +240,8 @@ export function useRegistrationHandlers({ app }) {
   );
 
   // ============================================
-  // Admin Screen Handlers (extracted to adminHandlers.js)
-  // ============================================
-  const adminHandlers = useAdminHandlers({
-    backend,
-    showAlertMessage,
-    getCourtData,
-    setCourtToMove,
-    ballPriceInput,
-    setPriceError,
-    dataStore,
-    TENNIS_CONFIG,
-    showPriceSuccessWithClear,
-    setCurrentScreen,
-    setSearchInput,
-  });
-
-  // ============================================
-  // Guest Handlers (extracted to guestHandlers.js)
-  // ============================================
-  const guestHandlers = useGuestHandlers({
-    guestName,
-    setGuestName,
-    guestSponsor,
-    setGuestSponsor,
-    showGuestForm,
-    setShowGuestForm,
-    setShowGuestNameError,
-    setShowSponsorError,
-    guestCounter,
-    incrementGuestCounter,
-    currentGroup,
-    setCurrentGroup,
-    memberNumber,
-    memberDatabase,
-    showAddPlayer,
-    setShowAddPlayer,
-    setShowAddPlayerSuggestions,
-    setAddPlayerSearch,
-    markUserTyping,
-    getCourtData,
-    guardAddPlayerEarly,
-    guardAgainstGroupDuplicate,
-    TENNIS_CONFIG,
-  });
-
-  // ============================================
   // Court Handlers (extracted to courtHandlers.js)
+  // Must be first: adminHandlers and groupHandlers depend on court outputs
   // ============================================
   const courtHandlers = useCourtHandlers({
     // State
@@ -347,6 +300,50 @@ export function useRegistrationHandlers({ app }) {
     // Constants
     CONSTANTS,
     API_CONFIG,
+  });
+
+  // ============================================
+  // Admin Screen Handlers (extracted to adminHandlers.js)
+  // ============================================
+  const adminHandlers = useAdminHandlers({
+    services: app.services,
+    alert: app.alert,
+    helpers: app.helpers,
+    setters: app.setters,
+    search: app.search,
+    state: app.state,
+    adminPriceFeedback: app.adminPriceFeedback,
+    TENNIS_CONFIG,
+    court: courtHandlers,
+  });
+
+  // ============================================
+  // Guest Handlers (extracted to guestHandlers.js)
+  // ============================================
+  const guestHandlers = useGuestHandlers({
+    guestName,
+    setGuestName,
+    guestSponsor,
+    setGuestSponsor,
+    showGuestForm,
+    setShowGuestForm,
+    setShowGuestNameError,
+    setShowSponsorError,
+    guestCounter,
+    incrementGuestCounter,
+    currentGroup,
+    setCurrentGroup,
+    memberNumber,
+    memberDatabase,
+    showAddPlayer,
+    setShowAddPlayer,
+    setShowAddPlayerSuggestions,
+    setAddPlayerSearch,
+    markUserTyping,
+    getCourtData,
+    guardAddPlayerEarly,
+    guardAgainstGroupDuplicate,
+    TENNIS_CONFIG,
   });
 
   // ============================================================
