@@ -6,9 +6,6 @@
  */
 
 export {
-  getAppUtils,
-  getTennisConfig,
-  getAppEvents,
   isMobileView,
   isApiMode,
   getGeolocationService,
