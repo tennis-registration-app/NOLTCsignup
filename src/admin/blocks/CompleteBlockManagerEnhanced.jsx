@@ -23,6 +23,13 @@ import WetCourtManagementPanel from './WetCourtManagementPanel.jsx';
 import BlockSummaryCard from './BlockSummaryCard.jsx';
 import BlockActionButtons from './BlockActionButtons.jsx';
 
+const blockTemplates = [
+  { name: 'Wet Courts (2 hours)', reason: 'WET COURT', duration: 120 },
+  { name: 'Maintenance (4 hours)', reason: 'COURT WORK', duration: 240 },
+  { name: 'Morning Lesson', reason: 'LESSON', startTime: '09:00', endTime: '10:00' },
+  { name: 'Evening Clinic', reason: 'CLINIC', startTime: '18:00', endTime: '20:00' },
+];
+
 // Complete Block Manager Component (Enhanced with Interactive Event Calendar)
 /**
  * @param {Object} props
@@ -150,13 +157,6 @@ const CompleteBlockManagerEnhanced = ({
     courts,
     setRefreshTrigger,
   });
-
-  const blockTemplates = [
-    { name: 'Wet Courts (2 hours)', reason: 'WET COURT', duration: 120 },
-    { name: 'Maintenance (4 hours)', reason: 'COURT WORK', duration: 240 },
-    { name: 'Morning Lesson', reason: 'LESSON', startTime: '09:00', endTime: '10:00' },
-    { name: 'Evening Clinic', reason: 'CLINIC', startTime: '18:00', endTime: '20:00' },
-  ];
 
   const isValid = useMemo(() => {
     const hasValidTimes = startTime && endTime;
