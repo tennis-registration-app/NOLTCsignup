@@ -4,8 +4,9 @@ import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
-import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
+import { getMobileModal, getTennisDomain } from '../../platform/windowBridge.js';
 import { useClockTick } from '../hooks/useClockTick.js';
+import { useMobileBridge } from '../hooks/useMobileBridge.js';
 import { normalizeSettings } from '../../lib/normalize/index.js';
 
 // TennisBackend for real-time board subscription
@@ -41,33 +42,7 @@ export function TennisCourtDisplay() {
   const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
   const [blockWarningMinutes, setBlockWarningMinutes] = useState(60); // Default 60, loaded from settings
 
-  // Mobile state - initialize from sessionStorage, updated via message from Mobile.html
-  const [mobileState, setMobileState] = useState(() => ({
-    registeredCourt: sessionStorage.getItem('mobile-registered-court'),
-    waitlistEntryId: sessionStorage.getItem('mobile-waitlist-entry-id'),
-  }));
-
-  // Listen for state updates from Mobile.html (MobileBridge broadcasts)
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data?.type === 'mobile:state-updated') {
-        logger.debug('CourtDisplay', 'Mobile state updated', event.data.payload);
-        setMobileState(event.data.payload);
-      } else if (event.data?.type === 'refresh-board') {
-        // Triggered after waitlist:joined to check for waitlist-available notice
-        logger.debug('CourtDisplay', 'Refresh board requested');
-        // The mobileState update from MobileBridge.broadcastState() will trigger
-        // the waitlist-available useEffect, but we can also manually trigger a refresh
-        const refreshBoard = getRefreshBoard();
-        if (refreshBoard) {
-          refreshBoard();
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  const mobileState = useMobileBridge();
 
   // TennisBackend real-time subscription (primary data source)
   useEffect(() => {
