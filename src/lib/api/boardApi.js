@@ -43,6 +43,12 @@ export async function getBoard() {
   // 1. Fetch raw API response
   const raw = await apiAdapter.get('/get-board');
 
+  // 1b. Guard: reject failed responses before entering normalize pipeline
+  if (!raw?.ok) {
+    logger.error('BoardApi', 'Failed to fetch board data', raw?.message);
+    throw new Error(raw?.message || 'Board fetch failed');
+  }
+
   // 2. Validate API envelope
   const envelopeResult = validateBoardResponse(raw);
   if (!envelopeResult.success) {

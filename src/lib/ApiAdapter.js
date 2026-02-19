@@ -3,6 +3,15 @@
  *
  * This adapter replaces LocalStorageAdapter for production use.
  * All data operations go through the Supabase Edge Functions.
+ *
+ * Dual Error Contract
+ * -------------------
+ * Private methods (_get, _post): Throw AppError on failure. Used by legacy
+ * domain methods (assignCourt, getCourtStatus, etc.) that expect exceptions.
+ *
+ * Public methods (get, post): Return raw response including { ok: false } on
+ * failure. Used by TennisBackend facade (TennisCommands, TennisQueries,
+ * TennisDirectory). Callers MUST check response.ok before consuming data.
  */
 
 import { API_CONFIG, ENDPOINTS, getDeviceContext } from './apiConfig.js';

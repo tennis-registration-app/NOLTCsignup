@@ -394,10 +394,18 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
                   if (court?.id) {
                     // Use API to end session
-                    await backend.commands.endSession({
+                    const result = await backend.commands.endSession({
                       courtId: court.id,
                       reason: 'completed',
                     });
+                    if (!result?.ok) {
+                      logger.error(
+                        'Courtboard',
+                        `Failed to clear court ${clearCourtNumber}`,
+                        result?.message
+                      );
+                      return;
+                    }
                     logger.info('Courtboard', `Court ${clearCourtNumber} cleared via API`);
                   } else {
                     console.warn(`[Courtboard] No court ID found for court ${clearCourtNumber}`);
