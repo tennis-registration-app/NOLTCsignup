@@ -4,21 +4,21 @@ import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
-import { getMobileModal, getTennisDomain } from '../../platform/windowBridge.js';
+import { getTennisDomain } from '../../platform/windowBridge.js';
 import { useClockTick } from '../hooks/useClockTick.js';
 import { useMobileBridge } from '../hooks/useMobileBridge.js';
 import { useCourtboardSettings } from '../hooks/useCourtboardSettings.js';
 import { useBoardSubscription } from '../hooks/useBoardSubscription.js';
+import { useWaitlistAvailable } from '../hooks/useWaitlistAvailable.js';
 
 // Court availability helper - single source of truth for free/playable courts
-import { countPlayableCourts, listPlayableCourts } from '../../shared/courts/courtAvailability.js';
-import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
+import { countPlayableCourts } from '../../shared/courts/courtAvailability.js';
 
 // Window bridge - single writer for window.CourtboardState
 import { writeCourtboardState } from '../bridge/window-bridge';
 
 // Import shared utilities from @lib
-import { TENNIS_CONFIG as _sharedTennisConfig, getUpcomingBlockWarningFromBlocks } from '@lib';
+import { TENNIS_CONFIG as _sharedTennisConfig } from '@lib';
 
 const TENNIS_CONFIG = _sharedTennisConfig;
 
@@ -75,88 +75,14 @@ export function TennisCourtDisplay() {
     }
   }, [courts, courtBlocks, upcomingBlocks, waitlist]);
 
-  // Auto-show waitlist-available notice when court is free and THIS mobile user is first in waitlist
-  useEffect(() => {
-    if (!isMobileView) return;
-
-    const hasWaitlist = waitlist.length > 0;
-    if (!hasWaitlist) {
-      // No waitlist - close notice if open
-      const mobileModal = getMobileModal();
-      if (mobileModal?.currentType === 'waitlist-available') {
-        mobileModal?.close?.();
-      }
-      return;
-    }
-
-    // Check if THIS mobile user is first in the waitlist
-    // Use mobileState (React state) instead of sessionStorage for reactivity
-    const mobileWaitlistEntryId = mobileState.waitlistEntryId;
-    const firstGroup = waitlist[0];
-
-    // Deferred groups: only skip when no full-time court available.
-    // No blocks means no restrictions — all courts have full time available.
-    let deferredBlocked = false;
-    if (firstGroup?.deferred) {
-      const allBlocks = [...(courtBlocks || []), ...(upcomingBlocks || [])];
-      if (allBlocks.length === 0) {
-        deferredBlocked = false; // No blocks = all courts have full time
-      } else {
-        const groupPlayerCount = firstGroup?.players?.length || 0;
-        const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
-        const nowDate = new Date();
-        const freeForDeferred = listPlayableCourts(courts, courtBlocks, nowDate.toISOString());
-        const eligibleForDeferred = freeForDeferred.filter((courtNum) =>
-          isCourtEligibleForGroup(courtNum, groupPlayerCount)
-        );
-        deferredBlocked = !eligibleForDeferred.some((courtNum) => {
-          const warning = getUpcomingBlockWarningFromBlocks(
-            courtNum,
-            sessionDuration + 5,
-            allBlocks,
-            nowDate
-          );
-          return warning == null;
-        });
-      }
-    }
-
-    const isUserFirstInWaitlist =
-      mobileWaitlistEntryId && firstGroup?.id === mobileWaitlistEntryId && !deferredBlocked;
-
-    // Use shared helper for consistent free court calculation
-    const now = new Date().toISOString();
-    const freeCourtList = listPlayableCourts(courts, courtBlocks, now);
-
-    // Filter by singles-only eligibility for this group's player count
-    const groupPlayerCount = firstGroup?.players?.length || 0;
-    const eligibleCourtList = freeCourtList.filter((courtNum) =>
-      isCourtEligibleForGroup(courtNum, groupPlayerCount)
-    );
-    const freeCourtCount = eligibleCourtList.length;
-
-    logger.debug('CourtDisplay', 'WaitlistNotice check', {
-      freeCourts: freeCourtCount,
-      freeCourtList: eligibleCourtList,
-      waitlistLength: waitlist?.length,
-      isMobileView: isMobileView,
-      mobileWaitlistEntryId: mobileWaitlistEntryId,
-      firstGroupId: firstGroup?.id,
-      isUserFirstInWaitlist: isUserFirstInWaitlist,
-      shouldShow: freeCourtCount > 0 && isUserFirstInWaitlist,
-      totalCourts: courts?.length,
-      courtsWithSession: courts?.filter((c) => c?.session).length,
-    });
-
-    const mobileModal = getMobileModal();
-    if (freeCourtCount > 0 && isUserFirstInWaitlist) {
-      // Court available AND this mobile user is first in waitlist - show notice
-      mobileModal?.open('waitlist-available', { firstGroup });
-    } else if (mobileModal?.currentType === 'waitlist-available') {
-      // Not first, no free courts, or no waitlist - close notice if it's currently showing
-      mobileModal?.close?.();
-    }
-  }, [courts, courtBlocks, upcomingBlocks, waitlist, isMobileView, mobileState]);
+  useWaitlistAvailable({
+    courts,
+    courtBlocks,
+    upcomingBlocks,
+    waitlist,
+    isMobileView,
+    mobileState,
+  });
 
   // Build status map using courts state from API (no localStorage fallback)
   let statusByCourt = {};
