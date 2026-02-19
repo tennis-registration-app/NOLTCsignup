@@ -1,3 +1,5 @@
+/* eslint-disable no-console -- Logger implementation: this module IS the console wrapper */
+
 /**
  * Consistent logging wrapper for NOLTC Tennis Registration
  *
