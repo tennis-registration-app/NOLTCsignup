@@ -24,155 +24,49 @@ import { TennisBusinessLogic } from '@lib';
  * @returns {import('../../types/appTypes').Handlers}
  */
 export function useRegistrationHandlers({ app }) {
-  // Destructure everything from app that was previously passed as individual props
   const {
-    services: { backend },
     assignCourtToGroupOrchestrated,
     sendGroupToWaitlistOrchestrated,
     handleSuggestionClickOrchestrated,
     handleAddPlayerSuggestionClickOrchestrated,
     changeCourtOrchestrated,
     resetFormOrchestrated,
-    setters: {
-      setCurrentScreen,
-      setShowSuccess,
-      setReplacedGroup,
-      setDisplacement,
-      setOriginalCourtData,
-      setCanChangeCourt,
-      setIsTimeLimited,
-      setIsChangingCourt,
-      setWasOvertimeCourt,
-      setShowAddPlayer,
-      setHasWaitlistPriority,
-      setCurrentWaitlistEntryId,
-      setWaitlistPosition,
-      setCourtToMove,
-    },
-    courtAssignment: {
-      setJustAssignedCourt,
-      setAssignedSessionId,
-      setAssignedEndTime,
-      setHasAssignedCourt,
-    },
-    groupGuest: {
-      currentGroup,
-      setCurrentGroup,
-      setGuestName,
-      setGuestSponsor,
-      setShowGuestForm,
-      setShowGuestNameError,
-      setShowSponsorError,
-    },
-    memberIdentity: { setCurrentMemberId, setMemberNumber, clearCache },
-    search: { setSearchInput, setShowSuggestions, setAddPlayerSearch, setShowAddPlayerSuggestions },
-    streak: { setRegistrantStreak, setShowStreakModal, setStreakAcknowledged },
-    clearCourtFlow: { setSelectedCourtToClear, setClearCourtStep },
-    refs: { successResetTimerRef },
+    validateGroupCompat,
+    dbg,
     CONSTANTS,
     TENNIS_CONFIG,
     API_CONFIG,
-    dbg,
-    helpers: { markUserTyping, getCourtData },
-    validateGroupCompat,
   } = app;
 
   // ===== UTILITY FUNCTIONS =====
 
   // Clear any pending success reset timer
   const clearSuccessResetTimer = useCallback(() => {
-    if (successResetTimerRef.current) {
-      clearTimeout(successResetTimerRef.current);
-      successResetTimerRef.current = null;
+    if (app.refs.successResetTimerRef.current) {
+      clearTimeout(app.refs.successResetTimerRef.current);
+      app.refs.successResetTimerRef.current = null;
     }
-  }, [successResetTimerRef]);
+  }, [app.refs.successResetTimerRef]);
 
   // Factory function to assemble reset deps (grouped structure)
   const createResetDeps = useCallback(
     () => ({
       actions: {
-        setCurrentGroup,
-        setShowSuccess,
-        setMemberNumber,
-        setCurrentMemberId,
-        setJustAssignedCourt,
-        setAssignedSessionId,
-        setAssignedEndTime,
-        setReplacedGroup,
-        setDisplacement,
-        setOriginalCourtData,
-        setCanChangeCourt,
-        setIsTimeLimited,
-        setCurrentScreen,
-        setSearchInput,
-        setShowSuggestions,
-        setShowAddPlayer,
-        setAddPlayerSearch,
-        setShowAddPlayerSuggestions,
-        setHasWaitlistPriority,
-        setCurrentWaitlistEntryId,
-        setWaitlistPosition,
-        setSelectedCourtToClear,
-        setClearCourtStep,
-        setIsChangingCourt,
-        setWasOvertimeCourt,
-        setCourtToMove,
-        setHasAssignedCourt,
-        setShowGuestForm,
-        setGuestName,
-        setGuestSponsor,
-        setShowGuestNameError,
-        setShowSponsorError,
-        setRegistrantStreak,
-        setShowStreakModal,
-        setStreakAcknowledged,
+        ...app.setters,
+        ...app.courtAssignment,
+        ...app.groupGuest,
+        ...app.memberIdentity,
+        ...app.search,
+        ...app.streak,
+        ...app.clearCourtFlow,
       },
       services: {
-        clearCache,
+        clearCache: app.memberIdentity.clearCache,
         clearSuccessResetTimer,
-        refresh: () => backend.queries.refresh(),
+        refresh: () => app.services.backend.queries.refresh(),
       },
     }),
-    [
-      setCurrentGroup,
-      setShowSuccess,
-      setMemberNumber,
-      setCurrentMemberId,
-      setJustAssignedCourt,
-      setAssignedSessionId,
-      setAssignedEndTime,
-      setReplacedGroup,
-      setDisplacement,
-      setOriginalCourtData,
-      setCanChangeCourt,
-      setIsTimeLimited,
-      setCurrentScreen,
-      setSearchInput,
-      setShowSuggestions,
-      setShowAddPlayer,
-      setAddPlayerSearch,
-      setShowAddPlayerSuggestions,
-      setHasWaitlistPriority,
-      setCurrentWaitlistEntryId,
-      setWaitlistPosition,
-      setSelectedCourtToClear,
-      setClearCourtStep,
-      setIsChangingCourt,
-      setWasOvertimeCourt,
-      setCourtToMove,
-      setHasAssignedCourt,
-      setShowGuestForm,
-      setGuestName,
-      setGuestSponsor,
-      setShowGuestNameError,
-      setShowSponsorError,
-      setRegistrantStreak,
-      setShowStreakModal,
-      setStreakAcknowledged,
-      clearCache,
-      clearSuccessResetTimer,
-      backend.queries,
-    ]
+    [app, clearSuccessResetTimer]
   );
 
   // Reset form (moved to orchestration layer)
@@ -185,10 +79,14 @@ export function useRegistrationHandlers({ app }) {
   // Note: This is used by both core handlers and groupHandlers, so it lives here
   const isPlayerAlreadyPlaying = useCallback(
     (playerId) => {
-      const courtData = getCourtData();
-      return TennisBusinessLogic.isPlayerAlreadyPlaying(playerId, courtData, currentGroup);
+      const courtData = app.helpers.getCourtData();
+      return TennisBusinessLogic.isPlayerAlreadyPlaying(
+        playerId,
+        courtData,
+        app.groupGuest.currentGroup
+      );
     },
-    [getCourtData, currentGroup]
+    [app.helpers, app.groupGuest]
   );
 
   // ============================================
@@ -293,8 +191,8 @@ export function useRegistrationHandlers({ app }) {
     // Navigation handlers
     ...navigationHandlers,
     // Core handlers (shared across modules)
-    markUserTyping,
-    getCourtData,
+    markUserTyping: app.helpers.markUserTyping,
+    getCourtData: app.helpers.getCourtData,
     clearSuccessResetTimer,
     resetForm,
     isPlayerAlreadyPlaying,
