@@ -4,7 +4,7 @@
  * Main block management UI with create/timeline/calendar views.
  * Handles court blocking, wet courts, and event scheduling.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Edit2, X, CalendarDays, Droplets } from '../components';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
@@ -82,7 +82,6 @@ const CompleteBlockManagerEnhanced = ({
   const [timePickerMode, setTimePickerMode] = useState('visual');
   const [recurrence, setRecurrence] = useState(null);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [isValid, setIsValid] = useState(false);
   const [editingBlock, setEditingBlock] = useState(null);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [isEvent, setIsEvent] = useState(true);
@@ -159,7 +158,7 @@ const CompleteBlockManagerEnhanced = ({
     { name: 'Evening Clinic', reason: 'CLINIC', startTime: '18:00', endTime: '20:00' },
   ];
 
-  useEffect(() => {
+  const isValid = useMemo(() => {
     const hasValidTimes = startTime && endTime;
     const hasReason = blockReason.trim().length > 0;
     const hasCourts = selectedCourts.length > 0;
@@ -195,7 +194,7 @@ const CompleteBlockManagerEnhanced = ({
         selectedDate?.toDateString() !== originalValues.selectedDate;
     }
 
-    setIsValid(hasValidTimes && hasReason && hasCourts && timeIsValid && hasChanges);
+    return hasValidTimes && hasReason && hasCourts && timeIsValid && hasChanges;
   }, [
     selectedCourts,
     blockReason,
