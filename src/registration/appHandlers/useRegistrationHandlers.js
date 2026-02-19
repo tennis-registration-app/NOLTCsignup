@@ -33,8 +33,6 @@ export function useRegistrationHandlers({ app }) {
     handleAddPlayerSuggestionClickOrchestrated,
     changeCourtOrchestrated,
     resetFormOrchestrated,
-    alert: { showAlertMessage, setShowAlert, setAlertMessage },
-    mobile: { mobileFlow, preselectedCourt },
     setters: {
       setCurrentScreen,
       setShowSuccess,
@@ -66,23 +64,16 @@ export function useRegistrationHandlers({ app }) {
       setShowGuestNameError,
       setShowSponsorError,
     },
-    memberIdentity: { setCurrentMemberId, setMemberNumber, fetchFrequentPartners, clearCache },
+    memberIdentity: { setCurrentMemberId, setMemberNumber, clearCache },
     search: { setSearchInput, setShowSuggestions, setAddPlayerSearch, setShowAddPlayerSuggestions },
-    streak: {
-      registrantStreak,
-      setRegistrantStreak,
-      setShowStreakModal,
-      streakAcknowledged,
-      setStreakAcknowledged,
-    },
+    streak: { setRegistrantStreak, setShowStreakModal, setStreakAcknowledged },
     clearCourtFlow: { setSelectedCourtToClear, setClearCourtStep },
     refs: { successResetTimerRef },
     CONSTANTS,
     TENNIS_CONFIG,
     API_CONFIG,
-    derived: { memberDatabase },
     dbg,
-    helpers: { guardAddPlayerEarly, guardAgainstGroupDuplicate, markUserTyping, getCourtData },
+    helpers: { markUserTyping, getCourtData },
     validateGroupCompat,
   } = app;
 
@@ -257,53 +248,22 @@ export function useRegistrationHandlers({ app }) {
   // Group Handlers (extracted to groupHandlers.js)
   // ============================================================
   const groupHandlers = useGroupHandlers({
-    // State
-    currentGroup,
-    memberDatabase,
-    mobileFlow,
-    registrantStreak,
-    streakAcknowledged,
-    preselectedCourt,
-    // Setters
-    setCurrentGroup,
-    setSearchInput,
-    setShowSuggestions,
-    setMemberNumber,
-    setCurrentMemberId,
-    setRegistrantStreak,
-    setStreakAcknowledged,
-    setShowStreakModal,
-    setCurrentScreen,
-    setAddPlayerSearch,
-    setShowAddPlayer,
-    setShowAddPlayerSuggestions,
-    setHasWaitlistPriority,
-    setAlertMessage,
-    setShowAlert,
-    setShowSuccess,
-    // Refs
-    successResetTimerRef,
-    // Services
-    backend,
-    // Helpers
-    showAlertMessage,
-    guardAddPlayerEarly,
-    guardAgainstGroupDuplicate,
-    getCourtData,
-    getAvailableCourts: courtHandlers.getAvailableCourts,
-    saveCourtData: courtHandlers.saveCourtData,
-    fetchFrequentPartners,
-    assignCourtToGroup: courtHandlers.assignCourtToGroup,
-    sendGroupToWaitlist: courtHandlers.sendGroupToWaitlist,
-    clearSuccessResetTimer,
-    resetForm,
-    isPlayerAlreadyPlaying,
-    // Orchestrators
+    groupGuest: app.groupGuest,
+    derived: app.derived,
+    mobile: app.mobile,
+    streak: app.streak,
+    search: app.search,
+    memberIdentity: app.memberIdentity,
+    setters: app.setters,
+    alert: app.alert,
+    refs: app.refs,
+    services: app.services,
+    helpers: app.helpers,
+    court: courtHandlers,
+    core: { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying },
     handleSuggestionClickOrchestrated,
     handleAddPlayerSuggestionClickOrchestrated,
-    // Constants
     CONSTANTS,
-    API_CONFIG,
   });
 
   // ============================================================

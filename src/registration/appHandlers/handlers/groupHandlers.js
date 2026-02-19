@@ -9,60 +9,52 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 /**
  * Group Handlers
  * Extracted from useRegistrationHandlers
- * Verbatim function bodies, no logic changes.
+ * Accepts named slices from the app state object.
  *
  * Handles group management: player selection, frequent partners,
  * streak acknowledgment, waitlist joining, court selection.
  */
-export function useGroupHandlers(deps) {
+export function useGroupHandlers({
+  groupGuest,
+  derived,
+  mobile,
+  streak,
+  search,
+  memberIdentity,
+  setters,
+  alert,
+  refs,
+  services,
+  helpers,
+  // Court handler outputs
+  court,
+  // Core handlers created in parent scope
+  core,
+  // Top-level app values
+  handleSuggestionClickOrchestrated,
+  handleAddPlayerSuggestionClickOrchestrated,
+  CONSTANTS,
+}) {
+  const { currentGroup, setCurrentGroup } = groupGuest;
+  const { memberDatabase } = derived;
+  const { mobileFlow, preselectedCourt } = mobile;
   const {
-    // State
-    currentGroup,
-    memberDatabase,
-    mobileFlow,
     registrantStreak,
     streakAcknowledged,
-    preselectedCourt,
-    // Setters
-    setCurrentGroup,
-    setSearchInput,
-    setShowSuggestions,
-    setMemberNumber,
-    setCurrentMemberId,
     setRegistrantStreak,
     setStreakAcknowledged,
     setShowStreakModal,
-    setCurrentScreen,
-    setAddPlayerSearch,
-    setShowAddPlayer,
-    setShowAddPlayerSuggestions,
-    setHasWaitlistPriority,
-    setAlertMessage,
-    setShowAlert,
-    setShowSuccess,
-    // Refs
-    successResetTimerRef,
-    // Services
-    backend,
-    // Helpers
-    showAlertMessage,
-    guardAddPlayerEarly,
-    guardAgainstGroupDuplicate,
-    getCourtData,
-    getAvailableCourts,
-    saveCourtData,
-    fetchFrequentPartners,
-    assignCourtToGroup,
-    sendGroupToWaitlist,
-    clearSuccessResetTimer,
-    resetForm,
-    isPlayerAlreadyPlaying,
-    // Orchestrators
-    handleSuggestionClickOrchestrated,
-    handleAddPlayerSuggestionClickOrchestrated,
-    // Constants
-    CONSTANTS,
-  } = deps;
+  } = streak;
+  const { setSearchInput, setShowSuggestions, setAddPlayerSearch, setShowAddPlayerSuggestions } =
+    search;
+  const { setMemberNumber, setCurrentMemberId, fetchFrequentPartners } = memberIdentity;
+  const { setCurrentScreen, setShowAddPlayer, setHasWaitlistPriority, setShowSuccess } = setters;
+  const { setAlertMessage, setShowAlert, showAlertMessage } = alert;
+  const { successResetTimerRef } = refs;
+  const { backend } = services;
+  const { guardAddPlayerEarly, guardAgainstGroupDuplicate, getCourtData } = helpers;
+  const { getAvailableCourts, saveCourtData, assignCourtToGroup, sendGroupToWaitlist } = court;
+  const { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying } = core;
 
   // VERBATIM COPY: findMemberNumber from line ~366
   const findMemberNumber = useCallback(
