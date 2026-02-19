@@ -7,7 +7,7 @@ import { logger } from '../../lib/logger.js';
 import { getMobileModal, getTennisDomain } from '../../platform/windowBridge.js';
 import { useClockTick } from '../hooks/useClockTick.js';
 import { useMobileBridge } from '../hooks/useMobileBridge.js';
-import { normalizeSettings } from '../../lib/normalize/index.js';
+import { useCourtboardSettings } from '../hooks/useCourtboardSettings.js';
 
 // TennisBackend for real-time board subscription
 import { createBackend } from '../../lib/backend/index.js';
@@ -39,8 +39,7 @@ export function TennisCourtDisplay() {
   const [upcomingBlocks, setUpcomingBlocks] = useState([]); // Future blocks today (for display)
   const [courtSelection, setCourtSelection] = useState(null); // Computed court selection from canonical API
   const [operatingHours, setOperatingHours] = useState([]); // Admin-configured operating hours
-  const [checkStatusMinutes, setCheckStatusMinutes] = useState(150); // Default 150, loaded from settings
-  const [blockWarningMinutes, setBlockWarningMinutes] = useState(60); // Default 60, loaded from settings
+  const { checkStatusMinutes, blockWarningMinutes } = useCourtboardSettings();
 
   const mobileState = useMobileBridge();
 
@@ -167,40 +166,6 @@ export function TennisCourtDisplay() {
       logger.debug('CourtDisplay', 'Unsubscribing from board updates');
       unsubscribe();
     };
-  }, []);
-
-  // Load check_status_minutes from system settings
-  // Normalize settings at boundary
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        logger.debug('CourtDisplay', 'Loading settings, backend.admin:', !!backend.admin);
-        const result = await backend.admin?.getSettings?.();
-        const settings = normalizeSettings(result?.settings);
-        logger.debug('CourtDisplay', 'Settings result', {
-          ok: result?.ok,
-          checkStatusMinutes: settings?.checkStatusMinutes,
-        });
-        if (result?.ok && settings?.checkStatusMinutes) {
-          const minutes = parseInt(settings.checkStatusMinutes, 10);
-          if (minutes > 0) {
-            setCheckStatusMinutes(minutes);
-            logger.debug('CourtDisplay', 'Loaded checkStatusMinutes:', minutes);
-          }
-        }
-        // Load blockWarningMinutes
-        if (result?.ok && settings?.blockWarningMinutes) {
-          const blockWarnMin = parseInt(settings.blockWarningMinutes, 10);
-          if (blockWarnMin > 0) {
-            setBlockWarningMinutes(blockWarnMin);
-            logger.debug('CourtDisplay', 'Loaded blockWarningMinutes:', blockWarnMin);
-          }
-        }
-      } catch (err) {
-        logger.warn('CourtDisplay', 'Failed to load settings, using default', err);
-      }
-    };
-    loadSettings();
   }, []);
 
   /**
