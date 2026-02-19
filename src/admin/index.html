@@ -30,7 +30,8 @@
 })();
 </script>
 
-  <!-- Cache warm — runs before modules load -->
+  <!-- Cache warm — parse localStorage JSON so the browser caches it before
+       React modules load. Replaced shared-utils.js readDataSafe(); read-only. -->
   <script>
     (function() {
       try {

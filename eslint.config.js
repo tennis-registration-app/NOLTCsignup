@@ -125,6 +125,8 @@ export default [
           message:
             'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of confirm().',
         },
+        // Legacy global removed in shared-utils elimination.
+        // Use src/lib/ instead.
         {
           name: 'APP_UTILS',
           message:
@@ -163,6 +165,8 @@ export default [
           message:
             'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of window.confirm().',
         },
+        // Legacy global removed in shared-utils elimination.
+        // Use src/lib/ instead.
         {
           object: 'window',
           property: 'APP_UTILS',

@@ -41,7 +41,7 @@
   <!-- IIFE: sets window.mobileTapToRegister; reads window.CourtboardState -->
   <script src="./mobile-bridge.js"></script>
 
-  <!-- ESM: syncs waitlist promotions; reads window.Tennis.Domain.availability -->
+  <!-- ESM (side-effect only): syncs waitlist promotions; reads window.Tennis.Domain.availability -->
   <script type="module" src="./sync-promotions.js"></script>
 
   <!-- IIFE: reads #mobile-bottom-bar-fallback, window.IS_MOBILE_VIEW, window.MobileModal -->
