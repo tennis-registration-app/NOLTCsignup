@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
 import { getMobileModal, getRefreshBoard, getTennisDomain } from '../../platform/windowBridge.js';
-import { setRefreshBoardGlobal } from '../../platform/registerGlobals.js';
 import { normalizeSettings } from '../../lib/normalize/index.js';
 
 // TennisBackend for real-time board subscription
@@ -22,15 +21,6 @@ import { writeCourtboardState } from '../bridge/window-bridge';
 
 // Import shared utilities from @lib
 import { TENNIS_CONFIG as _sharedTennisConfig, getUpcomingBlockWarningFromBlocks } from '@lib';
-
-// ---- Debounce helper (no UI change) ----
-const debounce = (fn, ms = 150) => {
-  let t;
-  return (...a) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...a), ms);
-  };
-};
 
 const TENNIS_CONFIG = _sharedTennisConfig;
 
@@ -66,7 +56,7 @@ export function TennisCourtDisplay() {
         // Triggered after waitlist:joined to check for waitlist-available notice
         logger.debug('CourtDisplay', 'Refresh board requested');
         // The mobileState update from MobileBridge.broadcastState() will trigger
-        // the waitlist-available useEffect, but we can also manually trigger loadData
+        // the waitlist-available useEffect, but we can also manually trigger a refresh
         const refreshBoard = getRefreshBoard();
         if (refreshBoard) {
           refreshBoard();
@@ -85,31 +75,6 @@ export function TennisCourtDisplay() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // Data loading - no longer reads from localStorage
-  // All state now comes from API via TennisBackend subscription
-  const loadData = useCallback(async () => {
-    // No-op: courts, waitlist, and courtBlocks now populate from API only
-    // Initial state is empty arrays, TennisBackend subscription fills them
-  }, []);
-
-  // DOM event listeners for cross-component updates
-  useEffect(() => {
-    // Legacy loadData call (now no-op, API subscription handles state)
-    loadData();
-
-    const handleUpdate = debounce(() => loadData(), 150);
-
-    window.addEventListener('tennisDataUpdate', handleUpdate, { passive: true });
-    window.addEventListener('DATA_UPDATED', handleUpdate, { passive: true });
-
-    // No polling - TennisBackend subscription provides real-time updates
-
-    return () => {
-      window.removeEventListener('tennisDataUpdate', handleUpdate);
-      window.removeEventListener('DATA_UPDATED', handleUpdate);
-    };
-  }, [loadData]);
 
   // TennisBackend real-time subscription (primary data source)
   useEffect(() => {
@@ -393,8 +358,6 @@ export function TennisCourtDisplay() {
       mobileModal?.close?.();
     }
   }, [courts, courtBlocks, upcomingBlocks, waitlist, isMobileView, mobileState]);
-
-  setRefreshBoardGlobal(loadData);
 
   // Build status map using courts state from API (no localStorage fallback)
   let statusByCourt = {};
