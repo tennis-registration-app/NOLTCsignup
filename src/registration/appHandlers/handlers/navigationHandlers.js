@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 // Import services for handlers that need them
 import { GeolocationService } from '../../services';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * Navigation Handlers
@@ -39,7 +40,7 @@ export function useNavigationHandlers({
     async (onSuccess) => {
       // Skip location check if disabled
       if (!TENNIS_CONFIG.GEOLOCATION.ENABLED) {
-        console.log('⚠️ Geolocation check disabled for development');
+        logger.warn('Geolocation', 'Geolocation check disabled for development');
         onSuccess();
         return;
       }

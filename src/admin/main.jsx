@@ -18,6 +18,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';
 import { migrateOldKeys } from '../platform/prefsStorage.js';
+import { logger } from '../lib/logger.js';
 
 // Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
 migrateOldKeys();
@@ -38,7 +39,7 @@ const waitForDependencies = () => {
 
 // Initialize the app
 waitForDependencies().then(() => {
-  console.log('[Admin Vite] Dependencies ready, mounting React app');
+  logger.info('Admin Vite', 'Dependencies ready, mounting React app');
 
   const root = ReactDOM.createRoot(document.getElementById('root'));
   root.render(

@@ -5,6 +5,8 @@
  * Contains all 13 domain hook invocations with their destructured returns.
  */
 
+import { logger } from '../../../lib/logger.js';
+
 // Alert display hook
 import { useAlertDisplay } from '../../ui/alert';
 
@@ -44,7 +46,7 @@ import { useMemberIdentity } from '../../memberIdentity/useMemberIdentity';
 // Debug utilities
 const DEBUG = false;
 const dbg = (...args) => {
-  if (DEBUG) console.log(...args);
+  if (DEBUG) logger.debug('RegistrationDomainHooks', ...args);
 };
 
 /**

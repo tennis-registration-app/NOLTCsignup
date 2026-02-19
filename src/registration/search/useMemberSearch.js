@@ -11,6 +11,7 @@
 import { useReducer, useCallback, useEffect } from 'react';
 import { memberSearchReducer, initialMemberSearchState } from './memberSearchReducer.js';
 import { useDebounce } from '../hooks/useDebounce.js';
+import { logger } from '../../lib/logger.js';
 
 export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUserTyping }) {
   const [state, dispatch] = useReducer(memberSearchReducer, initialMemberSearchState);
@@ -51,12 +52,12 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
   useEffect(() => {
     const loadMembers = async () => {
       try {
-        console.log('[TennisBackend] Loading members for autocomplete...');
+        logger.info('TennisBackend', 'Loading members for autocomplete...');
         const members = await backend.directory.getAllMembers();
         dispatch({ type: 'API_MEMBERS_SET', value: members });
-        console.log('[TennisBackend] Loaded', members.length, 'members');
+        logger.info('TennisBackend', `Loaded ${members.length} members`);
       } catch (error) {
-        console.error('[TennisBackend] Failed to load members:', error);
+        logger.error('TennisBackend', 'Failed to load members', error);
         // Legacy does NOT set apiMembers to [] on error - it stays as initial []
       }
     };

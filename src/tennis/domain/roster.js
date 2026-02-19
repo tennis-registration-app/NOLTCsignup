@@ -7,6 +7,7 @@
 
 import { STORAGE } from '../../lib/constants.js';
 import { readJSON, writeJSON } from '../../lib/storage.js';
+import { logger } from '../../lib/logger.js';
 
 // ============================================================
 // IIFE #1 - Core roster conflict checking
@@ -256,7 +257,7 @@ function findEngagementFor(player, state) {
   const pid = player?.memberId || null;
 
   if (typeof window !== 'undefined' && window.DEBUG) {
-    console.log('[findEngagementFor] Looking for player:', {
+    logger.debug('findEngagementFor', 'Looking for player', {
       name: player?.name,
       memberId: pid,
       normalized: nm,
@@ -273,7 +274,7 @@ function findEngagementFor(player, state) {
       const matchByName = normalizeName(pl?.name || '') === nm;
 
       if (typeof window !== 'undefined' && window.DEBUG && (matchById || matchByName)) {
-        console.log('[findEngagementFor] Found match on court', i + 1, ':', {
+        logger.debug('findEngagementFor', `Found match on court ${i + 1}`, {
           player: pl,
           matchById,
           matchByName,

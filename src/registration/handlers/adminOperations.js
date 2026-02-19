@@ -5,6 +5,7 @@
  */
 
 import { TENNIS_CONFIG } from '@lib';
+import { logger } from '../../lib/logger.js';
 
 export async function handleClearWaitlistOp(ctx) {
   const { backend, showAlertMessage, getCourtData, confirm: confirmFn = globalThis.confirm } = ctx;
@@ -221,7 +222,7 @@ export async function handleBlockCreateOp(ctx) {
     endTime.setDate(endTime.getDate() + 1);
   }
 
-  console.log('Block times calculated:', {
+  logger.debug('Admin', 'Block times calculated', {
     blockStartTimeInput: blockStartTime,
     currentTime: currentTimeNow.toLocaleString(),
     startTime: startTime.toLocaleString(),

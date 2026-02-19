@@ -6,6 +6,7 @@
  */
 
 import { TENNIS_CONFIG as _sharedTennisConfig } from '@lib';
+import { logger } from '../../lib/logger.js';
 
 const TENNIS_CONFIG = _sharedTennisConfig;
 
@@ -20,14 +21,14 @@ export const GeolocationService = {
    */
   calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371e3; // Earth's radius in meters
-    const φ1 = lat1 * Math.PI / 180;
-    const φ2 = lat2 * Math.PI / 180;
-    const Δφ = (lat2 - lat1) * Math.PI / 180;
-    const Δλ = (lon2 - lon1) * Math.PI / 180;
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c; // Distance in meters
@@ -62,7 +63,7 @@ export const GeolocationService = {
             TENNIS_CONFIG.GEOLOCATION.CLUB_CENTER.longitude
           );
 
-          console.log(`Distance from club: ${Math.round(distance)}m`);
+          logger.info('Geolocation', `Distance from club: ${Math.round(distance)}m`);
 
           if (distance <= TENNIS_CONFIG.GEOLOCATION.ALLOWED_RADIUS_METERS) {
             resolve({ success: true, distance: Math.round(distance) });
@@ -70,7 +71,7 @@ export const GeolocationService = {
             resolve({
               success: false,
               distance: Math.round(distance),
-              message: TENNIS_CONFIG.GEOLOCATION.DENIAL_MESSAGE
+              message: TENNIS_CONFIG.GEOLOCATION.DENIAL_MESSAGE,
             });
           }
         },
@@ -82,11 +83,11 @@ export const GeolocationService = {
         {
           enableHighAccuracy: true,
           timeout: TENNIS_CONFIG.GEOLOCATION.TIMEOUT_MS,
-          maximumAge: 0
+          maximumAge: 0,
         }
       );
     });
-  }
+  },
 };
 
 // Export singleton for backward compatibility

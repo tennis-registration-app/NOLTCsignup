@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronRight, Check } from '../components';
 import { getCache } from '../../platform/prefsStorage.js';
 import { useAdminNotification } from '../context/NotificationContext.jsx';
+import { logger } from '../../lib/logger.js';
 
 // Access global dependencies
 const Storage = window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } };
@@ -266,7 +267,7 @@ const AIAssistantAdmin = ({
         // Note: If Storage.writeJSON is unavailable, blocks will not persist
         // This is acceptable as blocks are domain data managed by backend
         Events.emitDom('tennisDataUpdate', { key, data: next });
-        console.log('[Admin] wrote blocks:', newBlocks);
+        logger.info('Admin', 'wrote blocks', newBlocks);
 
         refreshData();
 

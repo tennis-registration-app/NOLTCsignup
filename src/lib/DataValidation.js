@@ -6,6 +6,7 @@
  */
 
 import { TENNIS_CONFIG } from './config.js';
+import { logger } from './logger.js';
 
 // Debug flag
 const DEBUG = false;
@@ -13,7 +14,7 @@ const DEBUG = false;
 // Minimal logger for validation module
 const log = {
   debug: (...a) => {
-    if (DEBUG) console.debug('[DataValidation]', ...a);
+    if (DEBUG) logger.debug('DataValidation', ...a);
   },
 };
 

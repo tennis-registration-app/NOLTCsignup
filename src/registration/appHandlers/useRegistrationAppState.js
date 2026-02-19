@@ -7,6 +7,7 @@ import {
 
 // Import API config for mobile detection
 import { API_CONFIG } from '../../lib/apiConfig.js';
+import { logger } from '../../lib/logger.js';
 
 // Platform bridge for window global access
 import { getTennisDataStore, getTennisUI } from '../../platform/windowBridge.js';
@@ -62,7 +63,7 @@ const getCourtBlockStatus = _sharedGetCourtBlockStatus;
 // Debug utilities
 const DEBUG = false;
 const dbg = (...args) => {
-  if (DEBUG) console.log(...args);
+  if (DEBUG) logger.debug('RegistrationAppState', ...args);
 };
 
 // DataStore reference

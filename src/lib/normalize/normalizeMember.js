@@ -1,4 +1,6 @@
 // @ts-check
+import { logger } from '../logger.js';
+
 /**
  * Normalize a member from API response to Domain Member
  * Handles: memberId/member_id, displayName/display_name/name variations
@@ -8,7 +10,7 @@
  */
 export function normalizeMember(raw) {
   if (!raw) {
-    console.warn('[normalizeMember] Received null/undefined member');
+    logger.warn('normalizeMember', 'Received null/undefined member');
     return { memberId: 'unknown', displayName: 'Unknown', isGuest: false };
   }
 
@@ -27,7 +29,7 @@ export function normalizeMember(raw) {
   ];
   const unexpectedKeys = Object.keys(raw).filter((k) => !expectedKeys.includes(k));
   if (unexpectedKeys.length > 0) {
-    console.debug('[normalizeMember] Unexpected keys (flag for backend):', unexpectedKeys);
+    logger.debug('normalizeMember', 'Unexpected keys (flag for backend)', unexpectedKeys);
   }
 
   return {

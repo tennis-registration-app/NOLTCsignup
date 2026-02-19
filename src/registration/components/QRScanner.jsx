@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
+import { logger } from '../../lib/logger.js';
 
 export function QRScanner({ onScan, onClose, onError }) {
   const [, setIsScanning] = useState(false); // Getter unused, setter used
@@ -34,14 +35,14 @@ export function QRScanner({ onScan, onClose, onError }) {
         },
         (decodedText) => {
           // Successfully scanned
-          console.log('[QRScanner] Scanned:', decodedText);
+          logger.info('QR Scanner', 'Scanned', decodedText);
 
           // Validate it looks like a location token (32 uppercase chars)
           if (/^[A-Z0-9]{32}$/.test(decodedText)) {
             stopScanner();
             onScan(decodedText);
           } else {
-            console.warn('[QRScanner] Invalid token format:', decodedText);
+            logger.warn('QR Scanner', 'Invalid token format', decodedText);
             setError('Invalid QR code. Please scan the location code from the kiosk.');
           }
         },

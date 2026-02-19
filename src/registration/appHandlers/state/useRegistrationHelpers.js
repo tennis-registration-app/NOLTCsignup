@@ -9,6 +9,7 @@
 // Import Domain engagement helpers
 import { findEngagementByMemberId, getEngagementMessage } from '../../../lib/domain/engagement.js';
 import { getTennisUI, getTennisDomain } from '../../../platform/windowBridge.js';
+import { logger } from '../../../lib/logger.js';
 
 // Debug utilities
 const DEBUG = false;
@@ -80,8 +81,8 @@ export function useRegistrationHelpers({
     const board = getBoardData() || {};
 
     if (DEBUG) {
-      console.log('[guardAddPlayerEarly] Checking player:', player);
-      console.log('[guardAddPlayerEarly] memberId:', memberId);
+      logger.debug('guardAddPlayerEarly', 'Checking player', player);
+      logger.debug('guardAddPlayerEarly', 'memberId', memberId);
     }
 
     const engagement = findEngagementByMemberId(board, memberId);

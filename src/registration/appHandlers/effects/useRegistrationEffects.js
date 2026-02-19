@@ -8,6 +8,7 @@
 
 import { useEffect } from 'react';
 import { setLoadDataGlobal } from '../../../platform/registerGlobals.js';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * @param {Object} deps - Effect dependencies
@@ -60,12 +61,12 @@ export function useRegistrationEffects({
   useEffect(() => {
     if (typeof window !== 'undefined' && window.RegistrationUI) {
       window.RegistrationUI.setSelectedCourt = (courtNumber) => {
-        console.log('Mobile: Setting selected court to', courtNumber);
+        logger.info('Mobile', 'Setting selected court to', courtNumber);
         setPreselectedCourt(courtNumber);
       };
 
       window.RegistrationUI.startRegistration = (courtNumber) => {
-        console.log('Mobile: Starting registration for court', courtNumber);
+        logger.info('Mobile', 'Starting registration for court', courtNumber);
         setCurrentScreen('group', 'mobileStartRegistration');
         requestAnimationFrame(() => {
           const input =

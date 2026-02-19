@@ -65,6 +65,8 @@
  * Returns: Promise<void>
  */
 
+import { logger } from '../../lib/logger.js';
+
 export async function resetFormOrchestrated(deps) {
   // Grouped deps structure — { actions, services }
   const {
@@ -109,7 +111,7 @@ export async function resetFormOrchestrated(deps) {
   } = deps;
 
   // ===== ORIGINAL resetForm FUNCTION BODY (VERBATIM) =====
-  console.log('[RESET] resetForm() called at', new Date().toISOString());
+  logger.info('RESET', 'resetForm() called at', new Date().toISOString());
   // Clear any pending success timer to prevent stale callbacks
   clearSuccessResetTimer();
 

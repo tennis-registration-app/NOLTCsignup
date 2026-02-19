@@ -11,6 +11,7 @@ import MoveCourtUI from './admin/MoveCourtUI.jsx';
 import CourtGrid from './admin/CourtGrid.jsx';
 import WaitlistManagement from './admin/WaitlistManagement.jsx';
 import SystemSettingsSection from './admin/SystemSettingsSection.jsx';
+import { logger } from '../../lib/logger.js';
 
 const AdminScreen = ({
   // Data
@@ -91,7 +92,7 @@ const AdminScreen = ({
     return now >= blockStartTime && now < blockEndTime;
   });
 
-  console.log('Admin data loaded:', {
+  logger.info('Admin', 'Admin data loaded', {
     totalCourts: data.courts.length,
     occupied: occupiedCourts.length,
     blocked: blockedCourts.length,

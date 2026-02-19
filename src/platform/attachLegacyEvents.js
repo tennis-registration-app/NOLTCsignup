@@ -5,6 +5,8 @@
  * Delete this file when <script src="shared/events.js"> is removed from HTML files
  */
 
+import { logger } from '../lib/logger.js';
+
 // Circular debug log for tracking events
 class CircularDebugLog {
   constructor(maxSize = 10) {
@@ -40,7 +42,7 @@ class CircularDebugLog {
       this.events.shift();
     }
 
-    console.debug(`[Tennis.Events] ${type}: ${eventName}`, data);
+    logger.debug('Tennis.Events', `${type}: ${eventName}`, data);
   }
 
   getAll() {

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { normalizeSettings } from '../../../lib/normalize/index.js';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * useRegistrationRuntime
@@ -26,7 +27,7 @@ export function useRegistrationRuntime({
 
   // VERBATIM COPY: Debug availableCourts (line 663)
   useEffect(() => {
-    console.log('🔄 availableCourts state changed:', availableCourts);
+    logger.debug('RegistrationRuntime', 'availableCourts state changed', availableCourts);
   }, [availableCourts]);
 
   // VERBATIM COPY: Cleanup success reset timer on unmount (line 668)

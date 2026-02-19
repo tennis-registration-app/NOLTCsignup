@@ -4,6 +4,8 @@
  * Pure handler logic - no React hooks or state.
  */
 
+import { logger } from '../../lib/logger.js';
+
 export async function applyBlocksOp(ctx, blocks) {
   const { courts, backend, showNotification, TENNIS_CONFIG } = ctx;
 
@@ -74,14 +76,14 @@ export async function applyBlocksOp(ctx, blocks) {
         });
 
         if (result.ok) {
-          console.log('[Admin] Created block via API:', result.block);
+          logger.info('Admin', 'Created block via API', result.block);
           successCount++;
         } else {
-          console.error('[Admin] Failed to create block:', result.message);
+          logger.error('Admin', 'Failed to create block', result.message);
           failCount++;
         }
       } catch (error) {
-        console.error('[Admin] Error creating block:', error);
+        logger.error('Admin', 'Error creating block', error);
         failCount++;
       }
     }

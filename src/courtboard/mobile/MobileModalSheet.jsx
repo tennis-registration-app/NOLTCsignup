@@ -7,6 +7,7 @@ import {
   getTennisDomain,
   getTennisNamespaceConfig,
 } from '../../platform/windowBridge.js';
+import { logger } from '../../lib/logger.js';
 const backend = createBackend();
 
 /**
@@ -397,7 +398,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
                       courtId: court.id,
                       reason: 'completed',
                     });
-                    console.log(`[Courtboard] Court ${clearCourtNumber} cleared via API`);
+                    logger.info('Courtboard', `Court ${clearCourtNumber} cleared via API`);
                   } else {
                     console.warn(`[Courtboard] No court ID found for court ${clearCourtNumber}`);
                   }

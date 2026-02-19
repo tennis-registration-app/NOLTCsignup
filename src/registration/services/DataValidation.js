@@ -2,6 +2,7 @@
 // Extracted from App.jsx for modularity
 
 import { TENNIS_CONFIG as _sharedTennisConfig } from '@lib';
+import { logger } from '../../lib/logger.js';
 
 const TENNIS_CONFIG = _sharedTennisConfig;
 
@@ -11,7 +12,7 @@ const DEBUG = false;
 // Minimal logger for validation module
 const log = {
   debug: (...a) => {
-    if (DEBUG) console.debug('[DataValidation]', ...a);
+    if (DEBUG) logger.debug('DataValidation', ...a);
   },
 };
 

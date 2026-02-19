@@ -7,6 +7,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Edit2, Copy, Trash2 } from '../components';
 import { useAdminConfirm } from '../context/ConfirmContext.jsx';
+import { logger } from '../../lib/logger.js';
 
 const BlockTimeline = ({
   courts: _courts,
@@ -88,11 +89,11 @@ const BlockTimeline = ({
           }));
           setBlocks(transformedBlocks);
         } else {
-          console.error('[BlockTimeline] API error:', result.message);
+          logger.error('BlockTimeline', 'API error', result.message);
           setError(result.message || 'Failed to fetch blocks');
         }
       } catch (err) {
-        console.log('[BlockTimeline] Fetch error:', err);
+        logger.error('BlockTimeline', 'Fetch error', err);
         setError('Failed to fetch blocks');
       } finally {
         setIsLoading(false);

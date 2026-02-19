@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { TENNIS_CONFIG } from '@lib';
+import { logger } from '../../../lib/logger.js';
 
 /**
  * useRegistrationUiState
@@ -18,8 +19,8 @@ export function useRegistrationUiState({ CONSTANTS }) {
   // VERBATIM COPY: setCurrentScreen wrapper from lines ~151-156
   const setCurrentScreen = useCallback(
     (screen, source = 'unknown') => {
-      console.log(`[NAV] ${currentScreen} → ${screen} (from: ${source})`);
-      console.trace('[NAV] Stack trace');
+      logger.info('NAV', `${currentScreen} → ${screen} (from: ${source})`);
+      logger.debug('NAV', 'Stack trace');
       _setCurrentScreen(screen);
     },
     [currentScreen]
