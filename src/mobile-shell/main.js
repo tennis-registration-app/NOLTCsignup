@@ -5,15 +5,17 @@
  * Only loads Events adapter (required for health check) plus shell modules.
  */
 
+import { logger } from '../lib/logger.js';
+
 (async () => {
   try {
     await import('../platform/attachLegacyEvents.js');
     await import('./healthCheck.js');
     await import('./mobileBridge.js');
 
-    console.log('[Mobile Shell] ESM bootstrap complete');
+    logger.info('Mobile Shell', 'ESM bootstrap complete');
   } catch (error) {
-    console.error('[MobileShell]', error);
+    logger.error('MobileShell', 'Bootstrap failed', error);
     const detail = {
       message: error?.message,
       stack: error?.stack,

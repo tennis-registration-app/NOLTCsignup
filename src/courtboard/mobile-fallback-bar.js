@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- IIFE loaded via <script> tag; cannot import logger */
 // Plain-JS fallback bar (emergency restoration)
 (function mountFallbackBar() {
   if (!window.IS_MOBILE_VIEW) return;

@@ -5,7 +5,9 @@
  * Ported from Mobile.html inline script.
  */
 
-console.log('[Mobile Shell] Health check module loaded');
+import { logger } from '../lib/logger.js';
+
+logger.info('Mobile Shell', 'Health check module loaded');
 
 function getRegFrame() {
   return document.getElementById('iframeReg') || document.getElementById('iframeRegistration');
@@ -37,8 +39,8 @@ function checkFrame(frameEl) {
 function logHealth() {
   const reg = checkFrame(getRegFrame());
   const brd = checkFrame(getBoardFrame());
-  console.log('[Mobile Health] Registration:', reg);
-  console.log('[Mobile Health] Board:', brd);
+  logger.info('Mobile Health', 'Registration:', reg);
+  logger.info('Mobile Health', 'Board:', brd);
 }
 
 // Run health checks on DOMContentLoaded
@@ -66,8 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (isDebug && window.Tennis?.selfTest) {
     const results = window.Tennis.selfTest.runAll();
-    console.log(
-      `[Mobile Shell] Self-tests: ${results.passed}/${results.total} passed (${Math.round(results.successRate * 100)}%)`
+    logger.info(
+      'Mobile Shell',
+      `Self-tests: ${results.passed}/${results.total} passed (${Math.round(results.successRate * 100)}%)`
     );
   }
 
@@ -84,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
           iframeDoc.body.style.display = '';
         }
       } catch (e) {
-        console.warn('[Mobile Shell] Could not access iframe content:', e);
+        logger.warn('Mobile Shell', 'Could not access iframe content:', e);
       }
     });
   }

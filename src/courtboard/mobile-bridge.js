@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- IIFE loaded via <script> tag; cannot import logger */
 // Mobile Bridge Script for CourtBoard
 (function boardMobileBridge() {
   // Mobile-only: only active when embedded

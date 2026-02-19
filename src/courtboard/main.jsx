@@ -10,6 +10,7 @@ import '../platform/attachLegacyRoster.js';
 import '../platform/attachLegacyAvailability.js';
 import '../platform/attachLegacyWaitlist.js';
 import '../platform/attachLegacyBlocks.js';
+import { logger } from '../lib/logger.js';
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';
@@ -124,12 +125,12 @@ if (window.IS_MOBILE_VIEW) {
   if (modalNode) {
     const modalRoot = ReactDOM.createRoot(modalNode);
     modalRoot.render(<MobileModalApp />);
-    console.debug('Mobile modal system mounted');
+    logger.debug('Courtboard', 'Mobile modal system mounted');
 
     // Debug listener
     document.addEventListener('mm:open', (e) =>
-      console.debug('[ModalRoot] mm:open seen', e.detail)
+      logger.debug('ModalRoot', 'mm:open seen', e.detail)
     );
-    document.addEventListener('mm:close', () => console.debug('[ModalRoot] mm:close seen'));
+    document.addEventListener('mm:close', () => logger.debug('ModalRoot', 'mm:close seen'));
   }
 }
