@@ -17,11 +17,15 @@ window.Tennis.UI = window.Tennis.UI || {};
 window.Tennis.UI.toast = (msg, opts = {}) =>
   window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg, ...opts } }));
 
-// ---- Preflight self-heal ----
+// ---- Preflight cache warm ----
+// Inline readDataSafe logic — parse localStorage so the browser caches the JSON.
+// No APP_UTILS dependency needed; readDataSafe is read-only (never writes back).
 try {
-  window.APP_UTILS && window.APP_UTILS.readDataSafe();
+  // eslint-disable-next-line no-restricted-globals -- pre-init script runs before ESM modules; cannot import prefsStorage
+  var raw = localStorage.getItem('tennisClubData');
+  if (raw) JSON.parse(raw);
 } catch {
-  // Intentionally swallowed — storage may not be loaded yet
+  // Intentionally swallowed — storage may be empty or malformed
 }
 
 // ---- File protocol warning (dev only) ----
