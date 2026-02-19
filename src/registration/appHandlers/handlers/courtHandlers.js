@@ -6,67 +6,72 @@ import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
 /**
  * Court Handlers
  * Extracted from useRegistrationHandlers
- * Verbatim function bodies, no logic changes.
+ * Accepts named slices from the app state object.
  */
-export function useCourtHandlers(deps) {
+export function useCourtHandlers({
+  state,
+  setters,
+  mobile,
+  groupGuest,
+  courtAssignment,
+  services,
+  helpers,
+  blockAdmin,
+  alert,
+  refs,
+  // Top-level app values
+  assignCourtToGroupOrchestrated,
+  changeCourtOrchestrated,
+  sendGroupToWaitlistOrchestrated,
+  validateGroupCompat,
+  dbg,
+  CONSTANTS,
+  API_CONFIG,
+  // Core handlers created in parent scope
+  core,
+}) {
   const {
-    // State
     data,
     isAssigning,
-    mobileFlow,
-    preselectedCourt,
-    operatingHours,
-    currentGroup,
     currentWaitlistEntryId,
     canChangeCourt,
-    justAssignedCourt,
-    replacedGroup,
     isJoiningWaitlist,
-    // Setters
+    operatingHours,
+    replacedGroup,
+  } = state;
+  const {
     setIsAssigning,
     setCurrentWaitlistEntryId,
     setHasWaitlistPriority,
-    setCurrentGroup,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setAssignedEndTime,
     setReplacedGroup,
     setDisplacement,
     setOriginalCourtData,
     setIsChangingCourt,
     setWasOvertimeCourt,
-    setHasAssignedCourt,
     setCanChangeCourt,
     setChangeTimeRemaining,
     setIsTimeLimited,
     setTimeLimitReason,
     setShowSuccess,
-    setGpsFailedPrompt,
     setCurrentScreen,
     setIsJoiningWaitlist,
     setWaitlistPosition,
-    // Refs
-    successResetTimerRef,
-    // Services
-    backend,
-    // Helpers
-    getCourtData,
-    getCourtBlockStatus,
-    getMobileGeolocation,
-    showAlertMessage,
-    validateGroupCompat,
-    clearSuccessResetTimer,
-    resetForm,
-    isPlayerAlreadyPlaying,
-    dbg,
-    // Orchestrators
-    assignCourtToGroupOrchestrated,
-    changeCourtOrchestrated,
-    sendGroupToWaitlistOrchestrated,
-    // Constants
-    CONSTANTS,
-    API_CONFIG,
-  } = deps;
+  } = setters;
+  const { mobileFlow, preselectedCourt, getMobileGeolocation, setGpsFailedPrompt } = mobile;
+  const { currentGroup, setCurrentGroup } = groupGuest;
+  const {
+    justAssignedCourt,
+    setJustAssignedCourt,
+    setAssignedSessionId,
+    setAssignedEndTime,
+    setHasAssignedCourt,
+  } = courtAssignment;
+  const { backend } = services;
+  const { getCourtData } = helpers;
+  const { getCourtBlockStatus } = blockAdmin;
+  const { showAlertMessage } = alert;
+  const { successResetTimerRef } = refs;
+  const { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying } = core;
 
   // VERBATIM COPY: saveCourtData from line ~206
   // @deprecated — localStorage persistence removed; API commands handle state
