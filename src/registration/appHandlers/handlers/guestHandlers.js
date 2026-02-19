@@ -6,11 +6,18 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 /**
  * Guest Handlers
  * Extracted from useRegistrationHandlers
- * Verbatim function bodies, no logic changes.
+ * Accepts named slices from the app state object.
  */
-export function useGuestHandlers(deps) {
+export function useGuestHandlers({
+  groupGuest,
+  guestCounterHook,
+  memberIdentity,
+  derived,
+  setters,
+  search,
+  helpers,
+}) {
   const {
-    // Guest state
     guestName,
     setGuestName,
     guestSponsor,
@@ -19,23 +26,15 @@ export function useGuestHandlers(deps) {
     setShowGuestForm,
     setShowGuestNameError,
     setShowSponsorError,
-    guestCounter,
-    incrementGuestCounter,
-    // Group state
     currentGroup,
     setCurrentGroup,
-    memberNumber,
-    memberDatabase,
-    // Add player state
-    setShowAddPlayer,
-    setShowAddPlayerSuggestions,
-    setAddPlayerSearch,
-    // Helpers
-    markUserTyping,
-    getCourtData,
-    guardAddPlayerEarly,
-    guardAgainstGroupDuplicate,
-  } = deps;
+  } = groupGuest;
+  const { guestCounter, incrementGuestCounter } = guestCounterHook;
+  const { memberNumber } = memberIdentity;
+  const { memberDatabase } = derived;
+  const { setShowAddPlayer } = setters;
+  const { setShowAddPlayerSuggestions, setAddPlayerSearch } = search;
+  const { markUserTyping, getCourtData, guardAddPlayerEarly, guardAgainstGroupDuplicate } = helpers;
 
   // VERBATIM COPY: validateGuestName from line ~366
   const validateGuestName = useCallback((name) => {
