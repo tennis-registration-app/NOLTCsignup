@@ -240,6 +240,7 @@ export function useRegistrationDomainHooks({
   const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
     getCourtData,
     showAlertMessage: externalShowAlertMessage || showAlertMessage,
+    backend,
   });
 
   // Return all values in a flat object

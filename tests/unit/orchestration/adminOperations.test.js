@@ -422,18 +422,8 @@ describe('adminOperations', () => {
     const mockReorderWaitlist = vi.fn().mockResolvedValue(undefined);
 
     beforeEach(() => {
-      // Set up window.Tennis mock
       mockReorderWaitlist.mockClear();
       mockReorderWaitlist.mockResolvedValue(undefined);
-      globalThis.window = {
-        ...globalThis.window,
-        confirm: mockConfirm,
-        Tennis: {
-          Commands: {
-            reorderWaitlist: mockReorderWaitlist,
-          },
-        },
-      };
     });
 
     it('calls reorderWaitlist API with correct params', async () => {
@@ -443,6 +433,7 @@ describe('adminOperations', () => {
         }),
         showAlertMessage: vi.fn(),
         setWaitlistMoveFrom: vi.fn(),
+        backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
       await handleReorderWaitlistOp(ctx, 0, 2);
@@ -461,6 +452,7 @@ describe('adminOperations', () => {
         }),
         showAlertMessage: vi.fn(),
         setWaitlistMoveFrom: vi.fn(),
+        backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
       await handleReorderWaitlistOp(ctx, 0, 1);
@@ -477,6 +469,7 @@ describe('adminOperations', () => {
         }),
         showAlertMessage: vi.fn(),
         setWaitlistMoveFrom: vi.fn(),
+        backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
       await handleReorderWaitlistOp(ctx, 0, 1);
@@ -484,19 +477,14 @@ describe('adminOperations', () => {
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Network error');
     });
 
-    it('shows unavailable message when API not available', async () => {
-      globalThis.window = {
-        ...globalThis.window,
-        confirm: mockConfirm,
-        Tennis: undefined,
-      };
-
+    it('shows unavailable message when backend not available', async () => {
       const ctx = {
         getCourtData: () => ({
           waitlist: [{ id: 'entry-1' }],
         }),
         showAlertMessage: vi.fn(),
         setWaitlistMoveFrom: vi.fn(),
+        backend: null,
       };
 
       await handleReorderWaitlistOp(ctx, 0, 1);
@@ -513,6 +501,7 @@ describe('adminOperations', () => {
         }),
         showAlertMessage: vi.fn(),
         setWaitlistMoveFrom: vi.fn(),
+        backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
       await handleReorderWaitlistOp(ctx, 0, 1);

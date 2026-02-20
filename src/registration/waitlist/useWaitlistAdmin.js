@@ -9,7 +9,7 @@ import { useReducer, useCallback } from 'react';
 import { waitlistAdminReducer, initialWaitlistAdminState } from './waitlistAdminReducer.js';
 import { handleReorderWaitlistOp } from '../handlers/adminOperations.js';
 
-export function useWaitlistAdmin({ getCourtData, showAlertMessage }) {
+export function useWaitlistAdmin({ getCourtData, showAlertMessage, backend }) {
   const [state, dispatch] = useReducer(waitlistAdminReducer, initialWaitlistAdminState);
 
   // Bridge setter for handleReorderWaitlistOp and AdminScreen compatibility
@@ -22,12 +22,12 @@ export function useWaitlistAdmin({ getCourtData, showAlertMessage }) {
   const handleReorderWaitlist = useCallback(
     (fromIndex, toIndex) => {
       return handleReorderWaitlistOp(
-        { getCourtData, showAlertMessage, setWaitlistMoveFrom },
+        { getCourtData, showAlertMessage, setWaitlistMoveFrom, backend },
         fromIndex,
         toIndex
       );
     },
-    [getCourtData, showAlertMessage, setWaitlistMoveFrom]
+    [getCourtData, showAlertMessage, setWaitlistMoveFrom, backend]
   );
 
   return {

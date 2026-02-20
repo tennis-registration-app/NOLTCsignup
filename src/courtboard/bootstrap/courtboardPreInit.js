@@ -21,7 +21,6 @@ window.Tennis.UI.toast = (msg, opts = {}) =>
 // Inline readDataSafe logic — parse localStorage so the browser caches the JSON.
 // No APP_UTILS dependency needed; readDataSafe is read-only (never writes back).
 try {
-  // eslint-disable-next-line no-restricted-globals -- pre-init script runs before ESM modules; cannot import prefsStorage
   var raw = localStorage.getItem('tennisClubData');
   if (raw) JSON.parse(raw);
 } catch {

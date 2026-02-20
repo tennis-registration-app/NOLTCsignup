@@ -104,14 +104,14 @@ export async function handleClearAllCourtsOp(ctx) {
 }
 
 export async function handleReorderWaitlistOp(ctx, fromIndex, toIndex) {
-  const { getCourtData, showAlertMessage, setWaitlistMoveFrom } = ctx;
+  const { getCourtData, showAlertMessage, setWaitlistMoveFrom, backend } = ctx;
   const data = getCourtData();
   const movedGroup = data.waitlist[fromIndex];
   const entryId = movedGroup?.id || movedGroup?.group?.id;
 
-  if (entryId && window.Tennis?.Commands?.reorderWaitlist) {
+  if (entryId && backend?.admin?.reorderWaitlist) {
     try {
-      await window.Tennis.Commands.reorderWaitlist({
+      await backend.admin.reorderWaitlist({
         entryId,
         newPosition: toIndex,
       });

@@ -132,6 +132,12 @@ export default [
           message:
             'APP_UTILS global was removed. Import directly from src/lib/ instead.',
         },
+        // Architecture boundary: use windowBridge accessors, not direct Tennis global
+        {
+          name: 'Tennis',
+          message:
+            'Use windowBridge accessors (getTennisUI, getTennisDomain, etc.) instead of direct Tennis global access.',
+        },
       ],
       'no-restricted-properties': [
         'error',
@@ -173,6 +179,54 @@ export default [
           message:
             'APP_UTILS global was removed. Import directly from src/lib/ instead.',
         },
+        // Architecture boundary: use windowBridge accessors, not window.Tennis
+        {
+          object: 'window',
+          property: 'Tennis',
+          message:
+            'Use windowBridge accessors (getTennisUI, getTennisDomain, etc.) instead of window.Tennis.',
+        },
+      ],
+    },
+  },
+  // Architecture boundary: screens must not import backend or orchestration directly
+  {
+    files: ['src/registration/screens/**/*.{js,jsx}', 'src/admin/screens/**/*.{js,jsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/orchestration/**', '**/orchestrators/**'],
+              message:
+                'Screens must not import orchestrators — use handlers instead.',
+            },
+            {
+              group: ['**/backend/**', '**/lib/backend/**', '**/lib/ApiAdapter*'],
+              message:
+                'Screens must not import backend directly — use handlers/presenters.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Architecture boundary: presenters must not import backend
+  {
+    files: ['src/registration/presenters/**/*.js', 'src/registration/router/presenters/**/*.js'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/backend/**', '**/lib/backend/**', '**/lib/ApiAdapter*'],
+              message:
+                'Presenters must not import backend — they receive data via app/handlers params.',
+            },
+          ],
+        },
       ],
     },
   },
@@ -192,6 +246,26 @@ export default [
           ],
         },
       ],
+    },
+  },
+  // Exempt bootstrap/entry files and legacy interop from global/property restrictions.
+  // These files legitimately check window.Tennis readiness or bridge IIFE globals.
+  // New application code should use windowBridge accessors instead.
+  {
+    files: [
+      // Entry points — check window.Tennis readiness before rendering
+      'src/registration/main.jsx',
+      'src/admin/main.jsx',
+      // Legacy interop — use window.Tennis directly (migrate to windowBridge over time)
+      'src/registration/utils/helpers.js',
+      'src/admin/handlers/courtOperations.js',
+      'src/admin/ai/AIAssistantAdmin.jsx',
+      // Courtboard — IIFE-bridged plain scripts, direct window access required
+      'src/courtboard/**/*.{js,jsx}',
+    ],
+    rules: {
+      'no-restricted-globals': 'off',
+      'no-restricted-properties': 'off',
     },
   },
   // Exempt test files - MUST come AFTER the ban above
