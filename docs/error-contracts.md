@@ -1,112 +1,56 @@
-# Service Error Contract
+# Error Contract
 
 ## 1. Purpose
 
-The service layer normalizes all errors to a predictable, UI-safe shape. This ensures:
+The application uses a single structured error class (`AppError`) for
+programmatic error handling. All other errors flow as plain `Error` instances.
 
-- Backend-authoritative services handle error classification
-- UIs receive consistent error objects without guessing error types
-- Sensitive details (stack traces, internal messages) are separated from safe metadata
-- Error handling code is centralized rather than scattered across consumers
-
-## 2. DomainError Shape
+## 2. AppError Shape
 
 ```javascript
 {
-  name: 'DomainError',
-  code: ErrorCodes,        // One of the defined error codes
-  message: string,         // Preserved from original error by default
-  safeDetails: {           // Sanitized metadata safe for logging/display
-    service: string,       // e.g., 'courtsService'
-    operation: string,     // e.g., 'assignCourt'
-  },
-  cause: Error,            // Original error object (NOT for UI display)
+  name: 'AppError',
+  category: ErrorCategory,  // 'VALIDATION' | 'NETWORK' | 'AUTH' | 'CONFLICT' | 'NOT_FOUND' | 'UNKNOWN'
+  code: string,             // Machine-readable code (e.g., 'API_ERROR', 'FETCH_FAILED')
+  message: string,          // Human-readable message
+  details: any,             // Raw response or original error (for debugging)
 }
 ```
 
-## 3. Error Codes
+## 3. Error Categories
 
-Current minimal set defined in `src/lib/errors.js`:
+Defined in `src/lib/errors/errorCategories.js`:
 
-| Code | Description |
-|------|-------------|
-| `UNKNOWN` | Default fallback for unclassified errors |
-| `NETWORK` | Network/fetch failures |
-| `DB_ERROR` | Database operation failures |
-| `EDGE_FN_ERROR` | Supabase edge function errors |
-| `TRANSFORM_ERROR` | Data transformation failures (available; optional future usage) |
+| Category | Description |
+|----------|-------------|
+| `VALIDATION` | Input validation failures (bad data, schema errors) |
+| `NETWORK` | Network/transport failures (fetch errors, timeouts, 5xx) |
+| `AUTH` | Authentication/authorization failures (401, 403) |
+| `CONFLICT` | Resource conflict (409, concurrent modification) |
+| `NOT_FOUND` | Resource not found (404) |
+| `UNKNOWN` | Unclassifiable errors |
 
-## 4. Normalization Rules
+## 4. Where AppError Is Used
 
-1. **Idempotent**: If a `DomainError` is passed in, the same instance is returned unchanged
-2. **Preserve message**: Original error message is kept by default
-3. **Attach safeDetails**: Service name and operation are always included
-4. **Attach cause**: Original error is preserved for debugging (never display to users)
-5. **codeOverride behavior**: Respected only if it's a valid `ErrorCodes` value; otherwise ignored and automatic detection applies
+`ApiAdapter._fetch()` is the sole throw site. Two cases:
 
-## 5. Where Normalization Happens
+1. **API returned `ok: false`**: `AppError({ category: NETWORK, code: 'API_ERROR', ... })`
+2. **Network/fetch failure**: `AppError({ category: NETWORK, code: 'FETCH_FAILED', ... })`
 
-### Facade Layer
+The private methods (`_get`, `_post`) propagate these throws. The public
+methods (`get`, `post`) return raw `{ ok: false }` responses instead — see
+the dual error contract documented in `ApiAdapter.js`.
 
-**ApiTennisService** (`src/registration/services/ApiTennisService.js`):
-- 13 public async methods wrapped at boundary
-
-### Service Modules
-
-| Module | Methods Normalized |
-|--------|-------------------|
-| `courtsService` | 6 (`refreshCourtData`, `getAllCourts`, `getAvailableCourts`, `getCourtByNumber`, `clearCourt`, `assignCourt`) |
-| `waitlistService` | 5 (`refreshWaitlist`, `getWaitlist`, `removeFromWaitlist`, `addToWaitlist`, `assignFromWaitlist`) |
-| `membersService` | 3 (`searchMembers`, `getMembersByAccount`, `getAllMembers`) |
-| `settingsService` | 2 (`getSettings`, `refreshSettings`) |
-| `purchasesService` | 1 (`purchaseBalls`) |
-| `lifecycleService` | 1 (`loadInitialData`) |
-| `participantResolution` | 1 (`resolveParticipants`) |
-
-**Totals**: 19 module methods/functions normalized across 7 service modules
-
-## 6. Usage Examples
-
-### Import
+## 5. Usage
 
 ```javascript
-import { normalizeServiceError, DomainError, isDomainError } from '@lib/errors';
-```
+import { AppError, ErrorCategories } from '../errors/index.js';
 
-### Service Boundary Pattern
-
-```javascript
-export async function addToWaitlist(players, options = {}) {
-  try {
-    // existing logic
-  } catch (e) {
-    throw normalizeServiceError(e, { service: 'waitlistService', op: 'addToWaitlist' });
+try {
+  await adapter._get('/endpoint');
+} catch (e) {
+  if (e instanceof AppError) {
+    console.log(e.category, e.code, e.details);
   }
 }
 ```
-
-### UI Consumption
-
-```javascript
-try {
-  await apiService.addToWaitlist(players);
-} catch (err) {
-  // Safe to display
-  showError(err.message || 'An error occurred');
-
-  // Safe to log
-  logger.error('Waitlist error', {
-    code: err.code,
-    details: err.safeDetails,
-  });
-
-  // Never display to users
-  // err.cause contains original error with stack trace
-}
-```
-
-## 7. Non-Goals / Follow-Ons
-
-- **TRANSFORM_ERROR**: Apply at transform call sites (deferred)
-- **Finer domain codes**: Map specific Supabase error codes to more granular domain codes
-- **UI error component**: Standardize error presentation pattern across the application
