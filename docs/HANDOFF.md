@@ -16,6 +16,7 @@ This page is the "start here" guide for new developers.
 - docs/architecture.md (controller patterns + state bridges)
 - docs/ARCHITECTURE_MAP.md (where things live)
 - docs/WINDOW_GLOBALS.md (Courtboard bridge)
+- docs/SCHEMA.md (inferred database schema + Edge Function endpoints)
 
 ## Critical user flows
 - docs/GOLDEN_FLOWS.md
