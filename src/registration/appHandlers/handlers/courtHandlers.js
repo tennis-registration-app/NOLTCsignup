@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
+import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
 import { getTennisDomain, getTennisStorage, getTennisUI } from '../../../platform/windowBridge.js';
 import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
 
@@ -356,6 +357,132 @@ export function useCourtHandlers({
     ]
   );
 
+  // Defer waitlist entry — moved from courtPresenter.js onDeferWaitlist
+  const deferWaitlistEntry = useCallback(
+    async (entryId) => {
+      try {
+        const res = await backend.commands.deferWaitlistEntry({
+          entryId,
+          deferred: true,
+        });
+        if (res?.ok) {
+          getTennisUI()?.toast?.(
+            'Staying on waitlist — we will notify you when a full court opens',
+            {
+              type: 'success',
+            }
+          );
+        } else {
+          getTennisUI()?.toast?.(res?.message || 'Failed to defer', { type: 'error' });
+        }
+      } catch (err) {
+        logger.error('CourtHandlers', 'deferWaitlistEntry failed', err);
+        getTennisUI()?.toast?.('Failed to defer — please try again', { type: 'error' });
+      }
+      resetForm();
+    },
+    [backend, resetForm]
+  );
+
+  // Undo overtime takeover — moved from courtPresenter.js onCourtSelect pre-step
+  const undoOvertimeAndClearPrevious = useCallback(
+    async (previousCourtNumber, displacement) => {
+      if (displacement && displacement.displacedSessionId && displacement.takeoverSessionId) {
+        try {
+          const undoResult = await backend.commands.undoOvertimeTakeover({
+            takeoverSessionId: displacement.takeoverSessionId,
+            displacedSessionId: displacement.displacedSessionId,
+          });
+          // If undo failed with conflict, fall back to clearCourt
+          if (!undoResult.ok) {
+            logger.warn(
+              'CourtHandlers',
+              'Undo returned conflict, falling back to clearCourt',
+              undoResult
+            );
+            await clearCourt(previousCourtNumber, 'Bumped');
+          }
+          // If ok: true, the undo endpoint already ended the takeover session - no clearCourt needed
+        } catch (err) {
+          logger.error('CourtHandlers', 'Undo takeover failed', err);
+          // Fallback: just clear the court if undo fails
+          await clearCourt(previousCourtNumber, 'Bumped');
+        }
+      } else {
+        // No displacement - just clear the court normally
+        await clearCourt(previousCourtNumber, 'Bumped');
+      }
+    },
+    [backend, clearCourt]
+  );
+
+  // Assign next group from waitlist — moved from courtPresenter.js onAssignNext
+  const assignNextFromWaitlist = useCallback(async () => {
+    logger.debug('CourtHandlers', 'ASSIGN NEXT button clicked');
+    try {
+      // Get current board state
+      const board = await backend.queries.getBoard();
+
+      // Find first waiting entry
+      const firstWaiting = board?.waitlist?.find((e) => e.status === 'waiting');
+      if (!firstWaiting) {
+        showAlertMessage('No entries waiting in queue');
+        return;
+      }
+
+      // Find first available court (respecting singles-only restrictions)
+      const waitlistPlayerCount = firstWaiting.group?.players?.length || 0;
+      const availableCourt = board?.courts?.find(
+        (c) =>
+          c.isAvailable && !c.isBlocked && isCourtEligibleForGroup(c.number, waitlistPlayerCount)
+      );
+      if (!availableCourt) {
+        showAlertMessage('No courts available');
+        return;
+      }
+
+      // Assign using API
+      const res = await backend.commands.assignFromWaitlist({
+        waitlistEntryId: firstWaiting.id,
+        courtId: availableCourt.id,
+      });
+
+      if (res?.ok) {
+        getTennisUI()?.toast?.(`Assigned to Court ${availableCourt.number}`, {
+          type: 'success',
+        });
+        showAlertMessage(`Assigned to Court ${availableCourt.number}`);
+      } else {
+        getTennisUI()?.toast?.(res?.message || 'Failed assigning next', {
+          type: 'error',
+        });
+        showAlertMessage(res?.message || 'Failed assigning next');
+      }
+    } catch (err) {
+      logger.error('CourtHandlers', 'ASSIGN NEXT error', err);
+      showAlertMessage(err.message || 'Failed assigning next');
+    }
+  }, [backend, showAlertMessage]);
+
+  // Join waitlist as deferred — moved from courtPresenter.js onJoinWaitlistDeferred
+  const joinWaitlistDeferred = useCallback(
+    async (group) => {
+      try {
+        await sendGroupToWaitlist(group, { deferred: true });
+        getTennisUI()?.toast?.("You'll be notified when a full-time court is available", {
+          type: 'success',
+        });
+      } catch (err) {
+        logger.error('CourtHandlers', 'joinWaitlistDeferred failed', err);
+        getTennisUI()?.toast?.('Failed to join waitlist — please try again', {
+          type: 'error',
+        });
+      }
+      resetForm();
+    },
+    [sendGroupToWaitlist, resetForm]
+  );
+
   return {
     saveCourtData,
     getAvailableCourts,
@@ -363,5 +490,9 @@ export function useCourtHandlers({
     assignCourtToGroup,
     changeCourt,
     sendGroupToWaitlist,
+    deferWaitlistEntry,
+    undoOvertimeAndClearPrevious,
+    assignNextFromWaitlist,
+    joinWaitlistDeferred,
   };
 }

@@ -308,13 +308,17 @@
  * @property {Function} handleStreakAcknowledge
  * @property {Function} handleGroupJoinWaitlist
  *
- * Court Handlers (6):
+ * Court Handlers (10):
  * @property {Function} saveCourtData
  * @property {Function} getAvailableCourts
  * @property {Function} clearCourt
  * @property {Function} assignCourtToGroup
  * @property {Function} changeCourt
  * @property {Function} sendGroupToWaitlist
+ * @property {Function} deferWaitlistEntry
+ * @property {Function} undoOvertimeAndClearPrevious
+ * @property {Function} assignNextFromWaitlist
+ * @property {Function} joinWaitlistDeferred
  *
  * Navigation Handlers (3):
  * @property {Function} checkLocationAndProceed
