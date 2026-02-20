@@ -6,7 +6,7 @@
  */
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { getEventColor } from './utils.js';
-import { getPref } from '../../platform/prefsStorage.js';
+import { getDeviceId } from '../utils/getDeviceId.js';
 import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 
 const BLOCK_TYPES = [
@@ -34,9 +34,7 @@ const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) =>
   const initialBlockTypeRef = useRef('other');
 
   // Get device ID
-  const deviceId = useMemo(() => {
-    return window.Tennis?.deviceId || getPref('deviceId') || 'admin-device';
-  }, []);
+  const deviceId = getDeviceId();
 
   // Determine if wet block (can't change type)
   // event is pre-normalized by EventCalendarEnhanced, use camelCase

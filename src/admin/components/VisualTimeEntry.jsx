@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, AlertCircle } from './Icons';
 
+const DURATION_2H = 120; // minutes
+const DURATION_4H = 240; // minutes
+
 // Enhanced Time Entry Component
 export function VisualTimeEntry({
   startTime,
@@ -102,8 +105,8 @@ export function VisualTimeEntry({
   const durationPresets = [
     { label: '30 min', minutes: 30 },
     { label: '1 hour', minutes: 60 },
-    { label: '2 hours', minutes: 120 },
-    { label: '4 hours', minutes: 240 },
+    { label: '2 hours', minutes: DURATION_2H },
+    { label: '4 hours', minutes: DURATION_4H },
   ];
 
   const applyPresetDuration = (minutes) => {
@@ -128,7 +131,7 @@ export function VisualTimeEntry({
         const [hours, minutes] = slot.value.split(':').map(Number);
         const date = new Date();
         date.setHours(hours, minutes);
-        date.setMinutes(date.getMinutes() + 120);
+        date.setMinutes(date.getMinutes() + DURATION_2H);
         onEndTimeChange(date.toTimeString().slice(0, 5));
       }
     } else {

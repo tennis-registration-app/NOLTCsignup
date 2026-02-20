@@ -5,7 +5,7 @@
  * Extracted from CompleteBlockManagerEnhanced for maintainability.
  */
 import { logger } from '../../../lib/logger.js';
-import { getPref } from '../../../platform/prefsStorage.js';
+import { getDeviceId } from '../../utils/getDeviceId.js';
 
 // Get Events from window (same as parent component)
 const Events = window.Events;
@@ -33,11 +33,6 @@ export function useWetCourts({
   courts,
   setRefreshTrigger,
 }) {
-  // Get device ID from window.Tennis or fallback
-  const getDeviceId = () => {
-    return window.Tennis?.deviceId || getPref('deviceId') || 'admin-device';
-  };
-
   // Wet Court Helper Functions - Using API
   const handleEmergencyWetCourt = async () => {
     if (!ENABLE_WET_COURTS) return;

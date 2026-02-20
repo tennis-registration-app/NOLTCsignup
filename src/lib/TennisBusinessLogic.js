@@ -251,8 +251,5 @@ export const TennisBusinessLogic = {
   sameGroup,
 };
 
-// Export singleton for backward compatibility
-export const tennisBusinessLogic = TennisBusinessLogic;
-
 // Default export
 export default TennisBusinessLogic;

@@ -10,7 +10,6 @@ import { createBackend } from '../lib/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { getTennis, getTennisEvents } from '../platform/windowBridge.js';
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
-import { getPref } from '../platform/prefsStorage.js';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
 import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext.jsx';
 
@@ -20,10 +19,8 @@ import './utils/adminRefresh.js';
 // TennisBackend singleton for API operations
 const backend = createBackend();
 
-// Get device ID for API calls
-const getDeviceId = () => {
-  return getTennis()?.deviceId || getPref('deviceId') || 'admin-device';
-};
+// Shared device ID utility
+import { getDeviceId } from './utils/getDeviceId.js';
 
 // Import extracted components
 import {
@@ -105,7 +102,8 @@ import { useBoardSubscription } from './hooks/useBoardSubscription';
 import { addTimer, clearAllTimers } from './utils/timerRegistry';
 
 // Feature flag: use real AI assistant instead of mock
-const USE_REAL_AI = true;
+import { featureFlags } from '../config/runtimeConfig.js';
+const USE_REAL_AI = featureFlags.USE_REAL_AI;
 
 // No-op setters for prop compatibility with children using old hook pattern
 // Defined at module level for stable identity (avoids exhaustive-deps warnings)
@@ -128,17 +126,6 @@ const DEV = import.meta?.env?.DEV ?? false;
 const assert = (cond, msg, obj) => {
   if (DEV && !cond) logger.warn('AdminApp', `ASSERT: ${msg}`, obj || '');
 };
-
-// Global cleanup on page unload (uses timerRegistry)
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    try {
-      clearAllTimers();
-    } catch {
-      // Intentionally ignored: cleanup on unload
-    }
-  });
-}
 
 // ============================================================
 // Section: Admin actions (assign, clear, block scheduling)
@@ -244,6 +231,19 @@ const AdminPanelV2 = ({ onExit }) => {
         // Intentionally ignored (Phase 3.5 lint): cleanup on unmount
       }
     };
+  }, []);
+
+  // Clean up all timers on page unload
+  useEffect(() => {
+    const onUnload = () => {
+      try {
+        clearAllTimers();
+      } catch {
+        // Intentionally ignored: cleanup on unload
+      }
+    };
+    window.addEventListener('beforeunload', onUnload);
+    return () => window.removeEventListener('beforeunload', onUnload);
   }, []);
 
   // Court operations - delegated to handler module (useCallback for identity stability)
@@ -478,8 +478,6 @@ const AdminPanelV2 = ({ onExit }) => {
       {/* Content */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-sm -mt-px">
-          {' '}
-          {/* ADD THIS LINE */}
           {activeTab === 'status' && (
             <StatusSection
               statusModel={statusModel}
@@ -564,33 +562,13 @@ export default function App() {
   }
 
   if (view === 'admin') {
-    try {
-      if (typeof AdminPanelV2 !== 'undefined') {
-        return (
-          <NotificationProvider>
-            <ConfirmProvider>
-              <AdminPanelV2 onExit={() => setView('menu')} />
-            </ConfirmProvider>
-          </NotificationProvider>
-        );
-      } else {
-        return <div className="p-8">AdminPanelV2 component not found</div>;
-      }
-    } catch (error) {
-      logger.error('AdminApp', 'AdminPanelV2 render error', error);
-      return (
-        <div className="p-8">
-          <h1 className="text-xl font-bold text-red-600">Error loading Admin Panel</h1>
-          <p className="mt-2">{error.message}</p>
-          <button
-            onClick={() => setView('menu')}
-            className="mt-4 px-4 py-2 bg-gray-500 text-white rounded"
-          >
-            Back to Menu
-          </button>
-        </div>
-      );
-    }
+    return (
+      <NotificationProvider>
+        <ConfirmProvider>
+          <AdminPanelV2 onExit={() => setView('menu')} />
+        </ConfirmProvider>
+      </NotificationProvider>
+    );
   }
 
   if (view === 'analytics' && typeof AnalyticsDashboard !== 'undefined') {

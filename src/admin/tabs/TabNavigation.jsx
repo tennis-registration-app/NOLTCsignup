@@ -26,7 +26,7 @@ export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlocki
               }`}
             >
               <span style={activeTab !== 'status' ? greyFilter : {}}>
-                {React.createElement(Grid, { size: 24 })}
+                <Grid size={24} />
               </span>
               <span>Court Status</span>
             </button>
@@ -41,7 +41,7 @@ export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlocki
               }`}
             >
               <span style={activeTab !== 'calendar' ? greyFilter : {}}>
-                {React.createElement(Calendar, { size: 24 })}
+                <Calendar size={24} />
               </span>
               <span>Event Calendar</span>
             </button>
@@ -60,7 +60,7 @@ export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlocki
               }`}
             >
               <span style={activeTab !== 'blocking' ? greyFilter : {}}>
-                {React.createElement(Calendar, { size: 24 })}
+                <Calendar size={24} />
               </span>
               <span>Court Blocking</span>
             </button>
@@ -76,7 +76,7 @@ export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlocki
               }`}
             >
               <span style={activeTab !== 'analytics' ? greyFilter : {}}>
-                {React.createElement(BarChart, { size: 24 })}
+                <BarChart size={24} />
               </span>
               <span>Analytics</span>
             </button>
@@ -107,7 +107,7 @@ export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlocki
               }`}
             >
               <span style={activeTab !== 'system' ? greyFilter : {}}>
-                {React.createElement(Settings, { size: 24 })}
+                <Settings size={24} />
               </span>
               <span>System</span>
             </button>

@@ -22,9 +22,12 @@ import WetCourtManagementPanel from './WetCourtManagementPanel.jsx';
 import BlockSummaryCard from './BlockSummaryCard.jsx';
 import BlockActionButtons from './BlockActionButtons.jsx';
 
+const DURATION_2H = 120; // minutes
+const DURATION_4H = 240; // minutes
+
 const blockTemplates = [
-  { name: 'Wet Courts (2 hours)', reason: 'WET COURT', duration: 120 },
-  { name: 'Maintenance (4 hours)', reason: 'COURT WORK', duration: 240 },
+  { name: 'Wet Courts (2 hours)', reason: 'WET COURT', duration: DURATION_2H },
+  { name: 'Maintenance (4 hours)', reason: 'COURT WORK', duration: DURATION_4H },
   { name: 'Morning Lesson', reason: 'LESSON', startTime: '09:00', endTime: '10:00' },
   { name: 'Evening Clinic', reason: 'CLINIC', startTime: '18:00', endTime: '20:00' },
 ];
