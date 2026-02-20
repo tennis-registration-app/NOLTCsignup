@@ -28,6 +28,20 @@ import {
 } from '../types/domainObjects.js';
 
 /**
+ * Admin Controller — Future Target (Not Yet Wired)
+ *
+ * This pure function is designed to replace the 24 inline useMemo/useCallback
+ * blocks in admin/App.jsx with a single controller call, matching the
+ * registration app's presenter/controller pattern.
+ *
+ * Status: Scaffolded with contract tests (CONTROLLER_KEYS). Not yet imported
+ * by App.jsx. Wire-in is the convergence step when admin refactoring is prioritized.
+ *
+ * Target usage in App.jsx:
+ *   const controller = useMemo(() => buildAdminController(deps), [...]);
+ */
+
+/**
  * @typedef {Object} AdminControllerDeps
  * @property {Object} backend - TennisBackend instance
  * @property {Object} [dataStore] - TennisCourtDataStore instance (for AI)
