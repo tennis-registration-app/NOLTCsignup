@@ -16,12 +16,13 @@
     "prepare": "husky",
     "test": "npm run test:e2e",
     "test:e2e": "playwright test",
+    "test:fixtures": "node scripts/validate-fixtures.js",
     "test:unit": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "type:ratchet": "node scripts/type-ratchet.mjs",
-    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s test:unit && npm run -s build && npm run -s test:e2e"
+    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s test:unit && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [
