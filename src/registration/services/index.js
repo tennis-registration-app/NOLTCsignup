@@ -18,7 +18,7 @@ export { DataValidation } from '@lib';
 export { LocalStorageAdapter, storageAdapter } from '@lib';
 
 // Business logic and calculations
-export { TennisBusinessLogic, tennisBusinessLogic } from '@lib';
+export { TennisBusinessLogic } from '@lib';
 
 // ============================================================
 // Registration-specific services

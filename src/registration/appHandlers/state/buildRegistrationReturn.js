@@ -7,7 +7,7 @@
  * Accepts grouped module objects instead of 150+ individual params.
  * Return shape is unchanged.
  *
- * @returns {import('../../../../types/appTypes').AppState}
+ * @returns {any} // TODO: align with AppState typedef in types/appTypes.js
  */
 export function buildRegistrationReturn({
   // Module objects

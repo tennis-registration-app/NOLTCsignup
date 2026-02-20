@@ -75,6 +75,7 @@ function onDom(eventName, handler, options) {
   if (typeof window === 'undefined') return () => {};
 
   try {
+    // @ts-ignore — custom event name
     window.addEventListener(eventName, handler, options);
     debugLog.add('DOM_LISTENER_ADDED', eventName, { hasOptions: !!options });
   } catch (e) {
@@ -84,6 +85,7 @@ function onDom(eventName, handler, options) {
   // Return unsubscribe function
   return function () {
     try {
+      // @ts-ignore — custom event name
       window.removeEventListener(eventName, handler, options);
       debugLog.add('DOM_LISTENER_REMOVED', eventName, null);
     } catch {

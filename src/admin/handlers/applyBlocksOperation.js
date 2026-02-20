@@ -23,7 +23,7 @@ export async function applyBlocksOp(ctx, blocks) {
     const reason = block.reason || '';
     const startTime = new Date(block.startTime);
     const endTime = new Date(block.endTime);
-    const durationMinutes = Math.round((endTime - startTime) / (1000 * 60));
+    const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
     const selectedCourts = Array.isArray(block.courts) ? block.courts : [block.courtNumber];
 
     // validate minimally

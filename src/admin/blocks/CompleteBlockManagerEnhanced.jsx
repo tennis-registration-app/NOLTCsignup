@@ -58,7 +58,7 @@ const CompleteBlockManagerEnhanced = ({
     setActive: setWetCourtsActive,
     setCourts: setWetCourts,
     setSuspended: setSuspendedBlocks,
-  } = wetCourtsActions;
+  } = /** @type {any} */ (wetCourtsActions);
   const {
     courts,
     blocks: courtBlocks = [],

@@ -30,7 +30,9 @@ export const CreateBlockCommandSchema = z.object({
 export function buildCreateBlockCommand(input) {
   const result = CreateBlockCommandSchema.safeParse(input);
   if (!result.success) {
-    const errors = result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    const errors = /** @type {any} */ (result.error).errors
+      .map((e) => `${e.path.join('.')}: ${e.message}`)
+      .join(', ');
     throw new Error(`Invalid CreateBlockCommand: ${errors}`);
   }
   return result.data;

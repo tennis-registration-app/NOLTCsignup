@@ -162,7 +162,7 @@ export { LocalStorageAdapter, storageAdapter } from './StorageAdapter.js';
 // Business Logic Service
 // ============================================================
 
-export { TennisBusinessLogic, tennisBusinessLogic } from './TennisBusinessLogic.js';
+export { TennisBusinessLogic } from './TennisBusinessLogic.js';
 
 // TennisDataService removed - all mutations now go through API
 

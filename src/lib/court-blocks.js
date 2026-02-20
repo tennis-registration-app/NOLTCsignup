@@ -13,16 +13,7 @@ import { readJSON } from './storage.js';
  * Checks for wet court blocks (priority) and other active blocks.
  *
  * @param {number} courtNumber - Court number to check
- * @returns {Object} Block status object
- * @returns {boolean} returns.isBlocked - Whether the court is currently blocked
- * @returns {boolean} returns.isCurrent - Whether a block is currently active
- * @returns {string} [returns.reason] - Reason for the block
- * @returns {string} [returns.title] - Title of the block event
- * @returns {Object} [returns.eventDetails] - Additional event details
- * @returns {string} [returns.startTime] - ISO string of block start time
- * @returns {string} [returns.endTime] - ISO string of block end time
- * @returns {number} [returns.remainingMinutes] - Minutes remaining in current block
- * @returns {boolean} returns.isWetCourt - Whether this is a wet court block
+ * @returns {{ isBlocked: boolean, isCurrent: boolean, reason?: string, title?: string, eventDetails?: Object, startTime?: string, endTime?: string, remainingMinutes?: number, isWetCourt: boolean }}
  */
 export function getCourtBlockStatus(courtNumber) {
   const now = new Date();
@@ -51,7 +42,9 @@ export function getCourtBlockStatus(courtNumber) {
         reason: 'WET COURT',
         startTime: wetBlock.startTime,
         endTime: wetBlock.endTime,
-        remainingMinutes: Math.ceil((new Date(wetBlock.endTime) - now) / (1000 * 60)),
+        remainingMinutes: Math.ceil(
+          (new Date(wetBlock.endTime).getTime() - now.getTime()) / (1000 * 60)
+        ),
         isWetCourt: true,
       };
     }
@@ -65,7 +58,7 @@ export function getCourtBlockStatus(courtNumber) {
           new Date(block.startTime) <= now &&
           new Date(block.endTime) > now
       )
-      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
     if (activeBlocks.length > 0) {
       const currentBlock = activeBlocks[0];
@@ -81,7 +74,9 @@ export function getCourtBlockStatus(courtNumber) {
         eventDetails: currentBlock.eventDetails,
         startTime: currentBlock.startTime,
         endTime: currentBlock.endTime,
-        remainingMinutes: isCurrent ? Math.ceil((blockEndTime - now) / (1000 * 60)) : 0,
+        remainingMinutes: isCurrent
+          ? Math.ceil((blockEndTime.getTime() - now.getTime()) / (1000 * 60))
+          : 0,
         isWetCourt: false,
       };
     }
@@ -104,13 +99,7 @@ export function getCourtBlockStatus(courtNumber) {
  * @param {number} [duration=60] - Intended play duration in minutes (0 = any upcoming block)
  * @param {Array} blocksArray - Array of block objects with courtNumber, startTime, endTime, reason, isWetCourt
  * @param {Date} [now=new Date()] - Current time (injectable for testing)
- * @returns {Object|null} Warning object or null if no warning needed
- * @returns {string} returns.type - 'blocked' if cannot play, 'limited' if time limited
- * @returns {string} returns.reason - Reason for the upcoming block
- * @returns {string} returns.startTime - ISO string of block start time
- * @returns {number} [returns.limitedDuration] - Available minutes if limited
- * @returns {number} [returns.originalDuration] - Originally requested duration
- * @returns {number} returns.minutesUntilBlock - Minutes until block starts
+ * @returns {{ type: string, reason: string, startTime: string, limitedDuration?: number, originalDuration?: number, minutesUntilBlock: number }|null}
  */
 export function getUpcomingBlockWarningFromBlocks(
   courtNumber,
@@ -142,7 +131,7 @@ export function getUpcomingBlockWarningFromBlocks(
         // Block interferes if it starts before our session would naturally end
         return blockStart < sessionEndTime;
       })
-      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
 
     if (!upcomingBlock) return null;
 

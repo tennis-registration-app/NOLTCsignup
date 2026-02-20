@@ -3,7 +3,7 @@
  * Extracted from AdminPanelV2 for maintainability.
  * These are pure handler logic - no React hooks or state.
  */
-/* global Tennis */
+const Tennis = window.Tennis;
 
 export async function clearCourtOp(ctx, courtNumber) {
   const { courts, backend, showNotification, TENNIS_CONFIG } = ctx;

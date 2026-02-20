@@ -6,6 +6,7 @@
  */
 import React, { useRef } from 'react';
 
+/** @type {React.FC<{event: any, className: any, style: any, onEventClick: any, onEventHover: any, onEventLeave: any, onQuickAction: any, isWeekView: any}>} */
 const InteractiveEvent = ({
   event,
   className,
@@ -13,7 +14,8 @@ const InteractiveEvent = ({
   onEventClick,
   onEventHover,
   onEventLeave,
-  isWeekView
+  onQuickAction: _onQuickAction,
+  isWeekView,
 }) => {
   const eventRef = useRef(null);
 
@@ -39,9 +41,7 @@ const InteractiveEvent = ({
         <div className="text-xs opacity-75">
           {(() => {
             const courts = event.courtNumbers || [event.courtNumber];
-            return courts.length === 1
-              ? `Court ${courts[0]}`
-              : `Courts ${courts.join(', ')}`;
+            return courts.length === 1 ? `Court ${courts[0]}` : `Courts ${courts.join(', ')}`;
           })()}
         </div>
       )}

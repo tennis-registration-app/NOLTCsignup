@@ -70,7 +70,7 @@ document.documentElement.classList.toggle('variant-mobile', window.IS_MOBILE_VIE
       if (now - lastOpen < 250) return; // debounce guard
 
       if (currentModalType === type) {
-        this.close();
+        /** @type {any} */ (this).close();
         return;
       }
 

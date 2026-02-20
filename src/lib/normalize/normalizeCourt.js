@@ -18,11 +18,13 @@ export function normalizeCourt(raw, serverNow) {
   if (!raw) {
     console.warn('[normalizeCourt] Received null/undefined court');
     return {
+      id: '',
       number: 0,
       isOccupied: false,
       isBlocked: false,
       isOvertime: false,
       isAvailable: true,
+      isTournament: false,
       session: null,
       block: null,
     };

@@ -37,7 +37,7 @@ import { logger } from '../../../lib/logger.js';
  *
  * @param {Object} deps
  * @param {boolean} deps.showSuccess
- * @param {number|null} deps.justAssignedCourt
+ * @param {number|string|null} deps.justAssignedCourt
  * @param {Object} deps.backend
  * @param {boolean} deps.isMobile
  * @param {Function|null} deps.toast

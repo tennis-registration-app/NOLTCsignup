@@ -10,9 +10,7 @@ import { createShowNotification } from './notificationLogic.js';
 /**
  * Hook for managing notification state and display.
  *
- * @returns {Object} Notification state and operations
- * @returns {Object|null} returns.notification - Current notification {message, type} or null
- * @returns {Function} returns.showNotification - Function to show notification
+ * @returns {{ notification: Object|null, showNotification: Function }}
  */
 export function useNotification() {
   const [notification, setNotification] = useState(null);

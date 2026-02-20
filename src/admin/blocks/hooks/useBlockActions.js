@@ -144,7 +144,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
 
     const start = new Date(block.startTime);
     const end = new Date(block.endTime);
-    const durationMs = end - start;
+    const durationMs = end.getTime() - start.getTime();
 
     setStartTime('now');
     const newEnd = new Date(Date.now() + durationMs);

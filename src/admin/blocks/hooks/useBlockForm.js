@@ -152,7 +152,7 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
       setStartTime('now');
       const originalStart = new Date(block.startTime);
       const originalEnd = new Date(block.endTime);
-      const durationMs = originalEnd - originalStart;
+      const durationMs = originalEnd.getTime() - originalStart.getTime();
       const newEnd = new Date(Date.now() + durationMs);
       setEndTime(newEnd.toTimeString().slice(0, 5));
 

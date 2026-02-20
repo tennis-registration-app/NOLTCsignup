@@ -257,7 +257,7 @@ export class AdminCommands {
    * @param {string} [input.courtId] - Optional: filter by court UUID
    * @param {string} [input.fromDate] - Optional: ISO date, defaults to now
    * @param {string} [input.toDate] - Optional: ISO date, defaults to fromDate + 90 days
-   * @returns {Promise<{ok: boolean, blocks: Array, serverNow: string}>}
+   * @returns {Promise<{ok: boolean, blocks: Array, serverNow: string, code?: string, message?: string}>}
    */
   async getBlocks({ courtId = null, fromDate = null, toDate = null } = {}) {
     const payload = {};
@@ -362,7 +362,7 @@ export class AdminCommands {
    */
   async getSessionHistory({ courtNumber, memberName, dateStart, dateEnd, limit = 50 } = {}) {
     const params = new URLSearchParams();
-    if (courtNumber) params.append('court_number', courtNumber);
+    if (courtNumber) params.append('court_number', String(courtNumber));
     if (memberName) params.append('member_name', memberName);
     if (dateStart) params.append('date_start', dateStart);
     if (dateEnd) params.append('date_end', dateEnd);
@@ -428,7 +428,7 @@ export class AdminCommands {
    * @param {Array<{name: string, type: 'member' | 'guest', member_id?: string}>} input.participants
    * @param {string|null} input.scheduledEndAt - ISO timestamp or null for "no end time" (midnight)
    * @param {string} input.deviceId - Admin device ID
-   * @returns {Promise<{ok: boolean, session?: Object, code?: string, message?: string}>}
+   * @returns {Promise<{ok: boolean, session?: Object, code?: string, message?: string, serverNow?: string}>}
    */
   async updateSession(input) {
     const payload = {

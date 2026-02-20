@@ -13,8 +13,8 @@ const DEBUG = false;
 
 // Minimal logger for validation module
 const log = {
-  debug: (...a) => {
-    if (DEBUG) logger.debug('DataValidation', ...a);
+  debug: (/** @type {any[]} */ ...a) => {
+    if (DEBUG) logger.debug('DataValidation', .../** @type {[any, ...any[]]} */ (a));
   },
 };
 

@@ -154,7 +154,7 @@ const BlockTimeline = ({
     }
 
     // Sort by start time
-    filtered.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    filtered.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
     return filtered;
   }, [blocks, viewMode, selectedDate, filterCourt]);
@@ -196,7 +196,9 @@ const BlockTimeline = ({
     return groups;
   }, {});
 
-  const sortedGroups = Object.values(groupedBlocks).sort((a, b) => a.date - b.date);
+  const sortedGroups = Object.values(groupedBlocks).sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
 
   const isToday = (date) => {
     return date.toDateString() === new Date().toDateString();
@@ -213,7 +215,7 @@ const BlockTimeline = ({
     if (isTomorrow(date)) return 'Tomorrow';
 
     const now = new Date();
-    const diffTime = date - now;
+    const diffTime = date.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays > 0 && diffDays <= 7) {

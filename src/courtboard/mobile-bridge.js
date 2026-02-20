@@ -139,11 +139,14 @@
     if (window.top === window.self) return; // only when embedded
 
     // Check if this click was on a court card that already has a React onClick handler
-    const card = ev.target.closest('[data-court][data-available="true"]');
+    const card = /** @type {HTMLElement} */ (ev.target).closest(
+      '[data-court][data-available="true"]'
+    );
     if (!card) return;
 
     // If the court has a React onClick handler (available courts), let React handle it
-    const hasReactHandler = card.onclick !== null || card.getAttribute('role') === 'button';
+    const hasReactHandler =
+      /** @type {HTMLElement} */ (card).onclick !== null || card.getAttribute('role') === 'button';
     if (hasReactHandler) return; // Let React onClick handle it
 
     const now = Date.now();

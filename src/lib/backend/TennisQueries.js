@@ -70,7 +70,7 @@ export class TennisQueries {
   /**
    * Subscribe to board changes
    * Uses polling and visibility-based refresh for state updates.
-   * @param {(board: import('./types').BoardState) => void} callback
+   * @param {(board: import('../types/domain.js').Board) => void} callback
    * @returns {() => void} Unsubscribe function
    */
   subscribeToBoardChanges(callback, options = {}) {
@@ -196,7 +196,7 @@ export class TennisQueries {
 
   /**
    * Force refresh the board
-   * @returns {Promise<import('./types').BoardState>}
+   * @returns {Promise<import('../types/domain.js').Board>}
    */
   async refresh() {
     return this.getBoard();
@@ -204,7 +204,7 @@ export class TennisQueries {
 
   /**
    * Get last fetched board (for synchronous access)
-   * @returns {import('./types').BoardState | null}
+   * @returns {import('../types/domain.js').Board | null}
    */
   getLastBoard() {
     return this._lastBoard;
@@ -212,7 +212,7 @@ export class TennisQueries {
 
   /**
    * Get frequent partners for a member
-   * @param {string} memberNumber - The member number to get partners for
+   * @param {string} memberId - The member UUID to get partners for
    * @returns {Promise<{ok: boolean, partners: Array<{member_id: string, display_name: string, member_number: string, play_count: number}>}>}
    */
   async getFrequentPartners(memberId) {

@@ -76,10 +76,11 @@ export function useRegistrationEffects({
             document.querySelector('#playerNameInput') ||
             document.querySelector('input[type="text"]');
           if (input) {
-            input.focus({ preventScroll: true });
+            const el = /** @type {HTMLInputElement} */ (input);
+            el.focus({ preventScroll: true });
             try {
-              const v = input.value || '';
-              input.setSelectionRange(v.length, v.length);
+              const v = el.value || '';
+              el.setSelectionRange(v.length, v.length);
             } catch {
               /* setSelectionRange not supported */
             }

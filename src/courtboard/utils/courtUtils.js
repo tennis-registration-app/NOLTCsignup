@@ -82,7 +82,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
   // Helper to compute "+X min over" label
   const getOvertimeLabel = (endTime) => {
     if (!endTime) return 'Overtime';
-    const minutesOver = Math.round((now - endTime) / 60000);
+    const minutesOver = Math.round((now.getTime() - endTime.getTime()) / 60000);
     return minutesOver > 0 ? `+${minutesOver} min over` : 'Overtime';
   };
 
@@ -91,7 +91,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
       ? new Date(courtObj.session.scheduledEndAt)
       : null;
     if (end && end > now) {
-      const mins = Math.max(0, Math.ceil((end - now) / 60000));
+      const mins = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 60000));
       return {
         primary: `${mins} min`,
         secondary: `Until ${end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`,
@@ -105,7 +105,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
       : null;
     const start = courtObj?.session?.startedAt ? new Date(courtObj.session.startedAt) : null;
     if (start) {
-      const minutesPlaying = Math.floor((now - start) / 60000);
+      const minutesPlaying = Math.floor((now.getTime() - start.getTime()) / 60000);
       if (checkStatusMinutes > 0 && minutesPlaying >= checkStatusMinutes) {
         return {
           primary: getOvertimeLabel(end),
@@ -138,7 +138,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
     if (until) {
       try {
         const endTime = new Date(until);
-        if (!isNaN(endTime)) {
+        if (!isNaN(endTime.getTime())) {
           secondary = `Until ${endTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
         }
       } catch {

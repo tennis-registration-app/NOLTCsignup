@@ -12,8 +12,9 @@ import { logger } from '../../../lib/logger.js';
  * Extracted from SuccessScreen.jsx
  * Complete ball purchase feature including state, handler, and modal UI.
  *
- * @param {Object} data - Data needed for ball purchase
- * @param {Object} handlers - Callbacks to parent
+ * @param {Object} props
+ * @param {Object} props.data - Data needed for ball purchase
+ * @param {Object} props.handlers - Callbacks to parent
  */
 function BallPurchaseFeature({ data, handlers }) {
   // Destructure data

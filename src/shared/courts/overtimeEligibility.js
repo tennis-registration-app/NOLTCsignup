@@ -53,7 +53,7 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
       (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > now
     );
     if (!nextBlock) return true;
-    const minutesUntilBlock = (new Date(nextBlock.startTime) - now) / 60000;
+    const minutesUntilBlock = (new Date(nextBlock.startTime).getTime() - now.getTime()) / 60000;
     return minutesUntilBlock >= MIN_USEFUL_MINUTES;
   });
 
@@ -83,7 +83,7 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
       (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > new Date()
     );
     const minutesAvailable = nextBlock
-      ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
+      ? Math.floor((new Date(nextBlock.startTime).getTime() - Date.now()) / 60000)
       : null;
 
     // Skip courts with <= 5 min — unselectable by backend rules
@@ -105,7 +105,7 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
         (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > new Date()
       );
       const minutesAvailable = nextBlock
-        ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
+        ? Math.floor((new Date(nextBlock.startTime).getTime() - Date.now()) / 60000)
         : null;
 
       // Skip courts with <= 5 min — unselectable by backend rules
@@ -142,7 +142,7 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
             (b) => Number(b.courtNumber) === c.number && new Date(b.startTime) > new Date()
           );
           const minutesAvailable = nextBlock
-            ? Math.floor((new Date(nextBlock.startTime) - new Date()) / 60000)
+            ? Math.floor((new Date(nextBlock.startTime).getTime() - Date.now()) / 60000)
             : null;
           return {
             number: c.number,
@@ -207,7 +207,7 @@ export function computePlayableCourts(courts, blocks, serverNow) {
     };
   }
 
-  const now = serverNow || new Date().toISOString();
+  const now = /** @type {string} */ (serverNow) || new Date().toISOString();
 
   // EXACT LOGIC FROM courtAvailability.js isPlayableNow
   // isPlayableNow: !isOccupiedNow(court, now) && !isBlockedNow(courtNumber, blocks, now)

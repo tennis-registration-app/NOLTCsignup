@@ -11,8 +11,8 @@
  * @param {Object} deps - Contextual dependencies
  * @param {Set} deps.wetCourts - Set of court numbers currently marked wet
  * @param {Array} deps.courtBlocks - Array of block objects
- * @param {Date} deps.selectedDate - Currently selected date
- * @param {Date} deps.currentTime - Current time
+ * @param {Date} [deps.selectedDate] - Currently selected date
+ * @param {Date} [deps.currentTime] - Current time
  * @returns {{ status: string, info: Object|null }}
  */
 export function getCourtStatus(
@@ -149,7 +149,7 @@ export function getStatusColor(status) {
  */
 export function formatTimeRemaining(endTime, currentTime) {
   const end = new Date(endTime);
-  const diff = end - currentTime;
+  const diff = end.getTime() - currentTime.getTime();
   const minutes = Math.floor(diff / 60000);
 
   if (minutes < 0) {

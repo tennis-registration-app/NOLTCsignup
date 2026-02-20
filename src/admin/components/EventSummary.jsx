@@ -6,7 +6,7 @@ export const EventSummary = memo(function EventSummary({ events, currentTime, on
   const upcomingEvents = useMemo(() => {
     return events
       .filter((event) => new Date(event.startTime) > currentTime)
-      .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
       .slice(0, 3);
   }, [events, currentTime]);
 

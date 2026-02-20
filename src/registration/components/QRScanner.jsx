@@ -16,6 +16,18 @@ export function QRScanner({ onScan, onClose, onError }) {
   const scannerRef = useRef(null);
   const containerRef = useRef(null);
 
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current = null;
+      } catch (err) {
+        console.warn('[QRScanner] Error stopping scanner:', err);
+      }
+    }
+    setIsScanning(false);
+  }, []);
+
   const startScanner = useCallback(async () => {
     if (!containerRef.current) return;
 
@@ -68,18 +80,6 @@ export function QRScanner({ onScan, onClose, onError }) {
       if (onError) onError(err);
     }
   }, [onScan, onError, stopScanner]);
-
-  const stopScanner = useCallback(async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current = null;
-      } catch (err) {
-        console.warn('[QRScanner] Error stopping scanner:', err);
-      }
-    }
-    setIsScanning(false);
-  }, []);
 
   useEffect(() => {
     startScanner();

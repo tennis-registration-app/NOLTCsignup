@@ -45,23 +45,23 @@ import { useMemberIdentity } from '../../memberIdentity/useMemberIdentity';
 
 // Debug utilities
 const DEBUG = false;
-const dbg = (...args) => {
-  if (DEBUG) logger.debug('RegistrationDomainHooks', ...args);
+const dbg = (/** @type {any[]} */ ...args) => {
+  if (DEBUG) logger.debug('RegistrationDomainHooks', .../** @type {[any, ...any[]]} */ (args));
 };
 
 /**
  * Consolidated domain hooks for registration app state
  * @param {Object} deps - Dependencies needed by hooks
- * @param {Object} deps.backend - Backend service instance
- * @param {Object} deps.CONSTANTS - App constants
+ * @param {any} deps.backend - Backend service instance
+ * @param {any} deps.CONSTANTS - App constants
  * @param {Function} deps.setCurrentScreen - Screen navigation setter
- * @param {Function} deps.setShowSuccess - Success display setter
  * @param {boolean} deps.showSuccess - Current success state
  * @param {string|null} deps.justAssignedCourt - Just assigned court
  * @param {boolean} deps.isMobile - Mobile device flag
  * @param {Function} deps.toast - Toast function
  * @param {Function} deps.markUserTyping - Mark user typing function
  * @param {Function} deps.getCourtData - Get court data function
+ * @param {Function|null} [deps.showAlertMessage] - External alert message function
  */
 export function useRegistrationDomainHooks({
   backend,

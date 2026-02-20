@@ -69,7 +69,7 @@ export function setNoltcUseApiGlobal(value) {
  * @param {Function} fn - Data loader function
  */
 export function setLoadDataGlobal(fn) {
-  window.loadData = fn;
+  window.loadData = /** @type {any} */ (fn);
 }
 
 /**
@@ -77,7 +77,7 @@ export function setLoadDataGlobal(fn) {
  * @param {Function} fn - Board refresh function
  */
 export function setRefreshBoardGlobal(fn) {
-  window.refreshBoard = fn;
+  window.refreshBoard = /** @type {any} */ (fn);
 }
 
 /**
@@ -85,7 +85,7 @@ export function setRefreshBoardGlobal(fn) {
  * @param {Function} fn - Admin view refresh function
  */
 export function setRefreshAdminViewGlobal(fn) {
-  window.refreshAdminView = fn;
+  window.refreshAdminView = /** @type {any} */ (fn);
 }
 
 // ============================================
@@ -136,7 +136,7 @@ export function incrementAdminCoalesceHits() {
  * @param {Function} fn - Admin refresh scheduler function
  */
 export function setScheduleAdminRefreshGlobal(fn) {
-  window.scheduleAdminRefresh = fn;
+  window.scheduleAdminRefresh = /** @type {any} */ (fn);
 }
 
 /**

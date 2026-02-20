@@ -63,6 +63,7 @@ import {
  * @property {boolean} USE_REAL_AI - Use real AI vs mock
  * @property {Object} settings - Admin settings
  * @property {Object} actions - Action handlers from App.jsx
+ * @property {Object} [components] - Injected UI components
  */
 
 /**

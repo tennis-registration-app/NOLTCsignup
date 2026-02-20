@@ -21,7 +21,8 @@ import {
 } from './adminSettingsLogic.js';
 
 // Singleton guard to prevent duplicate listener attachment on re-mount
-const _one = (key) => (window[key] ? true : ((window[key] = true), false));
+const _one = (key) =>
+  /** @type {any} */ (window)[key] ? true : (/** @type {any} */ ((window)[key] = true), false);
 
 /**
  * Hook for managing admin settings state and operations.

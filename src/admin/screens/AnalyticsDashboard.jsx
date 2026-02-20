@@ -110,7 +110,8 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
       return null;
     }
     const primaryDays = Math.ceil(
-      (new Date(usagePrimaryEnd) - new Date(usagePrimaryStart)) / (1000 * 60 * 60 * 24)
+      (new Date(usagePrimaryEnd).getTime() - new Date(usagePrimaryStart).getTime()) /
+        (1000 * 60 * 60 * 24)
     );
     const endDate = new Date(usageComparisonStart);
     endDate.setDate(endDate.getDate() + primaryDays);

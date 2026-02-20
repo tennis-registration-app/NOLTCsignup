@@ -62,8 +62,8 @@ const getCourtBlockStatus = _sharedGetCourtBlockStatus;
 
 // Debug utilities
 const DEBUG = false;
-const dbg = (...args) => {
-  if (DEBUG) logger.debug('RegistrationAppState', ...args);
+const dbg = (/** @type {any[]} */ ...args) => {
+  if (DEBUG) logger.debug('RegistrationAppState', .../** @type {[any, ...any[]]} */ (args));
 };
 
 // DataStore reference
@@ -82,8 +82,8 @@ const backend = createBackend();
  * Contains all state, effects, and hook initialization for the registration app.
  * This is the main state management hook that orchestrates all other hooks.
  *
- * @param {Object} options - Configuration options
- * @param {boolean} options.isMobileView - Whether the app is in mobile view mode
+ * @param {Object} [options] - Configuration options
+ * @param {boolean} [options.isMobileView] - Whether the app is in mobile view mode
  * @returns {Object} - All state, setters, refs, derived values, helpers, and hook results
  */
 export function useRegistrationAppState({ isMobileView = false } = {}) {
@@ -311,7 +311,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     ui,
     domain,
     runtime,
-    dataLayer,
+    _dataLayer: dataLayer,
     helpers,
     derived,
     timeout: { showTimeoutWarning },

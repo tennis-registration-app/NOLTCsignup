@@ -105,8 +105,8 @@ export class TennisCourtDataStore {
    *
    * @param {string} key - Storage key
    * @param {any} data - Data to store
-   * @param {Object} options - Storage options
-   * @param {boolean} options.immediate - Force immediate localStorage write
+   * @param {Object} [options] - Storage options
+   * @param {boolean} [options.immediate] - Force immediate localStorage write
    */
   async set(key, data, options = {}) {
     const t0 = performance.now();
@@ -235,12 +235,14 @@ export function broadcastEvent(name, detail) {
  */
 export function listenForEvent(name, handler, opts) {
   try {
+    // @ts-ignore — custom event names not in lib.dom.d.ts
     window.addEventListener(name, handler, opts);
   } catch {
     // Ignore errors
   }
   return () => {
     try {
+      // @ts-ignore — custom event name
       window.removeEventListener(name, handler, opts);
     } catch {
       // Ignore errors

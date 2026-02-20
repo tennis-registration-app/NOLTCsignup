@@ -272,7 +272,9 @@ const GameHistorySearch = ({ backend }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {(() => {
                           const duration = Math.round(
-                            (new Date(game.endTime) - new Date(game.startTime)) / (1000 * 60)
+                            (new Date(game.endTime).getTime() -
+                              new Date(game.startTime).getTime()) /
+                              (1000 * 60)
                           );
                           return `${duration} min`;
                         })()}

@@ -181,7 +181,9 @@ export function NextAvailablePanel({
 
           // Calculate minutes until block starts (if any)
           const minutesUntilBlock = upcomingBlock
-            ? Math.floor((new Date(upcomingBlock.startTime) - currentTime) / 60000)
+            ? Math.floor(
+                (new Date(upcomingBlock.startTime).getTime() - currentTime.getTime()) / 60000
+              )
             : null;
 
           emptyCourts.push({

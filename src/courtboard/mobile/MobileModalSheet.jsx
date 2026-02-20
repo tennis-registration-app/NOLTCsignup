@@ -17,7 +17,7 @@ const backend = createBackend();
 export function MobileModalSheet({ type, payload, onClose }) {
   // Focus trap & return focus
   useEffect(() => {
-    const opener = document.activeElement;
+    const opener = /** @type {HTMLElement|null} */ (document.activeElement);
     return () => opener?.focus();
   }, []);
 
@@ -402,7 +402,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
                       logger.error(
                         'Courtboard',
                         `Failed to clear court ${clearCourtNumber}`,
-                        result?.message
+                        /** @type {any} */ (result)?.message
                       );
                       return;
                     }

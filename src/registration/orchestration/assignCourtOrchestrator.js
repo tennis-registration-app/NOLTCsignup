@@ -186,7 +186,7 @@ export async function assignCourtToGroupOrchestrated(
 
     // Check if block will start before session ends
     if (blockStart < sessionEnd) {
-      const minutesUntilBlock = Math.ceil((blockStart - nowBlock) / 60000);
+      const minutesUntilBlock = Math.ceil((blockStart.getTime() - nowBlock.getTime()) / 60000);
       const confirmMsg = `⚠️ This court has a block starting in ${minutesUntilBlock} minutes (${blockStatus.reason}). You may not get your full ${duration} minutes.\n\nDo you want to take this court anyway?`;
 
       const confirmFn = ui.confirm || globalThis.confirm;

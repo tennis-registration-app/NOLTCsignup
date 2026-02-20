@@ -6,6 +6,7 @@
  *
  * @typedef {Object} GuardResultOk
  * @property {true} ok
+ * @property {undefined} [ui]
  *
  * @typedef {Object} GuardResultFail
  * @property {false} ok

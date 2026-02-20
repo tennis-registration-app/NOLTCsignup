@@ -12,7 +12,8 @@ import {
  * CourtCard - Display card for a single tennis court
  * Shows court status, player names, time remaining, and block warnings
  */
-export function CourtCard({
+/** @type {React.FC<{courtNumber: any, currentTime: any, statusByCourt: any, selectableByCourt: any, statusObjectByCourt: any, data: any, isMobileView: any, checkStatusMinutes?: number, upcomingBlocks?: any[], blockWarningMinutes?: number, courts?: any[], courtBlocks?: any[]}>} */
+export const CourtCard = function CourtCard({
   courtNumber,
   currentTime: _currentTime,
   statusByCourt,
@@ -316,4 +317,4 @@ export function CourtCard({
       </div>
     </div>
   );
-}
+};

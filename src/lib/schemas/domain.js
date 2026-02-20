@@ -87,7 +87,7 @@ export function validateBoard(board) {
     console.error('[validateBoard] Domain validation failed:', result.error.format());
     console.error('[validateBoard] This indicates a bug in the normalization layer');
   }
-  return result;
+  return /** @type {any} */ (result);
 }
 
 /**
@@ -102,5 +102,5 @@ export function assertValidBoard(board) {
     console.error('[assertValidBoard] Validation errors:', result.error.format());
     throw new Error('Invalid Board domain object: ' + result.error.message);
   }
-  return result.data;
+  return /** @type {any} */ (result.data);
 }

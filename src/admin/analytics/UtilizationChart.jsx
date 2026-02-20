@@ -5,7 +5,7 @@
  */
 import React from 'react';
 
-const UtilizationChart = ({ summary, loading }) => {
+const UtilizationChart = ({ summary, loading, dateRange: _dateRange }) => {
   // Default values when no data
   const stats = {
     courtHoursUsed: summary?.courtHoursUsed ?? 0,

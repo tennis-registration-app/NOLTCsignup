@@ -14,7 +14,7 @@ function getRegFrame() {
 }
 
 function getBoardFrame() {
-  return document.getElementById('iframeBoard');
+  return /** @type {HTMLIFrameElement | null} */ (document.getElementById('iframeBoard'));
 }
 
 function checkFrame(frameEl) {

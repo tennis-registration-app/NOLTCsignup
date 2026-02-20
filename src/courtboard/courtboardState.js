@@ -67,11 +67,13 @@
  * @returns {{ courts: Array, courtBlocks: Array, waitingGroups: Array, timestamp?: number }}
  */
 export function getCourtboardState() {
-  return window.CourtboardState ?? {
-    courts: [],
-    courtBlocks: [],
-    waitingGroups: [],
-  };
+  return /** @type {{ courts: any[], courtBlocks: any[], waitingGroups: any[], timestamp?: number }} */ (
+    window.CourtboardState ?? {
+      courts: [],
+      courtBlocks: [],
+      waitingGroups: [],
+    }
+  );
 }
 
 /**

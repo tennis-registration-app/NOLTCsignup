@@ -54,12 +54,18 @@ import {
   const h = window.scheduleAdminRefresh;
   if (typeof h !== 'function') return;
 
+  // @ts-ignore — custom event names not in lib.dom.d.ts
   window.addEventListener('tennisDataUpdate', h, { passive: true });
+  // @ts-ignore — custom event name
   window.addEventListener('DATA_UPDATED', h, { passive: true });
+  // @ts-ignore — custom event name
   window.addEventListener('BLOCKS_UPDATED', h, { passive: true });
 
   // backup (some environments dispatch on document)
+  // @ts-ignore — custom event name
   document.addEventListener('tennisDataUpdate', h, { passive: true });
+  // @ts-ignore — custom event name
   document.addEventListener('DATA_UPDATED', h, { passive: true });
+  // @ts-ignore — custom event name
   document.addEventListener('BLOCKS_UPDATED', h, { passive: true });
 })();

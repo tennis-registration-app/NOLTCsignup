@@ -261,7 +261,7 @@ export function searchHistoricalGames(filters = {}) {
 
       return true;
     })
-    .sort((a, b) => new Date(b.startTime) - new Date(a.startTime)); // Most recent first
+    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()); // Most recent first
 }
 
 // ============================================================

@@ -353,7 +353,7 @@ export class TennisCommands {
     });
 
     // Build lookup map: memberNumber -> members[]
-    const membersByAccount = new Map(accountResults);
+    const membersByAccount = new Map(/** @type {any} */ (accountResults));
 
     // Resolve each member player (no await needed - data already fetched)
     const participants = [];
@@ -436,7 +436,7 @@ export class TennisCommands {
     logger.debug('TennisCommands', 'resolvePlayers complete', {
       durationMs: (performance.now() - tStart).toFixed(0),
     });
-    return participants;
+    return /** @type {import('./types').ParticipantInput[]} */ (participants);
   }
 
   /**
@@ -520,6 +520,7 @@ export class TennisCommands {
    * @param {'singles' | 'doubles'} params.groupType
    * @param {number} [params.latitude] - For mobile geofence validation
    * @param {number} [params.longitude] - For mobile geofence validation
+   * @param {boolean} [params.deferred] - Wait for Full Time flow
    * @returns {Promise<import('./types').CommandResponse & { entry?: Object, position?: number }>}
    */
   async joinWaitlistWithPlayers({ players, groupType, latitude, longitude, deferred }) {

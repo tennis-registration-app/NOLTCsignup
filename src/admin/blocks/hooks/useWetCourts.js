@@ -8,7 +8,7 @@ import { logger } from '../../../lib/logger.js';
 import { getDeviceId } from '../../utils/getDeviceId.js';
 
 // Get Events from window (same as parent component)
-const Events = window.Events;
+const Events = /** @type {any} */ (window).Events;
 
 /**
  * @param {Object} params

@@ -108,7 +108,7 @@ export function formatTimeRemaining(endTimeInput, currentTime = new Date()) {
   const end = endTimeInput instanceof Date ? endTimeInput : new Date(endTimeInput);
   if (isNaN(end.getTime())) return '';
 
-  const diff = end - currentTime;
+  const diff = end.getTime() - currentTime.getTime();
   const minutes = Math.floor(diff / 60000);
 
   if (minutes < -60) return `${Math.abs(Math.floor(minutes / 60))}h over`;

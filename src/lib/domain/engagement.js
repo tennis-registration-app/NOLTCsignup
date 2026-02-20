@@ -11,6 +11,7 @@
  * @property {number} [courtNumber] - Court number if on court
  * @property {number} [waitlistPosition] - Position if on waitlist
  * @property {string} [groupId] - Group ID
+ * @property {string} [displayName] - Player display name
  */
 
 /**

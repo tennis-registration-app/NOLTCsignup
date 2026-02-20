@@ -9,7 +9,7 @@ import React, { memo } from 'react';
 const HoverCard = memo(({ event, position, onClose }) => {
   const startTime = new Date(event.startTime);
   const endTime = new Date(event.endTime);
-  const duration = Math.round((endTime - startTime) / (1000 * 60)); // minutes, rounded
+  const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)); // minutes, rounded
 
   return (
     <div
@@ -17,13 +17,15 @@ const HoverCard = memo(({ event, position, onClose }) => {
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
-        transform: 'translateY(-50%)'
+        transform: 'translateY(-50%)',
       }}
       onMouseLeave={onClose}
     >
       <div className="flex items-start gap-3">
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-900">{event.eventDetails?.title || event.reason}</h4>
+          <h4 className="font-semibold text-gray-900">
+            {event.eventDetails?.title || event.reason}
+          </h4>
           <p className="text-sm text-gray-500 mt-1">
             {startTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </p>
@@ -35,8 +37,8 @@ const HoverCard = memo(({ event, position, onClose }) => {
           <span>🕐</span>
           <span>
             {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-            {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            ({Math.floor(duration / 60)}h {duration % 60}m)
+            {endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}(
+            {Math.floor(duration / 60)}h {duration % 60}m)
           </span>
         </div>
 

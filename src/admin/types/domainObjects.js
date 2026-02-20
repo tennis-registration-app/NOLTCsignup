@@ -35,12 +35,12 @@
  * deactivateWetCourts, onClearWetCourt, onClearAllWetCourts
  *
  * @typedef {Object} WetCourtsActions
- * @property {((active: boolean) => void)|undefined} setActive - Toggle wet court mode (from setWetCourtsActive)
- * @property {((courts: Set<number>) => void)|undefined} setCourts - Update wet court set (from setWetCourts)
- * @property {(() => void)|undefined} activateEmergency - Mark all courts wet (from handleEmergencyWetCourt)
- * @property {(() => void)|undefined} deactivateAll - Clear all wet markers (from deactivateWetCourts)
- * @property {((courtNum: number) => void)|undefined} clearCourt - Clear single wet court (from onClearWetCourt)
- * @property {(() => void)|undefined} clearAllCourts - Clear all wet courts (from onClearAllWetCourts)
+ * @property {Function|undefined} setActive - Toggle wet court mode (from setWetCourtsActive)
+ * @property {Function|undefined} setCourts - Update wet court set (from setWetCourts)
+ * @property {Function|undefined} activateEmergency - Mark all courts wet (from handleEmergencyWetCourt)
+ * @property {Function|undefined} deactivateAll - Clear all wet markers (from deactivateWetCourts)
+ * @property {Function|undefined} clearCourt - Clear single wet court (from onClearWetCourt)
+ * @property {Function|undefined} clearAllCourts - Clear all wet courts (from onClearAllWetCourts)
  */
 
 /**
@@ -111,10 +111,10 @@ export function createWetCourtsActions(params = {}) {
  * Maps to actual props: onApplyBlocks, onEditingBlockConsumed, setSuspendedBlocks, onNotification
  *
  * @typedef {Object} BlockActions
- * @property {((blocks: Array<Object>) => void)|undefined} applyBlocks - Create blocks (from onApplyBlocks)
- * @property {(() => void)|undefined} onEditingConsumed - Clear edit state (from onEditingBlockConsumed)
- * @property {((blocks: Array<Object>) => void)|undefined} setSuspended - Update suspended blocks (from setSuspendedBlocks)
- * @property {((message: string, type?: string) => void)|undefined} notify - Show notification (from onNotification)
+ * @property {Function|undefined} applyBlocks - Create blocks (from onApplyBlocks)
+ * @property {Function|undefined} onEditingConsumed - Clear edit state (from onEditingBlockConsumed)
+ * @property {Function|undefined} setSuspended - Update suspended blocks (from setSuspendedBlocks)
+ * @property {Function|undefined} notify - Show notification (from onNotification)
  */
 
 /**
@@ -252,8 +252,8 @@ export function createAdminServices(params = {}) {
  * @typedef {Object} StatusModel
  * @property {Array<Object>|undefined} courts - Court data array
  * @property {Array<Object>|undefined} courtBlocks - Court block definitions
- * @property {unknown|undefined} selectedDate - Currently selected date
- * @property {unknown|undefined} currentTime - Current time reference
+ * @property {Date|undefined} selectedDate - Currently selected date
+ * @property {Date|undefined} currentTime - Current time reference
  * @property {Array<Object>|undefined} waitingGroups - Waitlist entries
  */
 
@@ -357,7 +357,7 @@ export function createCalendarModel(params = {}) {
  * Maps to actual props: onRefresh
  *
  * @typedef {Object} CalendarActions
- * @property {(() => void)|undefined} onRefresh - Trigger calendar refresh (from onRefresh)
+ * @property {Function|undefined} onRefresh - Trigger calendar refresh (from onRefresh)
  */
 
 /**
@@ -422,14 +422,14 @@ export function createAIAssistantModel(params = {}) {
  * because the call site uses an inline lambda.
  *
  * @typedef {Object} AIAssistantActions
- * @property {((show: boolean) => void)|undefined} setShowAIAssistant - Toggle modal (from setShowAIAssistant)
- * @property {(() => void)|undefined} onAISettingsChanged - Settings change handler (from onAISettingsChanged)
- * @property {(() => void)|undefined} loadData - Reload settings (from loadData)
- * @property {((courtNum: number) => void)|undefined} clearCourt - Clear single court (from clearCourt)
- * @property {(() => void)|undefined} clearAllCourts - Clear all courts (from clearAllCourts)
- * @property {((from: number, to: number) => void)|undefined} moveCourt - Move between courts (from moveCourt)
- * @property {((price: number) => void)|undefined} updateBallPrice - Update ball price (from updateBallPrice)
- * @property {(() => void)|undefined} refreshData - Refresh data (from refreshData)
+ * @property {Function|undefined} setShowAIAssistant - Toggle modal (from setShowAIAssistant)
+ * @property {Function|undefined} onAISettingsChanged - Settings change handler (from onAISettingsChanged)
+ * @property {Function|undefined} loadData - Reload settings (from loadData)
+ * @property {Function|undefined} clearCourt - Clear single court (from clearCourt)
+ * @property {Function|undefined} clearAllCourts - Clear all courts (from clearAllCourts)
+ * @property {Function|undefined} moveCourt - Move between courts (from moveCourt)
+ * @property {Function|undefined} updateBallPrice - Update ball price (from updateBallPrice)
+ * @property {Function|undefined} refreshData - Refresh data (from refreshData)
  */
 
 /**

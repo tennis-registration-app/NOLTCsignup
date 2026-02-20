@@ -125,10 +125,10 @@ export function migrateOldKeys() {
   ];
 
   for (const [oldKey, newKey, isPref] of migrations) {
-    const oldValue = localStorage.getItem(oldKey);
+    const oldValue = localStorage.getItem(String(oldKey));
     if (oldValue !== null) {
       const prefix = isPref ? PREF_PREFIX : CACHE_PREFIX;
-      const newFullKey = `${prefix}${newKey}`;
+      const newFullKey = `${prefix}${String(newKey)}`;
       // Only migrate if new key doesn't exist
       if (localStorage.getItem(newFullKey) === null) {
         // Special handling for NOLTC_USE_API: convert string 'true'/'false' to boolean
@@ -140,7 +140,7 @@ export function migrateOldKeys() {
         }
       }
       // Remove old key
-      localStorage.removeItem(oldKey);
+      localStorage.removeItem(/** @type {string} */ (oldKey));
     }
   }
 }

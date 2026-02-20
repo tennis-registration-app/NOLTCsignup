@@ -27,7 +27,9 @@ export const ClearWaitlistCommandSchema = z.object({
 export function buildClearWaitlistCommand(input = {}) {
   const result = ClearWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
-    const errors = result.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
+    const errors = /** @type {any} */ (result.error).errors
+      .map((e) => `${e.path.join('.')}: ${e.message}`)
+      .join(', ');
     throw new Error(`Invalid ClearWaitlistCommand: ${errors}`);
   }
   return result.data;
@@ -52,7 +54,7 @@ export function preflightClearWaitlist(command, board) {
 
 /**
  * Convert command to API payload
- * @param {ClearWaitlistCommand} command
+ * @param {ClearWaitlistCommand} _command
  * @returns {Object}
  */
 export function toClearWaitlistPayload(_command) {

@@ -40,7 +40,7 @@ function countAssigned(obj) {
 function hasFutureCurrent(obj, now) {
   return (obj?.courts || []).some((c) => {
     const end = c?.current?.endTime ? new Date(c.current.endTime) : null;
-    return end && !isNaN(end) && end > now;
+    return end && !isNaN(end.getTime()) && end > now;
   });
 }
 

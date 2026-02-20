@@ -61,7 +61,7 @@ export function VisualTimeEntry({
         end.setDate(end.getDate() + 1);
       }
 
-      const diffMs = end - start;
+      const diffMs = end.getTime() - start.getTime();
       const diffMinutes = Math.floor(diffMs / 60000);
 
       setDuration({
@@ -86,7 +86,7 @@ export function VisualTimeEntry({
         end.setDate(end.getDate() + 1);
       }
 
-      const diffMs = end - now;
+      const diffMs = end.getTime() - now.getTime();
       const diffMinutes = Math.floor(diffMs / 60000);
 
       setDuration({

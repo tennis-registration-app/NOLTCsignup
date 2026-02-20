@@ -10,12 +10,14 @@ import { useAdminNotification } from '../context/NotificationContext.jsx';
 import { logger } from '../../lib/logger.js';
 
 // Access global dependencies
-const Storage = window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } };
-const Events = window.Events || { emitDom: () => {} };
-const BL = window.BL || {
-  applyTemplate: () => [],
-  overlaps: () => false,
-};
+const Storage = /** @type {any} */ (window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } });
+const Events = /** @type {any} */ (window.Tennis?.Events || { emitDom: () => {} });
+const BL = /** @type {any} */ (
+  window.BL || {
+    applyTemplate: () => [],
+    overlaps: () => false,
+  }
+);
 
 const AIAssistantAdmin = ({
   onClose,
@@ -203,7 +205,9 @@ const AIAssistantAdmin = ({
         // read form values from existing variables
         const name = action.reason || 'Block'; // use reason as name for mock commands
         const reason = action.reason || '';
-        const durationMinutes = Math.round((endDateTime - startDateTime) / (1000 * 60));
+        const durationMinutes = Math.round(
+          (endDateTime.getTime() - startDateTime.getTime()) / (1000 * 60)
+        );
         const selectedCourts = action.courts;
 
         // validate minimally

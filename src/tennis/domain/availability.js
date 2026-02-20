@@ -57,7 +57,12 @@ function isBlockActiveNow(b, now) {
   const st = new Date(b.startTime ?? b.start);
   const et = new Date(b.endTime ?? b.end);
   return (
-    st instanceof Date && !isNaN(st) && et instanceof Date && !isNaN(et) && st <= now && now < et
+    st instanceof Date &&
+    !isNaN(st.getTime()) &&
+    et instanceof Date &&
+    !isNaN(et.getTime()) &&
+    st <= now &&
+    now < et
   );
 }
 
@@ -72,7 +77,12 @@ function isActiveBlock(b, now) {
   const st = new Date(b.startTime ?? b.start);
   const et = new Date(b.endTime ?? b.end);
   return (
-    st instanceof Date && !isNaN(st) && et instanceof Date && !isNaN(et) && st <= now && now < et
+    st instanceof Date &&
+    !isNaN(st.getTime()) &&
+    et instanceof Date &&
+    !isNaN(et.getTime()) &&
+    st <= now &&
+    now < et
   );
 }
 
@@ -394,7 +404,9 @@ function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }) {
           Number(b.courtNumber || b.court) === courtNum && new Date(b.startTime || b.start) > now
       );
       if (!nextBlock) return true;
-      return new Date(nextBlock.startTime || nextBlock.start) - now >= MIN_USEFUL_MS;
+      return (
+        new Date(nextBlock.startTime || nextBlock.start).getTime() - now.getTime() >= MIN_USEFUL_MS
+      );
     });
 
   const total = (data?.courts || []).length || info.meta?.total || 0;
@@ -539,7 +551,11 @@ function getSelectableCourtsStrict({ data, now, blocks = [], wetSet = new Set() 
  */
 function shouldAllowWaitlistJoin({ data, now, blocks = [], wetSet = new Set() }) {
   const strict = getSelectableCourtsStrict({ data, now, blocks, wetSet });
-  return (strict && typeof strict.size === 'number' ? strict.size : strict.length || 0) === 0;
+  return (
+    (strict && typeof (/** @type {any} */ (strict).size) === 'number'
+      ? /** @type {any} */ (strict).size
+      : strict.length || 0) === 0
+  );
 }
 
 // ============================================================

@@ -36,24 +36,36 @@
  * @property {'singles' | 'doubles'} groupType
  * @property {boolean} [addBalls]
  * @property {boolean} [splitBalls]
+ * @property {number} [latitude] - GPS latitude for geofence validation
+ * @property {number} [longitude] - GPS longitude for geofence validation
+ * @property {number} [accuracy] - GPS accuracy in meters
+ * @property {string} [location_token] - QR-based location verification token
  */
 
 /**
  * @typedef {Object} EndSessionInput
  * @property {string} courtId - UUID of the court
  * @property {string} [reason] - 'normal', 'admin_override', 'no_show'
+ * @property {string} [endReason] - Legacy alias for reason
+ * @property {string} [sessionId] - Session UUID (for command validation)
  */
 
 /**
  * @typedef {Object} JoinWaitlistInput
  * @property {ParticipantInput[]} participants
- * @property {string} billingMemberId
+ * @property {string} [billingMemberId]
  * @property {'singles' | 'doubles'} groupType
+ * @property {number} [latitude] - GPS latitude for geofence validation
+ * @property {number} [longitude] - GPS longitude for geofence validation
+ * @property {number} [accuracy] - GPS accuracy in meters
+ * @property {string} [location_token] - QR-based location verification token
+ * @property {boolean} [deferred] - Wait for Full Time flow
  */
 
 /**
  * @typedef {Object} CancelWaitlistInput
  * @property {string} entryId
+ * @property {string} [reason] - Cancellation reason
  */
 
 /**
@@ -66,6 +78,10 @@
  * @typedef {Object} AssignFromWaitlistInput
  * @property {string} waitlistEntryId
  * @property {string} courtId - UUID of the court
+ * @property {number} [latitude] - GPS latitude for geofence validation
+ * @property {number} [longitude] - GPS longitude for geofence validation
+ * @property {number} [accuracy] - GPS accuracy in meters
+ * @property {string} [location_token] - QR-based location verification token
  */
 
 /**
@@ -74,11 +90,27 @@
  * @property {string} reason
  * @property {string} [startTime] - ISO timestamp
  * @property {string} [endTime] - ISO timestamp
+ * @property {string} [blockType] - Block type enum (maintenance, lesson, etc.)
  */
 
 /**
  * @typedef {Object} CancelBlockInput
  * @property {string} blockId
+ */
+
+/**
+ * @typedef {Object} PurchaseBallsInput
+ * @property {string} sessionId - UUID of the session
+ * @property {string} accountId - UUID of the account to charge
+ * @property {boolean} [splitBalls] - Whether to split across players
+ * @property {string[]} [splitAccountIds] - Account IDs for split billing
+ * @property {string} [idempotencyKey] - Idempotency key for dedup
+ */
+
+/**
+ * @typedef {Object} MoveCourtInput
+ * @property {string} fromCourtId - UUID of source court
+ * @property {string} toCourtId - UUID of destination court
  */
 
 // === Read Models ===
@@ -99,6 +131,8 @@
  * @property {string} startedAt - ISO timestamp
  * @property {string} scheduledEndAt - ISO timestamp
  * @property {number} minutesRemaining
+ * @property {Object} [group] - Group with players (from domain normalization)
+ * @property {boolean} [isTournament] - True if tournament match
  */
 
 /**
@@ -107,6 +141,10 @@
  * @property {number} courtNumber
  * @property {string} reason
  * @property {string} [endTime] - ISO timestamp
+ * @property {string} [startTime] - ISO timestamp
+ * @property {string} [title] - Display title
+ * @property {string} [startsAt] - ISO timestamp (domain alias)
+ * @property {string} [endsAt] - ISO timestamp (domain alias)
  */
 
 /**
@@ -126,6 +164,8 @@
  * @property {'singles' | 'doubles'} groupType
  * @property {string} joinedAt - ISO timestamp
  * @property {number} minutesWaiting
+ * @property {Object} [group] - Group with players (from domain normalization)
+ * @property {boolean} [deferred] - True if deferred
  */
 
 /**
@@ -141,6 +181,7 @@
  * @property {CourtState[]} courts
  * @property {WaitlistEntry[]} waitlist
  * @property {OperatingHoursEntry[]} operatingHours
+ * @property {Array<Object>} [upcomingBlocks] - Future blocks for today
  */
 
 /**
@@ -150,6 +191,7 @@
  * @property {string} memberNumber - e.g., "1001"
  * @property {string} displayName
  * @property {boolean} isPrimary
+ * @property {number} [unclearedStreak] - Consecutive uncleared session count
  */
 
 // === Response Types ===

@@ -49,6 +49,14 @@
  * @property {Object} TennisBusinessLogic - Business logic service
  * @property {Function} computeRegistrationCourtSelection - Court selection policy
  * @property {Function} validateGroupCompat - Group compatibility check
+ * @property {Function} assignCourtToGroupOrchestrated - Assign court orchestrator
+ * @property {Function} sendGroupToWaitlistOrchestrated - Waitlist orchestrator
+ * @property {Function} handleSuggestionClickOrchestrated - Suggestion click orchestrator
+ * @property {Function} handleAddPlayerSuggestionClickOrchestrated - Add player suggestion orchestrator
+ * @property {Function} changeCourtOrchestrated - Court change orchestrator
+ * @property {Function} resetFormOrchestrated - Form reset orchestrator
+ * @property {Function} dbg - Debug logger
+ * @property {boolean} DEBUG - Debug mode flag
  */
 
 /**
@@ -262,6 +270,10 @@
  * @property {Array} frequentPartners - Frequent partner list
  * @property {boolean} frequentPartnersLoading - Partners loading flag
  * @property {Function} setMemberNumber
+ * @property {Function} clearCache - Clear member cache
+ * @property {Function} fetchFrequentPartners - Fetch frequent partners
+ * @property {string|null} currentMemberId - Current member UUID
+ * @property {Function} setCurrentMemberId - Set current member ID
  */
 
 // ============================================

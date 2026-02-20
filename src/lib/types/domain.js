@@ -18,6 +18,7 @@
  * @property {string} memberId - Unique identifier
  * @property {string} displayName - Display name (e.g., "Anna Sinner")
  * @property {boolean} isGuest - True if guest, false if member
+ * @property {string} [name] - Legacy alias for displayName
  */
 
 /**
@@ -40,6 +41,7 @@
  * @property {'completed'|'cleared_early'|'admin_override'|null} endReason - Why session ended
  * @property {boolean} isOvertime - True if past scheduledEndAt and still active
  * @property {boolean} isTournament - True if this is a tournament match (plays until completion)
+ * @property {Array<Object>} [participants] - Wire-format participant list (legacy)
  */
 
 /**
@@ -52,6 +54,7 @@
  * @property {string} reason - Why the court is blocked
  * @property {string} [blockType] - Block type enum (lesson, clinic, maintenance, wet, other)
  * @property {boolean} isActive - True if block is currently in effect
+ * @property {string} [title] - Display title for the block
  */
 
 /**
@@ -78,6 +81,7 @@
  * @property {number} minutesWaiting - Derived: minutes since joinedAt
  * @property {string|null} estimatedCourtTime - ISO string of estimated court availability
  * @property {boolean} deferred - True if group is deferred (skipped by CTA/You're Up logic)
+ * @property {string} [status] - Waitlist status (waiting, assigned, cancelled)
  */
 
 /**
@@ -86,6 +90,10 @@
  * @property {string} serverNow - ISO string of server time (use for all time calculations)
  * @property {Court[]} courts - All 12 courts with current state
  * @property {WaitlistEntry[]} waitlist - Current waitlist, ordered by position
+ * @property {Object} [_raw] - Raw API response (temporary, for legacy adapter)
+ * @property {Array<Object>} [operatingHours] - Operating hours from API
+ * @property {Array<Object>} [upcomingBlocks] - Future blocks for today
+ * @property {Block[]} [blocks] - All active blocks (denormalized from courts)
  */
 
 /**
