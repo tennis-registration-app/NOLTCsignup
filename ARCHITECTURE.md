@@ -277,43 +277,38 @@ Court display status is computed client-side by `availability.js`. Tournament co
 
 ## Error Handling
 
-### DomainError Contract
+### AppError Contract
 
-All service-layer errors use the `DomainError` class:
+The application uses a single structured error class (`AppError`, defined in
+`src/lib/errors/AppError.js`) for programmatic error handling. All other errors
+flow as plain `Error` instances.
 
 ```javascript
-class DomainError extends Error {
-  constructor(code, message, { safeDetails, cause } = {}) {
-    super(message);
-    this.code = code;           // NETWORK, DB_ERROR, TRANSFORM_ERROR, etc.
-    this.safeDetails = safeDetails;  // { service, operation }
-    this.cause = cause;         // Original error for debugging
-  }
+{
+  name: 'AppError',
+  category: ErrorCategory,  // 'VALIDATION' | 'NETWORK' | 'AUTH' | 'CONFLICT' | 'NOT_FOUND' | 'UNKNOWN'
+  code: string,             // Machine-readable code (e.g., 'API_ERROR', 'FETCH_FAILED')
+  message: string,          // Human-readable message
+  details: any,             // Raw response or original error (for debugging)
 }
 ```
 
-### Error Normalization
+### Throw Sites
 
-Service modules wrap all errors using `normalizeServiceError`:
+`ApiAdapter._fetch()` is the sole throw site. Two cases:
 
-```javascript
-async function getCourtByNumber(courtNumber) {
-  try {
-    // ... operation
-  } catch (error) {
-    throw normalizeServiceError(error, {
-      service: 'courtsService',
-      op: 'getCourtByNumber'
-    });
-  }
-}
-```
+1. **API returned `ok: false`**: `AppError({ category: NETWORK, code: 'API_ERROR', ... })`
+2. **Network/fetch failure**: `AppError({ category: NETWORK, code: 'FETCH_FAILED', ... })`
 
-This ensures:
-1. **Idempotent:** Existing DomainErrors pass through unchanged
-2. **Message preserved:** Original error message kept for UI
-3. **Cause attached:** Original error available for debugging
-4. **Context sanitized:** Only service/operation in safeDetails
+### Dual Error Contract
+
+The private methods (`_get`, `_post`) propagate these throws. The public methods
+(`get`, `post`) catch and return raw `{ ok: false }` responses instead. This
+dual contract is documented in the `ApiAdapter.js` header.
+
+> **Note:** `DomainError` and `normalizeServiceError` were scaffolded but had
+> zero runtime callers and were removed during the Feb 2026 convergence work.
+> See `docs/error-contracts.md` for the current contract.
 
 ## Type Boundaries
 
@@ -346,8 +341,9 @@ function GroupRoute({ app, handlers }) {
 
 ### Unit Tests (Vitest)
 
-- **718 tests** across 49 test files
-- Cover: reducers, services, transforms, error handling
+- **994 unit tests** across 68 test files
+- Cover: reducers, services, transforms, error handling, contract fences,
+  orchestrators, presenters
 - Mock external dependencies (API, storage)
 
 ### E2E Tests (Playwright)
@@ -358,8 +354,10 @@ function GroupRoute({ app, handlers }) {
 
 ### Verification Gate
 
+All gating CI via:
+
 ```bash
-npm run verify  # lint + typecheck + unit + build + e2e
+npm run verify  # lint:ratchet + type:ratchet + test:unit + build + test:e2e
 ```
 
 ## Code Standards
@@ -457,11 +455,13 @@ Some components exceed the 500-line target:
 
 | Component | Lines | Notes |
 |-----------|-------|-------|
-| `CompleteBlockManagerEnhanced.jsx` | ~900 | Complex block management UI |
+| `CompleteBlockManagerEnhanced.jsx` | ~350 | Block management UI (reduced from ~900) |
 | `SystemSettings.jsx` | ~740 | Settings form with many fields |
-| `AdminScreen.jsx` | ~720 | Admin interface |
+| `admin/App.jsx` | ~600 | Admin entry point (was `AdminScreen.jsx` at ~720) |
 
-These are candidates for future decomposition.
+These are candidates for future decomposition. Note: all registration routes
+now follow the presenter pattern (`buildXModel` + `buildXActions`), with
+`CourtRoute.jsx` reduced from 315 to 122 lines as the reference example.
 
 ## Related Documentation
 
