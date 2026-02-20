@@ -76,23 +76,8 @@ import { applyBlocksOp } from './handlers/applyBlocksOperation';
 // Wet courts hook
 import { useWetCourts } from './wetCourts/useWetCourts';
 
-// Domain object factories
-import {
-  createWetCourtsModel,
-  createWetCourtsActions,
-  createBlockModel,
-  createBlockActions,
-  createBlockComponents,
-  createAdminServices,
-  createStatusModel,
-  createStatusActions,
-  createCalendarModel,
-  createCalendarActions,
-  createAIAssistantModel,
-  createAIAssistantActions,
-  createAIAssistantServices,
-  createAIAssistantComponents,
-} from './types/domainObjects.js';
+// Admin controller (replaces 14 inline useMemo domain object calls)
+import { buildAdminController } from './controller/buildAdminController.js';
 
 // Admin hooks
 import { useAdminSettings } from './hooks/useAdminSettings';
@@ -101,9 +86,8 @@ import { useBoardSubscription } from './hooks/useBoardSubscription';
 // Timer utilities
 import { addTimer, clearAllTimers } from './utils/timerRegistry';
 
-// Feature flag: use real AI assistant instead of mock
+// Feature flags
 import { featureFlags } from '../config/runtimeConfig.js';
-const USE_REAL_AI = featureFlags.USE_REAL_AI;
 
 // No-op setters for prop compatibility with children using old hook pattern
 // Defined at module level for stable identity (avoids exhaustive-deps warnings)
@@ -273,193 +257,128 @@ const AdminPanelV2 = ({ onExit }) => {
     [waitingGroups, showNotification]
   );
 
-  // Domain objects for BlockingSection
-  // Note: exhaustive-deps warnings appear at function definition sites (useWetCourts hook)
-  // because setters/wetCourts recreate on each render. Fix deferred per A3 rules.
-  const wetCourtsModel = useMemo(
+  // Block apply closure (captures React state for handler module)
+  const applyBlocks = useCallback(
+    (blocks) => applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG }, blocks),
+    [courts, showNotification]
+    // backend, TENNIS_CONFIG are module-level
+  );
+
+  // Refresh data closure (settings + board refresh combined)
+  const refreshData = useCallback(() => {
+    reloadSettings();
+    bumpRefreshTrigger();
+  }, [reloadSettings, bumpRefreshTrigger]);
+
+  // Build all domain objects via controller (replaces 14 inline useMemo calls)
+  const controller = useMemo(
     () =>
-      createWetCourtsModel({
+      buildAdminController({
+        backend,
+        dataStore,
+        courts,
+        courtBlocks,
+        waitingGroups,
+        hoursOverrides,
+        blockToEdit,
+        suspendedBlocks,
         wetCourtsActive,
         wetCourts,
         ENABLE_WET_COURTS,
-      }),
-    [wetCourtsActive, wetCourts, ENABLE_WET_COURTS]
-  );
-
-  const wetCourtsActions = useMemo(
-    () =>
-      createWetCourtsActions({
-        setWetCourtsActive,
-        setWetCourts,
-        handleEmergencyWetCourt,
-        deactivateWetCourts,
-        onClearWetCourt: clearWetCourt,
-        // Note: setSuspendedBlocks not in WetCourtsActions per A1 typedef
-      }),
-    [handleEmergencyWetCourt, deactivateWetCourts, clearWetCourt]
-    // setWetCourtsActive, setWetCourts are module-level stable no-ops
-  );
-
-  const blockModel = useMemo(
-    () =>
-      createBlockModel({
-        courts,
-        courtBlocks,
-        hoursOverrides,
-        initialEditingBlock: blockToEdit,
-        suspendedBlocks,
-      }),
-    [courts, courtBlocks, hoursOverrides, blockToEdit, suspendedBlocks]
-  );
-
-  const blockActions = useMemo(
-    () =>
-      createBlockActions({
-        // Inline applyBlocks to capture courts/backend/showNotification at memoization time
-        onApplyBlocks: (blocks) =>
-          applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG }, blocks),
-        onEditingBlockConsumed: () => setBlockToEdit(null),
-        setSuspendedBlocks,
-        onNotification: showNotification,
-      }),
-    [courts, setBlockToEdit, showNotification] // backend, TENNIS_CONFIG, setSuspendedBlocks are module-level
-  );
-
-  // Get Tennis reference for consistent semantics with other call sites
-  const tennis = getTennis();
-
-  // Module-level imports (VisualTimeEntry etc.) are stable; tennis tracked in deps
-  const blockComponents = useMemo(
-    () =>
-      createBlockComponents({
-        VisualTimeEntry,
-        MiniCalendar,
-        EventCalendarEnhanced,
-        MonthView,
-        EventSummary,
-        HoverCard,
-        QuickActionsMenu,
-        Tennis: tennis,
-      }),
-    [tennis]
-  );
-
-  // backend is module-level singleton
-  const adminServices = useMemo(() => createAdminServices({ backend }), []);
-
-  // StatusSection domain objects
-  const statusModel = useMemo(
-    () =>
-      createStatusModel({
-        courts,
-        courtBlocks,
         selectedDate,
         currentTime,
-        waitingGroups,
-      }),
-    [courts, courtBlocks, selectedDate, currentTime, waitingGroups]
-  );
-
-  const statusActions = useMemo(
-    () =>
-      createStatusActions({
-        clearCourt,
-        moveCourt,
-        clearAllCourts,
-        handleEditBlockFromStatus,
-        moveInWaitlist,
-        removeFromWaitlist,
-      }),
-    [
-      clearCourt,
-      moveCourt,
-      clearAllCourts,
-      handleEditBlockFromStatus,
-      moveInWaitlist,
-      removeFromWaitlist,
-    ]
-  );
-
-  // CalendarSection domain objects
-  const calendarModel = useMemo(
-    () =>
-      createCalendarModel({
-        courts,
-        currentTime,
-        hoursOverrides,
         calendarView,
         refreshTrigger,
-      }),
-    [courts, currentTime, hoursOverrides, calendarView, refreshTrigger]
-  );
-
-  const calendarActions = useMemo(
-    () => createCalendarActions({ onRefresh: bumpRefreshTrigger }),
-    [bumpRefreshTrigger]
-  );
-
-  // AIAssistantSection domain objects
-  const aiModel = useMemo(
-    () =>
-      createAIAssistantModel({
         activeTab,
         showAIAssistant,
-        USE_REAL_AI,
-        courts,
+        USE_REAL_AI: featureFlags.USE_REAL_AI,
         settings,
-        waitingGroups,
-      }),
-    [activeTab, showAIAssistant, courts, settings, waitingGroups]
-    // USE_REAL_AI is module-level constant, excluded per exhaustive-deps
-  );
-
-  const aiActions = useMemo(
-    () =>
-      createAIAssistantActions({
-        setShowAIAssistant,
-        onAISettingsChanged: handleAISettingsChanged,
-        loadData: reloadSettings,
-        clearCourt,
-        clearAllCourts,
-        moveCourt,
-        updateBallPrice,
-        // Inline refreshData to avoid dependency on handleRefreshData which recreates each render
-        refreshData: () => {
-          reloadSettings();
-          bumpRefreshTrigger();
+        actions: {
+          // No-op setters for prop compatibility with children
+          setWetCourtsActive,
+          setWetCourts,
+          setSuspendedBlocks,
+          // State-capturing callbacks
+          clearCourt,
+          moveCourt,
+          clearAllCourts,
+          clearWetCourt,
+          removeFromWaitlist,
+          moveInWaitlist,
+          handleEditBlockFromStatus,
+          handleEmergencyWetCourt,
+          deactivateWetCourts,
+          applyBlocks,
+          onEditingBlockConsumed: () => setBlockToEdit(null),
+          showNotification,
+          setShowAIAssistant,
+          handleAISettingsChanged,
+          reloadSettings,
+          updateBallPrice,
+          refreshData,
+          bumpRefreshTrigger,
+        },
+        components: {
+          VisualTimeEntry,
+          MiniCalendar,
+          EventCalendarEnhanced,
+          MonthView,
+          EventSummary,
+          HoverCard,
+          QuickActionsMenu,
+          Tennis: getTennis(),
+          AIAssistant,
+          AIAssistantAdmin,
         },
       }),
     [
+      courts,
+      courtBlocks,
+      waitingGroups,
+      hoursOverrides,
+      blockToEdit,
+      suspendedBlocks,
+      wetCourtsActive,
+      wetCourts,
+      ENABLE_WET_COURTS,
+      selectedDate,
+      currentTime,
+      calendarView,
+      refreshTrigger,
+      activeTab,
+      showAIAssistant,
+      settings,
+      clearCourt,
+      moveCourt,
+      clearAllCourts,
+      clearWetCourt,
+      removeFromWaitlist,
+      moveInWaitlist,
+      handleEditBlockFromStatus,
+      handleEmergencyWetCourt,
+      deactivateWetCourts,
+      applyBlocks,
+      setBlockToEdit,
+      showNotification,
       setShowAIAssistant,
       handleAISettingsChanged,
       reloadSettings,
-      clearCourt,
-      clearAllCourts,
-      moveCourt,
       updateBallPrice,
+      refreshData,
       bumpRefreshTrigger,
     ]
+    // backend, dataStore, featureFlags, TENNIS_CONFIG, component imports are module-level stable
   );
 
-  const aiServices = useMemo(
-    () =>
-      createAIAssistantServices({
-        backend,
-        dataStore,
-      }),
-    []
-    // backend, dataStore are module-level singletons
-  );
-
-  const aiComponents = useMemo(
-    () =>
-      createAIAssistantComponents({
-        AIAssistant,
-        AIAssistantAdmin,
-      }),
-    []
-    // AIAssistant, AIAssistantAdmin are module-level imports
-  );
+  // Destructure controller (wetCourtsController avoids shadowing the wetCourts Set)
+  const {
+    wetCourts: wetCourtsController,
+    blocks,
+    status,
+    calendar,
+    ai,
+    services: adminServices,
+  } = controller;
 
   // AdminPanelV2 rendering complete
   return (
@@ -480,29 +399,29 @@ const AdminPanelV2 = ({ onExit }) => {
         <div className="bg-white rounded-lg shadow-sm -mt-px">
           {activeTab === 'status' && (
             <StatusSection
-              statusModel={statusModel}
-              statusActions={statusActions}
-              wetCourtsModel={wetCourtsModel}
-              wetCourtsActions={wetCourtsActions}
+              statusModel={status.model}
+              statusActions={status.actions}
+              wetCourtsModel={wetCourtsController.model}
+              wetCourtsActions={wetCourtsController.actions}
               services={adminServices}
             />
           )}
           {activeTab === 'calendar' && (
             <CalendarSection
-              calendarModel={calendarModel}
-              calendarActions={calendarActions}
+              calendarModel={calendar.model}
+              calendarActions={calendar.actions}
               services={adminServices}
-              components={blockComponents}
+              components={blocks.components}
             />
           )}
           {activeTab === 'blocking' && (
             <BlockingSection
               blockingView={blockingView}
-              wetCourtsModel={wetCourtsModel}
-              wetCourtsActions={wetCourtsActions}
-              blockModel={blockModel}
-              blockActions={blockActions}
-              components={blockComponents}
+              wetCourtsModel={wetCourtsController.model}
+              wetCourtsActions={wetCourtsController.actions}
+              blockModel={blocks.model}
+              blockActions={blocks.actions}
+              components={blocks.components}
               services={adminServices}
               CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced}
             />
@@ -529,10 +448,10 @@ const AdminPanelV2 = ({ onExit }) => {
 
       {/* AI Assistant Button and Modal */}
       <AIAssistantSection
-        aiModel={aiModel}
-        aiActions={aiActions}
-        services={aiServices}
-        components={aiComponents}
+        aiModel={ai.model}
+        aiActions={ai.actions}
+        services={ai.services}
+        components={ai.components}
         clearWaitlist={() => clearWaitlistOp(backend)}
       />
     </div>
