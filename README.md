@@ -15,7 +15,7 @@ A web-based court registration system for the New Orleans Lawn Tennis Club, mana
 
 - **Frontend:** React 18, Vite, TailwindCSS
 - **Backend:** Supabase (PostgreSQL + Edge Functions)
-- **Testing:** Vitest (683 unit tests), Playwright (15 E2E tests)
+- **Testing:** Vitest (994 unit tests), Playwright (14 E2E specs)
 - **Deployment:** Vercel (frontend), Supabase (backend)
 
 ## Quick Start

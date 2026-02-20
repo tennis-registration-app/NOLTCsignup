@@ -33,10 +33,11 @@ npm run verify
 ```
 
 This runs:
-- `npm run lint` — ESLint checks (0 errors required)
-- `npm run test:unit` — Vitest unit tests (267+ tests)
-- `npm run build` — Production build
-- `npm run test:e2e` — Playwright E2E tests (15/15 required)
+1. `npm run lint:ratchet` — ESLint with baseline enforcement (0 errors, warnings must not increase)
+2. `npm run type:ratchet` — TypeScript with baseline enforcement (error count must not increase)
+3. `npm run test:unit` — Vitest unit tests (994 tests)
+4. `npm run build` — Vite production build
+5. `npm run test:e2e` — Playwright E2E tests (14/14 required)
 
 **Do not commit if any gate fails.**
 
@@ -128,7 +129,7 @@ When refactoring (moving code, extracting modules):
 1. **Verbatim extraction** — Copy exact code, no "improvements"
 2. **Same API surface** — Return same identifiers
 3. **Same dependency arrays** — Don't "fix" useCallback/useEffect deps
-4. **Playwright gate** — Must pass 15/15 after each commit
+4. **Playwright gate** — Must pass 14/14 after each commit
 
 ### Integration Order
 When wiring state modules:

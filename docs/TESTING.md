@@ -6,8 +6,8 @@ This project uses two test frameworks:
 
 | Type | Framework | Count | Location | Command |
 |------|-----------|-------|----------|---------|
-| Unit | Vitest | 683 | `tests/unit/` | `npm run test:unit` |
-| E2E | Playwright | 15 | `e2e/` | `npm run test:e2e` |
+| Unit | Vitest | 994 | `tests/unit/` | `npm run test:unit` |
+| E2E | Playwright | 14 | `e2e/` | `npm run test:e2e` |
 
 ## Verification Gate
 
@@ -17,10 +17,11 @@ npm run verify
 ```
 
 This runs in order:
-1. `npm run lint` — ESLint (0 errors required)
-2. `npm run test:unit` — Vitest unit tests
-3. `npm run build` — Production build
-4. `npm run test:e2e` — Playwright E2E tests (15/15 required)
+1. `npm run lint:ratchet` — ESLint with baseline enforcement (0 errors, warnings must not increase)
+2. `npm run type:ratchet` — TypeScript with baseline enforcement (error count must not increase)
+3. `npm run test:unit` — Vitest unit tests (994 tests)
+4. `npm run build` — Vite production build
+5. `npm run test:e2e` — Playwright E2E tests (14/14 required)
 
 **Do not merge if any step fails.**
 
@@ -110,8 +111,15 @@ npx playwright test e2e/registration-happy-path.spec.js
 | Test | Flow Covered | Entry Point | Fixture |
 |------|--------------|-------------|---------|
 | `waitlist-cta-flow.spec.js` | Waitlist "Court Available" CTA | `/src/registration/index.html` | `board-state-waitlist.json` |
+| `waitlist-cta-refresh.spec.js` | CTA updates when court frees after refresh | `/src/registration/index.html` | `board-state-all-occupied.json` → `board-state-one-available.json` |
 | `overtime-takeover.spec.js` | Overtime court takeover eligibility | `/src/registration/index.html` | `board-state-overtime-only.json` |
 | `clear-court-flow.spec.js` | Clear occupied court | `/src/registration/index.html` | `board-state.json` |
+| `deferred-waitlist.spec.js` | Block warning on time-restricted court assignment | `/src/registration/index.html` | `board-state-deferred-with-opening.json` |
+| `tournament-match.spec.js` | Tournament match designation from success screen | `/src/registration/index.html` | `board-state-tournament.json` |
+| `success-home-button.spec.js` | Home button clickable on success screen (regression) | `/src/registration/index.html` | `board-state.json` |
+| `null-courts-handling.spec.js` | Courtboard renders with null court entries | `/src/courtboard/index.html` | `board-state-with-nulls.json` |
+| `block-refresh-wiring.spec.js` | Admin blocks tab reflects new block after refresh | `/src/admin/index.html` | `blocks-data-empty.json` → `blocks-data-with-new-block.json` |
+| `block-state-transition.spec.js` | Courtboard blocked → available after refresh | `/src/courtboard/index.html` | `board-state-blocked.json` → `board-state-unblocked.json` |
 
 ### E2E Test Mode
 
@@ -134,11 +142,21 @@ On failure, a Playwright HTML report is uploaded as a CI artifact.
 | Fixture | Purpose |
 |---------|---------|
 | `board-state.json` | Default board with mix of court states |
-| `board-state-waitlist.json` | Free court + waitlist entry (triggers CTA) |
+| `board-state-all-occupied.json` | All courts occupied (no availability) |
+| `board-state-all-restricted.json` | All courts restricted |
+| `board-state-blocked.json` | Board with blocked courts |
+| `board-state-deferred-with-opening.json` | Deferred waitlist with time-restricted opening |
+| `board-state-one-available.json` | Single court available (CTA refresh target) |
 | `board-state-overtime-only.json` | No free courts, only overtime available |
+| `board-state-tournament.json` | Board state for tournament match flow |
+| `board-state-unblocked.json` | Board after block removal |
+| `board-state-waitlist.json` | Free court + waitlist entry (triggers CTA) |
+| `board-state-with-nulls.json` | Board with null court entries (defensive test) |
 | `analytics-data.json` | Analytics metrics |
-| `settings-data.json` | System settings |
 | `blocks-data.json` | Block list |
+| `blocks-data-empty.json` | Empty block list (pre-creation state) |
+| `blocks-data-with-new-block.json` | Block list after new block created |
+| `settings-data.json` | System settings |
 
 ### Updating Fixtures
 
