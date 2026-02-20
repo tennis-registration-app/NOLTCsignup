@@ -8,11 +8,11 @@ predates that work.
 
 ## Current State
 
-- `App.jsx` (~600 lines): 24 inline `useMemo`/`useCallback` blocks. Tier 3
-  housekeeping completed (dead guards removed, beforeunload moved to useEffect,
-  USE_REAL_AI wired to runtimeConfig, stale comments removed).
-- `buildAdminController.js` (234 lines): Pure function scaffolded to replace
-  the inline hooks. Has 30 contract tests via `CONTROLLER_KEYS`. **Not yet wired in.**
+- `App.jsx` (~512 lines): `buildAdminController` wired in. 14 inline `useMemo`
+  domain-object factories replaced by single controller call. 7 `useCallback` hooks
+  remain (capture React state: clearCourt, moveCourt, clearAllCourts, etc.).
+- `buildAdminController.js` (235 lines): Pure function producing 6 domain sections
+  (wetCourts, blocks, status, calendar, ai, services). 30 contract tests passing.
 - No presenter layer yet
 
 ## Recent Cleanup (Convergence Plan, Feb 2026)
@@ -29,15 +29,14 @@ The following changes were made as part of the system-wide convergence plan:
 - **Block durations** — named magic numbers (`DURATION_2H`, `DURATION_4H`)
 - **Stale comment** — removed `{/* ADD THIS LINE */}`
 
-## Convergence Path (When Prioritized)
+## Convergence Path
 
-1. Wire `buildAdminController` into `App.jsx` (replace 24 inline hooks with single call)
+1. ~~Wire `buildAdminController` into `App.jsx`~~ Done (Feb 2026)
 2. Extract admin presenters for each panel/section
-3. Slim `App.jsx` to thin shell matching registration's pattern
+3. Slim `App.jsx` further — remaining 7 useCallbacks could move to a handlers file
 
-This is not urgent. The admin app works correctly and has test coverage.
-Registration's architecture is the target pattern. The controller is already
-built — only the wiring step remains.
+The admin app works correctly and has test coverage.
+Registration's architecture is the target pattern.
 
 ## Two Generations of Architecture
 
