@@ -10,7 +10,7 @@ const QuickTemplatesCard = ({
   blockTemplates,
   handleTemplateSelect,
 }) => (
-  <div style={{ order: 4 }}>
+  <div className="order-4">
     <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
       <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
         <h3 className="text-lg font-semibold text-gray-800">Quick Templates</h3>

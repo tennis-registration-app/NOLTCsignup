@@ -191,10 +191,7 @@ const CompleteBlockManagerEnhanced = ({
 
       {activeView === 'create' && (
         <div className="grid grid-cols-3 gap-6">
-          <div
-            className="col-span-2"
-            style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-          >
+          <div className="col-span-2 flex flex-col gap-6">
             <QuickTemplatesCard
               showTemplates={showTemplates}
               setShowTemplates={setShowTemplates}
@@ -218,7 +215,7 @@ const CompleteBlockManagerEnhanced = ({
               onCustomReasonChange={setBlockReason}
             />
 
-            <div style={{ order: 3 }}>
+            <div className="order-3">
               <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
                 {VisualTimeEntry && (
                   <VisualTimeEntry

@@ -29,7 +29,7 @@ const BlockReasonSelector = ({
   onCustomReasonChange,
 }) => {
   return (
-    <div style={{ order: 2 }}>
+    <div className="order-2">
       <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
         <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2">
           Block Reason

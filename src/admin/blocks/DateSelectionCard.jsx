@@ -6,10 +6,7 @@ import React from 'react';
  */
 const DateSelectionCard = ({ selectedDate, setSelectedDate, MiniCalendar, CalendarDaysIcon }) => (
   <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-    <h3
-      className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2"
-      style={{ marginTop: '0', lineHeight: '1.75rem' }}
-    >
+    <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2 mt-0 leading-7">
       Select Date
     </h3>
 
