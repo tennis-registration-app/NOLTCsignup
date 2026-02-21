@@ -236,9 +236,9 @@ export default [
       ],
     },
   },
-  // Architecture boundary: presenters must not import backend
+  // Architecture boundary: presenters must not import backend or React
   {
-    files: ['src/registration/presenters/**/*.js', 'src/registration/router/presenters/**/*.js'],
+    files: ['src/registration/presenters/**/*.{js,ts}', 'src/registration/router/presenters/**/*.{js,ts}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -248,6 +248,11 @@ export default [
               group: ['**/backend/**', '**/lib/backend/**', '**/lib/ApiAdapter*'],
               message:
                 'Presenters must not import backend — they receive data via app/handlers params.',
+            },
+            {
+              group: ['react', 'react-dom', 'react-dom/*'],
+              message:
+                'Presenters must be pure functions — no React imports. They transform AppState into screen props.',
             },
           ],
         },
@@ -272,6 +277,56 @@ export default [
       ],
     },
   },
+  // Architecture boundary: orchestrators must be pure functions — no React
+  {
+    files: ['src/registration/orchestration/**/*.{js,ts}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react-dom', 'react-dom/*'],
+              message:
+                'Orchestrators must be pure functions — no React imports. Use dependency injection for UI concerns.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Architecture boundary: handlers must not import UI components
+  {
+    files: ['src/registration/appHandlers/**/*.{js,ts}', 'src/registration/handlers/**/*.{js,ts}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/screens/**', '**/components/**', '**/*.jsx'],
+              message:
+                'Handlers must not import UI components — they orchestrate state, not rendering.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Architecture boundary: no window global assignments outside platform layer
+  {
+    files: ['src/registration/**/*.{js,jsx,ts}', 'src/admin/**/*.{js,jsx,ts}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'AssignmentExpression[left.object.name="window"]',
+          message:
+            'Do not assign to window globals outside src/platform/. Use the platform bridge layer.',
+        },
+      ],
+    },
+  },
   // Exempt bootstrap/entry files and legacy interop from global/property restrictions.
   // These files legitimately check window.Tennis readiness or bridge IIFE globals.
   // New application code should use windowBridge accessors instead.
@@ -284,12 +339,15 @@ export default [
       'src/registration/utils/helpers.js',
       'src/admin/handlers/courtOperations.js',
       'src/admin/ai/AIAssistantAdmin.jsx',
+      // Singleton guard uses window[key] assignment pattern
+      'src/admin/hooks/useAdminSettings.js',
       // Courtboard — IIFE-bridged plain scripts, direct window access required
       'src/courtboard/**/*.{js,jsx}',
     ],
     rules: {
       'no-restricted-globals': 'off',
       'no-restricted-properties': 'off',
+      'no-restricted-syntax': 'off',
     },
   },
   // Exempt test files - MUST come AFTER the ban above
@@ -302,6 +360,7 @@ export default [
     rules: {
       'no-restricted-globals': 'off',
       'no-restricted-properties': 'off',
+      'no-restricted-syntax': 'off',
     },
   },
   prettier,
