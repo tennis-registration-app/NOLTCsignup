@@ -207,6 +207,31 @@ Boundary rule exemptions are narrowly scoped in `eslint.config.js`. Before addin
 
 Current exemptions: entry points (`main.jsx`), legacy interop (`helpers.js`, `courtOperations.js`, `AIAssistantAdmin.jsx`), `useAdminSettings.js` (singleton guard pattern), and courtboard plain scripts.
 
+### AppState Top-Level Key Governance
+
+Do not add new top-level keys to the `AppState` interface. The current 33 keys are frozen by contract test (`useRegistrationAppState.test.js`).
+
+New state should be added to the appropriate existing sub-interface:
+
+| Concern | Add fields to |
+|---------|--------------|
+| UI state (visibility, modes, selections) | `RegistrationUiState` |
+| UI setters | `RegistrationSetters` |
+| Court management | `CourtAssignmentState` or `ClearCourtFlow` |
+| Waitlist features | `WaitlistAdminState` |
+| Block scheduling | `BlockAdminState` |
+| Group/guest management | `GroupGuestState` |
+| Member lookup | `MemberIdentityState` or `SearchState` |
+| Mobile-specific | `MobileState` |
+| Alerts/feedback | `AlertState` or `AdminPriceFeedback` |
+| Streak tracking | `StreakState` |
+
+If a new top-level key is genuinely required:
+1. Document why an existing sub-interface doesn't fit
+2. Update the contract test in `useRegistrationAppState.test.js`
+3. Update the grouping comments in `appTypes.ts`
+4. Note a deletion condition if the key is temporary
+
 ```
 App.jsx
   └── useRegistrationAppState() → app object

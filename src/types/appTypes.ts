@@ -313,7 +313,28 @@ export interface TennisBusinessLogicShape {
 // Complete — covers all fields returned by buildRegistrationReturn.
 // ============================================
 
-/** Registration App State — Canonical Shape */
+/**
+ * AppState — the registration app's complete state surface.
+ *
+ * 33 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
+ *
+ * Logical groupings (governance only — access paths unchanged):
+ *
+ * UI State:       state, setters, refs
+ * Domain Slices:  alert, adminPriceFeedback, guestCounterHook, timeout, search,
+ *                 courtAssignment, clearCourtFlow, mobile, blockAdmin,
+ *                 waitlistAdmin, groupGuest, streak, memberIdentity
+ * Derived:        derived
+ * Helpers:        helpers
+ * Services:       services (backend, dataStore)
+ * Config:         CONSTANTS, TENNIS_CONFIG, API_CONFIG, TennisBusinessLogic
+ * Orchestrators:  computeRegistrationCourtSelection, validateGroupCompat,
+ *                 assignCourtToGroupOrchestrated, sendGroupToWaitlistOrchestrated,
+ *                 handleSuggestionClickOrchestrated, handleAddPlayerSuggestionClickOrchestrated,
+ *                 changeCourtOrchestrated, resetFormOrchestrated
+ * Debug:          dbg, DEBUG
+ */
 export interface AppState {
   /** Screen state, form data, flags */
   state: RegistrationUiState;
@@ -599,6 +620,7 @@ export interface TimeoutState {
   showTimeoutWarning: boolean;
 }
 
+// New fields for member search/lookup should be added here, not as AppState top-level keys.
 export interface SearchState {
   /** Search input value */
   searchInput: string;
@@ -713,6 +735,7 @@ export interface MobileState {
   requestMobileReset: () => void;
 }
 
+// New fields for block scheduling should be added here, not as AppState top-level keys.
 export interface BlockAdminState {
   /** Block modal visible */
   showBlockModal: boolean;
@@ -750,6 +773,7 @@ export interface BlockAdminState {
   onBlockCreate: () => Promise<void>;
 }
 
+// New fields for waitlist features should be added here, not as AppState top-level keys.
 export interface WaitlistAdminState {
   /** Source for waitlist reorder — queue index or null to cancel */
   waitlistMoveFrom: number | null;
@@ -759,6 +783,7 @@ export interface WaitlistAdminState {
   onReorderWaitlist: (fromIndex: number, toIndex: number) => Promise<void>;
 }
 
+// New fields for group/guest management should be added here, not as AppState top-level keys.
 export interface GroupGuestState {
   /** Current group being registered */
   currentGroup: GroupPlayer[] | null;
