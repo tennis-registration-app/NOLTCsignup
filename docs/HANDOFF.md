@@ -17,6 +17,7 @@ This page is the "start here" guide for new developers.
 - docs/ARCHITECTURE_MAP.md (where things live)
 - docs/WINDOW_GLOBALS.md (Courtboard bridge)
 - docs/SCHEMA.md (inferred database schema + Edge Function endpoints)
+- docs/adr/ (Architecture Decision Records — key design rationale)
 
 ## Critical user flows
 - docs/GOLDEN_FLOWS.md
