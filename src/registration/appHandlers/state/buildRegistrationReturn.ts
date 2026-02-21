@@ -11,22 +11,76 @@
 import type {
   AppState,
   RegistrationConstants,
+  RegistrationUiState,
+  RegistrationSetters,
+  RegistrationRefs,
+  DerivedState,
+  HelperFunctions,
+  AlertState,
+  AdminPriceFeedback,
+  GuestCounterHook,
+  SearchState,
+  CourtAssignmentState,
+  ClearCourtFlow,
+  MobileState,
+  BlockAdminState,
+  WaitlistAdminState,
+  GroupGuestState,
+  StreakState,
+  MemberIdentityState,
+  TimeoutState,
   TennisConfig,
   ApiConfig,
   TennisBusinessLogicShape,
   TennisBackendShape,
   DataStoreShape,
+  CourtBlockStatusResult,
 } from '../../../types/appTypes.js';
 
+/** Fields from useRegistrationUiState — state values + setters */
+type UiModule = RegistrationUiState & RegistrationSetters;
+
+/** Fields from useRegistrationDomainHooks — 13 sub-hooks flattened */
+type DomainModule =
+  & Omit<AlertState, never>
+  & Omit<AdminPriceFeedback, never>
+  & Omit<GuestCounterHook, never>
+  & Omit<SearchState, never>
+  & Omit<CourtAssignmentState, never>
+  & Omit<ClearCourtFlow, never>
+  & Omit<MobileState, never>
+  & Omit<BlockAdminState, 'getCourtBlockStatus'>
+  & Omit<WaitlistAdminState, never>
+  & Omit<GroupGuestState, never>
+  & Omit<StreakState, never>
+  & Omit<MemberIdentityState, never>;
+
+/** Fields from useRegistrationRuntime — React refs */
+type RuntimeModule = RegistrationRefs;
+
+/** Fields from useRegistrationDataLayer */
+interface DataLayerModule {
+  loadData: HelperFunctions['loadData'];
+}
+
+/** Fields from useRegistrationHelpers + local helpers */
+type HelpersModule = HelperFunctions;
+
+/** Fields from useRegistrationDerived */
+type DerivedModule = DerivedState;
+
+/** Fields from useSessionTimeout */
+type TimeoutModule = TimeoutState;
+
 export interface BuildRegistrationReturnParams {
-  // Module objects
-  ui: any;
-  domain: any;
-  runtime: any;
-  _dataLayer: any;
-  helpers: any;
-  derived: any;
-  timeout: any;
+  // Module objects — typed to match each source hook's return shape
+  ui: UiModule;
+  domain: DomainModule;
+  runtime: RuntimeModule;
+  _dataLayer: DataLayerModule;
+  helpers: HelpersModule;
+  derived: DerivedModule;
+  timeout: TimeoutModule;
 
   // Services
   backend: TennisBackendShape;
@@ -37,11 +91,11 @@ export interface BuildRegistrationReturnParams {
   TENNIS_CONFIG: TennisConfig;
   API_CONFIG: ApiConfig;
   TennisBusinessLogic: TennisBusinessLogicShape;
-  dbg: (...args: any[]) => void;
+  dbg: AppState['dbg'];
   DEBUG: boolean;
 
   // Standalone functions
-  getCourtBlockStatus: (courtNumber: number) => any;
+  getCourtBlockStatus: (courtNumber: number) => CourtBlockStatusResult | null;
   computeRegistrationCourtSelection: AppState['computeRegistrationCourtSelection'];
 
   // Orchestrators
