@@ -5,6 +5,10 @@
  * These functions are used for duplicate checking and validation.
  */
 
+import { getCourtStatuses } from '../../tennis/domain/availability.js';
+import { readDataSafe, readJSON } from '../../lib/storage.js';
+import { STORAGE } from '../../lib/constants.js';
+
 /**
  * Normalize a player name for comparison
  * Handles various input formats (string, object with name property)
@@ -91,11 +95,9 @@ export function validateGuestName(name) {
  * @returns {object} - { occupied: number[], data: object }
  */
 export function computeOccupiedCourts() {
-  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-  const S = window.Tennis?.Storage;
   const now = new Date();
-  const data = S.readDataSafe();
-  const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+  const data = readDataSafe();
+  const blocks = readJSON(STORAGE.BLOCKS) || [];
   const wetSet = new Set(
     (blocks || [])
       .filter(
@@ -106,7 +108,7 @@ export function computeOccupiedCourts() {
       )
       .map((b) => b.courtNumber)
   );
-  const statuses = A.getCourtStatuses({ data, now, blocks, wetSet });
+  const statuses = getCourtStatuses({ data, now, blocks, wetSet });
   const occupied = statuses.filter((s) => s.status === 'occupied').map((s) => s.courtNumber);
   return { occupied, data };
 }
@@ -117,11 +119,9 @@ export function computeOccupiedCourts() {
  * @returns {number[]} - Array of court numbers that can be cleared
  */
 export function getCourtsOccupiedForClearing() {
-  const Av = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
-  const S = window.Tennis?.Storage;
   const now = new Date();
-  const data = S.readDataSafe();
-  const blocks = S.readJSON(S.STORAGE?.BLOCKS) || [];
+  const data = readDataSafe();
+  const blocks = readJSON(STORAGE.BLOCKS) || [];
   const wetSet = new Set(
     blocks
       .filter(
@@ -133,7 +133,7 @@ export function getCourtsOccupiedForClearing() {
       .map((b) => b.courtNumber)
   );
 
-  const statuses = Av.getCourtStatuses({ data, now, blocks, wetSet });
+  const statuses = getCourtStatuses({ data, now, blocks, wetSet });
   const clearableCourts = statuses
     .filter((s) => (s.isOccupied || s.isOvertime) && !s.isBlocked)
     .map((s) => s.courtNumber)

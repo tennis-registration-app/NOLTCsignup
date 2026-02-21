@@ -8,10 +8,10 @@ import { X, ChevronRight, Check } from '../components';
 import { getCache } from '../../platform/prefsStorage.js';
 import { useAdminNotification } from '../context/NotificationContext.jsx';
 import { logger } from '../../lib/logger.js';
+import { emitDom } from '../../platform/attachLegacyEvents.js';
 
 // Access global dependencies
 const Storage = /** @type {any} */ (window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } });
-const Events = /** @type {any} */ (window.Tennis?.Events || { emitDom: () => {} });
 const BL = /** @type {any} */ (
   window.BL || {
     applyTemplate: () => [],
@@ -270,7 +270,7 @@ const AIAssistantAdmin = ({
         }
         // Note: If Storage.writeJSON is unavailable, blocks will not persist
         // This is acceptable as blocks are domain data managed by backend
-        Events.emitDom('tennisDataUpdate', { key, data: next });
+        emitDom('tennisDataUpdate', { key, data: next });
         logger.info('Admin', 'wrote blocks', newBlocks);
 
         refreshData();

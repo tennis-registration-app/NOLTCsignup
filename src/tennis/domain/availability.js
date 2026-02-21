@@ -369,7 +369,7 @@ function getSelectableCourts({ data, now, blocks, wetSet }) {
  * @param {Date} params.now - Current time
  * @param {Array} params.blocks - Block array
  * @param {Set} params.wetSet - Set of wet court numbers
- * @param {Array} params.upcomingBlocks - Upcoming blocks for usability check
+ * @param {Array} [params.upcomingBlocks] - Upcoming blocks for usability check
  * @returns {Object[]} Array of court status objects
  */
 function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }) {
