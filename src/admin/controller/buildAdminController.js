@@ -2,10 +2,7 @@
  * Admin Controller Builder
  *
  * Pure function that assembles domain models/actions into a single controller object.
- * This mirrors what App.jsx does with useMemo wrappers, but as a testable pure function.
- *
- * Usage in App.jsx (future refactor):
- *   const controller = useMemo(() => buildAdminController(deps), [deps]);
+ * Called from App.jsx via useMemo — the single source of all domain objects.
  *
  * @module admin/controller/buildAdminController
  */
@@ -26,20 +23,6 @@ import {
   createAIAssistantServices,
   createAIAssistantComponents,
 } from '../types/domainObjects.js';
-
-/**
- * Admin Controller — Future Target (Not Yet Wired)
- *
- * This pure function is designed to replace the 24 inline useMemo/useCallback
- * blocks in admin/App.jsx with a single controller call, matching the
- * registration app's presenter/controller pattern.
- *
- * Status: Scaffolded with contract tests (CONTROLLER_KEYS). Not yet imported
- * by App.jsx. Wire-in is the convergence step when admin refactoring is prioritized.
- *
- * Target usage in App.jsx:
- *   const controller = useMemo(() => buildAdminController(deps), [...]);
- */
 
 /**
  * @typedef {Object} AdminControllerDeps
@@ -68,6 +51,9 @@ import {
 
 /**
  * Build the complete admin controller object.
+ *
+ * Wired into App.jsx via useMemo. Replaces what were previously
+ * 14 inline useMemo domain-object calls. Contract-tested via CONTROLLER_KEYS.
  *
  * @param {AdminControllerDeps} deps - Dependencies from React state/hooks
  * @returns {Object} Controller with all domain objects grouped by section
