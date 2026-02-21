@@ -77,13 +77,14 @@ src/registration/
 ### Screens/Components
 - Render UI only
 - Receive state + handlers via props
-- Do NOT call backend directly
-- Do NOT orchestrate workflows
+- Do NOT call backend directly — **ESLint-enforced**
+- Do NOT orchestrate workflows — **ESLint-enforced**
 
-### Orchestrators (App.jsx)
+### Orchestrators (`src/registration/orchestration/`)
 - Coordinate multi-step workflows
 - Make backend calls
 - Handle navigation
+- Must be pure functions (no React imports) — **ESLint-enforced**
 - See ORCHESTRATION.md for frozen list
 
 ---
@@ -147,6 +148,7 @@ Architectural boundaries and enforcement mechanisms prevent common drift pattern
 - **Writes:** Centralized in `src/platform/registerGlobals.js` via setter helpers
 - **Reads:** Via `src/platform/windowBridge.js`
 - **Rule:** No `window.X = ...` outside platform layer (except documented IIFE exceptions)
+- **Enforcement:** ESLint `no-restricted-syntax` blocks `window.X =` assignments in `registration/` and `admin/`. ESLint `no-restricted-globals` and `no-restricted-properties` block reads of `Tennis`, `APP_UTILS`, `localStorage`, `alert`, `confirm`. Entry points and legacy interop files are narrowly exempted.
 - **Docs:** `docs/WINDOW_GLOBALS.md`
 
 ### 3. Orchestrator Deps Grouping
@@ -170,11 +172,14 @@ Architectural boundaries and enforcement mechanisms prevent common drift pattern
 - **Docs:** `docs/CODE_CONVENTIONS.md`
 
 ### Verification
+
+Most boundaries are now ESLint-enforced — `npm run verify` will fail if violated. The following `rg` commands are supplementary audit tools for boundaries not yet covered by ESLint:
+
 ```bash
 # Config: no hardcoded secrets outside the config module(s)
 rg "supabase.*url|anon.*key" src/ --glob "*.js" | rg -v "src/config/"
 
-# Window: no writes outside platform layer
+# Window writes: ESLint-enforced (no-restricted-syntax) — this rg check is supplementary
 rg "\bwindow\.\w+\s*=" src/ --glob "*.js" --glob "*.jsx" | rg -v "src/platform/"
 
 # Naming: no snake_case in JSX outside boundary modules
@@ -185,6 +190,27 @@ rg -n "accountId\s*\|\|.*account_id|isPrimary\s*\|\|.*is_primary" src/
 ```
 
 All checks should return empty (or only documented boundary exceptions).
+
+---
+
+## Boundary Enforcement (ESLint-backed)
+
+These rules are mechanically enforced — CI rejects violations via `npm run verify`:
+
+| Rule | Scope | What it prevents |
+|------|-------|-----------------|
+| No raw ApiAdapter | `*.jsx` | UI bypassing the backend facade |
+| No orchestration/backend from screens | `*/screens/**` | Screens doing business logic |
+| No backend from presenters | `*/presenters/**` | Presenters making API calls |
+| No React in presenters | `*/presenters/**` | Impure presenters |
+| No cross-app imports | `admin/**`, `courtboard/**` | Coupling between apps |
+| No React in orchestrators | `orchestration/**` | Impure orchestrators |
+| No UI imports from handlers | `appHandlers/**` | Handlers importing components |
+| No `window.X =` assignments | `registration/**`, `admin/**` | Global pollution outside platform |
+
+Plus global bans: `localStorage`, `alert`, `confirm`, `window.Tennis` (outside platform bridge).
+
+Exemptions are narrowly scoped to entry points (`main.jsx`), legacy interop files, and test files. See `eslint.config.js` for the full list.
 
 ---
 

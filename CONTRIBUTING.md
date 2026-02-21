@@ -190,6 +190,23 @@ User Action
 → UI update
 ```
 
+### Boundary Enforcement
+Layer boundaries are ESLint-enforced — `npm run verify` will reject violations. See `docs/ARCHITECTURE_MAP.md` § "Boundary Enforcement" for the full table of 8 rules. Key constraints:
+- Screens cannot import orchestrators or backend
+- Orchestrators and presenters must be pure (no React imports)
+- Handlers cannot import UI components
+- No `window.X =` outside the platform bridge layer
+
+### Exemptions
+
+Boundary rule exemptions are narrowly scoped in `eslint.config.js`. Before adding a new exemption:
+
+1. **Document why** — the file cannot comply without breaking legacy constraints
+2. **State the deletion condition** — what change would allow removing the exemption
+3. **Keep scope minimal** — exempt the specific file, not an entire directory
+
+Current exemptions: entry points (`main.jsx`), legacy interop (`helpers.js`, `courtOperations.js`, `AIAssistantAdmin.jsx`), `useAdminSettings.js` (singleton guard pattern), and courtboard plain scripts.
+
 ```
 App.jsx
   └── useRegistrationAppState() → app object
@@ -285,9 +302,16 @@ Browser APIs (keep as `window.*`):
 3. Use the accessor in all ESM files
 4. Document in this table
 
-### Verification Command
+### Enforcement
 
-Check for unauthorized direct READS of app-specific globals in ESM code:
+Window global access is ESLint-enforced — `npm run verify` will fail if violated:
+- **Reads** of `Tennis`, `APP_UTILS`, `localStorage`, `alert`, `confirm` are blocked by `no-restricted-globals` / `no-restricted-properties`
+- **Writes** (`window.X = ...`) are blocked by `no-restricted-syntax` in `registration/` and `admin/`
+- Entry points, legacy interop files, and tests are narrowly exempted in `eslint.config.js`
+
+### Supplementary Audit Command
+
+For deeper auditing beyond what ESLint catches (e.g., courtboard plain scripts):
 ```bash
 rg "window\.(Tennis|APP_UTILS|CourtboardState|UI|MobileModal|refreshBoard|refreshAdminView|loadData|mobileTapToRegister)" src --glob "*.js" --glob "*.jsx" \
   | grep -v "src/platform/windowBridge.js" \
