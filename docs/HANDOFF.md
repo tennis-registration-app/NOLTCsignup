@@ -41,3 +41,6 @@ This page is the "start here" guide for new developers.
 ## Security work package
 - docs/SECURITY_WP.md
 
+## Review remediation
+- docs/review-remediation.md (resolved, deferred, and retained items from architectural reviews)
+
