@@ -1118,10 +1118,12 @@ export interface OriginalCourtData {
 }
 
 /**
- * Mutable variant of court data — courts array accepts OriginalCourtData
- * for go-back restore (courtPresenter splices saved court data back in).
- * Used only where court slot mutation is needed; read-only consumers use
- * RegistrationUiState['data'] which has courts: DomainCourt[].
+ * Widened type for go-back restore — courts array may contain OriginalCourtData
+ * for one render cycle before being replaced with fresh DomainCourt data.
+ *
+ * Usage: courtPresenter.ts only (go-back restore path).
+ * Do not use for normal read paths — those expect DomainCourt[].
+ * Deletion condition: remove when go-back restore stores DomainCourt[] directly.
  */
 export type CourtDataMutable = Omit<RegistrationUiState['data'], 'courts'> & {
   courts: (DomainCourt | OriginalCourtData)[];
