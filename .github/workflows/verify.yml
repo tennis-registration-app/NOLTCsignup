@@ -26,8 +26,8 @@ jobs:
       - name: Typecheck (ratchet)
         run: npm run type:ratchet
 
-      - name: Run unit tests
-        run: npm run test:unit
+      - name: Run unit tests + coverage ratchet
+        run: npm run coverage:ratchet
 
       - name: Build
         run: npm run build
