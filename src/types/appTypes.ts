@@ -25,7 +25,7 @@ export type { AssignCourtDeps, WaitlistDeps, SuggestionClickDeps, AddPlayerSugge
 // ============================================
 
 /** React useState setter — direct value only */
-type Setter<T> = (value: T) => void;
+export type Setter<T> = (value: T) => void;
 
 /** React useState setter — accepts direct value or updater function */
 type Updater<T> = (value: T | ((prev: T) => T)) => void;
@@ -1091,6 +1091,7 @@ export interface DomainBoard {
 export interface GroupPlayer {
   id: string;
   name: string;
+  displayName?: string;
   memberNumber: string;
   memberId?: string;
   isGuest?: boolean;
@@ -1173,6 +1174,7 @@ export interface AutocompleteSuggestion {
   member: {
     id: string;
     name: string;
+    displayName?: string;
     accountId: string;
     isPrimary: boolean;
     unclearedStreak: number;
@@ -1209,8 +1211,11 @@ export interface ApiMember {
 /** Block status result. Evidence: court-blocks.js — getCourtBlockStatus returns this or null */
 export interface CourtBlockStatusResult {
   isBlocked: boolean;
+  isCurrent: boolean;
   blockId?: string;
   startTime?: string;
   endTime?: string;
   reason?: string;
+  remainingMinutes?: number;
+  isWetCourt?: boolean;
 }

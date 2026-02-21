@@ -4,49 +4,57 @@
  */
 
 import { logger } from '../../lib/logger.js';
+import type {
+  Setter,
+  GroupPlayer,
+  ReplacedGroup,
+  DisplacementInfo,
+  OriginalCourtData,
+  DomainBoard,
+} from '../../types/appTypes.js';
 
 export interface ResetFormActions {
-  setCurrentGroup: (v: any[]) => void;
-  setShowSuccess: (v: boolean) => void;
-  setMemberNumber: (v: string) => void;
-  setCurrentMemberId: (v: string | null) => void;
-  setJustAssignedCourt: (v: number | null) => void;
-  setAssignedSessionId: (v: string | null) => void;
-  setAssignedEndTime: (v: string | null) => void;
-  setReplacedGroup: (v: any) => void;
-  setDisplacement: (v: any) => void;
-  setOriginalCourtData: (v: any) => void;
-  setCanChangeCourt: (v: boolean) => void;
-  setIsTimeLimited: (v: boolean) => void;
+  setCurrentGroup: Setter<GroupPlayer[]>;
+  setShowSuccess: Setter<boolean>;
+  setMemberNumber: Setter<string>;
+  setCurrentMemberId: Setter<string | null>;
+  setJustAssignedCourt: Setter<number | null>;
+  setAssignedSessionId: Setter<string | null>;
+  setAssignedEndTime: Setter<string | null>;
+  setReplacedGroup: Setter<ReplacedGroup | null>;
+  setDisplacement: Setter<DisplacementInfo | null>;
+  setOriginalCourtData: Setter<OriginalCourtData | null>;
+  setCanChangeCourt: Setter<boolean>;
+  setIsTimeLimited: Setter<boolean>;
   setCurrentScreen: (screen: string, reason: string) => void;
-  setSearchInput: (v: string) => void;
-  setShowSuggestions: (v: boolean) => void;
-  setShowAddPlayer: (v: boolean) => void;
-  setAddPlayerSearch: (v: string) => void;
-  setShowAddPlayerSuggestions: (v: boolean) => void;
-  setHasWaitlistPriority: (v: boolean) => void;
-  setCurrentWaitlistEntryId: (v: string | null) => void;
-  setWaitlistPosition: (v: number) => void;
-  setSelectedCourtToClear: (v: number | null) => void;
-  setClearCourtStep: (v: number) => void;
-  setIsChangingCourt: (v: boolean) => void;
-  setWasOvertimeCourt: (v: boolean) => void;
-  setCourtToMove: (v: any) => void;
-  setHasAssignedCourt: (v: boolean) => void;
-  setShowGuestForm: (v: boolean) => void;
-  setGuestName: (v: string) => void;
-  setGuestSponsor: (v: string) => void;
-  setShowGuestNameError: (v: boolean) => void;
-  setShowSponsorError: (v: boolean) => void;
-  setRegistrantStreak: (v: number) => void;
-  setShowStreakModal: (v: boolean) => void;
-  setStreakAcknowledged: (v: boolean) => void;
+  setSearchInput: Setter<string>;
+  setShowSuggestions: Setter<boolean>;
+  setShowAddPlayer: Setter<boolean>;
+  setAddPlayerSearch: Setter<string>;
+  setShowAddPlayerSuggestions: Setter<boolean>;
+  setHasWaitlistPriority: Setter<boolean>;
+  setCurrentWaitlistEntryId: Setter<string | null>;
+  setWaitlistPosition: Setter<number>;
+  setSelectedCourtToClear: Setter<number | null>;
+  setClearCourtStep: Setter<number>;
+  setIsChangingCourt: Setter<boolean>;
+  setWasOvertimeCourt: Setter<boolean>;
+  setCourtToMove: Setter<number | null>;
+  setHasAssignedCourt: Setter<boolean>;
+  setShowGuestForm: Setter<boolean>;
+  setGuestName: Setter<string>;
+  setGuestSponsor: Setter<string>;
+  setShowGuestNameError: Setter<boolean>;
+  setShowSponsorError: Setter<boolean>;
+  setRegistrantStreak: Setter<number>;
+  setShowStreakModal: Setter<boolean>;
+  setStreakAcknowledged: Setter<boolean>;
 }
 
 export interface ResetFormServices {
   clearCache: () => void;
   clearSuccessResetTimer: () => void;
-  refresh?: () => Promise<any>;
+  refresh?: () => Promise<DomainBoard & Record<string, unknown>>;
 }
 
 export interface ResetFormDeps {
@@ -155,42 +163,42 @@ export async function resetFormOrchestrated(deps: ResetFormDeps): Promise<void> 
 
 export interface InactivityTimeoutDeps {
   // Setters
-  setCurrentGroup: (v: any[]) => void;
-  setShowSuccess: (v: boolean) => void;
-  setMemberNumber: (v: string) => void;
-  setCurrentMemberId: (v: string | null) => void;
-  setJustAssignedCourt: (v: number | null) => void;
-  setReplacedGroup: (v: any) => void;
-  setDisplacement: (v: any) => void;
-  setOriginalCourtData: (v: any) => void;
-  setCanChangeCourt: (v: boolean) => void;
-  setIsTimeLimited: (v: boolean) => void;
+  setCurrentGroup: Setter<GroupPlayer[]>;
+  setShowSuccess: Setter<boolean>;
+  setMemberNumber: Setter<string>;
+  setCurrentMemberId: Setter<string | null>;
+  setJustAssignedCourt: Setter<number | null>;
+  setReplacedGroup: Setter<ReplacedGroup | null>;
+  setDisplacement: Setter<DisplacementInfo | null>;
+  setOriginalCourtData: Setter<OriginalCourtData | null>;
+  setCanChangeCourt: Setter<boolean>;
+  setIsTimeLimited: Setter<boolean>;
   setCurrentScreen: (screen: string, reason: string) => void;
-  setAssignedSessionId: (v: string | null) => void;
-  setAssignedEndTime: (v: string | null) => void;
-  setCurrentWaitlistEntryId: (v: string | null) => void;
-  setWaitlistPosition: (v: number) => void;
-  setCourtToMove: (v: any) => void;
-  setHasAssignedCourt: (v: boolean) => void;
-  setShowGuestForm: (v: boolean) => void;
-  setGuestName: (v: string) => void;
-  setGuestSponsor: (v: string) => void;
-  setRegistrantStreak: (v: number) => void;
-  setShowStreakModal: (v: boolean) => void;
-  setStreakAcknowledged: (v: boolean) => void;
-  setSearchInput: (v: string) => void;
-  setShowSuggestions: (v: boolean) => void;
-  setShowAddPlayer: (v: boolean) => void;
-  setAddPlayerSearch: (v: string) => void;
-  setShowAddPlayerSuggestions: (v: boolean) => void;
-  setHasWaitlistPriority: (v: boolean) => void;
-  setSelectedCourtToClear: (v: number | null) => void;
-  setClearCourtStep: (v: number) => void;
-  setIsChangingCourt: (v: boolean) => void;
-  setWasOvertimeCourt: (v: boolean) => void;
+  setAssignedSessionId: Setter<string | null>;
+  setAssignedEndTime: Setter<string | null>;
+  setCurrentWaitlistEntryId: Setter<string | null>;
+  setWaitlistPosition: Setter<number>;
+  setCourtToMove: Setter<number | null>;
+  setHasAssignedCourt: Setter<boolean>;
+  setShowGuestForm: Setter<boolean>;
+  setGuestName: Setter<string>;
+  setGuestSponsor: Setter<string>;
+  setRegistrantStreak: Setter<number>;
+  setShowStreakModal: Setter<boolean>;
+  setStreakAcknowledged: Setter<boolean>;
+  setSearchInput: Setter<string>;
+  setShowSuggestions: Setter<boolean>;
+  setShowAddPlayer: Setter<boolean>;
+  setAddPlayerSearch: Setter<string>;
+  setShowAddPlayerSuggestions: Setter<boolean>;
+  setHasWaitlistPriority: Setter<boolean>;
+  setSelectedCourtToClear: Setter<number | null>;
+  setClearCourtStep: Setter<number>;
+  setIsChangingCourt: Setter<boolean>;
+  setWasOvertimeCourt: Setter<boolean>;
   // Helpers
   clearSuccessResetTimer: () => void;
-  refresh?: () => Promise<any>;
+  refresh?: () => Promise<DomainBoard & Record<string, unknown>>;
 }
 
 export async function applyInactivityTimeoutOrchestrated(

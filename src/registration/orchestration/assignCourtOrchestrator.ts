@@ -14,15 +14,27 @@ import {
   guardGroupCompat,
 } from './helpers/index.js';
 import { toast } from '../../shared/utils/toast.js';
-import type { RegistrationConstants, ApiConfig, TennisBackendShape } from '../../types/appTypes.js';
+import type {
+  RegistrationConstants,
+  ApiConfig,
+  TennisBackendShape,
+  Setter,
+  GroupPlayer,
+  DomainCourt,
+  OperatingHoursEntry,
+  ReplacedGroup,
+  DisplacementInfo,
+  OriginalCourtData,
+  CourtBlockStatusResult,
+} from '../../types/appTypes.js';
 
 export interface AssignCourtState {
   isAssigning: boolean;
   mobileFlow: boolean;
   preselectedCourt: number | null;
-  operatingHours: any[] | null;
-  currentGroup: any[];
-  courts: any[];
+  operatingHours: OperatingHoursEntry[] | null;
+  currentGroup: GroupPlayer[];
+  courts: DomainCourt[];
   currentWaitlistEntryId: string | null;
   CONSTANTS: RegistrationConstants;
   API_CONFIG: ApiConfig;
@@ -33,13 +45,13 @@ export interface AssignCourtActions {
   setIsAssigning: (v: boolean) => void;
   setCurrentWaitlistEntryId: (v: string | null) => void;
   setHasWaitlistPriority: (v: boolean) => void;
-  setCurrentGroup: (v: any[]) => void;
-  setJustAssignedCourt: (v: number) => void;
-  setAssignedSessionId: (v: string | null) => void;
-  setAssignedEndTime: (v: string | null) => void;
-  setReplacedGroup: (v: any) => void;
-  setDisplacement: (v: any) => void;
-  setOriginalCourtData: (v: any) => void;
+  setCurrentGroup: Setter<GroupPlayer[]>;
+  setJustAssignedCourt: Setter<number>;
+  setAssignedSessionId: Setter<string | null>;
+  setAssignedEndTime: Setter<string | null>;
+  setReplacedGroup: Setter<ReplacedGroup | null>;
+  setDisplacement: Setter<DisplacementInfo | null>;
+  setOriginalCourtData: Setter<OriginalCourtData | null>;
   setIsChangingCourt: (v: boolean) => void;
   setWasOvertimeCourt: (v: boolean) => void;
   setHasAssignedCourt: (v: boolean) => void;
@@ -53,15 +65,15 @@ export interface AssignCourtActions {
 
 export interface AssignCourtServices {
   backend: Pick<TennisBackendShape, 'commands' | 'queries'>;
-  getCourtBlockStatus: (courtNumber: number) => Promise<any>;
-  getMobileGeolocation: () => Promise<any>;
-  validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };
+  getCourtBlockStatus: (courtNumber: number) => CourtBlockStatusResult | null;
+  getMobileGeolocation: () => Promise<{ latitude?: number; longitude?: number; location_token?: string } | null>;
+  validateGroupCompat: (players: GroupPlayer[], guests: number) => { ok: boolean; errors: string[] };
   clearSuccessResetTimer: () => void;
   resetForm: () => void;
 }
 
 export interface AssignCourtUI {
-  showAlertMessage: (...args: any[]) => void;
+  showAlertMessage: (message: string) => void;
   confirm?: (msg: string) => boolean;
 }
 
@@ -123,7 +135,7 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!courtCheck.ok) {
     if (courtCheck.ui?.action === 'alert') {
-      ui.showAlertMessage(...courtCheck.ui.args);
+      ui.showAlertMessage(courtCheck.ui.args[0]);
     }
     // FEEDBACK: alert provides user feedback above
     return;
@@ -135,7 +147,7 @@ export async function assignCourtToGroupOrchestrated(
   const groupCheck = guardGroup({ currentGroup: state.currentGroup });
   if (!groupCheck.ok) {
     if (groupCheck.ui?.action === 'alert') {
-      ui.showAlertMessage(...groupCheck.ui.args);
+      ui.showAlertMessage(groupCheck.ui.args[0]);
     }
     // FEEDBACK: alert provides user feedback above
     return;
@@ -171,7 +183,7 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!compatCheck.ok) {
     if (compatCheck.ui?.action === 'alert') {
-      ui.showAlertMessage(...compatCheck.ui.args);
+      ui.showAlertMessage(compatCheck.ui.args[0]);
     }
     // FEEDBACK: alert provides user feedback above
     return;
@@ -275,6 +287,7 @@ export async function assignCourtToGroupOrchestrated(
       // Update currentGroup with participant details for ball purchases
       if (result.session?.participantDetails) {
         const groupFromWaitlist = result.session.participantDetails.map((p: any) => ({
+          id: p.memberId,
           memberNumber: p.memberId,
           name: p.name,
           accountId: p.accountId,

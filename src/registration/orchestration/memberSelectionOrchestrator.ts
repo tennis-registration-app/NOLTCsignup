@@ -11,19 +11,26 @@ import {
   COURT_READY,
 } from '../../shared/constants/toastMessages.js';
 import { toast } from '../../shared/utils/toast.js';
-import type { RegistrationConstants, TennisBackendShape } from '../../types/appTypes.js';
+import type {
+  RegistrationConstants,
+  TennisBackendShape,
+  Setter,
+  GroupPlayer,
+  AutocompleteSuggestion,
+  RegistrationUiState,
+} from '../../types/appTypes.js';
 
 export interface SuggestionClickDeps {
   // Read values
-  currentGroup: any[];
+  currentGroup: GroupPlayer[];
   // Setters
-  setSearchInput: (v: string) => void;
-  setShowSuggestions: (v: boolean) => void;
-  setMemberNumber: (v: string) => void;
-  setCurrentMemberId: (v: string) => void;
-  setRegistrantStreak: (v: number) => void;
-  setStreakAcknowledged: (v: boolean) => void;
-  setCurrentGroup: (v: any[]) => void;
+  setSearchInput: Setter<string>;
+  setShowSuggestions: Setter<boolean>;
+  setMemberNumber: Setter<string>;
+  setCurrentMemberId: Setter<string>;
+  setRegistrantStreak: Setter<number>;
+  setStreakAcknowledged: Setter<boolean>;
+  setCurrentGroup: Setter<GroupPlayer[]>;
   setCurrentScreen: (screen: string, reason: string) => void;
   // Services/helpers
   backend: Pick<TennisBackendShape, 'directory'>;
@@ -35,14 +42,14 @@ export interface SuggestionClickDeps {
     position?: number;
     playerName?: string;
   };
-  guardAddPlayerEarly: (getCourtData: () => any, member: any) => boolean;
-  getCourtData: () => any;
-  getAvailableCourts: (includeBlocked: boolean) => any[];
+  guardAddPlayerEarly: (getCourtData: () => RegistrationUiState['data'], member: GroupPlayer) => boolean;
+  getCourtData: () => RegistrationUiState['data'];
+  getAvailableCourts: (includeBlocked: boolean) => number[];
   showAlertMessage: (msg: string) => void;
 }
 
 export async function handleSuggestionClickOrchestrated(
-  suggestion: any,
+  suggestion: AutocompleteSuggestion,
   deps: SuggestionClickDeps
 ): Promise<void> {
   const {
@@ -210,18 +217,18 @@ export async function handleSuggestionClickOrchestrated(
 
 export interface AddPlayerSuggestionClickDeps {
   // Read values
-  currentGroup: any[];
+  currentGroup: GroupPlayer[];
   // Setters
-  setAddPlayerSearch: (v: string) => void;
-  setShowAddPlayer: (v: boolean) => void;
-  setShowAddPlayerSuggestions: (v: boolean) => void;
-  setCurrentGroup: (v: any[]) => void;
-  setHasWaitlistPriority: (v: boolean) => void;
-  setAlertMessage: (v: string) => void;
-  setShowAlert: (v: boolean) => void;
+  setAddPlayerSearch: Setter<string>;
+  setShowAddPlayer: Setter<boolean>;
+  setShowAddPlayerSuggestions: Setter<boolean>;
+  setCurrentGroup: Setter<GroupPlayer[]>;
+  setHasWaitlistPriority: Setter<boolean>;
+  setAlertMessage: Setter<string>;
+  setShowAlert: Setter<boolean>;
   // Services/helpers
-  guardAddPlayerEarly: (getCourtData: () => any, member: any) => boolean;
-  guardAgainstGroupDuplicate: (member: any, group: any[]) => boolean;
+  guardAddPlayerEarly: (getCourtData: () => RegistrationUiState['data'], member: GroupPlayer) => boolean;
+  guardAgainstGroupDuplicate: (member: GroupPlayer, group: GroupPlayer[]) => boolean;
   isPlayerAlreadyPlaying: (id: string) => {
     isPlaying: boolean;
     location?: string;
@@ -229,16 +236,16 @@ export interface AddPlayerSuggestionClickDeps {
     playerName?: string;
     courtNumber?: number;
   };
-  getAvailableCourts: (includeBlocked: boolean) => any[];
-  getCourtData: () => any;
-  saveCourtData: (data: any) => void;
+  getAvailableCourts: (includeBlocked: boolean) => number[];
+  getCourtData: () => RegistrationUiState['data'];
+  saveCourtData: (data: RegistrationUiState['data']) => Promise<boolean>;
   findMemberNumber: (memberId: string) => string;
   showAlertMessage: (msg: string) => void;
   CONSTANTS: RegistrationConstants;
 }
 
 export async function handleAddPlayerSuggestionClickOrchestrated(
-  suggestion: any,
+  suggestion: AutocompleteSuggestion,
   deps: AddPlayerSuggestionClickDeps
 ): Promise<void> {
   const {

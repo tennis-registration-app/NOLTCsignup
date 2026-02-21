@@ -3,16 +3,18 @@
  * Moved from App.jsx
  */
 
+import type { ReplacedGroup, OriginalCourtData, Setter } from '../../types/appTypes.js';
+
 export interface CourtChangeDeps {
   // Read values
   canChangeCourt: boolean;
   justAssignedCourt: number | null;
-  replacedGroup: { players: any[]; endTime: any } | null;
+  replacedGroup: ReplacedGroup | null;
   // Setters
-  setOriginalCourtData: (data: any) => void;
-  setShowSuccess: (show: boolean) => void;
-  setIsChangingCourt: (changing: boolean) => void;
-  setWasOvertimeCourt: (wasOvertime: boolean) => void;
+  setOriginalCourtData: Setter<OriginalCourtData | null>;
+  setShowSuccess: Setter<boolean>;
+  setIsChangingCourt: Setter<boolean>;
+  setWasOvertimeCourt: Setter<boolean>;
   setCurrentScreen: (screen: string, reason: string) => void;
 }
 
