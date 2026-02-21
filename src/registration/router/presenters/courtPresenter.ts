@@ -145,6 +145,7 @@ export function buildCourtActions(
       if (isChangingCourt && justAssignedCourt && originalCourtData) {
         try {
           const goBackData = getCourtData();
+          // @ts-expect-error OriginalCourtData shape differs from DomainCourt — pre-existing mismatch
           goBackData.courts[justAssignedCourt - 1] = originalCourtData;
           saveCourtData(goBackData);
           setOriginalCourtData(null);

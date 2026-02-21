@@ -92,8 +92,8 @@
  * @property {WaitlistEntry[]} waitlist - Current waitlist, ordered by position
  * @property {Object} [_raw] - Raw API response (temporary, for legacy adapter)
  * @property {Array<Object>} [operatingHours] - Operating hours from API
- * @property {Array<Object>} [upcomingBlocks] - Future blocks for today
- * @property {Block[]} [blocks] - All active blocks (denormalized from courts)
+ * @property {Array<{id?: string, courtNumber: number, startTime: string, endTime: string, title: string, reason?: string, isActive: boolean}>} [upcomingBlocks] - Future blocks for today (normalizeBoard maps startsAt→startTime)
+ * @property {Array<{courtNumber: number, startTime: string, endTime: string, title: string, isActive: boolean}>} [blocks] - Active blocks derived from courts (normalizeBoard maps block.startsAt→startTime, block.reason→title)
  */
 
 /**

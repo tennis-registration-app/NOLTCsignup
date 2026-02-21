@@ -8,7 +8,15 @@
  * Return shape is unchanged — matches AppState interface.
  */
 
-import type { AppState } from '../../../types/appTypes.js';
+import type {
+  AppState,
+  RegistrationConstants,
+  TennisConfig,
+  ApiConfig,
+  TennisBusinessLogicShape,
+  TennisBackendShape,
+  DataStoreShape,
+} from '../../../types/appTypes.js';
 
 export interface BuildRegistrationReturnParams {
   // Module objects
@@ -21,31 +29,31 @@ export interface BuildRegistrationReturnParams {
   timeout: any;
 
   // Services
-  backend: any;
-  dataStore: any;
+  backend: TennisBackendShape;
+  dataStore: DataStoreShape;
 
   // Constants and config
-  CONSTANTS: any;
-  TENNIS_CONFIG: any;
-  API_CONFIG: any;
-  TennisBusinessLogic: any;
-  dbg: Function;
+  CONSTANTS: RegistrationConstants;
+  TENNIS_CONFIG: TennisConfig;
+  API_CONFIG: ApiConfig;
+  TennisBusinessLogic: TennisBusinessLogicShape;
+  dbg: (...args: any[]) => void;
   DEBUG: boolean;
 
   // Standalone functions
-  getCourtBlockStatus: Function;
-  computeRegistrationCourtSelection: Function;
+  getCourtBlockStatus: (courtNumber: number) => any;
+  computeRegistrationCourtSelection: AppState['computeRegistrationCourtSelection'];
 
   // Orchestrators
-  assignCourtToGroupOrchestrated: Function;
-  sendGroupToWaitlistOrchestrated: Function;
-  handleSuggestionClickOrchestrated: Function;
-  handleAddPlayerSuggestionClickOrchestrated: Function;
-  changeCourtOrchestrated: Function;
-  resetFormOrchestrated: Function;
+  assignCourtToGroupOrchestrated: AppState['assignCourtToGroupOrchestrated'];
+  sendGroupToWaitlistOrchestrated: AppState['sendGroupToWaitlistOrchestrated'];
+  handleSuggestionClickOrchestrated: AppState['handleSuggestionClickOrchestrated'];
+  handleAddPlayerSuggestionClickOrchestrated: AppState['handleAddPlayerSuggestionClickOrchestrated'];
+  changeCourtOrchestrated: AppState['changeCourtOrchestrated'];
+  resetFormOrchestrated: AppState['resetFormOrchestrated'];
 
   // Validation
-  validateGroupCompat: Function;
+  validateGroupCompat: AppState['validateGroupCompat'];
 }
 
 export function buildRegistrationReturn({
