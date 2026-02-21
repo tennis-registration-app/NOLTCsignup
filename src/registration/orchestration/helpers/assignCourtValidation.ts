@@ -3,27 +3,35 @@
  *
  * These helpers are intentionally "dumb": they mirror current v0 logic exactly.
  * NO side effects. NO network. NO timers. NO DOM access.
- *
- * @typedef {Object} GuardResultOk
- * @property {true} ok
- * @property {undefined} [ui]
- *
- * @typedef {Object} GuardResultFail
- * @property {false} ok
- * @property {string} kind - Error code
- * @property {{ action: 'toast' | 'alert', args: any[] } | null} ui - UI dispatch info (null = silent)
- *
- * @typedef {GuardResultOk | GuardResultFail} GuardResult
  */
+
+export interface GuardResultOk {
+  ok: true;
+  ui?: undefined;
+}
+
+export interface GuardResultFail {
+  ok: false;
+  kind: string;
+  ui: { action: 'toast' | 'alert'; args: any[] } | null;
+}
+
+export type GuardResult = GuardResultOk | GuardResultFail;
+
+interface OperatingHoursEntry {
+  dayOfWeek?: number;
+  day_of_week?: number;
+  isClosed?: boolean;
+  is_closed?: boolean;
+  opensAt?: string;
+  opens_at?: string;
+}
 
 /**
  * Guard: Prevent double-submission while assignment is in progress.
  * v0 location: lines 112-114
- *
- * @param {boolean} isAssigning - Current assignment state from deps
- * @returns {GuardResult}
  */
-export function guardNotAssigning(isAssigning) {
+export function guardNotAssigning(isAssigning: boolean): GuardResult {
   // v0: if (isAssigning) { logger.debug(...); return; }
   // Silent return in v0 (no toast, just log + return)
   if (isAssigning) {
@@ -38,18 +46,21 @@ export function guardNotAssigning(isAssigning) {
  *
  * v0 uses operatingHours array from deps, checks today's dayOfWeek,
  * handles both snake_case and camelCase field names from API.
- *
- * @param {object} params
- * @param {Array|null|undefined} params.operatingHours - Operating hours array from deps
- * @param {number} params.currentHour - Current hour (0-23)
- * @param {number} params.currentMinutes - Current minute (0-59)
- * @param {number} params.dayOfWeek - Day of week (0=Sunday, 6=Saturday)
- * @returns {GuardResult}
  */
-export function guardOperatingHours({ operatingHours, currentHour, currentMinutes, dayOfWeek }) {
+export function guardOperatingHours({
+  operatingHours,
+  currentHour,
+  currentMinutes,
+  dayOfWeek,
+}: {
+  operatingHours: OperatingHoursEntry[] | null | undefined;
+  currentHour: number;
+  currentMinutes: number;
+  dayOfWeek: number;
+}): GuardResult {
   // v0 logic: lines 133-169
-  let openingTime;
-  let openingTimeString;
+  let openingTime: number;
+  let openingTimeString: string;
 
   if (operatingHours && Array.isArray(operatingHours) && operatingHours.length > 0) {
     // Find today's operating hours from API
@@ -60,7 +71,7 @@ export function guardOperatingHours({ operatingHours, currentHour, currentMinute
     if (todayHours && !isClosed) {
       // Parse opensAt (format: "HH:MM:SS") - handle both camelCase and snake_case
       const opensAtValue = todayHours.opensAt ?? todayHours.opens_at;
-      const [hours, minutes] = opensAtValue.split(':').map(Number);
+      const [hours, minutes] = (opensAtValue as string).split(':').map(Number);
       openingTime = hours + minutes / 60;
       // Format for display (e.g., "5:00 AM")
       const hour12 = hours % 12 || 12;
@@ -103,13 +114,14 @@ export function guardOperatingHours({ operatingHours, currentHour, currentMinute
 /**
  * Guard: Validate court number is valid.
  * v0 location: lines 172-177
- *
- * @param {object} params
- * @param {number|null|undefined} params.courtNumber - Selected court number
- * @param {number} params.courtCount - Max court count from CONSTANTS.COURT_COUNT
- * @returns {GuardResult}
  */
-export function guardCourtNumber({ courtNumber, courtCount }) {
+export function guardCourtNumber({
+  courtNumber,
+  courtCount,
+}: {
+  courtNumber: number | null | undefined;
+  courtCount: number;
+}): GuardResult {
   // v0: if (!courtNumber || courtNumber < 1 || courtNumber > CONSTANTS.COURT_COUNT)
   if (!courtNumber || courtNumber < 1 || courtNumber > courtCount) {
     // v0: showAlertMessage(`Invalid court number...`);
@@ -129,12 +141,12 @@ export function guardCourtNumber({ courtNumber, courtCount }) {
  *
  * Note: v0 does NOT check selectableCountAtSelection in this guard.
  * The count is only used later for allowCourtChange logic (line 429-430).
- *
- * @param {object} params
- * @param {Array|null|undefined} params.currentGroup - Current player group
- * @returns {GuardResult}
  */
-export function guardGroup({ currentGroup }) {
+export function guardGroup({
+  currentGroup,
+}: {
+  currentGroup: any[] | null | undefined;
+}): GuardResult {
   // v0: if (!currentGroup || currentGroup.length === 0)
   if (!currentGroup || currentGroup.length === 0) {
     // v0: showAlertMessage('No players in group. Please add players first.');
@@ -154,14 +166,16 @@ export function guardGroup({ currentGroup }) {
  *
  * This wraps the validateGroupCompat call from deps.
  * The actual validation is done by the injected function.
- *
- * @param {object} params
- * @param {Array} params.players - Non-guest players (filtered from currentGroup)
- * @param {number} params.guests - Guest count
- * @param {Function} params.validateGroupCompat - Validator function from deps
- * @returns {GuardResult}
  */
-export function guardGroupCompat({ players, guests, validateGroupCompat }) {
+export function guardGroupCompat({
+  players,
+  guests,
+  validateGroupCompat,
+}: {
+  players: any[];
+  guests: number;
+  validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };
+}): GuardResult {
   // v0: const { ok, errors } = validateGroupCompat(players, guests);
   const { ok, errors } = validateGroupCompat(players, guests);
   if (!ok) {

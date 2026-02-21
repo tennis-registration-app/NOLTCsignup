@@ -1,5 +1,5 @@
 import { logger } from '../../lib/logger.js';
-import { createOrchestrationDeps } from './deps/index.js';
+import { createOrchestrationDeps } from './deps/index';
 import { durationForGroupSize } from '../../lib/dateUtils.js';
 import {
   guardNotAssigning,
@@ -7,7 +7,7 @@ import {
   guardCourtNumber,
   guardGroup,
   guardGroupCompat,
-} from './helpers/index.js';
+} from './helpers/index';
 import { toast } from '../../shared/utils/toast.js';
 
 /**

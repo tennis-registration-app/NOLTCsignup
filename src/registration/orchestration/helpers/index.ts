@@ -9,3 +9,5 @@ export {
   guardGroup,
   guardGroupCompat,
 } from './assignCourtValidation.js';
+
+export type { GuardResult, GuardResultOk, GuardResultFail } from './assignCourtValidation.js';

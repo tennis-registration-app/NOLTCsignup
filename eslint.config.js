@@ -1,11 +1,35 @@
 import js from '@eslint/js';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
+import tsParser from '@typescript-eslint/parser';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
 import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
   js.configs.recommended,
+  // TypeScript files — use TS parser, no React rules (pure logic files)
+  {
+    files: ['**/*.ts'],
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+    },
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-unused-vars': 'off', // Use TS-aware version instead
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-undef': 'off', // TypeScript handles this
+      'no-redeclare': 'off', // TypeScript handles this (interfaces merge)
+    },
+  },
   {
     files: ['**/*.{js,jsx}'],
     plugins: {

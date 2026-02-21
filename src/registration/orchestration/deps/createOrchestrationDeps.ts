@@ -11,28 +11,32 @@
 
 import { logger } from '../../../lib/logger.js';
 
-/**
- * @typedef {Object} OrchestrationRuntimeDeps
- * @property {Object} logger
- * @property {(scope: string, msg: string, data?: any) => void} logger.debug
- * @property {(scope: string, msg: string, data?: any) => void} logger.info
- * @property {(scope: string, msg: string, data?: any) => void} logger.warn
- * @property {(scope: string, msg: string, data?: any) => void} logger.error
- * @property {Object} time
- * @property {() => number} time.now
- */
+export interface OrchestrationLogger {
+  debug: (scope: string, msg: string, data?: any) => void;
+  info: (scope: string, msg: string, data?: any) => void;
+  warn: (scope: string, msg: string, data?: any) => void;
+  error: (scope: string, msg: string, data?: any) => void;
+}
 
-const defaultTime = {
+export interface OrchestrationTime {
+  now: () => number;
+}
+
+export interface OrchestrationRuntimeDeps {
+  logger: OrchestrationLogger;
+  time: OrchestrationTime;
+}
+
+const defaultTime: OrchestrationTime = {
   now: () => Date.now(),
 };
 
 /**
  * Create orchestration runtime deps with production defaults.
- *
- * @param {Partial<OrchestrationRuntimeDeps>} [overrides]
- * @returns {OrchestrationRuntimeDeps}
  */
-export function createOrchestrationDeps(overrides = {}) {
+export function createOrchestrationDeps(
+  overrides: Partial<OrchestrationRuntimeDeps> = {}
+): OrchestrationRuntimeDeps {
   return {
     logger: overrides.logger ?? logger,
     time: {

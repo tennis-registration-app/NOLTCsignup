@@ -1,24 +1,22 @@
 /**
  * Court Change Orchestrator
  * Moved from App.jsx
- *
- * DEPENDENCY CHECKLIST (closure variables needed):
- * Reads:
- *   - canChangeCourt
- *   - justAssignedCourt
- *   - replacedGroup
- *
- * Calls (setters):
- *   - setOriginalCourtData
- *   - setShowSuccess
- *   - setIsChangingCourt
- *   - setWasOvertimeCourt
- *   - setCurrentScreen
- *
- * Returns: void (same as original)
  */
 
-export function changeCourtOrchestrated(deps) {
+export interface CourtChangeDeps {
+  // Read values
+  canChangeCourt: boolean;
+  justAssignedCourt: number | null;
+  replacedGroup: { players: any[]; endTime: any } | null;
+  // Setters
+  setOriginalCourtData: (data: any) => void;
+  setShowSuccess: (show: boolean) => void;
+  setIsChangingCourt: (changing: boolean) => void;
+  setWasOvertimeCourt: (wasOvertime: boolean) => void;
+  setCurrentScreen: (screen: string, reason: string) => void;
+}
+
+export function changeCourtOrchestrated(deps: CourtChangeDeps): void {
   const {
     // Read values
     canChangeCourt,
