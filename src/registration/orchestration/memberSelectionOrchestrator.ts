@@ -18,6 +18,7 @@ import type {
   GroupPlayer,
   AutocompleteSuggestion,
   RegistrationUiState,
+  DomainMember,
 } from '../../types/appTypes.js';
 
 export interface SuggestionClickDeps {
@@ -196,7 +197,7 @@ export async function handleSuggestionClickOrchestrated(
         const freshMemberData = await backend.directory.getMembersByAccount(
           suggestion.memberNumber
         );
-        const freshMember = freshMemberData?.find((m: any) => m.id === suggestion.member.id);
+        const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
         // Primary: camelCase (normalized). Fallback: snake_case (raw API, pre-normalization safety net)
         currentStreak = freshMember?.unclearedStreak || (freshMember as unknown as Record<string, unknown>)?.uncleared_streak as number || 0;
         logger.debug('MemberSelection', 'Fresh member data', freshMember);
@@ -334,7 +335,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(
       // Domain: entry.group.players
       const players = firstWaitlistEntry.group?.players || [];
       setCurrentGroup(
-        players.map((p: any) => ({
+        players.map((p: DomainMember) => ({
           id: p.memberId,
           name: p.displayName || 'Unknown',
           memberNumber: findMemberNumber(p.memberId),

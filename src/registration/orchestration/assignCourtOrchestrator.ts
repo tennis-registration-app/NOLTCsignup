@@ -26,6 +26,7 @@ import type {
   DisplacementInfo,
   OriginalCourtData,
   CourtBlockStatusResult,
+  AssignCourtResponse,
 } from '../../types/appTypes.js';
 
 export interface AssignCourtState {
@@ -286,7 +287,7 @@ export async function assignCourtToGroupOrchestrated(
 
       // Update currentGroup with participant details for ball purchases
       if (result.session?.participantDetails) {
-        const groupFromWaitlist = result.session.participantDetails.map((p: any) => ({
+        const groupFromWaitlist = result.session.participantDetails.map((p) => ({
           id: p.memberId,
           memberNumber: p.memberId,
           name: p.name,
@@ -325,10 +326,10 @@ export async function assignCourtToGroupOrchestrated(
 
       // EARLY-EXIT: waitlist flow complete — success screen shown
       return;
-    } catch (error: any) {
+    } catch (error: unknown) {
       getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       actions.setCurrentWaitlistEntryId(null);
-      toast(error.message || 'Failed to assign court from waitlist', {
+      toast(error instanceof Error ? error.message : 'Failed to assign court from waitlist', {
         type: 'error',
       });
       // FEEDBACK: toast provides user feedback above
@@ -365,7 +366,7 @@ export async function assignCourtToGroupOrchestrated(
   );
 
   actions.setIsAssigning(true);
-  let result: any;
+  let result: AssignCourtResponse;
   try {
     result = await services.backend.commands.assignCourtWithPlayers({
       courtId: court.id,
@@ -379,14 +380,14 @@ export async function assignCourtToGroupOrchestrated(
       `[T+${apiDuration}ms] Court assigned result`,
       result
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     const apiDuration = Math.round(performance.now() - assignStartTime);
     getRuntimeDeps().logger.error(
       'AssignCourt',
       `[T+${apiDuration}ms] assignCourtWithPlayers threw error`,
       error
     );
-    toast(error.message || 'Failed to assign court. Please try again.', {
+    toast(error instanceof Error ? error.message : 'Failed to assign court. Please try again.', {
       type: 'error',
     });
     actions.setIsAssigning(false);

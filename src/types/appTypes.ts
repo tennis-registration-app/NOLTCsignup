@@ -144,6 +144,19 @@ export interface CommandResponse {
   serverNow?: string;
 }
 
+/** Extended response from assignCourtWithPlayers. Evidence: assignCourtOrchestrator.ts usage */
+export interface AssignCourtResponse extends CommandResponse {
+  session?: {
+    id?: string;
+    scheduled_end_at?: string;
+    scheduledEndAt?: string;
+  };
+  displacement?: DisplacementInfo;
+  isTimeLimited?: boolean;
+  isInheritedEndTime?: boolean;
+  timeLimitReason?: string | null;
+}
+
 /** Directory member (normalized). Evidence: TennisDirectory._normalizeMember */
 export interface DirectoryMember {
   id: string;
@@ -193,7 +206,7 @@ export interface TennisBackendShape {
     // Evidence: TennisCommands.js:238 — returns CommandResponse & { transaction? }
     purchaseBalls: (input: { sessionId: string; accountId: string; splitBalls?: boolean; splitAccountIds?: string[] | null; idempotencyKey?: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:456 — resolves players, calls assignCourt
-    assignCourtWithPlayers: (input: { courtId: string; players: GroupPlayer[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
+    assignCourtWithPlayers: (input: { courtId: string; players: GroupPlayer[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<AssignCourtResponse>;
     // Evidence: TennisCommands.js:526 — resolves players, calls joinWaitlist
     joinWaitlistWithPlayers: (input: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number; data?: { waitlist?: { id?: string; position?: number } } }>;
     // Evidence: TennisCommands.js:560 — returns CommandResponse
