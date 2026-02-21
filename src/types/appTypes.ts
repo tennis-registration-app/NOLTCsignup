@@ -1117,6 +1117,16 @@ export interface OriginalCourtData {
   duration: null;
 }
 
+/**
+ * Mutable variant of court data — courts array accepts OriginalCourtData
+ * for go-back restore (courtPresenter splices saved court data back in).
+ * Used only where court slot mutation is needed; read-only consumers use
+ * RegistrationUiState['data'] which has courts: DomainCourt[].
+ */
+export type CourtDataMutable = Omit<RegistrationUiState['data'], 'courts'> & {
+  courts: (DomainCourt | OriginalCourtData)[];
+};
+
 /** Court selection result from computeRegistrationCourtSelection. Evidence: overtimeEligibility.js */
 export interface CourtSelectionResult {
   showingOvertimeCourts: boolean;

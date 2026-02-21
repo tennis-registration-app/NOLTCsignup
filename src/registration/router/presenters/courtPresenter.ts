@@ -7,7 +7,7 @@
  * Extracted from CourtRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, Handlers } from '../../../types/appTypes.js';
+import type { AppState, CourtDataMutable, Handlers } from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger.js';
 
 export interface CourtModelComputed {
@@ -145,9 +145,8 @@ export function buildCourtActions(
       if (isChangingCourt && justAssignedCourt && originalCourtData) {
         try {
           const goBackData = getCourtData();
-          // Restore original court data — OriginalCourtData is intentionally stored
-          // into a DomainCourt slot for go-back restore (runtime accepts mixed shapes)
-          (goBackData.courts as unknown[])[justAssignedCourt - 1] = originalCourtData;
+          // CourtDataMutable widens courts to accept OriginalCourtData for go-back restore
+          (goBackData as CourtDataMutable).courts[justAssignedCourt - 1] = originalCourtData;
           saveCourtData(goBackData);
           setOriginalCourtData(null);
         } catch (error) {
