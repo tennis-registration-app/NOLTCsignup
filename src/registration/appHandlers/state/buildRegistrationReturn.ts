@@ -5,10 +5,49 @@
  *
  * Assembles the return object for useRegistrationAppState.
  * Accepts grouped module objects instead of 150+ individual params.
- * Return shape is unchanged.
- *
- * @returns {any} // TODO: align with AppState typedef in types/appTypes.js
+ * Return shape is unchanged — matches AppState interface.
  */
+
+import type { AppState } from '../../../types/appTypes.js';
+
+export interface BuildRegistrationReturnParams {
+  // Module objects
+  ui: any;
+  domain: any;
+  runtime: any;
+  _dataLayer: any;
+  helpers: any;
+  derived: any;
+  timeout: any;
+
+  // Services
+  backend: any;
+  dataStore: any;
+
+  // Constants and config
+  CONSTANTS: any;
+  TENNIS_CONFIG: any;
+  API_CONFIG: any;
+  TennisBusinessLogic: any;
+  dbg: Function;
+  DEBUG: boolean;
+
+  // Standalone functions
+  getCourtBlockStatus: Function;
+  computeRegistrationCourtSelection: Function;
+
+  // Orchestrators
+  assignCourtToGroupOrchestrated: Function;
+  sendGroupToWaitlistOrchestrated: Function;
+  handleSuggestionClickOrchestrated: Function;
+  handleAddPlayerSuggestionClickOrchestrated: Function;
+  changeCourtOrchestrated: Function;
+  resetFormOrchestrated: Function;
+
+  // Validation
+  validateGroupCompat: Function;
+}
+
 export function buildRegistrationReturn({
   // Module objects
   ui,
@@ -45,7 +84,7 @@ export function buildRegistrationReturn({
 
   // Validation
   validateGroupCompat,
-}) {
+}: BuildRegistrationReturnParams): AppState {
   return {
     // Core state
     state: {

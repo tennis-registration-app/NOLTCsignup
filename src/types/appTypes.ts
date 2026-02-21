@@ -12,8 +12,8 @@
 
 // ============================================
 // APP STATE — Canonical Shape
-// Assembled by buildRegistrationReturn.js from 6 sub-hooks.
-// Partial — covers all presenter-consumed fields. Grows over time.
+// Assembled by buildRegistrationReturn.ts from 6 sub-hooks.
+// Complete — covers all fields returned by buildRegistrationReturn.
 // ============================================
 
 /** Registration App State — Canonical Shape */
@@ -137,24 +137,44 @@ export interface RegistrationUiState {
   isTimeLimited: boolean;
   /** Reason for time limit */
   timeLimitReason: string | null;
+  /** Operating hours data */
+  operatingHours: any;
 }
 
 export interface RegistrationSetters {
+  setData: Function;
+  setCurrentScreen: Function;
+  setAvailableCourts: Function;
+  setWaitlistPosition: Function;
+  setOperatingHours: Function;
+  setShowSuccess: Function;
+  setReplacedGroup: Function;
   setDisplacement: Function;
+  setOriginalCourtData: Function;
+  setCanChangeCourt: Function;
+  setChangeTimeRemaining: Function;
+  setIsTimeLimited: Function;
+  setTimeLimitReason: Function;
+  setShowAddPlayer: Function;
   setIsChangingCourt: Function;
   setWasOvertimeCourt: Function;
-  setShowSuccess: Function;
-  setCurrentScreen: Function;
-  setOriginalCourtData: Function;
+  setLastActivity: Function;
+  setCurrentTime: Function;
+  setCourtToMove: Function;
   setHasWaitlistPriority: Function;
   setCurrentWaitlistEntryId: Function;
-  setCourtToMove: Function;
+  setIsAssigning: Function;
+  setIsJoiningWaitlist: Function;
   setBallPriceInput: Function;
+  setBallPriceCents: Function;
+  setIsUserTyping: Function;
 }
 
 export interface RegistrationRefs {
   /** Timer ref for success screen auto-reset */
   successResetTimerRef: { current: ReturnType<typeof setTimeout> | null };
+  /** Timer ref for typing debounce */
+  typingTimeoutRef: { current: ReturnType<typeof setTimeout> | null };
 }
 
 export interface DerivedState {
@@ -178,6 +198,8 @@ export interface DerivedState {
   passThroughEntry: any;
   /** Pass-through entry data */
   passThroughEntryData: any;
+  /** Member database lookup */
+  memberDatabase: any;
 }
 
 export interface HelperFunctions {
@@ -203,6 +225,8 @@ export interface AlertState {
   showAlert: boolean;
   /** Alert text */
   alertMessage: string;
+  setShowAlert: Function;
+  setAlertMessage: Function;
   /** Show alert with message */
   showAlertMessage: Function;
 }
@@ -214,6 +238,8 @@ export interface AdminPriceFeedback {
   showPriceSuccess: boolean;
   setPriceError: Function;
   setShowPriceSuccess: Function;
+  /** Show success with auto-clear */
+  showPriceSuccessWithClear: Function;
 }
 
 export interface GuestCounterHook {
@@ -246,6 +272,9 @@ export interface SearchState {
   getAutocompleteSuggestions: Function;
   setSearchInput: Function;
   setShowSuggestions: Function;
+  setAddPlayerSearch: Function;
+  setShowAddPlayerSuggestions: Function;
+  setApiMembers: Function;
   handleGroupSearchChange: Function;
   handleGroupSearchFocus: Function;
   handleAddPlayerSearchChange: Function;
@@ -255,10 +284,16 @@ export interface SearchState {
 export interface CourtAssignmentState {
   /** Most recently assigned court number */
   justAssignedCourt: number | null;
+  setJustAssignedCourt: Function;
   /** Current session ID */
   assignedSessionId: string | null;
+  setAssignedSessionId: Function;
   /** Session end time ISO string */
   assignedEndTime: string | null;
+  setAssignedEndTime: Function;
+  /** Court has been assigned */
+  hasAssignedCourt: boolean;
+  setHasAssignedCourt: Function;
 }
 
 export interface ClearCourtFlow {
@@ -282,10 +317,19 @@ export interface MobileState {
   mobileCountdown: number | null;
   /** Location check in progress */
   checkingLocation: boolean;
+  /** Location token */
+  locationToken: string | null;
   /** QR scanner modal visible */
   showQRScanner: boolean;
   /** GPS failure prompt visible */
   gpsFailedPrompt: boolean;
+  setMobileFlow: Function;
+  setPreselectedCourt: Function;
+  setMobileMode: Function;
+  setCheckingLocation: Function;
+  setLocationToken: Function;
+  setShowQRScanner: Function;
+  setGpsFailedPrompt: Function;
   /** QR scan result handler */
   onQRScanToken: Function;
   /** QR scanner close handler */
@@ -315,6 +359,7 @@ export interface BlockAdminState {
   blockingInProgress: boolean;
   /** Minutes until block warning */
   blockWarningMinutes: number | null;
+  setBlockWarningMinutes: Function;
   /** Get block status for a court */
   getCourtBlockStatus: Function;
   setShowBlockModal: Function;
@@ -348,6 +393,11 @@ export interface GroupGuestState {
   /** Sponsor validation error */
   showSponsorError: boolean;
   setCurrentGroup: Function;
+  setGuestName: Function;
+  setGuestSponsor: Function;
+  setShowGuestForm: Function;
+  setShowGuestNameError: Function;
+  setShowSponsorError: Function;
   handleRemovePlayer: Function;
   handleSelectSponsor: Function;
   handleCancelGuest: Function;
@@ -356,8 +406,10 @@ export interface GroupGuestState {
 export interface StreakState {
   /** Current streak data */
   registrantStreak: any;
+  setRegistrantStreak: Function;
   /** Streak modal visible */
   showStreakModal: boolean;
+  setShowStreakModal: Function;
   /** Streak acknowledged by user */
   streakAcknowledged: boolean;
   setStreakAcknowledged: Function;
