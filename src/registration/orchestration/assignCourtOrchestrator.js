@@ -1,5 +1,6 @@
 import { logger } from '../../lib/logger.js';
 import { createOrchestrationDeps } from './deps/index.js';
+import { durationForGroupSize } from '../../lib/dateUtils.js';
 import {
   guardNotAssigning,
   guardOperatingHours,
@@ -7,7 +8,7 @@ import {
   guardGroup,
   guardGroupCompat,
 } from './helpers/index.js';
-import { getTennisUI } from '../../platform/windowBridge.js';
+import { toast } from '../../shared/utils/toast.js';
 
 /**
  * Assign Court Orchestrator
@@ -104,7 +105,7 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!hoursCheck.ok) {
     if (hoursCheck.ui?.action === 'toast') {
-      getTennisUI()?.toast(...hoursCheck.ui.args);
+      toast(/** @type {string} */ (hoursCheck.ui.args[0]), hoursCheck.ui.args[1]);
     }
     // FEEDBACK: toast provides user feedback above
     return;
@@ -170,9 +171,7 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   // Duration determined from group size (including guests)
-  const domain = getRuntimeDeps().platform.getTennisDomain();
-  const Tm = domain?.time || domain?.Time;
-  const duration = Tm.durationForGroupSize(allPlayers.length); // typically 60/90
+  const duration = durationForGroupSize(allPlayers.length); // typically 60/90
 
   // Canonical group object (use allPlayers so guests appear on court)
   const group = { players: allPlayers, guests };
@@ -215,7 +214,7 @@ export async function assignCourtToGroupOrchestrated(
         'Court not found for waitlist assignment',
         courtNumber
       );
-      getTennisUI()?.toast('Court not found. Please refresh and try again.', { type: 'error' });
+      toast('Court not found. Please refresh and try again.', { type: 'error' });
       // FEEDBACK: toast provides user feedback above
       return;
     }
@@ -234,7 +233,7 @@ export async function assignCourtToGroupOrchestrated(
       if (!result.ok) {
         // Handle "Court occupied" race condition
         if (result.code === 'COURT_OCCUPIED') {
-          getTennisUI()?.toast('This court was just taken. Refreshing...', { type: 'warning' });
+          toast('This court was just taken. Refreshing...', { type: 'warning' });
           actions.setCurrentWaitlistEntryId(null);
           await services.backend.queries.refresh();
           // FEEDBACK: toast provides user feedback above
@@ -246,7 +245,7 @@ export async function assignCourtToGroupOrchestrated(
           // FEEDBACK: GPS prompt modal provides user feedback
           return;
         }
-        getTennisUI()?.toast(result.message || 'Failed to assign court from waitlist', {
+        toast(result.message || 'Failed to assign court from waitlist', {
           type: 'error',
         });
         actions.setCurrentWaitlistEntryId(null);
@@ -292,12 +291,6 @@ export async function assignCourtToGroupOrchestrated(
       actions.setCanChangeCourt(false); // Waitlist groups typically don't get court change option
       actions.setShowSuccess(true);
 
-      // Mobile: trigger success signal
-      const uiPlatform = getRuntimeDeps().platform.getUI();
-      if (uiPlatform?.__mobileSendSuccess__) {
-        uiPlatform.__mobileSendSuccess__();
-      }
-
       // Auto-reset timer
       if (!state.mobileFlow) {
         services.clearSuccessResetTimer();
@@ -315,7 +308,7 @@ export async function assignCourtToGroupOrchestrated(
     } catch (error) {
       getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       actions.setCurrentWaitlistEntryId(null);
-      getTennisUI()?.toast(error.message || 'Failed to assign court from waitlist', {
+      toast(error.message || 'Failed to assign court from waitlist', {
         type: 'error',
       });
       // FEEDBACK: toast provides user feedback above
@@ -327,7 +320,7 @@ export async function assignCourtToGroupOrchestrated(
   const court = state.courts.find((c) => c.number === courtNumber);
   if (!court) {
     getRuntimeDeps().logger.error('AssignCourt', 'Court not found for number', courtNumber);
-    getTennisUI()?.toast('Court not found. Please refresh and try again.', { type: 'error' });
+    toast('Court not found. Please refresh and try again.', { type: 'error' });
     // FEEDBACK: toast provides user feedback above
     return;
   }
@@ -373,7 +366,7 @@ export async function assignCourtToGroupOrchestrated(
       `[T+${apiDuration}ms] assignCourtWithPlayers threw error`,
       error
     );
-    getTennisUI()?.toast(error.message || 'Failed to assign court. Please try again.', {
+    toast(error.message || 'Failed to assign court. Please try again.', {
       type: 'error',
     });
     actions.setIsAssigning(false);
@@ -388,7 +381,7 @@ export async function assignCourtToGroupOrchestrated(
     });
     // Handle "Court occupied" race condition
     if (result.code === 'COURT_OCCUPIED') {
-      getTennisUI()?.toast('This court was just taken. Refreshing...', { type: 'warning' });
+      toast('This court was just taken. Refreshing...', { type: 'warning' });
       // Board subscription will auto-refresh, but force immediate refresh
       await services.backend.queries.refresh();
       actions.setIsAssigning(false);
@@ -402,7 +395,7 @@ export async function assignCourtToGroupOrchestrated(
       // FEEDBACK: GPS prompt modal provides user feedback
       return;
     }
-    getTennisUI()?.toast(result.message || 'Failed to assign court', { type: 'error' });
+    toast(result.message || 'Failed to assign court', { type: 'error' });
     actions.setIsAssigning(false);
     // FEEDBACK: toast provides user feedback above
     return;
@@ -455,14 +448,6 @@ export async function assignCourtToGroupOrchestrated(
     'AssignCourt',
     `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`
   );
-
-  // Mobile: trigger success signal
-  const uiNs = getRuntimeDeps().platform.getUI();
-  services.dbg('Registration: Checking mobile success signal...', !!uiNs?.__mobileSendSuccess__);
-  if (uiNs?.__mobileSendSuccess__) {
-    services.dbg('Registration: Calling mobile success signal');
-    uiNs.__mobileSendSuccess__();
-  }
 
   // Auto-reset timer for court assignment (same as waitlist)
   if (!state.mobileFlow) {

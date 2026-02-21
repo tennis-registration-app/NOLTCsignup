@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
 import { getCache, setCache } from '../../../platform/prefsStorage.js';
-import { getTennisUI } from '../../../platform/windowBridge.js';
+import { toast } from '../../../shared/utils/toast.js';
 import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 
 /**
@@ -123,7 +123,7 @@ export function useGuestHandlers({
 
     // Check for duplicate in current group
     if (!guardAgainstGroupDuplicate(guestName.trim(), currentGroup)) {
-      getTennisUI()?.toast(ALREADY_IN_GROUP(guestName.trim()), { type: 'warning' });
+      toast(ALREADY_IN_GROUP(guestName.trim()), { type: 'warning' });
       setShowGuestForm(false);
       setShowAddPlayer(false);
       setGuestName('');

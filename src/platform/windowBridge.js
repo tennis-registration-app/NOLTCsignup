@@ -87,14 +87,6 @@ export function getTennisDomain() {
 }
 
 /**
- * Get Tennis.Commands
- * @returns {Object|undefined}
- */
-export function getTennisCommands() {
-  return window.Tennis?.Commands;
-}
-
-/**
  * Get Tennis.DataStore
  * @returns {Object|undefined}
  */
@@ -195,15 +187,6 @@ export function isGlobalAvailable(globalName) {
 export function getMobileModal() {
   if (typeof window === 'undefined') return null;
   return window.MobileModal ?? null;
-}
-
-/**
- * Get the UI namespace from window.UI
- * @returns {Object|null} UI namespace or null if not available
- */
-export function getUI() {
-  if (typeof window === 'undefined') return null;
-  return window.UI ?? null;
 }
 
 // =============================================================================

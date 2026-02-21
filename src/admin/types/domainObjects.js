@@ -165,7 +165,7 @@ export function createBlockActions(params = {}) {
  * Injected UI components for block management.
  * These are React components passed as props for composition.
  * Maps to actual props: VisualTimeEntry, MiniCalendar, EventCalendarEnhanced,
- * MonthView, EventSummary, HoverCard, QuickActionsMenu, Tennis
+ * MonthView, EventSummary, HoverCard, QuickActionsMenu
  *
  * @typedef {Object} BlockComponents
  * @property {ComponentType|undefined} VisualTimeEntry - Time range picker (from VisualTimeEntry)
@@ -175,7 +175,6 @@ export function createBlockActions(params = {}) {
  * @property {ComponentType|undefined} EventSummary - Event summary panel (from EventSummary)
  * @property {ComponentType|undefined} HoverCard - Hover preview (from HoverCard)
  * @property {ComponentType|undefined} QuickActionsMenu - Context menu (from QuickActionsMenu)
- * @property {Object|undefined} Tennis - Global Tennis namespace (from Tennis)
  */
 
 /**
@@ -188,7 +187,6 @@ export function createBlockActions(params = {}) {
  * @param {ComponentType} [params.EventSummary] - Event summary
  * @param {ComponentType} [params.HoverCard] - Hover card
  * @param {ComponentType} [params.QuickActionsMenu] - Context menu
- * @param {Object} [params.Tennis] - Global Tennis namespace
  * @returns {BlockComponents}
  */
 export function createBlockComponents(params = {}) {
@@ -200,7 +198,6 @@ export function createBlockComponents(params = {}) {
     EventSummary,
     HoverCard,
     QuickActionsMenu,
-    Tennis,
   } = params;
   return {
     VisualTimeEntry,
@@ -210,7 +207,6 @@ export function createBlockComponents(params = {}) {
     EventSummary,
     HoverCard,
     QuickActionsMenu,
-    Tennis,
   };
 }
 

@@ -79,7 +79,6 @@ const CompleteBlockManagerEnhanced = ({
     EventSummary,
     HoverCard,
     QuickActionsMenu,
-    Tennis,
   } = components;
   const { backend } = services;
 
@@ -183,7 +182,6 @@ const CompleteBlockManagerEnhanced = ({
           EventSummary={EventSummary}
           HoverCard={HoverCard}
           QuickActionsMenu={QuickActionsMenu}
-          Tennis={Tennis}
           onEditEvent={(blockToEdit) => populateFromBlock(blockToEdit)}
           onDuplicateEvent={(event) => populateFromBlock(event, { duplicate: true })}
         />

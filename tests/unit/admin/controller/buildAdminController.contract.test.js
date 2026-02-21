@@ -170,7 +170,6 @@ describe('buildAdminController contract', () => {
             "MiniCalendar",
             "MonthView",
             "QuickActionsMenu",
-            "Tennis",
             "VisualTimeEntry",
           ],
           "model": [

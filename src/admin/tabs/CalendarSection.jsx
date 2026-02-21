@@ -23,7 +23,6 @@ export function CalendarSection({ calendarModel, calendarActions, services, comp
     HoverCard,
     QuickActionsMenu,
     EventCalendar: EventCalendarEnhanced,
-    Tennis,
   } = components;
 
   return (
@@ -39,7 +38,6 @@ export function CalendarSection({ calendarModel, calendarActions, services, comp
       EventSummary={EventSummary}
       HoverCard={HoverCard}
       QuickActionsMenu={QuickActionsMenu}
-      Tennis={Tennis}
     />
   );
 }

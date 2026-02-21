@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../lib/backend/index.js';
 import { logger } from '../lib/logger.js';
-import { getTennis, getTennisEvents } from '../platform/windowBridge.js';
+import { legacyEvents as Events } from '../platform/attachLegacyEvents.js';
 import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
 import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext.jsx';
@@ -100,8 +100,7 @@ import { readDataSafe } from '../lib/storage.js';
 import { TennisCourtDataStore } from '../lib/TennisCourtDataStore.js';
 import { TENNIS_CONFIG } from '../lib/config.js';
 
-// Shared domain modules
-const Events = getTennisEvents();
+// Shared domain modules — Events imported directly from attachLegacyEvents.js
 
 // ---- Core constants (declared only; not replacing existing usages) ----
 
@@ -326,7 +325,6 @@ const AdminPanelV2 = ({ onExit }) => {
           EventSummary,
           HoverCard,
           QuickActionsMenu,
-          Tennis: getTennis(),
           AIAssistant,
           AIAssistantAdmin,
         },

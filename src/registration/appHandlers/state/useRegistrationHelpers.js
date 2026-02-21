@@ -8,7 +8,9 @@
 
 // Import Domain engagement helpers
 import { findEngagementByMemberId, getEngagementMessage } from '../../../lib/domain/engagement.js';
-import { getTennisUI, getTennisDomain } from '../../../platform/windowBridge.js';
+import { normalizeName } from '../../../tennis/domain/roster.js';
+import { validateGroup as domainValidateGroup } from '../../../tennis/domain/waitlist.js';
+import { toast } from '../../../shared/utils/toast.js';
 import { logger } from '../../../lib/logger.js';
 
 // Debug utilities
@@ -67,15 +69,6 @@ export function useRegistrationHelpers({
     return clearableCourts;
   }
 
-  // Duplicate guard helpers
-  function __normalizeName(n) {
-    return (n?.name ?? n?.fullName ?? n?.playerName ?? n ?? '')
-      .toString()
-      .trim()
-      .replace(/\s+/g, ' ')
-      .toLowerCase();
-  }
-
   function guardAddPlayerEarly(getBoardData, player) {
     const memberId = player?.memberId || player?.id;
     const board = getBoardData() || {};
@@ -101,25 +94,21 @@ export function useRegistrationHelpers({
       }
     }
 
-    const tennisUI = getTennisUI();
-    if (typeof window !== 'undefined' && tennisUI?.toast) {
-      tennisUI.toast(getEngagementMessage(engagement));
+    if (typeof window !== 'undefined') {
+      toast(getEngagementMessage(engagement));
     }
     return false;
   }
 
   function guardAgainstGroupDuplicate(player, playersArray) {
-    const R = typeof window !== 'undefined' ? getTennisDomain()?.roster : null;
-    const nm = R?.normalizeName
-      ? R.normalizeName(player?.name || player || '')
-      : __normalizeName(player);
+    const nm = normalizeName(player?.name || player || '');
     const pid = player?.memberId || null;
 
     return !playersArray.some((p) => {
       if (pid && p?.memberId) {
         return p.memberId === pid;
       }
-      const pName = R?.normalizeName ? R.normalizeName(p?.name || p || '') : __normalizeName(p);
+      const pName = normalizeName(p?.name || p || '');
       return pName === nm;
     });
   }
@@ -136,8 +125,6 @@ export function useRegistrationHelpers({
 
 // --- Robust validation wrapper: always returns { ok, errors[] }
 export function validateGroupCompat(players, guests) {
-  const domain = typeof window !== 'undefined' ? getTennisDomain() : null;
-  const W = domain?.waitlist || domain?.Waitlist || null;
   const norm = (ok, errs) => ({
     ok: !!ok,
     errors: Array.isArray(errs) ? errs : errs ? [errs] : [],
@@ -145,8 +132,8 @@ export function validateGroupCompat(players, guests) {
 
   // 1) Prefer domain-level validator if available
   try {
-    if (W && typeof W.validateGroup === 'function') {
-      const out = W.validateGroup({ players, guests });
+    if (typeof domainValidateGroup === 'function') {
+      const out = domainValidateGroup(/** @type {any} */ ({ players, guests }));
       if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
         return norm(out.ok, out.errors);
       }

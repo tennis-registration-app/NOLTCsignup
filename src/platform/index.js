@@ -14,7 +14,6 @@ export {
   ensureTennisNamespace,
   getTennis,
   getTennisDomain,
-  getTennisCommands,
   getTennisDataStore,
   getTennisNamespaceConfig,
   getTennisStorage,

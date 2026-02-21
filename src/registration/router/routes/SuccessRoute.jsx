@@ -5,8 +5,8 @@ import { AlertDisplay, ToastHost } from '../../components';
 import { logger } from '../../../lib/logger.js';
 import { buildSuccessModel, buildSuccessActions } from '../presenters';
 
-// Platform bridge
-import { getTennisDomain, getTennisNamespaceConfig } from '../../../platform';
+import { simulateWaitlistEstimates } from '../../../tennis/domain/waitlist.js';
+import { TENNIS_CONFIG } from '../../../lib/config.js';
 
 /**
  * SuccessRoute
@@ -45,47 +45,39 @@ export function SuccessRoute({ app, handlers }) {
 
     // Calculate estimated wait time using domain simulation function
     try {
-      const Domain = getTennisDomain();
-      const W = Domain?.Waitlist;
+      const now = new Date();
 
-      if (W?.simulateWaitlistEstimates) {
-        const now = new Date();
-
-        // Build blocks array from court-level blocks (active) and upcomingBlocks (future)
-        const activeBlocks = courtData.courts
-          .filter((c) => c?.block)
-          .map((c) => ({
-            courtNumber: c.number,
-            startTime: c.block.startsAt || c.block.startTime,
-            endTime: c.block.endsAt || c.block.endTime,
-            isWetCourt: (c.block.reason || c.block.title || '').toLowerCase().includes('wet'),
-          }));
-        const upcomingBlocks = (courtData.upcomingBlocks || []).map((b) => ({
-          courtNumber: b.courtNumber,
-          startTime: b.startTime || b.startsAt,
-          endTime: b.endTime || b.endsAt,
-          isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
+      // Build blocks array from court-level blocks (active) and upcomingBlocks (future)
+      const activeBlocks = courtData.courts
+        .filter((c) => c?.block)
+        .map((c) => ({
+          courtNumber: c.number,
+          startTime: c.block.startsAt || c.block.startTime,
+          endTime: c.block.endsAt || c.block.endTime,
+          isWetCourt: (c.block.reason || c.block.title || '').toLowerCase().includes('wet'),
         }));
-        const allBlocks = [...activeBlocks, ...upcomingBlocks];
+      const upcomingBlocks = (courtData.upcomingBlocks || []).map((b) => ({
+        courtNumber: b.courtNumber,
+        startTime: b.startTime || b.startsAt,
+        endTime: b.endTime || b.endsAt,
+        isWetCourt: (b.reason || b.title || '').toLowerCase().includes('wet'),
+      }));
+      const allBlocks = [...activeBlocks, ...upcomingBlocks];
 
-        // Build a minimal waitlist up to current position for simulation
-        const waitlistUpToPosition = (courtData.waitlist || []).slice(0, position);
+      // Build a minimal waitlist up to current position for simulation
+      const waitlistUpToPosition = (courtData.waitlist || []).slice(0, position);
 
-        // Calculate ETA using domain simulation function
-        const avgGame = getTennisNamespaceConfig()?.Timing?.AVG_GAME || CONSTANTS.AVG_GAME_TIME_MIN;
-        const etas = W.simulateWaitlistEstimates({
-          courts: courtData.courts || [],
-          waitlist: waitlistUpToPosition,
-          blocks: allBlocks,
-          now,
-          avgGameMinutes: avgGame,
-        });
-        // Get the last position's estimate (our position)
-        estimatedWait = etas[position - 1] || 0;
-      } else {
-        // Domain function not available - fallback to simple calculation
-        estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;
-      }
+      // Calculate ETA using domain simulation function
+      const avgGame = TENNIS_CONFIG.TIMING.AVG_GAME_TIME_MIN;
+      const etas = simulateWaitlistEstimates({
+        courts: courtData.courts || [],
+        waitlist: waitlistUpToPosition,
+        blocks: allBlocks,
+        now,
+        avgGameMinutes: avgGame,
+      });
+      // Get the last position's estimate (our position)
+      estimatedWait = etas[position - 1] || 0;
     } catch (e) {
       logger.error('SuccessRoute', 'Error calculating wait time', e);
       estimatedWait = position * CONSTANTS.AVG_GAME_TIME_MIN;

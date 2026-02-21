@@ -10,7 +10,8 @@ import { API_CONFIG } from '../../lib/apiConfig.js';
 import { logger } from '../../lib/logger.js';
 
 // Platform bridge for window global access
-import { getTennisDataStore, getTennisUI } from '../../platform/windowBridge.js';
+import { toast as _toast } from '../../shared/utils/toast.js';
+import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore.js';
 
 // TennisBackend interface layer
 import { createBackend } from '../../lib/backend/index.js';
@@ -69,7 +70,7 @@ const dbg = (/** @type {any[]} */ ...args) => {
 // DataStore reference
 let dataStore = null;
 if (typeof window !== 'undefined') {
-  dataStore = getTennisDataStore() || null;
+  dataStore = _getDataStore() || null;
 }
 
 // TennisBackend singleton instance
@@ -180,7 +181,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     showSuccess,
     justAssignedCourt: null, // Not available yet at this point
     isMobile: API_CONFIG.IS_MOBILE,
-    toast: typeof window !== 'undefined' ? getTennisUI()?.toast : undefined,
+    toast: typeof window !== 'undefined' ? _toast : undefined,
     markUserTyping,
     getCourtData,
     showAlertMessage: null, // Will use internal showAlertMessage

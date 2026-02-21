@@ -100,10 +100,6 @@ export function buildCourtActions(app, handlers, computed) {
     onJoinWaitlist: async () => {
       await sendGroupToWaitlist(currentGroup);
       setShowSuccess(true);
-      // Mobile: trigger success signal
-      if (window.UI?.__mobileSendSuccess__) {
-        window.UI.__mobileSendSuccess__();
-      }
       // Don't auto-reset in mobile flow - let the overlay handle timing
       if (!mobileFlow) {
         clearSuccessResetTimer();

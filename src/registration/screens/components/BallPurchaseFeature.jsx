@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { Check } from '../../components';
 
-// Platform bridge - same path as SuccessScreen uses (../../platform from screens/, so ../../../platform from components/)
-import { getTennisDataStore } from '../../../platform';
+// Direct ESM import for DataStore
+import { getDataStore } from '../../../lib/TennisCourtDataStore.js';
 import { getCache, setCache } from '../../../platform/prefsStorage.js';
 import { logger } from '../../../lib/logger.js';
 
@@ -227,7 +227,7 @@ function BallPurchaseFeature({ data, handlers }) {
 
       // Get existing purchases and save
       let existingPurchases = [];
-      const DataStore = getTennisDataStore();
+      const DataStore = getDataStore();
       if (DataStore) {
         existingPurchases = (await DataStore.get('tennisBallPurchases')) || [];
         existingPurchases.push(purchase);

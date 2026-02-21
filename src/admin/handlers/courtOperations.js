@@ -3,7 +3,7 @@
  * Extracted from AdminPanelV2 for maintainability.
  * These are pure handler logic - no React hooks or state.
  */
-const Tennis = window.Tennis;
+import { toast } from '../../shared/utils/toast.js';
 
 export async function clearCourtOp(ctx, courtNumber) {
   const { courts, backend, showNotification, TENNIS_CONFIG } = ctx;
@@ -60,12 +60,12 @@ export async function moveCourtOp(ctx, from, to) {
     const toCourt = board?.courts?.find((c) => c.number === t);
 
     if (!fromCourt?.id) {
-      Tennis?.UI?.toast?.(`Court ${f} not found`, { type: 'error' });
+      toast(`Court ${f} not found`, { type: 'error' });
       return { success: false, error: 'Source court not found' };
     }
 
     if (!toCourt?.id) {
-      Tennis?.UI?.toast?.(`Court ${t} not found`, { type: 'error' });
+      toast(`Court ${t} not found`, { type: 'error' });
       return { success: false, error: 'Destination court not found' };
     }
 
@@ -75,11 +75,11 @@ export async function moveCourtOp(ctx, from, to) {
     });
 
     if (!res?.ok) {
-      Tennis?.UI?.toast?.(res?.message || 'Failed to move court', { type: 'error' });
+      toast(res?.message || 'Failed to move court', { type: 'error' });
       return { success: false, error: res?.message };
     }
 
-    Tennis?.UI?.toast?.(`Moved from Court ${f} to Court ${t}`, { type: 'success' });
+    toast(`Moved from Court ${f} to Court ${t}`, { type: 'success' });
 
     // Belt & suspenders: coalescer should refresh, but trigger explicit refresh too.
     window.refreshAdminView?.();
@@ -87,7 +87,7 @@ export async function moveCourtOp(ctx, from, to) {
     return { success: true, from: f, to: t };
   } catch (err) {
     console.error('[moveCourt] Error:', err);
-    Tennis?.UI?.toast?.(err.message || 'Failed to move court', { type: 'error' });
+    toast(err.message || 'Failed to move court', { type: 'error' });
     return { success: false, error: err.message };
   }
 }

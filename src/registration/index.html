@@ -91,14 +91,6 @@
     })();
   </script>
 
-  <!-- Toast bridge (global) -->
-  <script>
-    window.Tennis = window.Tennis || {};
-    window.Tennis.UI = window.Tennis.UI || {};
-    window.Tennis.UI.toast = (msg, opts={}) =>
-      window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg, ...opts }}));
-  </script>
-
   <!-- File protocol warning -->
   <script>
 (function () {

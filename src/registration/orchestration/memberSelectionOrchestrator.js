@@ -5,7 +5,7 @@ import {
   ALREADY_ON_WAITLIST,
   COURT_READY,
 } from '../../shared/constants/toastMessages.js';
-import { getTennisUI } from '../../platform/windowBridge.js';
+import { toast } from '../../shared/utils/toast.js';
 
 /**
  * Member Selection Orchestrators
@@ -76,7 +76,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     const playerStatus = isPlayerAlreadyPlaying(memberId);
     if (playerStatus.isPlaying && playerStatus.location === 'court') {
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      getTennisUI()?.toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber), {
+      toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber), {
         type: 'warning',
       });
       setSearchInput('');
@@ -123,11 +123,11 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
 
     if (hasCourtReady) {
       // Court is available for this waitlist player - direct them to use the CTA button
-      getTennisUI()?.toast(COURT_READY, { type: 'info' });
+      toast(COURT_READY, { type: 'info' });
     } else {
       // Player is on waitlist but no court available yet
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      getTennisUI()?.toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position), {
+      toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position), {
         type: 'warning',
       });
     }
@@ -280,7 +280,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
 
   // Check for duplicate in current group
   if (!guardAgainstGroupDuplicate(enrichedMember, currentGroup)) {
-    getTennisUI()?.toast(ALREADY_IN_GROUP(enrichedMember.name), { type: 'warning' });
+    toast(ALREADY_IN_GROUP(enrichedMember.name), { type: 'warning' });
     setAddPlayerSearch('');
     setShowAddPlayer(false);
     setShowAddPlayerSuggestions(false);

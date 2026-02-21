@@ -31,7 +31,6 @@ const EventCalendarEnhanced = ({
   EventSummary: _EventSummary,
   HoverCard,
   QuickActionsMenu,
-  Tennis: _Tennis,
 }) => {
   const showNotification = useAdminNotification();
   const [viewMode, setViewMode] = useState(defaultView);

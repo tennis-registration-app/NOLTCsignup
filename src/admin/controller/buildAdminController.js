@@ -143,7 +143,6 @@ export function buildAdminController(deps) {
         EventSummary: components.EventSummary,
         HoverCard: components.HoverCard,
         QuickActionsMenu: components.QuickActionsMenu,
-        Tennis: components.Tennis,
       })
     : undefined;
 
@@ -261,7 +260,6 @@ export const CONTROLLER_KEYS = {
       'EventSummary',
       'HoverCard',
       'QuickActionsMenu',
-      'Tennis',
     ],
   },
   status: {

@@ -5,12 +5,13 @@
  */
 import { useState, useEffect } from 'react';
 import { logger } from '../../lib/logger.js';
-import { getTennis, getTennisUI, getTennisDataStore } from '../../platform/windowBridge.js';
-import { getPref } from '../../platform/prefsStorage.js';
+import { toast } from '../../shared/utils/toast.js';
+import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore.js';
+import { getDeviceId } from '../utils/getDeviceId.js';
 import { TENNIS_CONFIG } from '../../lib/config.js';
 
 // Get dataStore reference
-const getDataStore = () => getTennisDataStore() || window.DataStore;
+const getDataStore = () => _getDataStore();
 
 /** Fire all data-changed events so every listener refreshes. */
 function notifyDataChanged() {
@@ -167,7 +168,7 @@ export function useCourtActions({
         setMovingFrom(null);
       }
     } catch {
-      getTennisUI()?.toast?.('Unexpected error moving court', { type: 'error' });
+      toast('Unexpected error moving court', { type: 'error' });
     }
   };
 
@@ -179,13 +180,13 @@ export function useCourtActions({
   const handleSaveGame = async (updatedGame) => {
     if (!backend?.admin?.updateSession) {
       logger.error('CourtStatusGrid', 'Backend updateSession not available');
-      getTennisUI()?.toast?.('Backend not available', { type: 'error' });
+      toast('Backend not available', { type: 'error' });
       return;
     }
 
     setSavingGame(true);
     try {
-      const deviceId = getTennis()?.getDeviceId?.() || getPref('deviceId');
+      const deviceId = getDeviceId();
 
       const result = await backend.admin.updateSession({
         sessionId: updatedGame.sessionId,
@@ -195,7 +196,7 @@ export function useCourtActions({
       });
 
       if (result.ok) {
-        getTennisUI()?.toast?.('Game updated successfully', { type: 'success' });
+        toast('Game updated successfully', { type: 'success' });
         setEditingGame(null);
         notifyDataChanged();
       } else {
@@ -203,7 +204,7 @@ export function useCourtActions({
       }
     } catch (error) {
       logger.error('CourtStatusGrid', 'Error saving game', error);
-      getTennisUI()?.toast?.(error.message || 'Failed to save game', { type: 'error' });
+      toast(error.message || 'Failed to save game', { type: 'error' });
     } finally {
       setSavingGame(false);
     }

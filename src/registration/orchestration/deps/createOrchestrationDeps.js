@@ -10,7 +10,6 @@
  */
 
 import { logger } from '../../../lib/logger.js';
-import { getTennisDomain, getUI } from '../../../platform/windowBridge.js';
 
 /**
  * @typedef {Object} OrchestrationRuntimeDeps
@@ -19,17 +18,9 @@ import { getTennisDomain, getUI } from '../../../platform/windowBridge.js';
  * @property {(scope: string, msg: string, data?: any) => void} logger.info
  * @property {(scope: string, msg: string, data?: any) => void} logger.warn
  * @property {(scope: string, msg: string, data?: any) => void} logger.error
- * @property {Object} platform
- * @property {() => any} platform.getTennisDomain
- * @property {() => any} platform.getUI
  * @property {Object} time
  * @property {() => number} time.now
  */
-
-const defaultPlatform = {
-  getTennisDomain,
-  getUI,
-};
 
 const defaultTime = {
   now: () => Date.now(),
@@ -44,10 +35,6 @@ const defaultTime = {
 export function createOrchestrationDeps(overrides = {}) {
   return {
     logger: overrides.logger ?? logger,
-    platform: {
-      ...defaultPlatform,
-      ...(overrides.platform ?? {}),
-    },
     time: {
       ...defaultTime,
       ...(overrides.time ?? {}),

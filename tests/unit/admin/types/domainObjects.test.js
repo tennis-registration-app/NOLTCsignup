@@ -209,7 +209,6 @@ describe('domainObjects', () => {
       expect(components.EventSummary).toBeUndefined();
       expect(components.HoverCard).toBeUndefined();
       expect(components.QuickActionsMenu).toBeUndefined();
-      expect(components.Tennis).toBeUndefined();
     });
 
     it('maps input keys to curated field names', () => {
@@ -220,7 +219,6 @@ describe('domainObjects', () => {
       const EventSummary = () => null;
       const HoverCard = () => null;
       const QuickActionsMenu = () => null;
-      const Tennis = { config: {} };
 
       const components = createBlockComponents({
         VisualTimeEntry,
@@ -230,7 +228,6 @@ describe('domainObjects', () => {
         EventSummary,
         HoverCard,
         QuickActionsMenu,
-        Tennis,
       });
 
       expect(components.VisualTimeEntry).toBe(VisualTimeEntry);
@@ -240,7 +237,6 @@ describe('domainObjects', () => {
       expect(components.EventSummary).toBe(EventSummary);
       expect(components.HoverCard).toBe(HoverCard);
       expect(components.QuickActionsMenu).toBe(QuickActionsMenu);
-      expect(components.Tennis).toBe(Tennis);
     });
   });
 

@@ -1,7 +1,13 @@
 import { useCallback } from 'react';
 import { logger } from '../../../lib/logger.js';
 import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
-import { getTennisDomain, getTennisStorage, getTennisUI } from '../../../platform/windowBridge.js';
+import {
+  getSelectableCourtsStrict,
+  getFreeCourtsInfo,
+} from '../../../tennis/domain/availability.js';
+import { toast } from '../../../shared/utils/toast.js';
+import { readJSON, readDataSafe } from '../../../lib/storage.js';
+import { STORAGE } from '../../../lib/constants.js';
 import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
 
 /**
@@ -91,34 +97,26 @@ export function useCourtHandlers({
       excludeCourtNumber = null,
       dataOverride = null
     ) => {
-      const domain = getTennisDomain();
-      const Av = domain?.availability || domain?.Availability;
-      if (!Av?.getSelectableCourtsStrict || !Av?.getFreeCourtsInfo) {
-        logger.warn('CourtHandlers', 'Availability functions not available');
-        return [];
-      }
-
       try {
         // Use API state by default, fall back to localStorage only if state not available
         const courtData = dataOverride || getCourtData();
-        const storage = getTennisStorage();
-        const boardData = courtData?.courts?.length > 0 ? courtData : storage?.readDataSafe();
+        const boardData = courtData?.courts?.length > 0 ? courtData : readDataSafe();
         const now = new Date();
 
         // Get blocks from the board data if available, otherwise localStorage
-        const blocks = courtData?.blocks || storage?.readJSON(storage?.STORAGE?.BLOCKS) || [];
+        const blocks = courtData?.blocks || readJSON(STORAGE.BLOCKS) || [];
         const wetSet = new Set();
 
         let selectable = [];
 
         if (checkWaitlistPriority) {
           // Waitlist priority mode: ONLY show truly free courts (no overtime fallback)
-          const info = Av.getFreeCourtsInfo({ data: boardData, now, blocks, wetSet });
+          const info = getFreeCourtsInfo({ data: boardData, now, blocks, wetSet });
           selectable = info.free || [];
           dbg('Waitlist priority mode - free courts only:', selectable);
         } else {
           // Non-waitlist mode: use standard selectable logic (free first, then overtime fallback)
-          selectable = Av.getSelectableCourtsStrict({ data: boardData, now, blocks, wetSet });
+          selectable = getSelectableCourtsStrict({ data: boardData, now, blocks, wetSet });
           dbg('Standard selectable courts:', selectable);
         }
 
@@ -177,8 +175,7 @@ export function useCourtHandlers({
 
       const res = await clearViaService(courtNumber, clearReason);
       if (!res?.success) {
-        const tennisUI = getTennisUI();
-        tennisUI?.toast(COURT_CLEAR_FAILED, { type: 'error' });
+        toast(COURT_CLEAR_FAILED, { type: 'error' });
         return;
       }
       logger.debug('CourtHandlers', `Court ${courtNumber} cleared successfully`);
@@ -366,18 +363,15 @@ export function useCourtHandlers({
           deferred: true,
         });
         if (res?.ok) {
-          getTennisUI()?.toast?.(
-            'Staying on waitlist — we will notify you when a full court opens',
-            {
-              type: 'success',
-            }
-          );
+          toast('Staying on waitlist — we will notify you when a full court opens', {
+            type: 'success',
+          });
         } else {
-          getTennisUI()?.toast?.(res?.message || 'Failed to defer', { type: 'error' });
+          toast(res?.message || 'Failed to defer', { type: 'error' });
         }
       } catch (err) {
         logger.error('CourtHandlers', 'deferWaitlistEntry failed', err);
-        getTennisUI()?.toast?.('Failed to defer — please try again', { type: 'error' });
+        toast('Failed to defer — please try again', { type: 'error' });
       }
       resetForm();
     },
@@ -448,12 +442,12 @@ export function useCourtHandlers({
       });
 
       if (res?.ok) {
-        getTennisUI()?.toast?.(`Assigned to Court ${availableCourt.number}`, {
+        toast(`Assigned to Court ${availableCourt.number}`, {
           type: 'success',
         });
         showAlertMessage(`Assigned to Court ${availableCourt.number}`);
       } else {
-        getTennisUI()?.toast?.(res?.message || 'Failed assigning next', {
+        toast(res?.message || 'Failed assigning next', {
           type: 'error',
         });
         showAlertMessage(res?.message || 'Failed assigning next');
@@ -469,12 +463,12 @@ export function useCourtHandlers({
     async (group) => {
       try {
         await sendGroupToWaitlist(group, { deferred: true });
-        getTennisUI()?.toast?.("You'll be notified when a full-time court is available", {
+        toast("You'll be notified when a full-time court is available", {
           type: 'success',
         });
       } catch (err) {
         logger.error('CourtHandlers', 'joinWaitlistDeferred failed', err);
-        getTennisUI()?.toast?.('Failed to join waitlist — please try again', {
+        toast('Failed to join waitlist — please try again', {
           type: 'error',
         });
       }
