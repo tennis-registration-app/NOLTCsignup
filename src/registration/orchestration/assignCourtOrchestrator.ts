@@ -14,6 +14,7 @@ import {
   guardGroupCompat,
 } from './helpers/index.js';
 import { toast } from '../../shared/utils/toast.js';
+import type { RegistrationConstants, ApiConfig, TennisBackendShape } from '../../types/appTypes.js';
 
 export interface AssignCourtState {
   isAssigning: boolean;
@@ -23,8 +24,8 @@ export interface AssignCourtState {
   currentGroup: any[];
   courts: any[];
   currentWaitlistEntryId: string | null;
-  CONSTANTS: any;
-  API_CONFIG: any;
+  CONSTANTS: RegistrationConstants;
+  API_CONFIG: ApiConfig;
   successResetTimerRef: { current: ReturnType<typeof setTimeout> | null };
 }
 
@@ -51,7 +52,7 @@ export interface AssignCourtActions {
 }
 
 export interface AssignCourtServices {
-  backend: any;
+  backend: Pick<TennisBackendShape, 'commands' | 'queries'>;
   getCourtBlockStatus: (courtNumber: number) => Promise<any>;
   getMobileGeolocation: () => Promise<any>;
   validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };

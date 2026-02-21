@@ -5,6 +5,7 @@
 
 import { logger } from '../../lib/logger.js';
 import { toast } from '../../shared/utils/toast.js';
+import type { ApiConfig, TennisBackendShape } from '../../types/appTypes.js';
 
 export interface WaitlistDeps {
   // Read values
@@ -16,12 +17,12 @@ export interface WaitlistDeps {
   setWaitlistPosition: (v: number) => void;
   setGpsFailedPrompt: (v: boolean) => void;
   // Services/helpers
-  backend: any;
+  backend: Pick<TennisBackendShape, 'commands'>;
   getMobileGeolocation: () => Promise<any>;
   validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };
   isPlayerAlreadyPlaying: (id: string) => { isPlaying: boolean; location?: string };
   showAlertMessage: (msg: string) => void;
-  API_CONFIG: any;
+  API_CONFIG: ApiConfig;
 }
 
 export interface WaitlistOptions {

@@ -11,6 +11,7 @@ import {
   COURT_READY,
 } from '../../shared/constants/toastMessages.js';
 import { toast } from '../../shared/utils/toast.js';
+import type { RegistrationConstants, TennisBackendShape } from '../../types/appTypes.js';
 
 export interface SuggestionClickDeps {
   // Read values
@@ -25,7 +26,7 @@ export interface SuggestionClickDeps {
   setCurrentGroup: (v: any[]) => void;
   setCurrentScreen: (screen: string, reason: string) => void;
   // Services/helpers
-  backend: any;
+  backend: Pick<TennisBackendShape, 'directory'>;
   fetchFrequentPartners: (memberId: string) => void;
   isPlayerAlreadyPlaying: (id: string) => {
     isPlaying: boolean;
@@ -189,7 +190,8 @@ export async function handleSuggestionClickOrchestrated(
           suggestion.memberNumber
         );
         const freshMember = freshMemberData?.find((m: any) => m.id === suggestion.member.id);
-        currentStreak = freshMember?.unclearedStreak || freshMember?.uncleared_streak || 0;
+        // Primary: camelCase (normalized). Fallback: snake_case (raw API, pre-normalization safety net)
+        currentStreak = freshMember?.unclearedStreak || (freshMember as unknown as Record<string, unknown>)?.uncleared_streak as number || 0;
         logger.debug('MemberSelection', 'Fresh member data', freshMember);
         logger.debug('MemberSelection', 'Registrant streak (fresh)', currentStreak);
       } catch (error) {
@@ -232,7 +234,7 @@ export interface AddPlayerSuggestionClickDeps {
   saveCourtData: (data: any) => void;
   findMemberNumber: (memberId: string) => string;
   showAlertMessage: (msg: string) => void;
-  CONSTANTS: any;
+  CONSTANTS: RegistrationConstants;
 }
 
 export async function handleAddPlayerSuggestionClickOrchestrated(

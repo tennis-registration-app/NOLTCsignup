@@ -181,7 +181,7 @@ export interface TennisBackendShape {
     // Evidence: TennisCommands.js:118 — returns CommandResponse
     deferWaitlistEntry: (input: { entryId: string; deferred: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:135 — returns CommandResponse & { session? }
-    assignFromWaitlist: (input: { waitlistEntryId: string; courtId: string; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
+    assignFromWaitlist: (input: { waitlistEntryId: string; courtId: string; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
     // Evidence: TennisCommands.js:190 — returns CommandResponse & { endedSessionId?, restoredSessionId? }
     undoOvertimeTakeover: (input: { takeoverSessionId: string; displacedSessionId: string }) => Promise<CommandResponse & { endedSessionId?: string; restoredSessionId?: string }>;
     // Evidence: TennisCommands.js:173 — returns CommandResponse & { restoredSessionId? }
@@ -195,7 +195,7 @@ export interface TennisBackendShape {
     // Evidence: TennisCommands.js:456 — resolves players, calls assignCourt
     assignCourtWithPlayers: (input: { courtId: string; players: GroupPlayer[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:526 — resolves players, calls joinWaitlist
-    joinWaitlistWithPlayers: (input: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
+    joinWaitlistWithPlayers: (input: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number; data?: { waitlist?: { id?: string; position?: number } } }>;
     // Evidence: TennisCommands.js:560 — returns CommandResponse
     updateSessionTournament: (input: { sessionId: string; isTournament: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:576 — returns { ok, token?, expiresAt? }
@@ -210,6 +210,8 @@ export interface TennisBackendShape {
     getAllMembers: () => Promise<DirectoryMember[]>;
     // Evidence: TennisDirectory.js:98 — returns single Member or null
     findMemberByName: (memberNumber: string, name: string) => Promise<DirectoryMember | null>;
+    // Evidence: TennisDirectory.js:150 — cache invalidation by member number
+    invalidateAccount: (memberNumber: string) => void;
   };
   admin: {
     // Evidence: AdminCommands.js:25 — returns CommandResponse & { block? }
