@@ -1162,6 +1162,10 @@ export interface AutocompleteSuggestion {
     accountId: string;
     isPrimary: boolean;
     unclearedStreak: number;
+    // Optional enrichment fields — present on API response but not guaranteed
+    phone?: string;
+    ranking?: number | null;
+    winRate?: number;
   };
   displayText: string;
 }

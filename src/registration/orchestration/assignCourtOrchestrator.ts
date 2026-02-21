@@ -127,6 +127,8 @@ export async function assignCourtToGroupOrchestrated(
     // FEEDBACK: alert provides user feedback above
     return;
   }
+  // guardCourtNumber rejects null/undefined/out-of-range — narrow for TS
+  if (courtNumber == null) return; // unreachable after guard, satisfies TS narrowing
 
   // Guard 4: Validate group has players (alert)
   const groupCheck = guardGroup({ currentGroup: state.currentGroup });
@@ -181,7 +183,7 @@ export async function assignCourtToGroupOrchestrated(
   const group = { players: allPlayers, guests };
 
   // Check for upcoming block on selected court using new system
-  const blockStatus = await services.getCourtBlockStatus(courtNumber as number);
+  const blockStatus = await services.getCourtBlockStatus(courtNumber);
   if (blockStatus && !blockStatus.isCurrent && blockStatus.startTime) {
     const nowBlock = new Date();
     const blockStart = new Date(blockStatus.startTime);
@@ -281,7 +283,7 @@ export async function assignCourtToGroupOrchestrated(
       }
 
       // Update UI state
-      actions.setJustAssignedCourt(courtNumber as number);
+      actions.setJustAssignedCourt(courtNumber);
       actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
       actions.setAssignedEndTime(
         result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
@@ -421,7 +423,7 @@ export async function assignCourtToGroupOrchestrated(
     selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
 
   // Update UI state based on result
-  actions.setJustAssignedCourt(courtNumber as number);
+  actions.setJustAssignedCourt(courtNumber);
   actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
   actions.setAssignedEndTime(
     result.session?.scheduled_end_at || result.session?.scheduledEndAt || null

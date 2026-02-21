@@ -98,6 +98,9 @@ export async function handleSuggestionClickOrchestrated(
     accountId: suggestion.member.accountId,
     memberId: suggestion.member.id, // Same as id for API members
     unclearedStreak: suggestion.member.unclearedStreak || 0,
+    phone: suggestion.member.phone,
+    ranking: suggestion.member.ranking,
+    winRate: suggestion.member.winRate,
   };
 
   logger.debug('MemberSelection', '[handleSuggestionClick] suggestion.member', suggestion.member);
@@ -161,9 +164,9 @@ export async function handleSuggestionClickOrchestrated(
     memberNumber: suggestion.memberNumber,
     id: enrichedMember.id,
     memberId: enrichedMember.memberId || enrichedMember.id,
-    phone: (enrichedMember as any).phone || '',
-    ranking: (enrichedMember as any).ranking || null,
-    winRate: (enrichedMember as any).winRate || 0.5,
+    phone: enrichedMember.phone || '',
+    ranking: enrichedMember.ranking || null,
+    winRate: enrichedMember.winRate || 0.5,
     // API-specific fields
     accountId: enrichedMember.accountId,
   };
@@ -274,6 +277,9 @@ export async function handleAddPlayerSuggestionClickOrchestrated(
     memberNumber: suggestion.memberNumber,
     accountId: suggestion.member.accountId,
     memberId: suggestion.member.id,
+    phone: suggestion.member.phone,
+    ranking: suggestion.member.ranking,
+    winRate: suggestion.member.winRate,
   };
 
   // Early duplicate guard
@@ -355,9 +361,9 @@ export async function handleAddPlayerSuggestionClickOrchestrated(
       memberNumber: suggestion.memberNumber,
       id: enrichedMember.id,
       memberId: enrichedMember.memberId || enrichedMember.id,
-      phone: (enrichedMember as any).phone || '',
-      ranking: (enrichedMember as any).ranking || null,
-      winRate: (enrichedMember as any).winRate || 0.5,
+      phone: enrichedMember.phone || '',
+      ranking: enrichedMember.ranking || null,
+      winRate: enrichedMember.winRate || 0.5,
       accountId: enrichedMember.accountId,
     };
     logger.debug('MemberSelection', 'Adding player to group (add player flow)', newPlayer);
