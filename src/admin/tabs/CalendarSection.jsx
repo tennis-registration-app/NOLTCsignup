@@ -1,9 +1,11 @@
 import React from 'react';
+import { buildCalendarModel, buildCalendarActions } from '../presenters/calendarPresenter.js';
 
 /**
- * CalendarSection - Pass-through wrapper for calendar display.
+ * CalendarSection - Thin wrapper that delegates to presenter.
  *
- * Receives domain objects constructed by App.jsx and forwards to EventCalendarEnhanced.
+ * Receives domain objects from App.jsx, transforms via presenter,
+ * and forwards flat props to EventCalendarEnhanced.
  *
  * @param {Object} props
  * @param {import('../types/domainObjects.js').CalendarModel} props.calendarModel
@@ -12,32 +14,11 @@ import React from 'react';
  * @param {import('../types/domainObjects.js').BlockComponents} props.components
  */
 export function CalendarSection({ calendarModel, calendarActions, services, components }) {
-  // Destructure domain objects to preserve existing local names
-  const { courts, currentTime, hoursOverrides, calendarView, refreshTrigger } = calendarModel;
-  const { onRefresh } = calendarActions;
-  const { backend } = services;
-  // BlockComponents output field is EventCalendar, alias to local EventCalendarEnhanced
-  const {
-    MonthView,
-    EventSummary,
-    HoverCard,
-    QuickActionsMenu,
-    EventCalendar: EventCalendarEnhanced,
-  } = components;
+  const model = buildCalendarModel(calendarModel, services, components);
+  const actions = buildCalendarActions(calendarActions);
 
-  return (
-    <EventCalendarEnhanced
-      courts={courts}
-      currentTime={currentTime}
-      refreshTrigger={refreshTrigger}
-      onRefresh={onRefresh}
-      defaultView={calendarView}
-      backend={backend}
-      hoursOverrides={hoursOverrides}
-      MonthView={MonthView}
-      EventSummary={EventSummary}
-      HoverCard={HoverCard}
-      QuickActionsMenu={QuickActionsMenu}
-    />
-  );
+  // EventCalendar is the component ref (aliased from EventCalendarEnhanced)
+  const { EventCalendar: EventCalendarEnhanced, ...dataProps } = model;
+
+  return <EventCalendarEnhanced {...dataProps} {...actions} />;
 }
