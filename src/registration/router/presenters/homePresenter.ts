@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * HomeScreen Presenter
  *
@@ -8,12 +7,54 @@
  * Extracted from HomeRoute.jsx — maintains exact prop mapping.
  */
 
+import type { AppState, Handlers } from '../../../types/appTypes.js';
+
+export interface HomeModel {
+  // Search functionality (read-only)
+  searchInput: string;
+  showSuggestions: boolean;
+  isSearching: boolean;
+  effectiveSearchInput: string;
+  getAutocompleteSuggestions: Function;
+  // CTA state
+  canFirstGroupPlay: boolean;
+  canSecondGroupPlay: boolean;
+  firstWaitlistEntry: any;
+  secondWaitlistEntry: any;
+  firstWaitlistEntryData: any;
+  secondWaitlistEntryData: any;
+  canPassThroughGroupPlay: boolean;
+  passThroughEntry: any;
+  passThroughEntryData: any;
+  // UI state
+  showAlert: boolean;
+  alertMessage: string;
+  isMobileView: boolean;
+  CONSTANTS: any;
+}
+
+export interface HomeActions {
+  // Search setters
+  setSearchInput: Function;
+  setShowSuggestions: Function;
+  // Navigation
+  setCurrentScreen: Function;
+  setCurrentGroup: Function;
+  setMemberNumber: Function;
+  setHasWaitlistPriority: Function;
+  setCurrentWaitlistEntryId: Function;
+  // Callbacks
+  handleSuggestionClick: Function;
+  markUserTyping: Function;
+  findMemberNumber: Function;
+  // Clear court
+  onClearCourtClick: () => void;
+}
+
 /**
  * Build the model (data) props for HomeScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @returns {Object} Model props for HomeScreen
  */
-export function buildHomeModel(app) {
+export function buildHomeModel(app: AppState): HomeModel {
   // Destructure from app (verbatim from HomeRoute)
   const { search, derived, alert, CONSTANTS } = app;
   const {
@@ -64,11 +105,8 @@ export function buildHomeModel(app) {
 
 /**
  * Build the actions (callback/setter) props for HomeScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @param {import('../../../types/appTypes').Handlers} handlers
- * @returns {Object} Action props for HomeScreen
  */
-export function buildHomeActions(app, handlers) {
+export function buildHomeActions(app: AppState, handlers: Handlers): HomeActions {
   // Destructure from app (verbatim from HomeRoute)
   const { search, setters, memberIdentity, groupGuest } = app;
   const { setSearchInput, setShowSuggestions } = search;

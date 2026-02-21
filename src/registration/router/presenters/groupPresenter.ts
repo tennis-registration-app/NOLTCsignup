@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * GroupScreen Presenter
  *
@@ -8,12 +7,76 @@
  * Extracted from GroupRoute.jsx — maintains exact prop mapping.
  */
 
+import type { AppState, Handlers } from '../../../types/appTypes.js';
+
+export interface GroupModel {
+  // Data
+  data: any;
+  currentGroup: any[] | null;
+  memberNumber: string;
+  availableCourts: any[];
+  courtSelection: any;
+  frequentPartners: any[];
+  frequentPartnersLoading: boolean;
+  // UI state
+  showAlert: boolean;
+  alertMessage: string;
+  showTimeoutWarning: boolean;
+  isMobileView: boolean;
+  // Mobile flow
+  mobileFlow: boolean;
+  preselectedCourt: number | null;
+  // Search state
+  searchInput: string;
+  showSuggestions: boolean;
+  effectiveSearchInput: string;
+  // Add player state
+  showAddPlayer: boolean;
+  addPlayerSearch: string;
+  showAddPlayerSuggestions: boolean;
+  effectiveAddPlayerSearch: string;
+  // Guest form state
+  showGuestForm: boolean;
+  guestName: string;
+  guestSponsor: any;
+  showGuestNameError: boolean;
+  showSponsorError: boolean;
+  // Utilities (data)
+  getAutocompleteSuggestions: Function;
+  CONSTANTS: any;
+}
+
+export interface GroupActions {
+  // Callbacks (renamed to on* convention)
+  onSearchChange: Function;
+  onSearchFocus: Function;
+  onSuggestionClick: Function;
+  onAddPlayerSearchChange: Function;
+  onAddPlayerSearchFocus: Function;
+  onAddPlayerSuggestionClick: Function;
+  onToggleAddPlayer: Function;
+  onToggleGuestForm: Function;
+  onRemovePlayer: Function;
+  onSelectSponsor: Function;
+  onGuestNameChange: Function;
+  onAddGuest: Function;
+  onCancelGuest: Function;
+  onAddFrequentPartner: Function;
+  onSelectCourt: Function;
+  isAssigning: boolean;
+  onJoinWaitlist: Function;
+  joiningWaitlist: boolean;
+  onGoBack: Function;
+  onStartOver: Function;
+  // Utilities (functions)
+  isPlayerAlreadyPlaying: Function;
+  sameGroup: Function;
+}
+
 /**
  * Build the model (data) props for GroupScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @returns {Object} Model props for GroupScreen
  */
-export function buildGroupModel(app) {
+export function buildGroupModel(app: AppState): GroupModel {
   // Destructure from app (verbatim from GroupRoute)
   const { state, groupGuest, memberIdentity, derived, alert, timeout, mobile, search, CONSTANTS } =
     app;
@@ -82,11 +145,8 @@ export function buildGroupModel(app) {
 
 /**
  * Build the actions (callback) props for GroupScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @param {import('../../../types/appTypes').Handlers} handlers
- * @returns {Object} Action props for GroupScreen
  */
-export function buildGroupActions(app, handlers) {
+export function buildGroupActions(app: AppState, handlers: Handlers): GroupActions {
   // Destructure from app (verbatim from GroupRoute)
   const { state, groupGuest, search } = app;
   const { isAssigning, isJoiningWaitlist } = state;

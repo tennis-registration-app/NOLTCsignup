@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * CourtSelectionScreen Presenter
  *
@@ -8,20 +7,49 @@
  * Extracted from CourtRoute.jsx — maintains exact prop mapping.
  */
 
+import type { AppState, Handlers } from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger.js';
+
+export interface CourtModelComputed {
+  availableCourts: number[];
+  showingOvertimeCourts: boolean;
+  hasWaitingGroups: boolean;
+  waitingGroupsCount: number;
+  upcomingBlocks: any[];
+}
+
+export interface CourtModel {
+  // Computed values (from route)
+  availableCourts: number[];
+  showingOvertimeCourts: boolean;
+  hasWaitingGroups: boolean;
+  waitingGroupsCount: number;
+  upcomingBlocks: any[];
+  // Direct state values
+  currentGroup: any[] | null;
+  isMobileView: boolean;
+  hasWaitlistPriority: boolean;
+  currentWaitlistEntryId: string | null;
+}
+
+export interface CourtActionsComputed {
+  computedAvailableCourts: number[];
+}
+
+export interface CourtActions {
+  onDeferWaitlist: (entryId: string) => void;
+  onCourtSelect: (courtNum: number) => Promise<void>;
+  onJoinWaitlist: () => Promise<void>;
+  onAssignNext: () => void;
+  onGoBack: () => void;
+  onStartOver: Function;
+  onJoinWaitlistDeferred: () => void;
+}
 
 /**
  * Build the model (data) props for CourtSelectionScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @param {Object} computed - Route-computed values
- * @param {number[]} computed.availableCourts
- * @param {boolean} computed.showingOvertimeCourts
- * @param {boolean} computed.hasWaitingGroups
- * @param {number} computed.waitingGroupsCount
- * @param {Array} computed.upcomingBlocks
- * @returns {Object} Model props for CourtSelectionScreen
  */
-export function buildCourtModel(app, computed) {
+export function buildCourtModel(app: AppState, computed: CourtModelComputed): CourtModel {
   // Destructure from app (verbatim from CourtRoute)
   const { derived, groupGuest, state } = app;
   const { isMobileView } = derived;
@@ -45,13 +73,12 @@ export function buildCourtModel(app, computed) {
 
 /**
  * Build the actions (callback) props for CourtSelectionScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @param {import('../../../types/appTypes').Handlers} handlers
- * @param {Object} computed - Route-computed values
- * @param {number[]} computed.computedAvailableCourts
- * @returns {Object} Action props for CourtSelectionScreen
  */
-export function buildCourtActions(app, handlers, computed) {
+export function buildCourtActions(
+  app: AppState,
+  handlers: Handlers,
+  computed: CourtActionsComputed
+): CourtActions {
   // Destructure from app
   const { state, mobile, refs, setters, groupGuest, CONSTANTS } = app;
   const { isChangingCourt, displacement, originalCourtData } = state;
@@ -86,8 +113,8 @@ export function buildCourtActions(app, handlers, computed) {
   const { computedAvailableCourts } = computed;
 
   return {
-    onDeferWaitlist: (entryId) => deferWaitlistEntry(entryId),
-    onCourtSelect: async (courtNum) => {
+    onDeferWaitlist: (entryId: string) => deferWaitlistEntry(entryId),
+    onCourtSelect: async (courtNum: number) => {
       // If changing courts, undo previous assignment first
       if (isChangingCourt && justAssignedCourt) {
         await undoOvertimeAndClearPrevious(justAssignedCourt, displacement);

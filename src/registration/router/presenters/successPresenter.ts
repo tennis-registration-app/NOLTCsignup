@@ -1,4 +1,3 @@
-// @ts-check
 /**
  * SuccessScreen Presenter
  *
@@ -12,19 +11,55 @@
  * the `computed` parameter.
  */
 
+import type { AppState, Handlers } from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger.js';
+
+export interface SuccessModelComputed {
+  isCourtAssignment: boolean;
+  assignedCourt: any | null;
+  position: number;
+  estimatedWait: number;
+}
+
+export interface SuccessModel {
+  // Computed values (from route)
+  isCourtAssignment: boolean;
+  assignedCourt: any | null;
+  position: number;
+  estimatedWait: number;
+  // Direct state values
+  justAssignedCourt: number | null;
+  sessionId: string | null;
+  assignedEndTime: string | null;
+  replacedGroup: any;
+  canChangeCourt: boolean;
+  changeTimeRemaining: number | null;
+  currentGroup: any[] | null;
+  mobileCountdown: number | null;
+  isMobile: boolean;
+  isTimeLimited: boolean;
+  timeLimitReason: string | null;
+  registrantStreak: any;
+  ballPriceCents: number | null;
+  // Utilities
+  TENNIS_CONFIG: any;
+  getCourtBlockStatus: Function;
+  upcomingBlocks: any[];
+  blockWarningMinutes: number | null;
+}
+
+export interface SuccessActions {
+  onChangeCourt: Function;
+  onHome: Function;
+  onPurchaseBalls: (sessionId: string, accountId: string, options?: any) => Promise<any>;
+  onLookupMemberAccount: (memberNumber: string) => Promise<any>;
+  onUpdateSessionTournament: (sessionId: string, isTournamentFlag: boolean) => Promise<any>;
+}
 
 /**
  * Build the model (data) props for SuccessScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @param {Object} computed - Route-computed values
- * @param {boolean} computed.isCourtAssignment
- * @param {Object|null} computed.assignedCourt
- * @param {number} computed.position
- * @param {number} computed.estimatedWait
- * @returns {Object} Model props for SuccessScreen
  */
-export function buildSuccessModel(app, computed) {
+export function buildSuccessModel(app: AppState, computed: SuccessModelComputed): SuccessModel {
   // Destructure from app (verbatim from SuccessRoute)
   const { state, groupGuest, mobile, blockAdmin, courtAssignment, streak, TENNIS_CONFIG } = app;
   const {
@@ -72,11 +107,8 @@ export function buildSuccessModel(app, computed) {
 
 /**
  * Build the actions (callback) props for SuccessScreen
- * @param {import('../../../types/appTypes').AppState} app
- * @param {import('../../../types/appTypes').Handlers} handlers
- * @returns {Object} Action props for SuccessScreen
  */
-export function buildSuccessActions(app, handlers) {
+export function buildSuccessActions(app: AppState, handlers: Handlers): SuccessActions {
   // Destructure from app
   const { services } = app;
   const { backend } = services;
@@ -87,7 +119,7 @@ export function buildSuccessActions(app, handlers) {
   return {
     onChangeCourt: changeCourt,
     onHome: resetForm,
-    onPurchaseBalls: async (sessionId, accountId, options) => {
+    onPurchaseBalls: async (sessionId: string, accountId: string, options?: any) => {
       logger.debug('SuccessRoute', 'Ball purchase handler called', {
         sessionId,
         accountId,
@@ -102,11 +134,11 @@ export function buildSuccessActions(app, handlers) {
       logger.debug('SuccessRoute', 'Ball purchase API result', result);
       return result;
     },
-    onLookupMemberAccount: async (memberNumber) => {
+    onLookupMemberAccount: async (memberNumber: string) => {
       const members = await backend.directory.getMembersByAccount(memberNumber);
       return members;
     },
-    onUpdateSessionTournament: async (sessionId, isTournamentFlag) => {
+    onUpdateSessionTournament: async (sessionId: string, isTournamentFlag: boolean) => {
       const result = await backend.commands.updateSessionTournament({
         sessionId,
         isTournament: isTournamentFlag,
