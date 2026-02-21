@@ -5,7 +5,7 @@
  * This is the initial monolithic extraction (~7,100 lines).
  * Future phases will break this into smaller component files.
  */
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createBackend } from '../lib/backend/index.js';
 import { logger } from '../lib/logger.js';
 import { legacyEvents as Events } from '../platform/attachLegacyEvents.js';
@@ -65,13 +65,10 @@ import { SystemSection } from './tabs/SystemSection';
 import { AIAssistantSection } from './tabs/AIAssistantSection';
 
 // Handler modules
-import {
-  removeFromWaitlistOp,
-  moveInWaitlistOp,
-  clearWaitlistOp,
-} from './handlers/waitlistOperations';
-import { clearCourtOp, moveCourtOp, clearAllCourtsOp } from './handlers/courtOperations';
-import { applyBlocksOp } from './handlers/applyBlocksOperation';
+import { clearWaitlistOp } from './handlers/waitlistOperations';
+
+// Extracted callbacks hook (replaces 8 inline useCallbacks)
+import { useAdminHandlers } from './hooks/useAdminHandlers';
 
 // Wet courts hook
 import { useWetCourts } from './wetCourts/useWetCourts';
@@ -190,14 +187,30 @@ const AdminPanelV2 = ({ onExit }) => {
   // Export for coalescer & tests
   setRefreshAdminViewGlobal(reloadSettings);
 
-  const handleEditBlockFromStatus = useCallback(
-    (block) => {
-      setBlockToEdit(block);
-      setActiveTab('blocking');
-      setBlockingView('create');
-    },
-    [setBlockToEdit, setActiveTab, setBlockingView]
-  );
+  // Extracted callbacks (court ops, waitlist ops, block apply, refresh, edit-block nav)
+  const {
+    handleEditBlockFromStatus,
+    clearCourt,
+    moveCourt,
+    clearAllCourts,
+    removeFromWaitlist,
+    moveInWaitlist,
+    applyBlocks,
+    refreshData,
+  } = useAdminHandlers({
+    backend,
+    dataStore,
+    TENNIS_CONFIG,
+    courts,
+    waitingGroups,
+    showNotification,
+    confirm,
+    setBlockToEdit,
+    setActiveTab,
+    setBlockingView,
+    reloadSettings,
+    bumpRefreshTrigger,
+  });
 
   // Update current time every second
   useEffect(() => {
@@ -228,46 +241,6 @@ const AdminPanelV2 = ({ onExit }) => {
     window.addEventListener('beforeunload', onUnload);
     return () => window.removeEventListener('beforeunload', onUnload);
   }, []);
-
-  // Court operations - delegated to handler module (useCallback for identity stability)
-  const clearCourt = useCallback(
-    (courtNumber) =>
-      clearCourtOp({ courts, backend, showNotification, TENNIS_CONFIG }, courtNumber),
-    [courts, showNotification]
-  );
-
-  const moveCourt = useCallback((from, to) => moveCourtOp({ backend }, from, to), []);
-
-  const clearAllCourts = useCallback(
-    () =>
-      clearAllCourtsOp({ courts, backend, dataStore, showNotification, confirm, TENNIS_CONFIG }),
-    [courts, showNotification, confirm]
-  );
-
-  // Waitlist operations - delegated to handler module (useCallback for identity stability)
-  const removeFromWaitlist = useCallback(
-    (index) =>
-      removeFromWaitlistOp({ waitingGroups, backend, showNotification, TENNIS_CONFIG }, index),
-    [waitingGroups, showNotification]
-  );
-
-  const moveInWaitlist = useCallback(
-    (from, to) => moveInWaitlistOp({ waitingGroups, backend, showNotification }, from, to),
-    [waitingGroups, showNotification]
-  );
-
-  // Block apply closure (captures React state for handler module)
-  const applyBlocks = useCallback(
-    (blocks) => applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG }, blocks),
-    [courts, showNotification]
-    // backend, TENNIS_CONFIG are module-level
-  );
-
-  // Refresh data closure (settings + board refresh combined)
-  const refreshData = useCallback(() => {
-    reloadSettings();
-    bumpRefreshTrigger();
-  }, [reloadSettings, bumpRefreshTrigger]);
 
   // Build all domain objects via controller (replaces 14 inline useMemo calls)
   const controller = useMemo(
