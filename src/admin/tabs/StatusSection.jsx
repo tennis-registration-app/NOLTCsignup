@@ -1,12 +1,10 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Trash2 } from '../components';
 import { CourtStatusGrid } from '../courts';
+import { buildStatusModel, buildStatusActions } from '../presenters/statusPresenter.js';
 
 /**
- * StatusSection - Pass-through wrapper for court status display.
- *
- * Receives domain objects constructed by App.jsx and forwards to CourtStatusGrid.
- * Renders waitlist UI directly (not delegated).
+ * StatusSection - Delegates to presenter, renders CourtStatusGrid + waitlist UI.
  *
  * @param {Object} props
  * @param {import('../types/domainObjects.js').StatusModel} props.statusModel
@@ -22,18 +20,20 @@ export function StatusSection({
   wetCourtsActions,
   services,
 }) {
-  // Extract values needed for local waitlist UI
-  const { waitingGroups } = statusModel;
-  const { moveInWaitlist, removeFromWaitlist } = statusActions;
+  const model = buildStatusModel(statusModel, wetCourtsModel, services);
+  const actions = buildStatusActions(statusActions, wetCourtsActions);
+
+  const { waitingGroups } = model;
+  const { moveInWaitlist, removeFromWaitlist } = actions;
 
   return (
     <div className="p-6">
       <CourtStatusGrid
-        statusModel={statusModel}
-        statusActions={statusActions}
-        wetCourtsModel={wetCourtsModel}
-        wetCourtsActions={wetCourtsActions}
-        services={services}
+        statusModel={model.statusModel}
+        statusActions={actions.statusActions}
+        wetCourtsModel={model.wetCourtsModel}
+        wetCourtsActions={actions.wetCourtsActions}
+        services={model.services}
       />
 
       {/* Waitlist Section */}
