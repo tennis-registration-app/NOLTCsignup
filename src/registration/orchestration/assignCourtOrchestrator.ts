@@ -1,5 +1,10 @@
+/**
+ * Assign Court Orchestrator
+ * Moved from App.jsx
+ */
+
 import { logger } from '../../lib/logger.js';
-import { createOrchestrationDeps } from './deps/index';
+import { createOrchestrationDeps } from './deps/index.js';
 import { durationForGroupSize } from '../../lib/dateUtils.js';
 import {
   guardNotAssigning,
@@ -7,71 +12,70 @@ import {
   guardCourtNumber,
   guardGroup,
   guardGroupCompat,
-} from './helpers/index';
+} from './helpers/index.js';
 import { toast } from '../../shared/utils/toast.js';
 
-/**
- * Assign Court Orchestrator
- * Moved from App.jsx
- *
- * DEPENDENCY CHECKLIST (call-site parity):
- *
- * READ VALUES:
- *   - isAssigning
- *   - mobileFlow
- *   - preselectedCourt
- *   - operatingHours
- *   - currentGroup
- *   - courts (data.courts)
- *   - currentWaitlistEntryId
- *   - CONSTANTS
- *
- * SETTERS:
- *   - setIsAssigning
- *   - setCurrentWaitlistEntryId
- *   - setHasWaitlistPriority
- *   - setCurrentGroup
- *   - setJustAssignedCourt
- *   - setAssignedSessionId
- *   - setAssignedEndTime
- *   - setReplacedGroup
- *   - setDisplacement
- *   - setOriginalCourtData
- *   - setIsChangingCourt
- *   - setWasOvertimeCourt
- *   - setHasAssignedCourt
- *   - setCanChangeCourt
- *   - setChangeTimeRemaining
- *   - setIsTimeLimited
- *   - setTimeLimitReason
- *   - setShowSuccess
- *   - setGpsFailedPrompt
- *
- * SERVICES:
- *   - backend.commands.assignFromWaitlist
- *   - backend.commands.assignCourtWithPlayers
- *   - backend.queries.refresh
- *
- * HELPERS:
- *   - getCourtBlockStatus
- *   - getMobileGeolocation
- *   - showAlertMessage
- *   - validateGroupCompat
- *   - clearSuccessResetTimer
- *   - resetForm
- *   - successResetTimerRef
- *   - dbg
- *   - Tennis (global)
- *   - API_CONFIG
- *
- * Returns: void (same as original — has multiple early returns)
- */
+export interface AssignCourtState {
+  isAssigning: boolean;
+  mobileFlow: boolean;
+  preselectedCourt: number | null;
+  operatingHours: any[] | null;
+  currentGroup: any[];
+  courts: any[];
+  currentWaitlistEntryId: string | null;
+  CONSTANTS: any;
+  API_CONFIG: any;
+  successResetTimerRef: { current: ReturnType<typeof setTimeout> | null };
+}
+
+export interface AssignCourtActions {
+  setIsAssigning: (v: boolean) => void;
+  setCurrentWaitlistEntryId: (v: string | null) => void;
+  setHasWaitlistPriority: (v: boolean) => void;
+  setCurrentGroup: (v: any[]) => void;
+  setJustAssignedCourt: (v: number) => void;
+  setAssignedSessionId: (v: string | null) => void;
+  setAssignedEndTime: (v: string | null) => void;
+  setReplacedGroup: (v: any) => void;
+  setDisplacement: (v: any) => void;
+  setOriginalCourtData: (v: any) => void;
+  setIsChangingCourt: (v: boolean) => void;
+  setWasOvertimeCourt: (v: boolean) => void;
+  setHasAssignedCourt: (v: boolean) => void;
+  setCanChangeCourt: (v: boolean) => void;
+  setChangeTimeRemaining: (v: number | ((prev: number) => number)) => void;
+  setIsTimeLimited: (v: boolean) => void;
+  setTimeLimitReason: (v: string | null) => void;
+  setShowSuccess: (v: boolean) => void;
+  setGpsFailedPrompt: (v: boolean) => void;
+}
+
+export interface AssignCourtServices {
+  backend: any;
+  getCourtBlockStatus: (courtNumber: number) => Promise<any>;
+  getMobileGeolocation: () => Promise<any>;
+  validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };
+  clearSuccessResetTimer: () => void;
+  resetForm: () => void;
+}
+
+export interface AssignCourtUI {
+  showAlertMessage: (...args: any[]) => void;
+  confirm?: (msg: string) => boolean;
+}
+
+export interface AssignCourtDeps {
+  state: AssignCourtState;
+  actions: AssignCourtActions;
+  services: AssignCourtServices;
+  ui: AssignCourtUI;
+}
 
 export async function assignCourtToGroupOrchestrated(
-  courtNumber,
-  selectableCountAtSelection,
-  deps
-) {
+  courtNumber: number | null | undefined,
+  selectableCountAtSelection: number | null,
+  deps: AssignCourtDeps
+): Promise<void> {
   // Grouped deps structure — { state, actions, services, ui }
   const { state, actions, services, ui } = deps;
 
@@ -86,7 +90,7 @@ export async function assignCourtToGroupOrchestrated(
   }
 
   // Lazy runtime deps - created only when needed (preserves fast-fail)
-  let _runtimeDeps;
+  let _runtimeDeps: ReturnType<typeof createOrchestrationDeps> | undefined;
   const getRuntimeDeps = () => (_runtimeDeps ??= createOrchestrationDeps());
 
   // Mobile: Use preselected court if in mobile flow
@@ -105,7 +109,7 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!hoursCheck.ok) {
     if (hoursCheck.ui?.action === 'toast') {
-      toast(/** @type {string} */ (hoursCheck.ui.args[0]), hoursCheck.ui.args[1]);
+      toast(hoursCheck.ui.args[0] as string, hoursCheck.ui.args[1]);
     }
     // FEEDBACK: toast provides user feedback above
     return;
@@ -177,7 +181,7 @@ export async function assignCourtToGroupOrchestrated(
   const group = { players: allPlayers, guests };
 
   // Check for upcoming block on selected court using new system
-  const blockStatus = await services.getCourtBlockStatus(courtNumber);
+  const blockStatus = await services.getCourtBlockStatus(courtNumber as number);
   if (blockStatus && !blockStatus.isCurrent && blockStatus.startTime) {
     const nowBlock = new Date();
     const blockStart = new Date(blockStatus.startTime);
@@ -267,7 +271,7 @@ export async function assignCourtToGroupOrchestrated(
 
       // Update currentGroup with participant details for ball purchases
       if (result.session?.participantDetails) {
-        const groupFromWaitlist = result.session.participantDetails.map((p) => ({
+        const groupFromWaitlist = result.session.participantDetails.map((p: any) => ({
           memberNumber: p.memberId,
           name: p.name,
           accountId: p.accountId,
@@ -277,7 +281,7 @@ export async function assignCourtToGroupOrchestrated(
       }
 
       // Update UI state
-      actions.setJustAssignedCourt(courtNumber);
+      actions.setJustAssignedCourt(courtNumber as number);
       actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
       actions.setAssignedEndTime(
         result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
@@ -305,7 +309,7 @@ export async function assignCourtToGroupOrchestrated(
 
       // EARLY-EXIT: waitlist flow complete — success screen shown
       return;
-    } catch (error) {
+    } catch (error: any) {
       getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
       actions.setCurrentWaitlistEntryId(null);
       toast(error.message || 'Failed to assign court from waitlist', {
@@ -345,7 +349,7 @@ export async function assignCourtToGroupOrchestrated(
   );
 
   actions.setIsAssigning(true);
-  let result;
+  let result: any;
   try {
     result = await services.backend.commands.assignCourtWithPlayers({
       courtId: court.id,
@@ -359,7 +363,7 @@ export async function assignCourtToGroupOrchestrated(
       `[T+${apiDuration}ms] Court assigned result`,
       result
     );
-  } catch (error) {
+  } catch (error: any) {
     const apiDuration = Math.round(performance.now() - assignStartTime);
     getRuntimeDeps().logger.error(
       'AssignCourt',
@@ -417,7 +421,7 @@ export async function assignCourtToGroupOrchestrated(
     selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
 
   // Update UI state based on result
-  actions.setJustAssignedCourt(courtNumber);
+  actions.setJustAssignedCourt(courtNumber as number);
   actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
   actions.setAssignedEndTime(
     result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
@@ -427,7 +431,7 @@ export async function assignCourtToGroupOrchestrated(
   const replacedGroupFromDisplacement =
     result.displacement?.participants?.length > 0
       ? {
-          players: result.displacement.participants.map((name) => ({ name })),
+          players: result.displacement.participants.map((name: string) => ({ name })),
           endTime: result.displacement.restoreUntil,
         }
       : null;
@@ -460,7 +464,7 @@ export async function assignCourtToGroupOrchestrated(
 
   if (allowCourtChange) {
     const timer = setInterval(() => {
-      actions.setChangeTimeRemaining((prev) => {
+      actions.setChangeTimeRemaining((prev: number) => {
         if (prev <= 1) {
           clearInterval(timer);
           actions.setCanChangeCourt(false);

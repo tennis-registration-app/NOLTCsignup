@@ -1,3 +1,8 @@
+/**
+ * Member Selection Orchestrators
+ * Moved from App.jsx
+ */
+
 import { logger } from '../../lib/logger.js';
 import {
   ALREADY_IN_GROUP,
@@ -7,39 +12,38 @@ import {
 } from '../../shared/constants/toastMessages.js';
 import { toast } from '../../shared/utils/toast.js';
 
-/**
- * Member Selection Orchestrators
- * Moved from App.jsx
- *
- * DEPENDENCY CHECKLIST for handleSuggestionClickOrchestrated:
- * Reads:
- *   - currentGroup
- *
- * Calls (setters):
- *   - setSearchInput
- *   - setShowSuggestions
- *   - setMemberNumber
- *   - setCurrentMemberId
- *   - setRegistrantStreak
- *   - setStreakAcknowledged
- *   - setCurrentGroup
- *   - setCurrentScreen
- *
- * Calls (services/helpers):
- *   - backend.directory.invalidateAccount
- *   - backend.directory.getMembersByAccount
- *   - fetchFrequentPartners
- *   - isPlayerAlreadyPlaying
- *   - guardAddPlayerEarly
- *   - getCourtData
- *   - getAvailableCourts
- *   - showAlertMessage
- *   - Tennis (global)
- *
- * Returns: void (same as original — may have early returns)
- */
+export interface SuggestionClickDeps {
+  // Read values
+  currentGroup: any[];
+  // Setters
+  setSearchInput: (v: string) => void;
+  setShowSuggestions: (v: boolean) => void;
+  setMemberNumber: (v: string) => void;
+  setCurrentMemberId: (v: string) => void;
+  setRegistrantStreak: (v: number) => void;
+  setStreakAcknowledged: (v: boolean) => void;
+  setCurrentGroup: (v: any[]) => void;
+  setCurrentScreen: (screen: string, reason: string) => void;
+  // Services/helpers
+  backend: any;
+  fetchFrequentPartners: (memberId: string) => void;
+  isPlayerAlreadyPlaying: (id: string) => {
+    isPlaying: boolean;
+    location?: string;
+    courtNumber?: number;
+    position?: number;
+    playerName?: string;
+  };
+  guardAddPlayerEarly: (getCourtData: () => any, member: any) => boolean;
+  getCourtData: () => any;
+  getAvailableCourts: (includeBlocked: boolean) => any[];
+  showAlertMessage: (msg: string) => void;
+}
 
-export async function handleSuggestionClickOrchestrated(suggestion, deps) {
+export async function handleSuggestionClickOrchestrated(
+  suggestion: any,
+  deps: SuggestionClickDeps
+): Promise<void> {
   const {
     // Read values
     currentGroup,
@@ -157,9 +161,9 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
     memberNumber: suggestion.memberNumber,
     id: enrichedMember.id,
     memberId: enrichedMember.memberId || enrichedMember.id,
-    phone: enrichedMember.phone || '',
-    ranking: enrichedMember.ranking || null,
-    winRate: enrichedMember.winRate || 0.5,
+    phone: (enrichedMember as any).phone || '',
+    ranking: (enrichedMember as any).ranking || null,
+    winRate: (enrichedMember as any).winRate || 0.5,
     // API-specific fields
     accountId: enrichedMember.accountId,
   };
@@ -181,7 +185,7 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
         const freshMemberData = await backend.directory.getMembersByAccount(
           suggestion.memberNumber
         );
-        const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
+        const freshMember = freshMemberData?.find((m: any) => m.id === suggestion.member.id);
         currentStreak = freshMember?.unclearedStreak || freshMember?.uncleared_streak || 0;
         logger.debug('MemberSelection', 'Fresh member data', freshMember);
         logger.debug('MemberSelection', 'Registrant streak (fresh)', currentStreak);
@@ -199,36 +203,39 @@ export async function handleSuggestionClickOrchestrated(suggestion, deps) {
   // ===== END ORIGINAL FUNCTION BODY =====
 }
 
-/**
- * DEPENDENCY CHECKLIST for handleAddPlayerSuggestionClickOrchestrated:
- * Reads:
- *   - currentGroup
- *
- * Calls (setters):
- *   - setAddPlayerSearch
- *   - setShowAddPlayer
- *   - setShowAddPlayerSuggestions
- *   - setCurrentGroup
- *   - setHasWaitlistPriority
- *   - setAlertMessage
- *   - setShowAlert
- *
- * Calls (services/helpers):
- *   - guardAddPlayerEarly
- *   - guardAgainstGroupDuplicate
- *   - isPlayerAlreadyPlaying
- *   - getAvailableCourts
- *   - getCourtData
- *   - saveCourtData
- *   - findMemberNumber
- *   - showAlertMessage
- *   - Tennis (global)
- *   - CONSTANTS
- *
- * Returns: void (same as original — may have early returns)
- */
+export interface AddPlayerSuggestionClickDeps {
+  // Read values
+  currentGroup: any[];
+  // Setters
+  setAddPlayerSearch: (v: string) => void;
+  setShowAddPlayer: (v: boolean) => void;
+  setShowAddPlayerSuggestions: (v: boolean) => void;
+  setCurrentGroup: (v: any[]) => void;
+  setHasWaitlistPriority: (v: boolean) => void;
+  setAlertMessage: (v: string) => void;
+  setShowAlert: (v: boolean) => void;
+  // Services/helpers
+  guardAddPlayerEarly: (getCourtData: () => any, member: any) => boolean;
+  guardAgainstGroupDuplicate: (member: any, group: any[]) => boolean;
+  isPlayerAlreadyPlaying: (id: string) => {
+    isPlaying: boolean;
+    location?: string;
+    position?: number;
+    playerName?: string;
+    courtNumber?: number;
+  };
+  getAvailableCourts: (includeBlocked: boolean) => any[];
+  getCourtData: () => any;
+  saveCourtData: (data: any) => void;
+  findMemberNumber: (memberId: string) => string;
+  showAlertMessage: (msg: string) => void;
+  CONSTANTS: any;
+}
 
-export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, deps) {
+export async function handleAddPlayerSuggestionClickOrchestrated(
+  suggestion: any,
+  deps: AddPlayerSuggestionClickDeps
+): Promise<void> {
   const {
     // Read values
     currentGroup,
@@ -312,7 +319,7 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
       // Domain: entry.group.players
       const players = firstWaitlistEntry.group?.players || [];
       setCurrentGroup(
-        players.map((p) => ({
+        players.map((p: any) => ({
           id: p.memberId,
           name: p.displayName || 'Unknown',
           memberNumber: findMemberNumber(p.memberId),
@@ -348,9 +355,9 @@ export async function handleAddPlayerSuggestionClickOrchestrated(suggestion, dep
       memberNumber: suggestion.memberNumber,
       id: enrichedMember.id,
       memberId: enrichedMember.memberId || enrichedMember.id,
-      phone: enrichedMember.phone || '',
-      ranking: enrichedMember.ranking || null,
-      winRate: enrichedMember.winRate || 0.5,
+      phone: (enrichedMember as any).phone || '',
+      ranking: (enrichedMember as any).ranking || null,
+      winRate: (enrichedMember as any).winRate || 0.5,
       accountId: enrichedMember.accountId,
     };
     logger.debug('MemberSelection', 'Adding player to group (add player flow)', newPlayer);

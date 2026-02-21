@@ -1,34 +1,38 @@
 /**
  * Waitlist Orchestrator
  * Moved from App.jsx
- *
- * DEPENDENCY CHECKLIST for sendGroupToWaitlistOrchestrated:
- * Reads:
- *   - isJoiningWaitlist
- *   - currentGroup
- *   - mobileFlow
- *
- * Calls (setters):
- *   - setIsJoiningWaitlist
- *   - setWaitlistPosition
- *   - setGpsFailedPrompt
- *
- * Calls (services/helpers):
- *   - backend.commands.joinWaitlistWithPlayers
- *   - getMobileGeolocation
- *   - validateGroupCompat
- *   - isPlayerAlreadyPlaying
- *   - showAlertMessage
- *   - Tennis (global)
- *   - API_CONFIG
- *
- * Returns: void (same as original — may have early returns)
  */
 
 import { logger } from '../../lib/logger.js';
 import { toast } from '../../shared/utils/toast.js';
 
-export async function sendGroupToWaitlistOrchestrated(group, deps, options = {}) {
+export interface WaitlistDeps {
+  // Read values
+  isJoiningWaitlist: boolean;
+  currentGroup: any[];
+  mobileFlow: boolean;
+  // Setters
+  setIsJoiningWaitlist: (v: boolean) => void;
+  setWaitlistPosition: (v: number) => void;
+  setGpsFailedPrompt: (v: boolean) => void;
+  // Services/helpers
+  backend: any;
+  getMobileGeolocation: () => Promise<any>;
+  validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };
+  isPlayerAlreadyPlaying: (id: string) => { isPlaying: boolean; location?: string };
+  showAlertMessage: (msg: string) => void;
+  API_CONFIG: any;
+}
+
+export interface WaitlistOptions {
+  deferred?: boolean;
+}
+
+export async function sendGroupToWaitlistOrchestrated(
+  group: any[] | null,
+  deps: WaitlistDeps,
+  options: WaitlistOptions = {}
+): Promise<void> {
   const {
     // Read values
     isJoiningWaitlist,
