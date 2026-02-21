@@ -1,6 +1,6 @@
 // @ts-check
 import { useState, useCallback } from 'react';
-import { getDataStoreValue, setDataStoreValue } from '../../../platform/windowBridge';
+import { getDataStore } from '../../../lib/TennisCourtDataStore.js';
 import { logger } from '../../../lib/logger.js';
 import { getCache, setCache } from '../../../platform/prefsStorage.js';
 
@@ -216,11 +216,12 @@ const useBallPurchase = ({
 
       // Get existing purchases and save
       let existingPurchases = [];
-      const dataStoreResult = await getDataStoreValue('tennisBallPurchases');
+      const dataStore = getDataStore();
+      const dataStoreResult = await dataStore?.get?.('tennisBallPurchases');
       if (dataStoreResult !== undefined) {
         existingPurchases = dataStoreResult || [];
         existingPurchases.push(purchase);
-        await setDataStoreValue('tennisBallPurchases', existingPurchases, {
+        await dataStore?.set?.('tennisBallPurchases', existingPurchases, {
           immediate: true,
         });
       } else {

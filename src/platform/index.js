@@ -7,11 +7,7 @@
 
 export {
   isMobileView,
-  isApiMode,
-  getGeolocationService,
-  isGlobalAvailable,
-  // Tennis namespace
-  ensureTennisNamespace,
+  // Tennis namespace (courtboard only)
   getTennis,
   getTennisDomain,
   getTennisDataStore,

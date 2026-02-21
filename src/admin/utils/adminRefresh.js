@@ -4,7 +4,6 @@
  * Coalesced refresh handling for the admin panel.
  * Both IIFEs execute immediately at module load to maintain original timing.
  */
-import { getRefreshAdminView, getLoadData } from '../../platform/windowBridge.js';
 import {
   setAdminRefreshPending,
   getAdminRefreshPending,
@@ -29,7 +28,8 @@ import {
     setTimeout(() => {
       try {
         incrementAdminCoalesceHits();
-        const fn = getRefreshAdminView() || getLoadData() || null;
+        // window.refreshAdminView / window.loadData are set by registerGlobals.js
+        const fn = window.refreshAdminView || window.loadData || null;
 
         if (typeof fn === 'function') {
           fn(); // direct path

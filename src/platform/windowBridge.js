@@ -1,17 +1,14 @@
 /**
- * Window Bridge
+ * Window Bridge — typed accessors for window globals.
  *
- * Single module that owns all window.* global access.
- * Application code imports from here instead of accessing window directly.
+ * Courtboard-only: The courtboard app's plain <script> files cannot use ESM imports
+ * and read window.Tennis.* directly. These accessors serve the courtboard's ESM
+ * components (hooks, main.jsx) that need typed access to the same namespace.
  *
- * Benefits:
- * - Centralized control over global dependencies
- * - Easy to mock in tests
- * - Clear inventory of external dependencies
- * - Guards against undefined access
+ * isMobileView: Used across all apps (53 sites). Reads window.IS_MOBILE_VIEW.
  *
- * Note: Getters return undefined when unavailable (matching optional chaining behavior).
- * This preserves existing behavior where code may tolerate undefined.
+ * Registration and admin apps have been fully migrated to direct ESM imports
+ * and no longer use bridge accessors (except isMobileView).
  */
 
 // ============================================
@@ -26,43 +23,9 @@ export function isMobileView() {
   return !!window.IS_MOBILE_VIEW;
 }
 
-/**
- * Check if API mode is enabled
- * @returns {boolean}
- */
-export function isApiMode() {
-  return !!window.NOLTC_USE_API;
-}
-
-// ============================================
-// SERVICES
-// ============================================
-
-/**
- * Get GeolocationService
- * @returns {Object|undefined}
- */
-export function getGeolocationService() {
-  return window.GeolocationService;
-}
-
 // ============================================
 // TENNIS NAMESPACE
 // ============================================
-
-/**
- * Ensure Tennis namespace exists on window.
- *
- * This is the single authorized initializer for window.Tennis.
- * Call sites that previously did `window.Tennis = window.Tennis || {}`
- * should use this function instead.
- *
- * @returns {Object} The Tennis namespace object
- */
-export function ensureTennisNamespace() {
-  window.Tennis = window.Tennis || {};
-  return window.Tennis;
-}
 
 /**
  * Get Tennis namespace
@@ -95,32 +58,6 @@ export function getTennisDataStore() {
 }
 
 /**
- * DataStore bridge - get value by key
- * Pure pass-through, preserves return shape
- * Returns undefined if namespace/method unavailable (SSR/test safe)
- *
- * @param {string} key - Storage key
- * @returns {Promise<*>} Stored value or undefined
- */
-export function getDataStoreValue(key) {
-  return window.Tennis?.DataStore?.get?.(key);
-}
-
-/**
- * DataStore bridge - set value by key with options
- * Pure pass-through, preserves write timing
- * No-op if namespace/method unavailable (SSR/test safe)
- *
- * @param {string} key - Storage key
- * @param {*} value - Value to store
- * @param {Object} [options] - Storage options (e.g., { expiresInMinutes })
- * @returns {Promise<void>}
- */
-export function setDataStoreValue(key, value, options) {
-  return window.Tennis?.DataStore?.set?.(key, value, options);
-}
-
-/**
  * Get Tennis.Config
  * @returns {Object|undefined}
  */
@@ -137,17 +74,6 @@ export function getTennisStorage() {
 }
 
 /**
- * Storage bridge - safe data reading
- * Pure pass-through, preserves optional-chain semantics
- * Returns undefined if namespace/method unavailable (SSR/test safe)
- *
- * @returns {Object|undefined} Court data or undefined if unavailable
- */
-export function getStorageDataSafe() {
-  return window.Tennis?.Storage?.readDataSafe?.();
-}
-
-/**
  * Get Tennis.UI
  * @returns {Object|undefined}
  */
@@ -161,19 +87,6 @@ export function getTennisUI() {
  */
 export function getTennisEvents() {
   return window.Tennis?.Events;
-}
-
-// ============================================
-// UTILITIES
-// ============================================
-
-/**
- * Check if a global is available
- * @param {string} globalName - Name of window property
- * @returns {boolean}
- */
-export function isGlobalAvailable(globalName) {
-  return window[globalName] != null;
 }
 
 // =============================================================================
@@ -200,24 +113,6 @@ export function getMobileModal() {
 export function getRefreshBoard() {
   if (typeof window === 'undefined') return null;
   return typeof window.refreshBoard === 'function' ? window.refreshBoard : null;
-}
-
-/**
- * Get the admin view refresh function from window.refreshAdminView
- * @returns {Function|null} Refresh function or null if not available
- */
-export function getRefreshAdminView() {
-  if (typeof window === 'undefined') return null;
-  return typeof window.refreshAdminView === 'function' ? window.refreshAdminView : null;
-}
-
-/**
- * Get the data loader function from window.loadData
- * @returns {Function|null} Load function or null if not available
- */
-export function getLoadData() {
-  if (typeof window === 'undefined') return null;
-  return typeof window.loadData === 'function' ? window.loadData : null;
 }
 
 /**
