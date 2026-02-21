@@ -1,8 +1,11 @@
 import React from 'react';
+import { buildBlockingModel, buildBlockingActions } from '../presenters/blockingPresenter.js';
 
 /**
- * Pass-through wrapper for CompleteBlockManagerEnhanced.
- * Receives domain objects and forwards them unchanged.
+ * BlockingSection - Thin wrapper that delegates to presenter.
+ *
+ * Receives domain objects from App.jsx, transforms via presenter,
+ * and forwards to CompleteBlockManagerEnhanced.
  *
  * @param {Object} props
  * @param {string} props.blockingView - UI view mode
@@ -24,44 +27,20 @@ export function BlockingSection({
   services,
   CompleteBlockManagerEnhanced,
 }) {
+  const model = buildBlockingModel(blockingView, wetCourtsModel, blockModel, components, services);
+  const actions = buildBlockingActions(wetCourtsActions, blockActions);
+
   return (
     <div className="space-y-6 p-6 ">
-      {/* Sub-tab Content */}
-      {blockingView === 'create' && (
-        <CompleteBlockManagerEnhanced
-          wetCourtsModel={wetCourtsModel}
-          wetCourtsActions={wetCourtsActions}
-          blockModel={blockModel}
-          blockActions={blockActions}
-          components={components}
-          services={services}
-          defaultView="create"
-        />
-      )}
-
-      {blockingView === 'future' && (
-        <CompleteBlockManagerEnhanced
-          wetCourtsModel={wetCourtsModel}
-          wetCourtsActions={wetCourtsActions}
-          blockModel={blockModel}
-          blockActions={blockActions}
-          components={components}
-          services={services}
-          defaultView="calendar"
-        />
-      )}
-
-      {blockingView === 'list' && (
-        <CompleteBlockManagerEnhanced
-          wetCourtsModel={wetCourtsModel}
-          wetCourtsActions={wetCourtsActions}
-          blockModel={blockModel}
-          blockActions={blockActions}
-          components={components}
-          services={services}
-          defaultView="timeline"
-        />
-      )}
+      <CompleteBlockManagerEnhanced
+        wetCourtsModel={model.wetCourtsModel}
+        wetCourtsActions={actions.wetCourtsActions}
+        blockModel={model.blockModel}
+        blockActions={actions.blockActions}
+        components={model.components}
+        services={model.services}
+        defaultView={model.defaultView}
+      />
     </div>
   );
 }
