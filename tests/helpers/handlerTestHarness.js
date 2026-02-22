@@ -717,3 +717,108 @@ export function createGuestHandlerDeps(overrides = {}) {
 
   return { deps, mocks };
 }
+
+// ============================================
+// G) createRegistrationAdminHandlerDeps — exact shape for useAdminHandlers (registration)
+// ============================================
+
+/**
+ * Builds the EXACT destructured parameter shape for the registration
+ * useAdminHandlers (src/registration/appHandlers/handlers/adminHandlers.js).
+ * NOT to be confused with the admin app's useAdminHandlers.
+ *
+ * @param {object} [overrides] - Deep-merged into deps
+ * @returns {{ deps: object, mocks: object }}
+ */
+export function createRegistrationAdminHandlerDeps(overrides = {}) {
+  // --- services slice ---
+  const backend = {
+    commands: {
+      clearAllCourts: vi.fn().mockResolvedValue({ ok: true }),
+      moveCourt: vi.fn().mockResolvedValue({ ok: true }),
+      clearWaitlist: vi.fn().mockResolvedValue({ ok: true }),
+      removeFromWaitlist: vi.fn().mockResolvedValue({ ok: true }),
+    },
+  };
+  const dataStore = {
+    get: vi.fn().mockResolvedValue({}),
+    set: vi.fn().mockResolvedValue(undefined),
+  };
+
+  // --- alert slice ---
+  const showAlertMessage = vi.fn();
+
+  // --- helpers slice ---
+  const getCourtData = vi.fn().mockReturnValue({
+    courts: [],
+    waitlist: [],
+    operatingHours: [],
+  });
+
+  // --- setters slice ---
+  const setCourtToMove = vi.fn();
+  const setCurrentScreen = vi.fn();
+
+  // --- search slice ---
+  const setSearchInput = vi.fn();
+
+  // --- adminPriceFeedback slice ---
+  const setPriceError = vi.fn();
+  const showPriceSuccessWithClear = vi.fn();
+
+  // --- court slice (from courtHandlers) ---
+  const clearCourt = vi.fn().mockResolvedValue(undefined);
+
+  const mocks = {
+    backend,
+    dataStore,
+    showAlertMessage,
+    getCourtData,
+    setCourtToMove,
+    setCurrentScreen,
+    setSearchInput,
+    setPriceError,
+    showPriceSuccessWithClear,
+    clearCourt,
+  };
+
+  const deps = deepMerge(
+    {
+      services: {
+        backend,
+        dataStore,
+      },
+      alert: {
+        showAlertMessage,
+      },
+      helpers: {
+        getCourtData,
+      },
+      setters: {
+        setCourtToMove,
+        setCurrentScreen,
+      },
+      search: {
+        setSearchInput,
+      },
+      state: {
+        ballPriceInput: '',
+      },
+      adminPriceFeedback: {
+        setPriceError,
+        showPriceSuccessWithClear,
+      },
+      TENNIS_CONFIG: {
+        STORAGE: {
+          SETTINGS_KEY: 'tennisClubSettings',
+        },
+      },
+      court: {
+        clearCourt,
+      },
+    },
+    overrides
+  );
+
+  return { deps, mocks };
+}
