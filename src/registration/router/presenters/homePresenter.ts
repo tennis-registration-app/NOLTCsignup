@@ -7,7 +7,7 @@
  * Extracted from HomeRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, Handlers } from '../../../types/appTypes.js';
+import type { AppState, Handlers, WaitlistEntrySummary, RegistrationConstants } from '../../../types/appTypes.js';
 
 export interface HomeModel {
   // Search functionality (read-only)
@@ -19,18 +19,18 @@ export interface HomeModel {
   // CTA state
   canFirstGroupPlay: boolean;
   canSecondGroupPlay: boolean;
-  firstWaitlistEntry: any;
-  secondWaitlistEntry: any;
-  firstWaitlistEntryData: any;
-  secondWaitlistEntryData: any;
+  firstWaitlistEntry: WaitlistEntrySummary | null;
+  secondWaitlistEntry: WaitlistEntrySummary | null;
+  firstWaitlistEntryData: WaitlistEntrySummary | null;
+  secondWaitlistEntryData: WaitlistEntrySummary | null;
   canPassThroughGroupPlay: boolean;
-  passThroughEntry: any;
-  passThroughEntryData: any;
+  passThroughEntry: WaitlistEntrySummary | null;
+  passThroughEntryData: WaitlistEntrySummary | null;
   // UI state
   showAlert: boolean;
   alertMessage: string;
   isMobileView: boolean;
-  CONSTANTS: any;
+  CONSTANTS: RegistrationConstants;
 }
 
 export interface HomeActions {

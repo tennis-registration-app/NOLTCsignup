@@ -11,12 +11,14 @@
  * the `computed` parameter.
  */
 
-import type { AppState, Handlers } from '../../../types/appTypes.js';
+import type { AppState, CommandResponse, DirectoryMember, DomainCourt, GroupPlayer, Handlers, ReplacedGroup, TennisConfig, UpcomingBlock } from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger.js';
+
+type PurchaseBallsOptions = { splitBalls?: boolean; splitAccountIds?: string[] | null };
 
 export interface SuccessModelComputed {
   isCourtAssignment: boolean;
-  assignedCourt: any | null;
+  assignedCourt: DomainCourt | null;
   position: number;
   estimatedWait: number;
 }
@@ -24,36 +26,36 @@ export interface SuccessModelComputed {
 export interface SuccessModel {
   // Computed values (from route)
   isCourtAssignment: boolean;
-  assignedCourt: any | null;
+  assignedCourt: DomainCourt | null;
   position: number;
   estimatedWait: number;
   // Direct state values
   justAssignedCourt: number | null;
   sessionId: string | null;
   assignedEndTime: string | null;
-  replacedGroup: any;
+  replacedGroup: ReplacedGroup | null;
   canChangeCourt: boolean;
   changeTimeRemaining: number | null;
-  currentGroup: any[] | null;
+  currentGroup: GroupPlayer[] | null;
   mobileCountdown: number | null;
   isMobile: boolean;
   isTimeLimited: boolean;
   timeLimitReason: string | null;
-  registrantStreak: any;
+  registrantStreak: number;
   ballPriceCents: number | null;
   // Utilities
-  TENNIS_CONFIG: any;
+  TENNIS_CONFIG: TennisConfig;
   getCourtBlockStatus: Function;
-  upcomingBlocks: any[];
+  upcomingBlocks: UpcomingBlock[];
   blockWarningMinutes: number | null;
 }
 
 export interface SuccessActions {
   onChangeCourt: Function;
   onHome: Function;
-  onPurchaseBalls: (sessionId: string, accountId: string, options?: any) => Promise<any>;
-  onLookupMemberAccount: (memberNumber: string) => Promise<any>;
-  onUpdateSessionTournament: (sessionId: string, isTournamentFlag: boolean) => Promise<any>;
+  onPurchaseBalls: (sessionId: string, accountId: string, options?: PurchaseBallsOptions) => Promise<CommandResponse>;
+  onLookupMemberAccount: (memberNumber: string) => Promise<DirectoryMember[]>;
+  onUpdateSessionTournament: (sessionId: string, isTournamentFlag: boolean) => Promise<CommandResponse>;
 }
 
 /**
@@ -119,7 +121,7 @@ export function buildSuccessActions(app: AppState, handlers: Handlers): SuccessA
   return {
     onChangeCourt: changeCourt,
     onHome: resetForm,
-    onPurchaseBalls: async (sessionId: string, accountId: string, options?: any) => {
+    onPurchaseBalls: async (sessionId: string, accountId: string, options?: PurchaseBallsOptions) => {
       logger.debug('SuccessRoute', 'Ball purchase handler called', {
         sessionId,
         accountId,

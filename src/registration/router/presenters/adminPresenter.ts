@@ -7,32 +7,32 @@
  * Extracted from AdminRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, Handlers } from '../../../types/appTypes.js';
+import type { AppState, Handlers, RegistrationConstants, RegistrationUiState } from '../../../types/appTypes.js';
 
 export interface AdminModel {
   // Data
-  data: any;
+  data: RegistrationUiState['data'];
   currentTime: number;
   // Alert state (read only)
   showAlert: boolean;
   alertMessage: string;
   // Block modal state (read-only values)
   showBlockModal: boolean;
-  selectedCourtsToBlock: any[];
+  selectedCourtsToBlock: number[];
   blockMessage: string;
   blockStartTime: string;
   blockEndTime: string;
   blockingInProgress: boolean;
   // Move state (read-only values)
-  courtToMove: any;
-  waitlistMoveFrom: any;
+  courtToMove: number | null;
+  waitlistMoveFrom: number | null;
   // Price state (read-only values)
   ballPriceInput: string;
   priceError: string | null;
   showPriceSuccess: boolean;
   // Utilities
   getCourtBlockStatus: Function;
-  CONSTANTS: any;
+  CONSTANTS: RegistrationConstants;
 }
 
 export interface AdminActions {

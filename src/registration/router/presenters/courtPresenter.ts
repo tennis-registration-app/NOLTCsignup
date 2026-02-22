@@ -7,7 +7,7 @@
  * Extracted from CourtRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, CourtDataMutable, Handlers } from '../../../types/appTypes.js';
+import type { AppState, CourtDataMutable, GroupPlayer, Handlers, UpcomingBlock } from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger.js';
 
 export interface CourtModelComputed {
@@ -15,7 +15,7 @@ export interface CourtModelComputed {
   showingOvertimeCourts: boolean;
   hasWaitingGroups: boolean;
   waitingGroupsCount: number;
-  upcomingBlocks: any[];
+  upcomingBlocks: UpcomingBlock[];
 }
 
 export interface CourtModel {
@@ -24,9 +24,9 @@ export interface CourtModel {
   showingOvertimeCourts: boolean;
   hasWaitingGroups: boolean;
   waitingGroupsCount: number;
-  upcomingBlocks: any[];
+  upcomingBlocks: UpcomingBlock[];
   // Direct state values
-  currentGroup: any[] | null;
+  currentGroup: GroupPlayer[] | null;
   isMobileView: boolean;
   hasWaitlistPriority: boolean;
   currentWaitlistEntryId: string | null;

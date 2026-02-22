@@ -7,16 +7,16 @@
  * Extracted from GroupRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, Handlers } from '../../../types/appTypes.js';
+import type { AppState, CourtSelectionResult, FrequentPartner, GroupPlayer, Handlers, RegistrationConstants, RegistrationUiState } from '../../../types/appTypes.js';
 
 export interface GroupModel {
   // Data
-  data: any;
-  currentGroup: any[] | null;
+  data: RegistrationUiState['data'];
+  currentGroup: GroupPlayer[] | null;
   memberNumber: string;
-  availableCourts: any[];
-  courtSelection: any;
-  frequentPartners: any[];
+  availableCourts: number[];
+  courtSelection: CourtSelectionResult;
+  frequentPartners: FrequentPartner[];
   frequentPartnersLoading: boolean;
   // UI state
   showAlert: boolean;
@@ -38,12 +38,12 @@ export interface GroupModel {
   // Guest form state
   showGuestForm: boolean;
   guestName: string;
-  guestSponsor: any;
+  guestSponsor: string;
   showGuestNameError: boolean;
   showSponsorError: boolean;
   // Utilities (data)
   getAutocompleteSuggestions: Function;
-  CONSTANTS: any;
+  CONSTANTS: RegistrationConstants;
 }
 
 export interface GroupActions {
