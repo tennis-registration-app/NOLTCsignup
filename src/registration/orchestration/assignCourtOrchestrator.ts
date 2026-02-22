@@ -85,6 +85,45 @@ export interface AssignCourtDeps {
   ui: AssignCourtUI;
 }
 
+// ---- File-local helpers (not exported) ----
+
+interface SuccessStateParams {
+  courtNumber: number;
+  sessionId: string | null;
+  scheduledEndAt: string | null;
+  replacedGroup: ReplacedGroup | null;
+  displacement: DisplacementInfo | null;
+  canChangeCourt: boolean;
+}
+
+/** Sets the shared success-screen state used by both waitlist and direct-assign branches. */
+function applySuccessState(actions: AssignCourtActions, params: SuccessStateParams): void {
+  actions.setJustAssignedCourt(params.courtNumber);
+  actions.setAssignedSessionId(params.sessionId);
+  actions.setAssignedEndTime(params.scheduledEndAt);
+  actions.setReplacedGroup(params.replacedGroup);
+  actions.setDisplacement(params.displacement);
+  actions.setOriginalCourtData(null);
+  actions.setIsChangingCourt(false);
+  actions.setWasOvertimeCourt(false);
+  actions.setHasAssignedCourt(true);
+  actions.setCanChangeCourt(params.canChangeCourt);
+  actions.setShowSuccess(true);
+}
+
+/** Starts the auto-reset timer that fires resetForm after delayMs (desktop only). */
+function startAutoResetTimer(
+  state: AssignCourtState,
+  services: Pick<AssignCourtServices, 'clearSuccessResetTimer' | 'resetForm'>
+): void {
+  if (state.mobileFlow) return;
+  services.clearSuccessResetTimer();
+  state.successResetTimerRef.current = setTimeout(() => {
+    state.successResetTimerRef.current = null;
+    services.resetForm();
+  }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
+}
+
 export async function assignCourtToGroupOrchestrated(
   courtNumber: number | null | undefined,
   selectableCountAtSelection: number | null,
@@ -298,28 +337,16 @@ export async function assignCourtToGroupOrchestrated(
       }
 
       // Update UI state
-      actions.setJustAssignedCourt(courtNumber);
-      actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
-      actions.setAssignedEndTime(
-        result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
-      ); // Capture end time from API (snake_case) or normalized (camelCase)
-      actions.setReplacedGroup(null);
-      actions.setDisplacement(null);
-      actions.setOriginalCourtData(null);
-      actions.setIsChangingCourt(false);
-      actions.setWasOvertimeCourt(false);
-      actions.setHasAssignedCourt(true);
-      actions.setCanChangeCourt(false); // Waitlist groups typically don't get court change option
-      actions.setShowSuccess(true);
+      applySuccessState(actions, {
+        courtNumber,
+        sessionId: result.session?.id || null,
+        scheduledEndAt: result.session?.scheduled_end_at || result.session?.scheduledEndAt || null,
+        replacedGroup: null,
+        displacement: null,
+        canChangeCourt: false, // Waitlist groups typically don't get court change option
+      });
 
-      // Auto-reset timer
-      if (!state.mobileFlow) {
-        services.clearSuccessResetTimer();
-        state.successResetTimerRef.current = setTimeout(() => {
-          state.successResetTimerRef.current = null;
-          services.resetForm();
-        }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
-      }
+      startAutoResetTimer(state, services);
 
       // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
       await services.backend.queries.refresh();
@@ -437,13 +464,6 @@ export async function assignCourtToGroupOrchestrated(
   const allowCourtChange =
     selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
 
-  // Update UI state based on result
-  actions.setJustAssignedCourt(courtNumber);
-  actions.setAssignedSessionId(result.session?.id || null); // Capture session ID for ball purchases
-  actions.setAssignedEndTime(
-    result.session?.scheduled_end_at || result.session?.scheduledEndAt || null
-  ); // Capture end time from API (snake_case) or normalized (camelCase)
-
   // Construct replacedGroup from displacement.participants for SuccessScreen messaging
   const replacedGroupFromDisplacement =
     result.displacement?.participants?.length > 0
@@ -452,17 +472,20 @@ export async function assignCourtToGroupOrchestrated(
           endTime: result.displacement.restoreUntil,
         }
       : null;
-  actions.setReplacedGroup(replacedGroupFromDisplacement);
-  actions.setDisplacement(result.displacement); // Will be null if no overtime was displaced
-  actions.setOriginalCourtData(null);
-  actions.setIsChangingCourt(false);
-  actions.setWasOvertimeCourt(false);
-  actions.setHasAssignedCourt(true); // Track that this group has a court
-  actions.setCanChangeCourt(allowCourtChange); // Only true if alternatives exist
+
+  // Update UI state based on result
+  applySuccessState(actions, {
+    courtNumber,
+    sessionId: result.session?.id || null,
+    scheduledEndAt: result.session?.scheduled_end_at || result.session?.scheduledEndAt || null,
+    replacedGroup: replacedGroupFromDisplacement,
+    displacement: result.displacement, // Will be null if no overtime was displaced
+    canChangeCourt: allowCourtChange, // Only true if alternatives exist
+  });
+  // Direct-assign-only state
   actions.setChangeTimeRemaining(state.CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
-  actions.setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false); // Track if time was limited
+  actions.setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false);
   actions.setTimeLimitReason(result.timeLimitReason || (result.isTimeLimited ? 'block' : null));
-  actions.setShowSuccess(true);
 
   const uiUpdateTime = Math.round(performance.now() - assignStartTime);
   getRuntimeDeps().logger.debug(
@@ -470,14 +493,7 @@ export async function assignCourtToGroupOrchestrated(
     `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`
   );
 
-  // Auto-reset timer for court assignment (same as waitlist)
-  if (!state.mobileFlow) {
-    services.clearSuccessResetTimer();
-    state.successResetTimerRef.current = setTimeout(() => {
-      state.successResetTimerRef.current = null;
-      services.resetForm();
-    }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
-  }
+  startAutoResetTimer(state, services);
 
   if (allowCourtChange) {
     const timer = setInterval(() => {
