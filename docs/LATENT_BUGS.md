@@ -1,0 +1,39 @@
+# Latent Bugs Backlog
+
+Bugs discovered during the quality review cycle (57 commits, Feb 2026). Each was documented in test comments or commit messages but intentionally not fixed — all changes were test-only or structural.
+
+## Priority 1 — Production Risk
+
+| # | Bug | Module | Severity | Current Behavior | Expected Behavior | Discovered By | Test Coverage |
+|---|-----|--------|----------|-----------------|-------------------|---------------|---------------|
+| 1 | Zod v4 `.issues` vs `.errors` mismatch | `src/lib/backend/wire.js` | **High** | Command builders catch Zod validation errors and access `result.error.errors` — but Zod v4 uses `.issues`. Throws `TypeError: Cannot read properties of undefined` instead of formatted validation message. | Should access `result.error.issues` and format a user-friendly message. | TennisCommands test suite (commit 8241016) | wire.js 89% covered; error formatting path NOT covered |
+| 2 | `updateSettings` cache timestamp not cleared | `src/lib/backend/ApiAdapter.js` | **High** | `updateSettings()` sets `this._cache.settings = null` but does not clear `this._cache.settingsTime`. Next `getSettings()` call sees valid timestamp, returns `null` from cache. | Should also clear `settingsTime`, or use `clearCache()`. | ApiAdapter test suite (commit after 6bbaa08) | Test documents actual (buggy) behavior explicitly |
+| 3 | Block-vs-session priority in `clearCourtOp` | `src/admin/handlers/courtOperations.js` | **Medium** | When a court has both a block and a session, only the block is cancelled (if/else chain). Session is left running underneath. | Should clear both, or document the priority as intentional. | courtOperations test suite (commit in admin bootstrap) | Test documents actual behavior |
+
+## Priority 2 — Correctness
+
+| # | Bug | Module | Severity | Current Behavior | Expected Behavior | Discovered By | Test Coverage |
+|---|-----|--------|----------|-----------------|-------------------|---------------|---------------|
+| 4 | `getUsageComparison` sends camelCase keys | `src/lib/backend/admin/AdminCommands.js` | **Medium** | Sends `primaryStart`, `primaryEnd`, `comparisonStart` as camelCase. All other POST methods map to snake_case. | Should map to `primary_start`, `primary_end`, `comparison_start` — unless backend expects camelCase for this endpoint. | AdminCommands test suite | Test documents actual behavior |
+| 5 | `applyBlocksOp` early return on invalid block | `src/admin/handlers/applyBlocksOperation.js` | **Medium** | `return` inside `for...of` loop on first invalid block skips all remaining blocks (valid or not). | Should collect errors and continue processing valid blocks, or validate all before applying any. | applyBlocksOperation test suite | Test documents actual behavior |
+| 6 | `runtimeConfig.js` dead production check | `src/config/runtimeConfig.js` | **Medium** | `DEV_DEFAULTS` applied via `||` before `!value` check. Production build with no env vars silently uses dev Supabase credentials. | Production check should compare against dev defaults, or build-time script should be the sole gate (currently is). | Env contract baseline evidence (commit 6bbaa08) | Build-time `check-env.js` is the real gate |
+| 7 | `handleRemoveBlock` fire-and-forget during edit | `src/admin/blocks/hooks/useBlockActions.js` | **Medium** | When editing a block, old block deletion is called without `await`. If `cancelBlock` fails, new blocks are still applied — ghost duplicate. | Should `await` the cancellation and abort if it fails. | useBlockActions test suite | Test documents actual behavior |
+
+## Priority 3 — Minor / Cosmetic
+
+| # | Bug | Module | Severity | Current Behavior | Expected Behavior | Discovered By | Test Coverage |
+|---|-----|--------|----------|-----------------|-------------------|---------------|---------------|
+| 8 | `moveCourtOp` uses `toast()` while others use `showNotification` | `src/admin/handlers/courtOperations.js` | **Low** | Inconsistent notification channel — dispatches `CustomEvent('UI_TOAST')` instead of injected callback. | Should use `showNotification` for consistency. | courtOperations test suite | Not directly tested (notification channel) |
+| 9 | `getTransactions` "no query string" path is dead code | `src/lib/backend/admin/AdminCommands.js` | **Low** | `limit` defaults to 100, so the `queryString ? url + '?' + qs : url` ternary always takes the truthy branch. | Remove dead branch or make limit truly optional. | AdminCommands test suite | Test documents actual behavior |
+| 10 | Block ID collision risk | `src/admin/blocks/hooks/useBlockActions.js` | **Low** | `Date.now().toString() + Math.random()` for block IDs. Not a UUID, could collide in rapid succession. | Use `crypto.randomUUID()` or similar. Harmless if backend ignores client IDs. | useBlockActions test suite | Not directly testable |
+| 11 | Title-casing regex capitalizes after apostrophes | `src/admin/blocks/hooks/useBlockActions.js` | **Low** | `/\b\w/g` matches after `'` and `-`, producing "Don'T", "Pre-Season". | Use a smarter regex or dedicated helper. | useBlockActions test suite | Cosmetic only |
+
+## Fix Strategy
+
+Each fix follows the pattern established in this review cycle:
+1. Write a failing test that captures expected behavior
+2. Apply the minimal fix
+3. Verify existing tests still pass
+4. Commit with evidence
+
+Bugs #1 and #2 are recommended first — they have the highest blast radius and the simplest fixes.
