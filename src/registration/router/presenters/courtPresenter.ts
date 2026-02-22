@@ -80,9 +80,9 @@ export function buildCourtActions(
   computed: CourtActionsComputed
 ): CourtActions {
   // Destructure from app
-  const { state, mobile, refs, setters, groupGuest, CONSTANTS } = app;
+  const { state, mobile, refs, setters, groupGuest, courtAssignment, CONSTANTS } = app;
   const { isChangingCourt, displacement, originalCourtData } = state;
-  const { justAssignedCourt } = app.courtAssignment;
+  const { justAssignedCourt } = courtAssignment;
   const { currentGroup } = groupGuest;
   const { mobileFlow } = mobile;
   const { successResetTimerRef } = refs;
