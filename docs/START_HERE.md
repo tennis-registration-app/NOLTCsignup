@@ -2,6 +2,8 @@
 
 > Single entry point for the NOLTC Tennis Court Registration System. If you're new, read this first.
 
+**Contractor/new maintainer?** See [HANDOFF_PACKET.md](HANDOFF_PACKET.md) for the complete reading order and operating rules.
+
 ## What This System Is
 
 Court registration system for the New Orleans Lawn Tennis Club — 12 courts, ~2,500 members. Four sub-applications in this repo, all sharing a Supabase backend (separate repo: `noltc-backend/`).
