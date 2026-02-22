@@ -407,3 +407,213 @@ export function createCourtHandlerDeps(overrides = {}) {
 
   return { deps, mocks };
 }
+
+// ============================================
+// E) createGroupHandlerDeps — exact shape for useGroupHandlers
+// ============================================
+
+/**
+ * Builds the EXACT destructured parameter shape for useGroupHandlers.
+ * All function values are vi.fn(). Nested mocks share references
+ * with the flat mocks object.
+ *
+ * @param {object} [overrides] - Deep-merged into deps
+ * @returns {{ deps: object, mocks: object }}
+ */
+export function createGroupHandlerDeps(overrides = {}) {
+  // --- groupGuest slice ---
+  const setCurrentGroup = vi.fn();
+
+  // --- streak slice ---
+  const setRegistrantStreak = vi.fn();
+  const setStreakAcknowledged = vi.fn();
+  const setShowStreakModal = vi.fn();
+
+  // --- search slice ---
+  const setSearchInput = vi.fn();
+  const setShowSuggestions = vi.fn();
+  const setAddPlayerSearch = vi.fn();
+  const setShowAddPlayerSuggestions = vi.fn();
+
+  // --- memberIdentity slice ---
+  const setMemberNumber = vi.fn();
+  const setCurrentMemberId = vi.fn();
+  const fetchFrequentPartners = vi.fn();
+
+  // --- setters slice ---
+  const setCurrentScreen = vi.fn();
+  const setShowAddPlayer = vi.fn();
+  const setHasWaitlistPriority = vi.fn();
+  const setShowSuccess = vi.fn();
+
+  // --- alert slice ---
+  const setAlertMessage = vi.fn();
+  const setShowAlert = vi.fn();
+  const showAlertMessage = vi.fn();
+
+  // --- refs slice ---
+  const successResetTimerRef = { current: null };
+
+  // --- services slice ---
+  const backend = {
+    directory: {
+      invalidateAccount: vi.fn(),
+      getMembersByAccount: vi.fn().mockResolvedValue([]),
+    },
+  };
+
+  // --- helpers slice ---
+  const guardAddPlayerEarly = vi.fn().mockReturnValue(true);
+  const guardAgainstGroupDuplicate = vi.fn().mockReturnValue(true);
+  const getCourtData = vi.fn().mockReturnValue({
+    courts: [],
+    waitlist: [],
+    courtSelection: null,
+    blocks: [],
+    serverNow: new Date().toISOString(),
+    operatingHours: [],
+  });
+
+  // --- court slice (outputs from courtHandlers) ---
+  const getAvailableCourts = vi.fn().mockReturnValue([1, 2, 3]);
+  const saveCourtData = vi.fn().mockResolvedValue(true);
+  const assignCourtToGroup = vi.fn().mockResolvedValue(undefined);
+  const sendGroupToWaitlist = vi.fn().mockResolvedValue(undefined);
+
+  // --- core slice ---
+  const clearSuccessResetTimer = vi.fn();
+  const resetForm = vi.fn();
+  const isPlayerAlreadyPlaying = vi.fn().mockReturnValue({ isPlaying: false });
+
+  // --- orchestrators ---
+  const handleSuggestionClickOrchestrated = vi.fn().mockResolvedValue(undefined);
+  const handleAddPlayerSuggestionClickOrchestrated = vi.fn().mockResolvedValue(undefined);
+
+  const mocks = {
+    // groupGuest
+    setCurrentGroup,
+    // streak
+    setRegistrantStreak,
+    setStreakAcknowledged,
+    setShowStreakModal,
+    // search
+    setSearchInput,
+    setShowSuggestions,
+    setAddPlayerSearch,
+    setShowAddPlayerSuggestions,
+    // memberIdentity
+    setMemberNumber,
+    setCurrentMemberId,
+    fetchFrequentPartners,
+    // setters
+    setCurrentScreen,
+    setShowAddPlayer,
+    setHasWaitlistPriority,
+    setShowSuccess,
+    // alert
+    setAlertMessage,
+    setShowAlert,
+    showAlertMessage,
+    // refs
+    successResetTimerRef,
+    // services
+    backend,
+    // helpers
+    guardAddPlayerEarly,
+    guardAgainstGroupDuplicate,
+    getCourtData,
+    // court
+    getAvailableCourts,
+    saveCourtData,
+    assignCourtToGroup,
+    sendGroupToWaitlist,
+    // core
+    clearSuccessResetTimer,
+    resetForm,
+    isPlayerAlreadyPlaying,
+    // orchestrators
+    handleSuggestionClickOrchestrated,
+    handleAddPlayerSuggestionClickOrchestrated,
+  };
+
+  const deps = deepMerge(
+    {
+      groupGuest: {
+        currentGroup: [],
+        setCurrentGroup,
+      },
+      derived: {
+        memberDatabase: {},
+      },
+      mobile: {
+        mobileFlow: false,
+        preselectedCourt: null,
+      },
+      streak: {
+        registrantStreak: 0,
+        streakAcknowledged: false,
+        setRegistrantStreak,
+        setStreakAcknowledged,
+        setShowStreakModal,
+      },
+      search: {
+        setSearchInput,
+        setShowSuggestions,
+        setAddPlayerSearch,
+        setShowAddPlayerSuggestions,
+      },
+      memberIdentity: {
+        setMemberNumber,
+        setCurrentMemberId,
+        fetchFrequentPartners,
+      },
+      setters: {
+        setCurrentScreen,
+        setShowAddPlayer,
+        setHasWaitlistPriority,
+        setShowSuccess,
+      },
+      alert: {
+        setAlertMessage,
+        setShowAlert,
+        showAlertMessage,
+      },
+      refs: {
+        successResetTimerRef,
+      },
+      services: {
+        backend,
+      },
+      helpers: {
+        guardAddPlayerEarly,
+        guardAgainstGroupDuplicate,
+        getCourtData,
+      },
+      court: {
+        getAvailableCourts,
+        saveCourtData,
+        assignCourtToGroup,
+        sendGroupToWaitlist,
+      },
+      core: {
+        clearSuccessResetTimer,
+        resetForm,
+        isPlayerAlreadyPlaying,
+      },
+      handleSuggestionClickOrchestrated,
+      handleAddPlayerSuggestionClickOrchestrated,
+      CONSTANTS: {
+        MAX_PLAYERS: 4,
+        MIN_PLAYERS: 2,
+        COURT_COUNT: 8,
+        INACTIVITY_TIMEOUT_MS: 120000,
+        AUTO_RESET_SUCCESS_MS: 5000,
+        ALERT_DISPLAY_MS: 3000,
+        CHANGE_COURT_TIMEOUT_SEC: 30,
+      },
+    },
+    overrides
+  );
+
+  return { deps, mocks };
+}
