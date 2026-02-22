@@ -12,6 +12,15 @@ import {
 // Import validation services
 import { TennisBusinessLogic } from '@lib';
 
+// Centralized handler deps builders
+import {
+  buildCourtHandlerDeps,
+  buildGroupHandlerDeps,
+  buildGuestHandlerDeps,
+  buildAdminHandlerDeps,
+  buildNavigationHandlerDeps,
+} from './buildHandlerDeps';
+
 /**
  * useRegistrationHandlers
  * Extracted from App.jsx
@@ -24,19 +33,7 @@ import { TennisBusinessLogic } from '@lib';
  * @returns {import('../../types/appTypes').Handlers}
  */
 export function useRegistrationHandlers({ app }) {
-  const {
-    assignCourtToGroupOrchestrated,
-    sendGroupToWaitlistOrchestrated,
-    handleSuggestionClickOrchestrated,
-    handleAddPlayerSuggestionClickOrchestrated,
-    changeCourtOrchestrated,
-    resetFormOrchestrated,
-    validateGroupCompat,
-    dbg,
-    CONSTANTS,
-    TENNIS_CONFIG,
-    API_CONFIG,
-  } = app;
+  const { resetFormOrchestrated } = app;
 
   // ===== UTILITY FUNCTIONS =====
 
@@ -93,90 +90,28 @@ export function useRegistrationHandlers({ app }) {
   // Court Handlers (extracted to courtHandlers.js)
   // Must be first: adminHandlers and groupHandlers depend on court outputs
   // ============================================
-  const courtHandlers = useCourtHandlers({
-    state: app.state,
-    setters: app.setters,
-    mobile: app.mobile,
-    groupGuest: app.groupGuest,
-    courtAssignment: app.courtAssignment,
-    services: app.services,
-    helpers: app.helpers,
-    blockAdmin: app.blockAdmin,
-    alert: app.alert,
-    refs: app.refs,
-    assignCourtToGroupOrchestrated,
-    changeCourtOrchestrated,
-    sendGroupToWaitlistOrchestrated,
-    validateGroupCompat,
-    dbg,
-    CONSTANTS,
-    API_CONFIG,
-    core: { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying },
-  });
+  const core = { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying };
+  const courtHandlers = useCourtHandlers(buildCourtHandlerDeps(app, core));
 
   // ============================================
   // Admin Screen Handlers (extracted to adminHandlers.js)
   // ============================================
-  const adminHandlers = useAdminHandlers({
-    services: app.services,
-    alert: app.alert,
-    helpers: app.helpers,
-    setters: app.setters,
-    search: app.search,
-    state: app.state,
-    adminPriceFeedback: app.adminPriceFeedback,
-    TENNIS_CONFIG,
-    court: courtHandlers,
-  });
+  const adminHandlers = useAdminHandlers(buildAdminHandlerDeps(app, courtHandlers));
 
   // ============================================
   // Guest Handlers (extracted to guestHandlers.js)
   // ============================================
-  const guestHandlers = useGuestHandlers({
-    groupGuest: app.groupGuest,
-    guestCounterHook: app.guestCounterHook,
-    memberIdentity: app.memberIdentity,
-    derived: app.derived,
-    setters: app.setters,
-    search: app.search,
-    helpers: app.helpers,
-  });
+  const guestHandlers = useGuestHandlers(buildGuestHandlerDeps(app));
 
   // ============================================================
   // Group Handlers (extracted to groupHandlers.js)
   // ============================================================
-  const groupHandlers = useGroupHandlers({
-    groupGuest: app.groupGuest,
-    derived: app.derived,
-    mobile: app.mobile,
-    streak: app.streak,
-    search: app.search,
-    memberIdentity: app.memberIdentity,
-    setters: app.setters,
-    alert: app.alert,
-    refs: app.refs,
-    services: app.services,
-    helpers: app.helpers,
-    court: courtHandlers,
-    core: { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying },
-    handleSuggestionClickOrchestrated,
-    handleAddPlayerSuggestionClickOrchestrated,
-    CONSTANTS,
-  });
+  const groupHandlers = useGroupHandlers(buildGroupHandlerDeps(app, core, courtHandlers));
 
   // ============================================================
   // Navigation Handlers (extracted to navigationHandlers.js)
   // ============================================================
-  const navigationHandlers = useNavigationHandlers({
-    state: app.state,
-    setters: app.setters,
-    groupGuest: app.groupGuest,
-    memberIdentity: app.memberIdentity,
-    mobile: app.mobile,
-    clearCourtFlow: app.clearCourtFlow,
-    alert: app.alert,
-    TENNIS_CONFIG,
-  });
+  const navigationHandlers = useNavigationHandlers(buildNavigationHandlerDeps(app));
 
   // ===== RETURN ALL HANDLERS =====
   return {
