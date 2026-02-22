@@ -746,9 +746,9 @@ describe('AdminCommands', () => {
   });
 
   describe('getUsageComparison', () => {
-    it('posts to /get-usage-comparison with all params', async () => {
+    it('sends snake_case keys by default', async () => {
       const { commands, api } = setup();
-      const raw = { metric: 'usage', unit: 'sessions', primary: {}, comparison: {} };
+      const raw = { ok: true, metric: 'usage', unit: 'sessions', primary: {}, comparison: {} };
       api.post.mockResolvedValue(raw);
 
       const result = await commands.getUsageComparison({
@@ -759,17 +759,18 @@ describe('AdminCommands', () => {
         comparisonStart: '2024-01-01',
       });
 
+      expect(api.post).toHaveBeenCalledOnce();
       expect(api.post).toHaveBeenCalledWith('/get-usage-comparison', {
         metric: 'usage',
-        primaryStart: '2025-01-01',
-        primaryEnd: '2025-01-31',
+        primary_start: '2025-01-01',
+        primary_end: '2025-01-31',
         granularity: 'week',
-        comparisonStart: '2024-01-01',
+        comparison_start: '2024-01-01',
       });
       expect(result).toBe(raw);
     });
 
-    it('applies defaults for metric, granularity, comparisonStart', async () => {
+    it('applies defaults for metric, granularity, comparison_start', async () => {
       const { commands, api } = setup();
       api.post.mockResolvedValue({ ok: true });
 
@@ -778,13 +779,63 @@ describe('AdminCommands', () => {
         primaryEnd: '2025-01-31',
       });
 
+      expect(api.post).toHaveBeenCalledOnce();
       expect(api.post).toHaveBeenCalledWith('/get-usage-comparison', {
+        metric: 'usage',
+        primary_start: '2025-01-01',
+        primary_end: '2025-01-31',
+        granularity: 'auto',
+        comparison_start: null,
+      });
+    });
+
+    it('retries with legacy camelCase when backend rejects snake_case (no code)', async () => {
+      const { commands, api } = setup();
+      const successResponse = { ok: true, metric: 'usage', primary: {} };
+      api.post
+        .mockResolvedValueOnce({ ok: false, error: 'unknown parameter primary_start' })
+        .mockResolvedValueOnce(successResponse);
+
+      const result = await commands.getUsageComparison({
         metric: 'usage',
         primaryStart: '2025-01-01',
         primaryEnd: '2025-01-31',
-        granularity: 'auto',
-        comparisonStart: null,
+        granularity: 'week',
+        comparisonStart: '2024-01-01',
       });
+
+      expect(api.post).toHaveBeenCalledTimes(2);
+      // First call: snake_case
+      expect(api.post.mock.calls[0]).toEqual(['/get-usage-comparison', {
+        metric: 'usage',
+        primary_start: '2025-01-01',
+        primary_end: '2025-01-31',
+        granularity: 'week',
+        comparison_start: '2024-01-01',
+      }]);
+      // Second call: legacy camelCase
+      expect(api.post.mock.calls[1]).toEqual(['/get-usage-comparison', {
+        metric: 'usage',
+        primaryStart: '2025-01-01',
+        primaryEnd: '2025-01-31',
+        granularity: 'week',
+        comparisonStart: '2024-01-01',
+      }]);
+      expect(result).toBe(successResponse);
+    });
+
+    it('does NOT retry when failure has a business denial code', async () => {
+      const { commands, api } = setup();
+      const denial = { ok: false, code: 'OUTSIDE_OPERATING_HOURS', message: 'Closed' };
+      api.post.mockResolvedValue(denial);
+
+      const result = await commands.getUsageComparison({
+        primaryStart: '2025-01-01',
+        primaryEnd: '2025-01-31',
+      });
+
+      expect(api.post).toHaveBeenCalledOnce();
+      expect(result).toBe(denial);
     });
   });
 

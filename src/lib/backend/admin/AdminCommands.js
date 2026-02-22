@@ -408,13 +408,30 @@ export class AdminCommands {
     granularity = 'auto',
     comparisonStart = null,
   }) {
-    return this.api.post('/get-usage-comparison', {
+    const snakePayload = {
       metric,
-      primaryStart,
-      primaryEnd,
+      primary_start: primaryStart,
+      primary_end: primaryEnd,
       granularity,
-      comparisonStart,
-    });
+      comparison_start: comparisonStart,
+    };
+
+    const result = await this.api.post('/get-usage-comparison', snakePayload);
+
+    // If backend rejects snake_case (schema validation), retry with legacy camelCase.
+    // Business denial codes (COURT_OCCUPIED, etc.) always have a known code field —
+    // a schema rejection returns ok:false without a recognised code.
+    if (!result.ok && !result.code) {
+      return this.api.post('/get-usage-comparison', {
+        metric,
+        primaryStart,
+        primaryEnd,
+        granularity,
+        comparisonStart,
+      });
+    }
+
+    return result;
   }
 
   async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }) {
