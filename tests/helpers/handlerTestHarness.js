@@ -822,3 +822,105 @@ export function createRegistrationAdminHandlerDeps(overrides = {}) {
 
   return { deps, mocks };
 }
+
+// ============================================
+// H) createNavigationHandlerDeps — exact shape for useNavigationHandlers
+// ============================================
+
+/**
+ * Builds the EXACT destructured parameter shape for useNavigationHandlers.
+ *
+ * @param {object} [overrides] - Deep-merged into deps
+ * @returns {{ deps: object, mocks: object }}
+ */
+export function createNavigationHandlerDeps(overrides = {}) {
+  // --- setters slice ---
+  const setShowAddPlayer = vi.fn();
+  const setCurrentScreen = vi.fn();
+
+  // --- groupGuest slice ---
+  const setShowGuestForm = vi.fn();
+  const setGuestName = vi.fn();
+  const setGuestSponsor = vi.fn();
+  const setShowGuestNameError = vi.fn();
+  const setShowSponsorError = vi.fn();
+  const setCurrentGroup = vi.fn();
+
+  // --- memberIdentity slice ---
+  const setMemberNumber = vi.fn();
+  const setCurrentMemberId = vi.fn();
+
+  // --- mobile slice ---
+  const setCheckingLocation = vi.fn();
+  const requestMobileReset = vi.fn();
+
+  // --- clearCourtFlow slice ---
+  const decrementClearCourtStep = vi.fn();
+
+  // --- alert slice ---
+  const showAlertMessage = vi.fn();
+
+  const mocks = {
+    setShowAddPlayer,
+    setCurrentScreen,
+    setShowGuestForm,
+    setGuestName,
+    setGuestSponsor,
+    setShowGuestNameError,
+    setShowSponsorError,
+    setCurrentGroup,
+    setMemberNumber,
+    setCurrentMemberId,
+    setCheckingLocation,
+    requestMobileReset,
+    decrementClearCourtStep,
+    showAlertMessage,
+  };
+
+  const deps = deepMerge(
+    {
+      state: {
+        showAddPlayer: false,
+        currentScreen: 'group',
+      },
+      setters: {
+        setShowAddPlayer,
+        setCurrentScreen,
+      },
+      groupGuest: {
+        showGuestForm: false,
+        setShowGuestForm,
+        setGuestName,
+        setGuestSponsor,
+        setShowGuestNameError,
+        setShowSponsorError,
+        setCurrentGroup,
+      },
+      memberIdentity: {
+        setMemberNumber,
+        setCurrentMemberId,
+      },
+      mobile: {
+        mobileFlow: false,
+        setCheckingLocation,
+        requestMobileReset,
+      },
+      clearCourtFlow: {
+        clearCourtStep: 1,
+        decrementClearCourtStep,
+      },
+      alert: {
+        showAlertMessage,
+      },
+      TENNIS_CONFIG: {
+        GEOLOCATION: {
+          ENABLED: true,
+          ERROR_MESSAGE: 'Location check failed',
+        },
+      },
+    },
+    overrides
+  );
+
+  return { deps, mocks };
+}
