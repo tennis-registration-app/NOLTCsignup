@@ -200,6 +200,7 @@ fields. See `createCourtHandlerDeps` as the reference implementation.
 - **New guard branch** → add a guard-failure test
 - **New catch block** → add an error-path test asserting feedback + reset behavior
 - **Modified callback** → update existing tests to match new behavior
+- **New hook with side effects** (intervals, subscriptions, timers) → add at least 1 behavioral test verifying setup and cleanup
 
 Coverage targets are enforced by ratchet, not by mandate. These rules ensure the handler layer stays tested as it grows.
 
