@@ -85,6 +85,50 @@ cp .env.example .env.local
 
 Note: `.env.local` is gitignored and should never be committed.
 
+## Security Headers
+
+Security headers are configured in `vercel.json` and applied to all routes.
+
+### Content Security Policy
+
+CSP is currently in **Report-Only** mode. Violations are logged in the browser console but do not block resources.
+
+| Directive | Value | Reason |
+|-----------|-------|--------|
+| `default-src` | `'self'` | Baseline deny |
+| `script-src` | `'self' 'unsafe-inline' https://cdn.tailwindcss.com` | Inline scripts in HTML + Tailwind CDN |
+| `style-src` | `'self' 'unsafe-inline'` | Inline styles + Tailwind runtime |
+| `connect-src` | `'self' https://dncjloqewjubodkoruou.supabase.co https://camera.noltc.com` | Supabase API + camera iframe |
+| `frame-src` | `'self' https://camera.noltc.com` | Internal iframes + wet court camera |
+| `frame-ancestors` | `'self'` | Clickjacking defense |
+| `img-src` | `'self' data:` | Favicon data URI |
+| `object-src` | `'none'` | Block plugins |
+
+**If the production Supabase URL changes**, update `connect-src` in `vercel.json` to match the new host.
+
+### Switching to Enforced Mode
+
+1. Monitor browser console for CSP violations in Report-Only mode
+2. Fix any legitimate violations
+3. Change `Content-Security-Policy-Report-Only` to `Content-Security-Policy` in `vercel.json`
+
+### Removing `unsafe-inline` (Future)
+
+`unsafe-inline` is required because production HTML contains inline `<script>` blocks and `onclick` handlers. To remove it:
+1. Extract inline scripts to external `.js` files
+2. Replace `onclick` handlers with `addEventListener`
+3. Bundle Tailwind (remove CDN runtime) — eliminates the cdn.tailwindcss.com allowlist entry
+4. Replace `unsafe-inline` with specific `sha256-*` hashes or remove entirely
+
+### Other Security Headers
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `X-Content-Type-Options` | `nosniff` | Prevent MIME sniffing |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Limit referrer leakage |
+| `X-Frame-Options` | `SAMEORIGIN` | Legacy clickjacking defense. If cross-origin embedding is needed later, switch to `frame-ancestors` in enforced CSP and remove XFO. |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(self)` | Restrict sensitive APIs |
+
 ## Configuration Reference
 
 See [ENVIRONMENT.md](./ENVIRONMENT.md) for the complete list of environment
