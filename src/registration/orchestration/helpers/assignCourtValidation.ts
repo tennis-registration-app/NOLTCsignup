@@ -5,6 +5,8 @@
  * NO side effects. NO network. NO timers. NO DOM access.
  */
 
+import type { GroupPlayer } from '../../../types/appTypes.js';
+
 export interface GuardResultOk {
   ok: true;
   ui?: undefined;
@@ -13,7 +15,7 @@ export interface GuardResultOk {
 export interface GuardResultFail {
   ok: false;
   kind: string;
-  ui: { action: 'toast' | 'alert'; args: any[] } | null;
+  ui: { action: 'toast' | 'alert'; args: [string, ...unknown[]] } | null;
 }
 
 export type GuardResult = GuardResultOk | GuardResultFail;
@@ -145,7 +147,7 @@ export function guardCourtNumber({
 export function guardGroup({
   currentGroup,
 }: {
-  currentGroup: any[] | null | undefined;
+  currentGroup: GroupPlayer[] | null | undefined;
 }): GuardResult {
   // v0: if (!currentGroup || currentGroup.length === 0)
   if (!currentGroup || currentGroup.length === 0) {
@@ -172,9 +174,9 @@ export function guardGroupCompat({
   guests,
   validateGroupCompat,
 }: {
-  players: any[];
+  players: Pick<GroupPlayer, 'id' | 'name'>[];
   guests: number;
-  validateGroupCompat: (players: any[], guests: number) => { ok: boolean; errors: string[] };
+  validateGroupCompat: (players: Pick<GroupPlayer, 'id' | 'name'>[], guests: number) => { ok: boolean; errors: string[] };
 }): GuardResult {
   // v0: const { ok, errors } = validateGroupCompat(players, guests);
   const { ok, errors } = validateGroupCompat(players, guests);
