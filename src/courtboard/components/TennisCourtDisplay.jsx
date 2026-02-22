@@ -4,7 +4,7 @@ import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
 import { logger } from '../../lib/logger.js';
-import { getTennisDomain } from '../../platform/windowBridge.js';
+import { getTennisDomain, isMobileView } from '../../platform/windowBridge.js';
 import { useClockTick } from '../hooks/useClockTick.js';
 import { useMobileBridge } from '../hooks/useMobileBridge.js';
 import { useCourtboardSettings } from '../hooks/useCourtboardSettings.js';
@@ -27,7 +27,7 @@ const TENNIS_CONFIG = _sharedTennisConfig;
  * Shows all 12 courts, waitlist, and availability panels
  */
 export function TennisCourtDisplay() {
-  const isMobileView = window.IS_MOBILE_VIEW || false;
+  const mobile = isMobileView();
   const currentTime = useClockTick();
   const { courts, waitlist, courtBlocks, upcomingBlocks, courtSelection, operatingHours } =
     useBoardSubscription();
@@ -80,7 +80,7 @@ export function TennisCourtDisplay() {
     courtBlocks,
     upcomingBlocks,
     waitlist,
-    isMobileView,
+    isMobileView: mobile,
     mobileState,
   });
 
@@ -199,7 +199,7 @@ export function TennisCourtDisplay() {
                     selectableByCourt={selectableByCourt}
                     statusObjectByCourt={statusObjectByCourt}
                     data={data}
-                    isMobileView={isMobileView}
+                    isMobileView={mobile}
                     checkStatusMinutes={checkStatusMinutes}
                     upcomingBlocks={upcomingBlocks}
                     blockWarningMinutes={blockWarningMinutes}
@@ -234,7 +234,7 @@ export function TennisCourtDisplay() {
                       selectableByCourt={selectableByCourt}
                       statusObjectByCourt={statusObjectByCourt}
                       data={data}
-                      isMobileView={isMobileView}
+                      isMobileView={mobile}
                       checkStatusMinutes={checkStatusMinutes}
                       upcomingBlocks={upcomingBlocks}
                       blockWarningMinutes={blockWarningMinutes}
@@ -258,7 +258,7 @@ export function TennisCourtDisplay() {
                     selectableByCourt={selectableByCourt}
                     statusObjectByCourt={statusObjectByCourt}
                     data={data}
-                    isMobileView={isMobileView}
+                    isMobileView={mobile}
                     checkStatusMinutes={checkStatusMinutes}
                     upcomingBlocks={upcomingBlocks}
                     blockWarningMinutes={blockWarningMinutes}

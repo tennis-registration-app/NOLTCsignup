@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MobileModalSheet } from './MobileModalSheet';
+import { isMobileView, getMobileModal } from '../../platform/windowBridge.js';
 
 /**
  * MobileModalApp Component - manages modal state and listens for events
@@ -9,7 +10,7 @@ export function MobileModalApp() {
   const [state, setState] = useState({ open: false, type: null, payload: null });
 
   useEffect(() => {
-    if (!window.IS_MOBILE_VIEW) return;
+    if (!isMobileView()) return;
 
     const onOpen = (e) => {
       setState({ open: true, type: e.detail.type, payload: e.detail.payload || null });
@@ -29,12 +30,12 @@ export function MobileModalApp() {
     };
   }, []);
 
-  if (!window.IS_MOBILE_VIEW || !state.open) return null;
+  if (!isMobileView() || !state.open) return null;
   return (
     <MobileModalSheet
       type={state.type}
       payload={state.payload}
-      onClose={window.MobileModal?.close || (() => {})}
+      onClose={getMobileModal()?.close || (() => {})}
     />
   );
 }

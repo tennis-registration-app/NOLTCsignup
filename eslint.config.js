@@ -341,13 +341,56 @@ export default [
       'src/admin/ai/AIAssistantAdmin.jsx',
       // Singleton guard uses window[key] assignment pattern
       'src/admin/hooks/useAdminSettings.js',
-      // Courtboard — IIFE-bridged plain scripts, direct window access required
-      'src/courtboard/**/*.{js,jsx}',
+      // Courtboard entry point — polls window.Tennis readiness before rendering
+      'src/courtboard/main.jsx',
+      // Courtboard IIFE/plain scripts — direct window access required (ADR-006)
+      'src/courtboard/bootstrap/**/*.js',
+      'src/courtboard/mobile-bridge.js',
+      'src/courtboard/mobile-fallback-bar.js',
+      'src/courtboard/debug-panel.js',
+      'src/courtboard/courtboardState.js',
+      'src/courtboard/sync-promotions.js',
+      // Courtboard bridges — single writer for window.CourtboardState / CourtAvailability
+      'src/courtboard/bridge/**/*.js',
+      'src/courtboard/browser-bridge.js',
     ],
     rules: {
       'no-restricted-globals': 'off',
       'no-restricted-properties': 'off',
       'no-restricted-syntax': 'off',
+    },
+  },
+  // ADR-006 Phase 1: Fence courtboard ESM — prevent new window.Tennis / IS_MOBILE_VIEW reads.
+  // Courtboard components, hooks, and mobile modules must use windowBridge accessors.
+  // IIFE/plain scripts are exempted above; this block re-enables the rule for ESM only.
+  {
+    files: [
+      'src/courtboard/components/**/*.{js,jsx}',
+      'src/courtboard/hooks/**/*.{js,jsx}',
+      'src/courtboard/mobile/**/*.{js,jsx}',
+    ],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'window',
+          property: 'Tennis',
+          message:
+            'Courtboard ESM must not read window.Tennis directly. Use windowBridge or direct imports (ADR-006).',
+        },
+        {
+          object: 'window',
+          property: 'IS_MOBILE_VIEW',
+          message:
+            'Courtboard ESM must not read window.IS_MOBILE_VIEW. Use isMobileView() from windowBridge (ADR-006).',
+        },
+        {
+          object: 'window',
+          property: 'MobileModal',
+          message:
+            'Courtboard ESM must not read window.MobileModal. Use getMobileModal() from windowBridge (ADR-006).',
+        },
+      ],
     },
   },
   // Exempt test files - MUST come AFTER the ban above

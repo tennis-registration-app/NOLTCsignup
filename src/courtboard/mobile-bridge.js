@@ -1,3 +1,4 @@
+// Deletion condition: Phase 2 — consolidate into courtboard-bootstrap.js (ADR-006)
 /* eslint-disable no-console -- IIFE loaded via <script> tag; cannot import logger */
 // Mobile Bridge Script for CourtBoard
 (function boardMobileBridge() {

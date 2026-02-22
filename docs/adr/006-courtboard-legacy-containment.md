@@ -1,7 +1,7 @@
 # ADR-006: Courtboard Legacy Containment Strategy
 
 ## Status
-Proposed (becomes Accepted when Phase 1 lands)
+Accepted (Phase 1 landed)
 
 ## Context
 The courtboard app has 29 files. 20 are modern ESM React (components, hooks, utilities). 5 are legacy IIFE/plain scripts (995 lines total) that communicate via window globals. The 9 `attachLegacy*.js` files populate `window.Tennis.*` namespaces that both the IIFE scripts and 2 ESM components read.

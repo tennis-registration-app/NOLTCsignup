@@ -1,3 +1,4 @@
+// Deletion condition: Phase 2 — consolidate into courtboard-bootstrap.js (ADR-006)
 // @ts-nocheck — plain script loaded via <script> tag; cannot use ESM or type annotations
 /* eslint-disable no-console -- IIFE loaded via <script> tag; cannot import logger */
 // Plain-JS fallback bar (emergency restoration)

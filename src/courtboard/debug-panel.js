@@ -1,3 +1,4 @@
+// Retention: dev-only diagnostic panel, gated by ?debug=1. Stays separate.
 // Debug Panel - Only visible when ?debug=1
 (function () {
   const params = new URLSearchParams(location.search);

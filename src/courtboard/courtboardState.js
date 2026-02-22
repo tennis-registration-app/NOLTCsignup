@@ -1,3 +1,4 @@
+// Deletion condition: Phase 3 — direct import from bridge/window-bridge.js (ADR-006)
 /**
  * Courtboard State Bridge
  * =======================

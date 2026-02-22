@@ -1,6 +1,7 @@
 import React from 'react';
 import { TennisBall } from './Icons';
 import { ReservedCourtsPanel, selectReservedItemsFromBlocks } from './ReservedCourtsPanel';
+import { getLegacyAvailabilityDomain } from '../bridge/window-bridge';
 
 /**
  * NextAvailablePanel - Display panel showing next available courts
@@ -14,7 +15,7 @@ export function NextAvailablePanel({
   operatingHours = [],
   maxDisplay,
 }) {
-  const A = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+  const A = getLegacyAvailabilityDomain();
 
   // Convert React courts state to the data format expected by availability functions
   const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });

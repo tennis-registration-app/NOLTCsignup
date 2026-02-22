@@ -1,3 +1,4 @@
+// Deletion condition: Phase 2 — consolidate into courtboard-bootstrap.js (ADR-006)
 /**
  * Courtboard Pre-Init
  * Extracted from inline <script> blocks in src/courtboard/index.html.

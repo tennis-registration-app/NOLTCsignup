@@ -15,3 +15,13 @@
 export function writeCourtboardState(nextState) {
   window.CourtboardState = nextState;
 }
+
+/**
+ * Get the legacy availability domain object (window.Tennis.Domain.availability).
+ * Centralizes the single remaining ESM read so courtboard components
+ * don't access window.Tennis directly (ADR-006 Phase 1).
+ * @returns {Object|undefined}
+ */
+export function getLegacyAvailabilityDomain() {
+  return window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+}
