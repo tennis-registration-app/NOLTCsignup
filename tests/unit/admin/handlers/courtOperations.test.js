@@ -126,8 +126,7 @@ describe('clearCourtOp', () => {
     expect(ctx.backend.admin.adminEndSession).not.toHaveBeenCalled();
   });
 
-  it('cancels block first when court has BOTH block and session', async () => {
-    // The code checks block first (if/else chain), so block wins
+  it('clears both block and session when court has both', async () => {
     const ctx = createCtx({
       courts: [
         { number: 1, id: 'court-uuid-1', block: { id: 'block-1' }, session: { id: 'sess-1' } },
@@ -137,8 +136,22 @@ describe('clearCourtOp', () => {
     await clearCourtOp(ctx, 1);
 
     expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledOnce();
-    expect(ctx.backend.admin.adminEndSession).not.toHaveBeenCalled();
-    expect(ctx.showNotification).toHaveBeenCalledWith('Court 1 unblocked', 'success');
+    expect(ctx.backend.admin.adminEndSession).toHaveBeenCalledOnce();
+  });
+
+  it('still clears session even if block cancel fails', async () => {
+    const ctx = createCtx({
+      courts: [
+        { number: 1, id: 'court-uuid-1', block: { id: 'block-1' }, session: { id: 'sess-1' } },
+      ],
+    });
+    ctx.backend.admin.cancelBlock.mockResolvedValue({ ok: false, message: 'Block locked' });
+
+    await clearCourtOp(ctx, 1);
+
+    expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledOnce();
+    expect(ctx.backend.admin.adminEndSession).toHaveBeenCalledOnce();
+    expect(ctx.showNotification).toHaveBeenCalledWith('Block locked', 'error');
   });
 
   it('notifies "already empty" when court has neither session nor block', async () => {

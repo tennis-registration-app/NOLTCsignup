@@ -15,28 +15,37 @@ export async function clearCourtOp(ctx, courtNumber) {
       throw new Error(`Court ${courtNumber} not found`);
     }
 
-    // Check if court has a block - cancel it instead of ending session
+    // Clear block and session independently (both can coexist)
+    let cleared = false;
+
     if (court.block && court.block.id) {
-      const result = await backend.admin.cancelBlock({
+      const blockResult = await backend.admin.cancelBlock({
         blockId: court.block.id,
         deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
       });
-      if (!result.ok) {
-        throw new Error(result.message || 'Failed to cancel block');
+      if (blockResult.ok) {
+        showNotification(`Court ${courtNumber} unblocked`, 'success');
+        cleared = true;
+      } else {
+        showNotification(blockResult.message || `Failed to unblock court ${courtNumber}`, 'error');
       }
-      showNotification(`Court ${courtNumber} unblocked`, 'success');
-    } else if (court.session) {
-      // End the session via backend
-      const result = await backend.admin.adminEndSession({
+    }
+
+    if (court.session) {
+      const sessionResult = await backend.admin.adminEndSession({
         courtId: court.id,
         reason: 'admin_force_end',
         deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
       });
-      if (!result.ok) {
-        throw new Error(result.message || 'Failed to clear court');
+      if (sessionResult.ok) {
+        showNotification(`Court ${courtNumber} cleared`, 'success');
+        cleared = true;
+      } else {
+        showNotification(sessionResult.message || `Failed to clear court ${courtNumber}`, 'error');
       }
-      showNotification(`Court ${courtNumber} cleared`, 'success');
-    } else {
+    }
+
+    if (!cleared) {
       showNotification(`Court ${courtNumber} is already empty`, 'info');
     }
 
