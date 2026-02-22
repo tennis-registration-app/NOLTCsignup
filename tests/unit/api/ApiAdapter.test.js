@@ -573,22 +573,27 @@ describe('ApiAdapter', () => {
       expect(mockFn).toHaveBeenCalledTimes(3);
     });
 
-    it('updateSettings — nullifies cached settings data', async () => {
-      const mockFn = stubFetch({ ok: true, settings: { courtCount: 12 } });
+    it('updateSettings — invalidates cache so next getSettings re-fetches', async () => {
+      const mockFn = stubFetchSequence([
+        { ok: true, settings: { courtCount: 12 } }, // 1. getSettings (primes cache)
+        { ok: true },                                 // 2. updateSettings POST
+        { ok: true, settings: { courtCount: 10 } }, // 3. getSettings (fresh fetch)
+      ]);
 
       // Prime settings cache
       const first = await adapter.getSettings();
       expect(first.settings.courtCount).toBe(12);
 
-      // Mutate — cache data nullified
+      // Mutate — should fully invalidate cache (data AND timestamp)
       await adapter.updateSettings({ courtCount: 10 });
 
-      // Next non-forced call sees null (cache time still valid but data is null)
-      const cached = await adapter.getSettings();
-      expect(cached).toBeNull();
+      // Next call must re-fetch from API (not return stale null from cache)
+      const refreshed = await adapter.getSettings();
+      expect(refreshed).not.toBeNull();
+      expect(refreshed.settings.courtCount).toBe(10);
 
-      // Only 2 fetches: initial getSettings + updateSettings
-      expect(mockFn).toHaveBeenCalledTimes(2);
+      // 3 fetches: initial getSettings + updateSettings + re-fetched getSettings
+      expect(mockFn).toHaveBeenCalledTimes(3);
     });
 
     it('updateOperatingHours — sends hours, invalidates settings cache', async () => {

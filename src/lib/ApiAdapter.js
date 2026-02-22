@@ -365,6 +365,7 @@ export class ApiAdapter {
       settings: settings,
     });
     this._cache.settings = null; // Invalidate settings cache
+    this._cache.settingsTime = 0;
     return result;
   }
 
@@ -373,6 +374,7 @@ export class ApiAdapter {
       operating_hours: hours,
     });
     this._cache.settings = null;
+    this._cache.settingsTime = 0;
     return result;
   }
 
@@ -381,6 +383,7 @@ export class ApiAdapter {
       operating_hours_override: override,
     });
     this._cache.settings = null;
+    this._cache.settingsTime = 0;
     return result;
   }
 
@@ -389,6 +392,7 @@ export class ApiAdapter {
       delete_override: date,
     });
     this._cache.settings = null;
+    this._cache.settingsTime = 0;
     return result;
   }
 
