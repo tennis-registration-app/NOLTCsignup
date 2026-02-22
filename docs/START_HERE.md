@@ -46,6 +46,7 @@ This runs: lint ratchet → type ratchet → unit tests + coverage → fixture t
 | Understand module system + entry points | [docs/architecture.md](architecture.md) (ESM, adapters, boot chain) |
 | See the database schema | [docs/SCHEMA.md](SCHEMA.md) |
 | Understand window globals (courtboard) | [docs/WINDOW_GLOBALS.md](WINDOW_GLOBALS.md) |
+| See module boundaries + import rules | [docs/DEPENDENCY_MAP.md](DEPENDENCY_MAP.md) |
 | Read design rationale | [docs/adr/](adr/) (Architecture Decision Records) |
 
 ## Development Rules
