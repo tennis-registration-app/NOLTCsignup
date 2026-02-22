@@ -122,3 +122,99 @@ describe('formatTimeRemaining — input parsing', () => {
     expect(result).toContain('h');
   });
 });
+
+// ============================================================
+// F) appendLeftSuffix option
+// ============================================================
+describe('formatTimeRemaining — appendLeftSuffix', () => {
+  const opts = { appendLeftSuffix: true };
+
+  it('30 minutes → "30m left"', () => {
+    expect(formatTimeRemaining(mins(30), NOW, opts)).toBe('30m left');
+  });
+
+  it('0 minutes → "0m left" (not "Now")', () => {
+    expect(formatTimeRemaining(NOW, NOW, opts)).toBe('0m left');
+  });
+
+  it('60 minutes → "1h 0m left" (always shows remainder)', () => {
+    expect(formatTimeRemaining(mins(60), NOW, opts)).toBe('1h 0m left');
+  });
+
+  it('90 minutes → "1h 30m left"', () => {
+    expect(formatTimeRemaining(mins(90), NOW, opts)).toBe('1h 30m left');
+  });
+
+  it('120 minutes → "2h 0m left"', () => {
+    expect(formatTimeRemaining(mins(120), NOW, opts)).toBe('2h 0m left');
+  });
+
+  it('negative minutes still show "over" (no suffix)', () => {
+    // appendLeftSuffix only affects positive/zero; overtime uses default path
+    expect(formatTimeRemaining(mins(-15), NOW, opts)).toBe('15m over');
+  });
+});
+
+// ============================================================
+// G) showOvertimeRemainder option
+// ============================================================
+describe('formatTimeRemaining — showOvertimeRemainder', () => {
+  const opts = { showOvertimeRemainder: true };
+
+  it('75 minutes over → "1h 15m over" (shows remainder)', () => {
+    expect(formatTimeRemaining(mins(-75), NOW, opts)).toBe('1h 15m over');
+  });
+
+  it('60 minutes over → "1h over" (no remainder)', () => {
+    expect(formatTimeRemaining(mins(-60), NOW, opts)).toBe('1h over');
+  });
+
+  it('61 minutes over → "1h 1m over" (clean division, not 2h)', () => {
+    // With showOvertimeRemainder: Math.floor(61/60)=1, 61%60=1 → "1h 1m over"
+    // Without: Math.abs(Math.floor(-61/60))=2 → "2h over"
+    expect(formatTimeRemaining(mins(-61), NOW, opts)).toBe('1h 1m over');
+  });
+
+  it('135 minutes over → "2h 15m over"', () => {
+    expect(formatTimeRemaining(mins(-135), NOW, opts)).toBe('2h 15m over');
+  });
+
+  it('15 minutes over → "15m over" (under 60, same as default)', () => {
+    expect(formatTimeRemaining(mins(-15), NOW, opts)).toBe('15m over');
+  });
+
+  it('120 minutes over → "2h over"', () => {
+    expect(formatTimeRemaining(mins(-120), NOW, opts)).toBe('2h over');
+  });
+
+  it('positive minutes unaffected', () => {
+    expect(formatTimeRemaining(mins(30), NOW, opts)).toBe('30m');
+  });
+});
+
+// ============================================================
+// H) Both options combined (admin mode)
+// ============================================================
+describe('formatTimeRemaining — admin mode (both options)', () => {
+  const opts = { appendLeftSuffix: true, showOvertimeRemainder: true };
+
+  it('30 minutes → "30m left"', () => {
+    expect(formatTimeRemaining(mins(30), NOW, opts)).toBe('30m left');
+  });
+
+  it('0 minutes → "0m left"', () => {
+    expect(formatTimeRemaining(NOW, NOW, opts)).toBe('0m left');
+  });
+
+  it('60 minutes → "1h 0m left"', () => {
+    expect(formatTimeRemaining(mins(60), NOW, opts)).toBe('1h 0m left');
+  });
+
+  it('75 minutes over → "1h 15m over"', () => {
+    expect(formatTimeRemaining(mins(-75), NOW, opts)).toBe('1h 15m over');
+  });
+
+  it('60 minutes over → "1h over"', () => {
+    expect(formatTimeRemaining(mins(-60), NOW, opts)).toBe('1h over');
+  });
+});

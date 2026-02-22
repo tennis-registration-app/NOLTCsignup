@@ -1,3 +1,5 @@
+import { formatTimeRemaining as formatTimeRemainingCore } from '../../lib/formatters.js';
+
 /**
  * Pure utility functions extracted from CourtStatusGrid.
  * Stateless — all dependencies passed as arguments.
@@ -143,26 +145,16 @@ export function getStatusColor(status) {
 
 /**
  * Format time remaining until endTime relative to currentTime.
+ * Delegates to canonical formatTimeRemaining with admin display options.
  * @param {string|Date} endTime
  * @param {Date} currentTime
  * @returns {string} Human-readable time remaining
  */
 export function formatTimeRemaining(endTime, currentTime) {
-  const end = new Date(endTime);
-  const diff = end.getTime() - currentTime.getTime();
-  const minutes = Math.floor(diff / 60000);
-
-  if (minutes < 0) {
-    const absMinutes = Math.abs(minutes);
-    if (absMinutes >= 60) {
-      const hours = Math.floor(absMinutes / 60);
-      const mins = absMinutes % 60;
-      return mins > 0 ? `${hours}h ${mins}m over` : `${hours}h over`;
-    }
-    return `${absMinutes}m over`;
-  }
-  if (minutes < 60) return `${minutes}m left`;
-  return `${Math.floor(minutes / 60)}h ${minutes % 60}m left`;
+  return formatTimeRemainingCore(endTime, currentTime || new Date(), {
+    appendLeftSuffix: true,
+    showOvertimeRemainder: true,
+  });
 }
 
 /**

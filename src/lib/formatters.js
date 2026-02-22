@@ -101,9 +101,13 @@ export function formatTimeRange(startInput, endInput) {
  * Format time remaining until end time
  * @param {Date|string|number} endTimeInput - End time
  * @param {Date} currentTime - Current time (default: now)
+ * @param {Object} [options] - Formatting options
+ * @param {boolean} [options.appendLeftSuffix=false] - Append " left" to positive values
+ * @param {boolean} [options.showOvertimeRemainder=false] - Show minutes in overtime hours display
  * @returns {string} Formatted remaining time
  */
-export function formatTimeRemaining(endTimeInput, currentTime = new Date()) {
+export function formatTimeRemaining(endTimeInput, currentTime = new Date(), options = {}) {
+  const { appendLeftSuffix = false, showOvertimeRemainder = false } = options;
   if (!endTimeInput) return '';
   const end = endTimeInput instanceof Date ? endTimeInput : new Date(endTimeInput);
   if (isNaN(end.getTime())) return '';
@@ -111,13 +115,31 @@ export function formatTimeRemaining(endTimeInput, currentTime = new Date()) {
   const diff = end.getTime() - currentTime.getTime();
   const minutes = Math.floor(diff / 60000);
 
-  if (minutes < -60) return `${Math.abs(Math.floor(minutes / 60))}h over`;
-  if (minutes < 0) return `${Math.abs(minutes)}m over`;
-  if (minutes === 0) return 'Now';
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 0) {
+    const absMinutes = Math.abs(minutes);
+    if (showOvertimeRemainder) {
+      // Admin mode: >= 60 boundary, proper integer division on positive absMinutes
+      if (absMinutes >= 60) {
+        const hours = Math.floor(absMinutes / 60);
+        const mins = absMinutes % 60;
+        return mins > 0 ? `${hours}h ${mins}m over` : `${hours}h over`;
+      }
+      return `${absMinutes}m over`;
+    }
+    // Default mode: preserve original Math.floor-on-negative rounding
+    // Math.abs(Math.floor(minutes / 60)) rounds away from zero for negatives
+    if (minutes < -60) return `${Math.abs(Math.floor(minutes / 60))}h over`;
+    return `${absMinutes}m over`;
+  }
+  if (minutes === 0) return appendLeftSuffix ? '0m left' : 'Now';
+  const label = appendLeftSuffix ? ' left' : '';
+  if (minutes < 60) return `${minutes}m${label}`;
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  // Admin mode always shows "Xh Ym left" even when remainder is 0
+  if (appendLeftSuffix) return `${hours}h ${remainingMinutes}m${label}`;
+  if (remainingMinutes > 0) return `${hours}h ${remainingMinutes}m`;
+  return `${hours}h`;
 }
 
 /**
