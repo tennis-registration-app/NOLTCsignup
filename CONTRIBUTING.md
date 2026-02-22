@@ -194,6 +194,15 @@ afterEach(() => unmount()); // Required — prevents cross-test leakage
 Use `createBaseDeps()` from the harness and extend with handler-specific
 fields. See `createCourtHandlerDeps` as the reference implementation.
 
+### Handler Test Governance
+
+- **New callback** → add tests following the classification rules above
+- **New guard branch** → add a guard-failure test
+- **New catch block** → add an error-path test asserting feedback + reset behavior
+- **Modified callback** → update existing tests to match new behavior
+
+Coverage targets are enforced by ratchet, not by mandate. These rules ensure the handler layer stays tested as it grows.
+
 ## Architecture Overview
 
 See `ARCHITECTURE.md` for full details.
