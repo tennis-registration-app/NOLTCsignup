@@ -79,7 +79,8 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 |-------|-----|
 | Deployment | [DEPLOYMENT.md](../DEPLOYMENT.md), [docs/DEPLOYMENT.md](DEPLOYMENT.md) |
 | Environment config | [docs/ENVIRONMENT.md](ENVIRONMENT.md) |
-| Troubleshooting / runbook | [docs/RUNBOOK.md](RUNBOOK.md) |
+| Troubleshooting FAQ | [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Operations runbook | [docs/RUNBOOK.md](RUNBOOK.md) |
 | Error handling patterns | [docs/ERROR_HANDLING.md](ERROR_HANDLING.md), [docs/error-contracts.md](error-contracts.md) |
 
 ## Additional References
