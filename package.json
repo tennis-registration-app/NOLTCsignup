@@ -22,6 +22,7 @@
     "test:unit:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "type:ratchet": "node scripts/type-ratchet.mjs",
+    "check:env": "node scripts/check-env.js",
     "coverage:ratchet": "node scripts/coverage-ratchet.mjs",
     "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
   },

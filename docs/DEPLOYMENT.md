@@ -63,6 +63,14 @@ Vite injects environment variables at build time via `import.meta.env`. The conf
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Vercel dashboard |
 | `VITE_BASE_URL` | API base URL (optional) | Vercel dashboard |
 
+### Build-Time Validation
+
+`scripts/check-env.js` runs as the first step of the Vercel build command. It validates that all required `VITE_*` variables are present (without logging values). If any are missing, the build fails with a clear error message. The check only runs in Vercel builds (`VERCEL=1`) — it is skipped in local development and GitHub Actions.
+
+The enforced build contract is defined in `scripts/check-env.js`. Keep it consistent with `.env.example` and this document.
+
+> **Known issue:** `runtimeConfig.js` has a dead-code production check — `DEV_DEFAULTS` applied via `||` before the `!value` test means missing env vars silently use dev credentials at runtime. The build-time script above is the real gate preventing this.
+
 ## Local Development
 
 No environment file is required for local development. The config module
