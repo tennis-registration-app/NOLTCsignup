@@ -1,57 +1,20 @@
 /**
  * Admin Panel - Main App Component
  *
- * Extracted from Admin.html's inline React code.
- * This is the initial monolithic extraction (~7,100 lines).
- * Future phases will break this into smaller component files.
+ * Thin shell: context providers, useAdminAppState hook, JSX render.
+ * All state setup, hook orchestration, and controller assembly
+ * live in useAdminAppState.
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState } from 'react';
 import { createBackend } from '../lib/backend/index.js';
-import { logger } from '../lib/logger.js';
-import { legacyEvents as Events } from '../platform/attachLegacyEvents.js';
-import { setRefreshAdminViewGlobal } from '../platform/registerGlobals.js';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
 import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext.jsx';
-
-// Admin refresh utilities - IIFEs execute at import time (same as original module-level)
-import './utils/adminRefresh.js';
-
-// TennisBackend singleton for API operations
-const backend = createBackend();
-
-// Shared device ID utility
-import { getDeviceId } from './utils/getDeviceId.js';
-
-// Import extracted components
-import {
-  // UI Components
-  HoverCard,
-  QuickActionsMenu,
-  VisualTimeEntry,
-} from './components';
-
-// Calendar components
-import { EventCalendarEnhanced } from './calendar';
 
 // Block management components
 import { CompleteBlockManagerEnhanced } from './blocks';
 
-// Court management components (CourtStatusGrid now used in StatusSection)
-
-// Analytics components (re-exported via ./screens/AnalyticsDashboard)
-
-// AI components
-import { AIAssistantAdmin, AIAssistant } from './ai';
-
 // Screen components
 import { GameHistorySearch, AnalyticsDashboard } from './screens';
-
-// Utilities (getEventIcon now used in MonthView)
-
-// Direct component imports (not from barrel to avoid circular deps)
-import { MiniCalendar } from './components/MiniCalendar';
-import { MonthView } from './components/MonthView';
-import { EventSummary } from './components/EventSummary';
 
 // Tab section components
 import { CalendarSection } from './tabs/CalendarSection';
@@ -67,291 +30,35 @@ import { AIAssistantSection } from './tabs/AIAssistantSection';
 // Handler modules
 import { clearWaitlistOp } from './handlers/waitlistOperations';
 
-// Extracted callbacks hook (replaces 8 inline useCallbacks)
-import { useAdminHandlers } from './hooks/useAdminHandlers';
+// App state hook (all state, hooks, effects, controller assembly)
+import { useAdminAppState } from './hooks/useAdminAppState';
 
-// Wet courts hook
-import { useWetCourts } from './wetCourts/useWetCourts';
-
-// Admin controller (replaces 14 inline useMemo domain object calls)
-import { buildAdminController } from './controller/buildAdminController.js';
-
-// Admin hooks
-import { useAdminSettings } from './hooks/useAdminSettings';
-import { useBoardSubscription } from './hooks/useBoardSubscription';
-
-// Timer utilities
-import { addTimer, clearAllTimers } from './utils/timerRegistry';
-
-// Feature flags
-import { featureFlags } from '../config/runtimeConfig.js';
-
-// No-op setters for prop compatibility with children using old hook pattern
-// Defined at module level for stable identity (avoids exhaustive-deps warnings)
-const setWetCourtsActive = () => {};
-const setWetCourts = () => {};
-const setSuspendedBlocks = () => {};
-
-// ESM canonical imports (replacing window.APP_UTILS reads)
-import { readDataSafe } from '../lib/storage.js';
-import { TennisCourtDataStore } from '../lib/TennisCourtDataStore.js';
-import { TENNIS_CONFIG } from '../lib/config.js';
-
-// Shared domain modules — Events imported directly from attachLegacyEvents.js
-
-// ---- Core constants (declared only; not replacing existing usages) ----
-
-// ---- Dev flag & assert (no UI change) ----
-const DEV = import.meta?.env?.DEV ?? false;
-const assert = (cond, msg, obj) => {
-  if (DEV && !cond) logger.warn('AdminApp', `ASSERT: ${msg}`, obj || '');
-};
-
-// ============================================================
-// Section: Admin actions (assign, clear, block scheduling)
-// ============================================================
-
-// Boot data assertion
-const _bootData = readDataSafe();
-assert(
-  !_bootData || Array.isArray(_bootData?.courts),
-  'Expected data.courts array on boot',
-  _bootData
-);
-
-// Initialize DataStore using the shared class
-const dataStore = new TennisCourtDataStore();
+// TennisBackend singleton (needed by outer App component for analytics view)
+const backend = createBackend();
 
 // Main Admin Panel Component
 const AdminPanelV2 = ({ onExit }) => {
-  // AdminPanelV2 component initializing
-
-  const [activeTab, setActiveTab] = useState('status');
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [blockingView, setBlockingView] = useState('create');
-  const [blockToEdit, setBlockToEdit] = useState(null);
-  const [calendarView] = useState('day');
-  const [showAIAssistant, setShowAIAssistant] = useState(false);
-  const [selectedDate] = useState(new Date());
-
-  const ENABLE_WET_COURTS = true;
-
-  // IMPORTANT: Hook call order:
-  // 1. useAdminNotification — provides showNotification (via NotificationProvider)
-  // 2. useAdminSettings — settings effects (original #1/#2)
-  // 3. useBoardSubscription — subscription effect (original #3)
   const showNotification = useAdminNotification();
   const confirm = useAdminConfirm();
 
-  // Settings hook - owns settings, operatingHours, hoursOverrides, blockTemplates state
-  // Hook also returns operatingHours and blockTemplates (not destructured here)
   const {
-    settings,
-    hoursOverrides,
-    updateBallPrice,
-    handleSettingsChanged,
-    handleAISettingsChanged,
-    reloadSettings,
-  } = useAdminSettings({
-    backend,
-    showNotification,
-    dataStore,
-    TENNIS_CONFIG,
-    clearAllTimers,
-  });
-
-  // Board subscription hook - owns courts, waitingGroups, courtBlocks, refreshTrigger state
-  const { courts, waitingGroups, courtBlocks, refreshTrigger, bumpRefreshTrigger } =
-    useBoardSubscription({ backend });
-
-  // Wet courts hook - manages state + backend ops + side effects
-  const {
-    isActive: wetCourtsActive,
-    wetCourtNumbers,
-    suspendedBlocks,
-    activateWet: handleEmergencyWetCourt,
-    deactivateWet: deactivateWetCourts,
-    clearWetCourt,
-  } = useWetCourts({
-    backend,
-    getDeviceId,
-    courts,
-    Events,
-    onRefresh: bumpRefreshTrigger,
-  });
-
-  // Convert array to Set for compatibility with existing code that expects Set
-  // Memoize to avoid new Set identity on each render
-  const wetCourts = useMemo(() => new Set(wetCourtNumbers), [wetCourtNumbers]);
-
-  // Export for coalescer & tests
-  setRefreshAdminViewGlobal(reloadSettings);
-
-  // Extracted callbacks (court ops, waitlist ops, block apply, refresh, edit-block nav)
-  const {
-    handleEditBlockFromStatus,
-    clearCourt,
-    moveCourt,
-    clearAllCourts,
-    removeFromWaitlist,
-    moveInWaitlist,
-    applyBlocks,
-    refreshData,
-  } = useAdminHandlers({
-    backend,
-    dataStore,
-    TENNIS_CONFIG,
-    courts,
-    waitingGroups,
-    showNotification,
-    confirm,
-    setBlockToEdit,
-    setActiveTab,
-    setBlockingView,
-    reloadSettings,
-    bumpRefreshTrigger,
-  });
-
-  // Update current time every second
-  useEffect(() => {
-    const timer = addTimer(
-      setInterval(() => {
-        setCurrentTime(new Date());
-      }, 1000)
-    );
-
-    return () => {
-      try {
-        clearInterval(timer);
-      } catch {
-        // Intentionally ignored (Phase 3.5 lint): cleanup on unmount
-      }
-    };
-  }, []);
-
-  // Clean up all timers on page unload
-  useEffect(() => {
-    const onUnload = () => {
-      try {
-        clearAllTimers();
-      } catch {
-        // Intentionally ignored: cleanup on unload
-      }
-    };
-    window.addEventListener('beforeunload', onUnload);
-    return () => window.removeEventListener('beforeunload', onUnload);
-  }, []);
-
-  // Build all domain objects via controller (replaces 14 inline useMemo calls)
-  const controller = useMemo(
-    () =>
-      buildAdminController({
-        backend,
-        dataStore,
-        courts,
-        courtBlocks,
-        waitingGroups,
-        hoursOverrides,
-        blockToEdit,
-        suspendedBlocks,
-        wetCourtsActive,
-        wetCourts,
-        ENABLE_WET_COURTS,
-        selectedDate,
-        currentTime,
-        calendarView,
-        refreshTrigger,
-        activeTab,
-        showAIAssistant,
-        USE_REAL_AI: featureFlags.USE_REAL_AI,
-        settings,
-        actions: {
-          // No-op setters for prop compatibility with children
-          setWetCourtsActive,
-          setWetCourts,
-          setSuspendedBlocks,
-          // State-capturing callbacks
-          clearCourt,
-          moveCourt,
-          clearAllCourts,
-          clearWetCourt,
-          removeFromWaitlist,
-          moveInWaitlist,
-          handleEditBlockFromStatus,
-          handleEmergencyWetCourt,
-          deactivateWetCourts,
-          applyBlocks,
-          onEditingBlockConsumed: () => setBlockToEdit(null),
-          showNotification,
-          setShowAIAssistant,
-          handleAISettingsChanged,
-          reloadSettings,
-          updateBallPrice,
-          refreshData,
-          bumpRefreshTrigger,
-        },
-        components: {
-          VisualTimeEntry,
-          MiniCalendar,
-          EventCalendarEnhanced,
-          MonthView,
-          EventSummary,
-          HoverCard,
-          QuickActionsMenu,
-          AIAssistant,
-          AIAssistantAdmin,
-        },
-      }),
-    [
-      courts,
-      courtBlocks,
-      waitingGroups,
-      hoursOverrides,
-      blockToEdit,
-      suspendedBlocks,
-      wetCourtsActive,
-      wetCourts,
-      ENABLE_WET_COURTS,
-      selectedDate,
-      currentTime,
-      calendarView,
-      refreshTrigger,
-      activeTab,
-      showAIAssistant,
-      settings,
-      clearCourt,
-      moveCourt,
-      clearAllCourts,
-      clearWetCourt,
-      removeFromWaitlist,
-      moveInWaitlist,
-      handleEditBlockFromStatus,
-      handleEmergencyWetCourt,
-      deactivateWetCourts,
-      applyBlocks,
-      setBlockToEdit,
-      showNotification,
-      setShowAIAssistant,
-      handleAISettingsChanged,
-      reloadSettings,
-      updateBallPrice,
-      refreshData,
-      bumpRefreshTrigger,
-    ]
-    // backend, dataStore, featureFlags, TENNIS_CONFIG, component imports are module-level stable
-  );
-
-  // Destructure controller (wetCourtsController avoids shadowing the wetCourts Set)
-  const {
-    wetCourts: wetCourtsController,
+    wetCourtsController,
     blocks,
     status,
     calendar,
     ai,
-    services: adminServices,
-  } = controller;
+    adminServices,
+    activeTab,
+    setActiveTab,
+    blockingView,
+    setBlockingView,
+    waitingGroups,
+    moveInWaitlist,
+    removeFromWaitlist,
+    handleSettingsChanged,
+    backend,
+  } = useAdminAppState({ showNotification, confirm });
 
-  // AdminPanelV2 rendering complete
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Tab Navigation */}
