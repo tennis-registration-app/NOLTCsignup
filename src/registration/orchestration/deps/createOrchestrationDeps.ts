@@ -12,10 +12,10 @@
 import { logger } from '../../../lib/logger.js';
 
 export interface OrchestrationLogger {
-  debug: (scope: string, msg: string, data?: any) => void;
-  info: (scope: string, msg: string, data?: any) => void;
-  warn: (scope: string, msg: string, data?: any) => void;
-  error: (scope: string, msg: string, data?: any) => void;
+  debug: (scope: string, msg: string, data?: unknown) => void;
+  info: (scope: string, msg: string, data?: unknown) => void;
+  warn: (scope: string, msg: string, data?: unknown) => void;
+  error: (scope: string, msg: string, data?: unknown) => void;
 }
 
 export interface OrchestrationTime {
