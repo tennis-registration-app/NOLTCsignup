@@ -617,3 +617,103 @@ export function createGroupHandlerDeps(overrides = {}) {
 
   return { deps, mocks };
 }
+
+// ============================================
+// F) createGuestHandlerDeps — exact shape for useGuestHandlers
+// ============================================
+
+/**
+ * Builds the EXACT destructured parameter shape for useGuestHandlers.
+ *
+ * @param {object} [overrides] - Deep-merged into deps
+ * @returns {{ deps: object, mocks: object }}
+ */
+export function createGuestHandlerDeps(overrides = {}) {
+  // --- groupGuest slice ---
+  const setGuestName = vi.fn();
+  const setGuestSponsor = vi.fn();
+  const setShowGuestForm = vi.fn();
+  const setShowGuestNameError = vi.fn();
+  const setShowSponsorError = vi.fn();
+  const setCurrentGroup = vi.fn();
+
+  // --- guestCounterHook slice ---
+  const incrementGuestCounter = vi.fn();
+
+  // --- setters slice ---
+  const setShowAddPlayer = vi.fn();
+
+  // --- search slice ---
+  const setShowAddPlayerSuggestions = vi.fn();
+  const setAddPlayerSearch = vi.fn();
+
+  // --- helpers slice ---
+  const markUserTyping = vi.fn();
+  const getCourtData = vi.fn().mockReturnValue({
+    courts: [],
+    waitlist: [],
+    operatingHours: [],
+  });
+  const guardAddPlayerEarly = vi.fn().mockReturnValue(true);
+  const guardAgainstGroupDuplicate = vi.fn().mockReturnValue(true);
+
+  const mocks = {
+    setGuestName,
+    setGuestSponsor,
+    setShowGuestForm,
+    setShowGuestNameError,
+    setShowSponsorError,
+    setCurrentGroup,
+    incrementGuestCounter,
+    setShowAddPlayer,
+    setShowAddPlayerSuggestions,
+    setAddPlayerSearch,
+    markUserTyping,
+    getCourtData,
+    guardAddPlayerEarly,
+    guardAgainstGroupDuplicate,
+  };
+
+  const deps = deepMerge(
+    {
+      groupGuest: {
+        guestName: '',
+        setGuestName,
+        guestSponsor: '',
+        setGuestSponsor,
+        showGuestForm: false,
+        setShowGuestForm,
+        setShowGuestNameError,
+        setShowSponsorError,
+        currentGroup: [],
+        setCurrentGroup,
+      },
+      guestCounterHook: {
+        guestCounter: 1,
+        incrementGuestCounter,
+      },
+      memberIdentity: {
+        memberNumber: '1234',
+      },
+      derived: {
+        memberDatabase: {},
+      },
+      setters: {
+        setShowAddPlayer,
+      },
+      search: {
+        setShowAddPlayerSuggestions,
+        setAddPlayerSearch,
+      },
+      helpers: {
+        markUserTyping,
+        getCourtData,
+        guardAddPlayerEarly,
+        guardAgainstGroupDuplicate,
+      },
+    },
+    overrides
+  );
+
+  return { deps, mocks };
+}
