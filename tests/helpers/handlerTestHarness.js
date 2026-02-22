@@ -1,0 +1,409 @@
+/**
+ * Handler Test Harness
+ *
+ * Renders React hooks via manual createRoot pattern (no @testing-library/react).
+ * Matches the approach in useRegistrationAppState.test.js.
+ *
+ * @vitest-environment jsdom
+ */
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { act } from 'react';
+import { vi } from 'vitest';
+
+// ============================================
+// A) renderHandlerHook — render any hook, capture result
+// ============================================
+
+/**
+ * Renders a React hook inside a minimal component using createRoot.
+ * Returns { result, unmount } where result.current holds the hook's
+ * latest return value. Callers MUST call unmount() in afterEach.
+ *
+ * @param {Function} hookFn - Zero-arg function that calls the hook, e.g. () => useCourtHandlers(deps)
+ * @returns {Promise<{ result: { current: any }, unmount: () => void }>}
+ */
+export async function renderHandlerHook(hookFn) {
+  const result = { current: null };
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const root = createRoot(container);
+
+  function HookCapture() {
+    result.current = hookFn();
+    return null;
+  }
+
+  await act(async () => {
+    root.render(React.createElement(HookCapture));
+  });
+
+  const unmount = () => {
+    root.unmount();
+    container.remove();
+  };
+
+  return { result, unmount };
+}
+
+// ============================================
+// B) Deep merge utility
+// ============================================
+
+/**
+ * Deep merge two objects. Arrays are replaced, not concatenated.
+ * Target values are overwritten by source values at each level.
+ */
+function deepMerge(target, source) {
+  const output = { ...target };
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === 'object' &&
+      !Array.isArray(source[key]) &&
+      target[key] &&
+      typeof target[key] === 'object' &&
+      !Array.isArray(target[key])
+    ) {
+      output[key] = deepMerge(target[key], source[key]);
+    } else {
+      output[key] = source[key];
+    }
+  }
+  return output;
+}
+
+// ============================================
+// C) createBaseDeps — shared mock foundation
+// ============================================
+
+/**
+ * Creates base mock functions and state values reusable across
+ * all handler test files. Returns { deps, mocks } where mocks
+ * is a flat map for easy assertions and deps contains the nested
+ * structure handlers expect.
+ *
+ * @param {object} [overrides] - Deep-merged into deps
+ * @returns {{ deps: object, mocks: object }}
+ */
+export function createBaseDeps(overrides = {}) {
+  // Shared mock functions
+  const setCurrentScreen = vi.fn();
+  const setShowSuccess = vi.fn();
+  const showAlertMessage = vi.fn();
+  const getCourtData = vi.fn().mockReturnValue({
+    courts: [],
+    waitlist: [],
+    courtSelection: null,
+    blocks: [],
+    serverNow: new Date().toISOString(),
+    operatingHours: [],
+  });
+  const markUserTyping = vi.fn();
+  const resetForm = vi.fn();
+  const clearSuccessResetTimer = vi.fn();
+  const isPlayerAlreadyPlaying = vi.fn().mockReturnValue({ isPlaying: false });
+  const dbg = vi.fn();
+
+  const mocks = {
+    setCurrentScreen,
+    setShowSuccess,
+    showAlertMessage,
+    getCourtData,
+    markUserTyping,
+    resetForm,
+    clearSuccessResetTimer,
+    isPlayerAlreadyPlaying,
+    dbg,
+  };
+
+  const deps = deepMerge(
+    {
+      state: {
+        currentScreen: 'home',
+        data: { courts: [], waitlist: [], operatingHours: [] },
+        isAssigning: false,
+        isJoiningWaitlist: false,
+        currentWaitlistEntryId: null,
+        canChangeCourt: false,
+        operatingHours: [],
+        replacedGroup: null,
+      },
+      setters: {
+        setCurrentScreen,
+        setShowSuccess,
+      },
+      helpers: {
+        getCourtData,
+        markUserTyping,
+      },
+      alert: {
+        showAlertMessage,
+      },
+      core: {
+        clearSuccessResetTimer,
+        resetForm,
+        isPlayerAlreadyPlaying,
+      },
+      dbg,
+    },
+    overrides
+  );
+
+  return { deps, mocks };
+}
+
+// ============================================
+// D) createCourtHandlerDeps — exact shape for useCourtHandlers
+// ============================================
+
+/**
+ * Builds the EXACT destructured parameter shape for useCourtHandlers.
+ * All function values are vi.fn(). Nested mocks share references
+ * with the flat mocks object.
+ *
+ * @param {object} [overrides] - Deep-merged into deps
+ * @returns {{ deps: object, mocks: object }}
+ */
+export function createCourtHandlerDeps(overrides = {}) {
+  // --- Setters (from setters slice) ---
+  const setIsAssigning = vi.fn();
+  const setCurrentWaitlistEntryId = vi.fn();
+  const setHasWaitlistPriority = vi.fn();
+  const setReplacedGroup = vi.fn();
+  const setDisplacement = vi.fn();
+  const setOriginalCourtData = vi.fn();
+  const setIsChangingCourt = vi.fn();
+  const setWasOvertimeCourt = vi.fn();
+  const setCanChangeCourt = vi.fn();
+  const setChangeTimeRemaining = vi.fn();
+  const setIsTimeLimited = vi.fn();
+  const setTimeLimitReason = vi.fn();
+  const setShowSuccess = vi.fn();
+  const setCurrentScreen = vi.fn();
+  const setIsJoiningWaitlist = vi.fn();
+  const setWaitlistPosition = vi.fn();
+
+  // --- mobile slice ---
+  const getMobileGeolocation = vi.fn().mockResolvedValue(null);
+  const setGpsFailedPrompt = vi.fn();
+
+  // --- groupGuest slice ---
+  const setCurrentGroup = vi.fn();
+
+  // --- courtAssignment slice ---
+  const setJustAssignedCourt = vi.fn();
+  const setAssignedSessionId = vi.fn();
+  const setAssignedEndTime = vi.fn();
+  const setHasAssignedCourt = vi.fn();
+
+  // --- services slice ---
+  const refresh = vi.fn().mockResolvedValue({ courts: [], waitlist: [] });
+  const assignCourtWithPlayers = vi.fn().mockResolvedValue({ ok: true });
+  const assignFromWaitlist = vi.fn().mockResolvedValue({ ok: true });
+  const joinWaitlistWithPlayers = vi.fn().mockResolvedValue({ ok: true, data: { waitlist: { id: 'entry-1', position: 1 } } });
+  const endSession = vi.fn().mockResolvedValue({ ok: true });
+  const cancelWaitlist = vi.fn().mockResolvedValue({ ok: true });
+  const deferWaitlistEntryCmd = vi.fn().mockResolvedValue({ ok: true });
+  const undoOvertimeTakeover = vi.fn().mockResolvedValue({ ok: true });
+  const restoreSession = vi.fn().mockResolvedValue({ ok: true });
+  const moveCourt = vi.fn().mockResolvedValue({ ok: true });
+
+  // --- helpers slice ---
+  const getCourtData = vi.fn().mockReturnValue({
+    courts: [],
+    waitlist: [],
+    courtSelection: null,
+    blocks: [],
+    serverNow: new Date().toISOString(),
+    operatingHours: [],
+  });
+
+  // --- blockAdmin slice ---
+  const getCourtBlockStatus = vi.fn().mockReturnValue(null);
+
+  // --- alert slice ---
+  const showAlertMessage = vi.fn();
+
+  // --- refs slice ---
+  const successResetTimerRef = { current: null };
+
+  // --- core slice ---
+  const clearSuccessResetTimer = vi.fn();
+  const resetForm = vi.fn();
+  const isPlayerAlreadyPlaying = vi.fn().mockReturnValue({ isPlaying: false });
+
+  // --- orchestrators ---
+  const assignCourtToGroupOrchestrated = vi.fn().mockResolvedValue(undefined);
+  const changeCourtOrchestrated = vi.fn();
+  const sendGroupToWaitlistOrchestrated = vi.fn().mockResolvedValue(undefined);
+  const validateGroupCompat = vi.fn().mockReturnValue({ ok: true, errors: [] });
+
+  // --- config/debug ---
+  const dbg = vi.fn();
+
+  // Flat mocks for assertions
+  const mocks = {
+    // setters
+    setIsAssigning,
+    setCurrentWaitlistEntryId,
+    setHasWaitlistPriority,
+    setReplacedGroup,
+    setDisplacement,
+    setOriginalCourtData,
+    setIsChangingCourt,
+    setWasOvertimeCourt,
+    setCanChangeCourt,
+    setChangeTimeRemaining,
+    setIsTimeLimited,
+    setTimeLimitReason,
+    setShowSuccess,
+    setCurrentScreen,
+    setIsJoiningWaitlist,
+    setWaitlistPosition,
+    // mobile
+    getMobileGeolocation,
+    setGpsFailedPrompt,
+    // groupGuest
+    setCurrentGroup,
+    // courtAssignment
+    setJustAssignedCourt,
+    setAssignedSessionId,
+    setAssignedEndTime,
+    setHasAssignedCourt,
+    // services
+    refresh,
+    assignCourtWithPlayers,
+    assignFromWaitlist,
+    joinWaitlistWithPlayers,
+    endSession,
+    cancelWaitlist,
+    deferWaitlistEntryCmd,
+    undoOvertimeTakeover,
+    restoreSession,
+    moveCourt,
+    // helpers
+    getCourtData,
+    // blockAdmin
+    getCourtBlockStatus,
+    // alert
+    showAlertMessage,
+    // refs
+    successResetTimerRef,
+    // core
+    clearSuccessResetTimer,
+    resetForm,
+    isPlayerAlreadyPlaying,
+    // orchestrators
+    assignCourtToGroupOrchestrated,
+    changeCourtOrchestrated,
+    sendGroupToWaitlistOrchestrated,
+    validateGroupCompat,
+    // debug
+    dbg,
+  };
+
+  const deps = deepMerge(
+    {
+      state: {
+        data: { courts: [], waitlist: [], operatingHours: [] },
+        isAssigning: false,
+        currentWaitlistEntryId: null,
+        canChangeCourt: false,
+        isJoiningWaitlist: false,
+        operatingHours: [],
+        replacedGroup: null,
+      },
+      setters: {
+        setIsAssigning,
+        setCurrentWaitlistEntryId,
+        setHasWaitlistPriority,
+        setReplacedGroup,
+        setDisplacement,
+        setOriginalCourtData,
+        setIsChangingCourt,
+        setWasOvertimeCourt,
+        setCanChangeCourt,
+        setChangeTimeRemaining,
+        setIsTimeLimited,
+        setTimeLimitReason,
+        setShowSuccess,
+        setCurrentScreen,
+        setIsJoiningWaitlist,
+        setWaitlistPosition,
+      },
+      mobile: {
+        mobileFlow: false,
+        preselectedCourt: null,
+        getMobileGeolocation,
+        setGpsFailedPrompt,
+      },
+      groupGuest: {
+        currentGroup: [],
+        setCurrentGroup,
+      },
+      courtAssignment: {
+        justAssignedCourt: null,
+        setJustAssignedCourt,
+        setAssignedSessionId,
+        setAssignedEndTime,
+        setHasAssignedCourt,
+      },
+      services: {
+        backend: {
+          queries: { refresh },
+          commands: {
+            assignCourtWithPlayers,
+            assignFromWaitlist,
+            joinWaitlistWithPlayers,
+            endSession,
+            cancelWaitlist,
+            deferWaitlistEntry: deferWaitlistEntryCmd,
+            undoOvertimeTakeover,
+            restoreSession,
+            moveCourt,
+          },
+        },
+      },
+      helpers: {
+        getCourtData,
+      },
+      blockAdmin: {
+        getCourtBlockStatus,
+      },
+      alert: {
+        showAlertMessage,
+      },
+      refs: {
+        successResetTimerRef,
+      },
+      assignCourtToGroupOrchestrated,
+      changeCourtOrchestrated,
+      sendGroupToWaitlistOrchestrated,
+      validateGroupCompat,
+      dbg,
+      CONSTANTS: {
+        MAX_PLAYERS: 4,
+        MIN_PLAYERS: 2,
+        COURT_COUNT: 8,
+        INACTIVITY_TIMEOUT_MS: 120000,
+        AUTO_RESET_SUCCESS_MS: 5000,
+        ALERT_DISPLAY_MS: 3000,
+        CHANGE_COURT_TIMEOUT_SEC: 30,
+      },
+      API_CONFIG: {
+        DEVICE_TYPE: 'kiosk',
+        IS_MOBILE: false,
+      },
+      core: {
+        clearSuccessResetTimer,
+        resetForm,
+        isPlayerAlreadyPlaying,
+      },
+    },
+    overrides
+  );
+
+  return { deps, mocks };
+}
