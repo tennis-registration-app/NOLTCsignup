@@ -273,6 +273,20 @@ If a new top-level key is genuinely required:
 3. Update the grouping comments in `appTypes.ts`
 4. Note a deletion condition if the key is temporary
 
+### Slice-Access Discipline
+
+Direct `app.X` access is restricted to two locations in registration code:
+
+1. **Presenters** — immediate destructure at function top: `const { search, derived } = app;`
+2. **Handler wiring** — `useRegistrationHandlers.js` and `buildHandlerDeps.js`
+
+All other code receives slices, not the full `app` object:
+- Handlers receive named slice params (e.g., `{ state, setters, mobile }`)
+- Orchestrators receive typed `state`, `actions`, `services` params
+- Screens receive explicit props from presenters
+
+When adding new handler dependencies, update the appropriate builder in `buildHandlerDeps.js` and its contract test — do not add `app.X` reads elsewhere.
+
 ```
 App.jsx
   └── useRegistrationAppState() → app object
