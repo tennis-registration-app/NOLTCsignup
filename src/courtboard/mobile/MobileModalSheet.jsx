@@ -8,6 +8,12 @@ import {
   getTennisNamespaceConfig,
 } from '../../platform/windowBridge.js';
 import { logger } from '../../lib/logger.js';
+import {
+  getTitle,
+  getModalClass,
+  formatMobileNamesModal,
+  compareRosterEntries,
+} from './mobileModalUtils.js';
 const backend = createBackend();
 
 /**
@@ -42,25 +48,6 @@ export function MobileModalSheet({ type, payload, onClose }) {
     document.addEventListener('keydown', esc);
     return () => document.removeEventListener('keydown', esc);
   }, [onClose]);
-
-  const getTitle = () => {
-    switch (type) {
-      case 'court-conditions':
-        return 'Court Conditions';
-      case 'roster':
-        return 'Member Roster';
-      case 'reserved':
-        return 'Reserved Courts';
-      case 'waitlist':
-        return 'Waitlist';
-      case 'clear-court-confirm':
-        return `Clear Court ${payload?.courtNumber || ''}?`;
-      case 'waitlist-available':
-        return 'Court Available!';
-      default:
-        return '';
-    }
-  };
 
   const getBodyContent = () => {
     switch (type) {
@@ -135,20 +122,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
         }
 
         // Sort alphabetically by last name
-        const sortedRoster = [...rosterData].sort((a, b) => {
-          const getLastName = (fullName) => {
-            const parts = (fullName || '').trim().split(' ');
-            return parts[parts.length - 1] || '';
-          };
-          const lastNameA = getLastName(a.name || a.fullName).toLowerCase();
-          const lastNameB = getLastName(b.name || b.fullName).toLowerCase();
-          if (lastNameA === lastNameB) {
-            const firstNameA = (a.name || a.fullName || '').toLowerCase();
-            const firstNameB = (b.name || b.fullName || '').toLowerCase();
-            return firstNameA.localeCompare(firstNameB);
-          }
-          return lastNameA.localeCompare(lastNameB);
-        });
+        const sortedRoster = [...rosterData].sort(compareRosterEntries);
 
         return (
           <div className="modal-roster">
@@ -224,33 +198,6 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
         // Helper to convert courts array to data format for availability functions
         const courtsToDataModal = (courtsArray) => ({ courts: courtsArray || [] });
-
-        // Mobile name formatting
-        const formatMobileNamesModal = (nameArray) => {
-          if (!nameArray || !nameArray.length) return 'Group';
-          const SUFFIXES = new Set(['Jr.', 'Sr.', 'II', 'III', 'IV']);
-          const formatOne = (full) => {
-            const tokens = full.replace(/\s+/g, ' ').trim().split(' ');
-            if (tokens.length === 1) {
-              // Single name (e.g., "Bob" or "Player") - return as-is, no formatting
-              return tokens[0];
-            }
-            let last = tokens[tokens.length - 1];
-            let last2 = tokens[tokens.length - 2];
-            let lastName, remainder;
-            if (SUFFIXES.has(last) && tokens.length > 2) {
-              lastName = `${last2} ${last}`;
-              remainder = tokens.slice(0, -2);
-            } else {
-              lastName = last;
-              remainder = tokens.slice(0, -1);
-            }
-            const first = remainder[0] || '';
-            return first ? `${first[0]}. ${lastName}` : lastName;
-          };
-          const primary = formatOne(nameArray[0]);
-          return nameArray.length > 1 ? `${primary} +${nameArray.length - 1}` : primary;
-        };
 
         // Calculate estimated wait time for mobile modal (uses payload data, not localStorage)
         const calculateMobileWaitTime = (position) => {
@@ -455,19 +402,9 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
   const titleId = `modal-title-${type}`;
 
-  const getModalClass = () => {
-    if (type === 'court-conditions') return ' modal-court-conditions-full';
-    if (type === 'roster') return ' modal-court-conditions-full';
-    if (type === 'reserved') return ' modal-reserved-large';
-    if (type === 'waitlist') return ' modal-waitlist-large';
-    if (type === 'clear-court-confirm') return ' modal-clear-court-confirm';
-    if (type === 'waitlist-available') return ' modal-waitlist-available';
-    return '';
-  };
-
   return (
     <div
-      className={`mobile-modal-overlay${getModalClass()}`}
+      className={`mobile-modal-overlay${getModalClass(type)}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -475,7 +412,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
       <div className="mobile-modal-content">
         <div className="mobile-modal-header">
           <h3 id={titleId} className="mobile-modal-title">
-            {getTitle()}
+            {getTitle(type, payload)}
           </h3>
           <button
             type="button"
