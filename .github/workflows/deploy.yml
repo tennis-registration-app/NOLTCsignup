@@ -1,9 +1,12 @@
 name: Deploy to GitHub Pages
+# LEGACY: GitHub Pages deployment pipeline.
+# Automatic trigger disabled — production is served from Vercel.
+# Retained for auditability. Can be run manually via workflow_dispatch.
+# To confirm Pages status: check GitHub repo Settings → Pages.
+# Deletion condition: safe to remove once operator confirms Pages is disabled in repo settings.
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:  # Manual only — automatic trigger disabled
 
 permissions:
   contents: read

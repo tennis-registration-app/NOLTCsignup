@@ -1,58 +1,48 @@
 # Deployment Guide
 
-> **Note:** This document describes configuration requirements. It does not
-> change or enforce deployment behavior. No pipeline or workflow files are
-> modified by this work package.
+## Production (Verified)
 
-## Vercel (Recommended)
+Production URL: https://courtboard-noltc.vercel.app/
 
-### Build-Time Environment Variables
+| App | URL |
+|-----|-----|
+| Registration (kiosk) | https://courtboard-noltc.vercel.app/src/registration/index.html |
+| Admin Panel | https://courtboard-noltc.vercel.app/src/admin/index.html |
+| Courtboard Display | https://courtboard-noltc.vercel.app/src/courtboard/index.html |
 
-Vite injects environment variables at build time. For Vercel deployment,
-configure project environment variables:
+Source: README.md, handoff_audit docs, vite.config.js comment ("root for Vercel").
 
-1. Go to **Project Settings → Environment Variables**
-2. Add the following variables:
-   - `VITE_SUPABASE_URL` — Supabase project URL
-   - `VITE_SUPABASE_ANON_KEY` — Supabase anonymous/public key
-   - `VITE_BASE_URL` — (Optional) API base URL; derived from SUPABASE_URL if omitted
+## Vercel Configuration (Confirm in Dashboard)
 
-3. Select which environments should use each variable (Production, Preview, Development)
+Vercel is the production host. The following settings depend on the Vercel project configuration — confirm in the [Vercel dashboard](https://vercel.com/dashboard):
 
-4. Redeploy for changes to take effect
+- **Connected repo and branch:** Expected to be this repo, `main` branch
+- **Build command:** Expected `npm run build` (Vite auto-detected) unless overridden by `vercel.json`
+- **Output directory:** Expected `dist/`
+- **Auto-deploy on push:** Expected enabled for `main`
+- **Preview deployments:** Expected enabled for pull requests
+- **Environment variables:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_BASE_URL` — set in Vercel dashboard, not in repo
 
-### Validation
+## GitHub Pages (Legacy)
 
-The configuration module validates environment variables at runtime:
+A GitHub Pages deployment workflow exists at `.github/workflows/deploy.yml`. It was created during initial project scaffold (Dec 2024) and has never been updated. Its automatic trigger has been disabled (dispatch-only).
 
-- **Dev/Preview builds**: Fall back to built-in defaults if env vars are missing
-- **Production builds**: Use defaults if env vars are empty (defaults are working demo credentials)
+**Status:** Unknown whether GitHub Pages is enabled in repo settings. To determine:
+1. Go to GitHub repo → Settings → Pages
+2. If "Source" shows a branch or GitHub Actions, Pages may be active
+3. If disabled or unconfigured, the workflow is fully inert
 
-For production deployments with custom Supabase instances, ensure all three
-environment variables are set to your production values.
+**Action required:** Confirm Pages status. If disabled, deploy.yml can be deleted.
 
-## GitHub Pages
+## Environment Variables
 
-### Build-Time Environment Variables via GitHub Actions
+Vite injects environment variables at build time via `import.meta.env`. The config module (`src/config/runtimeConfig.js`) falls back to development defaults if variables are missing.
 
-For GitHub Pages deployment via GitHub Actions, configure repository secrets:
-
-1. Go to **Settings → Secrets and variables → Actions**
-2. Add repository secrets:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_BASE_URL` (optional)
-
-3. Expose them in your build step:
-
-```yaml
-- name: Build
-  run: npm run build
-  env:
-    VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-    VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-    VITE_BASE_URL: ${{ secrets.VITE_BASE_URL }}
-```
+| Variable | Purpose | Where Set |
+|----------|---------|-----------|
+| `VITE_SUPABASE_URL` | Supabase project URL | Vercel dashboard |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key | Vercel dashboard |
+| `VITE_BASE_URL` | API base URL (optional) | Vercel dashboard |
 
 ## Local Development
 
