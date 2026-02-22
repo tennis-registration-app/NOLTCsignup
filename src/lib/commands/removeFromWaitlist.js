@@ -28,9 +28,7 @@ export const RemoveFromWaitlistCommandSchema = z.object({
 export function buildRemoveFromWaitlistCommand(input) {
   const result = RemoveFromWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
-    const errors = /** @type {any} */ (result.error).errors
-      .map((e) => `${e.path.join('.')}: ${e.message}`)
-      .join(', ');
+    const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
     throw new Error(`Invalid RemoveFromWaitlistCommand: ${errors}`);
   }
   return result.data;

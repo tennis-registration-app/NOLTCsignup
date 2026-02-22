@@ -37,9 +37,7 @@ export function buildPurchaseBallsCommand(input) {
 
   const result = PurchaseBallsCommandSchema.safeParse(inputWithKey);
   if (!result.success) {
-    const errors = /** @type {any} */ (result.error).errors
-      .map((e) => `${e.path.join('.')}: ${e.message}`)
-      .join(', ');
+    const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
     throw new Error(`Invalid PurchaseBallsCommand: ${errors}`);
   }
   return result.data;

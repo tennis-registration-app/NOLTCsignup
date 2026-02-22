@@ -28,9 +28,7 @@ export const AssignFromWaitlistCommandSchema = z.object({
 export function buildAssignFromWaitlistCommand(input) {
   const result = AssignFromWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
-    const errors = /** @type {any} */ (result.error).errors
-      .map((e) => `${e.path.join('.')}: ${e.message}`)
-      .join(', ');
+    const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
     throw new Error(`Invalid AssignFromWaitlistCommand: ${errors}`);
   }
   return result.data;

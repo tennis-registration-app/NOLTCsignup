@@ -32,9 +32,7 @@ export const MoveCourtCommandSchema = z
 export function buildMoveCourtCommand(input) {
   const result = MoveCourtCommandSchema.safeParse(input);
   if (!result.success) {
-    const errors = /** @type {any} */ (result.error).errors
-      .map((e) => `${e.path.join('.')}: ${e.message}`)
-      .join(', ');
+    const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
     throw new Error(`Invalid MoveCourtCommand: ${errors}`);
   }
   return result.data;
