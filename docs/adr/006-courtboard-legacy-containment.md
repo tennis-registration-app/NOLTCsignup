@@ -11,11 +11,13 @@ The boot chain in `index.html` loads scripts in a specific order. `main.jsx` pol
 ## Decision
 Contain, don't rewrite. Migrate incrementally from the edges inward:
 
-### Phase 1: Fence globals (next)
-- Document all window globals with writers and readers
-- Tag each IIFE script with its deletion condition
-- Add ESLint rule preventing new window.Tennis and window.IS_MOBILE_VIEW reads in courtboard ESM
-- Centralize the 2 remaining ESM direct reads through windowBridge
+### Phase 1: Fence globals ✅ (commit 270afcd)
+- ESLint `no-restricted-properties` fence in `eslint.config.js` (courtboard components/hooks/mobile)
+- Courtboard exemption narrowed to 10 specific IIFE/bridge/entry files
+- `getLegacyAvailabilityDomain()` added to `src/courtboard/bridge/window-bridge.js`
+- `isMobileView()` and `getMobileModal()` imported from `src/platform/windowBridge.js`
+- 6 ESM violations fixed (NextAvailablePanel, TennisCourtDisplay, MobileModalApp)
+- Deletion-condition comments on all 5 IIFE/plain scripts
 
 ### Phase 2: Consolidate IIFE scripts (future)
 - Merge courtboardPreInit.js + mobile-bridge.js + mobile-fallback-bar.js into a single courtboard-bootstrap.js
