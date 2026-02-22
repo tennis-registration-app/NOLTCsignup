@@ -21,31 +21,18 @@ Warnings accumulate silently over time. A ratchet:
 
 ## Current Baseline
 
-Captured on: 2026-02-01 (see git history for exact commit)
+Source of truth: `eslint-baseline.json` (see git history for changes).
 
 | Metric | Count |
 |--------|-------|
 | Errors | 0 |
-| Warnings | 36 |
-| Files with warnings | 18 |
+| Warnings | 1 |
 
 ### Warning Breakdown by Rule
 
-| Rule | Count | Notes |
-|------|-------|-------|
-| `no-unused-vars` | 34 | Most common — unused parameters/variables |
-| `react-hooks/exhaustive-deps` | 2 | Missing hook dependencies |
-
-### Files with Most Warnings
-
-| File | Count |
+| Rule | Count |
 |------|-------|
-| `src/registration/appHandlers/useRegistrationAppState.js` | 8 |
-| `src/admin/App.jsx` | 4 |
-| `src/registration/appHandlers/useRegistrationHandlers.js` | 4 |
-| `src/registration/nav-diagnostics.js` | 4 |
-| `src/courtboard/components/CourtCard.jsx` | 2 |
-| `src/registration/services/index.js` | 2 |
+| `react-hooks/exhaustive-deps` | 1 |
 
 ## Lint Configuration
 
@@ -63,7 +50,7 @@ Captured on: 2026-02-01 (see git history for exact commit)
 **Warnings (ratcheted):**
 - `no-unused-vars` (with `argsIgnorePattern: '^_'`)
 - `react-hooks/exhaustive-deps`
-- `no-undef` (TODO: upgrade to error)
+- `no-undef` (currently warn; 0 violations in baseline)
 - `no-empty`
 - `no-case-declarations`
 - `no-unreachable`
@@ -92,10 +79,9 @@ npx eslint src/ --ext .js,.jsx --format json
 ```json
 {
   "errors": 0,
-  "warnings": 36,
+  "warnings": 1,
   "byRule": {
-    "no-unused-vars": 34,
-    "react-hooks/exhaustive-deps": 2
+    "react-hooks/exhaustive-deps": 1
   }
 }
 ```

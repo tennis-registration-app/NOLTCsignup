@@ -2,9 +2,9 @@
 
 ## Overview
 
-This project uses TypeScript's `checkJs` mode to validate existing JSDoc type annotations in JavaScript files. Type checking is enforced via a ratchet mechanism that prevents type regressions.
+This project uses TypeScript's `checkJs: true` mode to type-check all JavaScript files globally. Type checking is enforced via a ratchet mechanism that prevents type regressions.
 
-No `.ts` files are used. All type information is expressed through JSDoc annotations in `.js` / `.jsx` files.
+No `.ts` files are used (except orchestration layer `.ts` stubs). All type information is expressed through JSDoc annotations in `.js` / `.jsx` files.
 
 ## Why Type Check JS?
 
@@ -12,8 +12,8 @@ JSDoc-based type checking provides type safety without the overhead of a TypeScr
 
 ## How It Works
 
-1. **tsconfig.json** configures `tsc` with `allowJs: true` and `checkJs: false`
-2. Individual files opt in via `// @ts-check` at the top
+1. **tsconfig.json** configures `tsc` with `allowJs: true` and `checkJs: true`
+2. All `.js` / `.jsx` files under `src/` are type-checked by default
 3. `scripts/type-ratchet.mjs` compares error count to a committed baseline
 4. Type regressions fail `npm run verify`
 
@@ -36,15 +36,19 @@ npm run verify
 # (runs: lint:ratchet → type:ratchet → test:unit → build → test:e2e)
 ```
 
-## Adding @ts-check to a File
+## Adding Type Coverage to a File
 
-### When to add
+Since `checkJs: true` is set globally, all JS/JSX files under `src/` are already type-checked. No `// @ts-check` directive is needed. Existing `// @ts-check` directives are harmless but redundant.
 
-- File has existing JSDoc annotations (`@type`, `@param`, `@returns`)
+To improve type coverage in a file, add JSDoc annotations:
+
+### Good candidates
+
 - File is a utility, type definition, or pure function module
 - File has few or no side effects
+- File has existing JSDoc that can be tightened
 
-### When to wait
+### When to defer
 
 - File has many untyped dependencies (would cascade errors)
 - File relies heavily on untyped globals (e.g., `window.*` bridge properties)
@@ -52,12 +56,12 @@ npm run verify
 
 ### How to add safely
 
-1. Add `// @ts-check` as the first line of the file
+1. Add or tighten JSDoc annotations (`@type`, `@param`, `@returns`)
 2. Run `npm run typecheck -- --pretty false` immediately
 3. If errors appear in the file:
    - **Prefer:** Fix JSDoc annotations, add narrowing, or use explicit casts
    - **Acceptable:** `@ts-expect-error` with a reason comment (see Suppression Patterns)
-   - **If >5 errors:** Remove `@ts-check` and defer to a future commit
+   - **If >5 errors:** Revert annotations and defer to a future commit
 4. Run `npm run verify` to confirm all gates pass
 5. If baseline changed, run `node scripts/type-ratchet.mjs --update`
 
@@ -92,22 +96,15 @@ const result = someFunction(untypedArg);
 
 ## Current Coverage
 
-To verify: run `grep -rl "@ts-check" src/ | wc -l`
+With `checkJs: true`, all JS/JSX files under `src/` are type-checked. The type ratchet baseline (`typescript-baseline.json`) tracks the current error count — any increase is blocked.
 
-| Category | Files | Examples |
-|----------|-------|---------|
-| Router/screens | 13 | CourtRoute.jsx, HomeScreen.jsx |
-| Type definitions | 3 | appTypes.js, domain.js, global.d.ts |
-| Normalize layer | 5 | normalizeBlock.js, normalizeMember.js |
-| Schemas | 1 | apiEnvelope.js |
-| **Total** | **22** | |
+Some files still contain legacy `// @ts-check` directives from the earlier opt-in era. These are harmless and can be removed in cleanup passes.
 
-### Deferred (not yet @ts-checked)
+### Areas with known type noise
 
-| Module | Reason |
-|--------|--------|
-| `src/platform/windowBridge.js` | 18+ errors from untyped `window.*` properties; requires extending `global.d.ts` |
-| `src/registration/orchestration/` | Recently refactored; let settle before type enforcement |
+| Module | Situation |
+|--------|-----------|
+| `src/platform/windowBridge.js` | Untyped `window.*` properties; requires extending `global.d.ts` |
 | `src/registration/services/` | Complex API layer; high churn risk |
 | `src/admin/` | Large; modularization pending |
 
@@ -127,7 +124,7 @@ These declarations are intentionally permissive to avoid scope creep.
 ### tsconfig.json
 
 Key settings:
-- `checkJs: false` — Global default off; files opt in via `// @ts-check`
+- `checkJs: true` — All JS/JSX files are type-checked globally
 - `strict: false` — Not yet enforcing strict mode
 - `types: ["vite/client"]` — Supports `import.meta.env` references
 - `baseUrl` + `paths` — Maps `@lib/*` to `src/lib/*` (matches Vite aliases)
@@ -141,7 +138,5 @@ Key settings:
 
 ## Future Work
 
-- Expand @ts-check to platform layer (after extending global.d.ts for window.* properties)
-- Expand @ts-check to orchestration layer (after patterns stabilize)
-- Consider `strict: true` once coverage is sufficient
-- Upgrade `no-undef` ESLint rule from warning to error
+- Extend `global.d.ts` for `window.*` properties to reduce type noise in platform layer
+- Consider `strict: true` once type error count is low enough
