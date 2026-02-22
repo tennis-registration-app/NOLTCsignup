@@ -163,6 +163,37 @@ E2E tests live in `e2e/` directory.
 - E2E test critical user flows (see `docs/GOLDEN_FLOWS.md`)
 - Always run full verification before committing
 
+### Writing Handler Tests
+
+Handler modules (`src/registration/appHandlers/handlers/`) are React hooks
+wrapping orchestrator calls with guards, error handling, and state resets.
+Use the test harness in `tests/helpers/handlerTestHarness.js`.
+
+**Setup:**
+```js
+import { createCourtHandlerDeps, renderHandlerHook } from '../../../../helpers/handlerTestHarness.js';
+import { useCourtHandlers } from '../../../../../src/registration/appHandlers/handlers/courtHandlers.js';
+
+let deps, mocks, result, unmount;
+beforeEach(async () => {
+  ({ deps, mocks } = createCourtHandlerDeps());
+  ({ result, unmount } = await renderHandlerHook(() => useCourtHandlers(deps)));
+});
+afterEach(() => unmount()); // Required — prevents cross-test leakage
+```
+
+**Testing rules per callback type:**
+- **Pure delegation (no guards, no catch):** One happy-path test — assert
+  correct args passed to orchestrator.
+- **Guarded callback:** Happy path + guard failure test (orchestrator NOT
+  called, feedback shown).
+- **Error-handling callback (try/catch):** Happy path + error test (mock
+  rejection, verify toast/alert + reset setters called).
+
+**Adding tests for other handlers:**
+Use `createBaseDeps()` from the harness and extend with handler-specific
+fields. See `createCourtHandlerDeps` as the reference implementation.
+
 ## Architecture Overview
 
 See `ARCHITECTURE.md` for full details.
