@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run build",
+  "outputDirectory": "dist"
+}

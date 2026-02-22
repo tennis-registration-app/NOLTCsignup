@@ -17,7 +17,7 @@ Source: README.md, handoff_audit docs, vite.config.js comment ("root for Vercel"
 Vercel is the production host. The following settings depend on the Vercel project configuration — confirm in the [Vercel dashboard](https://vercel.com/dashboard):
 
 - **Connected repo and branch:** Expected to be this repo, `main` branch
-- **Build command:** Expected `npm run build` (Vite auto-detected) unless overridden by `vercel.json`
+- **Build command:** Defined in `vercel.json` — runs quality ratchets before `npm run build`
 - **Output directory:** Expected `dist/`
 - **Auto-deploy on push:** Expected enabled for `main`
 - **Preview deployments:** Expected enabled for pull requests
@@ -33,6 +33,25 @@ A GitHub Pages deployment workflow exists at `.github/workflows/deploy.yml`. It 
 3. If disabled or unconfigured, the workflow is fully inert
 
 **Action required:** Confirm Pages status. If disabled, deploy.yml can be deleted.
+
+## Quality Gates
+
+### Vercel Build (vercel.json)
+
+The `vercel.json` build command runs quality ratchets before `npm run build`. If any ratchet fails, the Vercel build fails and deployment is blocked.
+
+| Gate | Runs In | Blocks Deploy? |
+|------|---------|----------------|
+| Lint ratchet | Vercel build | Yes (if Vercel uses repo build settings) |
+| Type ratchet | Vercel build | Yes |
+| Coverage ratchet (runs all unit tests) | Vercel build | Yes |
+| Fixture tests | Vercel build | Yes |
+| Build (`vite build`) | Vercel build | Yes |
+| E2E tests (Playwright) | GitHub Actions `verify.yml` | Independent — blocks merge only if branch protection enabled |
+
+### To fully block broken code from production:
+1. Verify `vercel.json` build command is active (check Vercel dashboard → project settings → build command)
+2. Enable GitHub branch protection on `main` requiring the "Verify" status check to pass before merge
 
 ## Environment Variables
 
