@@ -43,7 +43,7 @@ This runs: lint ratchet → type ratchet → unit tests + coverage → fixture t
 |--------------|------------|
 | Understand the system | [ARCHITECTURE.md](../ARCHITECTURE.md) (high-level design) |
 | Find a specific file | [docs/ARCHITECTURE_MAP.md](ARCHITECTURE_MAP.md) (contractor discoverability) |
-| Understand module system + entry points | [docs/architecture.md](architecture.md) (ESM, adapters, boot chain) |
+| Understand module system + entry points | [ARCHITECTURE.md](../ARCHITECTURE.md) (includes ESM, adapters, boot chain) |
 | See the database schema | [docs/SCHEMA.md](SCHEMA.md) |
 | Understand window globals (courtboard) | [docs/WINDOW_GLOBALS.md](WINDOW_GLOBALS.md) |
 | See module boundaries + import rules | [docs/DEPENDENCY_MAP.md](DEPENDENCY_MAP.md) |
@@ -78,7 +78,7 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 
 | Topic | Doc |
 |-------|-----|
-| Deployment | [DEPLOYMENT.md](../DEPLOYMENT.md), [docs/DEPLOYMENT.md](DEPLOYMENT.md) |
+| Deployment | [docs/DEPLOYMENT.md](DEPLOYMENT.md) |
 | Environment config | [docs/ENVIRONMENT.md](ENVIRONMENT.md) |
 | Troubleshooting FAQ | [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Operations runbook | [docs/RUNBOOK.md](RUNBOOK.md) |

@@ -1,46 +1,7 @@
 # Handoff Index
 
-This page is the "start here" guide for new developers.
+> **Deprecated** — this document has been superseded.
 
-## Quick start
-- README: install, env setup, run apps, verification gate
+See [docs/START_HERE.md](START_HERE.md) for the canonical entry point for new developers.
 
-## Development rules
-- docs/architecture.md (Development Rules + contract test gate policy)
-- docs/LINT_RATCHET.md
-- CONTRIBUTING.md
-- docs/CODE_CONVENTIONS.md
-
-## Architecture
-- ARCHITECTURE.md (high-level)
-- docs/architecture.md (controller patterns + state bridges)
-- docs/ARCHITECTURE_MAP.md (where things live)
-- docs/WINDOW_GLOBALS.md (Courtboard bridge)
-- docs/SCHEMA.md (inferred database schema + Edge Function endpoints)
-- docs/adr/ (Architecture Decision Records — key design rationale)
-
-## Critical user flows
-- docs/GOLDEN_FLOWS.md
-
-## Testing
-- docs/TESTING.md
-- docs/API_TESTING.md
-- docs/TYPECHECK.md
-- docs/verification-checklist.md
-
-## Operations / troubleshooting
-- docs/RUNBOOK.md
-- docs/ERROR_HANDLING.md
-- docs/error-contracts.md
-
-## Deployment
-- DEPLOYMENT.md
-- docs/DEPLOYMENT.md
-- docs/ENVIRONMENT.md
-
-## Security work package
-- docs/SECURITY_WP.md
-
-## Review remediation
-- docs/review-remediation.md (resolved, deferred, and retained items from architectural reviews)
-
+<!-- Deletion condition: safe to delete once all team bookmarks are updated -->

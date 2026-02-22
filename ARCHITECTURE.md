@@ -463,10 +463,174 @@ These are candidates for future decomposition. Note: all registration routes
 now follow the presenter pattern (`buildXModel` + `buildXActions`), with
 `CourtRoute.jsx` reduced from 315 to 122 lines as the reference example.
 
+## Entry Points & Module System
+
+| Entry | HTML | Main Module |
+|-------|------|-------------|
+| Registration | `src/registration/index.html` | `src/registration/main.jsx` |
+| Courtboard | `src/courtboard/index.html` | `src/courtboard/main.jsx` |
+| Admin | `src/admin/index.html` | `src/admin/main.jsx` |
+| Mobile Shell | `Mobile.html` | `src/mobile-shell/main.js` |
+
+All domain logic lives in ES modules under `src/`. Legacy `window.Tennis.*` globals are populated by adapter modules in `src/platform/attachLegacy*.js`, imported at the top of each entry point.
+
+### Mobile Shell
+
+`Mobile.html` is an ESM entry that coordinates Registration and Courtboard iframes. It loads `src/mobile-shell/main.js` which imports only the Events adapter. Shell logic:
+- `mobileBridge.js` — iframe coordination, state sync via sessionStorage, postMessage
+- `healthCheck.js` — iframe health monitoring, debug-only selfTest (`?debug=1`)
+
+### Adapter Pattern
+
+Each `attachLegacy*.js` module:
+1. Imports canonical ESM implementation
+2. Attaches to `window.Tennis.*` for legacy compat
+3. Self-registers on import (no explicit init call)
+
+Adapters (in import order):
+
+| # | Adapter | Global |
+|---|---------|--------|
+| 1 | `attachLegacyConfig.js` | `window.Tennis.Config` |
+| 2 | `attachLegacyTime.js` | `window.Tennis.Domain.Time` |
+| 3 | `attachLegacyStorage.js` | `window.Tennis.Storage` |
+| 4 | `attachLegacyEvents.js` | `window.Tennis.Events` |
+| 5 | `attachLegacyDataStore.js` | `window.Tennis.DataStore` |
+| 6 | `attachLegacyBlocks.js` | `window.Tennis.Domain.Blocks` |
+| 7 | `attachLegacyAvailability.js` | `window.Tennis.Domain.Availability` |
+| 8 | `attachLegacyRoster.js` | `window.Tennis.Domain.Roster` |
+| 9 | `attachLegacyWaitlist.js` | `window.Tennis.Domain.Waitlist` |
+
+### ESM → Legacy Global Mapping
+
+| ESM Module | Legacy Global |
+|------------|---------------|
+| `src/tennis/config.js` | `Tennis.Config` |
+| `src/tennis/domain/time.js` | `Tennis.Domain.Time` |
+| `src/lib/storage.js` | `Tennis.Storage` |
+| `src/tennis/events.js` | `Tennis.Events` |
+| `src/tennis/datastore.js` | `Tennis.DataStore` |
+| `src/tennis/domain/blocks.js` | `Tennis.Domain.Blocks` |
+| `src/tennis/domain/availability.js` | `Tennis.Domain.Availability` |
+| `src/tennis/domain/roster.js` | `Tennis.Domain.Roster` |
+| `src/tennis/domain/waitlist.js` | `Tennis.Domain.Waitlist` |
+
+## Error Boundaries
+
+App-level boundaries wrap each entry point:
+- Registration: "Court Registration"
+- Courtboard: "Courtboard Display"
+- Admin: "Admin Panel"
+- Mobile Shell: try/catch with fallback HTML
+
+Feature boundaries protect known-risk areas:
+- Court Selection (`CourtRoute.jsx`)
+- Waitlist Display (`TennisCourtDisplay.jsx`, both instances)
+
+All boundaries: log to console, emit `clientError` via `Tennis.Events.emitDom` (falls back to raw `CustomEvent` dispatch), show Reload + Copy Diagnostic Info buttons.
+
+### clientError Event Payload
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `message` | string | Error message |
+| `stack` | string | Stack trace (when available) |
+| `context` | string | Boundary label (e.g. "Court Registration") |
+| `route` | string | `window.location.pathname` |
+| `timestamp` | string | ISO 8601 |
+| `deviceId` | string | Device identifier (when available) |
+
+## Orchestrator Dependency Conventions
+
+Preferred pattern for orchestrator dependencies (grouped deps):
+
+```js
+async function myOrchestrator(input, deps) {
+  const { state, actions, services, ui } = deps;
+}
+```
+
+Current status:
+- `assignCourtOrchestrator`: grouped deps
+- `adminOperations`: context objects
+- `waitlistOrchestrator`: flat deps (legacy, predates grouped convention)
+
+Rule: New orchestrators must use grouped deps (`{ state, actions, services, ui }`). Existing flat deps will be migrated when those files are next modified for functional changes.
+
+### Test Coverage Requirements
+
+Orchestrator tests must verify these sanity checks:
+1. Guard failures reset state (mutation safety)
+2. Backend throw → alert + state reset
+3. Double-click / double-submit guard
+
+See `tests/unit/orchestration/` for reference.
+
+## Controller & Presenter Patterns
+
+### Registration: Presenter Pattern
+
+Routes use presenter functions to extract props:
+
+```js
+function GroupRoute({ app, handlers }) {
+  const model = buildGroupModel(app);
+  const actions = buildGroupActions(app, handlers);
+  return <GroupScreen {...model} {...actions} />;
+}
+```
+
+Presenter files: `src/registration/router/presenters/`
+Tests: `tests/unit/registration/*Presenter.equivalence.test.js`
+
+### Admin: Domain Object Factories
+
+Admin uses factory functions to create domain objects via `buildAdminController.js`:
+
+```js
+<StatusSection statusModel={statusModel} statusActions={statusActions} />
+```
+
+Controller assembly: `src/admin/controller/buildAdminController.js`
+Tests: `tests/unit/admin/controller/buildAdminController.contract.test.js`
+
+## Courtboard State Bridge
+
+Courtboard shares state with non-React code via a window global:
+
+```
+API (get-board) → React State (main.jsx) → window.CourtboardState
+                                                    │
+              ┌─────────────────────────────────────┤
+              ▼                  ▼                   ▼
+    mobile-fallback-bar.js  mobile-bridge.js   MobileModal
+```
+
+- **Writer** (exactly one): `main.jsx` useEffect syncs React state
+- **Readers**: `getCourtboardState()` from `courtboardState.js`
+- **Guaranteed fields**: `courts`, `courtBlocks`, `waitingGroups`
+- **Optional fields**: `upcomingBlocks`, `freeCourts`, `timestamp`
+
+See [docs/adr/006-courtboard-legacy-containment.md](./docs/adr/006-courtboard-legacy-containment.md) for the full containment strategy.
+
+## Courtboard Icon Contract
+
+Courtboard icons use emoji in `<span>` elements sized via `fontSize` — this is intentional. SVG icons (lucide-react) break courtboard layout because `<svg>` elements have a different sizing model than inline text spans. Courtboard must never import from `src/shared/ui/icons/Icons.jsx`.
+
+## Contract Tests
+
+Contract tests (`*.contract.test.js`, `*.equivalence.test.js`) are non-negotiable CI gates. Any controller, presenter, or bridge surface change requires updating inline snapshots in the same PR with written rationale.
+
+Files: `useRegistrationAppState.contract.test.js`, `buildAdminController.contract.test.js`, `courtboardState.contract.test.js`, `buildHandlerDeps.contract.test.js`, plus 5 presenter equivalence tests.
+
+Gate: `npm run verify`
+
 ## Related Documentation
 
 - [README.md](./README.md) — Quick start and overview
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — Development workflow
+- [docs/START_HERE.md](./docs/START_HERE.md) — New developer entry point
+- [docs/DEPENDENCY_MAP.md](./docs/DEPENDENCY_MAP.md) — Module boundaries and import rules
 - [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) — Environment configuration
 - [docs/TESTING.md](./docs/TESTING.md) — Testing strategy
 - [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md) — Critical user flows
