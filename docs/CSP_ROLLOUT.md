@@ -47,10 +47,10 @@ Key compromises:
   - Options: Supabase Edge Function, Sentry CSP, or third-party collector
   - Collect violations before enforcement
 
-### Stage 1: Enforce on Courtboard (lowest risk)
-- Vercel.json supports per-route headers via `source` patterns
-- Move courtboard to enforced CSP (without `unsafe-inline` in script-src)
-- Keep all other routes on Report-Only
+### Stage 1: Enforce on Courtboard (lowest risk) — DONE
+- [x] Per-route header in vercel.json: `/src/courtboard/(.*)` gets enforced CSP
+- [x] All other routes remain on Report-Only (catch-all)
+- [x] `script-src 'self'` only (no `unsafe-inline`, no CDN)
 - Courtboard policy:
   ```
   Content-Security-Policy:
