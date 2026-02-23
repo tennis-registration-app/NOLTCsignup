@@ -41,30 +41,6 @@ export function getPref(key) {
   }
 }
 
-export function setPref(key, value) {
-  if (!PREF_KEYS.has(key)) {
-    throw new Error(
-      `prefsStorage: "${key}" is not an allowed preference key. Allowed: ${[...PREF_KEYS].join(', ')}`
-    );
-  }
-  localStorage.setItem(`${PREF_PREFIX}${key}`, JSON.stringify(value));
-}
-
-export function removePref(key) {
-  if (!PREF_KEYS.has(key)) {
-    throw new Error(
-      `prefsStorage: "${key}" is not an allowed preference key. Allowed: ${[...PREF_KEYS].join(', ')}`
-    );
-  }
-  localStorage.removeItem(`${PREF_PREFIX}${key}`);
-}
-
-export function clearPrefs() {
-  for (const key of PREF_KEYS) {
-    localStorage.removeItem(`${PREF_PREFIX}${key}`);
-  }
-}
-
 // === Session Cache (non-authoritative, discardable) ===
 
 export function getCache(key) {
@@ -90,15 +66,6 @@ export function setCache(key, value) {
   localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(value));
 }
 
-export function removeCache(key) {
-  if (!CACHE_KEYS.has(key)) {
-    throw new Error(
-      `prefsStorage: "${key}" is not an allowed cache key. Allowed: ${[...CACHE_KEYS].join(', ')}`
-    );
-  }
-  localStorage.removeItem(`${CACHE_PREFIX}${key}`);
-}
-
 export function clearCache() {
   for (const key of CACHE_KEYS) {
     localStorage.removeItem(`${CACHE_PREFIX}${key}`);
@@ -108,7 +75,9 @@ export function clearCache() {
 // === Utility ===
 
 export function clearAll() {
-  clearPrefs();
+  for (const key of PREF_KEYS) {
+    localStorage.removeItem(`${PREF_PREFIX}${key}`);
+  }
   clearCache();
 }
 

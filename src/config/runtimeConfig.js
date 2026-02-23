@@ -70,8 +70,6 @@ export function getRuntimeConfig(env = import.meta.env) {
 // Legacy Exports (preserve backward compatibility during migration)
 // =============================================================================
 
-export const IS_DEVELOPMENT = import.meta.env.DEV;
-export const IS_PRODUCTION = import.meta.env.PROD;
 export const MODE = import.meta.env.MODE;
 
 /**
@@ -103,23 +101,6 @@ export const featureFlags = {
 };
 
 // =============================================================================
-// Logging Configuration
-// =============================================================================
-
-export const LOG_LEVELS = Object.freeze({
-  NONE: 0,
-  ERROR: 1,
-  WARN: 2,
-  INFO: 3,
-  DEBUG: 4,
-});
-
-export const loggingConfig = {
-  level: featureFlags.DEBUG_MODE ? LOG_LEVELS.DEBUG : LOG_LEVELS.WARN,
-  levels: LOG_LEVELS,
-};
-
-// =============================================================================
 // Consolidated Export
 // =============================================================================
 
@@ -127,10 +108,13 @@ export const runtimeConfig = {
   getRuntimeConfig,
   getSupabaseConfig,
   features: featureFlags,
-  logging: loggingConfig,
+  logging: {
+    level: featureFlags.DEBUG_MODE ? 4 /* DEBUG */ : 2 /* WARN */,
+    levels: Object.freeze({ NONE: 0, ERROR: 1, WARN: 2, INFO: 3, DEBUG: 4 }),
+  },
   env: {
-    isDevelopment: IS_DEVELOPMENT,
-    isProduction: IS_PRODUCTION,
+    isDevelopment: import.meta.env.DEV,
+    isProduction: import.meta.env.PROD,
     mode: MODE,
   },
 };

@@ -2,12 +2,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getPref,
-  setPref,
-  removePref,
-  clearPrefs,
   getCache,
   setCache,
-  removeCache,
   clearCache,
   clearAll,
   migrateOldKeys,
@@ -19,53 +15,17 @@ describe('prefsStorage', () => {
   });
 
   describe('UI Preferences (PREF_KEYS)', () => {
-    it('stores and retrieves preference with correct prefix', () => {
-      setPref('deviceId', 'test-device-123');
-      expect(getPref('deviceId')).toBe('test-device-123');
-      expect(localStorage.getItem('noltc_pref_deviceId')).toBe('"test-device-123"');
-    });
-
     it('returns null for unset preference', () => {
       expect(getPref('deviceId')).toBeNull();
     });
 
     it('throws for disallowed preference key', () => {
       expect(() => getPref('notAllowed')).toThrow('not an allowed preference key');
-      expect(() => setPref('notAllowed', 'x')).toThrow('not an allowed preference key');
     });
 
     it('handles corrupted JSON gracefully', () => {
       localStorage.setItem('noltc_pref_deviceId', 'not-valid-json{');
       expect(getPref('deviceId')).toBeNull();
-    });
-
-    it('removes preference', () => {
-      setPref('deviceId', 'test');
-      removePref('deviceId');
-      expect(getPref('deviceId')).toBeNull();
-    });
-
-    it('clears all preferences', () => {
-      setPref('deviceId', 'test');
-      setPref('useApi', true);
-      clearPrefs();
-      expect(getPref('deviceId')).toBeNull();
-      expect(getPref('useApi')).toBeNull();
-    });
-
-    it('stores and retrieves boolean useApi correctly', () => {
-      setPref('useApi', true);
-      expect(getPref('useApi')).toBe(true);
-      expect(typeof getPref('useApi')).toBe('boolean');
-
-      setPref('useApi', false);
-      expect(getPref('useApi')).toBe(false);
-      expect(typeof getPref('useApi')).toBe('boolean');
-    });
-
-    it('allows all documented pref keys', () => {
-      expect(() => setPref('deviceId', 'abc')).not.toThrow();
-      expect(() => setPref('useApi', true)).not.toThrow();
     });
   });
 
@@ -115,7 +75,7 @@ describe('prefsStorage', () => {
 
   describe('clearAll', () => {
     it('clears both prefs and cache', () => {
-      setPref('deviceId', 'test');
+      localStorage.setItem('noltc_pref_deviceId', '"test"');
       setCache('guestCharges', {});
       clearAll();
       expect(getPref('deviceId')).toBeNull();
