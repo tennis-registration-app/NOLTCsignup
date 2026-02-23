@@ -115,8 +115,6 @@ describe('buildAdminController contract', () => {
             "clearAllCourts",
             "clearCourt",
             "deactivateAll",
-            "setActive",
-            "setCourts",
           ],
           "model": [
             "active",
@@ -161,7 +159,6 @@ describe('buildAdminController contract', () => {
             "applyBlocks",
             "notify",
             "onEditingConsumed",
-            "setSuspended",
           ],
           "components": [
             "EventCalendar",

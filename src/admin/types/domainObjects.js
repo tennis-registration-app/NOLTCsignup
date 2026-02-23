@@ -31,12 +31,10 @@
 
 /**
  * Wet court actions - handlers for wet court operations.
- * Maps to actual props: setWetCourtsActive, setWetCourts, handleEmergencyWetCourt,
+ * Maps to actual props: handleEmergencyWetCourt,
  * deactivateWetCourts, onClearWetCourt, onClearAllWetCourts
  *
  * @typedef {Object} WetCourtsActions
- * @property {Function|undefined} setActive - Toggle wet court mode (from setWetCourtsActive)
- * @property {Function|undefined} setCourts - Update wet court set (from setWetCourts)
  * @property {Function|undefined} activateEmergency - Mark all courts wet (from handleEmergencyWetCourt)
  * @property {Function|undefined} deactivateAll - Clear all wet markers (from deactivateWetCourts)
  * @property {Function|undefined} clearCourt - Clear single wet court (from onClearWetCourt)
@@ -63,8 +61,6 @@ export function createWetCourtsModel(params = {}) {
 /**
  * Creates WetCourtsActions - preserves undefined values.
  * @param {Object} [params={}]
- * @param {Function} [params.setWetCourtsActive] - Toggle wet court mode
- * @param {Function} [params.setWetCourts] - Update wet court set
  * @param {Function} [params.handleEmergencyWetCourt] - Activate emergency wet courts
  * @param {Function} [params.deactivateWetCourts] - Deactivate all wet courts
  * @param {Function} [params.onClearWetCourt] - Clear single wet court
@@ -72,17 +68,9 @@ export function createWetCourtsModel(params = {}) {
  * @returns {WetCourtsActions}
  */
 export function createWetCourtsActions(params = {}) {
-  const {
-    setWetCourtsActive,
-    setWetCourts,
-    handleEmergencyWetCourt,
-    deactivateWetCourts,
-    onClearWetCourt,
-    onClearAllWetCourts,
-  } = params;
+  const { handleEmergencyWetCourt, deactivateWetCourts, onClearWetCourt, onClearAllWetCourts } =
+    params;
   return {
-    setActive: setWetCourtsActive,
-    setCourts: setWetCourts,
     activateEmergency: handleEmergencyWetCourt,
     deactivateAll: deactivateWetCourts,
     clearCourt: onClearWetCourt,
@@ -108,12 +96,11 @@ export function createWetCourtsActions(params = {}) {
 
 /**
  * Block actions for court blocking operations.
- * Maps to actual props: onApplyBlocks, onEditingBlockConsumed, setSuspendedBlocks, onNotification
+ * Maps to actual props: onApplyBlocks, onEditingBlockConsumed, onNotification
  *
  * @typedef {Object} BlockActions
  * @property {Function|undefined} applyBlocks - Create blocks (from onApplyBlocks)
  * @property {Function|undefined} onEditingConsumed - Clear edit state (from onEditingBlockConsumed)
- * @property {Function|undefined} setSuspended - Update suspended blocks (from setSuspendedBlocks)
  * @property {Function|undefined} notify - Show notification (from onNotification)
  */
 
@@ -143,16 +130,14 @@ export function createBlockModel(params = {}) {
  * @param {Object} [params={}]
  * @param {Function} [params.onApplyBlocks] - Create blocks callback
  * @param {Function} [params.onEditingBlockConsumed] - Clear edit state callback
- * @param {Function} [params.setSuspendedBlocks] - Update suspended blocks
  * @param {Function} [params.onNotification] - Show notification
  * @returns {BlockActions}
  */
 export function createBlockActions(params = {}) {
-  const { onApplyBlocks, onEditingBlockConsumed, setSuspendedBlocks, onNotification } = params;
+  const { onApplyBlocks, onEditingBlockConsumed, onNotification } = params;
   return {
     applyBlocks: onApplyBlocks,
     onEditingConsumed: onEditingBlockConsumed,
-    setSuspended: setSuspendedBlocks,
     notify: onNotification,
   };
 }

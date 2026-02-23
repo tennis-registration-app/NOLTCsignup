@@ -98,8 +98,6 @@ export function buildAdminController(deps) {
     ENABLE_WET_COURTS,
   });
   const wetCourtsActions = createWetCourtsActions({
-    setWetCourtsActive: actions?.setWetCourtsActive,
-    setWetCourts: actions?.setWetCourts,
     handleEmergencyWetCourt: actions?.handleEmergencyWetCourt,
     deactivateWetCourts: actions?.deactivateWetCourts,
     onClearWetCourt: actions?.clearWetCourt,
@@ -117,7 +115,6 @@ export function buildAdminController(deps) {
   const blockActions = createBlockActions({
     onApplyBlocks: actions?.applyBlocks,
     onEditingBlockConsumed: actions?.onEditingBlockConsumed,
-    setSuspendedBlocks: actions?.setSuspendedBlocks,
     onNotification: actions?.showNotification,
   });
   const blockComponents = components
@@ -226,18 +223,11 @@ export const CONTROLLER_KEYS = {
   topLevel: ['services', 'wetCourts', 'blocks', 'status', 'calendar', 'ai'],
   wetCourts: {
     model: ['active', 'courts', 'enabled'],
-    actions: [
-      'setActive',
-      'setCourts',
-      'activateEmergency',
-      'deactivateAll',
-      'clearCourt',
-      'clearAllCourts',
-    ],
+    actions: ['activateEmergency', 'deactivateAll', 'clearCourt', 'clearAllCourts'],
   },
   blocks: {
     model: ['courts', 'blocks', 'hoursOverrides', 'editingBlock', 'suspendedBlocks'],
-    actions: ['applyBlocks', 'onEditingConsumed', 'setSuspended', 'notify'],
+    actions: ['applyBlocks', 'onEditingConsumed', 'notify'],
     components: [
       'VisualTimeEntry',
       'MiniCalendar',

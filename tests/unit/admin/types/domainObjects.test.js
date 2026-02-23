@@ -80,8 +80,6 @@ describe('domainObjects', () => {
 
     it('preserves undefined values (no defaults)', () => {
       const actions = createWetCourtsActions({});
-      expect(actions.setActive).toBeUndefined();
-      expect(actions.setCourts).toBeUndefined();
       expect(actions.activateEmergency).toBeUndefined();
       expect(actions.deactivateAll).toBeUndefined();
       expect(actions.clearCourt).toBeUndefined();
@@ -89,24 +87,18 @@ describe('domainObjects', () => {
     });
 
     it('maps input keys to curated field names', () => {
-      const setWetCourtsActive = vi.fn();
-      const setWetCourts = vi.fn();
       const handleEmergencyWetCourt = vi.fn();
       const deactivateWetCourts = vi.fn();
       const onClearWetCourt = vi.fn();
       const onClearAllWetCourts = vi.fn();
 
       const actions = createWetCourtsActions({
-        setWetCourtsActive,
-        setWetCourts,
         handleEmergencyWetCourt,
         deactivateWetCourts,
         onClearWetCourt,
         onClearAllWetCourts,
       });
 
-      expect(actions.setActive).toBe(setWetCourtsActive);
-      expect(actions.setCourts).toBe(setWetCourts);
       expect(actions.activateEmergency).toBe(handleEmergencyWetCourt);
       expect(actions.deactivateAll).toBe(deactivateWetCourts);
       expect(actions.clearCourt).toBe(onClearWetCourt);
@@ -171,26 +163,22 @@ describe('domainObjects', () => {
       const actions = createBlockActions({});
       expect(actions.applyBlocks).toBeUndefined();
       expect(actions.onEditingConsumed).toBeUndefined();
-      expect(actions.setSuspended).toBeUndefined();
       expect(actions.notify).toBeUndefined();
     });
 
     it('maps input keys to curated field names', () => {
       const onApplyBlocks = vi.fn();
       const onEditingBlockConsumed = vi.fn();
-      const setSuspendedBlocks = vi.fn();
       const onNotification = vi.fn();
 
       const actions = createBlockActions({
         onApplyBlocks,
         onEditingBlockConsumed,
-        setSuspendedBlocks,
         onNotification,
       });
 
       expect(actions.applyBlocks).toBe(onApplyBlocks);
       expect(actions.onEditingConsumed).toBe(onEditingBlockConsumed);
-      expect(actions.setSuspended).toBe(setSuspendedBlocks);
       expect(actions.notify).toBe(onNotification);
     });
   });

@@ -12,7 +12,6 @@ import CourtSelectionGrid from './CourtSelectionGrid.jsx';
 import BlockReasonSelector from './BlockReasonSelector.jsx';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
 import ConflictDetector from '../components/blocks/ConflictDetector.jsx';
-import { useWetCourts } from './hooks/useWetCourts';
 import { useBlockForm } from './hooks/useBlockForm';
 import { useBlockActions } from './hooks/useBlockActions';
 import EditModeBanner from './EditModeBanner.jsx';
@@ -53,12 +52,7 @@ const CompleteBlockManagerEnhanced = ({
   defaultView = 'timeline',
 }) => {
   // Destructure domain objects to preserve original variable names
-  const { active: wetCourtsActive, courts: wetCourts, enabled: ENABLE_WET_COURTS } = wetCourtsModel;
-  const {
-    setActive: setWetCourtsActive,
-    setCourts: setWetCourts,
-    setSuspended: setSuspendedBlocks,
-  } = /** @type {any} */ (wetCourtsActions);
+  const { active: wetCourtsActive, courts: wetCourts } = wetCourtsModel;
   const {
     courts,
     blocks: courtBlocks = [],
@@ -121,18 +115,11 @@ const CompleteBlockManagerEnhanced = ({
 
   const currentTime = new Date();
 
-  // Wet court operations via hook
-  const { handleEmergencyWetCourt, deactivateWetCourts, clearWetCourt } = useWetCourts({
-    backend,
-    onNotification,
-    ENABLE_WET_COURTS,
-    wetCourts,
-    setWetCourts,
-    setWetCourtsActive,
-    setSuspendedBlocks,
-    courts,
-    setRefreshTrigger,
-  });
+  // Wet court operations — use controller-provided actions directly
+  // (reducer-based hook, no duplicate backend calls)
+  const handleEmergencyWetCourt = wetCourtsActions.activateEmergency;
+  const deactivateWetCourts = wetCourtsActions.deactivateAll;
+  const clearWetCourt = wetCourtsActions.clearCourt;
 
   const {
     handleTemplateSelect,

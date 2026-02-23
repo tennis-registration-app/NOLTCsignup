@@ -64,12 +64,6 @@ import { addTimer, clearAllTimers } from '../utils/timerRegistry';
 // Feature flags
 import { featureFlags } from '../../config/runtimeConfig.js';
 
-// No-op setters for prop compatibility with children using old hook pattern
-// Defined at module level for stable identity (avoids exhaustive-deps warnings)
-const setWetCourtsActive = () => {};
-const setWetCourts = () => {};
-const setSuspendedBlocks = () => {};
-
 // ESM canonical imports (replacing window.APP_UTILS reads)
 import { readDataSafe } from '../../lib/storage.js';
 import { TennisCourtDataStore } from '../../lib/TennisCourtDataStore.js';
@@ -231,10 +225,6 @@ export function useAdminAppState({ showNotification, confirm }) {
         USE_REAL_AI: featureFlags.USE_REAL_AI,
         settings,
         actions: {
-          // No-op setters for prop compatibility with children
-          setWetCourtsActive,
-          setWetCourts,
-          setSuspendedBlocks,
           // State-capturing callbacks
           clearCourt,
           moveCourt,

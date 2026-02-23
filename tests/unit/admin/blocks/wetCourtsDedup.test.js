@@ -1,299 +1,139 @@
-/** @vitest-environment jsdom */
 /**
- * wetCourtsDedup — characterization test for legacy useWetCourts hook
+ * wetCourtsDedup — verifies bug #12 fix
  *
  * Documents that:
- * 1. Legacy blocks/hooks/useWetCourts.js is pure orchestration (not a React hook)
- * 2. It calls backend methods AND injected setters on success
- * 3. In production, setters are no-ops (from useAdminAppState lines 69-71)
- * 4. Controller already provides equivalent actions via reducer-based hook
- *
- * This test characterizes the CURRENT behavior before dedup (bug #12).
+ * 1. Legacy blocks/hooks/useWetCourts.js has been deleted
+ * 2. CompleteBlockManagerEnhanced uses controller actions directly
+ * 3. Controller wetCourtsActions no longer includes no-op setters
+ * 4. BlockActions no longer includes setSuspended (was fed by no-op)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useWetCourts as legacyUseWetCourts } from '../../../../src/admin/blocks/hooks/useWetCourts.js';
+import { describe, it, expect } from 'vitest';
+import { CONTROLLER_KEYS } from '../../../../src/admin/controller/buildAdminController.js';
+import { createWetCourtsActions, createBlockActions } from '../../../../src/admin/types/domainObjects.js';
+import fs from 'fs';
+import path from 'path';
 
-// Mock window.Events (IIFE sets this at module level)
-vi.stubGlobal('Events', { emitDom: vi.fn() });
+describe('wetCourts dedup (bug #12 fix)', () => {
+  // ============================================================
+  // A) Legacy hook deleted
+  // ============================================================
 
-describe('legacy useWetCourts (blocks/hooks) — characterization', () => {
-  let backend;
-  let setWetCourts;
-  let setWetCourtsActive;
-  let setSuspendedBlocks;
-  let setRefreshTrigger;
-  let onNotification;
-  let result;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    backend = {
-      admin: {
-        markWetCourts: vi.fn(),
-        clearWetCourts: vi.fn(),
-      },
-    };
-
-    // These are vi.fn() here to OBSERVE calls —
-    // in production they are no-ops: () => {}
-    setWetCourts = vi.fn();
-    setWetCourtsActive = vi.fn();
-    setSuspendedBlocks = vi.fn();
-    setRefreshTrigger = vi.fn();
-    onNotification = vi.fn();
-
-    result = legacyUseWetCourts({
-      backend,
-      onNotification,
-      ENABLE_WET_COURTS: true,
-      wetCourts: new Set(),
-      setWetCourts,
-      setWetCourtsActive,
-      setSuspendedBlocks,
-      courts: Array.from({ length: 12 }, (_, i) => ({ id: `court-${i + 1}`, number: i + 1 })),
-      setRefreshTrigger,
-    });
+  it('legacy blocks/hooks/useWetCourts.js no longer exists', () => {
+    const legacyPath = path.resolve(
+      __dirname,
+      '../../../../src/admin/blocks/hooks/useWetCourts.js'
+    );
+    expect(fs.existsSync(legacyPath)).toBe(false);
   });
 
   // ============================================================
-  // A) Pure orchestration — NOT a React hook
+  // B) No-op setters removed from controller surface
   // ============================================================
 
-  it('is pure orchestration — returns object with 3 handler functions', () => {
-    expect(typeof result.handleEmergencyWetCourt).toBe('function');
-    expect(typeof result.deactivateWetCourts).toBe('function');
-    expect(typeof result.clearWetCourt).toBe('function');
-    expect(Object.keys(result)).toEqual([
-      'handleEmergencyWetCourt',
-      'deactivateWetCourts',
-      'clearWetCourt',
+  it('wetCourts.actions no longer includes setActive or setCourts', () => {
+    expect(CONTROLLER_KEYS.wetCourts.actions).not.toContain('setActive');
+    expect(CONTROLLER_KEYS.wetCourts.actions).not.toContain('setCourts');
+  });
+
+  it('wetCourts.actions has exactly 4 action keys', () => {
+    expect(CONTROLLER_KEYS.wetCourts.actions).toEqual([
+      'activateEmergency',
+      'deactivateAll',
+      'clearCourt',
+      'clearAllCourts',
+    ]);
+  });
+
+  it('blocks.actions no longer includes setSuspended', () => {
+    expect(CONTROLLER_KEYS.blocks.actions).not.toContain('setSuspended');
+  });
+
+  it('blocks.actions has exactly 3 action keys', () => {
+    expect(CONTROLLER_KEYS.blocks.actions).toEqual([
+      'applyBlocks',
+      'onEditingConsumed',
+      'notify',
     ]);
   });
 
   // ============================================================
-  // B) handleEmergencyWetCourt — calls backend + setters
+  // C) Factory functions produce correct shape
   // ============================================================
 
-  describe('handleEmergencyWetCourt', () => {
-    it('calls backend.admin.markWetCourts on success', async () => {
-      backend.admin.markWetCourts.mockResolvedValue({
-        ok: true,
-        courtsMarked: 12,
-        courtNumbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        endsAt: '2025-06-15T22:00:00Z',
-      });
-
-      await result.handleEmergencyWetCourt();
-
-      expect(backend.admin.markWetCourts).toHaveBeenCalledOnce();
+  it('createWetCourtsActions returns 4 keys (no setActive/setCourts)', () => {
+    const actions = createWetCourtsActions({
+      handleEmergencyWetCourt: () => {},
+      deactivateWetCourts: () => {},
+      onClearWetCourt: () => {},
+      onClearAllWetCourts: () => {},
     });
+    expect(Object.keys(actions).sort()).toEqual([
+      'activateEmergency',
+      'clearAllCourts',
+      'clearCourt',
+      'deactivateAll',
+    ]);
+  });
 
-    it('calls setWetCourts and setWetCourtsActive on success', async () => {
-      backend.admin.markWetCourts.mockResolvedValue({
-        ok: true,
-        courtsMarked: 12,
-        courtNumbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-        endsAt: '2025-06-15T22:00:00Z',
-      });
-
-      await result.handleEmergencyWetCourt();
-
-      // Documents: these setters ARE called, but in production they are no-ops
-      expect(setWetCourts).toHaveBeenCalledOnce();
-      expect(setWetCourtsActive).toHaveBeenCalledWith(true);
-      expect(setRefreshTrigger).toHaveBeenCalledOnce();
+  it('createBlockActions returns 3 keys (no setSuspended)', () => {
+    const actions = createBlockActions({
+      onApplyBlocks: () => {},
+      onEditingBlockConsumed: () => {},
+      onNotification: () => {},
     });
-
-    it('does NOT call setters on backend failure', async () => {
-      backend.admin.markWetCourts.mockResolvedValue({
-        ok: false,
-        message: 'Failed',
-      });
-
-      await result.handleEmergencyWetCourt();
-
-      expect(setWetCourts).not.toHaveBeenCalled();
-      expect(setWetCourtsActive).not.toHaveBeenCalled();
-      expect(onNotification).toHaveBeenCalledWith('Failed', 'error');
-    });
-
-    it('does nothing when ENABLE_WET_COURTS is false', async () => {
-      const disabled = legacyUseWetCourts({
-        backend,
-        onNotification,
-        ENABLE_WET_COURTS: false,
-        wetCourts: new Set(),
-        setWetCourts,
-        setWetCourtsActive,
-        setSuspendedBlocks,
-        courts: [],
-        setRefreshTrigger,
-      });
-
-      await disabled.handleEmergencyWetCourt();
-
-      expect(backend.admin.markWetCourts).not.toHaveBeenCalled();
-    });
+    expect(Object.keys(actions).sort()).toEqual([
+      'applyBlocks',
+      'notify',
+      'onEditingConsumed',
+    ]);
   });
 
   // ============================================================
-  // C) deactivateWetCourts — calls backend + setters
+  // D) Controller actions wire through correctly
   // ============================================================
 
-  describe('deactivateWetCourts', () => {
-    it('calls backend.admin.clearWetCourts on success', async () => {
-      backend.admin.clearWetCourts.mockResolvedValue({
-        ok: true,
-        blocksCleared: 12,
-      });
+  it('createWetCourtsActions preserves function identity', () => {
+    const activate = () => {};
+    const deactivate = () => {};
+    const clear = () => {};
+    const clearAll = () => {};
 
-      await result.deactivateWetCourts();
-
-      expect(backend.admin.clearWetCourts).toHaveBeenCalledOnce();
+    const actions = createWetCourtsActions({
+      handleEmergencyWetCourt: activate,
+      deactivateWetCourts: deactivate,
+      onClearWetCourt: clear,
+      onClearAllWetCourts: clearAll,
     });
 
-    it('calls all three setters on success', async () => {
-      backend.admin.clearWetCourts.mockResolvedValue({
-        ok: true,
-        blocksCleared: 12,
-      });
-
-      await result.deactivateWetCourts();
-
-      // Documents: all three setters called, all are no-ops in production
-      expect(setWetCourtsActive).toHaveBeenCalledWith(false);
-      expect(setWetCourts).toHaveBeenCalledWith(new Set());
-      expect(setSuspendedBlocks).toHaveBeenCalledWith([]);
-      expect(setRefreshTrigger).toHaveBeenCalledOnce();
-    });
-
-    it('does NOT call setters on backend failure', async () => {
-      backend.admin.clearWetCourts.mockResolvedValue({
-        ok: false,
-        message: 'Service unavailable',
-      });
-
-      await result.deactivateWetCourts();
-
-      expect(setWetCourtsActive).not.toHaveBeenCalled();
-      expect(setWetCourts).not.toHaveBeenCalled();
-      expect(setSuspendedBlocks).not.toHaveBeenCalled();
-    });
+    expect(actions.activateEmergency).toBe(activate);
+    expect(actions.deactivateAll).toBe(deactivate);
+    expect(actions.clearCourt).toBe(clear);
+    expect(actions.clearAllCourts).toBe(clearAll);
   });
 
   // ============================================================
-  // D) clearWetCourt — calls backend + setters
+  // E) CompleteBlockManagerEnhanced no longer imports legacy hook
   // ============================================================
 
-  describe('clearWetCourt', () => {
-    it('calls backend.admin.clearWetCourts with courtIds on success', async () => {
-      backend.admin.clearWetCourts.mockResolvedValue({ ok: true });
-
-      await result.clearWetCourt(3);
-
-      expect(backend.admin.clearWetCourts).toHaveBeenCalledWith(
-        expect.objectContaining({ courtIds: ['court-3'] })
-      );
-    });
-
-    it('calls setWetCourts on success', async () => {
-      backend.admin.clearWetCourts.mockResolvedValue({ ok: true });
-
-      await result.clearWetCourt(3);
-
-      // Documents: setter called with updated Set, but is no-op in production
-      expect(setWetCourts).toHaveBeenCalledOnce();
-    });
-
-    it('auto-deactivates when last court cleared', async () => {
-      // Create hook with single wet court
-      const singleCourt = legacyUseWetCourts({
-        backend,
-        onNotification,
-        ENABLE_WET_COURTS: true,
-        wetCourts: new Set([5]),
-        setWetCourts,
-        setWetCourtsActive,
-        setSuspendedBlocks,
-        courts: Array.from({ length: 12 }, (_, i) => ({ id: `court-${i + 1}`, number: i + 1 })),
-        setRefreshTrigger,
-      });
-
-      backend.admin.clearWetCourts.mockResolvedValue({ ok: true });
-
-      await singleCourt.clearWetCourt(5);
-
-      // Documents: setWetCourtsActive(false) called when Set becomes empty
-      expect(setWetCourtsActive).toHaveBeenCalledWith(false);
-    });
-
-    it('does NOT call setters on backend failure', async () => {
-      backend.admin.clearWetCourts.mockResolvedValue({
-        ok: false,
-        message: 'Court busy',
-      });
-
-      await result.clearWetCourt(3);
-
-      expect(setWetCourts).not.toHaveBeenCalled();
-    });
+  it('CompleteBlockManagerEnhanced.jsx does not import legacy useWetCourts', () => {
+    const componentPath = path.resolve(
+      __dirname,
+      '../../../../src/admin/blocks/CompleteBlockManagerEnhanced.jsx'
+    );
+    const content = fs.readFileSync(componentPath, 'utf-8');
+    expect(content).not.toContain("from './hooks/useWetCourts'");
+    expect(content).not.toContain('blocks/hooks/useWetCourts');
   });
 
-  // ============================================================
-  // E) Document: production no-op behavior
-  // ============================================================
-
-  describe('production no-op setter behavior (bug #12)', () => {
-    it('setters execute without error when they are no-ops', async () => {
-      // Replace mocks with actual no-ops (as in production)
-      const noOpResult = legacyUseWetCourts({
-        backend,
-        onNotification,
-        ENABLE_WET_COURTS: true,
-        wetCourts: new Set(),
-        setWetCourts: () => {},
-        setWetCourtsActive: () => {},
-        setSuspendedBlocks: () => {},
-        courts: Array.from({ length: 12 }, (_, i) => ({ id: `court-${i + 1}`, number: i + 1 })),
-        setRefreshTrigger,
-      });
-
-      backend.admin.markWetCourts.mockResolvedValue({
-        ok: true,
-        courtsMarked: 12,
-        courtNumbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-      });
-
-      // Does not throw — backend call succeeds, setters called but discarded
-      await expect(noOpResult.handleEmergencyWetCourt()).resolves.not.toThrow();
-
-      // Backend WAS called (duplicate call — reducer-based hook also calls it)
-      expect(backend.admin.markWetCourts).toHaveBeenCalledOnce();
-    });
-  });
-
-  // ============================================================
-  // F) Document: controller already provides equivalent actions
-  // ============================================================
-
-  describe('controller overlap documentation', () => {
-    it('controller wetCourtsActions has activateEmergency (= handleEmergencyWetCourt)', () => {
-      // From buildAdminController.js:103 — actions.handleEmergencyWetCourt
-      // This is the reducer-based version from wetCourts/useWetCourts.js
-      // which dispatches to wetCourtsReducer and works correctly
-      expect(true).toBe(true); // Documenting overlap
-    });
-
-    it('controller wetCourtsActions has deactivateAll (= deactivateWetCourts)', () => {
-      // From buildAdminController.js:104 — actions.deactivateWetCourts
-      expect(true).toBe(true);
-    });
-
-    it('controller wetCourtsActions has clearCourt (= clearWetCourt)', () => {
-      // From buildAdminController.js:105 — actions.clearWetCourt
-      expect(true).toBe(true);
-    });
+  it('CompleteBlockManagerEnhanced.jsx uses controller actions directly', () => {
+    const componentPath = path.resolve(
+      __dirname,
+      '../../../../src/admin/blocks/CompleteBlockManagerEnhanced.jsx'
+    );
+    const content = fs.readFileSync(componentPath, 'utf-8');
+    expect(content).toContain('wetCourtsActions.activateEmergency');
+    expect(content).toContain('wetCourtsActions.deactivateAll');
+    expect(content).toContain('wetCourtsActions.clearCourt');
   });
 });
