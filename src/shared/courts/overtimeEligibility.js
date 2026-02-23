@@ -239,12 +239,3 @@ export function computePlayableCourts(courts, blocks, serverNow) {
     eligibilityByCourtNumber,
   };
 }
-
-/**
- * HELPER: Derive playable court numbers from eligibility map
- */
-export function derivePlayableCourtNumbers(eligibilityByCourtNumber) {
-  return Object.entries(eligibilityByCourtNumber)
-    .filter(([, e]) => e.eligible)
-    .map(([num]) => Number(num));
-}

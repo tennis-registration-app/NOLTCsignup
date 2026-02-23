@@ -46,11 +46,4 @@ export function createBackend() {
   return instance;
 }
 
-/**
- * Reset the backend instance (for testing)
- */
-export function resetBackend() {
-  instance = null;
-}
-
 export default createBackend;
