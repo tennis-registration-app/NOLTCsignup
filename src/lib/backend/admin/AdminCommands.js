@@ -299,8 +299,7 @@ export class AdminCommands {
     if (memberNumber) params.append('member_number', memberNumber);
     if (limit) params.append('limit', limit.toString());
 
-    const queryString = params.toString();
-    const url = queryString ? `/get-transactions?${queryString}` : '/get-transactions';
+    const url = `/get-transactions?${params.toString()}`;
     const response = await this.api.get(url);
     return response;
   }
