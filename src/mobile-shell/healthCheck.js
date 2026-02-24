@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (boardFrame) {
     boardFrame.addEventListener('load', () => {
       try {
-        const iframeDoc = boardFrame.contentDocument || boardFrame.contentWindow.document;
+        const iframeDoc = boardFrame.contentDocument || boardFrame.contentWindow?.document;
         if (iframeDoc && iframeDoc.body) {
           // Trigger a reflow to ensure styles are applied
           iframeDoc.body.style.display = 'none';

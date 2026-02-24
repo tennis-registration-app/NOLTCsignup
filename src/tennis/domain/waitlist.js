@@ -190,9 +190,10 @@ function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }) {
  */
 function estimateWaitForPositions({ positions, currentFreeCount, nextFreeTimes, avgGameMinutes }) {
   const now = new Date();
+  /** @type {number} */
   const avg =
-    Number.isFinite(avgGameMinutes) && avgGameMinutes > 0
-      ? Math.floor(avgGameMinutes)
+    Number.isFinite(avgGameMinutes) && /** @type {number} */ (avgGameMinutes) > 0
+      ? Math.floor(/** @type {number} */ (avgGameMinutes))
       : window.Tennis?.Config?.Timing?.AVG_GAME || 75;
   const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || nextFreeTimes?.length || 12;
   const times = [];
@@ -270,11 +271,12 @@ function isCourtEligibleForGroup(courtNumber, playerCount) {
  * @returns {number[]} - Estimated minutes for each waitlist position
  */
 function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinutes, closingHour }) {
+  /** @type {number} */
   const avg =
-    Number.isFinite(avgGameMinutes) && avgGameMinutes > 0
-      ? avgGameMinutes
+    Number.isFinite(avgGameMinutes) && /** @type {number} */ (avgGameMinutes) > 0
+      ? /** @type {number} */ (avgGameMinutes)
       : window.Tennis?.Config?.Timing?.AVG_GAME || 75;
-  const closing = Number.isFinite(closingHour) ? closingHour : 22;
+  const closing = Number.isFinite(closingHour) ? /** @type {number} */ (closingHour) : 22;
   const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || 12;
   const normalizedBlocks = Array.isArray(blocks) ? blocks : [];
   const normalizedCourts = Array.isArray(courts) ? courts : [];

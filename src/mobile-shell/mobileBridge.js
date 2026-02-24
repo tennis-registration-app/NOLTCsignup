@@ -148,7 +148,7 @@ window.addEventListener('message', (e) => {
     window._registrationTimeout = setTimeout(() => {
       hideReg();
       logger.info('Mobile Shell', 'Closing overlay after 8 second delay');
-      window._registrationTimeout = null;
+      window._registrationTimeout = undefined;
     }, 8000);
     // visual confirmation on the board immediately
     try {
@@ -186,7 +186,7 @@ window.addEventListener('message', (e) => {
     // Clear any pending timeout
     if (window._registrationTimeout) {
       clearTimeout(window._registrationTimeout);
-      window._registrationTimeout = null;
+      window._registrationTimeout = undefined;
     }
     // Hide the registration overlay immediately
     hideReg();

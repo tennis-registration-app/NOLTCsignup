@@ -57,7 +57,7 @@ declare global {
     isCourtboardStateReady?: () => boolean;
     CourtAvailability?: Record<string, unknown>;
     refreshBoard?: () => void;
-    updateJoinButtonState?: (courts: unknown) => void;
+    updateJoinButtonState?: (courts?: unknown) => void;
     updateJoinButtonForMobile?: (courtNum?: number) => void;
 
     // --- Mobile shell / bridge ---

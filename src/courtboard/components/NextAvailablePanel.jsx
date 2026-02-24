@@ -10,9 +10,9 @@ import { getLegacyAvailabilityDomain } from '../bridge/window-bridge';
 export function NextAvailablePanel({
   courts,
   currentTime,
-  waitlist = [],
-  blocks = [],
-  operatingHours = [],
+  waitlist = /** @type {any[]} */ ([]),
+  blocks = /** @type {any[]} */ ([]),
+  operatingHours = /** @type {any[]} */ ([]),
   maxDisplay,
 }) {
   const A = getLegacyAvailabilityDomain();

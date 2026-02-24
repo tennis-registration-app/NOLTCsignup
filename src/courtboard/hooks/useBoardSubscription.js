@@ -13,11 +13,11 @@ const backend = createBackend();
  */
 export function useBoardSubscription() {
   const [courts, setCourts] = useState(Array(12).fill(null));
-  const [waitlist, setWaitlist] = useState([]);
-  const [courtBlocks, setCourtBlocks] = useState([]);
-  const [upcomingBlocks, setUpcomingBlocks] = useState([]);
-  const [courtSelection, setCourtSelection] = useState(null);
-  const [operatingHours, setOperatingHours] = useState([]);
+  const [waitlist, setWaitlist] = useState(/** @type {any[]} */ ([]));
+  const [courtBlocks, setCourtBlocks] = useState(/** @type {any[]} */ ([]));
+  const [upcomingBlocks, setUpcomingBlocks] = useState(/** @type {any[]} */ ([]));
+  const [courtSelection, setCourtSelection] = useState(/** @type {any} */ (null));
+  const [operatingHours, setOperatingHours] = useState(/** @type {any[]} */ ([]));
 
   useEffect(() => {
     logger.debug('CourtDisplay', 'Setting up TennisBackend subscription...');
@@ -85,14 +85,17 @@ export function useBoardSubscription() {
           // Extract active blocks from courts (for availability calculations)
           const activeBlocks = board.courts
             .filter((c) => c && c.block)
-            .map((c) => ({
-              id: c.block.id,
-              courtNumber: c.number,
-              reason: c.block.reason || c.block.title || 'Blocked',
-              startTime: c.block.startsAt,
-              endTime: c.block.endsAt,
-              isWetCourt: c.block.reason?.toLowerCase().includes('wet'),
-            }));
+            .map((c) => {
+              const block = /** @type {NonNullable<typeof c.block>} */ (c.block);
+              return {
+                id: block.id,
+                courtNumber: c.number,
+                reason: block.reason || block.title || 'Blocked',
+                startTime: block.startsAt,
+                endTime: block.endsAt,
+                isWetCourt: block.reason?.toLowerCase().includes('wet'),
+              };
+            });
           setCourtBlocks(activeBlocks);
 
           // Extract upcoming blocks from API (future blocks for today, display only)

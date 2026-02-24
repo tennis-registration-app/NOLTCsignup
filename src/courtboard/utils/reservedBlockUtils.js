@@ -39,7 +39,10 @@ export function selectReservedSafe(blocks, now) {
     const endOfToday = new Date(now);
     endOfToday.setHours(23, 59, 59, 999);
 
-    const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
+    const normalized = (blocks || []).map(normalizeBlock).filter(
+      /** @returns {b is { courts: any[], start: Date, end: Date, reason: string }} */
+      (b) => b != null
+    );
     const todayFuture = normalized
       .filter((b) => b.end > now && b.start <= endOfToday)
       .map((b) => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
