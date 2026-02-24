@@ -1,97 +1,73 @@
-# Your First PR
+# Onboarding — Extension Recipes
 
-> Step-by-step guide from clone to merged PR.
+> Step-by-step recipes for common development tasks. Read [START_HERE.md](START_HERE.md) first for orientation.
 
-## 1. Install & Run
+## Your First PR
 
 ```bash
 git clone <repository-url>
 cd NOLTCsignup
 npm install
 npm run dev          # http://localhost:5173
+npm run verify       # Must pass before any commit
 ```
 
 Dev defaults are baked in — no `.env` needed for local dev. The dev server serves all four apps:
 - Registration: http://localhost:5173/src/registration/
-- Courtboard: http://localhost:5173/src/courtboard/
 - Admin: http://localhost:5173/src/admin/
+- Courtboard: http://localhost:5173/src/courtboard/
 - Mobile: http://localhost:5173/Mobile.html
-
-## 2. Verify Baseline
-
-Before touching any code, confirm your checkout is green:
-
-```bash
-npm run verify
-```
-
-This runs five gates in order:
-
-| Gate | Command | What it checks |
-|------|---------|----------------|
-| Lint ratchet | `npm run lint:ratchet` | ESLint — 0 errors, warnings must not increase |
-| Type ratchet | `npm run type:ratchet` | TypeScript — error count must not increase |
-| Coverage ratchet | `npm run coverage:ratchet` | Unit tests + coverage — must not decrease |
-| Fixture tests | `npm run test:fixtures` | API contract sentinel tests |
-| Build | `npm run build` | Vite production build |
-| E2E | `npm run test:e2e` | Playwright end-to-end (all must pass) |
-
-If verify fails on a clean checkout, something is wrong with your environment — check Node version (18+) and npm (9+).
-
-## 3. Create a Branch
-
-```bash
-git checkout -b feat/your-feature-name
-```
 
 Use conventional commit prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`. See [CONTRIBUTING.md](../CONTRIBUTING.md) for scopes.
 
-## 4. Make Your Change
+## How to Add a New Screen
 
-Key rules:
-- **No file over 500 lines.** Extract to separate modules if needed.
-- **Run `npm run verify` after each logical change.** Do not batch.
-- **Tests go in `tests/unit/`** mirroring source structure. E2E tests go in `e2e/`.
-- **Lint/type ratchets are one-way.** You can reduce warnings/errors but not add them.
+1. Create the component in `src/registration/screens/` (or `src/admin/screens/`)
+2. Create a presenter in `src/registration/router/presenters/` that builds the screen's model from AppState — pure function, no hooks
+3. Wire the presenter into the route in `src/registration/router/RegistrationRouter.jsx`
+4. If the screen needs backend calls, create or extend an orchestrator in `src/registration/orchestration/`
+5. Add a smoke test in `tests/unit/smoke/` — render with minimal props, assert key elements are present
+6. Run `npm run verify`
 
-Useful watch-mode commands while developing:
+**Key rules:**
+- Screens receive props from presenters. Screens never import AppState or orchestrators directly.
+- Handlers receive named slices, not the full `app` object.
 
-```bash
-npm run test:unit:watch     # Vitest watch mode
-npx playwright test <file>  # Run specific E2E test
-```
+## How to Add a New API Endpoint
 
-## 5. Understand the Architecture
+1. Add the method to `src/lib/backend/commands/TennisCommands.js` (mutations) or `TennisQueries.js` (reads), or `src/lib/backend/admin/AdminCommands.js` for admin-only endpoints
+2. Use `DenialCodes` enum for any denial code comparisons — no raw string literals
+3. Validate input with Zod; access validation errors via `result.error.issues` (not `.errors`)
+4. Throw `AppError` with the appropriate `ErrorCategories` value for validation/not-found errors
+5. Add a unit test proving correct payload shape, success path, and error category
+6. Wire into the calling orchestrator; use `normalizeError()` in catch blocks
+7. Run `npm run verify`
 
-Before making changes, know where you are:
+**Error propagation chain:** Backend response → Command (throws `AppError`) → Orchestrator (catches, `normalizeError()`) → UI (toast/alert). See [ERROR_HANDLING.md](ERROR_HANDLING.md) for the full taxonomy.
 
-| Area | Entry point | State management |
-|------|-------------|-----------------|
-| Registration | `src/registration/App.jsx` | `useRegistrationAppState` → presenters → screens |
-| Admin | `src/admin/App.jsx` | `buildAdminController` + local hooks |
-| Courtboard | `src/courtboard/main.jsx` | Direct API queries + window globals (see [ADR-006](adr/006-courtboard-legacy-containment.md)) |
+## How to Add a CSP Exception
 
-Registration code follows strict slice discipline — see [CONTRIBUTING.md § Slice-Access Discipline](../CONTRIBUTING.md). Handlers receive named slices, never the full `app` object.
+1. Edit `vercel.json` headers block (the `/(.*)`catch-all route)
+2. Add the minimum necessary domain to the specific directive (e.g., `connect-src`, `img-src`)
+3. Document the reason and the added domain in [CSP_ROLLOUT.md](CSP_ROLLOUT.md)
+4. Deploy and verify no console CSP violations in browser DevTools
+5. Run `npm run verify`
 
-## 6. Run Verify & Commit
+**Current policy:** `script-src 'self'` enforced on all routes. `style-src 'self' 'unsafe-inline'` retained for React style injection. See [CSP_ROLLOUT.md](CSP_ROLLOUT.md) for full policy.
 
-```bash
-npm run verify                    # Must pass
-git add -A
-git commit -m "feat(scope): short description"
-```
+## How to Add an Admin Hook
 
-## 7. Push & Open PR
+1. Create the hook in `src/admin/hooks/` (or the relevant subdirectory like `src/admin/blocks/hooks/`)
+2. For complex state, follow the reducer pattern from `src/admin/wetCourts/useWetCourts.js` + `wetCourtsReducer.js`
+3. For simple state, a `useState`-based hook is fine
+4. Wire into `buildAdminController` if the hook needs to be accessible across admin tabs
+5. Add unit tests — test the hook's state transitions, backend calls, and notification behavior
+6. Run `npm run verify`
 
-```bash
-git push -u origin feat/your-feature-name
-gh pr create --title "feat(scope): short description" --body "## Summary
-- What changed and why
-
-## Test plan
-- [ ] npm run verify passes
-- [ ] Manual smoke test of affected flow"
-```
+**Key rules:**
+- Admin hooks that own state use `useReducer` for predictable transitions
+- Hooks that call backend should handle errors and call `showNotification` on failure
+- New hooks exposed via controller need a contract test update in `tests/unit/admin/controller/`
 
 ## Quick Reference
 
@@ -108,7 +84,8 @@ gh pr create --title "feat(scope): short description" --body "## Summary
 
 ## Further Reading
 
-- [docs/START_HERE.md](START_HERE.md) — System overview and doc map
-- [docs/GOLDEN_FLOWS.md](GOLDEN_FLOWS.md) — Critical user flows to smoke-test
-- [docs/CODE_CONVENTIONS.md](CODE_CONVENTIONS.md) — Naming, file structure, patterns
-- [docs/TESTING.md](TESTING.md) — Where and how to add tests
+- [START_HERE.md](START_HERE.md) — System overview and doc map
+- [HANDOFF_PACKET.md](HANDOFF_PACKET.md) — System guarantees and architecture decisions
+- [GOLDEN_FLOWS.md](GOLDEN_FLOWS.md) — Critical user flows to smoke-test
+- [CODE_CONVENTIONS.md](CODE_CONVENTIONS.md) — Naming, file structure, patterns
+- [TESTING.md](TESTING.md) — Where and how to add tests

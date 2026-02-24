@@ -2,7 +2,7 @@
 
 > Single entry point for the NOLTC Tennis Court Registration System. If you're new, read this first.
 
-**Contractor/new maintainer?** See [HANDOFF_PACKET.md](HANDOFF_PACKET.md) for the complete reading order and operating rules.
+**Contractor/new maintainer?** See [HANDOFF_PACKET.md](HANDOFF_PACKET.md) for system guarantees, architecture decisions, and operating rules. See [ONBOARDING.md](ONBOARDING.md) for extension recipes (add screens, endpoints, CSP exceptions).
 
 ## What This System Is
 
@@ -37,7 +37,7 @@ Dev-only defaults exist for local setup (anon keys, not secrets). See [docs/ENVI
 npm run verify
 ```
 
-This runs: lint ratchet → type ratchet → unit tests + coverage → fixture tests → production build → E2E tests. All must pass. See [docs/TESTING.md](TESTING.md) for test locations and how to add tests.
+`npm run verify` runs all quality gates: lint ratchet, type checking, unit tests with coverage ratchets, fixture validation, production build, and E2E tests. This is the single required command before any merge. See [docs/TESTING.md](TESTING.md) for test locations and how to add tests.
 
 ## Where Things Live
 
@@ -89,5 +89,6 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 ## Additional References
 
 - [docs/SECURITY_WP.md](SECURITY_WP.md) — Security threat model and posture
-- [docs/LEGACY_MIGRATION.md](LEGACY_MIGRATION.md) — Legacy IIFE → ESM migration status
-- [docs/review-remediation.md](review-remediation.md) — Resolved, deferred, and retained items from architectural reviews
+- [docs/CSP_ROLLOUT.md](CSP_ROLLOUT.md) — Content Security Policy enforcement stages and rollback
+- [docs/LATENT_BUGS.md](LATENT_BUGS.md) — Bug tracker (all items resolved)
+- [docs/LEGACY_MIGRATION.md](LEGACY_MIGRATION.md) — IIFE/ESM coexistence status
