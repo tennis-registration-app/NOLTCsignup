@@ -6,7 +6,7 @@ Policy deployed via `vercel.json` headers block, applying to ALL routes.
 Mode: `Content-Security-Policy-Report-Only` (not enforced).
 
 Key compromises:
-- `script-src 'unsafe-inline'` — required by 5 inline `<script>` blocks + Tailwind CDN runtime
+- `script-src 'unsafe-inline'` — required by Tailwind CDN runtime (inline scripts eliminated in Stage 2)
 - `style-src 'unsafe-inline'` — required by React inline styles + Mobile.html inline styles
 - `https://cdn.tailwindcss.com` — Tailwind loaded as runtime CDN script (not bundled)
 
@@ -20,21 +20,21 @@ Key compromises:
 - ⚠️ Shares CSP header with other routes (vercel.json applies globally)
 
 ### Registration (`/src/registration/`)
-**Status: 3 blockers**
+**Status: 1 blocker remaining**
 1. Tailwind CDN `<script src="https://cdn.tailwindcss.com">` — runtime compiler
-2. `IS_MOBILE_VIEW` detection inline script (198 chars)
-3. Cache warm inline script (147 chars)
-4. File protocol warning inline script (715 chars, dev-only)
+2. ~~`IS_MOBILE_VIEW` detection inline script~~ — extracted to `src/registration/bootstrap/mobileViewDetect.js`
+3. ~~Cache warm inline script~~ — extracted to `src/shared/bootstrap/cacheWarm.js`
+4. ~~File protocol warning inline script~~ — extracted to `src/shared/bootstrap/fileProtocolWarning.js`
 
 ### Admin (`/src/admin/`)
-**Status: 2 blockers**
+**Status: 1 blocker remaining**
 1. Tailwind CDN `<script src="https://cdn.tailwindcss.com">` — runtime compiler
-2. Cache warm inline script (147 chars, same as registration)
-3. File protocol warning inline script (715 chars, dev-only)
+2. ~~Cache warm inline script~~ — extracted to `src/shared/bootstrap/cacheWarm.js`
+3. ~~File protocol warning inline script~~ — extracted to `src/shared/bootstrap/fileProtocolWarning.js`
 
 ### Mobile.html (`/Mobile.html`)
-**Status: 1 blocker**
-1. `onclick="hideReg()"` inline event handler on close button
+**Status: CLEAR**
+1. ~~`onclick="hideReg()"`~~ — replaced with `addEventListener` in `mobileBridge.js`
 
 ### Test pages (`/src/test-api/`, `/src/test-react/`)
 **Status: Non-production, exempt**
@@ -68,13 +68,15 @@ Key compromises:
   ```
 - `style-src 'unsafe-inline'` retained — courtboard CSS uses `style=` via React
 
-### Stage 2: Extract Inline Scripts (registration + admin)
-- Extract `IS_MOBILE_VIEW` detection → `/src/registration/mobile-detect.js`
-- Extract cache warm → `/src/shared/cache-warm.js`
-- Extract file protocol warning → `/src/shared/file-warning.js` (or remove for prod)
-- Fix `onclick="hideReg()"` → `addEventListener` in Mobile.html
-- All scripts are synchronous, order-dependent — use `<script src="...">` (not `type="module"`)
-- After extraction: registration + admin can drop `'unsafe-inline'` from script-src
+### Stage 2: Extract Inline Scripts (registration + admin) — DONE
+- [x] Extract file protocol warning → `src/shared/bootstrap/fileProtocolWarning.js` (Commit 1)
+- [x] Extract cache warm → `src/shared/bootstrap/cacheWarm.js` (Commit 2)
+- [x] Extract `IS_MOBILE_VIEW` detection → `src/registration/bootstrap/mobileViewDetect.js` (Commit 3)
+- [x] Fix `onclick="hideReg()"` → `addEventListener` in `mobileBridge.js` (Commit 3)
+- All extracted as `<script type="module">` entry points (Vite bundles them in production)
+- Result: zero inline `<script>` blocks in registration and admin HTML
+- Result: zero inline event handlers in Mobile.html
+- Remaining `'unsafe-inline'` dependency: Tailwind CDN only (Stage 3)
 
 ### Stage 3: Bundle Tailwind (registration + admin)
 - Registration and Admin currently load `https://cdn.tailwindcss.com` as a runtime compiler
@@ -136,12 +138,12 @@ Each stage is independently reversible:
 
 ## Inline Script Inventory
 
-| # | Script | Size | Files | Extractable? |
-|---|--------|------|-------|-------------|
-| 1 | IS_MOBILE_VIEW detection | 198 chars | registration | Yes → `mobile-view-detect.js` |
-| 2 | Cache warm (localStorage parse) | 147 chars | registration, admin | Yes → `cache-warm.js` |
-| 3 | File protocol warning (dev-only) | 715 chars | registration, admin | Yes → `file-protocol-warn.js` |
-| 4 | `onclick="hideReg()"` | 14 chars | Mobile.html | Yes → addEventListener in ESM |
+| # | Script | Size | Files | Status |
+|---|--------|------|-------|--------|
+| 1 | IS_MOBILE_VIEW detection | 198 chars | registration | ✅ Extracted → `src/registration/bootstrap/mobileViewDetect.js` |
+| 2 | Cache warm (localStorage parse) | 147 chars | registration, admin | ✅ Extracted → `src/shared/bootstrap/cacheWarm.js` |
+| 3 | File protocol warning (dev-only) | 715 chars | registration, admin | ✅ Extracted → `src/shared/bootstrap/fileProtocolWarning.js` |
+| 4 | `onclick="hideReg()"` | 14 chars | Mobile.html | ✅ Replaced → addEventListener in `mobileBridge.js` |
 
 ## CDN Dependency Inventory
 
