@@ -14,6 +14,7 @@ All client-side variables use the `VITE_` prefix (required by Vite).
 | `VITE_USE_REAL_AI` | No | `true` | Enable AI assistant in admin panel |
 | `VITE_ENABLE_WET_COURTS` | No | `true` | Enable wet court functionality |
 | `VITE_DEBUG_MODE` | No | `false` | Enable debug-level logging in browser console |
+| `VITE_ADMIN_ACCESS_MODE` | No | `open` | Admin access mode (`open` or `authenticated`). See [Admin Access Control](#admin-access-control). |
 
 **Build-time validation:** `scripts/check-env.js` runs before every Vercel build. It blocks deployment if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are missing. Only enforced when `VERCEL=1` (skipped in local builds).
 
@@ -172,6 +173,30 @@ See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for additional debugging scenarios.
 | `VITE_SUPABASE_URL` | Vercel env vars | Update in Vercel dashboard → redeploy (only if migrating Supabase projects) |
 
 No build step caches secrets — a new deployment picks up updated values immediately. Dev defaults in `runtimeConfig.js` are anon keys only (not service role keys).
+
+## Admin Access Control
+
+### Current Mode: Open Admin (Test/Development)
+
+**Assumptions:**
+- System is accessed by trusted testers only
+- Not deployed on public internet
+- Admin URL (`/src/admin/`) is not advertised but is reachable by anyone with the URL
+
+**Risk Statement:**
+Admin panel has no authentication. Any user who discovers the admin URL has full operational control (block courts, clear sessions, modify settings).
+
+**Acceptable when:**
+- Deployed on trusted LAN or behind Vercel password protection
+- All users are known testers
+- No real member data at risk
+
+**Mitigations available without code changes:**
+- Vercel Deployment Protection (password gate on preview/production URLs)
+- IP allowlisting at CDN/DNS level
+- Basic auth via Vercel middleware (zero app code)
+
+**Production deployment:** Enable `VITE_ADMIN_ACCESS_MODE=authenticated` and implement Supabase Auth gate. See auth-ready seam in `src/admin/guards/adminAccessGuard.js`.
 
 ## Known Operational Considerations
 

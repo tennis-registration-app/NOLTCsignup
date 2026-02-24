@@ -4,6 +4,9 @@
  * Thin shell: context providers, useAdminAppState hook, JSX render.
  * All state setup, hook orchestration, and controller assembly
  * live in useAdminAppState.
+ *
+ * Auth-ready seam: see src/admin/guards/adminAccessGuard.js
+ * Wire useAdminAccess() here when VITE_ADMIN_ACCESS_MODE=authenticated
  */
 import React, { useState } from 'react';
 import { createBackend } from '../lib/backend/index.js';

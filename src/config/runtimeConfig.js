@@ -98,6 +98,14 @@ export const featureFlags = {
 
   /** Enable debug logging (default: false - current behavior) */
   DEBUG_MODE: import.meta.env.VITE_DEBUG_MODE === 'true',
+
+  /**
+   * Admin access mode (default: 'open' - current behavior).
+   * 'open' — no authentication, anyone with the URL can access admin.
+   * 'authenticated' — requires Supabase Auth session (not yet implemented).
+   * See docs/OPERATIONS.md "Admin Access Control" for deployment modes.
+   */
+  ADMIN_ACCESS_MODE: String(import.meta.env.VITE_ADMIN_ACCESS_MODE || 'open'),
 };
 
 // =============================================================================
