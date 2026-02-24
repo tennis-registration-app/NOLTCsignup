@@ -4,7 +4,7 @@
  *
  * @param {Object} raw - Raw block from API
  * @param {string} serverNow - Server time for isActive calculation
- * @returns {import('../types/domain.js').Block}
+ * @returns {import('../types/domain.js').Block | null}
  */
 export function normalizeBlock(raw, serverNow) {
   if (!raw) return null;

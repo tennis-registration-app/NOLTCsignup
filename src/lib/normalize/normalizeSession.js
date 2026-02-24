@@ -7,7 +7,7 @@ import { END_REASONS } from '../types/domain.js';
  *
  * @param {Object} raw - Raw session from API
  * @param {string} serverNow - Server time for overtime calculation
- * @returns {import('../types/domain.js').Session}
+ * @returns {import('../types/domain.js').Session | null}
  */
 export function normalizeSession(raw, serverNow) {
   if (!raw) return null;

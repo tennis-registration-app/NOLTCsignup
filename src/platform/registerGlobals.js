@@ -105,7 +105,7 @@ export function setAdminRefreshPending(value) {
  * @returns {boolean}
  */
 export function getAdminRefreshPending() {
-  return window.__adminRefreshPending;
+  return window.__adminRefreshPending ?? false;
 }
 
 /**
@@ -121,14 +121,14 @@ export function setAdminCoalesceHits(value) {
  * @returns {number}
  */
 export function getAdminCoalesceHits() {
-  return window.__adminCoalesceHits;
+  return window.__adminCoalesceHits ?? 0;
 }
 
 /**
  * Increment window.__adminCoalesceHits counter
  */
 export function incrementAdminCoalesceHits() {
-  window.__adminCoalesceHits++;
+  window.__adminCoalesceHits = (window.__adminCoalesceHits ?? 0) + 1;
 }
 
 /**
@@ -152,5 +152,5 @@ export function setWiredAdminListeners(value) {
  * @returns {boolean}
  */
 export function getWiredAdminListeners() {
-  return window.__wiredAdminListeners;
+  return window.__wiredAdminListeners ?? false;
 }

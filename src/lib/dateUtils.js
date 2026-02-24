@@ -8,7 +8,7 @@ export const CLUB_TIMEZONE = 'America/Chicago';
 /**
  * Convert a UTC date string or Date object to Central Time
  * @param {string|Date} utcDate - UTC date string (ISO format) or Date object
- * @returns {Date} Date object in local time
+ * @returns {Date | null} Date object in local time
  */
 export function toLocalDate(utcDate) {
   if (!utcDate) return null;

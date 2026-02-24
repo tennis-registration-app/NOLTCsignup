@@ -80,7 +80,9 @@ export const TennisBusinessLogic = {
 
         return null;
       })
-      .filter((time) => time && time > currentTime.getTime())
+      .filter(
+        /** @returns {time is number} */ (time) => time != null && time > currentTime.getTime()
+      )
       .sort((a, b) => a - b);
 
     // No courts ending soon, and you're first in line
