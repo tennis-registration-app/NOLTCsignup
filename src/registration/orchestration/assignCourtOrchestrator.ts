@@ -5,6 +5,7 @@
 
 import { logger } from '../../lib/logger.js';
 import { DenialCodes } from '../../lib/backend/types.js';
+import { normalizeError } from '../../lib/errors/normalizeError.js';
 import { createOrchestrationDeps } from './deps/index.js';
 import { durationForGroupSize } from '../../lib/dateUtils.js';
 import {
@@ -355,7 +356,12 @@ export async function assignCourtToGroupOrchestrated(
       // EARLY-EXIT: waitlist flow complete — success screen shown
       return;
     } catch (error: unknown) {
-      getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', error);
+      const meta = normalizeError(error);
+      getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', {
+        category: meta.category,
+        code: meta.code,
+        message: meta.message,
+      });
       actions.setCurrentWaitlistEntryId(null);
       toast(error instanceof Error ? error.message : 'Failed to assign court from waitlist', {
         type: 'error',
@@ -409,11 +415,12 @@ export async function assignCourtToGroupOrchestrated(
       result
     );
   } catch (error: unknown) {
+    const meta = normalizeError(error);
     const apiDuration = Math.round(performance.now() - assignStartTime);
     getRuntimeDeps().logger.error(
       'AssignCourt',
       `[T+${apiDuration}ms] assignCourtWithPlayers threw error`,
-      error
+      { category: meta.category, code: meta.code, message: meta.message }
     );
     toast(error instanceof Error ? error.message : 'Failed to assign court. Please try again.', {
       type: 'error',

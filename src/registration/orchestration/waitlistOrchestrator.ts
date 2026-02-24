@@ -5,6 +5,7 @@
 
 import { logger } from '../../lib/logger.js';
 import { toast } from '../../shared/utils/toast.js';
+import { normalizeError } from '../../lib/errors/normalizeError.js';
 import type { ApiConfig, TennisBackendShape, Setter, GroupPlayer } from '../../types/appTypes.js';
 
 export interface WaitlistDeps {
@@ -206,8 +207,13 @@ export async function sendGroupToWaitlistOrchestrated(
       toast(result.message || 'Could not join waitlist', { type: 'error' });
     }
   } catch (e) {
+    const meta = normalizeError(e);
     setIsJoiningWaitlist(false);
-    logger.error('Waitlist', 'failed', e);
+    logger.error('Waitlist', 'failed', {
+      category: meta.category,
+      code: meta.code,
+      message: meta.message,
+    });
     toast('Could not join waitlist', { type: 'error' });
   }
   // ===== END ORIGINAL FUNCTION BODY =====
