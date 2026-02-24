@@ -1,51 +1,50 @@
 # CSP Enforcement Rollout Plan
 
-## Current State (Report-Only)
+## Current State (Enforced)
 
 Policy deployed via `vercel.json` headers block, applying to ALL routes.
-Mode: `Content-Security-Policy-Report-Only` (not enforced).
+Mode: `Content-Security-Policy` (enforced — Stage 4 complete).
 
-Key compromises:
-- `script-src 'unsafe-inline'` — no longer needed (inline scripts eliminated in Stage 2, CDN removed in Stage 3)
-- `style-src 'unsafe-inline'` — required by React inline styles + Mobile.html inline styles
+Single catch-all route `/(.*)`; courtboard-specific route removed (was redundant).
+
+Enforced policy:
+- `script-src 'self'` — no `unsafe-inline`, no CDN allowlists
+- `style-src 'self' 'unsafe-inline'` — required by React inline styles (Stage 5 future work)
 - ~~`https://cdn.tailwindcss.com`~~ — removed; Tailwind now bundled via PostCSS (Stage 3)
 
 ## Enforcement Blockers by Route
 
 ### Courtboard (`/src/courtboard/`)
-**Status: READY TO ENFORCE**
-- ✅ Zero inline scripts (all external via Vite build)
-- ✅ Tailwind bundled via PostCSS (no CDN)
-- ✅ 5 external script tags only
-- ⚠️ Shares CSP header with other routes (vercel.json applies globally)
+**Status: ENFORCED** ✅
+- Zero inline scripts (all external via Vite build)
+- Tailwind bundled via PostCSS (no CDN)
+- Enforced since Stage 1
 
 ### Registration (`/src/registration/`)
-**Status: READY TO ENFORCE**
+**Status: ENFORCED** ✅
 1. ~~Tailwind CDN~~ — removed; bundled via PostCSS (`src/registration/styles/index.css`)
 2. ~~`IS_MOBILE_VIEW` detection inline script~~ — extracted to `src/registration/bootstrap/mobileViewDetect.js`
 3. ~~Cache warm inline script~~ — extracted to `src/shared/bootstrap/cacheWarm.js`
 4. ~~File protocol warning inline script~~ — extracted to `src/shared/bootstrap/fileProtocolWarning.js`
 
 ### Admin (`/src/admin/`)
-**Status: READY TO ENFORCE**
+**Status: ENFORCED** ✅
 1. ~~Tailwind CDN~~ — removed; bundled via PostCSS (`src/admin/styles/index.css`)
 2. ~~Cache warm inline script~~ — extracted to `src/shared/bootstrap/cacheWarm.js`
 3. ~~File protocol warning inline script~~ — extracted to `src/shared/bootstrap/fileProtocolWarning.js`
 
 ### Mobile.html (`/Mobile.html`)
-**Status: CLEAR**
+**Status: ENFORCED** ✅
 1. ~~`onclick="hideReg()"`~~ — replaced with `addEventListener` in `mobileBridge.js`
 
 ### Test pages (`/src/test-api/`, `/src/test-react/`)
-**Status: Non-production, exempt**
+**Status: Non-production, exempt** (inline handler in test-api tolerated)
 
 ## Staged Rollout Plan
 
-### Stage 0: Reporting (current)
+### Stage 0: Reporting — DONE
 - [x] CSP Report-Only header deployed
-- [ ] Add `report-uri` directive pointing to logging endpoint
-  - Options: Supabase Edge Function, Sentry CSP, or third-party collector
-  - Collect violations before enforcement
+- [x] Reporting phase used for Stages 1–3; Report-Only header now removed (Stage 4)
 
 ### Stage 1: Enforce on Courtboard (lowest risk) — DONE
 - [x] Per-route header in vercel.json: `/src/courtboard/(.*)` gets enforced CSP
@@ -87,9 +86,13 @@ Key compromises:
 - Result: zero CDN references in src or dist
 - `tailwind.config.js` content globs already covered `src/**/*.{js,jsx,ts,tsx}`
 
-### Stage 4: Full Enforcement
-- With all blockers resolved, switch ALL routes from Report-Only to enforced
-- Final policy (target):
+### Stage 4: Full Enforcement — DONE
+- [x] Switched catch-all route `/(.*)`from `Content-Security-Policy-Report-Only` to `Content-Security-Policy`
+- [x] Removed `'unsafe-inline'` from `script-src`
+- [x] Removed `https://cdn.tailwindcss.com` from `script-src`
+- [x] Removed redundant courtboard-specific route (policy was identical to catch-all)
+- [x] Zero `Report-Only` headers remaining
+- Final enforced policy:
   ```
   Content-Security-Policy:
     default-src 'self';
@@ -104,9 +107,8 @@ Key compromises:
     base-uri 'self';
     form-action 'self'
   ```
-- `'unsafe-inline'` removed from `script-src`
 - `style-src 'unsafe-inline'` retained (React needs it; removal requires CSS-in-JS migration — low ROI)
-- ~~`https://cdn.tailwindcss.com`~~ — already removed (Stage 3)
+- Rollback: revert commit `ebf1cfb` to restore Report-Only mode
 
 ### Stage 5 (future): style-src hardening
 - Replace `'unsafe-inline'` in `style-src` with nonce-based approach
@@ -130,7 +132,7 @@ Each stage is independently reversible:
 | Vercel Edge Middleware | Medium | Medium | Log violations, forward to logging stack |
 | Manual browser DevTools | Zero | Low | Check Console for Report-Only violations during testing |
 
-**Recommended for this project:** Manual DevTools testing for Stage 1 (courtboard only), then add Supabase Edge Function before Stage 4 (full enforcement).
+**Status:** Reporting endpoint was not needed — manual DevTools testing during Stages 1–3 confirmed zero violations before full enforcement.
 
 ## Inline Script Inventory
 
