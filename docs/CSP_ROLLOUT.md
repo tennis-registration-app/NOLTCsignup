@@ -6,9 +6,9 @@ Policy deployed via `vercel.json` headers block, applying to ALL routes.
 Mode: `Content-Security-Policy-Report-Only` (not enforced).
 
 Key compromises:
-- `script-src 'unsafe-inline'` — required by Tailwind CDN runtime (inline scripts eliminated in Stage 2)
+- `script-src 'unsafe-inline'` — no longer needed (inline scripts eliminated in Stage 2, CDN removed in Stage 3)
 - `style-src 'unsafe-inline'` — required by React inline styles + Mobile.html inline styles
-- `https://cdn.tailwindcss.com` — Tailwind loaded as runtime CDN script (not bundled)
+- ~~`https://cdn.tailwindcss.com`~~ — removed; Tailwind now bundled via PostCSS (Stage 3)
 
 ## Enforcement Blockers by Route
 
@@ -20,15 +20,15 @@ Key compromises:
 - ⚠️ Shares CSP header with other routes (vercel.json applies globally)
 
 ### Registration (`/src/registration/`)
-**Status: 1 blocker remaining**
-1. Tailwind CDN `<script src="https://cdn.tailwindcss.com">` — runtime compiler
+**Status: READY TO ENFORCE**
+1. ~~Tailwind CDN~~ — removed; bundled via PostCSS (`src/registration/styles/index.css`)
 2. ~~`IS_MOBILE_VIEW` detection inline script~~ — extracted to `src/registration/bootstrap/mobileViewDetect.js`
 3. ~~Cache warm inline script~~ — extracted to `src/shared/bootstrap/cacheWarm.js`
 4. ~~File protocol warning inline script~~ — extracted to `src/shared/bootstrap/fileProtocolWarning.js`
 
 ### Admin (`/src/admin/`)
-**Status: 1 blocker remaining**
-1. Tailwind CDN `<script src="https://cdn.tailwindcss.com">` — runtime compiler
+**Status: READY TO ENFORCE**
+1. ~~Tailwind CDN~~ — removed; bundled via PostCSS (`src/admin/styles/index.css`)
 2. ~~Cache warm inline script~~ — extracted to `src/shared/bootstrap/cacheWarm.js`
 3. ~~File protocol warning inline script~~ — extracted to `src/shared/bootstrap/fileProtocolWarning.js`
 
@@ -78,18 +78,14 @@ Key compromises:
 - Result: zero inline event handlers in Mobile.html
 - Remaining `'unsafe-inline'` dependency: Tailwind CDN only (Stage 3)
 
-### Stage 3: Bundle Tailwind (registration + admin)
-- Registration and Admin currently load `https://cdn.tailwindcss.com` as a runtime compiler
-- Replace with build-time Tailwind via PostCSS (same as courtboard already uses)
-- Steps:
-  1. Add `@tailwind` directives to registration/admin CSS entry points
-  2. Verify Vite PostCSS config processes them (already configured for courtboard)
-  3. Remove `<script src="https://cdn.tailwindcss.com">` from both HTML files
-  4. Remove `https://cdn.tailwindcss.com` from CSP allowlist
-- **This is the largest lift** — requires testing all Tailwind utility classes still work
-- Risk: Tailwind CDN runtime compiler supports arbitrary classes in HTML;
-  build-time Tailwind only includes classes found by content scanner.
-  Must verify all Tailwind classes are detected by `tailwind.config.js` content paths.
+### Stage 3: Bundle Tailwind (registration + admin) — DONE
+- [x] Create CSS entry points: `src/registration/styles/index.css`, `src/admin/styles/index.css` (Commit 1)
+- [x] Extract registration inline `<style>` to `src/registration/styles/registration.css` (Commit 1)
+- [x] Import CSS in `main.jsx` entry points (Commit 1)
+- [x] Verify build produces CSS chunks: registration (57KB), admin (57KB) (Commit 1)
+- [x] Remove `<script src="https://cdn.tailwindcss.com">` from both HTML files (Commit 2)
+- Result: zero CDN references in src or dist
+- `tailwind.config.js` content globs already covered `src/**/*.{js,jsx,ts,tsx}`
 
 ### Stage 4: Full Enforcement
 - With all blockers resolved, switch ALL routes from Report-Only to enforced
@@ -110,7 +106,7 @@ Key compromises:
   ```
 - `'unsafe-inline'` removed from `script-src`
 - `style-src 'unsafe-inline'` retained (React needs it; removal requires CSS-in-JS migration — low ROI)
-- `https://cdn.tailwindcss.com` removed
+- ~~`https://cdn.tailwindcss.com`~~ — already removed (Stage 3)
 
 ### Stage 5 (future): style-src hardening
 - Replace `'unsafe-inline'` in `style-src` with nonce-based approach
@@ -147,9 +143,9 @@ Each stage is independently reversible:
 
 ## CDN Dependency Inventory
 
-| CDN | Routes | Purpose | Removal plan |
-|-----|--------|---------|-------------|
-| `cdn.tailwindcss.com` | registration, admin | Tailwind CSS runtime compiler | Bundle via PostCSS (Stage 3) |
+| CDN | Routes | Purpose | Status |
+|-----|--------|---------|--------|
+| `cdn.tailwindcss.com` | ~~registration, admin~~ | Tailwind CSS runtime compiler | ✅ Removed — bundled via PostCSS (Stage 3) |
 
 ## Risk Assessment
 
