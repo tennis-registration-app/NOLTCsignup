@@ -3,7 +3,6 @@
  * Extracted from AdminPanelV2 for maintainability.
  * These are pure handler logic - no React hooks or state.
  */
-import { toast } from '../../shared/utils/toast.js';
 
 export async function clearCourtOp(ctx, courtNumber) {
   const { courts, backend, showNotification, TENNIS_CONFIG } = ctx;
@@ -57,7 +56,7 @@ export async function clearCourtOp(ctx, courtNumber) {
 }
 
 export async function moveCourtOp(ctx, from, to) {
-  const { backend } = ctx;
+  const { backend, showNotification } = ctx;
 
   const f = Number(from),
     t = Number(to);
@@ -69,12 +68,12 @@ export async function moveCourtOp(ctx, from, to) {
     const toCourt = board?.courts?.find((c) => c.number === t);
 
     if (!fromCourt?.id) {
-      toast(`Court ${f} not found`, { type: 'error' });
+      showNotification(`Court ${f} not found`, 'error');
       return { success: false, error: 'Source court not found' };
     }
 
     if (!toCourt?.id) {
-      toast(`Court ${t} not found`, { type: 'error' });
+      showNotification(`Court ${t} not found`, 'error');
       return { success: false, error: 'Destination court not found' };
     }
 
@@ -84,11 +83,11 @@ export async function moveCourtOp(ctx, from, to) {
     });
 
     if (!res?.ok) {
-      toast(res?.message || 'Failed to move court', { type: 'error' });
+      showNotification(res?.message || 'Failed to move court', 'error');
       return { success: false, error: res?.message };
     }
 
-    toast(`Moved from Court ${f} to Court ${t}`, { type: 'success' });
+    showNotification(`Moved from Court ${f} to Court ${t}`, 'success');
 
     // Belt & suspenders: coalescer should refresh, but trigger explicit refresh too.
     window.refreshAdminView?.();
@@ -96,7 +95,7 @@ export async function moveCourtOp(ctx, from, to) {
     return { success: true, from: f, to: t };
   } catch (err) {
     console.error('[moveCourt] Error:', err);
-    toast(err.message || 'Failed to move court', { type: 'error' });
+    showNotification(err.message || 'Failed to move court', 'error');
     return { success: false, error: err.message };
   }
 }

@@ -4,20 +4,13 @@
  * Tests clearCourtOp, moveCourtOp, clearAllCourtsOp.
  * All functions take a ctx object with injected deps — no React, no DOM.
  *
- * toast is imported at module scope by courtOperations.js,
- * so we mock the module. window.refreshAdminView is called by moveCourtOp.
+ * All operations use ctx.showNotification for user feedback.
+ * window.refreshAdminView is called by moveCourtOp.
  *
  * @vitest-environment jsdom
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-
-// Mock toast (used by moveCourtOp for success/error toasts)
-vi.mock('../../../../src/shared/utils/toast.js', () => ({
-  toast: vi.fn(),
-}));
-
-import { toast } from '../../../../src/shared/utils/toast.js';
 import {
   clearCourtOp,
   moveCourtOp,
@@ -241,7 +234,7 @@ describe('moveCourtOp', () => {
       toCourtId: 'uuid-court-3',
     });
     expect(result).toEqual({ success: true, from: 1, to: 3 });
-    expect(toast).toHaveBeenCalledWith('Moved from Court 1 to Court 3', { type: 'success' });
+    expect(ctx.showNotification).toHaveBeenCalledWith('Moved from Court 1 to Court 3', 'success');
   });
 
   it('converts string court numbers to integers', async () => {
@@ -270,7 +263,7 @@ describe('moveCourtOp', () => {
     const result = await moveCourtOp(ctx, 99, 1);
 
     expect(result).toEqual({ success: false, error: 'Source court not found' });
-    expect(toast).toHaveBeenCalledWith('Court 99 not found', { type: 'error' });
+    expect(ctx.showNotification).toHaveBeenCalledWith('Court 99 not found', 'error');
     expect(ctx.backend.commands.moveCourt).not.toHaveBeenCalled();
   });
 
@@ -280,7 +273,7 @@ describe('moveCourtOp', () => {
     const result = await moveCourtOp(ctx, 1, 99);
 
     expect(result).toEqual({ success: false, error: 'Destination court not found' });
-    expect(toast).toHaveBeenCalledWith('Court 99 not found', { type: 'error' });
+    expect(ctx.showNotification).toHaveBeenCalledWith('Court 99 not found', 'error');
     expect(ctx.backend.commands.moveCourt).not.toHaveBeenCalled();
   });
 
@@ -294,7 +287,7 @@ describe('moveCourtOp', () => {
     const result = await moveCourtOp(ctx, 1, 2);
 
     expect(result).toEqual({ success: false, error: 'Destination occupied' });
-    expect(toast).toHaveBeenCalledWith('Destination occupied', { type: 'error' });
+    expect(ctx.showNotification).toHaveBeenCalledWith('Destination occupied', 'error');
   });
 
   it('returns error when backend throws', async () => {
@@ -304,7 +297,7 @@ describe('moveCourtOp', () => {
     const result = await moveCourtOp(ctx, 1, 2);
 
     expect(result).toEqual({ success: false, error: 'Timeout' });
-    expect(toast).toHaveBeenCalledWith('Timeout', { type: 'error' });
+    expect(ctx.showNotification).toHaveBeenCalledWith('Timeout', 'error');
   });
 
   it('returns error when getBoard returns empty courts', async () => {
