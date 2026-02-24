@@ -1,0 +1,11 @@
+/* Registration CSS entry point — mirrors courtboard/styles/index.css pattern */
+
+/*
+ * @import MUST come before @tailwind directives per CSS spec.
+ * If placed after, Vite/PostCSS silently drops the import.
+ */
+@import './registration.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

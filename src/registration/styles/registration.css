@@ -1,0 +1,64 @@
+/*
+ * Registration custom styles — extracted from inline <style> in index.html.
+ * These are non-Tailwind rules that must load alongside the Tailwind build.
+ */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 640px) {
+  /* Ensure modals don't exceed viewport */
+  .modal-mobile-full {
+    max-height: 100vh;
+    max-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  }
+}
+
+/* Very small screen button fixes */
+@media (max-width: 380px) {
+  /* Force smaller buttons on very small screens */
+  .bottom-nav-buttons button {
+    padding-top: 0.375rem !important;    /* 6px */
+    padding-bottom: 0.375rem !important; /* 6px */
+    padding-left: 0.5rem !important;     /* 8px */
+    padding-right: 0.5rem !important;    /* 8px */
+    font-size: 0.75rem !important;       /* 12px */
+  }
+}
+
+/* Mobile variant styles - only when ?view=mobile */
+.variant-mobile .reg-modal--mobile {
+  padding: 12px;
+}
+
+.variant-mobile .reg-modal--mobile .input--compact {
+  min-height: 44px;
+  font-size: 1rem;
+  padding: 10px 12px;
+}
+
+.variant-mobile .reg-modal--mobile .actions .btn--full {
+  width: 100%;
+}
+
+.variant-mobile .reg-modal--mobile h2 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Remove full-page backgrounds in mobile iframe (so parent blur shows through) */
+.variant-mobile html,
+.variant-mobile body {
+  background: transparent !important;
+}
+
+/* Clear any page wrapper that paints gradients/solids */
+.variant-mobile .bg-gradient-to-br {
+  background: transparent !important;
+}

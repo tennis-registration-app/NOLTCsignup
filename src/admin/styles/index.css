@@ -1,0 +1,7 @@
+/* Admin CSS entry point — mirrors courtboard/styles/index.css pattern */
+
+/* Admin has no custom CSS — Tailwind utilities only. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
