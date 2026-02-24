@@ -4,6 +4,7 @@
  */
 
 import { logger } from '../../lib/logger.js';
+import { DenialCodes } from '../../lib/backend/types.js';
 import { createOrchestrationDeps } from './deps/index.js';
 import { durationForGroupSize } from '../../lib/dateUtils.js';
 import {
@@ -291,7 +292,7 @@ export async function assignCourtToGroupOrchestrated(
 
       if (!result.ok) {
         // Handle "Court occupied" race condition
-        if (result.code === 'COURT_OCCUPIED') {
+        if (result.code === DenialCodes.COURT_OCCUPIED) {
           toast('This court was just taken. Refreshing...', { type: 'warning' });
           actions.setCurrentWaitlistEntryId(null);
           await services.backend.queries.refresh();
@@ -428,7 +429,7 @@ export async function assignCourtToGroupOrchestrated(
       message: result.message,
     });
     // Handle "Court occupied" race condition
-    if (result.code === 'COURT_OCCUPIED') {
+    if (result.code === DenialCodes.COURT_OCCUPIED) {
       toast('This court was just taken. Refreshing...', { type: 'warning' });
       // Board subscription will auto-refresh, but force immediate refresh
       await services.backend.queries.refresh();
