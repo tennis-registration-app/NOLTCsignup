@@ -11,10 +11,10 @@ export function VisualTimeEntry({
   onStartTimeChange,
   onEndTimeChange,
   selectedDate = new Date(),
-  selectedCourts = [],
+  selectedCourts = /** @type {any[]} */ ([]),
   blockReason = '',
   timePickerMode = 'visual',
-  setTimePickerMode = null,
+  setTimePickerMode = /** @type {Function | undefined} */ (undefined),
   hideToggleButton = false,
 }) {
   const [duration, setDuration] = useState({ hours: 0, minutes: 0 });
@@ -185,7 +185,7 @@ export function VisualTimeEntry({
       {!hideToggleButton && setTimePickerMode && (
         <div className="flex items-center">
           <button
-            onClick={() => setTimePickerMode(timePickerMode === 'visual' ? 'manual' : 'visual')}
+            onClick={() => setTimePickerMode?.(timePickerMode === 'visual' ? 'manual' : 'visual')}
             className="text-sm text-blue-600 hover:text-blue-700"
           >
             {timePickerMode === 'visual' ? 'Switch to manual input' : 'Switch to visual picker'}
@@ -217,7 +217,7 @@ export function VisualTimeEntry({
               {setTimePickerMode && (
                 <button
                   onClick={() =>
-                    setTimePickerMode(timePickerMode === 'visual' ? 'manual' : 'visual')
+                    setTimePickerMode?.(timePickerMode === 'visual' ? 'manual' : 'visual')
                   }
                   className="text-sm text-blue-600 hover:text-blue-700"
                 >

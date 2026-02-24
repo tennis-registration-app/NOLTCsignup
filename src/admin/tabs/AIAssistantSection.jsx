@@ -31,7 +31,7 @@ export function AIAssistantSection({ aiModel, aiActions, services, components, c
 
   // Only show on specific tabs
   const showOnTabs = ['calendar', 'blocking', 'analytics', 'system', 'history'];
-  if (!showOnTabs.includes(activeTab)) {
+  if (!activeTab || !showOnTabs.includes(activeTab)) {
     return null;
   }
 
@@ -40,7 +40,7 @@ export function AIAssistantSection({ aiModel, aiActions, services, components, c
       {/* Floating AI Assistant Button */}
       <div className="fixed bottom-8 right-8 z-40">
         <button
-          onClick={() => setShowAIAssistant(true)}
+          onClick={() => setShowAIAssistant?.(true)}
           className="bg-[#D97757] text-white p-3 rounded-full shadow-lg hover:bg-[#C4624A] transition-all transform hover:scale-110"
           title="Claude AI Assistant"
         >
@@ -55,12 +55,12 @@ export function AIAssistantSection({ aiModel, aiActions, services, components, c
         (USE_REAL_AI ? (
           <AIAssistant
             backend={backend}
-            onClose={() => setShowAIAssistant(false)}
+            onClose={() => setShowAIAssistant?.(false)}
             onSettingsChanged={onAISettingsChanged}
           />
         ) : (
           <AIAssistantAdmin
-            onClose={() => setShowAIAssistant(false)}
+            onClose={() => setShowAIAssistant?.(false)}
             dataStore={dataStore}
             courts={courts}
             loadData={loadData}

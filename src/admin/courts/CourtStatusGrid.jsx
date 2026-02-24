@@ -30,9 +30,15 @@ const CourtStatusGrid = ({
   services,
 }) => {
   // Destructure domain objects to preserve original local names
-  const { courts, courtBlocks, selectedDate, currentTime } = statusModel;
+  const {
+    courts = /** @type {any[]} */ ([]),
+    courtBlocks = /** @type {any[]} */ ([]),
+    selectedDate,
+    currentTime = new Date(),
+  } = statusModel;
   const { clearAllCourts: onClearAllCourts } = statusActions;
-  const { active: wetCourtsActive, courts: wetCourts } = wetCourtsModel;
+  const { active: wetCourtsActive, courts: wetCourts = /** @type {Set<any>} */ (new Set()) } =
+    wetCourtsModel;
   const { activateEmergency: handleEmergencyWetCourt, deactivateAll: deactivateWetCourts } =
     wetCourtsActions;
   const { backend } = services;

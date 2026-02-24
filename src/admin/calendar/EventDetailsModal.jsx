@@ -17,7 +17,13 @@ const BLOCK_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-const EventDetailsModal = ({ event, courts = [], backend, onClose, onSaved }) => {
+const EventDetailsModal = ({
+  event,
+  courts = /** @type {any[]} */ ([]),
+  backend,
+  onClose,
+  onSaved,
+}) => {
   const confirmDialog = useAdminConfirm();
   // Form state
   const [courtId, setCourtId] = useState('');

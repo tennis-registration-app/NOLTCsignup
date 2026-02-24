@@ -9,7 +9,7 @@ import { AlertTriangle } from '../../components';
 
 const ConflictDetector = ({
   courts,
-  courtBlocks = [],
+  courtBlocks = /** @type {any[]} */ ([]),
   selectedCourts,
   startTime,
   endTime,

@@ -20,7 +20,7 @@ import { formatTimeRemaining as formatTimeRemainingCore } from '../../lib/format
 export function getCourtStatus(
   court,
   courtNumber,
-  { wetCourts, courtBlocks, selectedDate, currentTime }
+  { wetCourts, courtBlocks, selectedDate = new Date(), currentTime = new Date() }
 ) {
   // Check if court has a wet block from API data
   // Data structure: court.block.reason contains the block title/reason

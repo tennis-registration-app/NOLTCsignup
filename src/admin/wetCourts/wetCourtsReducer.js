@@ -7,11 +7,11 @@
 // Initial state
 export const initialWetCourtsState = {
   isActive: false,
-  wetCourtNumbers: [], // Always sorted array of unique integers
-  suspendedBlocks: [], // Snapshot at activation, cleared on deactivate
+  wetCourtNumbers: /** @type {number[]} */ ([]), // Always sorted array of unique integers
+  suspendedBlocks: /** @type {any[]} */ ([]), // Snapshot at activation, cleared on deactivate
   isBusy: false,
-  busyOp: null, // 'activate' | 'deactivate' | 'clearOne' | 'clearAll'
-  error: null,
+  busyOp: /** @type {string | null} */ (null), // 'activate' | 'deactivate' | 'clearOne' | 'clearAll'
+  error: /** @type {string | null} */ (null),
 };
 
 /**

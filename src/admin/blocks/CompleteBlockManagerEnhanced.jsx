@@ -54,9 +54,9 @@ const CompleteBlockManagerEnhanced = ({
   // Destructure domain objects to preserve original variable names
   const { active: wetCourtsActive, courts: wetCourts } = wetCourtsModel;
   const {
-    courts,
-    blocks: courtBlocks = [],
-    hoursOverrides = [],
+    courts = /** @type {any[]} */ ([]),
+    blocks: courtBlocks = /** @type {any[]} */ ([]),
+    hoursOverrides = /** @type {any[]} */ ([]),
     editingBlock: initialEditingBlock = null,
     // suspendedBlocks not destructured - unused in this component
   } = blockModel;
