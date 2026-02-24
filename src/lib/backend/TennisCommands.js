@@ -17,6 +17,8 @@ import {
   toCancelBlockPayload,
 } from './wire.js';
 import { logger } from '../logger.js';
+import { AppError } from '../errors/AppError.js';
+import { ErrorCategories } from '../errors/errorCategories.js';
 
 // Command DTO validation (fail-fast before API call)
 import {
@@ -296,7 +298,8 @@ export class TennisCommands {
    *
    * @param {Array<Object>} players - Players in UI format (with name, memberNumber, isGuest, etc.)
    * @returns {Promise<import('./types').ParticipantInput[]>}
-   * @throws {Error} If a member cannot be resolved
+   * @throws {AppError} VALIDATION/DIRECTORY_NOT_SET, VALIDATION/MISSING_MEMBER_NUMBER,
+   *   NOT_FOUND/MEMBER_NOT_FOUND, VALIDATION/GUESTS_WITHOUT_MEMBER
    *
    * UI Player format:
    *   { name: string, memberNumber?: string, isGuest?: boolean, id?: string }
@@ -307,7 +310,11 @@ export class TennisCommands {
    */
   async resolvePlayersToParticipants(players) {
     if (!this.directory) {
-      throw new Error('TennisDirectory not set - cannot resolve players');
+      throw new AppError({
+        category: ErrorCategories.VALIDATION,
+        code: 'DIRECTORY_NOT_SET',
+        message: 'TennisDirectory not set - cannot resolve players',
+      });
     }
 
     const tStart = performance.now();
@@ -324,7 +331,11 @@ export class TennisCommands {
         const name = player.name || player.displayName;
 
         if (!memberNumber) {
-          throw new Error(`Member ${name} has no member number`);
+          throw new AppError({
+            category: ErrorCategories.VALIDATION,
+            code: 'MISSING_MEMBER_NUMBER',
+            message: `Member ${name} has no member number`,
+          });
         }
 
         memberPlayers.push({ ...player, memberNumber, name });
@@ -394,7 +405,11 @@ export class TennisCommands {
       }
 
       if (!member) {
-        throw new Error(`Could not find member: ${player.name} (account ${player.memberNumber})`);
+        throw new AppError({
+          category: ErrorCategories.NOT_FOUND,
+          code: 'MEMBER_NOT_FOUND',
+          message: `Could not find member: ${player.name} (account ${player.memberNumber})`,
+        });
       }
 
       participants.push({
@@ -429,7 +444,11 @@ export class TennisCommands {
       // All guests, no members - error
       const hasGuest = participants.some((p) => p.accountId === '__NEEDS_ACCOUNT__');
       if (hasGuest) {
-        throw new Error('Cannot register guests without a member');
+        throw new AppError({
+          category: ErrorCategories.VALIDATION,
+          code: 'GUESTS_WITHOUT_MEMBER',
+          message: 'Cannot register guests without a member',
+        });
       }
     }
 

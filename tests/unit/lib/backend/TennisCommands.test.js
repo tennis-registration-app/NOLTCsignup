@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TennisCommands } from '../../../../src/lib/backend/TennisCommands.js';
+import { AppError } from '../../../../src/lib/errors/AppError.js';
 
 // ============================================================
 // Helpers
@@ -789,7 +790,85 @@ describe('TennisCommands', () => {
   });
 
   // ============================================================
-  // G) setDirectory
+  // G) AppError metadata — category + code on every throw
+  // ============================================================
+
+  describe('AppError metadata', () => {
+    it('DIRECTORY_NOT_SET — throws AppError with VALIDATION category', async () => {
+      const api = createMockApi();
+      const commands = new TennisCommands(api, null);
+
+      try {
+        await commands.resolvePlayersToParticipants([{ name: 'A', memberNumber: '1' }]);
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e).toBeInstanceOf(Error);
+        expect(e.category).toBe('VALIDATION');
+        expect(e.code).toBe('DIRECTORY_NOT_SET');
+        expect(e.message).toContain('TennisDirectory not set');
+      }
+    });
+
+    it('MISSING_MEMBER_NUMBER — throws AppError with VALIDATION category', async () => {
+      const { commands } = setup();
+
+      try {
+        await commands.resolvePlayersToParticipants([{ name: 'No Number' }]);
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e).toBeInstanceOf(Error);
+        expect(e.category).toBe('VALIDATION');
+        expect(e.code).toBe('MISSING_MEMBER_NUMBER');
+        expect(e.message).toContain('has no member number');
+      }
+    });
+
+    it('MEMBER_NOT_FOUND — throws AppError with NOT_FOUND category', async () => {
+      const { commands } = setup({
+        directory: {
+          getMembersByAccount: vi.fn().mockResolvedValue([
+            { id: 'M1', accountId: 'A1', displayName: 'Person One' },
+            { id: 'M2', accountId: 'A1', displayName: 'Person Two' },
+          ]),
+        },
+      });
+
+      try {
+        await commands.resolvePlayersToParticipants([
+          { name: 'Nobody Matching', memberNumber: '1001' },
+        ]);
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e).toBeInstanceOf(Error);
+        expect(e.category).toBe('NOT_FOUND');
+        expect(e.code).toBe('MEMBER_NOT_FOUND');
+        expect(e.message).toContain('Could not find member');
+      }
+    });
+
+    it('GUESTS_WITHOUT_MEMBER — throws AppError with VALIDATION category', async () => {
+      const { commands } = setup();
+
+      try {
+        await commands.resolvePlayersToParticipants([
+          { name: 'Guest 1', isGuest: true },
+        ]);
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e).toBeInstanceOf(Error);
+        expect(e.category).toBe('VALIDATION');
+        expect(e.code).toBe('GUESTS_WITHOUT_MEMBER');
+        expect(e.message).toContain('Cannot register guests without a member');
+      }
+    });
+  });
+
+  // ============================================================
+  // H) setDirectory
   // ============================================================
 
   describe('setDirectory', () => {
