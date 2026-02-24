@@ -101,7 +101,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
         }
 
         appliedBlocks.push({
-          id: Date.now().toString() + Math.random(),
+          id: crypto.randomUUID(),
           courtNumber: courtNum,
           reason: blockReason,
           title: eventTitle || blockReason, // Always preserve the title
