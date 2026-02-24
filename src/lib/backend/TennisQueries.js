@@ -10,6 +10,9 @@
 import { normalizeBoard } from '../normalize/index.js';
 import { validateBoardResponse, validateBoard } from '../schemas/index.js';
 import { logger } from '../logger.js';
+import { AppError } from '../errors/AppError.js';
+import { ErrorCategories } from '../errors/errorCategories.js';
+import { mapResponseToCategory } from '../errors/mapResponseToCategory.js';
 
 export class TennisQueries {
   constructor(apiAdapter) {
@@ -42,7 +45,11 @@ export class TennisQueries {
     });
 
     if (!response.ok) {
-      throw new Error(response.message || 'Failed to load board');
+      throw new AppError({
+        category: response.code ? mapResponseToCategory(response.code) : ErrorCategories.UNKNOWN,
+        code: response.code || 'QUERY_FAILED',
+        message: response.message || 'Failed to load board',
+      });
     }
 
     // Validate API envelope

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { stubFetch, stubFetchReject, restoreFetch } from './helpers/mockFetch.js';
 import ApiAdapter from '../../../src/lib/ApiAdapter.js';
+import { AppError } from '../../../src/lib/errors/AppError.js';
 
 /*
  * Mock @supabase/supabase-js BEFORE importing TennisQueries.
@@ -132,6 +133,64 @@ describe('TennisQueries', () => {
       stubFetchReject('Network down');
 
       await expect(queries.getBoard()).rejects.toThrow(/Network down/);
+    });
+
+    // ─── AppError taxonomy chain contract ──────────────────
+
+    it('thrown error is instanceof AppError with category + code', async () => {
+      stubFetch({ ok: false, code: 'COURT_NOT_FOUND', message: 'Court not found' });
+
+      try {
+        await queries.getBoard();
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e).toBeInstanceOf(Error);
+        expect(e.category).toBe('NOT_FOUND');
+        expect(e.code).toBe('COURT_NOT_FOUND');
+        expect(e.message).toBe('Court not found');
+      }
+    });
+
+    it('maps known denial code to correct category', async () => {
+      stubFetch({ ok: false, code: 'COURT_OCCUPIED', message: 'Court in use' });
+
+      try {
+        await queries.getBoard();
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e.category).toBe('CONFLICT');
+        expect(e.code).toBe('COURT_OCCUPIED');
+      }
+    });
+
+    it('falls back to UNKNOWN category when no code in response', async () => {
+      stubFetch({ ok: false, message: 'Something went wrong' });
+
+      try {
+        await queries.getBoard();
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e.category).toBe('UNKNOWN');
+        expect(e.code).toBe('QUERY_FAILED');
+        expect(e.message).toBe('Something went wrong');
+      }
+    });
+
+    it('falls back to QUERY_FAILED code and default message when response is bare', async () => {
+      stubFetch({ ok: false });
+
+      try {
+        await queries.getBoard();
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e.category).toBe('UNKNOWN');
+        expect(e.code).toBe('QUERY_FAILED');
+        expect(e.message).toBe('Failed to load board');
+      }
     });
 
     it('handles empty courts array gracefully', async () => {
