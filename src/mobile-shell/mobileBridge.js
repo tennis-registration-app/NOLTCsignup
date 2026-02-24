@@ -112,10 +112,13 @@ function hideReg() {
   overlay.setAttribute('aria-hidden', 'true');
 }
 
-// Expose functions globally for onclick handlers in HTML
+// Expose functions globally for cross-iframe messaging
 window.showReg = showReg;
 window.showRegOverlayOnly = showRegOverlayOnly;
 window.hideReg = hideReg;
+
+// Bind close button (replaces inline onclick for CSP compliance)
+document.getElementById('mobile-close-reg')?.addEventListener('click', hideReg);
 
 // Receive events from child iframes
 window.addEventListener('message', (e) => {

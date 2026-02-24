@@ -335,6 +335,8 @@ export default [
       // Entry points — check window.Tennis readiness before rendering
       'src/registration/main.jsx',
       'src/admin/main.jsx',
+      // Bootstrap scripts extracted from inline HTML for CSP compliance
+      'src/registration/bootstrap/**/*.js',
       // Legacy interop — use window.Tennis directly (migrate to windowBridge over time)
       'src/registration/utils/helpers.js',
       'src/admin/handlers/courtOperations.js',

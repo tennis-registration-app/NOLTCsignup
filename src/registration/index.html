@@ -70,15 +70,8 @@
 <body>
   <div id="root"></div>
 
-  <!-- Mobile View Detection -->
-  <script>
-    window.IS_MOBILE_VIEW =
-      new URLSearchParams(location.search).get('view') === 'mobile';
-    document.documentElement.classList.toggle(
-      'variant-mobile',
-      window.IS_MOBILE_VIEW
-    );
-  </script>
+  <!-- Mobile View Detection (extracted to module for CSP compliance) -->
+  <script type="module" src="/src/registration/bootstrap/mobileViewDetectEntry.js"></script>
 
   <!-- Cache warm (extracted to module for CSP compliance) -->
   <script type="module" src="/src/shared/bootstrap/cacheWarmEntry.js"></script>
