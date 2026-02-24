@@ -160,6 +160,22 @@ Error handling contracts are locked by 24 tests in `tests/unit/errors/`:
 | `resultTypes.test.js` | 6 | okResult/errResult shapes |
 | `resultNormalizerShapes.test.js` | 8 | success/failure/wrapAsync conformance |
 
+## resultNormalizer (Available Helper)
+
+**Location:** `src/registration/orchestration/helpers/resultNormalizer.ts`
+
+Provides typed utilities for standardizing success/failure envelopes:
+
+- `Result<T>` / `ResultError` / `ResultOrError<T>` — discriminated union types
+- `success(data)` — create `{ ok: true, data }` envelope
+- `failure(code, message, details?)` — create `{ ok: false, error: { code, message, details } }` envelope
+- `wrapAsync(fn)` — wrap an async function, catching errors into `ResultError` with code `UNEXPECTED_ERROR`
+
+**Status:** Available but currently unused in production. Tested by 8 conformance
+tests in `resultNormalizerShapes.test.js`. Available for adoption by orchestrators
+during error taxonomy unification. Adoption decision will be made after
+TennisCommands/TennisQueries error preservation work (WP-ERROR-TAXONOMY-CHAIN).
+
 ## Future Work
 
 - Service layer contract unification (standardize throw vs return)

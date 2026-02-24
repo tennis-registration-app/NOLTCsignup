@@ -1,9 +1,19 @@
 /**
- * Standard orchestrator result shapes.
+ * Result normalization utilities for standardizing success/failure envelopes.
+ *
+ * STATUS: Available but currently unused in production code.
+ * Decision pending WP-ERROR-TAXONOMY-CHAIN — may be adopted by orchestrators
+ * to unify error handling across thrown Error/AppError and returned {ok:false}
+ * envelopes.
+ *
+ * If adopted: expand tests for the integration paths.
+ * If not needed after error taxonomy work is complete: delete as dead code.
  *
  * These helpers produce result objects matching the Result/ResultError
  * typedefs in src/lib/types/result.js. Function signatures and return
  * shapes are unchanged from the original implementation.
+ *
+ * @see docs/ERROR_HANDLING.md for the full error propagation model.
  */
 
 export interface Result<T = unknown> {
