@@ -80,6 +80,7 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 
 | Topic | Doc |
 |-------|-----|
+| Production operations | [docs/OPERATIONS.md](OPERATIONS.md) |
 | Deployment | [docs/DEPLOYMENT.md](DEPLOYMENT.md) |
 | Environment config | [docs/ENVIRONMENT.md](ENVIRONMENT.md) |
 | Troubleshooting FAQ | [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) |

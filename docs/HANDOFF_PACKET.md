@@ -111,6 +111,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
 |----------|---------|
 | [START_HERE.md](START_HERE.md) | Developer orientation and quick start |
 | [ONBOARDING.md](ONBOARDING.md) | Extension recipes — screens, endpoints, CSP, hooks |
+| [OPERATIONS.md](OPERATIONS.md) | Production operations — env vars, deployment, monitoring, polling |
 | [ERROR_HANDLING.md](ERROR_HANDLING.md) | Error taxonomy, propagation, DenialCodes mapping |
 | [CSP_ROLLOUT.md](CSP_ROLLOUT.md) | Security policy, enforcement stages, rollback procedure |
 | [LATENT_BUGS.md](LATENT_BUGS.md) | Bug tracker — all items resolved |
