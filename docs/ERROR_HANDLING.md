@@ -4,27 +4,49 @@
 
 This document describes error handling patterns across the application.
 
-## Error Propagation Flow
+## Error Propagation Flow (Taxonomy Chain)
 
 ```text
-Commands (Zod validate → throw Error)
-    ↓
-ApiAdapter (fetch → check .ok → throw AppError)
-    ↓
-Services (catch/rethrow or check .ok)
-    ↓
-Orchestrators (guard returns + try/catch → toast/alert)
-    ↓
-UI (useState error state, toast, showAlertMessage)
+Backend API
+    ↓  { ok: false, code: 'COURT_OCCUPIED', message: '...' }
+TennisCommands / TennisQueries
+    ↓  throw AppError({ category: mapResponseToCategory(code), code, message })
+ApiAdapter._fetch()
+    ↓  throw AppError({ category: NETWORK, code: FETCH_FAILED }) on transport error
+    ↓  (AppError from Commands/Queries passes through unwrapped)
+Orchestrators
+    ↓  catch → normalizeError(err) → { category, code, message, isAppError }
+    ↓  Structured metadata logged; user-facing message unchanged
+UI (toast / showAlertMessage / showNotification)
 ```
+
+**Key invariant:** An `AppError` thrown at any layer arrives in the orchestrator
+catch block with its `category` and `code` intact. `normalizeError()` extracts
+these fields without altering the user-facing message.
 
 ## Layer-by-Layer Contracts
 
-### Commands
+### TennisCommands
 
-**Pattern:** Validate input with Zod, throw on failure.
+**Pattern:** Validate input with Zod, call ApiAdapter, throw `AppError` on failure.
 
-Commands are pure validation gates — they do not catch errors.
+Commands validate input, then delegate to ApiAdapter. Four throw sites use
+`AppError` with explicit categories:
+
+| Throw site | Category | Code |
+|------------|----------|------|
+| Missing member lookup | `NOT_FOUND` | `MEMBER_NOT_FOUND` |
+| Missing account on member | `VALIDATION` | `MISSING_ACCOUNT` |
+| Invalid participants array | `VALIDATION` | `INVALID_PARTICIPANTS` |
+| Waitlist entry not found | `NOT_FOUND` | `WAITLIST_ENTRY_NOT_FOUND` |
+
+### TennisQueries
+
+**Pattern:** Call ApiAdapter, throw `AppError` with mapped category on failure.
+
+Uses `mapResponseToCategory(response.code)` to deterministically classify
+backend denial codes into ErrorCategories. This is the single source of truth
+for code-to-category mapping.
 
 ### ApiAdapter
 
@@ -39,25 +61,32 @@ Throw sites:
 
 Already-wrapped `AppError` instances pass through without re-wrapping.
 
-### Services
-
-**Pattern:** Mixed throw and return-based.
-
-Some services re-throw errors from ApiAdapter (which are `AppError` instances). Others catch and return `{ ok, error }` envelopes.
-
-The consistent envelope shape is: `{ ok: boolean, message?, error?, data? }`
-
 ### Orchestrators
 
-**Pattern:** Guards + try/catch + UI feedback.
+**Pattern:** Guards + try/catch + `normalizeError()` + UI feedback.
 
-Orchestrators use a guard pattern for validation and wrap backend operations in try/catch blocks. All bare `return;` statements are annotated with one of three categories (see Silent Return Inventory below).
+Orchestrators use a guard pattern for validation and wrap backend operations in
+try/catch blocks. Catch blocks call `normalizeError(err)` to extract structured
+metadata (`category`, `code`, `message`, `isAppError`) for logging. User-facing
+messages remain unchanged. All bare `return;` statements are annotated with one
+of three categories (see Silent Return Inventory below).
+
+### Admin Handlers
+
+**Pattern:** Context-injected `showNotification()` for all user feedback.
+
+All three operations (`clearCourtOp`, `moveCourtOp`, `clearAllCourtsOp`) use
+`ctx.showNotification(message, type)` consistently. No module-level `toast()`
+imports.
 
 ### UI
 
-**Pattern:** `useState` + `Tennis.UI.toast()` + `showAlertMessage()`.
+**Pattern:** `useState` + `toast()` + `showAlertMessage()` (registration) /
+`showNotification()` (admin).
 
-Components typically read `.message` from caught errors for display.
+Components read `.message` from caught errors for display. Structured metadata
+(`category`, `code`) is available in logs but not yet used for category-aware UX
+decisions (deferred to WP-5B).
 
 ## AppError Class
 
@@ -107,6 +136,38 @@ Implementation details:
 
 `ErrorCategories` is frozen — changes require an explicit code change.
 
+## DenialCodes → ErrorCategory Mapping
+
+**Location:** `src/lib/errors/mapResponseToCategory.js`
+
+Backend denial codes are mapped to ErrorCategories via a single deterministic
+function. All 14 DenialCodes are covered:
+
+| Category | DenialCodes |
+|----------|-------------|
+| `CONFLICT` | `COURT_OCCUPIED`, `COURT_BLOCKED`, `MEMBER_ALREADY_PLAYING`, `MEMBER_ON_WAITLIST`, `SESSION_ALREADY_ENDED` |
+| `VALIDATION` | `OUTSIDE_OPERATING_HOURS`, `OUTSIDE_GEOFENCE`, `INVALID_MEMBER`, `INVALID_REQUEST` |
+| `NOT_FOUND` | `COURT_NOT_FOUND`, `WAITLIST_ENTRY_NOT_FOUND`, `SESSION_NOT_FOUND` |
+| `UNKNOWN` | `QUERY_ERROR`, `INTERNAL_ERROR` |
+
+Code comparisons use the `DenialCodes` enum (`src/lib/backend/types.js`) — no
+raw string literals.
+
+## normalizeError
+
+**Location:** `src/lib/errors/normalizeError.js`
+
+Extracts structured metadata from any caught value:
+
+| Input type | `category` | `code` | `isAppError` |
+|------------|-----------|--------|--------------|
+| `AppError` | preserved | preserved | `true` |
+| `Error` | `UNKNOWN` | `null` | `false` |
+| other | `UNKNOWN` | `null` | `false` |
+
+Used in orchestrator catch blocks for structured logging without altering
+user-facing messages.
+
 ## Result Types
 
 **Location:** `src/lib/types/result.js`
@@ -152,13 +213,16 @@ Total: 32 annotated returns across 3 orchestrator files.
 
 ## Test Coverage
 
-Error handling contracts are locked by 24 tests in `tests/unit/errors/`:
+Error handling contracts are locked by tests in `tests/unit/errors/`:
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
 | `AppError.test.js` | 10 | instanceof, message, category, code, details, stack tolerance |
 | `resultTypes.test.js` | 6 | okResult/errResult shapes |
 | `resultNormalizerShapes.test.js` | 8 | success/failure/wrapAsync conformance |
+| `mapResponseToCategory.test.js` | 19 | all 14 DenialCodes + edge cases + exhaustiveness |
+| `normalizeError.test.js` | 9 | AppError/Error/string/number/null/undefined + instanceof chain |
+| `taxonomyChain.contract.test.js` | — | end-to-end chain: DenialCode → AppError → normalizeError |
 
 ## resultNormalizer (Available Helper)
 
@@ -178,8 +242,8 @@ TennisCommands/TennisQueries error preservation work (WP-ERROR-TAXONOMY-CHAIN).
 
 ## Future Work
 
-- Service layer contract unification (standardize throw vs return)
+- Category-aware UX decisions: retry for NETWORK, inline for VALIDATION (WP-5B)
+- Registration notification unification: toast vs showAlertMessage channel split
+- Fire-and-forget error cleanup in non-critical paths
 - React error boundaries
 - Error telemetry / centralized logging
-- UI error handling standardization that uses AppError metadata
-- HTTP status code → ErrorCategory mapping (where available)
