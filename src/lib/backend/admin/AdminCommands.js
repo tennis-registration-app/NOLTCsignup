@@ -259,7 +259,7 @@ export class AdminCommands {
    * @param {string} [input.toDate] - Optional: ISO date, defaults to fromDate + 90 days
    * @returns {Promise<{ok: boolean, blocks: Array, serverNow: string, code?: string, message?: string}>}
    */
-  async getBlocks({ courtId = null, fromDate = null, toDate = null } = {}) {
+  async getBlocks({ courtId = undefined, fromDate = undefined, toDate = undefined } = {}) {
     const payload = {};
     if (courtId) payload.court_id = courtId;
     if (fromDate) payload.from_date = fromDate;
@@ -286,10 +286,10 @@ export class AdminCommands {
    * @returns {Promise<{ok: boolean, summary: Object, transactions: Array}>}
    */
   async getTransactions({
-    type = null,
-    dateStart = null,
-    dateEnd = null,
-    memberNumber = null,
+    type = undefined,
+    dateStart = undefined,
+    dateEnd = undefined,
+    memberNumber = undefined,
     limit = 100,
   } = {}) {
     const params = new URLSearchParams();

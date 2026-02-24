@@ -111,7 +111,7 @@ function mapEndReason(reason) {
 export function toEndSessionPayload(input) {
   return {
     court_id: input.courtId, // UUID of the court
-    end_reason: mapEndReason(input.reason || input.endReason),
+    end_reason: mapEndReason(input.reason || input.endReason || 'cleared'),
   };
 }
 

@@ -39,9 +39,14 @@ import {
 } from '../commands/index.js';
 
 export class TennisCommands {
-  constructor(apiAdapter, directory = null) {
+  /**
+   * @param {import('../ApiAdapter').ApiAdapter} apiAdapter
+   * @param {import('./TennisDirectory').TennisDirectory} [directory]
+   */
+  constructor(apiAdapter, directory = undefined) {
     this.api = apiAdapter;
-    this.directory = directory; // TennisDirectory for member lookups
+    /** @type {import('./TennisDirectory').TennisDirectory | undefined} */
+    this.directory = directory;
   }
 
   /**
@@ -345,12 +350,15 @@ export class TennisCommands {
     // Get unique member numbers for parallel fetch
     const uniqueMemberNumbers = [...new Set(memberPlayers.map((p) => p.memberNumber))];
 
+    // Capture for closure (TS can't narrow `this` across async callbacks)
+    const directory = this.directory;
+
     // Fetch all accounts in parallel
     const t0 = performance.now();
     const accountResults = await Promise.all(
       uniqueMemberNumbers.map(async (memberNumber) => {
         const a0 = performance.now();
-        const members = await this.directory.getMembersByAccount(memberNumber);
+        const members = await directory.getMembersByAccount(memberNumber);
         const a1 = performance.now();
         logger.debug('TennisCommands', `getMembersByAccount ${memberNumber}`, {
           durationMs: (a1 - a0).toFixed(0),
