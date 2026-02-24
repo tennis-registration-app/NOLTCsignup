@@ -240,6 +240,20 @@ describe('applyBlocksOp', () => {
     });
   });
 
+  it('processes valid blocks after an invalid block in the batch', async () => {
+    const ctx = createCtx();
+    const invalidBlock = { startTime: new Date().toISOString(), endTime: new Date().toISOString(), courts: [1] };
+    const validBlock = makeBlock({ courts: [2] });
+
+    await applyBlocksOp(ctx, [invalidBlock, validBlock]);
+
+    // Valid block should still be processed despite invalid block preceding it
+    expect(ctx.backend.admin.createBlock).toHaveBeenCalledOnce();
+    expect(ctx.backend.admin.createBlock).toHaveBeenCalledWith(
+      expect.objectContaining({ courtId: 'uuid-court-2' })
+    );
+  });
+
   it('uses courtNumber fallback when courts array is absent', async () => {
     const ctx = createCtx();
     // No "courts" field — falls back to block.courtNumber

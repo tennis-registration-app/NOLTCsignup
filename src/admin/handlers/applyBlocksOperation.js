@@ -39,7 +39,8 @@ export async function applyBlocksOp(ctx, blocks) {
         'Please provide name, reason, positive duration, and at least one court.',
         'error'
       );
-      return;
+      failCount++;
+      continue;
     }
 
     // Map reason to block type for API
