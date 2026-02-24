@@ -327,13 +327,38 @@ describe('handleBlockCourts', () => {
       backendOverrides: { admin: { cancelBlock } },
     });
 
-    actions.handleBlockCourts();
+    await actions.handleBlockCourts();
 
     // Should call handleRemoveBlock for old block
     expect(cancelBlock).toHaveBeenCalledWith({ blockId: 'old-block-id' });
     // Should still apply the new blocks
     expect(onApplyBlocks).toHaveBeenCalledOnce();
     expect(form.resetForm).toHaveBeenCalledOnce();
+  });
+
+  it('does not apply new blocks when cancel of old block fails during edit', async () => {
+    const cancelBlock = vi.fn().mockRejectedValue(new Error('Network error'));
+    const onApplyBlocks = vi.fn();
+    const { actions } = setup({
+      form: {
+        selectedCourts: [1],
+        blockReason: 'Updated reason',
+        startTime: '08:00',
+        endTime: '10:00',
+        selectedDate: new Date('2025-06-15T00:00:00'),
+        recurrence: null,
+        editingBlock: { id: 'old-block-id' },
+      },
+      backendOverrides: { admin: { cancelBlock } },
+      onApplyBlocks,
+    });
+
+    await actions.handleBlockCourts();
+
+    // Cancel was attempted
+    expect(cancelBlock).toHaveBeenCalledWith({ blockId: 'old-block-id' });
+    // New blocks should NOT be applied — cancel failed
+    expect(onApplyBlocks).not.toHaveBeenCalled();
   });
 
   it('expands recurrence dates for multiple occurrences', () => {

@@ -51,7 +51,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     if (!backend) {
       logger.error('BlockManager', 'No backend available for delete');
       onNotification('Backend not available', 'error');
-      return;
+      return false;
     }
 
     try {
@@ -62,17 +62,20 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
       if (result.ok) {
         logger.debug('BlockManager', 'Block deleted successfully');
         setRefreshTrigger((prev) => prev + 1);
+        return true;
       } else {
         logger.error('BlockManager', 'Failed to delete block', result.message);
         onNotification('Failed to delete block: ' + (result.message || 'Unknown error'), 'error');
+        return false;
       }
     } catch (error) {
       logger.error('BlockManager', 'Error deleting block', error);
       onNotification('Error deleting block: ' + error.message, 'error');
+      return false;
     }
   };
 
-  const handleBlockCourts = () => {
+  const handleBlockCourts = async () => {
     const blocks = expandRecurrenceDates(selectedDate, recurrence);
     const now = new Date();
 
@@ -117,9 +120,10 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
       });
     });
 
-    // If editing, remove the old block first
+    // If editing, remove the old block first — abort if cancel fails to prevent ghost duplicates
     if (editingBlock) {
-      handleRemoveBlock(editingBlock.id);
+      const removed = await handleRemoveBlock(editingBlock.id);
+      if (!removed) return;
     }
 
     logger.debug('BlockManager', 'Sending to applyBlocks', appliedBlocks);
