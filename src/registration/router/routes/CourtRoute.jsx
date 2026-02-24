@@ -115,7 +115,11 @@ export function CourtRoute({ app, handlers }) {
       )}
 
       <ErrorBoundary context="Court Selection">
-        <CourtSelectionScreen {...model} {...actions} />
+        <CourtSelectionScreen
+          {...model}
+          {...actions}
+          currentGroup={model.currentGroup ?? undefined}
+        />
       </ErrorBoundary>
     </>
   );

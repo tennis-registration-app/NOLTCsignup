@@ -22,7 +22,7 @@ const SearchSuggestions = ({
   containerClass = '',
   style = {},
   showMemberId = true,
-  onAddAsGuest = null,
+  onAddAsGuest = undefined,
   addAsGuestName = '',
 }) => {
   if (suggestions.length > 0) {

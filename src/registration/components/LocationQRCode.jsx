@@ -17,13 +17,13 @@ const REFRESH_BEFORE_EXPIRY_MS = 60 * 1000; // Refresh 1 minute before expiry
 const backend = createBackend();
 
 export function LocationQRCode({ onError }) {
-  const [token, setToken] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
+  const [token, setToken] = useState(/** @type {string | null} */ (null));
+  const [expiresAt, setExpiresAt] = useState(/** @type {Date | null} */ (null));
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(null);
-  const refreshTimeoutRef = useRef(null);
-  const countdownIntervalRef = useRef(null);
+  const [error, setError] = useState(/** @type {string | null} */ (null));
+  const [timeLeft, setTimeLeft] = useState(/** @type {number | null} */ (null));
+  const refreshTimeoutRef = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
+  const countdownIntervalRef = useRef(/** @type {ReturnType<typeof setInterval> | null} */ (null));
 
   const generateToken = useCallback(async () => {
     setLoading(true);
@@ -39,11 +39,11 @@ export function LocationQRCode({ onError }) {
       }
 
       setToken(data.token);
-      setExpiresAt(new Date(data.expiresAt));
+      setExpiresAt(new Date(/** @type {string} */ (data.expiresAt)));
       setLoading(false);
 
       // Schedule refresh before expiry
-      const expiryTime = new Date(data.expiresAt).getTime();
+      const expiryTime = new Date(/** @type {string} */ (data.expiresAt)).getTime();
       const refreshTime = expiryTime - Date.now() - REFRESH_BEFORE_EXPIRY_MS;
 
       if (refreshTimeoutRef.current) {

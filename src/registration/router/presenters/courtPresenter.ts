@@ -117,7 +117,7 @@ export function buildCourtActions(
     onCourtSelect: async (courtNum: number) => {
       // If changing courts, undo previous assignment first
       if (isChangingCourt && justAssignedCourt) {
-        await undoOvertimeAndClearPrevious(justAssignedCourt, displacement);
+        await undoOvertimeAndClearPrevious(justAssignedCourt, displacement!);
         setDisplacement(null); // Clear ONLY after court change is complete
       }
       await assignCourtToGroup(courtNum, computedAvailableCourts.length);
@@ -125,7 +125,7 @@ export function buildCourtActions(
       setWasOvertimeCourt(false);
     },
     onJoinWaitlist: async () => {
-      await sendGroupToWaitlist(currentGroup);
+      await sendGroupToWaitlist(currentGroup ?? []);
       setShowSuccess(true);
       // Don't auto-reset in mobile flow - let the overlay handle timing
       if (!mobileFlow) {
@@ -155,6 +155,6 @@ export function buildCourtActions(
       }
     },
     onStartOver: resetForm,
-    onJoinWaitlistDeferred: () => joinWaitlistDeferred(currentGroup),
+    onJoinWaitlistDeferred: () => joinWaitlistDeferred(currentGroup ?? []),
   };
 }

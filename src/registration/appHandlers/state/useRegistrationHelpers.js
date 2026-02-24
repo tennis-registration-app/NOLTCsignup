@@ -89,7 +89,7 @@ export function useRegistrationHelpers({
       const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
       const maxAllowedPosition = totalAvailable >= 2 ? 2 : 1;
 
-      if (engagement.waitlistPosition <= maxAllowedPosition) {
+      if ((engagement.waitlistPosition ?? 0) <= maxAllowedPosition) {
         return true;
       }
     }

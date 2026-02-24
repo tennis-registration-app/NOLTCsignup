@@ -181,7 +181,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     showSuccess,
     justAssignedCourt: null, // Not available yet at this point
     isMobile: API_CONFIG.IS_MOBILE,
-    toast: typeof window !== 'undefined' ? _toast : undefined,
+    toast: /** @type {Function} */ (typeof window !== 'undefined' ? _toast : () => {}),
     markUserTyping,
     getCourtData,
     showAlertMessage: null, // Will use internal showAlertMessage

@@ -52,9 +52,9 @@ export function SuccessRoute({ app, handlers }) {
         .filter((c) => c?.block)
         .map((c) => ({
           courtNumber: c.number,
-          startTime: c.block.startsAt || c.block.startTime,
-          endTime: c.block.endsAt || c.block.endTime,
-          isWetCourt: (c.block.reason || c.block.title || '').toLowerCase().includes('wet'),
+          startTime: c.block?.startsAt || c.block?.startTime,
+          endTime: c.block?.endsAt || c.block?.endTime,
+          isWetCourt: (c.block?.reason || c.block?.title || '').toLowerCase().includes('wet'),
         }));
       const upcomingBlocks = (courtData.upcomingBlocks || []).map((b) => ({
         courtNumber: b.courtNumber,

@@ -11,7 +11,7 @@
  * @param {Function} props.onCourtSelect - Court selection handler
  * @param {Function} props.onGoBack - Go back handler
  * @param {Function} props.onStartOver - Start over handler
- * @param {any[]} [props.currentGroup] - Current group to determine session duration
+ * @param {any[] | null | undefined} [props.currentGroup] - Current group to determine session duration
  * @param {boolean} [props.isMobileView] - Whether in mobile view
  * @param {any[]} [props.upcomingBlocks] - Upcoming block data for warning checks
  * @param {boolean} [props.hasWaitingGroups] - Whether there are groups waiting
@@ -19,7 +19,7 @@
  * @param {Function} [props.onJoinWaitlist] - Join waitlist handler
  * @param {Function} [props.onAssignNext] - Assign next handler
  * @param {boolean} [props.hasWaitlistPriority] - Whether user came from waitlist
- * @param {string|null} [props.currentWaitlistEntryId] - Waitlist entry UUID if from waitlist
+ * @param {string | null} [props.currentWaitlistEntryId] - Waitlist entry UUID if from waitlist
  * @param {Function} [props.onDeferWaitlist] - Handler to defer and stay on waitlist
  * @param {Function} [props.onJoinWaitlistDeferred] - Handler to join waitlist with deferred flag
  */
@@ -33,16 +33,16 @@ const CourtSelectionScreen = ({
   onCourtSelect,
   onGoBack,
   onStartOver,
-  currentGroup = [],
+  currentGroup = /** @type {any[]} */ ([]),
   isMobileView = false,
-  upcomingBlocks = [],
+  upcomingBlocks = /** @type {any[]} */ ([]),
   // These props are passed but not used in component - accept them to avoid caller type errors
   hasWaitingGroups: _hasWaitingGroups,
   waitingGroupsCount: _waitingGroupsCount,
   onJoinWaitlist: _onJoinWaitlist,
   onAssignNext: _onAssignNext,
   hasWaitlistPriority = false,
-  currentWaitlistEntryId = null,
+  currentWaitlistEntryId = /** @type {string | null} */ (null),
   onDeferWaitlist,
   onJoinWaitlistDeferred,
 }) => {

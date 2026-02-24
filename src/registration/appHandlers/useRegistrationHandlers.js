@@ -80,7 +80,7 @@ export function useRegistrationHandlers({ app }) {
       return TennisBusinessLogic.isPlayerAlreadyPlaying(
         playerId,
         courtData,
-        app.groupGuest.currentGroup
+        app.groupGuest.currentGroup ?? undefined
       );
     },
     [app.helpers, app.groupGuest]

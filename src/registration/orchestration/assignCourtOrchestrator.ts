@@ -164,7 +164,7 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!hoursCheck.ok) {
     if (hoursCheck.ui?.action === 'toast') {
-      toast(hoursCheck.ui.args[0] as string, hoursCheck.ui.args[1]);
+      toast(hoursCheck.ui.args[0] as string, hoursCheck.ui.args[1] as { type?: 'info' | 'error' | 'success' | 'warning'; duration?: number } | undefined);
     }
     // FEEDBACK: toast provides user feedback above
     return;
@@ -404,7 +404,7 @@ export async function assignCourtToGroupOrchestrated(
   try {
     result = await services.backend.commands.assignCourtWithPlayers({
       courtId: court.id,
-      players: allPlayers,
+      players: allPlayers as GroupPlayer[],
       groupType,
       ...(mobileLocation || {}), // Spread latitude/longitude if available
     });
@@ -474,10 +474,10 @@ export async function assignCourtToGroupOrchestrated(
 
   // Construct replacedGroup from displacement.participants for SuccessScreen messaging
   const replacedGroupFromDisplacement =
-    result.displacement?.participants?.length > 0
+    (result.displacement?.participants?.length ?? 0) > 0
       ? {
-          players: result.displacement.participants.map((name: string) => ({ name })),
-          endTime: result.displacement.restoreUntil,
+          players: result.displacement!.participants.map((name: string) => ({ name })),
+          endTime: result.displacement!.restoreUntil,
         }
       : null;
 
@@ -487,7 +487,7 @@ export async function assignCourtToGroupOrchestrated(
     sessionId: result.session?.id || null,
     scheduledEndAt: result.session?.scheduled_end_at || result.session?.scheduledEndAt || null,
     replacedGroup: replacedGroupFromDisplacement,
-    displacement: result.displacement, // Will be null if no overtime was displaced
+    displacement: result.displacement ?? null, // Will be null if no overtime was displaced
     canChangeCourt: allowCourtChange, // Only true if alternatives exist
   });
   // Direct-assign-only state
