@@ -10,8 +10,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'json-summary'],
-      include: ['src/**/*.{js,jsx}', 'public/domain/**/*.js'],
-      exclude: ['**/node_modules/**', '**/tests/**', '**/*.test.*'],
+      include: ['src/**/*.{js,jsx,ts,tsx}', 'public/domain/**/*.js'],
+      exclude: ['**/node_modules/**', '**/tests/**', '**/*.test.*', '**/*.d.ts'],
     },
   },
   resolve: {
