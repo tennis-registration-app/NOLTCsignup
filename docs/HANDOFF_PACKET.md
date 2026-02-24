@@ -32,6 +32,7 @@ Single command. Runs lint ratchet, TypeScript type checking, unit tests with cov
 - **All `DenialCodes`** compared via enum — no raw string literals
 - **Coverage ratchets** prevent regression — lint warnings, type errors, and test coverage each have a baseline that can improve but never worsen
 - **`npm run verify`** is the single required gate before any merge
+- **TypeScript `strictNullChecks` enforced** — 0 errors, ratcheted at baseline 0. All null/undefined access caught at compile time
 - **Quality ratchets are one-way** — you can reduce warnings/errors but not add them
 - **Admin access defaults to open** for testing; auth-ready seam exists for production lockdown (`VITE_ADMIN_ACCESS_MODE`)
 
@@ -99,7 +100,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
 ## Roadmap / Enhancements (Not Required for Stability)
 
 - Admin authentication: auth-ready seam in place (`AdminAccessMode` config + guard wrapper). Enable at production deployment time. Requires Supabase Auth + Edge Function JWT verification.
-- TypeScript `strict: true` migration (ratchet approach)
+- ~~TypeScript `strictNullChecks`~~ **(DONE)** — enabled and ratcheted to 0 errors. Remaining `strict: true` flags (strictBindCallApply, strictFunctionTypes, etc.) can follow same ratchet pattern
 - Registration state decomposition into React contexts
 - Category-aware UX decisions (retry for NETWORK, inline feedback for VALIDATION)
 - Registration notification unification (toast vs showAlertMessage)
