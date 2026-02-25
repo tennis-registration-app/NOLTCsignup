@@ -104,7 +104,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
 - Registration state decomposition into React contexts
 - Category-aware UX decisions (retry for NETWORK, inline feedback for VALIDATION)
 - Registration notification unification (toast vs showAlertMessage)
-- Performance instrumentation
+- Performance instrumentation (see [PERFORMANCE.md](PERFORMANCE.md) for current hotspots and profiling)
 - Accessibility improvements (see [ACCESSIBILITY.md](ACCESSIBILITY.md) for current state and roadmap)
 - IIFE-to-ESM migration per ADR-006
 
@@ -125,6 +125,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
 | [TESTING.md](TESTING.md) | Test locations, frameworks, and how to add tests |
 | [SECURITY_WP.md](SECURITY_WP.md) | Threat model and security posture |
 | [ACCESSIBILITY.md](ACCESSIBILITY.md) | A11y current state, gaps, and improvement roadmap |
+| [PERFORMANCE.md](PERFORMANCE.md) | Polling inventory, hotspots, and profiling recipes |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Deployment process and environment config |
 | [ENVIRONMENT.md](ENVIRONMENT.md) | Environment variables and feature flags |
 | [WINDOW_GLOBALS.md](WINDOW_GLOBALS.md) | Courtboard window globals bridge |

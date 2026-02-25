@@ -90,6 +90,8 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 ## Additional References
 
 - [docs/SECURITY_WP.md](SECURITY_WP.md) — Security threat model and posture
+- [docs/ACCESSIBILITY.md](ACCESSIBILITY.md) — Accessibility current state, known gaps, and improvement roadmap
+- [docs/PERFORMANCE.md](PERFORMANCE.md) — Polling inventory, hotspots, profiling recipes
 - [docs/CSP_ROLLOUT.md](CSP_ROLLOUT.md) — Content Security Policy enforcement stages and rollback
 - [docs/LATENT_BUGS.md](LATENT_BUGS.md) — Bug tracker (all items resolved)
 - [docs/LEGACY_MIGRATION.md](LEGACY_MIGRATION.md) — IIFE/ESM coexistence status
