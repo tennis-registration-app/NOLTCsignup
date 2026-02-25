@@ -236,7 +236,12 @@ describe('TennisQueries', () => {
       const result = await queries.getFrequentPartners('INVALID');
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBe('Member not found');
+      // .error is now the structured error object (overwrites the original string)
+      expect(result.error).toEqual({
+        category: 'UNKNOWN',
+        code: 'API_ERROR',
+        message: 'Member not found',
+      });
     });
   });
 

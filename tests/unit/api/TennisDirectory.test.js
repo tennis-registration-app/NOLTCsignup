@@ -118,10 +118,13 @@ describe('TennisDirectory', () => {
       expect(getParam(url, 'search')).toBe("O'Brien & Sons");
     });
 
-    it('propagates network errors (no internal catch)', async () => {
+    it('returns empty array on network failure (facade catches !ok)', async () => {
       stubFetchReject('Network down');
 
-      await expect(directory.searchMembers('test')).rejects.toThrow(/Network down/);
+      // searchMembers checks response.ok and returns [] on failure
+      const result = await directory.searchMembers('test');
+
+      expect(result).toEqual([]);
     });
   });
 

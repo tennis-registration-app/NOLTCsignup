@@ -3,10 +3,12 @@ import { stubFetch, stubFetchReject, restoreFetch } from './helpers/mockFetch.js
 import ApiAdapter from '../../../src/lib/ApiAdapter.js';
 
 /**
- * Characterization tests: lock de facto error contract of public get/post methods.
+ * Error contract tests for ApiAdapter public get/post methods.
  *
- * These tests document existing behavior BEFORE any modifications.
- * If a test fails after changes, it means the public contract shifted.
+ * Phase 1 (characterization): locked original behavior.
+ * Phase 2 (current): verifies structured error metadata on failures.
+ *
+ * Backward compatibility assertions are preserved — old fields still present.
  */
 
 function createTestAdapter() {
@@ -28,7 +30,7 @@ function stubFetchJsonFailure(message = 'Unexpected token < in JSON') {
   return mockFn;
 }
 
-describe('ApiAdapter public error contract (characterization)', () => {
+describe('ApiAdapter public error contract', () => {
   let adapter;
 
   beforeEach(() => {
@@ -51,12 +53,20 @@ describe('ApiAdapter public error contract (characterization)', () => {
       expect(result.data).toEqual({ sessionId: 42 });
       expect(result.serverNow).toBe('2025-01-01T00:00:00Z');
     });
+
+    it('does not include .error on success', async () => {
+      stubFetch({ ok: true, data: {} });
+
+      const result = await adapter.post('/test', {});
+
+      expect(result.error).toBeUndefined();
+    });
   });
 
   // ─── B) post() with server returning { ok: false } ────
 
   describe('post() server error (ok: false)', () => {
-    it('returns the raw response without throwing', async () => {
+    it('returns the raw response fields without throwing (backward compat)', async () => {
       stubFetch({ ok: false, code: 'COURT_OCCUPIED', message: 'Court is occupied' });
 
       const result = await adapter.post('/assign-court', {});
@@ -66,13 +76,52 @@ describe('ApiAdapter public error contract (characterization)', () => {
       expect(result.message).toBe('Court is occupied');
     });
 
+    it('includes structured .error with category from mapResponseToCategory', async () => {
+      stubFetch({ ok: false, code: 'COURT_OCCUPIED', message: 'Court is occupied' });
+
+      const result = await adapter.post('/assign-court', {});
+
+      expect(result.error).toEqual({
+        category: 'CONFLICT',
+        code: 'COURT_OCCUPIED',
+        message: 'Court is occupied',
+      });
+    });
+
+    it('uses API_ERROR code and UNKNOWN category when server sends no code', async () => {
+      stubFetch({ ok: false, message: 'Something went wrong' });
+
+      const result = await adapter.post('/test', {});
+
+      expect(result.error).toEqual({
+        category: 'UNKNOWN',
+        code: 'API_ERROR',
+        message: 'Something went wrong',
+      });
+    });
+
+    it('falls back to data.error string when no message field', async () => {
+      stubFetch({ ok: false, error: 'Legacy error string' });
+
+      const result = await adapter.post('/test', {});
+
+      expect(result.error.message).toBe('Legacy error string');
+    });
+
+    it('falls back to "Request failed" when neither message nor error exists', async () => {
+      stubFetch({ ok: false });
+
+      const result = await adapter.post('/test', {});
+
+      expect(result.error.message).toBe('Request failed');
+    });
+
     it('calls logger.error (which calls console.error) on !ok', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       stubFetch({ ok: false, code: 'COURT_OCCUPIED', message: 'Court is occupied' });
 
       await adapter.post('/assign-court', {});
 
-      // logger.error calls console.error with formatted message + data
       expect(consoleSpy).toHaveBeenCalled();
       const firstArg = consoleSpy.mock.calls[0][0];
       expect(firstArg).toContain('[ApiAdapter]');
@@ -81,47 +130,69 @@ describe('ApiAdapter public error contract (characterization)', () => {
 
       consoleSpy.mockRestore();
     });
+
+    it('preserves extra server fields (serverNow, etc.)', async () => {
+      stubFetch({ ok: false, code: 'ERR', message: 'fail', serverNow: '2025-01-01' });
+
+      const result = await adapter.post('/test', {});
+
+      expect(result.serverNow).toBe('2025-01-01');
+    });
   });
 
   // ─── C) post() network failure ─────────────────────────
 
   describe('post() network failure', () => {
-    it('throws the fetch error (no try/catch in post)', async () => {
+    it('returns {ok: false} instead of throwing (caught by try/catch)', async () => {
       stubFetchReject('Failed to fetch');
 
-      await expect(adapter.post('/assign-court', {})).rejects.toThrow('Failed to fetch');
+      const result = await adapter.post('/assign-court', {});
+
+      expect(result.ok).toBe(false);
     });
 
-    it('the thrown error is a TypeError (from fetch)', async () => {
+    it('includes structured .error with NETWORK category', async () => {
       stubFetchReject('Failed to fetch');
 
-      try {
-        await adapter.post('/assign-court', {});
-        expect.fail('Should have thrown');
-      } catch (e) {
-        expect(e).toBeInstanceOf(TypeError);
-      }
+      const result = await adapter.post('/assign-court', {});
+
+      expect(result.error).toEqual({
+        category: 'NETWORK',
+        code: 'FETCH_FAILED',
+        message: 'Failed to fetch',
+      });
+    });
+
+    it('includes message at top level', async () => {
+      stubFetchReject('Failed to fetch');
+
+      const result = await adapter.post('/assign-court', {});
+
+      expect(result.message).toBe('Failed to fetch');
     });
   });
 
   // ─── D) post() JSON parse failure ──────────────────────
 
   describe('post() JSON parse failure', () => {
-    it('throws the SyntaxError from response.json()', async () => {
+    it('returns {ok: false} instead of throwing (caught by try/catch)', async () => {
       stubFetchJsonFailure('Unexpected token < in JSON');
 
-      await expect(adapter.post('/assign-court', {})).rejects.toThrow(SyntaxError);
+      const result = await adapter.post('/assign-court', {});
+
+      expect(result.ok).toBe(false);
     });
 
-    it('error message comes from the JSON parse failure', async () => {
+    it('includes structured .error with NETWORK category', async () => {
       stubFetchJsonFailure('Unexpected token < in JSON');
 
-      try {
-        await adapter.post('/assign-court', {});
-        expect.fail('Should have thrown');
-      } catch (e) {
-        expect(e.message).toBe('Unexpected token < in JSON');
-      }
+      const result = await adapter.post('/assign-court', {});
+
+      expect(result.error).toEqual({
+        category: 'NETWORK',
+        code: 'FETCH_FAILED',
+        message: 'Unexpected token < in JSON',
+      });
     });
   });
 
@@ -137,12 +208,20 @@ describe('ApiAdapter public error contract (characterization)', () => {
       expect(result.data).toEqual({ courts: [1, 2, 3] });
       expect(result.serverNow).toBe('2025-01-01');
     });
+
+    it('does not include .error on success', async () => {
+      stubFetch({ ok: true, data: {} });
+
+      const result = await adapter.get('/test');
+
+      expect(result.error).toBeUndefined();
+    });
   });
 
   // ─── F) get() server error (ok: false) ─────────────────
 
   describe('get() server error (ok: false)', () => {
-    it('returns raw data with ok: false without throwing', async () => {
+    it('returns raw data with ok: false without throwing (backward compat)', async () => {
       stubFetch({ ok: false, code: 'NOT_FOUND', message: 'Resource not found' });
 
       const result = await adapter.get('/get-board');
@@ -152,13 +231,24 @@ describe('ApiAdapter public error contract (characterization)', () => {
       expect(result.message).toBe('Resource not found');
     });
 
+    it('includes structured .error with category from mapResponseToCategory', async () => {
+      stubFetch({ ok: false, code: 'COURT_NOT_FOUND', message: 'Court not found' });
+
+      const result = await adapter.get('/get-board');
+
+      expect(result.error).toEqual({
+        category: 'NOT_FOUND',
+        code: 'COURT_NOT_FOUND',
+        message: 'Court not found',
+      });
+    });
+
     it('does NOT call console.error on !ok (unlike post)', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       stubFetch({ ok: false, code: 'NOT_FOUND', message: 'Resource not found' });
 
       await adapter.get('/get-board');
 
-      // get() has no logger.error call on !ok — only post() does
       expect(consoleSpy).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -168,42 +258,48 @@ describe('ApiAdapter public error contract (characterization)', () => {
   // ─── G) get() network failure ──────────────────────────
 
   describe('get() network failure', () => {
-    it('throws the fetch error (no try/catch in get)', async () => {
+    it('returns {ok: false} instead of throwing (caught by try/catch)', async () => {
       stubFetchReject('Network down');
 
-      await expect(adapter.get('/get-board')).rejects.toThrow('Network down');
+      const result = await adapter.get('/get-board');
+
+      expect(result.ok).toBe(false);
     });
 
-    it('the thrown error is a TypeError (from fetch)', async () => {
+    it('includes structured .error with NETWORK category', async () => {
       stubFetchReject('Network down');
 
-      try {
-        await adapter.get('/get-board');
-        expect.fail('Should have thrown');
-      } catch (e) {
-        expect(e).toBeInstanceOf(TypeError);
-      }
+      const result = await adapter.get('/get-board');
+
+      expect(result.error).toEqual({
+        category: 'NETWORK',
+        code: 'FETCH_FAILED',
+        message: 'Network down',
+      });
     });
   });
 
   // ─── H) get() JSON parse failure ───────────────────────
 
   describe('get() JSON parse failure', () => {
-    it('throws the SyntaxError from response.json()', async () => {
+    it('returns {ok: false} instead of throwing (caught by try/catch)', async () => {
       stubFetchJsonFailure('Unexpected token < in JSON');
 
-      await expect(adapter.get('/get-board')).rejects.toThrow(SyntaxError);
+      const result = await adapter.get('/get-board');
+
+      expect(result.ok).toBe(false);
     });
 
-    it('error message comes from the JSON parse failure', async () => {
+    it('includes structured .error with NETWORK category', async () => {
       stubFetchJsonFailure('Unexpected token < in JSON');
 
-      try {
-        await adapter.get('/get-board');
-        expect.fail('Should have thrown');
-      } catch (e) {
-        expect(e.message).toBe('Unexpected token < in JSON');
-      }
+      const result = await adapter.get('/get-board');
+
+      expect(result.error).toEqual({
+        category: 'NETWORK',
+        code: 'FETCH_FAILED',
+        message: 'Unexpected token < in JSON',
+      });
     });
   });
 
@@ -228,11 +324,7 @@ describe('ApiAdapter public error contract (characterization)', () => {
       await adapter.post('/test', {});
 
       expect(consoleSpy).toHaveBeenCalledTimes(1);
-      // logger.error('ApiAdapter', `POST /test failed`, data) →
-      // console.error('[ApiAdapter] POST /test failed', data)
       expect(consoleSpy.mock.calls[0][0]).toContain('[ApiAdapter]');
-      // Second arg is the response data object
-      expect(consoleSpy.mock.calls[0][1]).toMatchObject({ ok: false, code: 'ERR' });
 
       consoleSpy.mockRestore();
     });

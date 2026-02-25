@@ -15,7 +15,7 @@
  */
 
 import { API_CONFIG, ENDPOINTS, getDeviceContext } from './apiConfig.js';
-import { AppError, ErrorCategories } from './errors/index.js';
+import { AppError, ErrorCategories, mapResponseToCategory } from './errors/index.js';
 import { logger } from './logger.js';
 
 export class ApiAdapter {
@@ -114,18 +114,40 @@ export class ApiAdapter {
    * @returns {Promise<Object>} Response data with { ok, ... }
    */
   async get(endpoint) {
-    const url = `${this.baseUrl}${endpoint}`;
-    logger.debug('ApiAdapter', 'GET', endpoint);
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${this.anonKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    const data = await response.json();
-    logger.debug('ApiAdapter', 'GET response ok', data.ok);
-    return data;
+    try {
+      const url = `${this.baseUrl}${endpoint}`;
+      logger.debug('ApiAdapter', 'GET', endpoint);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.anonKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      logger.debug('ApiAdapter', 'GET response ok', data.ok);
+      if (!data.ok) {
+        return {
+          ...data,
+          error: {
+            category: mapResponseToCategory(data.code),
+            code: data.code || 'API_ERROR',
+            message: data.message || data.error || 'Request failed',
+          },
+        };
+      }
+      return data;
+    } catch (err) {
+      return {
+        ok: false,
+        message: err.message || 'Network request failed',
+        error: {
+          category: ErrorCategories.NETWORK,
+          code: 'FETCH_FAILED',
+          message: err.message || 'Network request failed',
+        },
+      };
+    }
   }
 
   /**
@@ -135,28 +157,48 @@ export class ApiAdapter {
    * @returns {Promise<Object>} Response data with { ok, ... }
    */
   async post(endpoint, body = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
-    // Evaluate device context at request time (not module load time)
-    const { deviceId, deviceType } = getDeviceContext();
-    const bodyWithDevice = {
-      ...body,
-      device_id: deviceId,
-      device_type: deviceType,
-    };
-    logger.debug('ApiAdapter', `POST ${endpoint}`);
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.anonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(bodyWithDevice),
-    });
-    const data = await response.json();
-    if (!data.ok) {
-      logger.error('ApiAdapter', `POST ${endpoint} failed`, data);
+    try {
+      const url = `${this.baseUrl}${endpoint}`;
+      // Evaluate device context at request time (not module load time)
+      const { deviceId, deviceType } = getDeviceContext();
+      const bodyWithDevice = {
+        ...body,
+        device_id: deviceId,
+        device_type: deviceType,
+      };
+      logger.debug('ApiAdapter', `POST ${endpoint}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.anonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bodyWithDevice),
+      });
+      const data = await response.json();
+      if (!data.ok) {
+        logger.error('ApiAdapter', `POST ${endpoint} failed`, data);
+        return {
+          ...data,
+          error: {
+            category: mapResponseToCategory(data.code),
+            code: data.code || 'API_ERROR',
+            message: data.message || data.error || 'Request failed',
+          },
+        };
+      }
+      return data;
+    } catch (err) {
+      return {
+        ok: false,
+        message: err.message || 'Network request failed',
+        error: {
+          category: ErrorCategories.NETWORK,
+          code: 'FETCH_FAILED',
+          message: err.message || 'Network request failed',
+        },
+      };
     }
-    return data;
   }
 
   // ===========================================

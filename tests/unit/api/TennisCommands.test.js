@@ -114,7 +114,12 @@ describe('TennisCommands', () => {
       });
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBe('Court already assigned');
+      // .error is now the structured error object (overwrites the original string)
+      expect(result.error).toEqual({
+        category: 'UNKNOWN',
+        code: 'API_ERROR',
+        message: 'Court already assigned',
+      });
     });
   });
 
@@ -211,24 +216,28 @@ describe('TennisCommands', () => {
   // ─── Error propagation ────────────────────────────────
 
   describe('error propagation', () => {
-    it('propagates network failure from adapter', async () => {
+    it('returns {ok: false} with error metadata on network failure', async () => {
       stubFetchReject('Network down');
 
-      await expect(
-        commands.assignCourt({
-          courtId: 'court-1',
-          groupType: 'singles',
-          participants: [],
-        })
-      ).rejects.toThrow(/Network down/);
+      const result = await commands.assignCourt({
+        courtId: 'court-1',
+        groupType: 'singles',
+        participants: [],
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.error.code).toBe('FETCH_FAILED');
+      expect(result.message).toBe('Network down');
     });
 
-    it('propagates network failure for different commands', async () => {
+    it('returns {ok: false} with error metadata for different commands', async () => {
       stubFetchReject('Connection refused');
 
-      await expect(
-        commands.endSession({ courtId: 'court-1', reason: 'test' })
-      ).rejects.toThrow(/Connection refused/);
+      const result = await commands.endSession({ courtId: 'court-1', reason: 'test' });
+
+      expect(result.ok).toBe(false);
+      expect(result.error.code).toBe('FETCH_FAILED');
+      expect(result.message).toBe('Connection refused');
     });
   });
 });

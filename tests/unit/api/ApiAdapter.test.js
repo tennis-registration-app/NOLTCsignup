@@ -141,14 +141,21 @@ describe('ApiAdapter', () => {
       const result = await adapter.get('/get-board');
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBe('Something went wrong');
+      // .error is now the structured error object (overwrites the original string)
+      expect(result.error).toEqual({
+        category: 'UNKNOWN',
+        code: 'API_ERROR',
+        message: 'Something went wrong',
+      });
     });
 
-    it('throws on network failure (fetch rejects)', async () => {
+    it('returns {ok: false} on network failure (caught by try/catch)', async () => {
       stubFetchReject('Network down');
 
-      // Network failures should still throw (fetch itself rejects)
-      await expect(adapter.get('/get-board')).rejects.toThrow();
+      // Network failures now caught and returned as structured error
+      const result = await adapter.get('/get-board');
+      expect(result.ok).toBe(false);
+      expect(result.error.code).toBe('FETCH_FAILED');
     });
 
     it('constructs correct URL and headers', async () => {
@@ -211,13 +218,21 @@ describe('ApiAdapter', () => {
       const result = await adapter.post('/assign-court', {});
 
       expect(result.ok).toBe(false);
-      expect(result.error).toBe('Court already assigned');
+      // .error is now the structured error object (overwrites the original string)
+      expect(result.error).toEqual({
+        category: 'UNKNOWN',
+        code: 'API_ERROR',
+        message: 'Court already assigned',
+      });
     });
 
-    it('throws on network failure (fetch rejects)', async () => {
+    it('returns {ok: false} on network failure (caught by try/catch)', async () => {
       stubFetchReject('Network down');
 
-      await expect(adapter.post('/assign-court', {})).rejects.toThrow();
+      // Network failures now caught and returned as structured error
+      const result = await adapter.post('/assign-court', {});
+      expect(result.ok).toBe(false);
+      expect(result.error.code).toBe('FETCH_FAILED');
     });
   });
 
