@@ -4,7 +4,10 @@
  * AI-powered chat interface for natural language court management commands.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronRight, Check } from '../components';
+import { X } from '../components';
+import AIAssistantMessages from './AIAssistantMessages.jsx';
+import AIAssistantInput from './AIAssistantInput.jsx';
+import AIAssistantActionCard from './AIAssistantActionCard.jsx';
 import { getCache } from '../../platform/prefsStorage.js';
 import { useAdminNotification } from '../context/NotificationContext.jsx';
 import { logger } from '../../lib/logger.js';
@@ -451,85 +454,24 @@ const AIAssistantAdmin = ({
           </button>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg p-3 ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : message.role === 'system'
-                      ? 'bg-green-800 text-green-100'
-                      : message.warning
-                        ? 'bg-orange-800 text-orange-100'
-                        : message.error
-                          ? 'bg-red-800 text-red-100'
-                          : 'bg-gray-700 text-gray-100'
-                }`}
-              >
-                <div className="whitespace-pre-wrap">{message.content}</div>
-              </div>
-            </div>
-          ))}
+        <AIAssistantMessages
+          messages={messages}
+          isProcessing={isProcessing}
+          messagesEndRef={messagesEndRef}
+        >
+          <AIAssistantActionCard
+            pendingAction={pendingAction}
+            onConfirm={handleConfirm}
+            onCancel={() => setPendingAction(null)}
+          />
+        </AIAssistantMessages>
 
-          {isProcessing && (
-            <div className="flex justify-start">
-              <div className="bg-gray-700 text-gray-100 rounded-lg p-3">
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-white rounded-full"></div>
-                  <span>Processing...</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {pendingAction && (
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                onClick={handleConfirm}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <Check size={16} />
-                Confirm
-              </button>
-              <button
-                onClick={() => setPendingAction(null)}
-                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="p-4 border-t border-gray-700">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Type a command..."
-              className="flex-1 bg-gray-800 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isProcessing}
-              autoFocus
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isProcessing}
-              className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
+        <AIAssistantInput
+          input={input}
+          isProcessing={isProcessing}
+          onInputChange={setInput}
+          onSend={handleSend}
+        />
       </div>
     </div>
   );
