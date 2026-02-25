@@ -456,12 +456,19 @@ Some components exceed the 500-line target:
 | Component | Lines | Notes |
 |-----------|-------|-------|
 | `CompleteBlockManagerEnhanced.jsx` | ~350 | Block management UI (reduced from ~900) |
-| `SystemSettings.jsx` | ~740 | Settings form with many fields |
 | `admin/App.jsx` | ~600 | Admin entry point (was `AdminScreen.jsx` at ~720) |
 
-These are candidates for future decomposition. Note: all registration routes
-now follow the presenter pattern (`buildXModel` + `buildXActions`), with
-`CourtRoute.jsx` reduced from 315 to 122 lines as the reference example.
+Decomposed components (WP-ADMIN-COMPONENT-DECOMPOSITION):
+
+| Component | Before | After | Approach |
+|-----------|--------|-------|----------|
+| `EventCalendarEnhanced.jsx` | 575 | 438 | Presenter + CalendarToolbar subcomponent |
+| `BlockTimeline.jsx` | 453 | 240 | Presenter + Toolbar/Card subcomponents |
+| `SystemSettings.jsx` | 410 | 92 | useSystemSettingsState hook extraction |
+| `AIAssistantAdmin.jsx` | 538 | 480 | Messages/Input/ActionCard subcomponents |
+
+All registration routes follow the presenter pattern (`buildXModel` + `buildXActions`),
+with `CourtRoute.jsx` reduced from 315 to 122 lines as the reference example.
 
 ## Entry Points & Module System
 

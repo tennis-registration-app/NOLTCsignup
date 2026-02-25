@@ -9,7 +9,9 @@ src/admin/blocks/
 ├── CompleteBlockManagerEnhanced.jsx  # Main component (832 lines)
 ├── CourtSelectionGrid.jsx            # Presentational: 12-court grid
 ├── BlockReasonSelector.jsx           # Presentational: reason buttons + custom input
-├── BlockTimeline.jsx                 # Timeline visualization
+├── BlockTimeline.jsx                 # Timeline visualization (uses blockTimelinePresenter)
+├── BlockTimelineToolbar.jsx          # Toolbar: view mode, nav, court filter
+├── BlockTimelineCard.jsx             # Individual block card with edit/remove actions
 ├── RecurrenceConfig.jsx              # Recurrence pattern configuration
 ├── hooks/
 │   └── useWetCourts.js               # Wet court API handlers

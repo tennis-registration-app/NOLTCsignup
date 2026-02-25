@@ -14,7 +14,7 @@
 | Mobile countdown | `setInterval` | 1s | Success screen countdown (synced with 8s Mobile.html dismiss) | `clearInterval` on effect cleanup |
 | QR countdown | `setInterval` | 1s | Location QR code expiry timer | `clearInterval` via ref |
 | Mobile fallback bar | `setInterval` | Dynamic | Queue timer for mobile waitlist | `clearInterval` on clear |
-| Admin save status | `setTimeout` | 2s | Reset save indicator after confirmation | Automatic (5 instances in SystemSettings) |
+| Admin save status | `setTimeout` | 2s | Reset save indicator after confirmation | Automatic (5 instances in useSystemSettingsState) |
 | Health check | `setTimeout` | 1s | Mobile shell health check | Automatic |
 | Admin timer registry | `timerRegistry.js` | N/A | Centralized cleanup for admin intervals | `clearAllTimers()` on unmount/unload |
 
@@ -51,7 +51,7 @@
 
 - **What:** Analytics components process history data on each render
 - **Where:** `UsageHeatmap.jsx`, `WaitTimeAnalysis.jsx`, `GuestChargeLog.jsx`, etc.
-- **Mitigation:** Heavy memoization (14 `useMemo`/`useCallback` in `EventCalendarEnhanced.jsx` alone)
+- **Mitigation:** Heavy memoization (EventCalendarEnhanced uses presenter functions via `useMemo` wrappers)
 - **Watch for:** Slow chart rendering with large date ranges
 
 ## Memoization Inventory
@@ -61,8 +61,8 @@
 | Area | Count | Key files |
 |------|-------|-----------|
 | Admin analytics | ~20 | UsageHeatmap, WaitTimeAnalysis, GuestChargeLog, BallPurchaseLog |
-| Admin calendar | ~24 | EventCalendarEnhanced (14), DayViewEnhanced, WeekView, MonthView |
-| Admin other | ~10 | SystemSettings, EventDetailsModal, BlockTimeline |
+| Admin calendar | ~24 | EventCalendarEnhanced (presenter via useMemo), DayViewEnhanced, WeekView, MonthView |
+| Admin other | ~10 | useSystemSettingsState, EventDetailsModal, BlockTimeline (presenter via useMemo) |
 | Courtboard | ~4 | TennisCourtDisplay, NextAvailablePanel |
 | Registration | ~7 | QRScanner, LocationQRCode, SuccessScreen |
 

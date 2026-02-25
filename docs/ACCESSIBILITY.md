@@ -16,7 +16,7 @@
 | Behavior | Location |
 |----------|----------|
 | Modal close restores focus to opener | `MobileModalSheet.jsx` |
-| `autoFocus` on primary inputs | HomeScreen (member ID), MobileGroupSearchModal, AIAssistantAdmin |
+| `autoFocus` on primary inputs | HomeScreen (member ID), MobileGroupSearchModal, AIAssistantInput |
 | Programmatic focus on add-player flows | GroupScreen (`addPlayerInputRef`, `guestInputRef`) |
 | `tabIndex` on interactive court cards | CourtCard.jsx (only when clickable) |
 | Focus on block reason input | BlockReasonSelector.jsx |
@@ -27,7 +27,7 @@
 |-------------|----------|---------|
 | Enter to submit member search | HomeScreen:104 | `onKeyDown` — selects single match or shows "no member found" |
 | Enter to select player suggestion | GroupScreen:242 | `onKeyDown` — auto-selects when exactly one suggestion |
-| Enter to send AI message | AIAssistantAdmin:518 | `onKeyPress` |
+| Enter to send AI message | AIAssistantInput | `onKeyPress` |
 | Court card keyboard activation | CourtCard.jsx:142-143 | `role="button"` + `tabIndex={0}` when clickable |
 
 ### Semantic HTML
@@ -35,7 +35,7 @@
 Most interactive elements use `<button>` elements correctly:
 - Tab navigation (TabNavigation.jsx)
 - Waitlist reorder/remove actions (WaitlistSection.jsx, StatusSection.jsx)
-- Calendar navigation (EventCalendarEnhanced.jsx)
+- Calendar navigation (CalendarToolbar.jsx, EventCalendarEnhanced.jsx)
 - Form submissions and save actions
 
 ## Known Gaps
