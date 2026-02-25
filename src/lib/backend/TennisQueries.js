@@ -12,7 +12,6 @@ import { validateBoardResponse, validateBoard } from '../schemas/index.js';
 import { logger } from '../logger.js';
 import { AppError } from '../errors/AppError.js';
 import { ErrorCategories } from '../errors/errorCategories.js';
-import { mapResponseToCategory } from '../errors/mapResponseToCategory.js';
 
 export class TennisQueries {
   constructor(apiAdapter) {
@@ -46,7 +45,7 @@ export class TennisQueries {
 
     if (!response.ok) {
       throw new AppError({
-        category: response.code ? mapResponseToCategory(response.code) : ErrorCategories.UNKNOWN,
+        category: response.error?.category || ErrorCategories.UNKNOWN,
         code: response.code || 'QUERY_FAILED',
         message: response.message || 'Failed to load board',
       });
