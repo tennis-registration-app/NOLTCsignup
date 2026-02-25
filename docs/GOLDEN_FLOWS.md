@@ -214,6 +214,92 @@ Each flow includes preconditions, steps, and observable results.
 
 ---
 
+## Flow 8: Mobile Registration (via QR Code)
+
+**Entry Point:** Member scans QR code → opens `Mobile.html` → 3-iframe layout
+
+### Architecture
+
+`Mobile.html` loads three iframes:
+1. **Courtboard** (`src/courtboard/index.html?view=mobile`) — background court grid
+2. **Registration** (overlay, shown on tap) — same registration app with `?view=mobile`
+3. **Camera** (for QR location verification)
+
+The registration iframe communicates with `Mobile.html` via `postMessage`:
+- `Mobile.html` → registration: `{ type: 'register', courtNumber }` or `{ type: 'assign-from-waitlist', waitlistEntryId, courtNumber }`
+- Registration → `Mobile.html`: `{ type: 'registration:success', courtNumber }` or `{ type: 'resetRegistration' }`
+
+Mobile flow state is managed by `useMobileFlowController.js`.
+
+### Preconditions
+- Member has mobile device with browser
+- QR code is accessible (posted at club or sent via notification)
+- Device has GPS capability (or camera for QR location scan)
+
+### Steps
+1. Member scans QR code on mobile device
+2. `Mobile.html` loads — courtboard displays in full screen
+3. Member taps an available (green) court on the courtboard
+4. Registration overlay slides up (`#regOverlay.show`)
+5. `postMessage({ type: 'register', courtNumber })` sent to registration iframe
+6. Registration iframe activates mobile flow (`mobileFlow = true`, `preselectedCourt = courtNumber`)
+7. Member searches by name/ID (same as kiosk flow, mobile-optimized layout via `variant-mobile` CSS)
+8. Group management (same as kiosk)
+9. Court assignment — backend validates geolocation:
+   - GPS coordinates sent with assign request (`getMobileGeolocation()`)
+   - If GPS fails, QR scanner fallback offered (`gpsFailedPrompt`)
+   - If QR scanned, `location_token` sent instead of coordinates
+   - Backend validates against geofence → `OUTSIDE_GEOFENCE` denial if too far
+10. On success: `registration:success` message sent to parent
+11. Mobile countdown starts (8 seconds, synced with `Mobile.html` dismiss timer)
+12. Overlay auto-dismisses after countdown
+
+### Observable Results
+
+| Check | What to Observe |
+|-------|-----------------|
+| Primary (UI) | Courtboard shows in full screen, tapping court opens registration overlay |
+| Primary (UI) | Registration overlay shows mobile-optimized layout (`variant-mobile` class) |
+| Primary (UI) | Success screen shows countdown timer (8 → 0) |
+| GPS flow | DevTools → Network: assign request includes `latitude`/`longitude` |
+| QR fallback | If GPS fails, "Verify Location" prompt appears with QR scanner option |
+| Location token | If QR scanned, assign request includes `location_token` instead of GPS |
+| Geofence | If outside geofence, backend returns `OUTSIDE_GEOFENCE` denial |
+| Post-success | Overlay dismisses after countdown, courtboard shows updated court status |
+
+### Key Differences from Kiosk
+
+| Aspect | Kiosk | Mobile |
+|--------|-------|--------|
+| Entry | Direct URL | QR code → `Mobile.html` |
+| Layout | Full registration app | 3-iframe layout (courtboard + overlay) |
+| Court selection | Manual from list | Pre-selected by tapping courtboard |
+| Location | Not required | GPS or QR token required |
+| Success | Stays on success screen | 8-second countdown → auto-dismiss |
+| Communication | Direct state | `postMessage` between iframes |
+
+### Regression Tripwires
+
+```bash
+# Mobile view detection
+rg "IS_MOBILE_VIEW\|IS_MOBILE" src/registration/ --include="*.{js,jsx,ts,tsx}" | grep -v test
+# Expected: references in routes, presenters, and orchestrators
+
+# Geofence validation in assign flow
+rg "geofence\|geolocation\|OUTSIDE_GEOFENCE\|getMobileGeolocation" src/registration/orchestration/ | grep -v test
+# Expected: references in assignCourtOrchestrator
+
+# Mobile countdown mechanism
+rg "mobileCountdown\|registration:success\|resetRegistration" src/registration/ | grep -v test
+# Expected: references in useMobileFlowController and presenters
+
+# postMessage communication
+rg "postMessage\|addEventListener.*message" src/registration/ui/mobile/ | grep -v test
+# Expected: message listener in useMobileFlowController, postMessage sends
+```
+
+---
+
 ## Using These Flows
 
 ### Manual Testing
