@@ -5,7 +5,7 @@
  * Fetches block data from API via TennisBackend.
  */
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Edit2, Copy, Trash2 } from '../components';
+import { CalendarDays } from '../components';
 import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 import { logger } from '../../lib/logger.js';
 import {
@@ -13,9 +13,10 @@ import {
   groupBlocksByDate,
   sortGroupedBlocks,
   getBlockStatus,
-  getStatusColor,
   getDateLabel,
 } from '../presenters/blockTimelinePresenter.js';
+import BlockTimelineToolbar from './BlockTimelineToolbar.jsx';
+import BlockTimelineCard from './BlockTimelineCard.jsx';
 
 const BlockTimeline = ({
   courts: _courts,
@@ -135,64 +136,16 @@ const BlockTimeline = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('day')}
-              className={`px-3 py-1 rounded ${viewMode === 'day' ? 'bg-white shadow-sm' : ''}`}
-            >
-              Day
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={`px-3 py-1 rounded ${viewMode === 'week' ? 'bg-white shadow-sm' : ''}`}
-            >
-              Week
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button onClick={() => navigateDate(-1)} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => setSelectedDate(new Date())}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Today
-            </button>
-            <button onClick={() => navigateDate(1)} className="p-1 hover:bg-gray-100 rounded">
-              <ChevronRight size={20} />
-            </button>
-          </div>
-
-          <div className="font-medium">
-            {viewMode === 'day'
-              ? selectedDate.toLocaleDateString([], {
-                  weekday: 'long',
-                  month: 'long',
-                  day: 'numeric',
-                })
-              : `Week of ${selectedDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}`}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <select
-            value={filterCourt}
-            onChange={(e) => setFilterCourt(e.target.value)}
-            className="px-3 py-1 border rounded-lg text-sm"
-          >
-            <option value="all">All Courts</option>
-            {[...Array(12)].map((_, i) => (
-              <option key={i} value={i + 1}>
-                Court {i + 1}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <BlockTimelineToolbar
+        viewMode={viewMode}
+        selectedDate={selectedDate}
+        filterCourt={filterCourt}
+        onViewModeChange={setViewMode}
+        onPrev={() => navigateDate(-1)}
+        onNext={() => navigateDate(1)}
+        onToday={() => setSelectedDate(new Date())}
+        onFilterCourtChange={setFilterCourt}
+      />
 
       {/* Loading state */}
       {isLoading && (
@@ -238,84 +191,20 @@ const BlockTimeline = ({
                   <div className="flex-1 h-px bg-gray-300"></div>
                 </div>
 
-                {group.blocks.map((block) => {
-                  const status = getBlockStatus(block, currentTime);
-                  const isEditable = status !== 'past';
-
-                  return (
-                    <div
-                      key={block.id}
-                      className={`p-4 rounded-lg border-2 ${getStatusColor(status)} transition-all`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="font-bold text-lg">Court {block.courtNumber}</span>
-                            <span className="px-2 py-1 bg-white/70 rounded text-sm font-medium">
-                              {block.title || block.reason}
-                            </span>
-                            {status === 'active' && (
-                              <span className="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium animate-pulse">
-                                ACTIVE NOW
-                              </span>
-                            )}
-                            {block.isRecurring && (
-                              <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
-                                Recurring
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock size={14} />
-                            <span>
-                              {new Date(block.startTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                              {' - '}
-                              {new Date(block.endTime).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          {isEditable && (
-                            <>
-                              <button
-                                onClick={() => onEditBlock(block)}
-                                className="p-2 hover:bg-white/50 rounded transition-colors"
-                                title="Edit block"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => onDuplicateBlock(block)}
-                                className="p-2 hover:bg-white/50 rounded transition-colors"
-                                title="Duplicate block"
-                              >
-                                <Copy size={16} />
-                              </button>
-                            </>
-                          )}
-                          <button
-                            onClick={async () => {
-                              if (await confirm(`Remove block on Court ${block.courtNumber}?`)) {
-                                onRemoveBlock(block.id);
-                              }
-                            }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Remove block"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {group.blocks.map((block) => (
+                  <BlockTimelineCard
+                    key={block.id}
+                    block={block}
+                    status={getBlockStatus(block, currentTime)}
+                    onEdit={onEditBlock}
+                    onDuplicate={onDuplicateBlock}
+                    onRemove={async (b) => {
+                      if (await confirm(`Remove block on Court ${b.courtNumber}?`)) {
+                        onRemoveBlock(b.id);
+                      }
+                    }}
+                  />
+                ))}
               </div>
             ))
           )}
