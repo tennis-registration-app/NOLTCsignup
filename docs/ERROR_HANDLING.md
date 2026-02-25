@@ -9,11 +9,14 @@ This document describes error handling patterns across the application.
 ```text
 Backend API
     ↓  { ok: false, code: 'COURT_OCCUPIED', message: '...' }
+ApiAdapter public get/post
+    ↓  return { ok: false, code, message, error: { category, code, message } }
+    ↓  Network/parse failure: return { ok: false, error: { category: NETWORK, code: FETCH_FAILED } }
 TennisCommands / TennisQueries
-    ↓  throw AppError({ category: mapResponseToCategory(code), code, message })
-ApiAdapter._fetch()
+    ↓  check response.ok → throw AppError using response.error.category
+    ↓  OR passthrough { ok: false } to caller
+ApiAdapter._fetch() (private path)
     ↓  throw AppError({ category: NETWORK, code: FETCH_FAILED }) on transport error
-    ↓  (AppError from Commands/Queries passes through unwrapped)
 Orchestrators
     ↓  catch → normalizeError(err) → { category, code, message, isAppError }
     ↓  Structured metadata logged; user-facing message unchanged
@@ -44,15 +47,14 @@ Commands validate input, then delegate to ApiAdapter. Four throw sites use
 
 **Pattern:** Call ApiAdapter, throw `AppError` with mapped category on failure.
 
-Uses `mapResponseToCategory(response.code)` to deterministically classify
-backend denial codes into ErrorCategories. This is the single source of truth
-for code-to-category mapping.
+Uses `response.error.category` from ApiAdapter's structured error metadata.
+Falls back to `ErrorCategories.UNKNOWN` if `response.error` is not present.
+Preserves domain-specific fallback code `'QUERY_FAILED'` and message
+`'Failed to load board'`.
 
 ### ApiAdapter
 
-**Pattern:** Fetch, check response, throw `AppError` on failure.
-
-Throw sites:
+**Private methods** (`_fetch`, `_get`, `_post`): throw `AppError` on failure.
 
 | Condition | Category | Code | Details |
 |-----------|----------|------|---------|
@@ -60,6 +62,11 @@ Throw sites:
 | fetch/network failure | `NETWORK` | `FETCH_FAILED` | original error |
 
 Already-wrapped `AppError` instances pass through without re-wrapping.
+
+**Public methods** (`get`, `post`): return structured error metadata on failure.
+See `docs/error-contracts.md` for the full response shape. Network and JSON
+parse failures are caught and returned as `{ ok: false, error: { category: NETWORK } }`
+instead of throwing.
 
 ### Orchestrators
 
@@ -186,8 +193,7 @@ const b = errResult({ code: 'NOT_FOUND', message: 'Court not found' });
 // → { ok: false, error: { code: 'NOT_FOUND', message: 'Court not found', details?: ... } }
 ```
 
-The orchestrator helpers in `src/registration/orchestration/helpers/resultNormalizer.js`
-(`success`, `failure`, `wrapAsync`) produce the same shapes and are typed against these definitions.
+ApiAdapter public methods produce compatible shapes on failure — `{ ok: false, error: { code, message } }`.
 
 ## UI Feedback Decision Table
 
@@ -219,26 +225,9 @@ Error handling contracts are locked by tests in `tests/unit/errors/`:
 |-----------|-------|----------|
 | `AppError.test.js` | 10 | instanceof, message, category, code, details, stack tolerance |
 | `resultTypes.test.js` | 6 | okResult/errResult shapes |
-| `resultNormalizerShapes.test.js` | 8 | success/failure/wrapAsync conformance |
 | `mapResponseToCategory.test.js` | 19 | all 14 DenialCodes + edge cases + exhaustiveness |
 | `normalizeError.test.js` | 9 | AppError/Error/string/number/null/undefined + instanceof chain |
 | `taxonomyChain.contract.test.js` | — | end-to-end chain: DenialCode → AppError → normalizeError |
-
-## resultNormalizer (Available Helper)
-
-**Location:** `src/registration/orchestration/helpers/resultNormalizer.ts`
-
-Provides typed utilities for standardizing success/failure envelopes:
-
-- `Result<T>` / `ResultError` / `ResultOrError<T>` — discriminated union types
-- `success(data)` — create `{ ok: true, data }` envelope
-- `failure(code, message, details?)` — create `{ ok: false, error: { code, message, details } }` envelope
-- `wrapAsync(fn)` — wrap an async function, catching errors into `ResultError` with code `UNEXPECTED_ERROR`
-
-**Status:** Available but currently unused in production. Tested by 8 conformance
-tests in `resultNormalizerShapes.test.js`. Available for adoption by orchestrators
-during error taxonomy unification. Adoption decision will be made after
-TennisCommands/TennisQueries error preservation work (WP-ERROR-TAXONOMY-CHAIN).
 
 ## Future Work
 
