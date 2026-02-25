@@ -14,6 +14,11 @@ import { getEventTypeFromReason } from './utils.js';
 import { logger } from '../../lib/logger.js';
 import { normalizeCalendarBlock } from '../../lib/normalize/index.js';
 import { useAdminNotification } from '../context/NotificationContext.jsx';
+import {
+  buildCalendarEvents,
+  filterCalendarEvents,
+  formatCalendarHeader,
+} from '../presenters/eventCalendarPresenter.js';
 
 const EventCalendarEnhanced = ({
   courts,
@@ -139,104 +144,17 @@ const EventCalendarEnhanced = ({
   }, [backend, viewMode, selectedDate, refreshTrigger]);
 
   // Memoized event extraction and processing
-  const events = useMemo(() => {
-    const processedEvents = new Map();
-
-    // Process API-sourced blocks
-    blocks.forEach((block) => {
-      if (block.isEvent) {
-        const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
-
-        if (!processedEvents.has(eventKey)) {
-          processedEvents.set(eventKey, {
-            ...block,
-            courtNumbers: block.courtNumbers || [block.courtNumber],
-            id: block.id || eventKey,
-          });
-        }
-      }
-    });
-
-    // Process non-event blocks
-    blocks.forEach((block) => {
-      if (!block.isEvent) {
-        const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
-
-        if (!processedEvents.has(eventKey)) {
-          processedEvents.set(eventKey, {
-            id: block.id,
-            courtId: block.courtId,
-            courtNumber: block.courtNumber,
-            title: block.title || block.reason,
-            startTime: block.startTime,
-            endTime: block.endTime,
-            eventType: block.eventType || getEventTypeFromReason(block.reason),
-            courtNumbers: [block.courtNumber],
-            isBlock: true,
-            reason: block.reason,
-          });
-        }
-      }
-    });
-
-    // Also check courts data for backward compatibility with active blocks
-    courts.forEach((court, idx) => {
-      if (court && court.blocked && court.blocked.isEvent) {
-        const eventKey = `${court.blocked.eventDetails?.title || court.blocked.title}-${court.blocked.startTime}`;
-
-        if (!processedEvents.has(eventKey)) {
-          processedEvents.set(eventKey, {
-            ...court.blocked,
-            courtNumbers: court.blocked.eventDetails?.courts || [idx + 1],
-            id: eventKey,
-          });
-        }
-      }
-    });
-
-    return Array.from(processedEvents.values());
+  const events = useMemo(
+    () => buildCalendarEvents({ blocks, courts }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshTrigger intentionally forces re-compute on external events (block creation/deletion)
-  }, [blocks, courts, refreshTrigger]);
+    [blocks, courts, refreshTrigger]
+  );
 
   // Memoized filtered events based on view and date range
-  const filteredEvents = useMemo(() => {
-    let startDate, endDate;
-
-    if (viewMode === 'month') {
-      startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-      endDate = new Date(
-        selectedDate.getFullYear(),
-        selectedDate.getMonth() + 1,
-        0,
-        23,
-        59,
-        59,
-        999
-      );
-    } else if (viewMode === 'week') {
-      startDate = new Date(selectedDate);
-      startDate.setDate(startDate.getDate() - startDate.getDay());
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 6);
-      endDate.setHours(23, 59, 59, 999);
-    } else {
-      startDate = new Date(selectedDate);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(selectedDate);
-      endDate.setHours(23, 59, 59, 999);
-    }
-
-    return events.filter((event) => {
-      const eventStart = new Date(event.startTime);
-      const eventEnd = new Date(event.endTime);
-      return (
-        (eventStart >= startDate && eventStart <= endDate) ||
-        (eventEnd >= startDate && eventEnd <= endDate) ||
-        (eventStart <= startDate && eventEnd >= endDate)
-      );
-    });
-  }, [events, viewMode, selectedDate]);
+  const filteredEvents = useMemo(
+    () => filterCalendarEvents({ events, viewMode, selectedDate }),
+    [events, viewMode, selectedDate]
+  );
 
   // Event handlers
   const handleEventClick = useCallback(
@@ -379,24 +297,10 @@ const EventCalendarEnhanced = ({
   }, []);
 
   // Memoized header text
-  const headerText = useMemo(() => {
-    if (viewMode === 'month') {
-      return selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    } else if (viewMode === 'week') {
-      const start = new Date(selectedDate);
-      start.setDate(start.getDate() - start.getDay());
-      const end = new Date(start);
-      end.setDate(end.getDate() + 6);
-      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-    } else {
-      return selectedDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    }
-  }, [viewMode, selectedDate]);
+  const headerText = useMemo(
+    () => formatCalendarHeader({ viewMode, selectedDate }),
+    [viewMode, selectedDate]
+  );
 
   // Close menus on click outside
   useEffect(() => {
