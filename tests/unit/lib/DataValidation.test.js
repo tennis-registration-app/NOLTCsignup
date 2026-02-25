@@ -150,3 +150,145 @@ describe('DataValidation.isValidDate', () => {
     expect(DataValidation.isValidDate(null)).toBe(false);
   });
 });
+
+// ── isValidCourtData ───────────────────────────────────────
+describe('DataValidation.isValidCourtData', () => {
+  it('returns true for null court', () => {
+    expect(DataValidation.isValidCourtData(null)).toBe(true);
+  });
+
+  it('returns true for undefined court', () => {
+    expect(DataValidation.isValidCourtData(undefined)).toBe(true);
+  });
+
+  it('validates wasCleared court with valid data', () => {
+    const now = Date.now();
+    const court = {
+      wasCleared: true,
+      players: [{ id: '1', name: 'A' }],
+      startTime: new Date(now).toISOString(),
+      endTime: new Date(now + 60000).toISOString(),
+    };
+    expect(DataValidation.isValidCourtData(court)).toBe(true);
+  });
+
+  it('rejects wasCleared court with invalid players', () => {
+    const court = {
+      wasCleared: true,
+      players: 'bad',
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+    };
+    expect(DataValidation.isValidCourtData(court)).toBe(false);
+  });
+
+  it('validates domain-format court with session', () => {
+    const court = {
+      session: {
+        group: { players: [] },
+        startedAt: new Date().toISOString(),
+        scheduledEndAt: new Date(Date.now() + 60000).toISOString(),
+      },
+    };
+    expect(DataValidation.isValidCourtData(court)).toBe(true);
+  });
+
+  it('validates court with null session but history array', () => {
+    const court = { session: null, history: [] };
+    expect(DataValidation.isValidCourtData(court)).toBe(true);
+  });
+
+  it('rejects court with non-array history', () => {
+    const court = { history: 'not-array' };
+    expect(DataValidation.isValidCourtData(court)).toBe(false);
+  });
+
+  it('validates regular court with correct times', () => {
+    const now = Date.now();
+    const court = {
+      players: [{ id: '1', name: 'A' }],
+      startTime: new Date(now).toISOString(),
+      endTime: new Date(now + 3600000).toISOString(),
+    };
+    expect(DataValidation.isValidCourtData(court)).toBe(true);
+  });
+
+  it('rejects regular court with endTime <= startTime', () => {
+    const now = Date.now();
+    const court = {
+      players: [{ id: '1', name: 'A' }],
+      startTime: new Date(now + 3600000).toISOString(),
+      endTime: new Date(now).toISOString(),
+    };
+    expect(DataValidation.isValidCourtData(court)).toBe(false);
+  });
+});
+
+// ── sanitizeStorageData ────────────────────────────────────
+describe('DataValidation.sanitizeStorageData', () => {
+  it('returns default structure with 12 null courts', () => {
+    const result = DataValidation.sanitizeStorageData({ courts: [] });
+    expect(result.courts).toHaveLength(12);
+    expect(result.courts.every((c) => c === null)).toBe(true);
+    expect(result.waitingGroups).toEqual([]);
+    expect(result.recentlyCleared).toEqual([]);
+  });
+
+  it('copies valid courts to correct indices', () => {
+    const now = Date.now();
+    const court = {
+      players: [{ id: '1', name: 'A' }],
+      startTime: new Date(now).toISOString(),
+      endTime: new Date(now + 3600000).toISOString(),
+    };
+    const result = DataValidation.sanitizeStorageData({ courts: [null, court] });
+    expect(result.courts[0]).toBeNull();
+    expect(result.courts[1]).toBe(court);
+  });
+
+  it('skips courts at index >= TOTAL_COUNT', () => {
+    const courts = Array(15).fill(null);
+    const result = DataValidation.sanitizeStorageData({ courts });
+    expect(result.courts).toHaveLength(12);
+  });
+
+  it('copies valid waiting groups', () => {
+    const group = {
+      players: [{ id: '1', name: 'A' }],
+      timestamp: new Date().toISOString(),
+    };
+    const result = DataValidation.sanitizeStorageData({ courts: [], waitingGroups: [group] });
+    expect(result.waitingGroups).toHaveLength(1);
+  });
+
+  it('filters out invalid waiting groups', () => {
+    const result = DataValidation.sanitizeStorageData({
+      courts: [],
+      waitingGroups: [null, { players: 'bad' }],
+    });
+    expect(result.waitingGroups).toHaveLength(0);
+  });
+
+  it('filters recentlyCleared with expired endTime', () => {
+    const session = {
+      players: [{ id: '1', name: 'A' }],
+      originalEndTime: new Date(Date.now() - 3600000).toISOString(),
+    };
+    const result = DataValidation.sanitizeStorageData({ courts: [], recentlyCleared: [session] });
+    expect(result.recentlyCleared).toHaveLength(0);
+  });
+
+  it('keeps recentlyCleared with future endTime', () => {
+    const session = {
+      players: [{ id: '1', name: 'A' }],
+      originalEndTime: new Date(Date.now() + 3600000).toISOString(),
+    };
+    const result = DataValidation.sanitizeStorageData({ courts: [], recentlyCleared: [session] });
+    expect(result.recentlyCleared).toHaveLength(1);
+  });
+
+  it('handles missing recentlyCleared', () => {
+    const result = DataValidation.sanitizeStorageData({ courts: [] });
+    expect(result.recentlyCleared).toEqual([]);
+  });
+});

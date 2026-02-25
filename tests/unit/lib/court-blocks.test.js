@@ -1,5 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { getUpcomingBlockWarningFromBlocks } from '../../../src/lib/court-blocks.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock storage to control readJSON for getCourtBlockStatus
+vi.mock('../../../src/lib/storage.js', () => ({
+  readJSON: vi.fn(() => []),
+}));
+
+import { readJSON } from '../../../src/lib/storage.js';
+import {
+  getCourtBlockStatus,
+  getUpcomingBlockWarningFromBlocks,
+  getUpcomingBlockWarning,
+} from '../../../src/lib/court-blocks.js';
 
 describe('getUpcomingBlockWarningFromBlocks', () => {
   // Helper to create a Date offset from base
@@ -117,5 +128,194 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     expect(result.type).toBe('limited');
     // Should return the earlier block (20 min), not the later one (45 min)
     expect(result.startTime).toBe(earlierBlock.startTime);
+  });
+
+  it('returns limited with duration=0 for any upcoming block', () => {
+    const blocks = [
+      createBlock({
+        courtNumber: 1,
+        startTime: minutesFromNow(now, 120), // Far future
+      }),
+    ];
+    const result = getUpcomingBlockWarningFromBlocks(1, 0, blocks, now);
+    expect(result).not.toBeNull();
+    expect(result.type).toBe('limited');
+    expect(result.originalDuration).toBe(0);
+  });
+
+  it('uses title as reason when available', () => {
+    const blocks = [
+      createBlock({
+        courtNumber: 1,
+        startTime: minutesFromNow(now, 3),
+        title: 'Lesson Block',
+        reason: 'lesson',
+      }),
+    ];
+    const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
+    expect(result.reason).toBe('Lesson Block');
+  });
+
+  it('falls back to reason when no title', () => {
+    const blocks = [
+      createBlock({
+        courtNumber: 1,
+        startTime: minutesFromNow(now, 3),
+        title: undefined,
+        reason: 'Maintenance',
+      }),
+    ];
+    const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
+    expect(result.reason).toBe('Maintenance');
+  });
+
+  it('falls back to Reserved when no title or reason', () => {
+    const blocks = [
+      createBlock({
+        courtNumber: 1,
+        startTime: minutesFromNow(now, 3),
+        title: undefined,
+        reason: undefined,
+      }),
+    ];
+    const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
+    expect(result.reason).toBe('Reserved');
+  });
+
+  it('returns null when block already ended', () => {
+    const blocks = [
+      createBlock({
+        courtNumber: 1,
+        startTime: minutesFromNow(now, -60),
+        endTime: minutesFromNow(now, -10),
+      }),
+    ];
+    const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
+    expect(result).toBeNull();
+  });
+});
+
+// ── getCourtBlockStatus ─────────────────────────────────────
+describe('getCourtBlockStatus', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const now = new Date('2025-01-15T10:00:00Z');
+  const minutesFromNow = (minutes) =>
+    new Date(now.getTime() + minutes * 60 * 1000).toISOString();
+
+  it('returns not blocked when no blocks exist', () => {
+    readJSON.mockReturnValue([]);
+    // We can't control `new Date()` inside the function, but we test the shape
+    const result = getCourtBlockStatus(1);
+    expect(result.isBlocked).toBe(false);
+    expect(result.isCurrent).toBe(false);
+    expect(result.isWetCourt).toBe(false);
+  });
+
+  it('returns not blocked when blocks are for other courts', () => {
+    readJSON.mockReturnValue([
+      {
+        courtNumber: 5,
+        startTime: new Date(Date.now() - 60000).toISOString(),
+        endTime: new Date(Date.now() + 3600000).toISOString(),
+        isWetCourt: false,
+        reason: 'test',
+      },
+    ]);
+    const result = getCourtBlockStatus(1);
+    expect(result.isBlocked).toBe(false);
+  });
+
+  it('detects active wet court block with priority', () => {
+    const nowMs = Date.now();
+    readJSON.mockReturnValue([
+      {
+        courtNumber: 1,
+        isWetCourt: true,
+        startTime: new Date(nowMs - 60000).toISOString(),
+        endTime: new Date(nowMs + 3600000).toISOString(),
+      },
+    ]);
+    const result = getCourtBlockStatus(1);
+    expect(result.isBlocked).toBe(true);
+    expect(result.isCurrent).toBe(true);
+    expect(result.isWetCourt).toBe(true);
+    expect(result.reason).toBe('WET COURT');
+    expect(result.remainingMinutes).toBeGreaterThan(0);
+  });
+
+  it('detects active non-wet block', () => {
+    const nowMs = Date.now();
+    readJSON.mockReturnValue([
+      {
+        courtNumber: 2,
+        isWetCourt: false,
+        startTime: new Date(nowMs - 60000).toISOString(),
+        endTime: new Date(nowMs + 3600000).toISOString(),
+        reason: 'Lesson',
+        title: 'Tennis Lesson',
+        eventDetails: { instructor: 'Coach' },
+      },
+    ]);
+    const result = getCourtBlockStatus(2);
+    expect(result.isBlocked).toBe(true);
+    expect(result.isCurrent).toBe(true);
+    expect(result.isWetCourt).toBe(false);
+    expect(result.reason).toBe('Lesson');
+    expect(result.title).toBe('Tennis Lesson');
+    expect(result.remainingMinutes).toBeGreaterThan(0);
+  });
+
+  it('handles readJSON returning null', () => {
+    readJSON.mockReturnValue(null);
+    const result = getCourtBlockStatus(1);
+    expect(result.isBlocked).toBe(false);
+  });
+
+  it('handles readJSON throwing', () => {
+    readJSON.mockImplementation(() => {
+      throw new Error('corrupted');
+    });
+    const result = getCourtBlockStatus(1);
+    expect(result.isBlocked).toBe(false);
+  });
+});
+
+// ── getUpcomingBlockWarning ─────────────────────────────────
+describe('getUpcomingBlockWarning', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('delegates to getUpcomingBlockWarningFromBlocks with readJSON data', () => {
+    const nowMs = Date.now();
+    readJSON.mockReturnValue([
+      {
+        courtNumber: 1,
+        startTime: new Date(nowMs + 3 * 60000).toISOString(),
+        endTime: new Date(nowMs + 90 * 60000).toISOString(),
+        isWetCourt: false,
+        reason: 'Test',
+      },
+    ]);
+    const result = getUpcomingBlockWarning(1, 60);
+    expect(result).not.toBeNull();
+    expect(result.type).toBe('blocked');
+  });
+
+  it('returns null when readJSON throws', () => {
+    readJSON.mockImplementation(() => {
+      throw new Error('fail');
+    });
+    const result = getUpcomingBlockWarning(1, 60);
+    expect(result).toBeNull();
+  });
+
+  it('returns null when no blocks', () => {
+    readJSON.mockReturnValue([]);
+    const result = getUpcomingBlockWarning(1, 60);
+    expect(result).toBeNull();
   });
 });

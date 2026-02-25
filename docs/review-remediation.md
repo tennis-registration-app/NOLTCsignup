@@ -67,10 +67,10 @@ Based on two independent architectural reviews (Claude Code Opus) evaluating the
 - **Rationale:** High churn, moderate incremental value over checkJs + JSDoc which is already at 0 errors.
 - **Gate:** Consider when converting more files to .tsx or adopting a JSX type declaration strategy.
 
-### 40% Test Coverage Target
-- **Status:** ~20% line coverage, enforced by ratchet (cannot regress).
-- **Rationale:** Testing strategy prioritizes orchestrator unit tests + E2E user flows over component-level coverage. Coverage ratchet locks in improvements.
-- **Gate:** No immediate need. Handler/hook testing would be next if coverage uplift is pursued.
+### Test Coverage
+- **Status:** ~50% statement coverage (ratcheted at 50.06%), enforced by coverage ratchet (cannot regress).
+- **Rationale:** Testing strategy prioritizes orchestrator unit tests, command/domain logic, and E2E user flows over component-level coverage. Coverage ratchet locks in improvements.
+- **Gate:** Next uplift would target remaining handler/hook files and screen components.
 
 ## Retained Technical Debt
 

@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('../../../src/lib/court-blocks.js', () => ({
+  getCourtBlockStatus: vi.fn(() => null),
+}));
+
+import { getCourtBlockStatus } from '../../../src/lib/court-blocks.js';
 import { TennisBusinessLogic } from '../../../src/lib/TennisBusinessLogic.js';
 
 describe('TennisBusinessLogic.formatPlayerDisplayName', () => {
@@ -184,5 +190,159 @@ describe('TennisBusinessLogic.sameGroup', () => {
     const a = [{ name: 'John Smith' }];
     const b = [{ name: 'john smith' }];
     expect(TennisBusinessLogic.sameGroup(a, b)).toBe(true);
+  });
+
+  it('handles empty arrays', () => {
+    expect(TennisBusinessLogic.sameGroup([], [])).toBe(true);
+  });
+
+  it('handles undefined defaults', () => {
+    expect(TennisBusinessLogic.sameGroup(undefined, undefined)).toBe(true);
+  });
+
+  it('compares by id when memberId missing', () => {
+    const a = [{ id: '100' }];
+    const b = [{ id: '100' }];
+    expect(TennisBusinessLogic.sameGroup(a, b)).toBe(true);
+  });
+});
+
+// ── calculateEstimatedWaitTime ──────────────────────────────
+describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 0 for null courts', () => {
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, null, new Date())).toBe(0);
+  });
+
+  it('returns 0 for non-array courts', () => {
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, 'bad', new Date())).toBe(0);
+  });
+
+  it('returns 0 for position < 1', () => {
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(0, [], new Date())).toBe(0);
+  });
+
+  it('returns 0 for position 1 when no courts have end times', () => {
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, [null, null], new Date())).toBe(0);
+  });
+
+  it('calculates wait time based on court session end times', () => {
+    const now = new Date('2025-01-15T10:00:00Z');
+    const courts = [
+      { session: { scheduledEndAt: new Date('2025-01-15T10:30:00Z').toISOString() } },
+      { session: { scheduledEndAt: new Date('2025-01-15T11:00:00Z').toISOString() } },
+    ];
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts, now);
+    expect(result).toBe(30); // First court ends in 30 min
+  });
+
+  it('calculates for position 2 with sorted court end times', () => {
+    const now = new Date('2025-01-15T10:00:00Z');
+    const courts = [
+      { session: { scheduledEndAt: new Date('2025-01-15T10:30:00Z').toISOString() } },
+      { session: { scheduledEndAt: new Date('2025-01-15T11:00:00Z').toISOString() } },
+    ];
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(2, courts, now);
+    expect(result).toBe(60); // Second court ends in 60 min
+  });
+
+  it('uses block status end time when no session', () => {
+    const now = new Date('2025-01-15T10:00:00Z');
+    getCourtBlockStatus.mockReturnValue({
+      endTime: new Date('2025-01-15T10:45:00Z').toISOString(),
+    });
+    const courts = [{}]; // No session but has block
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts, now);
+    expect(result).toBe(45);
+  });
+
+  it('estimates based on rounds when position exceeds court count', () => {
+    const now = new Date('2025-01-15T10:00:00Z');
+    const courts = [
+      { session: { scheduledEndAt: new Date('2025-01-15T10:30:00Z').toISOString() } },
+    ];
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(3, courts, now, 75);
+    // rounds = ceil(3/1) = 3, baseWait = 30 + (3-1)*75 = 180
+    expect(result).toBeGreaterThan(100);
+  });
+
+  it('estimates without end times for positions > 1', () => {
+    const now = new Date('2025-01-15T10:00:00Z');
+    const courts = [null, null, null]; // 3 free courts
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(4, courts, now, 75);
+    // position=4, courtsAvailable=3, rounds=ceil(4/3)=2
+    // courtEndTimes.length === 0, so formula: ceil(((4-1)/3)*75) = ceil(75) = 75
+    expect(result).toBe(75);
+  });
+
+  it('skips null courts in end time calculation', () => {
+    const now = new Date('2025-01-15T10:00:00Z');
+    const courts = [
+      null,
+      { session: { scheduledEndAt: new Date('2025-01-15T10:20:00Z').toISOString() } },
+    ];
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts, now);
+    expect(result).toBe(20);
+  });
+});
+
+// ── getOriginalEndTimeForGroup ──────────────────────────────
+describe('TennisBusinessLogic.getOriginalEndTimeForGroup', () => {
+  it('returns null for empty players', () => {
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup([], [])).toBeNull();
+  });
+
+  it('returns null for empty recentlyCleared', () => {
+    const players = [{ memberId: '1', name: 'A' }];
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(players, [])).toBeNull();
+  });
+
+  it('returns null for non-array players', () => {
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(null, [])).toBeNull();
+  });
+
+  it('returns null for non-array recentlyCleared', () => {
+    const players = [{ memberId: '1', name: 'A' }];
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(players, null)).toBeNull();
+  });
+
+  it('returns originalEndTime when exact group match found', () => {
+    const futureTime = new Date(Date.now() + 3600000).toISOString();
+    const players = [{ memberId: '1', name: 'Alice' }];
+    const recentlyCleared = [
+      {
+        players: [{ memberId: '1', name: 'Alice' }],
+        originalEndTime: futureTime,
+      },
+    ];
+    const result = TennisBusinessLogic.getOriginalEndTimeForGroup(players, recentlyCleared);
+    expect(result).toBe(futureTime);
+  });
+
+  it('returns null when session has expired', () => {
+    const pastTime = new Date(Date.now() - 3600000).toISOString();
+    const players = [{ memberId: '1', name: 'Alice' }];
+    const recentlyCleared = [
+      {
+        players: [{ memberId: '1', name: 'Alice' }],
+        originalEndTime: pastTime,
+      },
+    ];
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(players, recentlyCleared)).toBeNull();
+  });
+
+  it('returns null when groups do not match', () => {
+    const futureTime = new Date(Date.now() + 3600000).toISOString();
+    const players = [{ memberId: '1', name: 'Alice' }];
+    const recentlyCleared = [
+      {
+        players: [{ memberId: '2', name: 'Bob' }],
+        originalEndTime: futureTime,
+      },
+    ];
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(players, recentlyCleared)).toBeNull();
   });
 });

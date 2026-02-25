@@ -7,6 +7,9 @@ import {
   MessageTypes,
   onDom,
   emitDom,
+  onMessage,
+  emitMessage,
+  debug,
 } from '../../../src/platform/attachLegacyEvents.js';
 
 describe('attachLegacyEvents', () => {
@@ -98,6 +101,119 @@ describe('attachLegacyEvents', () => {
     test('debug.clearLog clears the log', () => {
       legacyEvents.debug.clearLog();
       expect(legacyEvents.debug.getLog()).toEqual([]);
+    });
+  });
+
+  // ── onMessage / emitMessage ─────────────────────────────────
+  describe('onMessage/emitMessage', () => {
+    let handler;
+    let unsubscribe;
+
+    beforeEach(() => {
+      handler = vi.fn();
+    });
+
+    afterEach(() => {
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+      }
+    });
+
+    test('onMessage receives postMessage events', () => {
+      unsubscribe = onMessage(handler);
+
+      // Dispatch a message event
+      const event = new MessageEvent('message', {
+        data: { type: 'test', payload: 42 },
+        origin: 'http://localhost',
+      });
+      window.dispatchEvent(event);
+
+      expect(handler).toHaveBeenCalledTimes(1);
+      expect(handler.mock.calls[0][0].data).toEqual({ type: 'test', payload: 42 });
+    });
+
+    test('onMessage unsubscribe removes listener', () => {
+      unsubscribe = onMessage(handler);
+
+      window.dispatchEvent(new MessageEvent('message', { data: { type: 'a' } }));
+      expect(handler).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      unsubscribe = null;
+
+      window.dispatchEvent(new MessageEvent('message', { data: { type: 'b' } }));
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    test('onMessage filters by targetOrigin when specified', () => {
+      unsubscribe = onMessage(handler, 'http://allowed.com');
+
+      // Wrong origin — should be filtered
+      const wrongOrigin = new MessageEvent('message', {
+        data: { type: 'wrong' },
+        origin: 'http://notallowed.com',
+      });
+      window.dispatchEvent(wrongOrigin);
+      expect(handler).not.toHaveBeenCalled();
+
+      // Correct origin
+      const rightOrigin = new MessageEvent('message', {
+        data: { type: 'right' },
+        origin: 'http://allowed.com',
+      });
+      window.dispatchEvent(rightOrigin);
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    test('onMessage with wildcard origin accepts all', () => {
+      unsubscribe = onMessage(handler, '*');
+
+      window.dispatchEvent(
+        new MessageEvent('message', { data: { type: 'any' }, origin: 'http://anything.com' })
+      );
+      expect(handler).toHaveBeenCalledTimes(1);
+    });
+
+    test('emitMessage sends postMessage to target', () => {
+      const target = { postMessage: vi.fn() };
+      emitMessage(target, { type: 'hello', data: 123 }, 'http://target.com');
+      expect(target.postMessage).toHaveBeenCalledWith(
+        { type: 'hello', data: 123 },
+        'http://target.com'
+      );
+    });
+
+    test('emitMessage defaults to wildcard origin', () => {
+      const target = { postMessage: vi.fn() };
+      emitMessage(target, { type: 'test' });
+      expect(target.postMessage).toHaveBeenCalledWith({ type: 'test' }, '*');
+    });
+
+    test('emitMessage handles null target gracefully', () => {
+      // Should not throw
+      expect(() => emitMessage(null, { type: 'test' })).not.toThrow();
+    });
+
+    test('emitMessage handles target without postMessage', () => {
+      expect(() => emitMessage({}, { type: 'test' })).not.toThrow();
+    });
+  });
+
+  // ── debug exports ──────────────────────────────────────────
+  describe('debug direct exports', () => {
+    test('debug.getLog returns array', () => {
+      expect(Array.isArray(debug.getLog())).toBe(true);
+    });
+
+    test('debug.clearLog works', () => {
+      debug.clearLog();
+      expect(debug.getLog()).toEqual([]);
+    });
+
+    test('debug.isEnabled returns boolean', () => {
+      expect(typeof debug.isEnabled()).toBe('boolean');
     });
   });
 });
