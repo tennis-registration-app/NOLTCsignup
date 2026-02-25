@@ -8,6 +8,14 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays, Clock, Edit2, Copy, Trash2 } from '../components';
 import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 import { logger } from '../../lib/logger.js';
+import {
+  filterBlocksByDateAndCourt,
+  groupBlocksByDate,
+  sortGroupedBlocks,
+  getBlockStatus,
+  getStatusColor,
+  getDateLabel,
+} from '../presenters/blockTimelinePresenter.js';
 
 const BlockTimeline = ({
   courts: _courts,
@@ -103,127 +111,13 @@ const BlockTimeline = ({
     fetchBlocks();
   }, [backend, viewMode, selectedDate, refreshTrigger]);
 
-  const filteredBlocks = useMemo(() => {
-    let filtered = [...blocks];
-
-    // Filter by date range based on view mode
-    // Show blocks that overlap with the selected date range (past, present, or future)
-    filtered = filtered.filter((block) => {
-      const blockStart = new Date(block.startTime);
-      const blockEnd = new Date(block.endTime);
-
-      if (viewMode === 'day') {
-        const dayStart = new Date(selectedDate);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(selectedDate);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        // Block overlaps with day if:
-        // - starts during the day, OR
-        // - ends during the day, OR
-        // - spans the entire day
-        return (
-          (blockStart >= dayStart && blockStart <= dayEnd) ||
-          (blockEnd >= dayStart && blockEnd <= dayEnd) ||
-          (blockStart <= dayStart && blockEnd >= dayEnd)
-        );
-      } else {
-        // Week view
-        const weekStart = new Date(selectedDate);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-        weekStart.setHours(0, 0, 0, 0);
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        weekEnd.setHours(23, 59, 59, 999);
-
-        // Block overlaps with week if:
-        // - starts during the week, OR
-        // - ends during the week, OR
-        // - spans the entire week
-        return (
-          (blockStart >= weekStart && blockStart <= weekEnd) ||
-          (blockEnd >= weekStart && blockEnd <= weekEnd) ||
-          (blockStart <= weekStart && blockEnd >= weekEnd)
-        );
-      }
-    });
-
-    // Filter by court if specific court selected
-    if (filterCourt !== 'all') {
-      filtered = filtered.filter((block) => block.courtNumber === parseInt(filterCourt));
-    }
-
-    // Sort by start time
-    filtered.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-
-    return filtered;
-  }, [blocks, viewMode, selectedDate, filterCourt]);
-
-  const getBlockStatus = (block) => {
-    const start = new Date(block.startTime);
-    const end = new Date(block.endTime);
-
-    if (currentTime >= start && currentTime < end) return 'active';
-    if (currentTime >= end) return 'past';
-    return 'future';
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'bg-red-50 border-red-300 text-red-900';
-      case 'past':
-        return 'bg-gray-50 border-gray-300 text-gray-600';
-      case 'future':
-        return 'bg-blue-50 border-blue-300 text-blue-900';
-      default:
-        return '';
-    }
-  };
-
-  const groupedBlocks = filteredBlocks.reduce((groups, block) => {
-    const blockDate = new Date(block.startTime);
-    const dateKey = blockDate.toDateString();
-
-    if (!groups[dateKey]) {
-      groups[dateKey] = {
-        date: blockDate,
-        blocks: [],
-      };
-    }
-
-    groups[dateKey].blocks.push(block);
-    return groups;
-  }, {});
-
-  const sortedGroups = Object.values(groupedBlocks).sort(
-    (a, b) => a.date.getTime() - b.date.getTime()
+  const filteredBlocks = useMemo(
+    () => filterBlocksByDateAndCourt({ blocks, viewMode, selectedDate, filterCourt }),
+    [blocks, viewMode, selectedDate, filterCourt]
   );
 
-  const isToday = (date) => {
-    return date.toDateString() === new Date().toDateString();
-  };
-
-  const isTomorrow = (date) => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return date.toDateString() === tomorrow.toDateString();
-  };
-
-  const getDateLabel = (date) => {
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
-
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 0 && diffDays <= 7) {
-      return date.toLocaleDateString('en-US', { weekday: 'long' });
-    }
-
-    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  };
+  const groupedBlocks = groupBlocksByDate(filteredBlocks);
+  const sortedGroups = sortGroupedBlocks(groupedBlocks);
 
   const navigateDate = (direction) => {
     setSelectedDate((prevDate) => {
@@ -331,9 +225,13 @@ const BlockTimeline = ({
                   <div className="flex items-center gap-2">
                     <CalendarDays size={16} className="text-gray-600" />
                     <h3 className="font-semibold text-gray-700">{getDateLabel(group.date)}</h3>
-                    {isToday(group.date) && (
+                    {group.date.toDateString() === new Date().toDateString() && (
                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                        {group.blocks.filter((b) => getBlockStatus(b) === 'active').length} active
+                        {
+                          group.blocks.filter((b) => getBlockStatus(b, currentTime) === 'active')
+                            .length
+                        }{' '}
+                        active
                       </span>
                     )}
                   </div>
@@ -341,7 +239,7 @@ const BlockTimeline = ({
                 </div>
 
                 {group.blocks.map((block) => {
-                  const status = getBlockStatus(block);
+                  const status = getBlockStatus(block, currentTime);
                   const isEditable = status !== 'past';
 
                   return (
@@ -428,19 +326,19 @@ const BlockTimeline = ({
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-blue-600">
-              {filteredBlocks.filter((b) => getBlockStatus(b) === 'future').length}
+              {filteredBlocks.filter((b) => getBlockStatus(b, currentTime) === 'future').length}
             </p>
             <p className="text-sm text-gray-600">Upcoming Blocks</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-red-600">
-              {filteredBlocks.filter((b) => getBlockStatus(b) === 'active').length}
+              {filteredBlocks.filter((b) => getBlockStatus(b, currentTime) === 'active').length}
             </p>
             <p className="text-sm text-gray-600">Active Now</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-gray-600">
-              {filteredBlocks.filter((b) => getBlockStatus(b) === 'past').length}
+              {filteredBlocks.filter((b) => getBlockStatus(b, currentTime) === 'past').length}
             </p>
             <p className="text-sm text-gray-600">Past Blocks</p>
           </div>
