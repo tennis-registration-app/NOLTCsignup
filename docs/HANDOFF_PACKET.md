@@ -105,7 +105,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
 - Category-aware UX decisions (retry for NETWORK, inline feedback for VALIDATION)
 - Registration notification unification (toast vs showAlertMessage)
 - Performance instrumentation
-- Accessibility audit
+- Accessibility improvements (see [ACCESSIBILITY.md](ACCESSIBILITY.md) for current state and roadmap)
 - IIFE-to-ESM migration per ADR-006
 
 ## Architecture Documentation
@@ -124,6 +124,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
 | [GOLDEN_FLOWS.md](GOLDEN_FLOWS.md) | Critical user flows and regression checklists |
 | [TESTING.md](TESTING.md) | Test locations, frameworks, and how to add tests |
 | [SECURITY_WP.md](SECURITY_WP.md) | Threat model and security posture |
+| [ACCESSIBILITY.md](ACCESSIBILITY.md) | A11y current state, gaps, and improvement roadmap |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Deployment process and environment config |
 | [ENVIRONMENT.md](ENVIRONMENT.md) | Environment variables and feature flags |
 | [WINDOW_GLOBALS.md](WINDOW_GLOBALS.md) | Courtboard window globals bridge |
