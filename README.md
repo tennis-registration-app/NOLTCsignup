@@ -139,6 +139,14 @@ See [docs/ENVIRONMENT.md](./docs/ENVIRONMENT.md) for security considerations.
 
 ## Documentation
 
+Start here:
+
+- **Orientation and doc map:** [docs/START_HERE.md](./docs/START_HERE.md)
+- **Maintainer operating rules:** [docs/HANDOFF.md](./docs/HANDOFF.md)
+- **Extension recipes:** [docs/ONBOARDING.md](./docs/ONBOARDING.md)
+- **Operations & deployment:** [docs/OPERATIONS.md](./docs/OPERATIONS.md), [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+- **Critical validation flows:** [docs/GOLDEN_FLOWS.md](./docs/GOLDEN_FLOWS.md)
+
 | Document | Description |
 |----------|-------------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design and architectural decisions |
