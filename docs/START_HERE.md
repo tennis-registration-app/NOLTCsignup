@@ -2,7 +2,7 @@
 
 > Single entry point for the NOLTC Tennis Court Registration System. If you're new, read this first.
 
-**Contractor/new maintainer?** See [HANDOFF_PACKET.md](HANDOFF_PACKET.md) for system guarantees, architecture decisions, and operating rules. See [ONBOARDING.md](ONBOARDING.md) for extension recipes (add screens, endpoints, CSP exceptions).
+**Contractor/new maintainer?** See [HANDOFF.md](HANDOFF.md) for system guarantees, architecture decisions, and operating rules. See [ONBOARDING.md](ONBOARDING.md) for extension recipes (add screens, endpoints, CSP exceptions).
 
 ## What This System Is
 

@@ -85,7 +85,7 @@ Use conventional commit prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `ch
 ## Further Reading
 
 - [START_HERE.md](START_HERE.md) — System overview and doc map
-- [HANDOFF_PACKET.md](HANDOFF_PACKET.md) — System guarantees and architecture decisions
+- [HANDOFF.md](HANDOFF.md) — System guarantees and architecture decisions
 - [GOLDEN_FLOWS.md](GOLDEN_FLOWS.md) — Critical user flows to smoke-test
 - [CODE_CONVENTIONS.md](CODE_CONVENTIONS.md) — Naming, file structure, patterns
 - [TESTING.md](TESTING.md) — Where and how to add tests
