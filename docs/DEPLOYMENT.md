@@ -10,7 +10,7 @@ Production URL: https://courtboard-noltc.vercel.app/
 | Admin Panel | https://courtboard-noltc.vercel.app/src/admin/index.html |
 | Courtboard Display | https://courtboard-noltc.vercel.app/src/courtboard/index.html |
 
-Source: README.md, handoff_audit docs, vite.config.js comment ("root for Vercel").
+Source: README.md, docs/audits/handoff/ docs, vite.config.js comment ("root for Vercel").
 
 ## Vercel Configuration (Confirm in Dashboard)
 
