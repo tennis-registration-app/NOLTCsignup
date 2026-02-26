@@ -25,7 +25,7 @@ const __dirname = dirname(__filename);
 const ROOT_DIR = join(__dirname, '..');
 
 // Allow baseline path override via env var (useful for proof tests)
-const BASELINE_PATH = process.env.ESLINT_BASELINE_PATH || join(ROOT_DIR, 'eslint-baseline.json');
+const BASELINE_PATH = process.env.ESLINT_BASELINE_PATH || join(ROOT_DIR, 'config', 'ratchets', 'eslint-baseline.json');
 
 // Parse CLI args
 const args = process.argv.slice(2);

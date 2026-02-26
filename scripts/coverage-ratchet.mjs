@@ -24,7 +24,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT_DIR = join(__dirname, '..');
 const BASELINE_PATH =
-  process.env.COVERAGE_BASELINE_PATH || join(ROOT_DIR, 'coverage-baseline.json');
+  process.env.COVERAGE_BASELINE_PATH || join(ROOT_DIR, 'config', 'ratchets', 'coverage-baseline.json');
 const SUMMARY_PATH = join(ROOT_DIR, 'coverage', 'coverage-summary.json');
 
 const METRICS = ['statements', 'branches', 'functions', 'lines'];

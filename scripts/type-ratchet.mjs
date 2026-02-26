@@ -23,7 +23,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT_DIR = join(__dirname, '..');
-const BASELINE_PATH = process.env.TYPESCRIPT_BASELINE_PATH || join(ROOT_DIR, 'typescript-baseline.json');
+const BASELINE_PATH = process.env.TYPESCRIPT_BASELINE_PATH || join(ROOT_DIR, 'config', 'ratchets', 'typescript-baseline.json');
 
 const args = process.argv.slice(2);
 const updateBaseline = args.includes('--update') || args.includes('--update-baseline');
