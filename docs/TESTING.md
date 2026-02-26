@@ -4,10 +4,14 @@
 
 This project uses two test frameworks:
 
-| Type | Framework | Count | Location | Command |
-|------|-----------|-------|----------|---------|
-| Unit | Vitest | 994 | `tests/unit/` | `npm run test:unit` |
-| E2E | Playwright | 14 | `e2e/` | `npm run test:e2e` |
+| Type | Framework | Location | Command |
+|------|-----------|----------|---------|
+| Unit | Vitest | `tests/unit/` | `npm run test:unit` |
+| E2E | Playwright | `e2e/` | `npm run test:e2e` |
+
+> Test counts are dynamic and can be viewed in CI (GitHub Actions) or via `npm run verify`.
+ 
+---
 
 ## Verification Gate
 
@@ -19,9 +23,9 @@ npm run verify
 This runs in order:
 1. `npm run lint:ratchet` — ESLint with baseline enforcement (0 errors, warnings must not increase)
 2. `npm run type:ratchet` — TypeScript with baseline enforcement (error count must not increase)
-3. `npm run test:unit` — Vitest unit tests (994 tests)
+3. `npm run coverage:ratchet` — Vitest unit tests + coverage baseline enforcement
 4. `npm run build` — Vite production build
-5. `npm run test:e2e` — Playwright E2E tests (14/14 required)
+5. `npm run test:e2e` — Playwright E2E tests
 
 **Do not merge if any step fails.**
 
