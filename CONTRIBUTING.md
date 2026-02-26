@@ -19,7 +19,6 @@ npm run dev
 ### Before Making Changes
 1. Pull latest from main
 2. Run `npm run verify` to ensure clean baseline
-3. Create a feature branch
 
 ### Making Changes
 1. Make incremental changes
@@ -31,13 +30,14 @@ Every commit must pass the full verification suite:
 ```bash
 npm run verify
 ```
+Commits that fail verification must not be pushed to main.
 
 This runs:
 1. `npm run lint:ratchet` — ESLint with baseline enforcement (0 errors, warnings must not increase)
 2. `npm run type:ratchet` — TypeScript with baseline enforcement (error count must not increase)
-3. `npm run test:unit` — Vitest unit tests (994 tests)
+3. `npm run test:unit` — Vitest unit tests with coverage baseline enforcment
 4. `npm run build` — Vite production build
-5. `npm run test:e2e` — Playwright E2E tests (14/14 required)
+5. `npm run test:e2e` — Playwright E2E tests 
 
 **Do not commit if any gate fails.**
 
