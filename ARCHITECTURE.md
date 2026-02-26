@@ -302,13 +302,14 @@ flow as plain `Error` instances.
 
 ### Dual Error Contract
 
-The private methods (`_get`, `_post`) propagate these throws. The public methods
-(`get`, `post`) catch and return raw `{ ok: false }` responses instead. This
-dual contract is documented in the `ApiAdapter.js` header.
+- **Private methods** (`_get`, `_post`) throw `AppError` on failure.
+- **Public methods** (`get`, `post`) catch and return structured error responses:
+  ```javascript
+  { ok: false, ...fields, error: { category, code, message } }
+  ```
+- **Network/fetch failure:** `{ ok: false, error: { category: 'NETWORK', code: 'FETCH_FAILED', message } }`
 
-> **Note:** `DomainError` and `normalizeServiceError` were scaffolded but had
-> zero runtime callers and were removed during the Feb 2026 convergence work.
-> See `docs/error-contracts.md` for the current contract.
+See `docs/error-contracts.md` for the canonical error contract reference.
 
 ## Type Boundaries
 
@@ -341,10 +342,12 @@ function GroupRoute({ app, handlers }) {
 
 ### Unit Tests (Vitest)
 
-- **994 unit tests** across 68 test files
+- **2,932 unit tests** across 144 test files
 - Cover: reducers, services, transforms, error handling, contract fences,
   orchestrators, presenters
 - Mock external dependencies (API, storage)
+
+Coverage ratchet enforced via CI (current baseline: 50.06% statements, 45.06% branches, 41.84% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
 
 ### E2E Tests (Playwright)
 
@@ -401,11 +404,13 @@ Architecture boundaries are enforced via ESLint:
 - **Device IDs:** Client-supplied constants (spoofable)
 - **Admin access:** Anyone who navigates to `/admin/` has full access
 
+An auth-ready seam is in place: `src/admin/guards/adminAccessGuard.js` provides `checkAdminAccess()` and `useAdminAccess()` hooks that currently return `{ allowed: true }` in all modes. `ADMIN_ACCESS_MODE` in `src/config/runtimeConfig.js` defaults to `'open'`. When authentication is implemented, this seam activates without structural changes.
+
 ### Production Hardening Checklist
 
 When leaving demo mode:
 
-- [ ] Add admin authentication (password, SSO, or device certificate)
+- [ ] Add admin authentication (auth-ready seam scaffolded in `adminAccessGuard.js` — implement Supabase Auth + JWT verification)
 - [ ] Implement device enrollment with server-issued tokens
 - [ ] Audit RLS policies in Supabase
 - [ ] Verify Edge Function authorization
@@ -449,26 +454,18 @@ When leaving demo mode:
 
 The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfig.js` as development fallbacks. Production deployments should use environment variables.
 
-### Large Components
+### Files Over 500 Lines
 
-Some components exceed the 500-line target:
+| File | Lines | Notes |
+|------|-------|-------|
+| `src/types/appTypes.ts` | 1,234 | Type definitions only — acceptable exception (no logic) |
+| `src/lib/backend/TennisCommands.js` | 611 | Command methods |
+| `src/tennis/domain/availability.js` | 610 | Court availability logic |
+| `src/lib/ApiAdapter.js` | 546 | API client |
+| `src/tennis/domain/waitlist.js` | 538 | Waitlist domain logic |
+| `src/registration/orchestration/assignCourtOrchestrator.ts` | 527 | Court assignment orchestration |
 
-| Component | Lines | Notes |
-|-----------|-------|-------|
-| `CompleteBlockManagerEnhanced.jsx` | ~350 | Block management UI (reduced from ~900) |
-| `admin/App.jsx` | ~600 | Admin entry point (was `AdminScreen.jsx` at ~720) |
-
-Decomposed components (WP-ADMIN-COMPONENT-DECOMPOSITION):
-
-| Component | Before | After | Approach |
-|-----------|--------|-------|----------|
-| `EventCalendarEnhanced.jsx` | 575 | 438 | Presenter + CalendarToolbar subcomponent |
-| `BlockTimeline.jsx` | 453 | 240 | Presenter + Toolbar/Card subcomponents |
-| `SystemSettings.jsx` | 410 | 92 | useSystemSettingsState hook extraction |
-| `AIAssistantAdmin.jsx` | 538 | 480 | Messages/Input/ActionCard subcomponents |
-
-All registration routes follow the presenter pattern (`buildXModel` + `buildXActions`),
-with `CourtRoute.jsx` reduced from 315 to 122 lines as the reference example.
+The remaining five files (excluding `appTypes.ts`) are candidates for extraction when next modified for functional changes.
 
 ## Entry Points & Module System
 
