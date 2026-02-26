@@ -92,15 +92,12 @@ Pure-function unit tests for commands, orchestrators, and presenters. Hook-level
 
 ## Known Issues
 
-All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md):
-- 10 fixed
-- 1 won't-fix (runtimeConfig dead check — harmless defense-in-depth)
-- 1 intent-dependent (title-casing cosmetic — needs operator preference)
+All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md) for details. One won't-fix (runtimeConfig dead check — harmless defense-in-depth) and one intent-dependent (title-casing cosmetic — needs operator preference).
 
 ## Roadmap / Enhancements (Not Required for Stability)
 
 - Admin authentication: auth-ready seam in place (`AdminAccessMode` config + guard wrapper). Enable at production deployment time. Requires Supabase Auth + Edge Function JWT verification.
-- ~~TypeScript `strictNullChecks`~~ **(DONE)** — enabled and ratcheted to 0 errors. Remaining `strict: true` flags (strictBindCallApply, strictFunctionTypes, etc.) can follow same ratchet pattern
+- Remaining TypeScript `strict: true` flags (strictBindCallApply, strictFunctionTypes, etc.) — can follow same ratchet pattern used for strictNullChecks
 - Registration state decomposition into React contexts
 - Category-aware UX decisions (retry for NETWORK, inline feedback for VALIDATION)
 - Registration notification unification (toast vs showAlertMessage)
