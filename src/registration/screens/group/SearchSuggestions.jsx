@@ -43,12 +43,12 @@ const SearchSuggestions = ({
                 {suggestion.member.isGuest && (
                   <span className="text-sm text-blue-600 ml-2">(Guest)</span>
                 )}
+                {suggestion.type === 'member' && (
+                  <span className="text-xs sm:text-sm text-gray-400 ml-2">
+                    #{showMemberId ? suggestion.member.id : suggestion.memberNumber}
+                  </span>
+                )}
               </div>
-              {suggestion.type === 'member' && (
-                <div className="text-xs sm:text-sm text-gray-600">
-                  Member #{showMemberId ? suggestion.member.id : suggestion.memberNumber}
-                </div>
-              )}
             </div>
             {suggestion.type === 'member' && suggestion.member.ranking && (
               <div className="text-sm text-blue-600 font-medium">

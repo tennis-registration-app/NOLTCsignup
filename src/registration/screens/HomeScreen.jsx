@@ -144,9 +144,11 @@ const HomeScreen = ({
                   onClick={() => handleSuggestionClick(suggestion)}
                   className="w-full p-3 sm:p-4 text-left hover:bg-green-50 border-b last:border-b-0 transition-colors block"
                 >
-                  <div className="font-medium text-lg sm:text-xl">{suggestion.member.name}</div>
-                  <div className="text-sm sm:text-base text-gray-600">
-                    Member #{suggestion.memberNumber}
+                  <div className="font-medium text-lg sm:text-xl">
+                    {suggestion.member.name}
+                    <span className="text-sm sm:text-base text-gray-400 ml-2">
+                      #{suggestion.memberNumber}
+                    </span>
                   </div>
                 </button>
               ))}
