@@ -180,6 +180,7 @@ export class TennisDirectory {
       displayName: m.display_name,
       isPrimary: m.is_primary,
       unclearedStreak: m.uncleared_streak || 0,
+      playCount: m.plays_180d || 0,
     };
   }
 }

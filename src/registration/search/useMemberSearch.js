@@ -113,13 +113,14 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
               accountId: apiMember.accountId,
               isPrimary: apiMember.isPrimary,
               unclearedStreak: apiMember.unclearedStreak || 0,
+              playCount: apiMember.playCount || 0,
             },
             displayText: `${displayName} (#${memberNumber})`,
           });
         }
       });
 
-      // Sort suggestions to prioritize first name matches, then last name matches
+      // Sort: first-name prefix match first, then by play frequency, then alphabetical
       suggestions.sort((a, b) => {
         const aName = a.member.name.toLowerCase();
         const bName = b.member.name.toLowerCase();
@@ -127,10 +128,17 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
         const bFirstName = bName.split(' ')[0];
 
         // Prioritize first name matches
-        if (aFirstName.startsWith(lowerInput) && !bFirstName.startsWith(lowerInput)) return -1;
-        if (!aFirstName.startsWith(lowerInput) && bFirstName.startsWith(lowerInput)) return 1;
+        const aFirstMatch = aFirstName.startsWith(lowerInput);
+        const bFirstMatch = bFirstName.startsWith(lowerInput);
+        if (aFirstMatch && !bFirstMatch) return -1;
+        if (!aFirstMatch && bFirstMatch) return 1;
 
-        // Then sort alphabetically
+        // Within same priority tier, sort by play frequency (most active first)
+        const aCount = a.member.playCount || 0;
+        const bCount = b.member.playCount || 0;
+        if (aCount !== bCount) return bCount - aCount;
+
+        // Fall back to alphabetical
         return aName.localeCompare(bName);
       });
 

@@ -50,11 +50,6 @@ const SearchSuggestions = ({
                 )}
               </div>
             </div>
-            {suggestion.member.ranking && (
-              <div className="text-sm text-blue-600 font-medium">
-                Rank #{suggestion.member.ranking}
-              </div>
-            )}
           </button>
         ))}
       </div>

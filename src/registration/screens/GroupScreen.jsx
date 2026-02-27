@@ -184,11 +184,6 @@ const GroupScreen = (
                           (Guest{player.sponsor ? ` of ${player.sponsor}` : ''})
                         </span>
                       )}
-                      {!player.isGuest && player.ranking && (
-                        <span className="text-xs sm:text-sm text-blue-600 ml-2 sm:ml-3">
-                          Rank #{player.ranking}
-                        </span>
-                      )}
                     </div>
                     {idx > 0 && (
                       <button

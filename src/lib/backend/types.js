@@ -192,6 +192,7 @@
  * @property {string} displayName
  * @property {boolean} isPrimary
  * @property {number} [unclearedStreak] - Consecutive uncleared session count
+ * @property {number} [playCount] - Sessions played in last 180 days
  */
 
 // === Response Types ===
