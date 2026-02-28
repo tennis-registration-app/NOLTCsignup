@@ -45,6 +45,7 @@ const CourtStatusGrid = ({
 
   const {
     movingFrom,
+    movingTo,
     showActions,
     editingGame,
     editingBlock,
@@ -106,6 +107,7 @@ const CourtStatusGrid = ({
                 info={info}
                 currentTime={currentTime}
                 movingFrom={movingFrom}
+                movingTo={movingTo}
                 showActionsMenu={showActions === courtNum}
                 handlers={{
                   onToggleActions: toggleActions,

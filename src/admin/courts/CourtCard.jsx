@@ -13,6 +13,7 @@ const CourtCard = ({
   info,
   currentTime,
   movingFrom,
+  movingTo,
   showActionsMenu,
   handlers,
 }) => {
@@ -20,13 +21,16 @@ const CourtCard = ({
     handlers;
 
   const isMoving = movingFrom === courtNum;
-  const canReceiveMove = movingFrom && movingFrom !== courtNum && status === 'available';
+  const isMoveTarget = movingTo === courtNum;
+  const isMoveInFlight = movingTo !== null && movingTo !== undefined;
+  const canReceiveMove =
+    movingFrom && movingFrom !== courtNum && status === 'available' && !isMoveInFlight;
 
   return (
     <div
       className={`p-3 rounded-lg border-2 ${getStatusColor(status)} ${
         isMoving ? 'ring-2 ring-blue-500' : ''
-      } ${canReceiveMove ? 'cursor-pointer hover:bg-green-200' : ''}
+      } ${isMoveTarget ? 'animate-pulse opacity-75' : ''} ${canReceiveMove ? 'cursor-pointer hover:bg-green-200' : ''}
                 ${status === 'wet' ? 'cursor-pointer hover:bg-gray-300' : ''}
                 min-h-[120px] h-[120px] flex flex-col justify-between relative`}
       onClick={
@@ -102,6 +106,11 @@ const CourtCard = ({
           </div>
         )}
 
+        {isMoveTarget && (
+          <div className="mt-2 text-center">
+            <p className="text-sm font-medium text-blue-600">Moving...</p>
+          </div>
+        )}
         {canReceiveMove && (
           <div className="mt-2 text-center">
             <p className="text-sm font-medium text-green-700">Click to move here</p>

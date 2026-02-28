@@ -45,6 +45,7 @@ import { useCourtActions } from '../../../../src/admin/courts/useCourtActions.js
 
 // Expected keys (alphabetical) — update this when the contract changes
 const EXPECTED_KEYS = [
+  'cancelMove',
   'closeEditingBlock',
   'closeEditingGame',
   'editingBlock',
@@ -58,12 +59,13 @@ const EXPECTED_KEYS = [
   'handleWetCourtToggle',
   'initiateMove',
   'movingFrom',
+  'movingTo',
   'savingGame',
   'showActions',
   'toggleActions',
 ];
 
-const STATE_KEYS = ['movingFrom', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
+const STATE_KEYS = ['movingFrom', 'movingTo', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
 const HANDLER_KEYS = [
   'handleWetCourtToggle',
   'handleClearCourt',
@@ -72,6 +74,7 @@ const HANDLER_KEYS = [
   'handleEditClick',
   'handleMoveCourt',
   'initiateMove',
+  'cancelMove',
   'toggleActions',
   'closeEditingGame',
   'closeEditingBlock',
@@ -106,14 +109,15 @@ describe('useCourtActions contract', () => {
     });
   });
 
-  it('returns exactly 16 keys', () => {
-    expect(Object.keys(hookResult)).toHaveLength(16);
+  it('returns exactly 18 keys', () => {
+    expect(Object.keys(hookResult)).toHaveLength(18);
   });
 
   it('keys match expected shape (inline snapshot)', () => {
     const keys = Object.keys(hookResult).sort();
     expect(keys).toMatchInlineSnapshot(`
       [
+        "cancelMove",
         "closeEditingBlock",
         "closeEditingGame",
         "editingBlock",
@@ -127,6 +131,7 @@ describe('useCourtActions contract', () => {
         "handleWetCourtToggle",
         "initiateMove",
         "movingFrom",
+        "movingTo",
         "savingGame",
         "showActions",
         "toggleActions",
@@ -141,6 +146,10 @@ describe('useCourtActions contract', () => {
   describe('state keys have expected initial values', () => {
     it('movingFrom is null', () => {
       expect(hookResult.movingFrom).toBeNull();
+    });
+
+    it('movingTo is null', () => {
+      expect(hookResult.movingTo).toBeNull();
     });
 
     it('showActions is null', () => {
@@ -175,6 +184,7 @@ describe('useCourtActions contract', () => {
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {
+        "cancelMove": "function",
         "closeEditingBlock": "function",
         "closeEditingGame": "function",
         "editingBlock": "object",
@@ -188,6 +198,7 @@ describe('useCourtActions contract', () => {
         "handleWetCourtToggle": "function",
         "initiateMove": "function",
         "movingFrom": "object",
+        "movingTo": "object",
         "savingGame": "boolean",
         "showActions": "object",
         "toggleActions": "function",

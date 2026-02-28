@@ -41,6 +41,7 @@ export function useCourtActions({
   const { backend } = services;
 
   const [movingFrom, setMovingFrom] = useState(null);
+  const [movingTo, setMovingTo] = useState(null); // target court during in-flight move
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
@@ -162,12 +163,18 @@ export function useCourtActions({
   };
 
   const handleMoveCourt = async (from, to) => {
+    setMovingTo(to);
     try {
       const res = await onMoveCourt(from, to);
       if (res?.success) {
         setMovingFrom(null);
+        setMovingTo(null);
+      } else {
+        // Failed — clear movingTo so user can retry from move-mode
+        setMovingTo(null);
       }
     } catch {
+      setMovingTo(null);
       toast('Unexpected error moving court', { type: 'error' });
     }
   };
@@ -229,9 +236,14 @@ export function useCourtActions({
     }
   };
 
+  const cancelMove = () => {
+    setMovingFrom(null);
+    setMovingTo(null);
+  };
+
   const toggleActions = (courtNum) => {
     setShowActions(showActions === courtNum ? null : courtNum);
-    setMovingFrom(null);
+    cancelMove();
   };
 
   const closeEditingGame = () => setEditingGame(null);
@@ -245,6 +257,7 @@ export function useCourtActions({
   return {
     // State
     movingFrom,
+    movingTo,
     showActions,
     editingGame,
     editingBlock,
@@ -257,6 +270,7 @@ export function useCourtActions({
     handleEditClick,
     handleMoveCourt,
     initiateMove,
+    cancelMove,
     toggleActions,
     closeEditingGame,
     closeEditingBlock,
