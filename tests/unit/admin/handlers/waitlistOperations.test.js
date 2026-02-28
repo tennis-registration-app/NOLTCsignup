@@ -34,6 +34,7 @@ function createCtx(overrides = {}) {
       ...overrides.backend,
     },
     showNotification: vi.fn(),
+    refreshBoard: vi.fn(),
     TENNIS_CONFIG,
     ...overrides,
   };
@@ -65,6 +66,7 @@ describe('removeFromWaitlistOp', () => {
       deviceId: DEVICE_ID,
     });
     expect(ctx.showNotification).toHaveBeenCalledWith('Group removed from waitlist', 'success');
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
   it('removes group at second index', async () => {
@@ -151,6 +153,7 @@ describe('moveInWaitlistOp', () => {
       newPosition: 3, // 0-based index 2 → 1-based position 3
     });
     expect(ctx.showNotification).toHaveBeenCalledWith('Moved to position 3', 'success');
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
   it('moves to first position (index 0)', async () => {

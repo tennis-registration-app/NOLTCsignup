@@ -120,7 +120,7 @@ export function useAdminAppState({ showNotification, confirm }) {
   });
 
   // Board subscription hook - owns courts, waitingGroups, courtBlocks, refreshTrigger state
-  const { courts, waitingGroups, courtBlocks, refreshTrigger, bumpRefreshTrigger } =
+  const { courts, waitingGroups, courtBlocks, refreshTrigger, bumpRefreshTrigger, refreshBoard } =
     useBoardSubscription({ backend });
 
   // Wet courts hook - manages state + backend ops + side effects
@@ -169,6 +169,7 @@ export function useAdminAppState({ showNotification, confirm }) {
     setBlockingView,
     reloadSettings,
     bumpRefreshTrigger,
+    refreshBoard,
   });
 
   // Update current time every second

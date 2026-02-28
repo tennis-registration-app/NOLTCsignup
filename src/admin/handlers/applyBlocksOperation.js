@@ -98,4 +98,6 @@ export async function applyBlocksOp(ctx, blocks) {
   } else {
     showNotification(`Applied ${successCount} block(s) successfully`, 'success');
   }
+
+  if (successCount > 0) ctx.refreshBoard?.();
 }

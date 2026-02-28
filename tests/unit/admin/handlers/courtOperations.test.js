@@ -5,7 +5,7 @@
  * All functions take a ctx object with injected deps — no React, no DOM.
  *
  * All operations use ctx.showNotification for user feedback.
- * window.refreshAdminView is called by moveCourtOp.
+ * ctx.refreshBoard is called after successful mutations.
  *
  * @vitest-environment jsdom
  */
@@ -45,6 +45,7 @@ function createCtx(overrides = {}) {
       ...overrides.backend,
     },
     showNotification: vi.fn(),
+    refreshBoard: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
     dataStore: {
       set: vi.fn().mockResolvedValue(undefined),
@@ -73,12 +74,6 @@ function createCtxWithBackend(backendOverrides, ctxOverrides = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // moveCourtOp calls window.refreshAdminView?.()
-  window.refreshAdminView = vi.fn();
-});
-
-afterEach(() => {
-  delete window.refreshAdminView;
 });
 
 // ============================================================
@@ -100,6 +95,7 @@ describe('clearCourtOp', () => {
       deviceId: DEVICE_ID,
     });
     expect(ctx.showNotification).toHaveBeenCalledWith('Court 3 cleared', 'success');
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
   it('cancels block when court has active block (no session)', async () => {
@@ -249,12 +245,12 @@ describe('moveCourtOp', () => {
     expect(result).toEqual({ success: true, from: 2, to: 3 });
   });
 
-  it('calls window.refreshAdminView after success', async () => {
+  it('calls refreshBoard after success', async () => {
     const ctx = createCtx({ boardCourts: BOARD_COURTS });
 
     await moveCourtOp(ctx, 1, 2);
 
-    expect(window.refreshAdminView).toHaveBeenCalled();
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
   it('returns error when source court not found', async () => {
@@ -350,6 +346,7 @@ describe('clearAllCourtsOp', () => {
       expect.stringContaining('3 sessions ended'),
       'success'
     );
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
   it('does nothing when confirm rejected', async () => {

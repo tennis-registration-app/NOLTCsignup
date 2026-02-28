@@ -39,34 +39,49 @@ export function useBoardSubscription(deps) {
     setRefreshTrigger((prev) => prev + 1);
   }, []);
 
+  // Shared board update handler — used by both subscription and manual refresh
+  const applyBoardUpdate = useCallback((board) => {
+    const result = transformBoardUpdate(board, lastBlocksFingerprintRef.current);
+
+    setCourts(result.courts);
+    setWaitingGroups(result.waitingGroups);
+    setCourtBlocks(result.courtBlocks);
+
+    if (result.shouldBumpRefreshTrigger) {
+      lastBlocksFingerprintRef.current = result.newFingerprint;
+      setRefreshTrigger((prev) => prev + 1);
+      logger.debug('AdminApp', 'Blocks changed, triggering calendar refresh');
+    }
+  }, []);
+
+  // On-demand board refresh — call after admin mutations for instant UI update
+  const refreshBoard = useCallback(async () => {
+    try {
+      const board = await backend.queries.getBoard();
+      if (board) applyBoardUpdate(board);
+    } catch (error) {
+      logger.error('AdminApp', 'Manual board refresh failed', error);
+    }
+  }, [backend, applyBoardUpdate]);
+
   // Subscribe to TennisBackend realtime updates for courts/waitlist
   // IMPORTANT: Dependency array is [] (mount only) - preserved from original
   useEffect(() => {
     logger.debug('AdminApp', 'Setting up TennisBackend subscription...');
 
-    const unsubscribe = backend.queries.subscribeToBoardChanges((board) => {
-      logger.debug('AdminApp', 'Board update received', {
-        serverNow: board?.serverNow,
-        courts: board?.courts?.length,
-      });
+    const unsubscribe = backend.queries.subscribeToBoardChanges(
+      (board) => {
+        logger.debug('AdminApp', 'Board update received', {
+          serverNow: board?.serverNow,
+          courts: board?.courts?.length,
+        });
 
-      if (board) {
-        // Use pure transform function
-        const result = transformBoardUpdate(board, lastBlocksFingerprintRef.current);
-
-        // Update state
-        setCourts(result.courts);
-        setWaitingGroups(result.waitingGroups);
-        setCourtBlocks(result.courtBlocks);
-
-        // Update fingerprint ref and bump refresh trigger if blocks changed
-        if (result.shouldBumpRefreshTrigger) {
-          lastBlocksFingerprintRef.current = result.newFingerprint;
-          setRefreshTrigger((prev) => prev + 1);
-          logger.debug('AdminApp', 'Blocks changed, triggering calendar refresh');
+        if (board) {
+          applyBoardUpdate(board);
         }
-      }
-    });
+      },
+      { pollIntervalMs: 3000 }
+    );
 
     return () => {
       logger.debug('AdminApp', 'Cleaning up TennisBackend subscription');
@@ -82,6 +97,7 @@ export function useBoardSubscription(deps) {
     refreshTrigger,
     // Commands (named, not raw setters)
     bumpRefreshTrigger,
+    refreshBoard,
   };
 }
 

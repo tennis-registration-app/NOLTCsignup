@@ -25,7 +25,7 @@ export async function removeFromWaitlistOp(ctx, index) {
     }
 
     showNotification('Group removed from waitlist', 'success');
-    // Realtime subscription will update the UI
+    ctx.refreshBoard?.();
   } catch (error) {
     console.error('Error removing from waitlist:', error);
     showNotification(error.message || 'Failed to remove group', 'error');
@@ -48,7 +48,7 @@ export async function moveInWaitlistOp(ctx, from, to) {
 
   if (result.ok) {
     showNotification(`Moved to position ${newPosition}`, 'success');
-    // Board will refresh via realtime subscription
+    ctx.refreshBoard?.();
   } else {
     showNotification(result.error || 'Failed to reorder waitlist', 'error');
   }

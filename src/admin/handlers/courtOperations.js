@@ -48,7 +48,7 @@ export async function clearCourtOp(ctx, courtNumber) {
       showNotification(`Court ${courtNumber} is already empty`, 'info');
     }
 
-    // Realtime subscription will update the UI automatically
+    if (cleared) ctx.refreshBoard?.();
   } catch (error) {
     console.error('Error clearing court:', error);
     showNotification(error.message || 'Failed to clear court', 'error');
@@ -89,8 +89,7 @@ export async function moveCourtOp(ctx, from, to) {
 
     showNotification(`Moved from Court ${f} to Court ${t}`, 'success');
 
-    // Belt & suspenders: coalescer should refresh, but trigger explicit refresh too.
-    window.refreshAdminView?.();
+    ctx.refreshBoard?.();
 
     return { success: true, from: f, to: t };
   } catch (err) {
@@ -140,7 +139,7 @@ export async function clearAllCourtsOp(ctx) {
         'success'
       );
 
-      // Realtime subscription will update the UI
+      ctx.refreshBoard?.();
     } catch (error) {
       console.error('Error clearing all courts:', error);
       showNotification(error.message || 'Failed to clear courts', 'error');

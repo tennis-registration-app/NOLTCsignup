@@ -63,6 +63,7 @@ describe('useAdminHandlers contract', () => {
         setBlockingView: vi.fn(),
         reloadSettings: vi.fn(),
         bumpRefreshTrigger: vi.fn(),
+        refreshBoard: vi.fn(),
       });
       hookResult = result;
       return null;

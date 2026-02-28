@@ -42,6 +42,7 @@ function createCtx(overrides = {}) {
       ...overrides.backend,
     },
     showNotification: vi.fn(),
+    refreshBoard: vi.fn(),
     TENNIS_CONFIG,
     ...overrides,
   };
@@ -93,6 +94,7 @@ describe('applyBlocksOp', () => {
       expect.stringContaining('1 block(s) successfully'),
       'success'
     );
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
   it('creates blocks for multiple courts from single block', async () => {
