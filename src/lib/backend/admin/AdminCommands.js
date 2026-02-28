@@ -40,6 +40,7 @@ export class AdminCommands {
       message: response.message || response.error,
       serverNow: response.serverNow,
       block: response.block,
+      board: response.board,
     };
   }
 
@@ -99,6 +100,7 @@ export class AdminCommands {
       code: response.code,
       message: response.message || response.error,
       serverNow: response.serverNow,
+      board: response.board,
     };
   }
 
@@ -125,6 +127,7 @@ export class AdminCommands {
       message: response.message || response.error,
       serverNow: response.serverNow,
       session: response.session,
+      board: response.board,
     };
   }
 
@@ -147,6 +150,7 @@ export class AdminCommands {
       message: response.message || response.error,
       serverNow: response.serverNow,
       sessionsEnded: response.sessionsEnded,
+      board: response.board,
     };
   }
 
@@ -170,6 +174,7 @@ export class AdminCommands {
       code: response.code,
       message: response.message || response.error,
       serverNow: response.serverNow,
+      board: response.board,
     };
   }
 

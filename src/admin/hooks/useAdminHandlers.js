@@ -9,6 +9,7 @@ import { useCallback } from 'react';
 import { removeFromWaitlistOp, moveInWaitlistOp } from '../handlers/waitlistOperations';
 import { clearCourtOp, moveCourtOp, clearAllCourtsOp } from '../handlers/courtOperations';
 import { applyBlocksOp } from '../handlers/applyBlocksOperation';
+import { normalizeBoard } from '../../lib/normalize/index.js';
 
 /**
  * @param {Object} deps
@@ -25,6 +26,7 @@ import { applyBlocksOp } from '../handlers/applyBlocksOperation';
  * @param {Function} deps.reloadSettings - Reload admin settings
  * @param {Function} deps.bumpRefreshTrigger - Increment board refresh trigger
  * @param {Function} deps.refreshBoard - Fetch board from backend and apply update immediately
+ * @param {Function} deps.applyBoardUpdate - Apply normalized Domain Board to state directly
  */
 export function useAdminHandlers({
   backend,
@@ -40,7 +42,25 @@ export function useAdminHandlers({
   reloadSettings,
   bumpRefreshTrigger,
   refreshBoard,
+  applyBoardUpdate,
 }) {
+  // Normalize raw API board data and apply to state (avoids separate refetch)
+  const applyBoardResponse = useCallback(
+    (apiResponse) => {
+      if (!apiResponse?.board) {
+        refreshBoard?.();
+        return;
+      }
+      try {
+        const normalized = normalizeBoard(apiResponse.board);
+        applyBoardUpdate(normalized);
+      } catch (error) {
+        console.error('Failed to normalize board response:', error);
+        refreshBoard?.();
+      }
+    },
+    [applyBoardUpdate, refreshBoard]
+  );
   const handleEditBlockFromStatus = useCallback(
     (block) => {
       setBlockToEdit(block);
@@ -53,13 +73,17 @@ export function useAdminHandlers({
   // Court operations - delegated to handler module (useCallback for identity stability)
   const clearCourt = useCallback(
     (courtNumber) =>
-      clearCourtOp({ courts, backend, showNotification, TENNIS_CONFIG, refreshBoard }, courtNumber),
-    [courts, backend, showNotification, TENNIS_CONFIG, refreshBoard]
+      clearCourtOp(
+        { courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse },
+        courtNumber
+      ),
+    [courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse]
   );
 
   const moveCourt = useCallback(
-    (from, to) => moveCourtOp({ backend, refreshBoard }, from, to),
-    [backend, refreshBoard]
+    (from, to) =>
+      moveCourtOp({ backend, showNotification, refreshBoard, applyBoardResponse }, from, to),
+    [backend, showNotification, refreshBoard, applyBoardResponse]
   );
 
   const clearAllCourts = useCallback(
@@ -72,31 +96,55 @@ export function useAdminHandlers({
         confirm,
         TENNIS_CONFIG,
         refreshBoard,
+        applyBoardResponse,
       }),
-    [courts, backend, dataStore, showNotification, confirm, TENNIS_CONFIG, refreshBoard]
+    [
+      courts,
+      backend,
+      dataStore,
+      showNotification,
+      confirm,
+      TENNIS_CONFIG,
+      refreshBoard,
+      applyBoardResponse,
+    ]
   );
 
   // Waitlist operations - delegated to handler module (useCallback for identity stability)
   const removeFromWaitlist = useCallback(
     (index) =>
       removeFromWaitlistOp(
-        { waitingGroups, backend, showNotification, TENNIS_CONFIG, refreshBoard },
+        {
+          waitingGroups,
+          backend,
+          showNotification,
+          TENNIS_CONFIG,
+          refreshBoard,
+          applyBoardResponse,
+        },
         index
       ),
-    [waitingGroups, backend, showNotification, TENNIS_CONFIG, refreshBoard]
+    [waitingGroups, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse]
   );
 
   const moveInWaitlist = useCallback(
     (from, to) =>
-      moveInWaitlistOp({ waitingGroups, backend, showNotification, refreshBoard }, from, to),
-    [waitingGroups, backend, showNotification, refreshBoard]
+      moveInWaitlistOp(
+        { waitingGroups, backend, showNotification, refreshBoard, applyBoardResponse },
+        from,
+        to
+      ),
+    [waitingGroups, backend, showNotification, refreshBoard, applyBoardResponse]
   );
 
   // Block apply closure (captures React state for handler module)
   const applyBlocks = useCallback(
     (blocks) =>
-      applyBlocksOp({ courts, backend, showNotification, TENNIS_CONFIG, refreshBoard }, blocks),
-    [courts, backend, showNotification, TENNIS_CONFIG, refreshBoard]
+      applyBlocksOp(
+        { courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse },
+        blocks
+      ),
+    [courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse]
   );
 
   // Refresh data closure (settings + board refresh combined)

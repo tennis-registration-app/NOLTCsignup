@@ -35,6 +35,7 @@ function createCtx(overrides = {}) {
     },
     showNotification: vi.fn(),
     refreshBoard: vi.fn(),
+    applyBoardResponse: vi.fn(),
     TENNIS_CONFIG,
     ...overrides,
   };
@@ -129,6 +130,29 @@ describe('removeFromWaitlistOp', () => {
       'error'
     );
   });
+
+  it('uses board from response when available (removeFromWaitlist)', async () => {
+    const mockBoard = { courts: [], waitlist: [] };
+    const ctx = createCtx({ waitingGroups: GROUPS });
+    ctx.backend.admin.removeFromWaitlist.mockResolvedValue({ ok: true, board: mockBoard });
+
+    await removeFromWaitlistOp(ctx, 0);
+
+    expect(ctx.applyBoardResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ board: mockBoard })
+    );
+    expect(ctx.refreshBoard).not.toHaveBeenCalled();
+  });
+
+  it('falls back to refreshBoard when no board in response', async () => {
+    const ctx = createCtx({ waitingGroups: GROUPS });
+    ctx.backend.admin.removeFromWaitlist.mockResolvedValue({ ok: true });
+
+    await removeFromWaitlistOp(ctx, 0);
+
+    expect(ctx.applyBoardResponse).not.toHaveBeenCalled();
+    expect(ctx.refreshBoard).toHaveBeenCalled();
+  });
 });
 
 // ============================================================
@@ -185,6 +209,29 @@ describe('moveInWaitlistOp', () => {
     await moveInWaitlistOp(ctx, 99, 0);
 
     expect(ctx.backend.admin.reorderWaitlist).not.toHaveBeenCalled();
+  });
+
+  it('uses board from response when available (moveInWaitlist)', async () => {
+    const mockBoard = { courts: [], waitlist: [] };
+    const ctx = createCtx({ waitingGroups: GROUPS });
+    ctx.backend.admin.reorderWaitlist.mockResolvedValue({ ok: true, board: mockBoard });
+
+    await moveInWaitlistOp(ctx, 0, 2);
+
+    expect(ctx.applyBoardResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ board: mockBoard })
+    );
+    expect(ctx.refreshBoard).not.toHaveBeenCalled();
+  });
+
+  it('falls back to refreshBoard when no board in moveInWaitlist response', async () => {
+    const ctx = createCtx({ waitingGroups: GROUPS });
+    ctx.backend.admin.reorderWaitlist.mockResolvedValue({ ok: true });
+
+    await moveInWaitlistOp(ctx, 0, 2);
+
+    expect(ctx.applyBoardResponse).not.toHaveBeenCalled();
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 });
 

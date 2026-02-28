@@ -59,13 +59,13 @@ const EXPECTED_KEYS = [
   'handleWetCourtToggle',
   'initiateMove',
   'movingFrom',
-  'movingTo',
+  'optimisticCourts',
   'savingGame',
   'showActions',
   'toggleActions',
 ];
 
-const STATE_KEYS = ['movingFrom', 'movingTo', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
+const STATE_KEYS = ['movingFrom', 'optimisticCourts', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
 const HANDLER_KEYS = [
   'handleWetCourtToggle',
   'handleClearCourt',
@@ -94,6 +94,7 @@ describe('useCourtActions contract', () => {
         statusActions: { clearCourt: vi.fn(), moveCourt: vi.fn() },
         wetCourtsActions: { clearCourt: vi.fn(), clearAllCourts: vi.fn() },
         services: { backend: { admin: { updateSession: vi.fn() } } },
+        courts: [],
         courtBlocks: [],
         wetCourts: new Set(),
       });
@@ -131,7 +132,7 @@ describe('useCourtActions contract', () => {
         "handleWetCourtToggle",
         "initiateMove",
         "movingFrom",
-        "movingTo",
+        "optimisticCourts",
         "savingGame",
         "showActions",
         "toggleActions",
@@ -148,8 +149,8 @@ describe('useCourtActions contract', () => {
       expect(hookResult.movingFrom).toBeNull();
     });
 
-    it('movingTo is null', () => {
-      expect(hookResult.movingTo).toBeNull();
+    it('optimisticCourts is null', () => {
+      expect(hookResult.optimisticCourts).toBeNull();
     });
 
     it('showActions is null', () => {
@@ -198,7 +199,7 @@ describe('useCourtActions contract', () => {
         "handleWetCourtToggle": "function",
         "initiateMove": "function",
         "movingFrom": "object",
-        "movingTo": "object",
+        "optimisticCourts": "object",
         "savingGame": "boolean",
         "showActions": "object",
         "toggleActions": "function",

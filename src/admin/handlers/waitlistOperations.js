@@ -25,7 +25,11 @@ export async function removeFromWaitlistOp(ctx, index) {
     }
 
     showNotification('Group removed from waitlist', 'success');
-    ctx.refreshBoard?.();
+    if (result.board) {
+      ctx.applyBoardResponse?.(result);
+    } else {
+      ctx.refreshBoard?.();
+    }
   } catch (error) {
     console.error('Error removing from waitlist:', error);
     showNotification(error.message || 'Failed to remove group', 'error');
@@ -48,7 +52,11 @@ export async function moveInWaitlistOp(ctx, from, to) {
 
   if (result.ok) {
     showNotification(`Moved to position ${newPosition}`, 'success');
-    ctx.refreshBoard?.();
+    if (result.board) {
+      ctx.applyBoardResponse?.(result);
+    } else {
+      ctx.refreshBoard?.();
+    }
   } else {
     showNotification(result.error || 'Failed to reorder waitlist', 'error');
   }

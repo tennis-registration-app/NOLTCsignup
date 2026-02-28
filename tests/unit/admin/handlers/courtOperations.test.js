@@ -46,6 +46,7 @@ function createCtx(overrides = {}) {
     },
     showNotification: vi.fn(),
     refreshBoard: vi.fn(),
+    applyBoardResponse: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
     dataStore: {
       set: vi.fn().mockResolvedValue(undefined),
@@ -95,7 +96,23 @@ describe('clearCourtOp', () => {
       deviceId: DEVICE_ID,
     });
     expect(ctx.showNotification).toHaveBeenCalledWith('Court 3 cleared', 'success');
+    // Falls back to refreshBoard when no board in response
     expect(ctx.refreshBoard).toHaveBeenCalled();
+  });
+
+  it('uses board from response when available (clearCourt)', async () => {
+    const mockBoard = { courts: [], waitlist: [] };
+    const ctx = createCtx({
+      courts: [{ number: 3, id: 'court-uuid-3', session: { id: 'sess-1' } }],
+    });
+    ctx.backend.admin.adminEndSession.mockResolvedValue({ ok: true, board: mockBoard });
+
+    await clearCourtOp(ctx, 3);
+
+    expect(ctx.applyBoardResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ board: mockBoard })
+    );
+    expect(ctx.refreshBoard).not.toHaveBeenCalled();
   });
 
   it('cancels block when court has active block (no session)', async () => {
@@ -245,11 +262,26 @@ describe('moveCourtOp', () => {
     expect(result).toEqual({ success: true, from: 2, to: 3 });
   });
 
-  it('calls refreshBoard after success', async () => {
+  it('uses board from response when available (no refreshBoard)', async () => {
+    const mockBoard = { courts: [], waitlist: [] };
     const ctx = createCtx({ boardCourts: BOARD_COURTS });
+    ctx.backend.commands.moveCourt.mockResolvedValue({ ok: true, board: mockBoard });
 
     await moveCourtOp(ctx, 1, 2);
 
+    expect(ctx.applyBoardResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ board: mockBoard })
+    );
+    expect(ctx.refreshBoard).not.toHaveBeenCalled();
+  });
+
+  it('falls back to refreshBoard when board not in response', async () => {
+    const ctx = createCtx({ boardCourts: BOARD_COURTS });
+    ctx.backend.commands.moveCourt.mockResolvedValue({ ok: true });
+
+    await moveCourtOp(ctx, 1, 2);
+
+    expect(ctx.applyBoardResponse).not.toHaveBeenCalled();
     expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 
@@ -400,5 +432,34 @@ describe('clearAllCourtsOp', () => {
     await clearAllCourtsOp(ctx);
 
     expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledTimes(3);
+  });
+
+  it('uses board from response when available (clearAllCourts)', async () => {
+    const mockBoard = { courts: [], waitlist: [] };
+    const ctx = createCtx({
+      courts: [
+        { number: 1, id: 'uuid-1', block: { id: 'block-1' } },
+      ],
+    });
+    ctx.backend.admin.cancelBlock.mockResolvedValue({ ok: true, board: mockBoard });
+
+    await clearAllCourtsOp(ctx);
+
+    expect(ctx.applyBoardResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ board: mockBoard })
+    );
+    expect(ctx.refreshBoard).not.toHaveBeenCalled();
+  });
+
+  it('falls back to refreshBoard when no board in clearAllCourts response', async () => {
+    const ctx = createCtx({
+      courts: [
+        { number: 1, id: 'uuid-1', session: { id: 'sess-1' } },
+      ],
+    });
+
+    await clearAllCourtsOp(ctx);
+
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 });

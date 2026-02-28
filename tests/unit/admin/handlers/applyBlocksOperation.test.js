@@ -43,6 +43,7 @@ function createCtx(overrides = {}) {
     },
     showNotification: vi.fn(),
     refreshBoard: vi.fn(),
+    applyBoardResponse: vi.fn(),
     TENNIS_CONFIG,
     ...overrides,
   };
@@ -266,5 +267,28 @@ describe('applyBlocksOp', () => {
     expect(ctx.backend.admin.createBlock).toHaveBeenCalledWith(
       expect.objectContaining({ courtId: 'uuid-court-2' })
     );
+  });
+
+  it('uses board from last successful response when available', async () => {
+    const mockBoard = { courts: [], waitlist: [] };
+    const ctx = createCtx();
+    ctx.backend.admin.createBlock.mockResolvedValue({ ok: true, block: { id: 'b1' }, board: mockBoard });
+
+    await applyBlocksOp(ctx, [makeBlock({ courts: [1] })]);
+
+    expect(ctx.applyBoardResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ board: mockBoard })
+    );
+    expect(ctx.refreshBoard).not.toHaveBeenCalled();
+  });
+
+  it('falls back to refreshBoard when no board in createBlock response', async () => {
+    const ctx = createCtx();
+    ctx.backend.admin.createBlock.mockResolvedValue({ ok: true, block: { id: 'b1' } });
+
+    await applyBlocksOp(ctx, [makeBlock({ courts: [1] })]);
+
+    expect(ctx.applyBoardResponse).not.toHaveBeenCalled();
+    expect(ctx.refreshBoard).toHaveBeenCalled();
   });
 });

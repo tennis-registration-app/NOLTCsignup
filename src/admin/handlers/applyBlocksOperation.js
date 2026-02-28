@@ -15,6 +15,7 @@ export async function applyBlocksOp(ctx, blocks) {
 
   let successCount = 0;
   let failCount = 0;
+  let lastSuccessResult = null;
 
   // Process all blocks and courts
   for (const block of blocks) {
@@ -79,6 +80,7 @@ export async function applyBlocksOp(ctx, blocks) {
         if (result.ok) {
           logger.info('Admin', 'Created block via API', result.block);
           successCount++;
+          lastSuccessResult = result;
         } else {
           logger.error('Admin', 'Failed to create block', result.message);
           failCount++;
@@ -99,5 +101,10 @@ export async function applyBlocksOp(ctx, blocks) {
     showNotification(`Applied ${successCount} block(s) successfully`, 'success');
   }
 
-  if (successCount > 0) ctx.refreshBoard?.();
+  // Use board from last successful response if available, otherwise fall back to refresh
+  if (successCount > 0 && lastSuccessResult?.board) {
+    ctx.applyBoardResponse?.(lastSuccessResult);
+  } else if (successCount > 0) {
+    ctx.refreshBoard?.();
+  }
 }

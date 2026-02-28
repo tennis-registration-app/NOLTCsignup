@@ -26,6 +26,7 @@ function notifyDataChanged() {
  * @param {Object} params.statusActions - { clearCourt, moveCourt }
  * @param {Object} params.wetCourtsActions - { clearCourt, clearAllCourts }
  * @param {Object} params.services - { backend }
+ * @param {Array} params.courts - court objects from statusModel
  * @param {Array} params.courtBlocks - block objects from statusModel
  * @param {Set} params.wetCourts - wet court numbers from wetCourtsModel
  */
@@ -33,6 +34,7 @@ export function useCourtActions({
   statusActions,
   wetCourtsActions,
   services,
+  courts,
   courtBlocks,
   wetCourts,
 }) {
@@ -41,7 +43,8 @@ export function useCourtActions({
   const { backend } = services;
 
   const [movingFrom, setMovingFrom] = useState(null);
-  const [movingTo, setMovingTo] = useState(null); // target court during in-flight move
+  const [moveInFlight, setMoveInFlight] = useState(false); // prevents double-click during API call
+  const [optimisticCourts, setOptimisticCourts] = useState(null); // local override while move is in-flight
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
@@ -163,19 +166,59 @@ export function useCourtActions({
   };
 
   const handleMoveCourt = async (from, to) => {
-    setMovingTo(to);
+    if (moveInFlight) return; // prevent double-click
+
+    // Build optimistic courts: swap session from source → target
+    const sourceCourts = courts || [];
+    const fromCourt = sourceCourts.find((c) => c.number === Number(from));
+    const toCourt = sourceCourts.find((c) => c.number === Number(to));
+
+    if (fromCourt && toCourt) {
+      const SESSION_KEYS = ['session', 'players', 'startTime', 'endTime', 'duration', 'sessionId'];
+      const updated = sourceCourts.map((c) => {
+        if (c.number === Number(from)) {
+          // Source becomes empty: strip session/players
+          const rest = {};
+          for (const key of Object.keys(c)) {
+            if (!SESSION_KEYS.includes(key)) rest[key] = c[key];
+          }
+          return rest;
+        }
+        if (c.number === Number(to)) {
+          // Target gets source's session data
+          return {
+            ...c,
+            session: fromCourt.session,
+            players: fromCourt.players,
+            startTime: fromCourt.startTime,
+            endTime: fromCourt.endTime,
+            duration: fromCourt.duration,
+            sessionId: fromCourt.sessionId,
+          };
+        }
+        return c;
+      });
+      setOptimisticCourts(updated);
+    }
+
+    // Clear move mode immediately — UI already shows the result
+    setMovingFrom(null);
+    setMoveInFlight(true);
+
     try {
       const res = await onMoveCourt(from, to);
-      if (res?.success) {
-        setMovingFrom(null);
-        setMovingTo(null);
-      } else {
-        // Failed — clear movingTo so user can retry from move-mode
-        setMovingTo(null);
+      if (!res?.success) {
+        // Rollback: discard optimistic state so real data shows
+        setOptimisticCourts(null);
+        toast(res?.error || 'Move failed', { type: 'error' });
       }
     } catch {
-      setMovingTo(null);
+      setOptimisticCourts(null);
       toast('Unexpected error moving court', { type: 'error' });
+    } finally {
+      setMoveInFlight(false);
+      // Clear optimistic override — next poll/refresh will have the real data
+      setOptimisticCourts(null);
     }
   };
 
@@ -238,7 +281,6 @@ export function useCourtActions({
 
   const cancelMove = () => {
     setMovingFrom(null);
-    setMovingTo(null);
   };
 
   const toggleActions = (courtNum) => {
@@ -257,7 +299,7 @@ export function useCourtActions({
   return {
     // State
     movingFrom,
-    movingTo,
+    optimisticCourts,
     showActions,
     editingGame,
     editingBlock,

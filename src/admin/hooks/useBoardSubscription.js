@@ -98,6 +98,7 @@ export function useBoardSubscription(deps) {
     // Commands (named, not raw setters)
     bumpRefreshTrigger,
     refreshBoard,
+    applyBoardUpdate,
   };
 }
 

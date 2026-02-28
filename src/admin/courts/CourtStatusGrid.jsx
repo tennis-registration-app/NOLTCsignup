@@ -45,7 +45,7 @@ const CourtStatusGrid = ({
 
   const {
     movingFrom,
-    movingTo,
+    optimisticCourts,
     showActions,
     editingGame,
     editingBlock,
@@ -61,12 +61,20 @@ const CourtStatusGrid = ({
     closeEditingGame,
     closeEditingBlock,
     handleBlockSaved,
-  } = useCourtActions({ statusActions, wetCourtsActions, services, courtBlocks, wetCourts });
+  } = useCourtActions({
+    statusActions,
+    wetCourtsActions,
+    services,
+    courts,
+    courtBlocks,
+    wetCourts,
+  });
 
-  // Get data for grid rendering - use courts prop from TennisBackend API
-  // Create a lookup map by court number for efficient access
+  // Get data for grid rendering — use optimistic courts during in-flight move,
+  // otherwise fall back to real courts from TennisBackend API
+  const displayCourts = optimisticCourts || courts;
   const courtsByNumber = {};
-  (courts || []).forEach((c) => {
+  (displayCourts || []).forEach((c) => {
     courtsByNumber[c.number] = c;
   });
 
@@ -107,7 +115,6 @@ const CourtStatusGrid = ({
                 info={info}
                 currentTime={currentTime}
                 movingFrom={movingFrom}
-                movingTo={movingTo}
                 showActionsMenu={showActions === courtNum}
                 handlers={{
                   onToggleActions: toggleActions,

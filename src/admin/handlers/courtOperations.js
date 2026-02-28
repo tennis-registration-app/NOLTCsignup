@@ -16,6 +16,7 @@ export async function clearCourtOp(ctx, courtNumber) {
 
     // Clear block and session independently (both can coexist)
     let cleared = false;
+    let lastResult = null;
 
     if (court.block && court.block.id) {
       const blockResult = await backend.admin.cancelBlock({
@@ -25,6 +26,7 @@ export async function clearCourtOp(ctx, courtNumber) {
       if (blockResult.ok) {
         showNotification(`Court ${courtNumber} unblocked`, 'success');
         cleared = true;
+        lastResult = blockResult;
       } else {
         showNotification(blockResult.message || `Failed to unblock court ${courtNumber}`, 'error');
       }
@@ -39,6 +41,7 @@ export async function clearCourtOp(ctx, courtNumber) {
       if (sessionResult.ok) {
         showNotification(`Court ${courtNumber} cleared`, 'success');
         cleared = true;
+        lastResult = sessionResult;
       } else {
         showNotification(sessionResult.message || `Failed to clear court ${courtNumber}`, 'error');
       }
@@ -48,7 +51,12 @@ export async function clearCourtOp(ctx, courtNumber) {
       showNotification(`Court ${courtNumber} is already empty`, 'info');
     }
 
-    if (cleared) ctx.refreshBoard?.();
+    // Use board from last successful response if available, otherwise fall back to refresh
+    if (cleared && lastResult?.board) {
+      ctx.applyBoardResponse?.(lastResult);
+    } else if (cleared) {
+      ctx.refreshBoard?.();
+    }
   } catch (error) {
     console.error('Error clearing court:', error);
     showNotification(error.message || 'Failed to clear court', 'error');
@@ -89,7 +97,12 @@ export async function moveCourtOp(ctx, from, to) {
 
     showNotification(`Moved from Court ${f} to Court ${t}`, 'success');
 
-    ctx.refreshBoard?.();
+    // Use board from response if available, otherwise fall back to refresh
+    if (res.board) {
+      ctx.applyBoardResponse?.(res);
+    } else {
+      ctx.refreshBoard?.();
+    }
 
     return { success: true, from: f, to: t };
   } catch (err) {
@@ -123,9 +136,10 @@ export async function clearAllCourtsOp(ctx) {
       }
 
       // Also cancel any active blocks
+      let lastBlockResult = null;
       const activeBlocks = courts.filter((c) => c.block && c.block.id);
       for (const court of activeBlocks) {
-        await backend.admin.cancelBlock({
+        lastBlockResult = await backend.admin.cancelBlock({
           blockId: court.block.id,
           deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
         });
@@ -139,7 +153,13 @@ export async function clearAllCourtsOp(ctx) {
         'success'
       );
 
-      ctx.refreshBoard?.();
+      // Use board from last response if available, otherwise fall back to refresh
+      const boardSource = lastBlockResult?.board ? lastBlockResult : result;
+      if (boardSource?.board) {
+        ctx.applyBoardResponse?.(boardSource);
+      } else {
+        ctx.refreshBoard?.();
+      }
     } catch (error) {
       console.error('Error clearing all courts:', error);
       showNotification(error.message || 'Failed to clear courts', 'error');
