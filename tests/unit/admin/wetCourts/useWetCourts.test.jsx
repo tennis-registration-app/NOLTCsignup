@@ -485,6 +485,27 @@ describe('clearWetCourt', () => {
     expect(h.hook.wetCourtNumbers).toEqual([2]);
     h.cleanup();
   });
+
+  it('auto-deactivates isActive when last wet court is cleared individually', async () => {
+    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1] });
+    clearWetCourtOp.mockResolvedValue({ ok: true });
+    const h = createHarness();
+
+    await act(async () => {
+      await h.hook.activateWet();
+    });
+    expect(h.hook.isActive).toBe(true);
+    expect(h.hook.wetCourtNumbers).toEqual([1]);
+
+    await act(async () => {
+      await h.hook.clearWetCourt(1);
+    });
+
+    // After clearing the only wet court, isActive should auto-deactivate
+    expect(h.hook.wetCourtNumbers).toEqual([]);
+    expect(h.hook.isActive).toBe(false);
+    h.cleanup();
+  });
 });
 
 // ============================================================
@@ -508,7 +529,7 @@ describe('clearAllWet', () => {
     h.cleanup();
   });
 
-  it('empties wetCourtNumbers but keeps isActive=true', async () => {
+  it('empties wetCourtNumbers and auto-deactivates isActive', async () => {
     const h = createHarness();
 
     await act(async () => {
@@ -520,8 +541,8 @@ describe('clearAllWet', () => {
       await h.hook.clearAllWet();
     });
 
-    // clearAllWet dispatches WET_COURTS_CLEARED_ALL which does NOT change isActive
-    expect(h.hook.isActive).toBe(true);
+    // clearAllWet empties list; useEffect auto-deactivates when list is empty
+    expect(h.hook.isActive).toBe(false);
     expect(h.hook.wetCourtNumbers).toEqual([]);
     expect(h.hook.wetCount).toBe(0);
     h.cleanup();

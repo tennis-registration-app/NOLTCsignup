@@ -22,14 +22,12 @@ export function getCourtStatus(
   courtNumber,
   { wetCourts, courtBlocks, selectedDate = new Date(), currentTime = new Date() }
 ) {
-  // Check if court has a wet block from API data
-  // Data structure: court.block.reason contains the block title/reason
-  const hasWetBlock = court?.block?.id && court.block.reason?.toLowerCase().includes('wet');
-
-  // Also check wetCourts prop (from parent state) as fallback
-  const isWetFromProp = wetCourts?.has(courtNumber);
-
-  if (hasWetBlock || isWetFromProp) {
+  // Single source of truth for wet status: the wetCourts Set.
+  // The Set is maintained by useWetCourts reducer and updates immediately on
+  // dispatch, whereas court.block data arrives asynchronously via board polling.
+  // Using only the Set eliminates the bounce caused by the two sources updating
+  // on different schedules.
+  if (wetCourts?.has(courtNumber)) {
     return {
       status: 'wet',
       info: {
@@ -42,7 +40,12 @@ export function getCourtStatus(
 
   // Then check for blocks on the selected date
   const activeBlock = courtBlocks.find((block) => {
-    if (block.courtNumber !== courtNumber || block.isWetCourt) return false;
+    if (block.courtNumber !== courtNumber) return false;
+    // Skip wet court blocks — these are system-managed and only shown via the
+    // wetCourts Set above.  Check both the explicit flag and the reason text
+    // because extractCourtBlocks() doesn't always set isWetCourt.
+    if (block.isWetCourt) return false;
+    if ((block.reason || '').toLowerCase().includes('wet')) return false;
     const blockStart = new Date(block.startTime);
     const blockEnd = new Date(block.endTime);
 

@@ -11,7 +11,7 @@
  * Receives context hooks (showNotification, confirm) as params because
  * they come from React context providers above AdminPanelV2.
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../../lib/backend/index.js';
 import { logger } from '../../lib/logger.js';
 import { legacyEvents as Events } from '../../platform/attachLegacyEvents.js';
@@ -44,6 +44,9 @@ import { AIAssistantAdmin, AIAssistant } from '../ai';
 import { MiniCalendar } from '../components/MiniCalendar';
 import { MonthView } from '../components/MonthView';
 import { EventSummary } from '../components/EventSummary';
+
+// Board normalization (shared between applyBoardResponse consumers)
+import { normalizeBoard } from '../../lib/normalize/index.js';
 
 // Extracted callbacks hook (replaces 8 inline useCallbacks)
 import { useAdminHandlers } from './useAdminHandlers';
@@ -130,6 +133,25 @@ export function useAdminAppState({ showNotification, confirm }) {
     applyBoardUpdate,
   } = useBoardSubscription({ backend });
 
+  // Board-in-response helper — normalize raw API board and apply to state.
+  // Created here (before useWetCourts & useAdminHandlers) so both can consume it.
+  const applyBoardResponse = useCallback(
+    (apiResponse) => {
+      if (!apiResponse?.board) {
+        refreshBoard?.();
+        return;
+      }
+      try {
+        const normalized = normalizeBoard(apiResponse.board);
+        applyBoardUpdate(normalized);
+      } catch (error) {
+        console.error('Failed to normalize board response:', error);
+        refreshBoard?.();
+      }
+    },
+    [applyBoardUpdate, refreshBoard]
+  );
+
   // Wet courts hook - manages state + backend ops + side effects
   const {
     isActive: wetCourtsActive,
@@ -138,12 +160,14 @@ export function useAdminAppState({ showNotification, confirm }) {
     activateWet: handleEmergencyWetCourt,
     deactivateWet: deactivateWetCourts,
     clearWetCourt,
+    clearAllWet: clearAllWetCourts,
   } = useWetCourts({
     backend,
     getDeviceId,
     courts,
     Events,
     onRefresh: bumpRefreshTrigger,
+    applyBoardResponse,
   });
 
   // Convert array to Set for compatibility with existing code that expects Set
@@ -239,6 +263,7 @@ export function useAdminAppState({ showNotification, confirm }) {
           moveCourt,
           clearAllCourts,
           clearWetCourt,
+          clearAllWetCourts,
           removeFromWaitlist,
           moveInWaitlist,
           handleEditBlockFromStatus,
@@ -287,6 +312,7 @@ export function useAdminAppState({ showNotification, confirm }) {
       moveCourt,
       clearAllCourts,
       clearWetCourt,
+      clearAllWetCourts,
       removeFromWaitlist,
       moveInWaitlist,
       handleEditBlockFromStatus,

@@ -6,6 +6,7 @@
  */
 import React from 'react';
 import { Edit2, X, CalendarDays, Droplets } from '../components';
+import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle.js';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
 import CourtSelectionGrid from './CourtSelectionGrid.jsx';
@@ -116,10 +117,17 @@ const CompleteBlockManagerEnhanced = ({
   const currentTime = new Date();
 
   // Wet court operations — use controller-provided actions directly
-  // (reducer-based hook, no duplicate backend calls)
   const handleEmergencyWetCourt = wetCourtsActions.activateEmergency;
   const deactivateWetCourts = wetCourtsActions.deactivateAll;
-  const clearWetCourt = wetCourtsActions.clearCourt;
+
+  // Shared optimistic wet toggle — same implementation as CourtStatusGrid
+  const { optimisticWetCourts, handleWetCourtToggle: clearWetCourt } = useOptimisticWetToggle({
+    wetCourts,
+    clearCourt: wetCourtsActions.clearCourt,
+  });
+
+  // Use optimistic wet courts when in-flight, otherwise real data
+  const displayWetCourts = optimisticWetCourts || wetCourts;
 
   const {
     handleTemplateSelect,
@@ -242,7 +250,7 @@ const CompleteBlockManagerEnhanced = ({
             {/* Wet Court Management Panel */}
             {wetCourtsActive && (
               <WetCourtManagementPanel
-                wetCourts={wetCourts}
+                wetCourts={displayWetCourts}
                 clearWetCourt={clearWetCourt}
                 deactivateWetCourts={deactivateWetCourts}
               />
@@ -304,7 +312,7 @@ const CompleteBlockManagerEnhanced = ({
               selectedCourts={selectedCourts}
               recurrence={recurrence}
               wetCourtsActive={wetCourtsActive}
-              wetCourts={wetCourts}
+              wetCourts={displayWetCourts}
               deactivateWetCourts={deactivateWetCourts}
               handleEmergencyWetCourt={handleEmergencyWetCourt}
               DropletsIcon={Droplets}

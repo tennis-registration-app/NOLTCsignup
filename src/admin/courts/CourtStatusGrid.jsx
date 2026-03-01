@@ -39,17 +39,20 @@ const CourtStatusGrid = ({
   const { clearAllCourts: onClearAllCourts } = statusActions;
   const { active: wetCourtsActive, courts: wetCourts = /** @type {Set<any>} */ (new Set()) } =
     wetCourtsModel;
-  const { activateEmergency: handleEmergencyWetCourt, deactivateAll: deactivateWetCourts } =
-    wetCourtsActions;
+  // activateEmergency/deactivateAll no longer used directly — routed through useCourtActions
+  // for optimistic UX (kept in wetCourtsActions for useCourtActions to consume)
   const { backend } = services;
 
   const {
     movingFrom,
     optimisticCourts,
+    optimisticWetCourts,
     showActions,
     editingGame,
     editingBlock,
     savingGame,
+    handleActivateWet,
+    handleDeactivateWet,
     handleWetCourtToggle,
     handleClearCourt,
     handleSaveGame,
@@ -70,9 +73,10 @@ const CourtStatusGrid = ({
     wetCourts,
   });
 
-  // Get data for grid rendering — use optimistic courts during in-flight move,
-  // otherwise fall back to real courts from TennisBackend API
+  // Get data for grid rendering — use optimistic overrides during in-flight operations,
+  // otherwise fall back to real data from TennisBackend API
   const displayCourts = optimisticCourts || courts;
+  const displayWetCourts = optimisticWetCourts || wetCourts;
   const courtsByNumber = {};
   (displayCourts || []).forEach((c) => {
     courtsByNumber[c.number] = c;
@@ -101,7 +105,7 @@ const CourtStatusGrid = ({
             const courtNum = index + 1;
             const court = courtsByNumber[courtNum] || null;
             const { status, info } = getCourtStatus(court, courtNum, {
-              wetCourts,
+              wetCourts: displayWetCourts,
               courtBlocks,
               selectedDate,
               currentTime,
@@ -131,9 +135,9 @@ const CourtStatusGrid = ({
 
         <WetCourtsToolbar
           wetCourtsActive={wetCourtsActive}
-          wetCourts={wetCourts}
-          onActivateEmergency={handleEmergencyWetCourt}
-          onDeactivate={deactivateWetCourts}
+          wetCourts={displayWetCourts}
+          onActivateEmergency={handleActivateWet}
+          onDeactivate={handleDeactivateWet}
           onAllCourtsDry={handleAllCourtsDry}
         />
       </div>

@@ -33,13 +33,13 @@ function makeDeps(overrides = {}) {
 // ---------------------------------------------------------------------------
 
 describe('getCourtStatus', () => {
-  it('returns wet when block.reason contains "wet"', () => {
+  it('does NOT return wet from block.reason alone (single source of truth: wetCourts Set)', () => {
     const court = {
       block: { id: 'b1', reason: 'WET COURT - Rain' },
     };
+    // Court has a wet block but is NOT in wetCourts Set → not wet
     const result = getCourtStatus(court, 1, makeDeps());
-    expect(result.status).toBe('wet');
-    expect(result.info.type).toBe('wet');
+    expect(result.status).toBe('available');
   });
 
   it('returns wet when wetCourts Set has courtNumber', () => {
@@ -185,14 +185,14 @@ describe('getCourtStatus', () => {
     expect(result.status).toBe('available');
   });
 
-  it('priority: wet wins over occupied court', () => {
+  it('priority: wet (from Set) wins over occupied court', () => {
     const court = {
-      block: { id: 'b1', reason: 'Wet conditions' },
       players: [{ displayName: 'Alice' }],
       startTime: '2025-06-15T13:00:00Z',
       endTime: '2025-06-15T15:00:00Z',
     };
-    const result = getCourtStatus(court, 1, makeDeps());
+    const deps = makeDeps({ wetCourts: new Set([1]) });
+    const result = getCourtStatus(court, 1, deps);
     expect(result.status).toBe('wet');
   });
 
@@ -244,7 +244,7 @@ describe('getCourtStatus', () => {
     expect(result.status).toBe('available');
   });
 
-  it('ignores wet court blocks in the courtBlocks search', () => {
+  it('ignores wet court blocks in the courtBlocks search (isWetCourt flag)', () => {
     const now = new Date();
     now.setHours(14, 0, 0, 0);
     const start = new Date(now);
@@ -260,10 +260,30 @@ describe('getCourtStatus', () => {
       id: 'wet-1',
       reason: 'WET COURT',
     };
-    // Court has no wet block.reason, and not in wetCourts set
     const deps = makeDeps({ courtBlocks: [wetBlock], currentTime: now, selectedDate: now });
     const result = getCourtStatus(null, 1, deps);
-    // The isWetCourt block should be filtered out by the courtBlocks search
+    expect(result.status).toBe('available');
+  });
+
+  it('ignores wet court blocks by reason text when isWetCourt flag is absent', () => {
+    const now = new Date();
+    now.setHours(14, 0, 0, 0);
+    const start = new Date(now);
+    start.setHours(13, 0, 0, 0);
+    const end = new Date(now);
+    end.setHours(15, 0, 0, 0);
+
+    // Block without isWetCourt flag but with wet reason (from extractCourtBlocks)
+    const wetBlock = {
+      courtNumber: 1,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+      id: 'wet-2',
+      reason: 'WET COURT - Rain',
+    };
+    const deps = makeDeps({ courtBlocks: [wetBlock], currentTime: now, selectedDate: now });
+    const result = getCourtStatus(null, 1, deps);
+    // Should NOT show as yellow "blocked" — wet blocks are only shown via wetCourts Set
     expect(result.status).toBe('available');
   });
 });

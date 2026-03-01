@@ -68,12 +68,32 @@ const COURTS = [
   },
 ];
 
+// Courts with wet blocks (simulates board data after "Wet Courts" activation).
+// getCourtStatus checks BOTH wetCourts Set AND court.block.reason for "wet".
+const WET_BLOCK_COURTS = [
+  {
+    number: 3,
+    id: 'uuid-3',
+    block: { id: 'wet-3', reason: 'WET COURT', startsAt: '2025-01-01T08:00:00Z', endsAt: '2025-01-01T20:00:00Z', isActive: true },
+  },
+  {
+    number: 7,
+    id: 'uuid-7',
+    block: { id: 'wet-7', reason: 'WET COURT', startsAt: '2025-01-01T08:00:00Z', endsAt: '2025-01-01T20:00:00Z', isActive: true },
+  },
+];
+
 // ============================================================
 // Helpers
 // ============================================================
 
-function renderHook(moveCourt, courts, { clearCourt, courtBlocks } = {}) {
+function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts } = {}) {
   let result = { current: null };
+  // Mutable props ref — allows re-rendering with updated values
+  const propsRef = {
+    courts: courts || COURTS,
+    wetCourts: wetCourts || new Set(),
+  };
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -84,11 +104,16 @@ function renderHook(moveCourt, courts, { clearCourt, courtBlocks } = {}) {
         clearCourt: clearCourt || vi.fn().mockResolvedValue({ success: true }),
         moveCourt: moveCourt || vi.fn().mockResolvedValue({ success: true }),
       },
-      wetCourtsActions: { clearCourt: vi.fn(), clearAllCourts: vi.fn() },
+      wetCourtsActions: {
+        activateEmergency: activateEmergency || vi.fn().mockResolvedValue({ success: true }),
+        deactivateAll: deactivateAll || vi.fn().mockResolvedValue({ success: true }),
+        clearCourt: clearWetCourt || vi.fn().mockResolvedValue({ success: true }),
+        clearAllCourts: clearAllWetCourts || vi.fn().mockResolvedValue({ success: true }),
+      },
       services: { backend: { admin: { updateSession: vi.fn() } } },
-      courts: courts || COURTS,
+      courts: propsRef.courts,
       courtBlocks: courtBlocks || [],
-      wetCourts: new Set(),
+      wetCourts: propsRef.wetCourts,
     });
     return null;
   }
@@ -99,12 +124,21 @@ function renderHook(moveCourt, courts, { clearCourt, courtBlocks } = {}) {
     });
   };
 
+  // Re-render with updated props (simulates real data arriving from applyBoardResponse)
+  const rerender = async (newProps) => {
+    if (newProps.wetCourts !== undefined) propsRef.wetCourts = newProps.wetCourts;
+    if (newProps.courts !== undefined) propsRef.courts = newProps.courts;
+    await act(async () => {
+      root.render(React.createElement(Harness));
+    });
+  };
+
   const unmount = () => {
     root.unmount();
     container.remove();
   };
 
-  return { result, renderSync, unmount };
+  return { result, renderSync, rerender, unmount };
 }
 
 // ============================================================
@@ -471,6 +505,613 @@ describe('useCourtActions — optimistic clear', () => {
       resolveClear({ success: true });
       await clearPromise;
     });
+    unmount();
+  });
+});
+
+// ============================================================
+// Optimistic wet court toggle tests
+// ============================================================
+
+describe('useCourtActions — optimistic wet court toggle', () => {
+  const WET_COURTS = new Set([3, 7]);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sets optimisticWetCourts with court removed during in-flight', async () => {
+    let resolveWet;
+    const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearWetCourt,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let togglePromise;
+    await act(async () => {
+      togglePromise = result.current.handleWetCourtToggle(3);
+    });
+
+    // Optimistic wet courts should exist with court 3 removed
+    const opt = result.current.optimisticWetCourts;
+    expect(opt).not.toBeNull();
+    expect(opt.has(3)).toBe(false);
+    expect(opt.has(7)).toBe(true);
+
+    await act(async () => {
+      resolveWet({ success: true });
+      await togglePromise;
+    });
+    unmount();
+  });
+
+  it('clears optimisticWetCourts when real data catches up', async () => {
+    const clearWetCourt = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, rerender, unmount } = renderHook(null, COURTS, {
+      clearWetCourt,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleWetCourtToggle(3);
+    });
+
+    // Optimistic state stays until real data arrives
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.wetToggleInFlight).toBe(false);
+
+    // Simulate real data arriving (applyBoardResponse updates wetCourts upstream)
+    await rerender({ wetCourts: new Set([7]) });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    unmount();
+  });
+
+  it('rolls back and shows toast on failure', async () => {
+    const clearWetCourt = vi.fn().mockResolvedValue({ success: false, error: 'Backend error' });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearWetCourt,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleWetCourtToggle(3);
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Backend error', { type: 'error' });
+    unmount();
+  });
+
+  it('rolls back and shows toast on exception', async () => {
+    const clearWetCourt = vi.fn().mockRejectedValue(new Error('Network'));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearWetCourt,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleWetCourtToggle(3);
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Unexpected error clearing wet court', { type: 'error' });
+    unmount();
+  });
+
+  it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
+    let resolveWet;
+    const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
+    const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
+      clearWetCourt,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let togglePromise;
+    await act(async () => {
+      togglePromise = result.current.handleWetCourtToggle(3);
+    });
+
+    // Wet ops only set optimisticWetCourts, not optimisticCourts
+    expect(result.current.optimisticCourts).toBeNull();
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.optimisticWetCourts.has(3)).toBe(false);
+
+    await act(async () => {
+      resolveWet({ success: true });
+      await togglePromise;
+    });
+    unmount();
+  });
+
+  it('prevents double-click during in-flight wet toggle', async () => {
+    let resolveWet;
+    const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearWetCourt,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let togglePromise;
+    await act(async () => {
+      togglePromise = result.current.handleWetCourtToggle(3);
+    });
+
+    await act(async () => {
+      result.current.handleWetCourtToggle(7);
+    });
+
+    expect(clearWetCourt).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveWet({ success: true });
+      await togglePromise;
+    });
+    unmount();
+  });
+});
+
+// ============================================================
+// Optimistic "All Courts Dry" tests
+// ============================================================
+
+describe('useCourtActions — optimistic All Courts Dry', () => {
+  const WET_COURTS = new Set([1, 3, 7]);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sets optimisticWetCourts to empty set during in-flight', async () => {
+    let resolveDry;
+    const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearAllWetCourts,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let dryPromise;
+    await act(async () => {
+      dryPromise = result.current.handleAllCourtsDry();
+    });
+
+    // Should be empty set (all courts dry)
+    const opt = result.current.optimisticWetCourts;
+    expect(opt).not.toBeNull();
+    expect(opt.size).toBe(0);
+
+    await act(async () => {
+      resolveDry({ success: true });
+      await dryPromise;
+    });
+    unmount();
+  });
+
+  it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
+    let resolveDry;
+    const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
+    const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
+      clearAllWetCourts,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let dryPromise;
+    await act(async () => {
+      dryPromise = result.current.handleAllCourtsDry();
+    });
+
+    // Wet ops only set optimisticWetCourts, not optimisticCourts
+    expect(result.current.optimisticCourts).toBeNull();
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.optimisticWetCourts.size).toBe(0);
+
+    await act(async () => {
+      resolveDry({ success: true });
+      await dryPromise;
+    });
+    unmount();
+  });
+
+  it('calls clearAllWetCourts NOT clearAllCourts (no sessions ended)', async () => {
+    const clearAllWetCourts = vi.fn().mockResolvedValue({ success: true });
+    const clearCourt = vi.fn();
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearCourt,
+      clearAllWetCourts,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleAllCourtsDry();
+    });
+
+    // Should call wet court handler
+    expect(clearAllWetCourts).toHaveBeenCalledOnce();
+    // Should NOT call session-clearing handler
+    expect(clearCourt).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('clears optimisticWetCourts when real data catches up', async () => {
+    const clearAllWetCourts = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, rerender, unmount } = renderHook(null, COURTS, {
+      clearAllWetCourts,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleAllCourtsDry();
+    });
+
+    // Optimistic state stays until real data arrives
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.wetToggleInFlight).toBe(false);
+
+    // Simulate real data arriving (applyBoardResponse updates wetCourts upstream)
+    await rerender({ wetCourts: new Set() });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    unmount();
+  });
+
+  it('rolls back and shows toast on failure', async () => {
+    const clearAllWetCourts = vi.fn().mockResolvedValue({ success: false, error: 'Partial failure' });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearAllWetCourts,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleAllCourtsDry();
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Partial failure', { type: 'error' });
+    unmount();
+  });
+
+  it('prevents double-click during in-flight All Courts Dry', async () => {
+    let resolveDry;
+    const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      clearAllWetCourts,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let dryPromise;
+    await act(async () => {
+      dryPromise = result.current.handleAllCourtsDry();
+    });
+
+    await act(async () => {
+      result.current.handleAllCourtsDry();
+    });
+
+    expect(clearAllWetCourts).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveDry({ success: true });
+      await dryPromise;
+    });
+    unmount();
+  });
+});
+
+// ============================================================
+// Optimistic "Wet Courts" activate tests
+// ============================================================
+
+describe('useCourtActions — optimistic activate wet courts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sets optimisticWetCourts to all 12 courts during in-flight', async () => {
+    let resolveActivate;
+    const activateEmergency = vi.fn(() => new Promise((r) => { resolveActivate = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      activateEmergency,
+    });
+    await renderSync();
+
+    let activatePromise;
+    await act(async () => {
+      activatePromise = result.current.handleActivateWet();
+    });
+
+    // Should be all 12 courts wet
+    const opt = result.current.optimisticWetCourts;
+    expect(opt).not.toBeNull();
+    expect(opt.size).toBe(12);
+    for (let i = 1; i <= 12; i++) {
+      expect(opt.has(i)).toBe(true);
+    }
+
+    await act(async () => {
+      resolveActivate({ success: true });
+      await activatePromise;
+    });
+    unmount();
+  });
+
+  it('clears optimisticWetCourts when real data catches up', async () => {
+    const activateEmergency = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, rerender, unmount } = renderHook(null, COURTS, {
+      activateEmergency,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleActivateWet();
+    });
+
+    // Optimistic state stays until real data arrives
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.wetToggleInFlight).toBe(false);
+
+    // Simulate real data arriving (applyBoardResponse updates wetCourts upstream)
+    await rerender({ wetCourts: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    unmount();
+  });
+
+  it('rolls back and shows toast on failure', async () => {
+    const activateEmergency = vi.fn().mockResolvedValue({ success: false, error: 'Backend down' });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      activateEmergency,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleActivateWet();
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Backend down', { type: 'error' });
+    unmount();
+  });
+
+  it('rolls back and shows toast on exception', async () => {
+    const activateEmergency = vi.fn().mockRejectedValue(new Error('Network'));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      activateEmergency,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleActivateWet();
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Unexpected error activating wet courts', { type: 'error' });
+    unmount();
+  });
+
+  it('prevents double-click during in-flight activate', async () => {
+    let resolveActivate;
+    const activateEmergency = vi.fn(() => new Promise((r) => { resolveActivate = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      activateEmergency,
+    });
+    await renderSync();
+
+    let activatePromise;
+    await act(async () => {
+      activatePromise = result.current.handleActivateWet();
+    });
+
+    await act(async () => {
+      result.current.handleActivateWet();
+    });
+
+    expect(activateEmergency).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveActivate({ success: true });
+      await activatePromise;
+    });
+    unmount();
+  });
+
+  it('does not affect court sessions (optimisticCourts stays null)', async () => {
+    const activateEmergency = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      activateEmergency,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleActivateWet();
+    });
+
+    // Court sessions untouched
+    expect(result.current.optimisticCourts).toBeNull();
+    unmount();
+  });
+});
+
+// ============================================================
+// Optimistic deactivate wet courts tests
+// ============================================================
+
+describe('useCourtActions — optimistic deactivate wet courts', () => {
+  const WET_COURTS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sets optimisticWetCourts to empty set during in-flight', async () => {
+    let resolveDeactivate;
+    const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let deactivatePromise;
+    await act(async () => {
+      deactivatePromise = result.current.handleDeactivateWet();
+    });
+
+    // Should be empty set (all courts dry)
+    const opt = result.current.optimisticWetCourts;
+    expect(opt).not.toBeNull();
+    expect(opt.size).toBe(0);
+
+    await act(async () => {
+      resolveDeactivate({ success: true });
+      await deactivatePromise;
+    });
+    unmount();
+  });
+
+  it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
+    let resolveDeactivate;
+    const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
+    const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let deactivatePromise;
+    await act(async () => {
+      deactivatePromise = result.current.handleDeactivateWet();
+    });
+
+    // Wet ops only use optimisticWetCourts (the Set), never optimisticCourts
+    expect(result.current.optimisticCourts).toBeNull();
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.optimisticWetCourts.size).toBe(0);
+
+    await act(async () => {
+      resolveDeactivate({ success: true });
+      await deactivatePromise;
+    });
+    unmount();
+  });
+
+  it('clears optimisticWetCourts when real data catches up', async () => {
+    const deactivateAll = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, rerender, unmount } = renderHook(null, COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleDeactivateWet();
+    });
+
+    // Optimistic state stays until real data arrives
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+    expect(result.current.wetToggleInFlight).toBe(false);
+
+    // Simulate real data arriving (applyBoardResponse updates wetCourts upstream)
+    await rerender({ wetCourts: new Set() });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    unmount();
+  });
+
+  it('rolls back and shows toast on failure', async () => {
+    const deactivateAll = vi.fn().mockResolvedValue({ success: false, error: 'Partial failure' });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleDeactivateWet();
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Partial failure', { type: 'error' });
+    unmount();
+  });
+
+  it('rolls back and shows toast on exception', async () => {
+    const deactivateAll = vi.fn().mockRejectedValue(new Error('Network'));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleDeactivateWet();
+    });
+
+    expect(result.current.optimisticWetCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Unexpected error deactivating wet courts', { type: 'error' });
+    unmount();
+  });
+
+  it('prevents double-click during in-flight deactivate', async () => {
+    let resolveDeactivate;
+    const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    let deactivatePromise;
+    await act(async () => {
+      deactivatePromise = result.current.handleDeactivateWet();
+    });
+
+    await act(async () => {
+      result.current.handleDeactivateWet();
+    });
+
+    expect(deactivateAll).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveDeactivate({ success: true });
+      await deactivatePromise;
+    });
+    unmount();
+  });
+
+  it('clears optimisticWetCourts when real data catches up (optimisticCourts never set)', async () => {
+    const deactivateAll = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, rerender, unmount } = renderHook(null, COURTS, {
+      deactivateAll,
+      wetCourts: WET_COURTS,
+    });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleDeactivateWet();
+    });
+
+    // Only optimisticWetCourts is set; optimisticCourts is never used for wet ops
+    expect(result.current.optimisticCourts).toBeNull();
+    expect(result.current.optimisticWetCourts).not.toBeNull();
+
+    // Simulate real data arriving
+    await rerender({ wetCourts: new Set() });
+
+    // Optimistic override cleared
+    expect(result.current.optimisticWetCourts).toBeNull();
     unmount();
   });
 });

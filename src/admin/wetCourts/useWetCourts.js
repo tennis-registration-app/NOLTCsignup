@@ -9,7 +9,7 @@
  * - On missing courtId: dispatches WET_OP_FAILED, no backend call
  */
 
-import { useReducer, useCallback } from 'react';
+import { useReducer, useCallback, useEffect } from 'react';
 import { wetCourtsReducer, initialWetCourtsState } from './wetCourtsReducer.js';
 import {
   activateWetCourtsOp,
@@ -23,10 +23,28 @@ import {
  * @param {Function} deps.getDeviceId - Device ID getter
  * @param {Array} deps.courts - Courts array (for ID lookup)
  * @param {Object} deps.Events - Events module for emitDom
- * @param {Function} deps.onRefresh - Callback to trigger refresh
+ * @param {Function} deps.onRefresh - Callback to trigger refresh (fallback when no board in response)
+ * @param {Function} [deps.applyBoardResponse] - Apply board-in-response data (avoids async refetch)
  */
-export function useWetCourts({ backend, getDeviceId, courts, Events, onRefresh }) {
+export function useWetCourts({
+  backend,
+  getDeviceId,
+  courts,
+  Events,
+  onRefresh,
+  applyBoardResponse,
+}) {
   const [state, dispatch] = useReducer(wetCourtsReducer, initialWetCourtsState);
+
+  // Auto-deactivate when all wet courts have been cleared by any method.
+  // This covers: individual clears from Court Status, "All Courts Dry" from
+  // either screen, or any other path that empties wetCourtNumbers without
+  // explicitly dispatching WET_DEACTIVATED.
+  useEffect(() => {
+    if (state.isActive && state.wetCourtNumbers.length === 0 && !state.isBusy) {
+      dispatch({ type: 'WET_DEACTIVATED' });
+    }
+  }, [state.isActive, state.wetCourtNumbers.length, state.isBusy]);
 
   /**
    * Activate wet mode (mark all courts wet)
@@ -47,19 +65,26 @@ export function useWetCourts({ backend, getDeviceId, courts, Events, onRefresh }
         dispatch({ type: 'WET_OP_SUCCEEDED' });
 
         // Side effects at end of success block (single location)
-        // Match legacy: Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(allCourts) })
         Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(courtNumbers) });
-        onRefresh();
+        // Board-in-response: apply synchronously if backend returned board state, else fall back to async refresh
+        if (result.board && applyBoardResponse) {
+          applyBoardResponse(result);
+        } else {
+          onRefresh();
+        }
+        return { success: true };
       } else {
         dispatch({
           type: 'WET_OP_FAILED',
           error: result.message || 'Failed to activate wet courts',
         });
+        return { success: false, error: result.message || 'Failed to activate wet courts' };
       }
     } catch (error) {
       dispatch({ type: 'WET_OP_FAILED', error: error.message });
+      return { success: false, error: error.message };
     }
-  }, [backend, getDeviceId, Events, onRefresh]);
+  }, [backend, getDeviceId, Events, onRefresh, applyBoardResponse]);
 
   /**
    * Deactivate wet mode (clear all + toggle mode off)
@@ -80,19 +105,26 @@ export function useWetCourts({ backend, getDeviceId, courts, Events, onRefresh }
         dispatch({ type: 'WET_OP_SUCCEEDED' });
 
         // Side effects at end of success block
-        // Match legacy: Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] })
         Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] });
-        onRefresh();
+        // Board-in-response: apply synchronously if backend returned board state, else fall back to async refresh
+        if (result.board && applyBoardResponse) {
+          applyBoardResponse(result);
+        } else {
+          onRefresh();
+        }
+        return { success: true };
       } else {
         dispatch({
           type: 'WET_OP_FAILED',
           error: result.message || 'Failed to deactivate wet courts',
         });
+        return { success: false, error: result.message || 'Failed to deactivate wet courts' };
       }
     } catch (error) {
       dispatch({ type: 'WET_OP_FAILED', error: error.message });
+      return { success: false, error: error.message };
     }
-  }, [backend, getDeviceId, Events, onRefresh]);
+  }, [backend, getDeviceId, Events, onRefresh, applyBoardResponse]);
 
   /**
    * Clear a single wet court
@@ -114,7 +146,7 @@ export function useWetCourts({ backend, getDeviceId, courts, Events, onRefresh }
           type: 'WET_OP_FAILED',
           error: `Court ${courtNumber} not found`,
         });
-        return; // No backend call, no emitDom, no onRefresh
+        return { success: false, error: `Court ${courtNumber} not found` };
       }
 
       // Compute emptiness BEFORE dispatch (using pre-dispatch snapshot)
@@ -139,21 +171,28 @@ export function useWetCourts({ backend, getDeviceId, courts, Events, onRefresh }
           dispatch({ type: 'WET_OP_SUCCEEDED' });
 
           // Side effects at end of success block
-          // Match legacy: Array.from(newWetCourts) where newWetCourts is Set with courtNumber deleted
           const newWetCourts = state.wetCourtNumbers.filter((n) => n !== Number(courtNumber));
           Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: Array.from(newWetCourts) });
-          onRefresh();
+          // Board-in-response: apply synchronously if backend returned board state, else fall back to async refresh
+          if (result.board && applyBoardResponse) {
+            applyBoardResponse(result);
+          } else {
+            onRefresh();
+          }
+          return { success: true };
         } else {
           dispatch({
             type: 'WET_OP_FAILED',
             error: result.message || 'Failed to clear wet court',
           });
+          return { success: false, error: result.message };
         }
       } catch (error) {
         dispatch({ type: 'WET_OP_FAILED', error: error.message });
+        return { success: false, error: error.message };
       }
     },
-    [backend, getDeviceId, courts, Events, onRefresh, state.wetCourtNumbers]
+    [backend, getDeviceId, courts, Events, onRefresh, applyBoardResponse, state.wetCourtNumbers]
   );
 
   /**
@@ -175,17 +214,25 @@ export function useWetCourts({ backend, getDeviceId, courts, Events, onRefresh }
 
         // Side effects at end of success block
         Events.emitDom('tennisDataUpdate', { key: 'wetCourts', data: [] });
-        onRefresh();
+        // Board-in-response: apply synchronously if backend returned board state, else fall back to async refresh
+        if (result.board && applyBoardResponse) {
+          applyBoardResponse(result);
+        } else {
+          onRefresh();
+        }
+        return { success: true };
       } else {
         dispatch({
           type: 'WET_OP_FAILED',
           error: result.message || 'Failed to clear all wet courts',
         });
+        return { success: false, error: result.message };
       }
     } catch (error) {
       dispatch({ type: 'WET_OP_FAILED', error: error.message });
+      return { success: false, error: error.message };
     }
-  }, [backend, getDeviceId, Events, onRefresh]);
+  }, [backend, getDeviceId, Events, onRefresh, applyBoardResponse]);
 
   return {
     // State (spread all reducer state)

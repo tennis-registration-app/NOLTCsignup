@@ -1,7 +1,7 @@
 /**
  * useCourtActions Contract Test
  *
- * Freezes the 19-key return shape of useCourtActions.
+ * Freezes the 23-key return shape of useCourtActions.
  * Changes to the hook's public surface will fail this test,
  * requiring explicit acknowledgment via snapshot update.
  *
@@ -51,9 +51,11 @@ const EXPECTED_KEYS = [
   'closeEditingGame',
   'editingBlock',
   'editingGame',
+  'handleActivateWet',
   'handleAllCourtsDry',
   'handleBlockSaved',
   'handleClearCourt',
+  'handleDeactivateWet',
   'handleEditClick',
   'handleMoveCourt',
   'handleSaveGame',
@@ -61,13 +63,17 @@ const EXPECTED_KEYS = [
   'initiateMove',
   'movingFrom',
   'optimisticCourts',
+  'optimisticWetCourts',
   'savingGame',
   'showActions',
   'toggleActions',
+  'wetToggleInFlight',
 ];
 
-const STATE_KEYS = ['movingFrom', 'clearInFlight', 'optimisticCourts', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
+const STATE_KEYS = ['movingFrom', 'clearInFlight', 'wetToggleInFlight', 'optimisticCourts', 'optimisticWetCourts', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
 const HANDLER_KEYS = [
+  'handleActivateWet',
+  'handleDeactivateWet',
   'handleWetCourtToggle',
   'handleClearCourt',
   'handleSaveGame',
@@ -93,7 +99,7 @@ describe('useCourtActions contract', () => {
     function Harness() {
       const result = useCourtActions({
         statusActions: { clearCourt: vi.fn(), moveCourt: vi.fn() },
-        wetCourtsActions: { clearCourt: vi.fn(), clearAllCourts: vi.fn() },
+        wetCourtsActions: { activateEmergency: vi.fn(), deactivateAll: vi.fn(), clearCourt: vi.fn(), clearAllCourts: vi.fn() },
         services: { backend: { admin: { updateSession: vi.fn() } } },
         courts: [],
         courtBlocks: [],
@@ -111,8 +117,8 @@ describe('useCourtActions contract', () => {
     });
   });
 
-  it('returns exactly 19 keys', () => {
-    expect(Object.keys(hookResult)).toHaveLength(19);
+  it('returns exactly 23 keys', () => {
+    expect(Object.keys(hookResult)).toHaveLength(23);
   });
 
   it('keys match expected shape (inline snapshot)', () => {
@@ -125,9 +131,11 @@ describe('useCourtActions contract', () => {
         "closeEditingGame",
         "editingBlock",
         "editingGame",
+        "handleActivateWet",
         "handleAllCourtsDry",
         "handleBlockSaved",
         "handleClearCourt",
+        "handleDeactivateWet",
         "handleEditClick",
         "handleMoveCourt",
         "handleSaveGame",
@@ -135,9 +143,11 @@ describe('useCourtActions contract', () => {
         "initiateMove",
         "movingFrom",
         "optimisticCourts",
+        "optimisticWetCourts",
         "savingGame",
         "showActions",
         "toggleActions",
+        "wetToggleInFlight",
       ]
     `);
   });
@@ -155,8 +165,16 @@ describe('useCourtActions contract', () => {
       expect(hookResult.clearInFlight).toBe(false);
     });
 
+    it('wetToggleInFlight is false', () => {
+      expect(hookResult.wetToggleInFlight).toBe(false);
+    });
+
     it('optimisticCourts is null', () => {
       expect(hookResult.optimisticCourts).toBeNull();
+    });
+
+    it('optimisticWetCourts is null', () => {
+      expect(hookResult.optimisticWetCourts).toBeNull();
     });
 
     it('showActions is null', () => {
@@ -197,9 +215,11 @@ describe('useCourtActions contract', () => {
         "closeEditingGame": "function",
         "editingBlock": "object",
         "editingGame": "object",
+        "handleActivateWet": "function",
         "handleAllCourtsDry": "function",
         "handleBlockSaved": "function",
         "handleClearCourt": "function",
+        "handleDeactivateWet": "function",
         "handleEditClick": "function",
         "handleMoveCourt": "function",
         "handleSaveGame": "function",
@@ -207,9 +227,11 @@ describe('useCourtActions contract', () => {
         "initiateMove": "function",
         "movingFrom": "object",
         "optimisticCourts": "object",
+        "optimisticWetCourts": "object",
         "savingGame": "boolean",
         "showActions": "object",
         "toggleActions": "function",
+        "wetToggleInFlight": "boolean",
       }
     `);
   });

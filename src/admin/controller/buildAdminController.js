@@ -101,7 +101,7 @@ export function buildAdminController(deps) {
     handleEmergencyWetCourt: actions?.handleEmergencyWetCourt,
     deactivateWetCourts: actions?.deactivateWetCourts,
     onClearWetCourt: actions?.clearWetCourt,
-    onClearAllWetCourts: actions?.clearAllCourts,
+    onClearAllWetCourts: actions?.clearAllWetCourts,
   });
 
   // Build block domain objects

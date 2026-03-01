@@ -9,6 +9,7 @@ import { toast } from '../../shared/utils/toast.js';
 import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore.js';
 import { getDeviceId } from '../utils/getDeviceId.js';
 import { TENNIS_CONFIG } from '../../lib/config.js';
+import { useOptimisticWetToggle } from './useOptimisticWetToggle.js';
 
 // Get dataStore reference
 const getDataStore = () => _getDataStore();
@@ -39,7 +40,12 @@ export function useCourtActions({
   wetCourts,
 }) {
   const { clearCourt: onClearCourt, moveCourt: onMoveCourt } = statusActions;
-  const { clearCourt: onClearWetCourt, clearAllCourts: onClearAllWetCourts } = wetCourtsActions;
+  const {
+    activateEmergency: onActivateWet,
+    deactivateAll: onDeactivateWet,
+    clearCourt: onClearWetCourt,
+    clearAllCourts: onClearAllWetCourts,
+  } = wetCourtsActions;
   const { backend } = services;
 
   const [movingFrom, setMovingFrom] = useState(null);
@@ -51,6 +57,18 @@ export function useCourtActions({
   const [editingBlock, setEditingBlock] = useState(null);
   const [, setRefreshTick] = useState(0); // Getter unused, setter used
   const [savingGame, setSavingGame] = useState(false);
+
+  // Shared optimistic wet toggle — single implementation used by both
+  // CourtStatusGrid (here) and CompleteBlockManagerEnhanced
+  const {
+    optimisticWetCourts,
+    wetToggleInFlight,
+    handleWetCourtToggle,
+    setAllDryOptimistic,
+    setAllWetOptimistic,
+    rollbackOptimistic: rollbackWetOptimistic,
+    setBulkInFlight: setWetBulkInFlight,
+  } = useOptimisticWetToggle({ wetCourts, clearCourt: onClearWetCourt });
 
   const dataStore = getDataStore();
 
@@ -68,49 +86,6 @@ export function useCourtActions({
       window.removeEventListener('tennisDataUpdate', onUpdate);
     };
   }, []);
-
-  const handleWetCourtToggle = async (courtNum) => {
-    // If parent provided a callback, use it
-    if (onClearWetCourt) {
-      onClearWetCourt(courtNum);
-      return;
-    }
-
-    // Otherwise use local handling
-    if (!dataStore) return;
-
-    try {
-      const blocks = [...(courtBlocks || [])];
-      const activeWetCourts = wetCourts || new Set();
-
-      if (activeWetCourts.has(courtNum)) {
-        // Remove wet court block
-        const updatedBlocks = blocks.filter(
-          (block) => !(block.isWetCourt && block.courtNumber === courtNum)
-        );
-        await dataStore.set('courtBlocks', updatedBlocks, { immediate: true });
-        notifyDataChanged();
-      } else {
-        // Add wet court block
-        const wetBlock = {
-          id: `wet-court-${courtNum}-${Date.now()}`,
-          courtNumber: courtNum,
-          reason: 'WET COURT',
-          startTime: new Date().toISOString(),
-          endTime: new Date(new Date().setHours(22, 0, 0, 0)).toISOString(),
-          isEvent: false,
-          isWetCourt: true,
-          createdAt: new Date().toISOString(),
-        };
-        blocks.push(wetBlock);
-        await dataStore.set('courtBlocks', blocks, { immediate: true });
-      }
-
-      notifyDataChanged();
-    } catch (error) {
-      logger.error('CourtStatusGrid', 'Error toggling wet court', error);
-    }
-  };
 
   const handleClearCourt = async (courtNum) => {
     if (clearInFlight) return; // prevent double-click
@@ -301,9 +276,67 @@ export function useCourtActions({
     }
   };
 
+  const handleActivateWet = async () => {
+    if (wetToggleInFlight) return; // prevent double-click
+    if (!onActivateWet) return;
+
+    setAllWetOptimistic();
+    setWetBulkInFlight(true);
+
+    try {
+      const res = await onActivateWet();
+      if (!res?.success) {
+        rollbackWetOptimistic();
+        toast(res?.error || 'Failed to activate wet courts', { type: 'error' });
+      }
+    } catch {
+      rollbackWetOptimistic();
+      toast('Unexpected error activating wet courts', { type: 'error' });
+    } finally {
+      setWetBulkInFlight(false);
+    }
+  };
+
+  const handleDeactivateWet = async () => {
+    if (wetToggleInFlight) return; // prevent double-click
+    if (!onDeactivateWet) return;
+
+    setAllDryOptimistic();
+    setWetBulkInFlight(true);
+
+    try {
+      const res = await onDeactivateWet();
+      if (!res?.success) {
+        rollbackWetOptimistic();
+        toast(res?.error || 'Failed to deactivate wet courts', { type: 'error' });
+      }
+    } catch {
+      rollbackWetOptimistic();
+      toast('Unexpected error deactivating wet courts', { type: 'error' });
+    } finally {
+      setWetBulkInFlight(false);
+    }
+  };
+
   const handleAllCourtsDry = async () => {
+    if (wetToggleInFlight) return; // prevent double-click
+
     if (onClearAllWetCourts) {
-      onClearAllWetCourts();
+      setAllDryOptimistic();
+      setWetBulkInFlight(true);
+
+      try {
+        const res = await onClearAllWetCourts();
+        if (!res?.success) {
+          rollbackWetOptimistic();
+          toast(res?.error || 'Failed to clear wet courts', { type: 'error' });
+        }
+      } catch {
+        rollbackWetOptimistic();
+        toast('Unexpected error clearing wet courts', { type: 'error' });
+      } finally {
+        setWetBulkInFlight(false);
+      }
       return;
     }
 
@@ -341,12 +374,16 @@ export function useCourtActions({
     // State
     movingFrom,
     clearInFlight,
+    wetToggleInFlight,
     optimisticCourts,
+    optimisticWetCourts,
     showActions,
     editingGame,
     editingBlock,
     savingGame,
     // Handlers
+    handleActivateWet,
+    handleDeactivateWet,
     handleWetCourtToggle,
     handleClearCourt,
     handleSaveGame,
