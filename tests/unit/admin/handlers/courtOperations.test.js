@@ -87,8 +87,9 @@ describe('clearCourtOp', () => {
       courts: [{ number: 3, id: 'court-uuid-3', session: { id: 'sess-1' } }],
     });
 
-    await clearCourtOp(ctx, 3);
+    const result = await clearCourtOp(ctx, 3);
 
+    expect(result).toEqual({ success: true });
     expect(ctx.backend.admin.adminEndSession).toHaveBeenCalledOnce();
     expect(ctx.backend.admin.adminEndSession).toHaveBeenCalledWith({
       courtId: 'court-uuid-3',
@@ -120,8 +121,9 @@ describe('clearCourtOp', () => {
       courts: [{ number: 5, id: 'court-uuid-5', block: { id: 'block-1' } }],
     });
 
-    await clearCourtOp(ctx, 5);
+    const result = await clearCourtOp(ctx, 5);
 
+    expect(result).toEqual({ success: true });
     expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledOnce();
     expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledWith({
       blockId: 'block-1',
@@ -145,7 +147,7 @@ describe('clearCourtOp', () => {
     expect(ctx.backend.admin.adminEndSession).toHaveBeenCalledOnce();
   });
 
-  it('still clears session even if block cancel fails', async () => {
+  it('still clears session even if block cancel fails (returns partial failure)', async () => {
     const ctx = createCtx({
       courts: [
         { number: 1, id: 'court-uuid-1', block: { id: 'block-1' }, session: { id: 'sess-1' } },
@@ -153,11 +155,13 @@ describe('clearCourtOp', () => {
     });
     ctx.backend.admin.cancelBlock.mockResolvedValue({ ok: false, message: 'Block locked' });
 
-    await clearCourtOp(ctx, 1);
+    const result = await clearCourtOp(ctx, 1);
 
     expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledOnce();
     expect(ctx.backend.admin.adminEndSession).toHaveBeenCalledOnce();
     expect(ctx.showNotification).toHaveBeenCalledWith('Block locked', 'error');
+    // Partial failure — block cancel failed even though session cleared
+    expect(result).toEqual({ success: false });
   });
 
   it('notifies "already empty" when court has neither session nor block', async () => {
@@ -177,8 +181,9 @@ describe('clearCourtOp', () => {
       courts: [{ number: 1, id: 'court-uuid-1' }],
     });
 
-    await clearCourtOp(ctx, 99);
+    const result = await clearCourtOp(ctx, 99);
 
+    expect(result).toEqual({ success: false, error: 'Court 99 not found' });
     expect(ctx.showNotification).toHaveBeenCalledWith(
       expect.stringContaining('Court 99 not found'),
       'error'
@@ -194,8 +199,9 @@ describe('clearCourtOp', () => {
       message: 'Session locked',
     });
 
-    await clearCourtOp(ctx, 3);
+    const result = await clearCourtOp(ctx, 3);
 
+    expect(result).toEqual({ success: false });
     expect(ctx.showNotification).toHaveBeenCalledWith('Session locked', 'error');
   });
 
@@ -208,8 +214,9 @@ describe('clearCourtOp', () => {
       message: 'Block not found',
     });
 
-    await clearCourtOp(ctx, 5);
+    const result = await clearCourtOp(ctx, 5);
 
+    expect(result).toEqual({ success: false });
     expect(ctx.showNotification).toHaveBeenCalledWith('Block not found', 'error');
   });
 
@@ -219,9 +226,20 @@ describe('clearCourtOp', () => {
     });
     ctx.backend.admin.adminEndSession.mockRejectedValue(new Error('Network down'));
 
-    await clearCourtOp(ctx, 3);
+    const result = await clearCourtOp(ctx, 3);
 
+    expect(result).toEqual({ success: false, error: 'Network down' });
     expect(ctx.showNotification).toHaveBeenCalledWith('Network down', 'error');
+  });
+
+  it('returns success:false for empty court (nothing to clear)', async () => {
+    const ctx = createCtx({
+      courts: [{ number: 2, id: 'court-uuid-2' }],
+    });
+
+    const result = await clearCourtOp(ctx, 2);
+
+    expect(result).toEqual({ success: false });
   });
 });
 

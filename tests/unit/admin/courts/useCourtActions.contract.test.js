@@ -1,7 +1,7 @@
 /**
  * useCourtActions Contract Test
  *
- * Freezes the 16-key return shape of useCourtActions.
+ * Freezes the 19-key return shape of useCourtActions.
  * Changes to the hook's public surface will fail this test,
  * requiring explicit acknowledgment via snapshot update.
  *
@@ -46,6 +46,7 @@ import { useCourtActions } from '../../../../src/admin/courts/useCourtActions.js
 // Expected keys (alphabetical) — update this when the contract changes
 const EXPECTED_KEYS = [
   'cancelMove',
+  'clearInFlight',
   'closeEditingBlock',
   'closeEditingGame',
   'editingBlock',
@@ -65,7 +66,7 @@ const EXPECTED_KEYS = [
   'toggleActions',
 ];
 
-const STATE_KEYS = ['movingFrom', 'optimisticCourts', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
+const STATE_KEYS = ['movingFrom', 'clearInFlight', 'optimisticCourts', 'showActions', 'editingGame', 'editingBlock', 'savingGame'];
 const HANDLER_KEYS = [
   'handleWetCourtToggle',
   'handleClearCourt',
@@ -110,8 +111,8 @@ describe('useCourtActions contract', () => {
     });
   });
 
-  it('returns exactly 18 keys', () => {
-    expect(Object.keys(hookResult)).toHaveLength(18);
+  it('returns exactly 19 keys', () => {
+    expect(Object.keys(hookResult)).toHaveLength(19);
   });
 
   it('keys match expected shape (inline snapshot)', () => {
@@ -119,6 +120,7 @@ describe('useCourtActions contract', () => {
     expect(keys).toMatchInlineSnapshot(`
       [
         "cancelMove",
+        "clearInFlight",
         "closeEditingBlock",
         "closeEditingGame",
         "editingBlock",
@@ -147,6 +149,10 @@ describe('useCourtActions contract', () => {
   describe('state keys have expected initial values', () => {
     it('movingFrom is null', () => {
       expect(hookResult.movingFrom).toBeNull();
+    });
+
+    it('clearInFlight is false', () => {
+      expect(hookResult.clearInFlight).toBe(false);
     });
 
     it('optimisticCourts is null', () => {
@@ -186,6 +192,7 @@ describe('useCourtActions contract', () => {
     expect(typeMap).toMatchInlineSnapshot(`
       {
         "cancelMove": "function",
+        "clearInFlight": "boolean",
         "closeEditingBlock": "function",
         "closeEditingGame": "function",
         "editingBlock": "object",

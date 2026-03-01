@@ -43,8 +43,9 @@ export function useCourtActions({
   const { backend } = services;
 
   const [movingFrom, setMovingFrom] = useState(null);
-  const [moveInFlight, setMoveInFlight] = useState(false); // prevents double-click during API call
-  const [optimisticCourts, setOptimisticCourts] = useState(null); // local override while move is in-flight
+  const [moveInFlight, setMoveInFlight] = useState(false); // prevents double-click during move API call
+  const [clearInFlight, setClearInFlight] = useState(false); // prevents double-click during clear API call
+  const [optimisticCourts, setOptimisticCourts] = useState(null); // local override while operation is in-flight
   const [showActions, setShowActions] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
@@ -112,6 +113,7 @@ export function useCourtActions({
   };
 
   const handleClearCourt = async (courtNum) => {
+    if (clearInFlight) return; // prevent double-click
     if (!dataStore) return;
 
     // Only clear ACTIVE blocks, preserve historical ones
@@ -148,9 +150,48 @@ export function useCourtActions({
     // Force local refresh
     setRefreshTick((t) => t + 1);
 
-    // Call parent's clear handler which triggers loadData
-    onClearCourt(courtNum);
+    // Build optimistic empty court: strip session/block from target
+    const SESSION_KEYS = [
+      'session',
+      'players',
+      'startTime',
+      'endTime',
+      'duration',
+      'sessionId',
+      'block',
+    ];
+    const sourceCourts = courts || [];
+    const updated = sourceCourts.map((c) => {
+      if (c.number === courtNum) {
+        const rest = {};
+        for (const key of Object.keys(c)) {
+          if (!SESSION_KEYS.includes(key)) rest[key] = c[key];
+        }
+        return rest;
+      }
+      return c;
+    });
+    setOptimisticCourts(updated);
+
+    // Clear UI state immediately — court already looks empty
     setShowActions(null);
+    setClearInFlight(true);
+
+    try {
+      const res = await onClearCourt(courtNum);
+      if (!res?.success) {
+        // Rollback: discard optimistic state so real data shows
+        setOptimisticCourts(null);
+        toast(res?.error || 'Clear failed', { type: 'error' });
+      }
+    } catch {
+      setOptimisticCourts(null);
+      toast('Unexpected error clearing court', { type: 'error' });
+    } finally {
+      setClearInFlight(false);
+      // Clear optimistic override — next poll/refresh will have the real data
+      setOptimisticCourts(null);
+    }
   };
 
   const handleEditClick = (courtNum, info) => {
@@ -166,7 +207,7 @@ export function useCourtActions({
   };
 
   const handleMoveCourt = async (from, to) => {
-    if (moveInFlight) return; // prevent double-click
+    if (moveInFlight || clearInFlight) return; // prevent double-click or concurrent operations
 
     // Build optimistic courts: swap session from source → target
     const sourceCourts = courts || [];
@@ -299,6 +340,7 @@ export function useCourtActions({
   return {
     // State
     movingFrom,
+    clearInFlight,
     optimisticCourts,
     showActions,
     editingGame,

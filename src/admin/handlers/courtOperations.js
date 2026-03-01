@@ -16,6 +16,7 @@ export async function clearCourtOp(ctx, courtNumber) {
 
     // Clear block and session independently (both can coexist)
     let cleared = false;
+    let failed = false;
     let lastResult = null;
 
     if (court.block && court.block.id) {
@@ -29,6 +30,7 @@ export async function clearCourtOp(ctx, courtNumber) {
         lastResult = blockResult;
       } else {
         showNotification(blockResult.message || `Failed to unblock court ${courtNumber}`, 'error');
+        failed = true;
       }
     }
 
@@ -44,6 +46,7 @@ export async function clearCourtOp(ctx, courtNumber) {
         lastResult = sessionResult;
       } else {
         showNotification(sessionResult.message || `Failed to clear court ${courtNumber}`, 'error');
+        failed = true;
       }
     }
 
@@ -57,9 +60,12 @@ export async function clearCourtOp(ctx, courtNumber) {
     } else if (cleared) {
       ctx.refreshBoard?.();
     }
+
+    return { success: cleared && !failed };
   } catch (error) {
     console.error('Error clearing court:', error);
     showNotification(error.message || 'Failed to clear court', 'error');
+    return { success: false, error: error.message };
   }
 }
 

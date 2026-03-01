@@ -72,7 +72,7 @@ const COURTS = [
 // Helpers
 // ============================================================
 
-function renderHook(moveCourt, courts) {
+function renderHook(moveCourt, courts, { clearCourt, courtBlocks } = {}) {
   let result = { current: null };
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -81,13 +81,13 @@ function renderHook(moveCourt, courts) {
   function Harness() {
     result.current = useCourtActions({
       statusActions: {
-        clearCourt: vi.fn(),
+        clearCourt: clearCourt || vi.fn().mockResolvedValue({ success: true }),
         moveCourt: moveCourt || vi.fn().mockResolvedValue({ success: true }),
       },
       wetCourtsActions: { clearCourt: vi.fn(), clearAllCourts: vi.fn() },
       services: { backend: { admin: { updateSession: vi.fn() } } },
       courts: courts || COURTS,
-      courtBlocks: [],
+      courtBlocks: courtBlocks || [],
       wetCourts: new Set(),
     });
     return null;
@@ -320,6 +320,157 @@ describe('useCourtActions — optimistic move', () => {
     });
 
     expect(result.current.movingFrom).toBeNull();
+    unmount();
+  });
+});
+
+// ============================================================
+// Optimistic clear tests
+// ============================================================
+
+describe('useCourtActions — optimistic clear', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('clearInFlight is false initially', async () => {
+    const { result, renderSync, unmount } = renderHook();
+    await renderSync();
+
+    expect(result.current.clearInFlight).toBe(false);
+    unmount();
+  });
+
+  it('sets optimisticCourts with target court emptied during in-flight', async () => {
+    let resolveClear;
+    const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
+    await renderSync();
+
+    let clearPromise;
+    await act(async () => {
+      clearPromise = result.current.handleClearCourt(3);
+    });
+
+    // Optimistic courts should exist during in-flight
+    const opt = result.current.optimisticCourts;
+    expect(opt).not.toBeNull();
+
+    // Cleared court (3) should have no session/players/block data
+    const clearedCourt = opt.find((c) => c.number === 3);
+    expect(clearedCourt.session).toBeUndefined();
+    expect(clearedCourt.players).toBeUndefined();
+    expect(clearedCourt.block).toBeUndefined();
+    expect(clearedCourt.startTime).toBeUndefined();
+    // Should still have number and id
+    expect(clearedCourt.number).toBe(3);
+    expect(clearedCourt.id).toBe('uuid-3');
+
+    // Other court (7) should be unchanged
+    const otherCourt = opt.find((c) => c.number === 7);
+    expect(otherCourt).toEqual(COURTS[1]);
+
+    await act(async () => {
+      resolveClear({ success: true });
+      await clearPromise;
+    });
+    unmount();
+  });
+
+  it('clears optimisticCourts after successful clear', async () => {
+    const clearCourt = vi.fn().mockResolvedValue({ success: true });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleClearCourt(3);
+    });
+
+    expect(result.current.optimisticCourts).toBeNull();
+    expect(result.current.clearInFlight).toBe(false);
+    unmount();
+  });
+
+  it('clears optimisticCourts and shows error toast after failed clear', async () => {
+    const clearCourt = vi.fn().mockResolvedValue({ success: false, error: 'Session locked' });
+    const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleClearCourt(3);
+    });
+
+    // Optimistic state rolled back
+    expect(result.current.optimisticCourts).toBeNull();
+    // Error toast shown
+    expect(toast).toHaveBeenCalledWith('Session locked', { type: 'error' });
+    unmount();
+  });
+
+  it('clears optimisticCourts and shows error toast after exception', async () => {
+    const clearCourt = vi.fn().mockRejectedValue(new Error('Network'));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
+    await renderSync();
+
+    await act(async () => {
+      await result.current.handleClearCourt(3);
+    });
+
+    expect(result.current.optimisticCourts).toBeNull();
+    expect(toast).toHaveBeenCalledWith('Unexpected error clearing court', { type: 'error' });
+    unmount();
+  });
+
+  it('prevents double-click during in-flight clear', async () => {
+    let resolveClear;
+    const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
+    await renderSync();
+
+    let clearPromise;
+    await act(async () => {
+      clearPromise = result.current.handleClearCourt(3);
+    });
+
+    // Second click during in-flight should be ignored
+    await act(async () => {
+      result.current.handleClearCourt(7);
+    });
+
+    // Only one call to clearCourt
+    expect(clearCourt).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveClear({ success: true });
+      await clearPromise;
+    });
+    unmount();
+  });
+
+  it('clears showActions immediately', async () => {
+    let resolveClear;
+    const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
+    const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
+    await renderSync();
+
+    // Open actions menu first
+    await act(async () => {
+      result.current.toggleActions(3);
+    });
+    expect(result.current.showActions).toBe(3);
+
+    let clearPromise;
+    await act(async () => {
+      clearPromise = result.current.handleClearCourt(3);
+    });
+
+    // Actions menu should be closed immediately
+    expect(result.current.showActions).toBeNull();
+
+    await act(async () => {
+      resolveClear({ success: true });
+      await clearPromise;
+    });
     unmount();
   });
 });
