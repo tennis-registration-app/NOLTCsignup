@@ -104,7 +104,7 @@ describe('handleTemplateSelect', () => {
     expect(form.setShowTemplates).toHaveBeenCalledWith(false);
   });
 
-  it('sets start to "now" and computes end from duration', () => {
+  it('sets start to current time HH:MM and computes end from duration', () => {
     const { actions, form } = setup();
 
     actions.handleTemplateSelect({
@@ -113,8 +113,10 @@ describe('handleTemplateSelect', () => {
     });
 
     expect(form.setBlockReason).toHaveBeenCalledWith('Quick block');
-    expect(form.setStartTime).toHaveBeenCalledWith('now');
-    // endTime is computed from Date.now() + 60 min, verify it's a time string (HH:MM)
+    // startTime is current time as HH:MM (not 'now')
+    const startArg = form.setStartTime.mock.calls[0][0];
+    expect(startArg).toMatch(/^\d{2}:\d{2}$/);
+    // endTime is computed from current time + 60 min
     const endArg = form.setEndTime.mock.calls[0][0];
     expect(endArg).toMatch(/^\d{2}:\d{2}$/);
     expect(form.setShowTemplates).toHaveBeenCalledWith(false);
@@ -225,12 +227,12 @@ describe('handleBlockCourts', () => {
     expect(form.resetForm).toHaveBeenCalledOnce();
   });
 
-  it('uses "now" as start time when startTime is "now"', () => {
+  it('parses HH:MM startTime into correct ISO timestamp on selected date', () => {
     const { actions, onApplyBlocks } = setup({
       form: {
         selectedCourts: [1],
         blockReason: 'Quick block',
-        startTime: 'now',
+        startTime: '14:30',
         endTime: '23:00',
         selectedDate: new Date('2025-06-15T00:00:00'),
         recurrence: null,
@@ -240,9 +242,9 @@ describe('handleBlockCourts', () => {
     actions.handleBlockCourts();
 
     const blocks = onApplyBlocks.mock.calls[0][0];
-    const startMs = new Date(blocks[0].startTime).getTime();
-    // "now" should produce a time within last 2 seconds
-    expect(Math.abs(startMs - Date.now())).toBeLessThan(2000);
+    const start = new Date(blocks[0].startTime);
+    expect(start.getHours()).toBe(14);
+    expect(start.getMinutes()).toBe(30);
   });
 
   it('adds a day to endTime when it is before startTime (overnight block)', () => {
@@ -455,7 +457,9 @@ describe('handleDuplicateBlock', () => {
 
     expect(form.setSelectedCourts).toHaveBeenCalledWith([]);
     expect(form.setBlockReason).toHaveBeenCalledWith('Maintenance work');
-    expect(form.setStartTime).toHaveBeenCalledWith('now');
+    // startTime is current time as HH:MM (not 'now')
+    const startArg = form.setStartTime.mock.calls[0][0];
+    expect(startArg).toMatch(/^\d{2}:\d{2}$/);
     // endTime computed from now + 2hr duration
     const endArg = form.setEndTime.mock.calls[0][0];
     expect(endArg).toMatch(/^\d{2}:\d{2}$/);

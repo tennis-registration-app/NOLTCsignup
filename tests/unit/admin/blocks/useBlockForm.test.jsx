@@ -85,10 +85,11 @@ describe('default initialization', () => {
     h.cleanup();
   });
 
-  it('startTime and endTime are empty strings', () => {
+  it('startTime defaults to next full hour, endTime defaults to one hour later', () => {
     const h = createHarness();
-    expect(h.hook.startTime).toBe('');
-    expect(h.hook.endTime).toBe('');
+    // startTime and endTime are HH:MM strings (from getNextFullHour / addHour)
+    expect(h.hook.startTime).toMatch(/^\d{2}:00$/);
+    expect(h.hook.endTime).toMatch(/^\d{2}:00$/);
     h.cleanup();
   });
 
@@ -413,12 +414,12 @@ describe('validation (isValid)', () => {
     h.cleanup();
   });
 
-  it('valid when startTime is "now" (special value, skips time comparison)', () => {
+  it('valid when startTime is a normal HH:MM value before endTime', () => {
     const h = createHarness();
     act(() => {
       h.hook.setSelectedCourts([1]);
       h.hook.setBlockReason('Emergency');
-      h.hook.setStartTime('now');
+      h.hook.setStartTime('07:00');
       h.hook.setEndTime('23:59');
     });
     expect(h.hook.isValid).toBe(true);
@@ -477,8 +478,8 @@ describe('resetForm', () => {
 
     expect(h.hook.selectedCourts).toEqual([]);
     expect(h.hook.blockReason).toBe('');
-    expect(h.hook.startTime).toBe('');
-    expect(h.hook.endTime).toBe('');
+    expect(h.hook.startTime).toMatch(/^\d{2}:00$/);
+    expect(h.hook.endTime).toMatch(/^\d{2}:00$/);
     expect(h.hook.recurrence).toBeNull();
     expect(h.hook.editingBlock).toBeNull();
     expect(h.hook.originalValues).toBeNull();
@@ -606,10 +607,10 @@ describe('populateFromBlock (duplicate)', () => {
     h.cleanup();
   });
 
-  it('sets startTime to "now"', () => {
+  it('sets startTime to current time as HH:MM', () => {
     const h = createHarness();
     act(() => h.hook.populateFromBlock(BLOCK, { duplicate: true }));
-    expect(h.hook.startTime).toBe('now');
+    expect(h.hook.startTime).toMatch(/^\d{2}:\d{2}$/);
     h.cleanup();
   });
 

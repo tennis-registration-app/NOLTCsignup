@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { getNextFullHour, addHour } from '../../../components/admin/SmartTimeRangePicker';
 
 /**
  * Manages all block form state: field values, validation,
@@ -8,8 +9,8 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
   const [activeView, setActiveView] = useState(defaultView);
   const [selectedCourts, setSelectedCourts] = useState([]);
   const [blockReason, setBlockReason] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [startTime, setStartTime] = useState(() => getNextFullHour());
+  const [endTime, setEndTime] = useState(() => addHour(getNextFullHour()));
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timePickerMode, setTimePickerMode] = useState('visual');
   const [recurrence, setRecurrence] = useState(null);
@@ -75,18 +76,16 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
 
     let timeIsValid = true;
     if (hasValidTimes) {
-      if (startTime !== 'now') {
-        const start = new Date();
-        const end = new Date();
-        const [startHours, startMinutes] = startTime.split(':');
-        const [endHours, endMinutes] = endTime.split(':');
+      const start = new Date();
+      const end = new Date();
+      const [startHours, startMinutes] = startTime.split(':');
+      const [endHours, endMinutes] = endTime.split(':');
 
-        start.setHours(parseInt(startHours), parseInt(startMinutes), 0);
-        end.setHours(parseInt(endHours), parseInt(endMinutes), 0);
+      start.setHours(parseInt(startHours), parseInt(startMinutes), 0);
+      end.setHours(parseInt(endHours), parseInt(endMinutes), 0);
 
-        if (end <= start) {
-          timeIsValid = false;
-        }
+      if (end <= start) {
+        timeIsValid = false;
       }
     }
 
@@ -121,8 +120,8 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
   const resetForm = () => {
     setSelectedCourts([]);
     setBlockReason('');
-    setStartTime('');
-    setEndTime('');
+    setStartTime(getNextFullHour());
+    setEndTime(addHour(getNextFullHour()));
     setSelectedDate(new Date());
     setRecurrence(null);
     setEditingBlock(null);
@@ -149,11 +148,12 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
       setSelectedCourts(block.courtNumbers || []);
       setBlockReason(block.reason);
 
-      setStartTime('now');
+      const nowTime = new Date();
+      setStartTime(nowTime.toTimeString().slice(0, 5));
       const originalStart = new Date(block.startTime);
       const originalEnd = new Date(block.endTime);
       const durationMs = originalEnd.getTime() - originalStart.getTime();
-      const newEnd = new Date(Date.now() + durationMs);
+      const newEnd = new Date(nowTime.getTime() + durationMs);
       setEndTime(newEnd.toTimeString().slice(0, 5));
 
       setSelectedDate(new Date());

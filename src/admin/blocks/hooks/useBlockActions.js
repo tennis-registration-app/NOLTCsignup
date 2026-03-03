@@ -36,8 +36,9 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
   const handleTemplateSelect = (template) => {
     setBlockReason(template.reason);
     if (template.duration) {
-      setStartTime('now');
-      const end = new Date();
+      const now = new Date();
+      setStartTime(now.toTimeString().slice(0, 5));
+      const end = new Date(now);
       end.setMinutes(end.getMinutes() + template.duration);
       setEndTime(end.toTimeString().slice(0, 5));
     } else {
@@ -77,20 +78,13 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
 
   const handleBlockCourts = async () => {
     const blocks = expandRecurrenceDates(selectedDate, recurrence);
-    const now = new Date();
-
     const appliedBlocks = [];
 
     blocks.forEach((blockInfo) => {
       selectedCourts.forEach((courtNum) => {
-        let actualStartTime;
-        if (startTime === 'now') {
-          actualStartTime = now;
-        } else {
-          actualStartTime = new Date(blockInfo.date);
-          const [hours, minutes] = startTime.split(':');
-          actualStartTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        }
+        const actualStartTime = new Date(blockInfo.date);
+        const [hours, minutes] = startTime.split(':');
+        actualStartTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
         const actualEndTime = new Date(blockInfo.date);
         const [endHours, endMinutes] = endTime.split(':');
@@ -150,8 +144,9 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     const end = new Date(block.endTime);
     const durationMs = end.getTime() - start.getTime();
 
-    setStartTime('now');
-    const newEnd = new Date(Date.now() + durationMs);
+    const nowTime = new Date();
+    setStartTime(nowTime.toTimeString().slice(0, 5));
+    const newEnd = new Date(nowTime.getTime() + durationMs);
     setEndTime(newEnd.toTimeString().slice(0, 5));
 
     setActiveView('create');
