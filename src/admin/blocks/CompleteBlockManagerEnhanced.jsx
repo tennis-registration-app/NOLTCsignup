@@ -4,7 +4,7 @@
  * Main block management UI with create/timeline/calendar views.
  * Handles court blocking, wet courts, and event scheduling.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Edit2, X, CalendarDays } from '../components';
 import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle.js';
 import BlockTimeline from './BlockTimeline.jsx';
@@ -21,6 +21,7 @@ import DateSelectionCard from './DateSelectionCard.jsx';
 import WetCourtManagementPanel from './WetCourtManagementPanel.jsx';
 import BlockSummaryCard from './BlockSummaryCard.jsx';
 import BlockActionButtons from './BlockActionButtons.jsx';
+import ManageRecurringPanel from './ManageRecurringPanel.jsx';
 import SmartTimeRangePicker from '../../components/admin/SmartTimeRangePicker';
 
 const DURATION_2H = 120; // minutes
@@ -99,6 +100,8 @@ const CompleteBlockManagerEnhanced = ({
     setShowTemplates,
     showRecurrence,
     setShowRecurrence,
+    endManuallySet,
+    setEndManuallySet,
     editingBlock,
     selectedBlock,
     setSelectedBlock,
@@ -107,6 +110,8 @@ const CompleteBlockManagerEnhanced = ({
     resetForm,
     populateFromBlock,
   } = form;
+
+  const [showManageRecurring, setShowManageRecurring] = useState(false);
 
   const currentTime = new Date();
 
@@ -131,6 +136,7 @@ const CompleteBlockManagerEnhanced = ({
     handleEditBlock,
     handleDuplicateBlock,
     handleQuickReasonSelect,
+    handleRemoveBlockGroup,
   } = useBlockActions({ form, backend, onApplyBlocks, onNotification });
 
   return (
@@ -152,6 +158,7 @@ const CompleteBlockManagerEnhanced = ({
           currentTime={currentTime}
           onEditBlock={handleEditBlock}
           onRemoveBlock={handleRemoveBlock}
+          onRemoveBlockGroup={handleRemoveBlockGroup}
           onDuplicateBlock={handleDuplicateBlock}
           refreshTrigger={refreshTrigger}
           backend={backend}
@@ -206,25 +213,39 @@ const CompleteBlockManagerEnhanced = ({
                       endTime={endTime}
                       onStartTimeChange={setStartTime}
                       onEndTimeChange={setEndTime}
+                      endManuallySet={endManuallySet}
+                      onEndManuallySet={setEndManuallySet}
                     />
                     <div className="flex items-center justify-between mt-4">
-                      <button
-                        onClick={() => {
-                          if (showRecurrence) {
-                            setShowRecurrence(false);
-                            setRecurrence(null);
-                          } else {
-                            setShowRecurrence(true);
-                          }
-                        }}
-                        className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
-                          showRecurrence
-                            ? 'bg-blue-50 border-blue-300 text-blue-700'
-                            : 'bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400'
-                        }`}
-                      >
-                        {showRecurrence ? 'Remove Repeat' : 'Repeat ▽'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            if (showRecurrence) {
+                              setShowRecurrence(false);
+                              setRecurrence(null);
+                            } else {
+                              setShowRecurrence(true);
+                            }
+                          }}
+                          className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
+                            showRecurrence
+                              ? 'bg-blue-50 border-blue-300 text-blue-700'
+                              : 'bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400'
+                          }`}
+                        >
+                          {showRecurrence ? 'Repeat ▵' : 'Repeat ▽'}
+                        </button>
+                        <button
+                          onClick={() => setShowManageRecurring((prev) => !prev)}
+                          className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
+                            showManageRecurring
+                              ? 'bg-blue-50 border-blue-300 text-blue-700'
+                              : 'bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400'
+                          }`}
+                        >
+                          Manage Recurring
+                        </button>
+                      </div>
 
                       <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                         <input
@@ -241,6 +262,15 @@ const CompleteBlockManagerEnhanced = ({
                         recurrence={recurrence}
                         onRecurrenceChange={setRecurrence}
                       />
+                    )}
+                    {showManageRecurring && (
+                      <div className="mt-3">
+                        <ManageRecurringPanel
+                          backend={backend}
+                          onNotification={onNotification}
+                          onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
+                        />
+                      </div>
                     )}
                   </div>
 

@@ -23,6 +23,7 @@ const BlockTimeline = ({
   currentTime,
   onEditBlock,
   onRemoveBlock,
+  onRemoveBlockGroup,
   onDuplicateBlock,
   refreshTrigger,
   backend,
@@ -93,6 +94,7 @@ const BlockTimeline = ({
             title: b.title,
             isRecurring: b.isRecurring,
             recurrenceRule: b.recurrenceRule,
+            recurrenceGroupId: b.recurrenceGroupId || null,
             // Detect wet court blocks
             isWetCourt: b.blockType === 'wet' || b.title?.toLowerCase().includes('wet'),
           }));
@@ -199,8 +201,29 @@ const BlockTimeline = ({
                     onEdit={onEditBlock}
                     onDuplicate={onDuplicateBlock}
                     onRemove={async (b) => {
-                      if (await confirm(`Remove block on Court ${b.courtNumber}?`)) {
-                        onRemoveBlock(b.id);
+                      if (b.recurrenceGroupId) {
+                        // Series block: offer choices via sequential confirms
+                        if (
+                          await confirm(
+                            `This block is part of a recurring series.\n\nDelete ALL blocks in this series?`
+                          )
+                        ) {
+                          onRemoveBlockGroup(b.recurrenceGroupId, false);
+                          return;
+                        }
+                        if (await confirm(`Delete only FUTURE blocks in this series?`)) {
+                          onRemoveBlockGroup(b.recurrenceGroupId, true);
+                          return;
+                        }
+                        if (
+                          await confirm(`Delete just this single block on Court ${b.courtNumber}?`)
+                        ) {
+                          onRemoveBlock(b.id);
+                        }
+                      } else {
+                        if (await confirm(`Remove block on Court ${b.courtNumber}?`)) {
+                          onRemoveBlock(b.id);
+                        }
                       }
                     }}
                   />

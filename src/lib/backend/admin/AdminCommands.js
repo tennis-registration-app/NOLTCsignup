@@ -21,6 +21,7 @@ export class AdminCommands {
    * @param {string} input.endsAt - ISO timestamp for block end
    * @param {string} input.deviceId - Admin device ID
    * @param {string} input.deviceType - Device type
+   * @param {string} [input.recurrenceGroupId] - Optional recurrence group UUID
    */
   async createBlock(input) {
     const payload = {
@@ -32,6 +33,9 @@ export class AdminCommands {
       device_id: input.deviceId,
       device_type: input.deviceType || 'admin',
     };
+    if (input.recurrenceGroupId) {
+      payload.recurrence_group_id = input.recurrenceGroupId;
+    }
 
     const response = await this.api.post('/create-block', payload);
     return {
@@ -101,6 +105,51 @@ export class AdminCommands {
       message: response.message || response.error,
       serverNow: response.serverNow,
       board: response.board,
+    };
+  }
+
+  /**
+   * Cancel all blocks in a recurrence group
+   * @param {Object} input
+   * @param {string} input.recurrenceGroupId - UUID of the recurrence group
+   * @param {boolean} [input.futureOnly] - If true, only cancel blocks starting after now
+   * @param {string} input.deviceId - Admin device ID
+   * @param {string} input.deviceType - Device type
+   */
+  async cancelBlockGroup(input) {
+    const payload = {
+      recurrence_group_id: input.recurrenceGroupId,
+      device_id: input.deviceId,
+      device_type: input.deviceType || 'admin',
+      future_only: input.futureOnly || false,
+    };
+
+    const response = await this.api.post('/cancel-block-group', payload);
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      cancelledCount: response.data?.cancelled_count || 0,
+      blockIds: response.data?.block_ids || [],
+    };
+  }
+
+  /**
+   * List active recurring block groups
+   * @returns {Promise<{ok: boolean, code: string, message: string, serverNow: string, groups: Array}>}
+   */
+  async listBlockGroups() {
+    const response = await this.api.post('/list-block-groups', {
+      device_id: 'admin-device',
+      device_type: 'admin',
+    });
+    return {
+      ok: response.ok,
+      code: response.code,
+      message: response.message || response.error,
+      serverNow: response.serverNow,
+      groups: response.groups || [],
     };
   }
 

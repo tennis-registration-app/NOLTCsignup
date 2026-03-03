@@ -2,6 +2,8 @@
 import React from 'react';
 import { formatTo12h } from '../../components/admin/SmartTimeRangePicker';
 
+const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 /**
  * BlockSummaryCard - Summary of current block configuration
  */
@@ -35,7 +37,11 @@ const BlockSummaryCard = ({ selectedCourts, blockReason, startTime, endTime, rec
         <span className="font-medium">Repeats:</span>{' '}
         {recurrence ? (
           <>
-            {recurrence.pattern.endsWith('ly') ? recurrence.pattern : recurrence.pattern + 'ly'} for{' '}
+            {recurrence.pattern.endsWith('ly') ? recurrence.pattern : recurrence.pattern + 'ly'}
+            {recurrence.daysOfWeek?.length > 0 && (
+              <> on {recurrence.daysOfWeek.map((d) => DAY_ABBREVS[d]).join(', ')}</>
+            )}{' '}
+            for{' '}
             {recurrence.endType === 'after'
               ? `${recurrence.occurrences} times`
               : `until ${recurrence.endDate}`}

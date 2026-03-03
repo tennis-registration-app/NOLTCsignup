@@ -116,7 +116,7 @@ export const MonthView = memo(function MonthView({
                         >
                           <Icon size={10} />
                           <span className="truncate">
-                            {event.eventDetails?.title || event.reason}
+                            {event.eventDetails?.title || event.title || event.reason}
                           </span>
                         </div>
                       );

@@ -55,6 +55,8 @@ export async function applyBlocksOp(ctx, blocks) {
       blockType = 'lesson';
     } else if (reasonLower.includes('clinic') || reasonLower.includes('camp')) {
       blockType = 'clinic';
+    } else if (reasonLower.includes('league') || reasonLower.includes('tournament')) {
+      blockType = 'league';
     }
 
     // Create blocks via backend API for each selected court
@@ -67,7 +69,7 @@ export async function applyBlocksOp(ctx, blocks) {
       }
 
       try {
-        const result = await backend.admin.createBlock({
+        const createPayload = {
           courtId: court.id,
           blockType: blockType,
           title: name,
@@ -75,7 +77,11 @@ export async function applyBlocksOp(ctx, blocks) {
           endsAt: block.endTime,
           deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
           deviceType: 'admin',
-        });
+        };
+        if (block.recurrenceGroupId) {
+          createPayload.recurrenceGroupId = block.recurrenceGroupId;
+        }
+        const result = await backend.admin.createBlock(createPayload);
 
         if (result.ok) {
           logger.info('Admin', 'Created block via API', result.block);

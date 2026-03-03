@@ -537,6 +537,7 @@ describe('Admin Analytics Normalization', () => {
         'endsAt',
         'id',
         'isRecurring',
+        'recurrenceGroupId',
         'recurrenceRule',
         'startsAt',
         'title',

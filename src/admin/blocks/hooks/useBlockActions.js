@@ -76,9 +76,42 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     }
   };
 
+  const handleRemoveBlockGroup = async (recurrenceGroupId, futureOnly) => {
+    if (!backend) {
+      logger.error('BlockManager', 'No backend available for group delete');
+      onNotification('Backend not available', 'error');
+      return false;
+    }
+
+    try {
+      const result = await backend.admin.cancelBlockGroup({
+        recurrenceGroupId,
+        futureOnly,
+      });
+
+      if (result.ok) {
+        logger.debug('BlockManager', 'Block group deleted', {
+          cancelledCount: result.cancelledCount,
+        });
+        onNotification(`Cancelled ${result.cancelledCount} blocks`, 'success');
+        setRefreshTrigger((prev) => prev + 1);
+        return true;
+      } else {
+        logger.error('BlockManager', 'Failed to delete block group', result.message);
+        onNotification('Failed to delete blocks: ' + (result.message || 'Unknown error'), 'error');
+        return false;
+      }
+    } catch (error) {
+      logger.error('BlockManager', 'Error deleting block group', error);
+      onNotification('Error deleting blocks: ' + error.message, 'error');
+      return false;
+    }
+  };
+
   const handleBlockCourts = async () => {
     const blocks = expandRecurrenceDates(selectedDate, recurrence);
     const appliedBlocks = [];
+    const groupId = recurrence ? crypto.randomUUID() : null;
 
     blocks.forEach((blockInfo) => {
       selectedCourts.forEach((courtNum) => {
@@ -101,6 +134,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
           title: eventTitle || blockReason, // Always preserve the title
           startTime: actualStartTime.toISOString(),
           endTime: actualEndTime.toISOString(),
+          recurrenceGroupId: groupId,
           isEvent: isEvent,
           eventDetails: isEvent
             ? {
@@ -187,6 +221,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     handleTemplateSelect,
     handleBlockCourts,
     handleRemoveBlock,
+    handleRemoveBlockGroup,
     toggleCourtSelection,
     handleEditBlock,
     handleDuplicateBlock,

@@ -260,9 +260,11 @@ interface SmartTimeRangePickerProps {
   endTime: string;
   onStartTimeChange: (val: string) => void;
   onEndTimeChange: (val: string) => void;
+  endManuallySet: boolean;
+  onEndManuallySet: (val: boolean) => void;
 }
 
-const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTimeChange }: SmartTimeRangePickerProps) => {
+const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTimeChange, endManuallySet, onEndManuallySet }: SmartTimeRangePickerProps) => {
   const [activePicker, setActivePicker] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -289,17 +291,28 @@ const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTime
     const startMin = sh * 60 + sm;
     const endMin = eh * 60 + em;
 
-    if (endMin <= startMin + 29) {
+    if (!endManuallySet) {
+      // Auto-set end to start + 1h
       let newEndMin = startMin + 60;
       if (newEndMin >= 24 * 60) newEndMin -= 24 * 60;
       const newH = Math.floor(newEndMin / 60).toString().padStart(2, '0');
       const newM = (newEndMin % 60).toString().padStart(2, '0');
       onEndTimeChange(`${newH}:${newM}`);
+    } else if (endMin <= startMin) {
+      // Manual lock is set, but start has passed end — override
+      let newEndMin = startMin + 60;
+      if (newEndMin >= 24 * 60) newEndMin -= 24 * 60;
+      const newH = Math.floor(newEndMin / 60).toString().padStart(2, '0');
+      const newM = (newEndMin % 60).toString().padStart(2, '0');
+      onEndTimeChange(`${newH}:${newM}`);
+      onEndManuallySet(false); // Clear the lock
     }
+    // else: manual lock set and end is still after start — leave it alone
   };
 
   const handleEndChange = (newEnd: string) => {
     onEndTimeChange(newEnd);
+    onEndManuallySet(true);
   };
 
   const endSlots = timeSlots.filter((s) => s > startTime);

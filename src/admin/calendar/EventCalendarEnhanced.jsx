@@ -14,6 +14,7 @@ import { getEventTypeFromReason } from './utils.js';
 import { logger } from '../../lib/logger.js';
 import { normalizeCalendarBlock } from '../../lib/normalize/index.js';
 import { useAdminNotification } from '../context/NotificationContext.jsx';
+import { useAdminConfirm } from '../context/ConfirmContext.jsx';
 import {
   buildCalendarEvents,
   filterCalendarEvents,
@@ -38,6 +39,7 @@ const EventCalendarEnhanced = ({
   QuickActionsMenu,
 }) => {
   const showNotification = useAdminNotification();
+  const confirmDialog = useAdminConfirm();
   const [viewMode, setViewMode] = useState(defaultView);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -118,6 +120,7 @@ const EventCalendarEnhanced = ({
               eventType: getEventTypeFromReason(normalized.blockType),
               isRecurring: normalized.isRecurring,
               recurrenceRule: normalized.recurrenceRule,
+              recurrenceGroupId: normalized.recurrenceGroupId,
               isBlock: true,
               isEvent:
                 normalized.blockType === 'event' ||
@@ -238,7 +241,46 @@ const EventCalendarEnhanced = ({
       }
 
       try {
-        // Call API to cancel the block
+        const groupId = event.recurrenceGroupId;
+
+        if (groupId) {
+          // Series block: offer choices via sequential confirms
+          if (
+            await confirmDialog(
+              'This block is part of a recurring series.\n\nDelete ALL blocks in this series?'
+            )
+          ) {
+            const result = await backend.admin.cancelBlockGroup({
+              recurrenceGroupId: groupId,
+              futureOnly: false,
+            });
+            if (result.ok) {
+              setSelectedEvent(null);
+              onRefresh();
+            } else {
+              showNotification(`Failed to delete series: ${result.message}`, 'error');
+            }
+            return;
+          }
+          if (await confirmDialog('Delete only FUTURE blocks in this series?')) {
+            const result = await backend.admin.cancelBlockGroup({
+              recurrenceGroupId: groupId,
+              futureOnly: true,
+            });
+            if (result.ok) {
+              setSelectedEvent(null);
+              onRefresh();
+            } else {
+              showNotification(`Failed to delete future blocks: ${result.message}`, 'error');
+            }
+            return;
+          }
+          if (!(await confirmDialog('Delete just this single block?'))) {
+            return;
+          }
+        }
+
+        // Single block delete (or user chose "just this block")
         const result = await backend.admin.cancelBlock({
           blockId: event.id,
         });

@@ -68,6 +68,7 @@ export function normalizeCalendarBlock(raw) {
     endsAt: raw.endsAt ?? raw.ends_at,
     isRecurring: raw.isRecurring ?? raw.is_recurring,
     recurrenceRule: raw.recurrenceRule ?? raw.recurrence_rule,
+    recurrenceGroupId: raw.recurrenceGroupId ?? raw.recurrence_group_id ?? null,
   };
 }
 

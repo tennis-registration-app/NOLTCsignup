@@ -200,13 +200,68 @@ const EventDetailsModal = ({
     }
   };
 
-  // Handle Delete
+  // Handle Delete (series-aware when block has a recurrence group)
   const handleDelete = async () => {
     if (!backend || !event) return;
 
     const courtNum = event.courtNumber || event.courtNumbers?.[0] || 'Unknown';
-    if (!(await confirmDialog(`Delete this block on Court ${courtNum}?`))) {
-      return;
+    const groupId = event.recurrenceGroupId;
+
+    if (groupId) {
+      // Series block: offer choices via sequential confirms
+      if (
+        await confirmDialog(
+          'This block is part of a recurring series.\n\nDelete ALL blocks in this series?'
+        )
+      ) {
+        setSaving(true);
+        setError('');
+        try {
+          const result = await backend.admin.cancelBlockGroup({
+            recurrenceGroupId: groupId,
+            futureOnly: false,
+          });
+          if (result.ok) {
+            onSaved?.();
+            onClose();
+          } else {
+            setError(result.message || 'Failed to delete series');
+          }
+        } catch (err) {
+          setError(err.message || 'Error deleting series');
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
+      if (await confirmDialog('Delete only FUTURE blocks in this series?')) {
+        setSaving(true);
+        setError('');
+        try {
+          const result = await backend.admin.cancelBlockGroup({
+            recurrenceGroupId: groupId,
+            futureOnly: true,
+          });
+          if (result.ok) {
+            onSaved?.();
+            onClose();
+          } else {
+            setError(result.message || 'Failed to delete future blocks');
+          }
+        } catch (err) {
+          setError(err.message || 'Error deleting future blocks');
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
+      if (!(await confirmDialog(`Delete just this single block on Court ${courtNum}?`))) {
+        return;
+      }
+    } else {
+      if (!(await confirmDialog(`Delete this block on Court ${courtNum}?`))) {
+        return;
+      }
     }
 
     setSaving(true);

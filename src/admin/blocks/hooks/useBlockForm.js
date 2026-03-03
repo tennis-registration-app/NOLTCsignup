@@ -23,6 +23,7 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showCustomReason, setShowCustomReason] = useState(false);
   const [showRecurrence, setShowRecurrence] = useState(false);
+  const [endManuallySet, setEndManuallySet] = useState(false);
   const [originalValues, setOriginalValues] = useState(null);
 
   useEffect(() => {
@@ -126,6 +127,7 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
     setRecurrence(null);
     setEditingBlock(null);
     setOriginalValues(null);
+    setEndManuallySet(false);
     setIsEvent(false);
     setEventType('event');
     setEventTitle('');
@@ -232,6 +234,8 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
     setShowCustomReason,
     showRecurrence,
     setShowRecurrence,
+    endManuallySet,
+    setEndManuallySet,
     // Editing state
     editingBlock,
     setEditingBlock,

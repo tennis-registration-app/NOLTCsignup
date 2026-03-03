@@ -11,6 +11,24 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
   const [endType, setEndType] = useState(recurrence?.endType || 'after');
   const [occurrences, setOccurrences] = useState(recurrence?.occurrences || 7);
   const [endDate, setEndDate] = useState(recurrence?.endDate || '');
+  const [selectedDays, setSelectedDays] = useState(
+    recurrence?.daysOfWeek?.length ? recurrence.daysOfWeek : []
+  );
+
+  const handlePatternChange = (newPattern) => {
+    setPattern(newPattern);
+    if (newPattern === 'weekly') {
+      setSelectedDays([new Date().getDay()]);
+    } else {
+      setSelectedDays([]);
+    }
+  };
+
+  const toggleDay = (day) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
+    );
+  };
 
   useEffect(() => {
     onRecurrenceChange({
@@ -19,9 +37,10 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
       endType,
       occurrences,
       endDate,
+      daysOfWeek: pattern === 'weekly' ? selectedDays : [],
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onRecurrenceChange excluded: only call when internal fields change, not on parent re-render
-  }, [pattern, frequency, endType, occurrences, endDate]);
+  }, [pattern, frequency, endType, occurrences, endDate, selectedDays]);
 
   return (
     <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -30,7 +49,7 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
           <label className="block text-sm font-medium text-gray-700 mb-1">Repeat Pattern</label>
           <select
             value={pattern}
-            onChange={(e) => setPattern(e.target.value)}
+            onChange={(e) => handlePatternChange(e.target.value)}
             className="w-full p-2 border rounded-lg"
           >
             <option value="daily">Daily</option>
@@ -55,6 +74,38 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
           </div>
         </div>
       </div>
+
+      {pattern === 'weekly' && (
+        <div className="mt-3">
+          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">
+            Repeat On
+          </label>
+          <div className="flex items-center gap-2">
+            {[
+              { day: 0, label: 'S' },
+              { day: 1, label: 'M' },
+              { day: 2, label: 'T' },
+              { day: 3, label: 'W' },
+              { day: 4, label: 'T' },
+              { day: 5, label: 'F' },
+              { day: 6, label: 'S' },
+            ].map(({ day, label }) => (
+              <button
+                key={day}
+                type="button"
+                onClick={() => toggleDay(day)}
+                className={`w-10 h-10 rounded-lg text-sm font-semibold transition-colors ${
+                  selectedDays.includes(day)
+                    ? 'bg-blue-600 text-white border border-blue-600'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">End</label>
