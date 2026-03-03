@@ -5,7 +5,7 @@
  * Handles court blocking, wet courts, and event scheduling.
  */
 import React from 'react';
-import { Edit2, X, CalendarDays, Droplets } from '../components';
+import { Edit2, X, CalendarDays } from '../components';
 import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle.js';
 import BlockTimeline from './BlockTimeline.jsx';
 import RecurrenceConfig from './RecurrenceConfig.jsx';
@@ -21,6 +21,7 @@ import DateSelectionCard from './DateSelectionCard.jsx';
 import WetCourtManagementPanel from './WetCourtManagementPanel.jsx';
 import BlockSummaryCard from './BlockSummaryCard.jsx';
 import BlockActionButtons from './BlockActionButtons.jsx';
+import SmartTimeRangePicker from '../../components/admin/SmartTimeRangePicker';
 
 const DURATION_2H = 120; // minutes
 const DURATION_4H = 240; // minutes
@@ -67,7 +68,6 @@ const CompleteBlockManagerEnhanced = ({
     notify: onNotification,
   } = blockActions;
   const {
-    VisualTimeEntry,
     MiniCalendar,
     EventCalendar: EventCalendarEnhanced,
     MonthView,
@@ -86,8 +86,6 @@ const CompleteBlockManagerEnhanced = ({
     selectedDate,
     recurrence,
     isEvent,
-    eventType,
-    eventTitle,
     isValid,
     setSelectedCourts,
     setBlockReason,
@@ -96,13 +94,9 @@ const CompleteBlockManagerEnhanced = ({
     setSelectedDate,
     setRecurrence,
     setIsEvent,
-    setEventTitle,
     activeView,
-    timePickerMode,
-    setTimePickerMode,
     showTemplates,
     setShowTemplates,
-    showCustomReason,
     showRecurrence,
     setShowRecurrence,
     editingBlock,
@@ -137,7 +131,6 @@ const CompleteBlockManagerEnhanced = ({
     handleEditBlock,
     handleDuplicateBlock,
     handleQuickReasonSelect,
-    handleOtherClick,
   } = useBlockActions({ form, backend, onApplyBlocks, onNotification });
 
   return (
@@ -185,13 +178,6 @@ const CompleteBlockManagerEnhanced = ({
       {activeView === 'create' && (
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 flex flex-col gap-6">
-            <QuickTemplatesCard
-              showTemplates={showTemplates}
-              setShowTemplates={setShowTemplates}
-              blockTemplates={blockTemplates}
-              handleTemplateSelect={handleTemplateSelect}
-            />
-
             <CourtSelectionGrid
               selectedCourts={selectedCourts}
               onToggleCourt={toggleCourtSelection}
@@ -202,29 +188,84 @@ const CompleteBlockManagerEnhanced = ({
 
             <BlockReasonSelector
               blockReason={blockReason}
-              showCustomReason={showCustomReason}
               onQuickReasonSelect={handleQuickReasonSelect}
-              onOtherClick={handleOtherClick}
               onCustomReasonChange={setBlockReason}
+              wetCourtsActive={wetCourtsActive}
+              wetCourts={displayWetCourts}
+              deactivateWetCourts={deactivateWetCourts}
+              handleEmergencyWetCourt={handleEmergencyWetCourt}
             />
 
             <div className="order-3">
               <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                {VisualTimeEntry && (
-                  <VisualTimeEntry
-                    key={selectedDate.toISOString()}
-                    startTime={startTime}
-                    endTime={endTime}
-                    onStartTimeChange={setStartTime}
-                    onEndTimeChange={setEndTime}
-                    selectedDate={selectedDate}
-                    selectedCourts={selectedCourts}
-                    blockReason={blockReason}
-                    timePickerMode={timePickerMode}
-                    setTimePickerMode={setTimePickerMode}
-                    hideToggleButton={true}
-                  />
-                )}
+                <div className="flex gap-6">
+                  {/* Left: Time Picker + Repeat */}
+                  <div className="flex-[3] min-w-0">
+                    <SmartTimeRangePicker
+                      startTime={startTime}
+                      endTime={endTime}
+                      onStartTimeChange={setStartTime}
+                      onEndTimeChange={setEndTime}
+                    />
+                    <div className="flex items-center justify-between mt-4">
+                      <button
+                        onClick={() => {
+                          if (showRecurrence) {
+                            setShowRecurrence(false);
+                            setRecurrence(null);
+                          } else {
+                            setShowRecurrence(true);
+                          }
+                        }}
+                        className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
+                          showRecurrence
+                            ? 'bg-blue-50 border-blue-300 text-blue-700'
+                            : 'bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400'
+                        }`}
+                      >
+                        {showRecurrence ? 'Remove Repeat' : 'Repeat ▽'}
+                      </button>
+
+                      <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!isEvent}
+                          onChange={(e) => setIsEvent(!e.target.checked)}
+                          className="w-4 h-4 text-red-600 rounded"
+                        />
+                        Hide on Calendar View
+                      </label>
+                    </div>
+                    {showRecurrence && (
+                      <RecurrenceConfig
+                        recurrence={recurrence}
+                        onRecurrenceChange={setRecurrence}
+                      />
+                    )}
+                  </div>
+
+                  {/* Right: Block Summary + Action Buttons */}
+                  <div className="flex-[2] flex flex-col gap-4 min-w-0">
+                    <BlockSummaryCard
+                      selectedCourts={selectedCourts}
+                      blockReason={blockReason}
+                      startTime={startTime}
+                      endTime={endTime}
+                      recurrence={recurrence}
+                    />
+
+                    <div className="mt-auto">
+                      <BlockActionButtons
+                        handleBlockCourts={handleBlockCourts}
+                        onClear={resetForm}
+                        isValid={isValid}
+                        editingBlock={editingBlock}
+                        selectedCourts={selectedCourts}
+                        recurrence={recurrence}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -256,66 +297,11 @@ const CompleteBlockManagerEnhanced = ({
               />
             )}
 
-            {(selectedCourts.length > 0 || blockReason || startTime || endTime) && (
-              <BlockSummaryCard
-                selectedCourts={selectedCourts}
-                blockReason={blockReason}
-                startTime={startTime}
-                endTime={endTime}
-                recurrence={recurrence}
-                isEvent={isEvent}
-                eventType={eventType}
-              />
-            )}
-
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Event Title</h3>
-              <input
-                type="text"
-                value={eventTitle}
-                onChange={(e) => setEventTitle(e.target.value)}
-                placeholder="e.g., Summer League - Division A"
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={!isEvent}
-                  onChange={(e) => setIsEvent(!e.target.checked)}
-                  className="w-4 h-4 text-red-600 rounded"
-                />
-                <span className="font-medium">Hide on Calendar View</span>
-              </label>
-
-              <button
-                onClick={() => setShowRecurrence(!showRecurrence)}
-                className="py-2 px-3 rounded-lg font-medium transition-all shadow-sm border bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400"
-              >
-                <div className="flex items-center gap-2">
-                  <span>Repeat</span>
-                  <span className="text-sm text-blue-600">{showRecurrence ? '△' : '▽'}</span>
-                </div>
-              </button>
-            </div>
-
-            {showRecurrence && (
-              <RecurrenceConfig recurrence={recurrence} onRecurrenceChange={setRecurrence} />
-            )}
-
-            <BlockActionButtons
-              handleBlockCourts={handleBlockCourts}
-              isValid={isValid}
-              editingBlock={editingBlock}
-              selectedCourts={selectedCourts}
-              recurrence={recurrence}
-              wetCourtsActive={wetCourtsActive}
-              wetCourts={displayWetCourts}
-              deactivateWetCourts={deactivateWetCourts}
-              handleEmergencyWetCourt={handleEmergencyWetCourt}
-              DropletsIcon={Droplets}
+            <QuickTemplatesCard
+              showTemplates={showTemplates}
+              setShowTemplates={setShowTemplates}
+              blockTemplates={blockTemplates}
+              handleTemplateSelect={handleTemplateSelect}
             />
           </div>
         </div>
