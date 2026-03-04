@@ -284,7 +284,7 @@ const CompleteBlockManagerEnhanced = ({
                       recurrence={recurrence}
                     />
 
-                    <div className="mt-auto">
+                    <div className="sticky bottom-0 bg-white pt-2">
                       <BlockActionButtons
                         handleBlockCourts={handleBlockCourts}
                         onClear={resetForm}

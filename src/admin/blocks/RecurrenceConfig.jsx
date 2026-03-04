@@ -65,7 +65,16 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
               min="1"
               max="30"
               value={frequency}
-              onChange={(e) => setFrequency(parseInt(e.target.value) || 1)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setFrequency(raw === '' ? '' : parseInt(raw) || 1);
+              }}
+              onFocus={(e) => e.target.select()}
+              onBlur={(e) => {
+                if (!e.target.value || parseInt(e.target.value) < 1) {
+                  setFrequency(1);
+                }
+              }}
               className="w-20 p-2 border rounded-lg"
             />
             <span className="text-sm text-gray-600">
