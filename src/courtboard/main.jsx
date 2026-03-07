@@ -2,14 +2,10 @@
 // Converted from inline Babel to ES module JSX
 import './styles/index.css';
 import '../platform/attachLegacyConfig.js';
-import '../platform/attachLegacyTime.js';
 import '../platform/attachLegacyEvents.js';
 import '../platform/attachLegacyStorage.js';
-import '../platform/attachLegacyDataStore.js';
-import '../platform/attachLegacyRoster.js';
 import '../platform/attachLegacyAvailability.js';
 import '../platform/attachLegacyWaitlist.js';
-import '../platform/attachLegacyBlocks.js';
 import { logger } from '../lib/logger.js';
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
