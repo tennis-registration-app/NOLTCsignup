@@ -31,6 +31,7 @@ Contain, don't rewrite. Migrate incrementally from the edges inward:
 - ✅ main.jsx: removed 4 dead attachLegacy imports (Roster, DataStore, Blocks, Time) — zero readers in src/
 - ✅ main.jsx: removed dead polling loop; readiness is now a synchronous useState initializer (fail-safe gate preserved)
 - ✅ TennisCourtDisplay: replaced direct window.updateJoinButtonState() call with document tennisDataUpdate event dispatch
+- ✅ MobileModalSheet: replaced direct window.updateJoinButtonForMobile() call with document tennisDataUpdate event dispatch
 - Convert courtboard-bootstrap.js to ESM module imported by main.jsx
 - Replace window.CourtboardState reads with direct imports from bridge/window-bridge.js
 - Remove attachLegacy imports from main.jsx (direct ESM imports like registration/admin)

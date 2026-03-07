@@ -361,9 +361,9 @@ export function MobileModalSheet({ type, payload, onClose }) {
                   // Post-clear cleanup (mobile UI state)
                   sessionStorage.removeItem('mobile-registered-court');
                   window.parent.postMessage({ type: 'resetRegistration' }, '*');
-                  if (window.updateJoinButtonForMobile) {
-                    window.updateJoinButtonForMobile();
-                  }
+                  // Signal the fallback bar to refresh (bootstrap's tennisDataUpdate
+                  // listener calls both updateJoinButtonState and updateJoinButtonForMobile)
+                  document.dispatchEvent(new Event('tennisDataUpdate'));
                   onClose();
                 } catch (e) {
                   console.error('Error clearing court:', e);
