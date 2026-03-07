@@ -66,13 +66,10 @@ export function TennisCourtDisplay() {
       timestamp: Date.now(),
     });
 
-    // Update mobile button state after state is set
-    if (typeof window.updateJoinButtonState === 'function') {
-      logger.debug('CourtDisplay', 'Calling updateJoinButtonState');
-      window.updateJoinButtonState();
-    } else {
-      logger.debug('CourtDisplay', 'updateJoinButtonState not found');
-    }
+    // Signal the plain-JS fallback bar (courtboard-bootstrap.js) to refresh.
+    // The bootstrap's document 'tennisDataUpdate' listener calls both
+    // updateJoinButtonState() and updateJoinButtonForMobile().
+    document.dispatchEvent(new Event('tennisDataUpdate'));
   }, [courts, courtBlocks, upcomingBlocks, waitlist]);
 
   useWaitlistAvailable({
