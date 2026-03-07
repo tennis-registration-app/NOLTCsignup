@@ -7,7 +7,7 @@ import '../platform/attachLegacyStorage.js';
 import '../platform/attachLegacyAvailability.js';
 import '../platform/attachLegacyWaitlist.js';
 import { logger } from '../lib/logger.js';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';
 import { migrateOldKeys } from '../platform/prefsStorage.js';
@@ -29,43 +29,16 @@ import { TennisCourtDisplay } from './components/TennisCourtDisplay';
 // Mobile modal components
 import { MobileModalApp } from './mobile/MobileModalApp';
 
-// Main App wrapper that waits for Tennis modules
+// Main App wrapper — synchronous readiness gate.
+// All 5 attachLegacy imports above are synchronous side effects that complete
+// before React renders, so this check always passes on first evaluation.
+// Kept as a fail-safe: if readiness is false, LoadingPlaceholder renders.
 function App() {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    // Check if Tennis modules are loaded
-    const checkReady = () => {
-      const storage = getTennisStorage();
-      const domain = getTennisDomain();
-      if (storage && domain?.availability) {
-        setReady(true);
-        return true;
-      }
-      return false;
-    };
-
-    if (checkReady()) return;
-
-    // Poll until ready
-    const interval = setInterval(() => {
-      if (checkReady()) {
-        clearInterval(interval);
-      }
-    }, 100);
-
-    // Timeout after 10 seconds
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      console.error('Tennis modules failed to load within timeout');
-      setReady(true); // Show UI anyway, will show error state
-    }, 10000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, []);
+  const [ready] = useState(() => {
+    const storage = getTennisStorage();
+    const domain = getTennisDomain();
+    return !!(storage && domain?.availability);
+  });
 
   if (!ready) {
     return <LoadingPlaceholder />;
