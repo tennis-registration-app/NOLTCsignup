@@ -19,17 +19,11 @@ import { migrateOldKeys } from '../platform/prefsStorage.js';
 // Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
 migrateOldKeys();
 
-// Browser bridge - exposes window.CourtAvailability for non-bundled scripts (mobile-fallback-bar.js)
+// Browser bridge - exposes window.CourtAvailability for non-bundled scripts (courtboard-bootstrap.js)
 import './browser-bridge.js';
 
 // Platform bridge for window global access
-import {
-  getTennisStorage,
-  getTennisDomain,
-  getTennisNamespaceConfig,
-  getTennisEvents,
-  getTennisDataStore,
-} from '../platform/windowBridge.js';
+import { getTennisStorage, getTennisDomain } from '../platform/windowBridge.js';
 
 // Extracted components
 import { ToastHost } from './components/ToastHost';
@@ -38,10 +32,6 @@ import { TennisCourtDisplay } from './components/TennisCourtDisplay';
 
 // Mobile modal components
 import { MobileModalApp } from './mobile/MobileModalApp';
-
-// Module references assigned in App() useEffect - only A and W are used
-// eslint-disable-next-line no-unused-vars -- A and W are assigned in useEffect and used throughout; ESLint can't track dynamic assignment
-let _Config, _Storage, _Events, A, W, _T, _DataStore, _Av, _Tm, _TimeFmt;
 
 // Main App wrapper that waits for Tennis modules
 function App() {
@@ -53,17 +43,6 @@ function App() {
       const storage = getTennisStorage();
       const domain = getTennisDomain();
       if (storage && domain?.availability) {
-        // Initialize module references (only A and W are used)
-        _Config = getTennisNamespaceConfig();
-        _Storage = storage;
-        _Events = getTennisEvents();
-        A = domain.availability || domain.Availability;
-        W = domain.waitlist || domain.Waitlist;
-        _T = domain.time || domain.Time;
-        _DataStore = getTennisDataStore();
-        _Av = domain.availability || domain.Availability;
-        _Tm = domain.time || domain.Time;
-        _TimeFmt = domain.time || domain.Time;
         setReady(true);
         return true;
       }
