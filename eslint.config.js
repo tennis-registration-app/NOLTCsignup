@@ -347,7 +347,6 @@ export default [
       'src/courtboard/main.jsx',
       // Courtboard IIFE/plain scripts — direct window access required (ADR-006)
       'src/courtboard/bootstrap/**/*.js',
-      'src/courtboard/mobile-fallback-bar.js',
       'src/courtboard/debug-panel.js',
       'src/courtboard/courtboardState.js',
       'src/courtboard/sync-promotions.js',

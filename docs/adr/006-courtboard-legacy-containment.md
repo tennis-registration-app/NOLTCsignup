@@ -1,7 +1,7 @@
 # ADR-006: Courtboard Legacy Containment Strategy
 
 ## Status
-Accepted (Phase 1 landed, Phase 2 partial)
+Accepted (Phase 1 landed, Phase 2 complete)
 
 ## Context
 The courtboard app has 29 files. 20 are modern ESM React (components, hooks, utilities). 5 are legacy IIFE/plain scripts (995 lines total) that communicate via window globals. The 9 `attachLegacy*.js` files populate `window.Tennis.*` namespaces that both the IIFE scripts and 2 ESM components read.
@@ -19,11 +19,10 @@ Contain, don't rewrite. Migrate incrementally from the edges inward:
 - 6 ESM violations fixed (NextAvailablePanel, TennisCourtDisplay, MobileModalApp)
 - Deletion-condition comments on all 5 IIFE/plain scripts
 
-### Phase 2: Consolidate IIFE scripts (partial)
-- ✅ Merged courtboardPreInit.js + mobile-bridge.js into bootstrap/courtboard-bootstrap.js
-- ⬚ mobile-fallback-bar.js remains separate (352 lines, higher complexity — next consolidation step)
-- Single bootstrap entry point sets pre-init globals + mobile bridge before main.jsx loads
-- debug-panel.js stays separate (dev-only, gated)
+### Phase 2: Consolidate IIFE scripts ✅
+- ✅ Merged courtboardPreInit.js + mobile-bridge.js + mobile-fallback-bar.js into bootstrap/courtboard-bootstrap.js
+- Single bootstrap entry point sets pre-init globals, mobile bridge, and fallback bar before main.jsx loads
+- debug-panel.js stays separate (dev-only, gated by `?debug=1`)
 
 ### Phase 3: ESM migration (future, requires bundler strategy)
 - Convert courtboard-bootstrap.js to ESM module imported by main.jsx
@@ -40,7 +39,7 @@ Contain, don't rewrite. Migrate incrementally from the edges inward:
 | window.MobileModal | courtboard-bootstrap.js | 2 files | Phase 2: pass as prop or context |
 | window.CourtboardState | bridge/window-bridge.js | 4 IIFE scripts | Phase 3: direct import from bridge module |
 | window.mobileTapToRegister | courtboard-bootstrap.js | self-reference | Phase 2: ✅ consolidated into bootstrap |
-| window.CourtAvailability | browser-bridge.js | mobile-fallback-bar.js | Phase 2: consolidate into bootstrap |
+| window.CourtAvailability | browser-bridge.js | courtboard-bootstrap.js | Phase 2: ✅ consolidated into bootstrap |
 | window.Tennis.Domain.* | 9 attachLegacy*.js | 2 ESM + 1 IIFE | Phase 3: direct ESM imports |
 
 ## Alternatives Considered
@@ -50,4 +49,4 @@ Contain, don't rewrite. Migrate incrementally from the edges inward:
 ## Consequences
 - Positive: Incremental path with exit criteria per phase. Each phase reduces global surface area.
 - Positive: Phase 1 is zero-risk (ESLint rule + 2 small fixes). Phases 2-3 can be deferred indefinitely.
-- Negative: Two module systems coexist until Phase 3. Boot chain remains order-dependent until Phase 2.
+- Negative: Two module systems coexist until Phase 3. Boot chain is consolidated (Phase 2 complete) but remains order-dependent until Phase 3.
