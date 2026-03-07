@@ -348,7 +348,6 @@ export default [
       // Courtboard IIFE/plain scripts — direct window access required (ADR-006)
       'src/courtboard/bootstrap/**/*.js',
       'src/courtboard/debug-panel.js',
-      'src/courtboard/courtboardState.js',
       'src/courtboard/sync-promotions.js',
       // Courtboard bridges — single writer for window.CourtboardState / CourtAvailability
       'src/courtboard/bridge/**/*.js',

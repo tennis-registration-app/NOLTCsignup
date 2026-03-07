@@ -121,7 +121,6 @@ These files are the single authorized writers and may write to window directly:
 | `src/platform/windowBridge.js` | `ensureTennisNamespace()` |
 | `src/platform/registerGlobals.js` | All setter functions |
 | `src/courtboard/bridge/window-bridge.js` | `writeCourtboardState()` |
-| `src/courtboard/courtboardState.js` | Getter exports for cross-frame |
 
 ---
 
@@ -137,7 +136,6 @@ Expected matches should be limited to:
 - `src/platform/registerGlobals.js` (setters)
 - `src/platform/windowBridge.js` (ensureTennisNamespace)
 - `src/courtboard/bridge/window-bridge.js` (writeCourtboardState)
-- `src/courtboard/courtboardState.js` (getter exports)
 - IIFE exceptions listed above
 
 Any other matches indicate policy violations.

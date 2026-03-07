@@ -25,6 +25,7 @@ Contain, don't rewrite. Migrate incrementally from the edges inward:
 - debug-panel.js stays separate (dev-only, gated by `?debug=1`)
 
 ### Phase 3: ESM migration (future, requires bundler strategy)
+- ✅ Deleted dead courtboardState.js (window.getCourtboardState / window.isCourtboardStateReady had zero readers)
 - Convert courtboard-bootstrap.js to ESM module imported by main.jsx
 - Replace window.CourtboardState reads with direct imports from bridge/window-bridge.js
 - Remove attachLegacy imports from main.jsx (direct ESM imports like registration/admin)
