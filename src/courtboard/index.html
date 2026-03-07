@@ -35,11 +35,8 @@
     ============================================================
   -->
 
-  <!-- IIFE: sets window.Tennis.UI.toast, window.IS_MOBILE_VIEW, window.MobileModal -->
-  <script src="./bootstrap/courtboardPreInit.js"></script>
-
-  <!-- IIFE: sets window.mobileTapToRegister; reads window.CourtboardState -->
-  <script src="./mobile-bridge.js"></script>
+  <!-- IIFE: sets window.Tennis.UI.toast, window.IS_MOBILE_VIEW, window.MobileModal, window.mobileTapToRegister; reads window.CourtboardState -->
+  <script src="./bootstrap/courtboard-bootstrap.js"></script>
 
   <!-- ESM (side-effect only): syncs waitlist promotions; reads window.Tennis.Domain.availability -->
   <script type="module" src="./sync-promotions.js"></script>
