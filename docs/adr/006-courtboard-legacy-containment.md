@@ -26,6 +26,7 @@ Contain, don't rewrite. Migrate incrementally from the edges inward:
 
 ### Phase 3: ESM migration (future, requires bundler strategy)
 - ✅ Deleted dead courtboardState.js (window.getCourtboardState / window.isCourtboardStateReady had zero readers)
+- ✅ sync-promotions.js: replaced dead module-scope window.Tennis capture with lazy getLegacyAvailabilityDomain() bridge call
 - Convert courtboard-bootstrap.js to ESM module imported by main.jsx
 - Replace window.CourtboardState reads with direct imports from bridge/window-bridge.js
 - Remove attachLegacy imports from main.jsx (direct ESM imports like registration/admin)

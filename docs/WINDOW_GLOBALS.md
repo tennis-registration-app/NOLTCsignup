@@ -108,7 +108,6 @@ documented exceptions and may access window globals directly:
 | `src/lib/browser-bridge.js` | IIFE namespace setup (APP_UTILS, Tennis) |
 | `src/courtboard/browser-bridge.js` | CourtAvailability export for fallback bar |
 | `src/courtboard/bootstrap/courtboard-bootstrap.js` | Pre-init globals, mobile bridge, fallback bar |
-| `src/courtboard/sync-promotions.js` | Promotion sync (reads only) |
 | `src/courtboard/debug-panel.js` | Debug panel (reads only) |
 | `src/registration/nav-diagnostics.js` | Navigation diagnostics (reads only) |
 

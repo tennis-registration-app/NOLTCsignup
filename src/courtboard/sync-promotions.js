@@ -1,7 +1,6 @@
 // Sync Waitlist Promotions for CourtBoard (ESM)
 import { waitlistSignature } from '../lib/storage.js';
-
-const Avail = window.Tennis?.Domain?.availability || window.Tennis?.Domain?.Availability;
+import { getLegacyAvailabilityDomain } from './bridge/window-bridge.js';
 
 /**
  * Get Courtboard state from React (via window bridge).
@@ -12,6 +11,7 @@ function getCourtboardState() {
 }
 
 function computeFreeCourts({ data, now, blocks }) {
+  const Avail = getLegacyAvailabilityDomain();
   try {
     if (Avail?.getFreeCourtsInfo) {
       const info = Avail.getFreeCourtsInfo({ data, now, blocks });
