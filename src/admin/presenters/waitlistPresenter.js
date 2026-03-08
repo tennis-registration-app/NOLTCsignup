@@ -1,8 +1,8 @@
 /**
  * Waitlist Presenter
  *
- * Pure functions that structure the raw waitlist props (which currently
- * bypass the controller) into model/actions shape for WaitlistSection.
+ * Pure functions that structure the controller domain objects
+ * into the shape needed by WaitlistSection rendering.
  *
  * Extracted from WaitlistSection.jsx — maintains exact prop mapping.
  */
@@ -10,25 +10,24 @@
 /**
  * Build the data props for WaitlistSection.
  *
- * @param {Array<Object>} waitingGroups - Current waitlist entries
+ * @param {import('../types/domainObjects.js').WaitlistModel} waitlistModel - Domain model from controller
  * @returns {Object} Data props for WaitlistSection rendering
  */
-export function buildWaitlistModel(waitingGroups) {
+export function buildWaitlistModel(waitlistModel) {
   return {
-    waitingGroups,
+    waitingGroups: waitlistModel.waitingGroups,
   };
 }
 
 /**
  * Build the action/callback props for WaitlistSection.
  *
- * @param {Function} moveInWaitlist - Reorder waitlist entry
- * @param {Function} removeFromWaitlist - Remove waitlist entry
+ * @param {import('../types/domainObjects.js').WaitlistActions} waitlistActions - Domain actions from controller
  * @returns {Object} Action props for WaitlistSection rendering
  */
-export function buildWaitlistActions(moveInWaitlist, removeFromWaitlist) {
+export function buildWaitlistActions(waitlistActions) {
   return {
-    moveInWaitlist,
-    removeFromWaitlist,
+    moveInWaitlist: waitlistActions.moveInWaitlist,
+    removeFromWaitlist: waitlistActions.removeFromWaitlist,
   };
 }

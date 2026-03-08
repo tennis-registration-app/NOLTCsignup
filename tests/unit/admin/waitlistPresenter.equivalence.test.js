@@ -4,9 +4,8 @@
  * Proves that buildWaitlistModel + buildWaitlistActions produce
  * IDENTICAL data to the legacy WaitlistSection direct prop usage.
  *
- * WaitlistSection currently bypasses the controller — it receives
- * raw props from App.jsx. The presenter wraps them into the
- * model/actions pattern for consistency.
+ * The presenter now accepts controller domain objects (WaitlistModel,
+ * WaitlistActions) rather than raw values.
  *
  * @vitest-environment node
  */
@@ -28,6 +27,13 @@ const mockWaitingGroups = [
 const mockMoveInWaitlist = vi.fn();
 const mockRemoveFromWaitlist = vi.fn();
 
+// Domain objects (as produced by buildAdminController)
+const mockWaitlistModel = { waitingGroups: mockWaitingGroups };
+const mockWaitlistActions = {
+  moveInWaitlist: mockMoveInWaitlist,
+  removeFromWaitlist: mockRemoveFromWaitlist,
+};
+
 /**
  * Legacy WaitlistSection prop extraction — VERBATIM from WaitlistSection.jsx
  * before the presenter refactor.
@@ -43,11 +49,11 @@ function legacyWaitlistExtraction(waitingGroups, moveInWaitlist, removeFromWaitl
 }
 
 /**
- * Presenter-based extraction
+ * Presenter-based extraction (now accepts domain objects)
  */
-function presenterWaitlistExtraction(waitingGroups, moveInWaitlist, removeFromWaitlist) {
-  const model = buildWaitlistModel(waitingGroups);
-  const actions = buildWaitlistActions(moveInWaitlist, removeFromWaitlist);
+function presenterWaitlistExtraction(waitlistModel, waitlistActions) {
+  const model = buildWaitlistModel(waitlistModel);
+  const actions = buildWaitlistActions(waitlistActions);
   return {
     waitingGroups: model.waitingGroups,
     moveInWaitlist: actions.moveInWaitlist,
@@ -60,7 +66,7 @@ describe('WaitlistSection presenter equivalence', () => {
     mockWaitingGroups, mockMoveInWaitlist, mockRemoveFromWaitlist
   );
   const presenter = presenterWaitlistExtraction(
-    mockWaitingGroups, mockMoveInWaitlist, mockRemoveFromWaitlist
+    mockWaitlistModel, mockWaitlistActions
   );
 
   it('produces same keys', () => {
@@ -83,17 +89,17 @@ describe('WaitlistSection presenter equivalence', () => {
   });
 
   it('model has exactly 1 key', () => {
-    const model = buildWaitlistModel(mockWaitingGroups);
+    const model = buildWaitlistModel(mockWaitlistModel);
     expect(Object.keys(model)).toEqual(['waitingGroups']);
   });
 
   it('actions has exactly 2 keys', () => {
-    const actions = buildWaitlistActions(mockMoveInWaitlist, mockRemoveFromWaitlist);
+    const actions = buildWaitlistActions(mockWaitlistActions);
     expect(Object.keys(actions).sort()).toEqual(['moveInWaitlist', 'removeFromWaitlist']);
   });
 
   it('type map for model matches expected shape', () => {
-    const model = buildWaitlistModel(mockWaitingGroups);
+    const model = buildWaitlistModel(mockWaitlistModel);
     const typeMap = {};
     for (const key of Object.keys(model).sort()) {
       typeMap[key] = typeof model[key];
@@ -106,7 +112,7 @@ describe('WaitlistSection presenter equivalence', () => {
   });
 
   it('type map for actions matches expected shape', () => {
-    const actions = buildWaitlistActions(mockMoveInWaitlist, mockRemoveFromWaitlist);
+    const actions = buildWaitlistActions(mockWaitlistActions);
     const typeMap = {};
     for (const key of Object.keys(actions).sort()) {
       typeMap[key] = typeof actions[key];
@@ -121,7 +127,7 @@ describe('WaitlistSection presenter equivalence', () => {
 
   describe('works with empty waitlist', () => {
     it('handles empty array', () => {
-      const model = buildWaitlistModel([]);
+      const model = buildWaitlistModel({ waitingGroups: [] });
       expect(model.waitingGroups).toEqual([]);
       expect(model.waitingGroups).toHaveLength(0);
     });

@@ -6,13 +6,12 @@ import { WaitlistGroupList } from '../components/WaitlistGroupList.jsx';
  * WaitlistSection - Delegates to presenter, renders waitlist UI.
  *
  * @param {Object} props
- * @param {Array<Object>} props.waitingGroups
- * @param {Function} props.moveInWaitlist
- * @param {Function} props.removeFromWaitlist
+ * @param {import('../types/domainObjects.js').WaitlistModel} props.waitlistModel
+ * @param {import('../types/domainObjects.js').WaitlistActions} props.waitlistActions
  */
-export function WaitlistSection({ waitingGroups, moveInWaitlist, removeFromWaitlist }) {
-  const model = buildWaitlistModel(waitingGroups);
-  const actions = buildWaitlistActions(moveInWaitlist, removeFromWaitlist);
+export function WaitlistSection({ waitlistModel, waitlistActions }) {
+  const model = buildWaitlistModel(waitlistModel);
+  const actions = buildWaitlistActions(waitlistActions);
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

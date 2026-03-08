@@ -66,6 +66,7 @@ describe('buildAdminController contract', () => {
           "calendar",
           "services",
           "status",
+          "waitlist",
           "wetCourts",
         ]
       `);
@@ -216,6 +217,40 @@ describe('buildAdminController contract', () => {
             "courts",
             "currentTime",
             "selectedDate",
+            "waitingGroups",
+          ],
+        }
+      `);
+    });
+  });
+
+  describe('waitlist section', () => {
+    it('has model and actions', () => {
+      const controller = buildAdminController(minimalDeps);
+      expect(controller.waitlist).toHaveProperty('model');
+      expect(controller.waitlist).toHaveProperty('actions');
+    });
+
+    it('model has expected keys', () => {
+      const controller = buildAdminController(minimalDeps);
+      const keys = Object.keys(controller.waitlist.model).sort();
+      expect(keys).toEqual(CONTROLLER_KEYS.waitlist.model.sort());
+    });
+
+    it('actions has expected keys', () => {
+      const controller = buildAdminController(minimalDeps);
+      const keys = Object.keys(controller.waitlist.actions).sort();
+      expect(keys).toEqual(CONTROLLER_KEYS.waitlist.actions.sort());
+    });
+
+    it('CONTROLLER_KEYS.waitlist matches inline snapshot', () => {
+      expect(CONTROLLER_KEYS.waitlist).toMatchInlineSnapshot(`
+        {
+          "actions": [
+            "moveInWaitlist",
+            "removeFromWaitlist",
+          ],
+          "model": [
             "waitingGroups",
           ],
         }

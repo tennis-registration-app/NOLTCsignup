@@ -297,6 +297,50 @@ export function createStatusActions(params = {}) {
 }
 
 // ============================================================
+// WAITLIST DISPLAY (WaitlistSection)
+// ============================================================
+
+/**
+ * Waitlist display state.
+ * @typedef {Object} WaitlistModel
+ * @property {Array<Object>|undefined} waitingGroups - Waitlist entries
+ */
+
+/**
+ * Creates WaitlistModel - preserves undefined values.
+ * @param {Object} [params={}]
+ * @param {Array<Object>} [params.waitingGroups] - Waitlist entries
+ * @returns {WaitlistModel}
+ */
+export function createWaitlistModel(params = {}) {
+  const { waitingGroups } = params;
+  return {
+    waitingGroups,
+  };
+}
+
+/**
+ * Waitlist display actions - reorder and remove operations.
+ *
+ * @typedef {Object} WaitlistActions
+ * @property {((...args: any[]) => void)|undefined} moveInWaitlist - Reorder waitlist
+ * @property {((...args: any[]) => void)|undefined} removeFromWaitlist - Remove from waitlist
+ */
+
+/**
+ * Creates WaitlistActions - preserves undefined values.
+ * @param {Object} [params={}]
+ * @returns {WaitlistActions}
+ */
+export function createWaitlistActions(params = {}) {
+  const { moveInWaitlist, removeFromWaitlist } = params;
+  return {
+    moveInWaitlist,
+    removeFromWaitlist,
+  };
+}
+
+// ============================================================
 // CALENDAR DISPLAY (CalendarSection, EventCalendarEnhanced)
 // ============================================================
 

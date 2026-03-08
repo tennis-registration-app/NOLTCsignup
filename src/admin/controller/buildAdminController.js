@@ -16,6 +16,8 @@ import {
   createAdminServices,
   createStatusModel,
   createStatusActions,
+  createWaitlistModel,
+  createWaitlistActions,
   createCalendarModel,
   createCalendarActions,
   createAIAssistantModel,
@@ -146,6 +148,15 @@ export function buildAdminController(deps) {
     removeFromWaitlist: actions?.removeFromWaitlist,
   });
 
+  // Build waitlist domain objects
+  const waitlistModel = createWaitlistModel({
+    waitingGroups,
+  });
+  const waitlistActions = createWaitlistActions({
+    moveInWaitlist: actions?.moveInWaitlist,
+    removeFromWaitlist: actions?.removeFromWaitlist,
+  });
+
   // Build calendar domain objects
   const calendarModel = createCalendarModel({
     courts,
@@ -202,6 +213,10 @@ export function buildAdminController(deps) {
       model: statusModel,
       actions: statusActions,
     },
+    waitlist: {
+      model: waitlistModel,
+      actions: waitlistActions,
+    },
     calendar: {
       model: calendarModel,
       actions: calendarActions,
@@ -220,7 +235,7 @@ export function buildAdminController(deps) {
  * This is the stable public API of buildAdminController.
  */
 export const CONTROLLER_KEYS = {
-  topLevel: ['services', 'wetCourts', 'blocks', 'status', 'calendar', 'ai'],
+  topLevel: ['services', 'wetCourts', 'blocks', 'status', 'waitlist', 'calendar', 'ai'],
   wetCourts: {
     model: ['active', 'courts', 'enabled'],
     actions: ['activateEmergency', 'deactivateAll', 'clearCourt', 'clearAllCourts'],
@@ -248,6 +263,10 @@ export const CONTROLLER_KEYS = {
       'moveInWaitlist',
       'removeFromWaitlist',
     ],
+  },
+  waitlist: {
+    model: ['waitingGroups'],
+    actions: ['moveInWaitlist', 'removeFromWaitlist'],
   },
   calendar: {
     model: ['courts', 'currentTime', 'hoursOverrides', 'calendarView', 'refreshTrigger'],

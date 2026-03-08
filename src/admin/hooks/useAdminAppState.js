@@ -336,6 +336,7 @@ export function useAdminAppState({ showNotification, confirm }) {
     wetCourts: wetCourtsController,
     blocks,
     status,
+    waitlist,
     calendar,
     ai,
     services: adminServices,
@@ -346,6 +347,7 @@ export function useAdminAppState({ showNotification, confirm }) {
     wetCourtsController,
     blocks,
     status,
+    waitlist,
     calendar,
     ai,
     adminServices,
@@ -359,9 +361,6 @@ export function useAdminAppState({ showNotification, confirm }) {
     setShowAIAssistant,
 
     // From hooks (used directly in JSX)
-    waitingGroups,
-    moveInWaitlist,
-    removeFromWaitlist,
     handleSettingsChanged,
 
     // Module singleton (JSX uses directly)

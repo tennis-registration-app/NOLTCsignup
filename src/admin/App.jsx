@@ -44,6 +44,7 @@ const AdminPanelV2 = ({ onExit }) => {
     wetCourtsController,
     blocks,
     status,
+    waitlist,
     calendar,
     ai,
     adminServices,
@@ -51,9 +52,6 @@ const AdminPanelV2 = ({ onExit }) => {
     setActiveTab,
     blockingView,
     setBlockingView,
-    waitingGroups,
-    moveInWaitlist,
-    removeFromWaitlist,
     handleSettingsChanged,
     backend,
   } = useAdminAppState({ showNotification, confirm });
@@ -104,11 +102,7 @@ const AdminPanelV2 = ({ onExit }) => {
             />
           )}
           {activeTab === 'waitlist' && (
-            <WaitlistSection
-              waitingGroups={waitingGroups}
-              moveInWaitlist={moveInWaitlist}
-              removeFromWaitlist={removeFromWaitlist}
-            />
+            <WaitlistSection waitlistModel={waitlist.model} waitlistActions={waitlist.actions} />
           )}
           {activeTab === 'analytics' && (
             <AnalyticsSection backend={backend} AnalyticsDashboard={AnalyticsDashboard} />

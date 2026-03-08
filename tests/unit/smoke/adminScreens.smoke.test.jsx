@@ -253,9 +253,8 @@ describe('WaitlistSection', () => {
   it('renders empty waitlist message', () => {
     render(
       <WaitlistSection
-        waitingGroups={[]}
-        moveInWaitlist={vi.fn()}
-        removeFromWaitlist={vi.fn()}
+        waitlistModel={{ waitingGroups: [] }}
+        waitlistActions={{ moveInWaitlist: vi.fn(), removeFromWaitlist: vi.fn() }}
       />
     );
     expect(screen.getByText('Waiting Groups (0)')).toBeInTheDocument();
@@ -269,9 +268,8 @@ describe('WaitlistSection', () => {
     ];
     render(
       <WaitlistSection
-        waitingGroups={groups}
-        moveInWaitlist={vi.fn()}
-        removeFromWaitlist={vi.fn()}
+        waitlistModel={{ waitingGroups: groups }}
+        waitlistActions={{ moveInWaitlist: vi.fn(), removeFromWaitlist: vi.fn() }}
       />
     );
     expect(screen.getByText('Waiting Groups (2)')).toBeInTheDocument();
@@ -283,9 +281,8 @@ describe('WaitlistSection', () => {
     const removeFromWaitlist = vi.fn();
     render(
       <WaitlistSection
-        waitingGroups={[{ names: ['Alice'] }]}
-        moveInWaitlist={vi.fn()}
-        removeFromWaitlist={removeFromWaitlist}
+        waitlistModel={{ waitingGroups: [{ names: ['Alice'] }] }}
+        waitlistActions={{ moveInWaitlist: vi.fn(), removeFromWaitlist }}
       />
     );
     // The Trash2 icon button is the remove action
