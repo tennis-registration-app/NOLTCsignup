@@ -10,6 +10,7 @@
 
 import type {
   AppState,
+  CourtSlice,
   SessionSlice,
   AdminSlice,
   RegistrationConstants,
@@ -352,6 +353,27 @@ export function buildRegistrationReturn({
       fetchFrequentPartners: domain.fetchFrequentPartners,
       clearCache: domain.clearCache,
     },
+
+    // Grouped court slice — backward-compatible alias.
+    court: {
+      courtAssignment: {
+        justAssignedCourt: domain.justAssignedCourt,
+        setJustAssignedCourt: domain.setJustAssignedCourt,
+        assignedSessionId: domain.assignedSessionId,
+        setAssignedSessionId: domain.setAssignedSessionId,
+        assignedEndTime: domain.assignedEndTime,
+        setAssignedEndTime: domain.setAssignedEndTime,
+        hasAssignedCourt: domain.hasAssignedCourt,
+        setHasAssignedCourt: domain.setHasAssignedCourt,
+      },
+      clearCourtFlow: {
+        selectedCourtToClear: domain.selectedCourtToClear,
+        setSelectedCourtToClear: domain.setSelectedCourtToClear,
+        clearCourtStep: domain.clearCourtStep,
+        setClearCourtStep: domain.setClearCourtStep,
+        decrementClearCourtStep: domain.decrementClearCourtStep,
+      },
+    } satisfies CourtSlice,
 
     // Grouped session slice — backward-compatible alias.
     session: {

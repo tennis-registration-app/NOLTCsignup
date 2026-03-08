@@ -334,7 +334,7 @@ export interface TennisBusinessLogicShape {
 /**
  * AppState — the registration app's complete state surface.
  *
- * 29 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * 30 top-level keys, frozen by contract test. Do not add new top-level keys;
  * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
  *
  * Logical groupings (governance only — access paths unchanged):
@@ -342,6 +342,7 @@ export interface TennisBusinessLogicShape {
  * UI State:       state, setters, refs
  * Domain Slices:  alert, search, courtAssignment, clearCourtFlow,
  *                 mobile, groupGuest, memberIdentity
+ * Court Slice:    court (courtAssignment, clearCourtFlow)
  * Session Slice:  session (streak, timeout, guestCounterHook)
  * Admin Slice:    admin (adminPriceFeedback, waitlistAdmin, blockAdmin)
  * Derived:        derived
@@ -383,6 +384,8 @@ export interface AppState {
   memberIdentity: MemberIdentityState;
   /** Grouped session slice (backward-compatible alias) */
   session: SessionSlice;
+  /** Grouped court slice (backward-compatible alias) */
+  court: CourtSlice;
   /** Grouped admin slice (backward-compatible alias) */
   admin: AdminSlice;
   /** App constants */
@@ -782,6 +785,19 @@ export interface BlockAdminState {
   onCancelBlock: (blockId: string, courtNumber: number) => Promise<void>;
   // Evidence: useBlockAdmin — calls handleBlockCreateOp with current state
   onBlockCreate: () => Promise<void>;
+}
+
+/**
+ * CourtSlice — grouped alias for court-lifecycle domain slices.
+ *
+ * Introduced as Step 3 of the God Object decomposition. Consumers can
+ * migrate from app.courtAssignment / app.clearCourtFlow
+ * to app.court.courtAssignment / app.court.clearCourtFlow
+ * one at a time. The top-level keys remain for backward compatibility.
+ */
+export interface CourtSlice {
+  courtAssignment: CourtAssignmentState;
+  clearCourtFlow: ClearCourtFlow;
 }
 
 /**
