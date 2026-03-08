@@ -16,7 +16,8 @@ import { TennisBusinessLogic } from '@lib';
  */
 export function ClearCourtRoute({ app, handlers }) {
   // Destructure from app
-  const { clearCourtFlow, alert, helpers, mobile, CONSTANTS } = app;
+  const { court, alert, helpers, mobile, CONSTANTS } = app;
+  const { clearCourtFlow } = court;
   const { clearCourtStep, setClearCourtStep, selectedCourtToClear, setSelectedCourtToClear } =
     clearCourtFlow;
   const { showAlert, alertMessage } = alert;

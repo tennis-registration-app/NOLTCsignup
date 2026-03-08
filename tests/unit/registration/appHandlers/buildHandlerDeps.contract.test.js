@@ -28,6 +28,7 @@ const mockApp = {
   search: { searchTerm: '' },
   memberIdentity: { clearCache: () => {} },
   clearCourtFlow: { clearCourt: () => {} },
+  court: { clearCourtFlow: { clearCourt: () => {} } },
   admin: {
     adminPriceFeedback: { price: null },
     waitlistAdmin: {},

@@ -55,7 +55,7 @@ export function useRegistrationHandlers({ app }) {
         ...app.memberIdentity,
         ...app.search,
         ...app.session.streak,
-        ...app.clearCourtFlow,
+        ...app.court.clearCourtFlow,
       },
       services: {
         clearCache: app.memberIdentity.clearCache,

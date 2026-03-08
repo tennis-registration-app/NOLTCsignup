@@ -106,7 +106,7 @@ export function buildNavigationHandlerDeps(app) {
     groupGuest: app.groupGuest,
     memberIdentity: app.memberIdentity,
     mobile: app.mobile,
-    clearCourtFlow: app.clearCourtFlow,
+    clearCourtFlow: app.court.clearCourtFlow,
     alert: app.alert,
     TENNIS_CONFIG: app.TENNIS_CONFIG,
   };
