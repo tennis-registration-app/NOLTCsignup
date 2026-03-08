@@ -54,7 +54,7 @@ export function useRegistrationHandlers({ app }) {
         ...app.groupGuest,
         ...app.memberIdentity,
         ...app.search,
-        ...app.streak,
+        ...app.session.streak,
         ...app.clearCourtFlow,
       },
       services: {

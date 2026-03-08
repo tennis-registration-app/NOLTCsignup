@@ -63,8 +63,9 @@ export interface SuccessActions {
  */
 export function buildSuccessModel(app: AppState, computed: SuccessModelComputed): SuccessModel {
   // Destructure from app (verbatim from SuccessRoute)
-  const { state, groupGuest, mobile, admin, courtAssignment, streak, TENNIS_CONFIG } = app;
+  const { state, groupGuest, mobile, admin, session, courtAssignment, TENNIS_CONFIG } = app;
   const { blockAdmin } = admin;
+  const { streak } = session;
   const {
     replacedGroup,
     ballPriceCents,

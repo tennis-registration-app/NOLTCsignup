@@ -47,7 +47,7 @@ export function buildGroupHandlerDeps(app, core, court) {
     groupGuest: app.groupGuest,
     derived: app.derived,
     mobile: app.mobile,
-    streak: app.streak,
+    streak: app.session.streak,
     search: app.search,
     memberIdentity: app.memberIdentity,
     setters: app.setters,

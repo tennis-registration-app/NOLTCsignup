@@ -20,7 +20,7 @@ export function GroupRoute({ app, handlers }) {
   const actions = buildGroupActions(app, handlers);
 
   // Route-internal state for Streak Modal (not passed to GroupScreen)
-  const { streak } = app;
+  const { streak } = app.session;
   const { registrantStreak, showStreakModal, streakAcknowledged, setStreakAcknowledged } = streak;
   const { handleStreakAcknowledge } = handlers;
 
