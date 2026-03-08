@@ -24,7 +24,7 @@ const mockApp = {
   alert: { showAlert: () => {} },
   refs: { successResetTimerRef: { current: null } },
   derived: { canSubmit: false },
-  session: { streak: { streakCount: 0 } },
+  session: { streak: { streakCount: 0 }, guestCounterHook: { count: 0 } },
   search: { searchTerm: '' },
   memberIdentity: { clearCache: () => {} },
   guestCounterHook: { count: 0 },

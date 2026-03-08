@@ -78,8 +78,9 @@ export interface GroupActions {
  */
 export function buildGroupModel(app: AppState): GroupModel {
   // Destructure from app (verbatim from GroupRoute)
-  const { state, groupGuest, memberIdentity, derived, alert, timeout, mobile, search, CONSTANTS } =
+  const { state, groupGuest, memberIdentity, derived, alert, session, mobile, search, CONSTANTS } =
     app;
+  const { timeout } = session;
   const { data, showAddPlayer, availableCourts } = state;
   const { courtSelection } = data;
   const {

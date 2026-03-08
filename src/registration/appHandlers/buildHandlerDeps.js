@@ -69,7 +69,7 @@ export function buildGroupHandlerDeps(app, core, court) {
 export function buildGuestHandlerDeps(app) {
   return {
     groupGuest: app.groupGuest,
-    guestCounterHook: app.guestCounterHook,
+    guestCounterHook: app.session.guestCounterHook,
     memberIdentity: app.memberIdentity,
     derived: app.derived,
     setters: app.setters,
