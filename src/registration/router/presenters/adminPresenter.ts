@@ -68,8 +68,9 @@ export interface AdminActions {
  * Build the model (data) props for AdminScreen
  */
 export function buildAdminModel(app: AppState, handlers: Handlers): AdminModel {
-  // Destructure from app (verbatim from AdminRoute)
-  const { state, blockAdmin, waitlistAdmin, adminPriceFeedback, alert, CONSTANTS } = app;
+  // Destructure from app — admin slices via grouped alias
+  const { state, admin, alert, CONSTANTS } = app;
+  const { blockAdmin, waitlistAdmin, adminPriceFeedback } = admin;
   const { currentTime, courtToMove, ballPriceInput } = state;
   const { showAlert, alertMessage } = alert;
   const {
@@ -119,8 +120,9 @@ export function buildAdminModel(app: AppState, handlers: Handlers): AdminModel {
  * Build the actions (callback/setter) props for AdminScreen
  */
 export function buildAdminActions(app: AppState, handlers: Handlers): AdminActions {
-  // Destructure from app (verbatim from AdminRoute)
-  const { setters, alert, blockAdmin, waitlistAdmin, adminPriceFeedback } = app;
+  // Destructure from app — admin slices via grouped alias
+  const { setters, alert, admin } = app;
+  const { blockAdmin, waitlistAdmin, adminPriceFeedback } = admin;
   const { setCourtToMove, setBallPriceInput } = setters;
   const { showAlertMessage } = alert;
   const {
