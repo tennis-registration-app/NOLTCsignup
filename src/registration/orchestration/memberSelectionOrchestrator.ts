@@ -198,8 +198,7 @@ export async function handleSuggestionClickOrchestrated(
           suggestion.memberNumber
         );
         const freshMember = freshMemberData?.find((m) => m.id === suggestion.member.id);
-        // Primary: camelCase (normalized). Fallback: snake_case (raw API, pre-normalization safety net)
-        currentStreak = freshMember?.unclearedStreak || (freshMember as unknown as Record<string, unknown>)?.uncleared_streak as number || 0;
+        currentStreak = freshMember?.unclearedStreak || 0;
         logger.debug('MemberSelection', 'Fresh member data', freshMember);
         logger.debug('MemberSelection', 'Registrant streak (fresh)', currentStreak);
       } catch (error) {
