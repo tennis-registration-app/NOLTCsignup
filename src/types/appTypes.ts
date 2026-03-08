@@ -144,7 +144,9 @@ export interface CommandResponse {
   serverNow?: string;
 }
 
-/** Extended response from assignCourtWithPlayers. Evidence: assignCourtOrchestrator.ts usage */
+/** Extended response from assignCourtWithPlayers. Evidence: assignCourtOrchestrator.ts usage.
+ *  Note: raw API may return scheduled_end_at (snake_case); normalizeCommandSession()
+ *  in assignCourtOrchestrator handles conversion before downstream reads. */
 export interface AssignCourtResponse extends CommandResponse {
   session?: {
     id?: string;
@@ -194,6 +196,7 @@ export interface TennisBackendShape {
     // Evidence: TennisCommands.js:118 — returns CommandResponse
     deferWaitlistEntry: (input: { entryId: string; deferred: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:135 — returns CommandResponse & { session? }
+    // Note: raw API may return scheduled_end_at; normalizeCommandSession() in assignCourtOrchestrator handles conversion
     assignFromWaitlist: (input: { waitlistEntryId: string; courtId: string; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
     // Evidence: TennisCommands.js:190 — returns CommandResponse & { endedSessionId?, restoredSessionId? }
     undoOvertimeTakeover: (input: { takeoverSessionId: string; displacedSessionId: string }) => Promise<CommandResponse & { endedSessionId?: string; restoredSessionId?: string }>;

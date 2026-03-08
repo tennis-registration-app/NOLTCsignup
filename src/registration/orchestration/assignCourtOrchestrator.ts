@@ -89,6 +89,18 @@ export interface AssignCourtDeps {
 
 // ---- File-local helpers (not exported) ----
 
+/** Normalize a command-response session so downstream code uses only camelCase scheduledEndAt. */
+function normalizeCommandSession(
+  raw?: { id?: string; scheduled_end_at?: string; scheduledEndAt?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }> }
+): { id: string | null; scheduledEndAt: string | null; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }> } {
+  if (!raw) return { id: null, scheduledEndAt: null };
+  return {
+    id: raw.id || null,
+    scheduledEndAt: raw.scheduled_end_at || raw.scheduledEndAt || null,
+    participantDetails: raw.participantDetails,
+  };
+}
+
 interface SuccessStateParams {
   courtNumber: number;
   sessionId: string | null;
@@ -326,9 +338,12 @@ export async function assignCourtToGroupOrchestrated(
         'Waitlist assignment successful, waiting for board refresh signal'
       );
 
+      // Normalize command session to camelCase (backend may return scheduled_end_at)
+      const session = normalizeCommandSession(result.session);
+
       // Update currentGroup with participant details for ball purchases
-      if (result.session?.participantDetails) {
-        const groupFromWaitlist = result.session.participantDetails.map((p) => ({
+      if (session.participantDetails) {
+        const groupFromWaitlist = session.participantDetails.map((p) => ({
           id: p.memberId,
           memberNumber: p.memberId,
           name: p.name,
@@ -341,8 +356,8 @@ export async function assignCourtToGroupOrchestrated(
       // Update UI state
       applySuccessState(actions, {
         courtNumber,
-        sessionId: result.session?.id || null,
-        scheduledEndAt: result.session?.scheduled_end_at || result.session?.scheduledEndAt || null,
+        sessionId: session.id,
+        scheduledEndAt: session.scheduledEndAt,
         replacedGroup: null,
         displacement: null,
         canChangeCourt: false, // Waitlist groups typically don't get court change option
@@ -481,11 +496,14 @@ export async function assignCourtToGroupOrchestrated(
         }
       : null;
 
+  // Normalize command session to camelCase (backend may return scheduled_end_at)
+  const session = normalizeCommandSession(result.session);
+
   // Update UI state based on result
   applySuccessState(actions, {
     courtNumber,
-    sessionId: result.session?.id || null,
-    scheduledEndAt: result.session?.scheduled_end_at || result.session?.scheduledEndAt || null,
+    sessionId: session.id,
+    scheduledEndAt: session.scheduledEndAt,
     replacedGroup: replacedGroupFromDisplacement,
     displacement: result.displacement ?? null, // Will be null if no overtime was displaced
     canChangeCourt: allowCourtChange, // Only true if alternatives exist
