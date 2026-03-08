@@ -105,10 +105,10 @@ const AdminPanelV2 = ({ onExit }) => {
             <WaitlistSection waitlistModel={waitlist.model} waitlistActions={waitlist.actions} />
           )}
           {activeTab === 'analytics' && (
-            <AnalyticsSection backend={backend} AnalyticsDashboard={AnalyticsDashboard} />
+            <AnalyticsSection services={adminServices} AnalyticsDashboard={AnalyticsDashboard} />
           )}
           {activeTab === 'history' && (
-            <HistorySection backend={backend} GameHistorySearch={GameHistorySearch} />
+            <HistorySection services={adminServices} GameHistorySearch={GameHistorySearch} />
           )}
         </div>
         {/* System tab - outside the white wrapper so cards have visible separation */}

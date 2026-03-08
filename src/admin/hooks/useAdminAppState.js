@@ -357,8 +357,6 @@ export function useAdminAppState({ showNotification, confirm }) {
     setActiveTab,
     blockingView,
     setBlockingView,
-    showAIAssistant,
-    setShowAIAssistant,
 
     // From hooks (used directly in JSX)
     handleSettingsChanged,

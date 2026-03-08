@@ -1,5 +1,5 @@
 import React from 'react';
 
-export function HistorySection({ backend, GameHistorySearch }) {
-  return <GameHistorySearch backend={backend} />;
+export function HistorySection({ services, GameHistorySearch }) {
+  return <GameHistorySearch backend={services.backend} />;
 }

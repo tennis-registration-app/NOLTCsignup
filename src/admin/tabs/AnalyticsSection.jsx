@@ -1,5 +1,5 @@
 import React from 'react';
 
-export function AnalyticsSection({ backend, AnalyticsDashboard }) {
-  return <AnalyticsDashboard onClose={null} backend={backend} />;
+export function AnalyticsSection({ services, AnalyticsDashboard }) {
+  return <AnalyticsDashboard onClose={null} backend={services.backend} />;
 }
