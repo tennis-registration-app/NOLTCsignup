@@ -90,7 +90,7 @@ export function buildAdminHandlerDeps(app, court) {
     setters: app.setters,
     search: app.search,
     state: app.state,
-    adminPriceFeedback: app.adminPriceFeedback,
+    adminPriceFeedback: app.admin.adminPriceFeedback,
     TENNIS_CONFIG: app.TENNIS_CONFIG,
     court,
   };

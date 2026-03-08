@@ -31,6 +31,11 @@ const mockApp = {
   guestCounterHook: { count: 0 },
   clearCourtFlow: { clearCourt: () => {} },
   adminPriceFeedback: { price: null },
+  admin: {
+    adminPriceFeedback: { price: null },
+    waitlistAdmin: {},
+    blockAdmin: { blocks: [] },
+  },
   assignCourtToGroupOrchestrated: () => {},
   changeCourtOrchestrated: () => {},
   sendGroupToWaitlistOrchestrated: () => {},
