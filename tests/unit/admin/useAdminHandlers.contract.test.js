@@ -64,6 +64,7 @@ describe('useAdminHandlers contract', () => {
         reloadSettings: vi.fn(),
         bumpRefreshTrigger: vi.fn(),
         refreshBoard: vi.fn(),
+        applyBoardResponse: vi.fn(),
       });
       hookResult = result;
       return null;

@@ -134,7 +134,7 @@ export function useAdminAppState({ showNotification, confirm }) {
   } = useBoardSubscription({ backend });
 
   // Board-in-response helper — normalize raw API board and apply to state.
-  // Created here (before useWetCourts & useAdminHandlers) so both can consume it.
+  // Single definition shared by useWetCourts and useAdminHandlers.
   const applyBoardResponse = useCallback(
     (apiResponse) => {
       if (!apiResponse?.board) {
@@ -201,7 +201,7 @@ export function useAdminAppState({ showNotification, confirm }) {
     reloadSettings,
     bumpRefreshTrigger,
     refreshBoard,
-    applyBoardUpdate,
+    applyBoardResponse,
   });
 
   // Update current time every second

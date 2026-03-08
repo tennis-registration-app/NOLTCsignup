@@ -9,7 +9,6 @@ import { useCallback } from 'react';
 import { removeFromWaitlistOp, moveInWaitlistOp } from '../handlers/waitlistOperations';
 import { clearCourtOp, moveCourtOp, clearAllCourtsOp } from '../handlers/courtOperations';
 import { applyBlocksOp } from '../handlers/applyBlocksOperation';
-import { normalizeBoard } from '../../lib/normalize/index.js';
 
 /**
  * @param {Object} deps
@@ -26,7 +25,7 @@ import { normalizeBoard } from '../../lib/normalize/index.js';
  * @param {Function} deps.reloadSettings - Reload admin settings
  * @param {Function} deps.bumpRefreshTrigger - Increment board refresh trigger
  * @param {Function} deps.refreshBoard - Fetch board from backend and apply update immediately
- * @param {Function} deps.applyBoardUpdate - Apply normalized Domain Board to state directly
+ * @param {Function} deps.applyBoardResponse - Normalize raw API board and apply to state
  */
 export function useAdminHandlers({
   backend,
@@ -42,25 +41,8 @@ export function useAdminHandlers({
   reloadSettings,
   bumpRefreshTrigger,
   refreshBoard,
-  applyBoardUpdate,
+  applyBoardResponse,
 }) {
-  // Normalize raw API board data and apply to state (avoids separate refetch)
-  const applyBoardResponse = useCallback(
-    (apiResponse) => {
-      if (!apiResponse?.board) {
-        refreshBoard?.();
-        return;
-      }
-      try {
-        const normalized = normalizeBoard(apiResponse.board);
-        applyBoardUpdate(normalized);
-      } catch (error) {
-        console.error('Failed to normalize board response:', error);
-        refreshBoard?.();
-      }
-    },
-    [applyBoardUpdate, refreshBoard]
-  );
   const handleEditBlockFromStatus = useCallback(
     (block) => {
       setBlockToEdit(block);
