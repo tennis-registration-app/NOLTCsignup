@@ -9,7 +9,6 @@
  * Wire useAdminAccess() here when VITE_ADMIN_ACCESS_MODE=authenticated
  */
 import React, { useState } from 'react';
-import { createBackend } from '../lib/backend/index.js';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
 import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext.jsx';
 
@@ -35,9 +34,6 @@ import { clearWaitlistOp } from './handlers/waitlistOperations';
 
 // App state hook (all state, hooks, effects, controller assembly)
 import { useAdminAppState } from './hooks/useAdminAppState';
-
-// TennisBackend singleton (needed by outer App component for analytics view)
-const backend = createBackend();
 
 // Main Admin Panel Component
 const AdminPanelV2 = ({ onExit }) => {
@@ -169,10 +165,6 @@ export default function App() {
         </ConfirmProvider>
       </NotificationProvider>
     );
-  }
-
-  if (view === 'analytics' && typeof AnalyticsDashboard !== 'undefined') {
-    return <AnalyticsDashboard onClose={() => setView('menu')} backend={backend} />;
   }
 
   // Fallback if components aren't available
