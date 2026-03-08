@@ -334,7 +334,7 @@ export interface TennisBusinessLogicShape {
 /**
  * AppState — the registration app's complete state surface.
  *
- * 31 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * 32 top-level keys, frozen by contract test. Do not add new top-level keys;
  * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
  *
  * Logical groupings (governance only — access paths unchanged):
@@ -343,6 +343,7 @@ export interface TennisBusinessLogicShape {
  * Domain Slices:  alert, guestCounterHook, timeout, search,
  *                 courtAssignment, clearCourtFlow, mobile,
  *                 groupGuest, streak, memberIdentity
+ * Session Slice:  session (streak, timeout, guestCounterHook)
  * Admin Slice:    admin (adminPriceFeedback, waitlistAdmin, blockAdmin)
  * Derived:        derived
  * Helpers:        helpers
@@ -387,6 +388,8 @@ export interface AppState {
   streak: StreakState;
   /** Member lookup state */
   memberIdentity: MemberIdentityState;
+  /** Grouped session slice (backward-compatible alias) */
+  session: SessionSlice;
   /** Grouped admin slice (backward-compatible alias) */
   admin: AdminSlice;
   /** App constants */
@@ -786,6 +789,20 @@ export interface BlockAdminState {
   onCancelBlock: (blockId: string, courtNumber: number) => Promise<void>;
   // Evidence: useBlockAdmin — calls handleBlockCreateOp with current state
   onBlockCreate: () => Promise<void>;
+}
+
+/**
+ * SessionSlice — grouped alias for per-registration-session utility slices.
+ *
+ * Introduced as Step 2 of the God Object decomposition. Consumers can
+ * migrate from app.streak / app.timeout / app.guestCounterHook
+ * to app.session.streak / app.session.timeout / app.session.guestCounterHook
+ * one at a time. The top-level keys remain for backward compatibility.
+ */
+export interface SessionSlice {
+  streak: StreakState;
+  timeout: TimeoutState;
+  guestCounterHook: GuestCounterHook;
 }
 
 /**

@@ -10,6 +10,7 @@
 
 import type {
   AppState,
+  SessionSlice,
   AdminSlice,
   RegistrationConstants,
   RegistrationUiState,
@@ -372,6 +373,25 @@ export function buildRegistrationReturn({
       fetchFrequentPartners: domain.fetchFrequentPartners,
       clearCache: domain.clearCache,
     },
+
+    // Grouped session slice — backward-compatible alias.
+    session: {
+      streak: {
+        registrantStreak: domain.registrantStreak,
+        setRegistrantStreak: domain.setRegistrantStreak,
+        showStreakModal: domain.showStreakModal,
+        setShowStreakModal: domain.setShowStreakModal,
+        streakAcknowledged: domain.streakAcknowledged,
+        setStreakAcknowledged: domain.setStreakAcknowledged,
+      },
+      timeout: {
+        showTimeoutWarning: timeout.showTimeoutWarning,
+      },
+      guestCounterHook: {
+        guestCounter: domain.guestCounter,
+        incrementGuestCounter: domain.incrementGuestCounter,
+      },
+    } satisfies SessionSlice,
 
     // Grouped admin slice — backward-compatible alias.
     // Shares the same object references as the top-level keys above.
