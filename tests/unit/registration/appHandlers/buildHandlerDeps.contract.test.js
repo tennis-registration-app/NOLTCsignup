@@ -21,7 +21,6 @@ const mockApp = {
   courtAssignment: { selectedCourt: null },
   services: { backend: { queries: { refresh: () => {} } } },
   helpers: { getCourtData: () => [], markUserTyping: () => {} },
-  blockAdmin: { blocks: [] },
   alert: { showAlert: () => {} },
   refs: { successResetTimerRef: { current: null } },
   derived: { canSubmit: false },
@@ -30,7 +29,6 @@ const mockApp = {
   memberIdentity: { clearCache: () => {} },
   guestCounterHook: { count: 0 },
   clearCourtFlow: { clearCourt: () => {} },
-  adminPriceFeedback: { price: null },
   admin: {
     adminPriceFeedback: { price: null },
     waitlistAdmin: {},

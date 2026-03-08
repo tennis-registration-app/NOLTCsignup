@@ -334,15 +334,16 @@ export interface TennisBusinessLogicShape {
 /**
  * AppState — the registration app's complete state surface.
  *
- * 34 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * 31 top-level keys, frozen by contract test. Do not add new top-level keys;
  * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
  *
  * Logical groupings (governance only — access paths unchanged):
  *
  * UI State:       state, setters, refs
- * Domain Slices:  alert, adminPriceFeedback, guestCounterHook, timeout, search,
- *                 courtAssignment, clearCourtFlow, mobile, blockAdmin,
- *                 waitlistAdmin, groupGuest, streak, memberIdentity
+ * Domain Slices:  alert, guestCounterHook, timeout, search,
+ *                 courtAssignment, clearCourtFlow, mobile,
+ *                 groupGuest, streak, memberIdentity
+ * Admin Slice:    admin (adminPriceFeedback, waitlistAdmin, blockAdmin)
  * Derived:        derived
  * Helpers:        helpers
  * Services:       services (backend, dataStore)
@@ -368,8 +369,6 @@ export interface AppState {
   services: Services;
   /** Alert display state and controls */
   alert: AlertState;
-  /** Ball price feedback */
-  adminPriceFeedback: AdminPriceFeedback;
   /** Guest count tracking */
   guestCounterHook: GuestCounterHook;
   /** Session timeout warnings */
@@ -382,10 +381,6 @@ export interface AppState {
   clearCourtFlow: ClearCourtFlow;
   /** Mobile flow state */
   mobile: MobileState;
-  /** Court block administration */
-  blockAdmin: BlockAdminState;
-  /** Waitlist management */
-  waitlistAdmin: WaitlistAdminState;
   /** Group and guest management */
   groupGuest: GroupGuestState;
   /** Registration streak tracking */

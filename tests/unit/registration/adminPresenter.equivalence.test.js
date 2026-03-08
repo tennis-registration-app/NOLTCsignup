@@ -105,8 +105,9 @@ import {
  * This is the source of truth we're testing against.
  */
 function legacyAdminScreenProps(app, handlers) {
-  // Destructure from app (verbatim from AdminRoute)
-  const { state, setters, alert, blockAdmin, waitlistAdmin, adminPriceFeedback, CONSTANTS } = app;
+  // Destructure from app (via grouped admin slice)
+  const { state, setters, alert, admin, CONSTANTS } = app;
+  const { blockAdmin, waitlistAdmin, adminPriceFeedback } = admin;
   const { currentTime, courtToMove, ballPriceInput } = state;
   const { setCourtToMove, setBallPriceInput } = setters;
   const { showAlert, alertMessage, showAlertMessage } = alert;

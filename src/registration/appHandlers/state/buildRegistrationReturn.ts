@@ -254,15 +254,6 @@ export function buildRegistrationReturn({
       showAlertMessage: domain.showAlertMessage,
     },
 
-    // From useAdminPriceFeedback
-    adminPriceFeedback: {
-      showPriceSuccess: domain.showPriceSuccess,
-      priceError: domain.priceError,
-      setPriceError: domain.setPriceError,
-      setShowPriceSuccess: domain.setShowPriceSuccess,
-      showPriceSuccessWithClear: domain.showPriceSuccessWithClear,
-    },
-
     // From useGuestCounter
     guestCounterHook: {
       guestCounter: domain.guestCounter,
@@ -339,34 +330,6 @@ export function buildRegistrationReturn({
       onQRScannerClose: domain.onQRScannerClose,
       openQRScanner: domain.openQRScanner,
       dismissGpsPrompt: domain.dismissGpsPrompt,
-    },
-
-    // From useBlockAdmin
-    blockAdmin: {
-      showBlockModal: domain.showBlockModal,
-      setShowBlockModal: domain.setShowBlockModal,
-      selectedCourtsToBlock: domain.selectedCourtsToBlock,
-      setSelectedCourtsToBlock: domain.setSelectedCourtsToBlock,
-      blockStartTime: domain.blockStartTime,
-      setBlockStartTime: domain.setBlockStartTime,
-      blockEndTime: domain.blockEndTime,
-      setBlockEndTime: domain.setBlockEndTime,
-      blockMessage: domain.blockMessage,
-      setBlockMessage: domain.setBlockMessage,
-      blockWarningMinutes: domain.blockWarningMinutes,
-      setBlockWarningMinutes: domain.setBlockWarningMinutes,
-      blockingInProgress: domain.blockingInProgress,
-      setBlockingInProgress: domain.setBlockingInProgress,
-      getCourtBlockStatus,
-      onBlockCreate: domain.onBlockCreate,
-      onCancelBlock: domain.onCancelBlock,
-    },
-
-    // From useWaitlistAdmin
-    waitlistAdmin: {
-      waitlistMoveFrom: domain.waitlistMoveFrom,
-      setWaitlistMoveFrom: domain.setWaitlistMoveFrom,
-      onReorderWaitlist: domain.onReorderWaitlist,
     },
 
     // From useGroupGuest
