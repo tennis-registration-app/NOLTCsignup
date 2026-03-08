@@ -10,6 +10,7 @@
 
 import type {
   AppState,
+  AdminSlice,
   RegistrationConstants,
   RegistrationUiState,
   RegistrationSetters,
@@ -408,6 +409,42 @@ export function buildRegistrationReturn({
       fetchFrequentPartners: domain.fetchFrequentPartners,
       clearCache: domain.clearCache,
     },
+
+    // Grouped admin slice — backward-compatible alias.
+    // Shares the same object references as the top-level keys above.
+    admin: {
+      adminPriceFeedback: {
+        showPriceSuccess: domain.showPriceSuccess,
+        priceError: domain.priceError,
+        setPriceError: domain.setPriceError,
+        setShowPriceSuccess: domain.setShowPriceSuccess,
+        showPriceSuccessWithClear: domain.showPriceSuccessWithClear,
+      },
+      waitlistAdmin: {
+        waitlistMoveFrom: domain.waitlistMoveFrom,
+        setWaitlistMoveFrom: domain.setWaitlistMoveFrom,
+        onReorderWaitlist: domain.onReorderWaitlist,
+      },
+      blockAdmin: {
+        showBlockModal: domain.showBlockModal,
+        setShowBlockModal: domain.setShowBlockModal,
+        selectedCourtsToBlock: domain.selectedCourtsToBlock,
+        setSelectedCourtsToBlock: domain.setSelectedCourtsToBlock,
+        blockStartTime: domain.blockStartTime,
+        setBlockStartTime: domain.setBlockStartTime,
+        blockEndTime: domain.blockEndTime,
+        setBlockEndTime: domain.setBlockEndTime,
+        blockMessage: domain.blockMessage,
+        setBlockMessage: domain.setBlockMessage,
+        blockWarningMinutes: domain.blockWarningMinutes,
+        setBlockWarningMinutes: domain.setBlockWarningMinutes,
+        blockingInProgress: domain.blockingInProgress,
+        setBlockingInProgress: domain.setBlockingInProgress,
+        getCourtBlockStatus,
+        onBlockCreate: domain.onBlockCreate,
+        onCancelBlock: domain.onCancelBlock,
+      },
+    } satisfies AdminSlice,
 
     // Constants and config
     CONSTANTS,

@@ -334,7 +334,7 @@ export interface TennisBusinessLogicShape {
 /**
  * AppState — the registration app's complete state surface.
  *
- * 33 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * 34 top-level keys, frozen by contract test. Do not add new top-level keys;
  * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
  *
  * Logical groupings (governance only — access paths unchanged):
@@ -392,6 +392,8 @@ export interface AppState {
   streak: StreakState;
   /** Member lookup state */
   memberIdentity: MemberIdentityState;
+  /** Grouped admin slice (backward-compatible alias) */
+  admin: AdminSlice;
   /** App constants */
   CONSTANTS: RegistrationConstants;
   /** Tennis configuration */
@@ -789,6 +791,20 @@ export interface BlockAdminState {
   onCancelBlock: (blockId: string, courtNumber: number) => Promise<void>;
   // Evidence: useBlockAdmin — calls handleBlockCreateOp with current state
   onBlockCreate: () => Promise<void>;
+}
+
+/**
+ * AdminSlice — grouped alias for the three admin-related domain slices.
+ *
+ * Introduced as Step 1 of the God Object decomposition. Consumers can
+ * migrate from app.adminPriceFeedback / app.waitlistAdmin / app.blockAdmin
+ * to app.admin.adminPriceFeedback / app.admin.waitlistAdmin / app.admin.blockAdmin
+ * one at a time. The top-level keys remain for backward compatibility.
+ */
+export interface AdminSlice {
+  adminPriceFeedback: AdminPriceFeedback;
+  waitlistAdmin: WaitlistAdminState;
+  blockAdmin: BlockAdminState;
 }
 
 // New fields for waitlist features should be added here, not as AppState top-level keys.
