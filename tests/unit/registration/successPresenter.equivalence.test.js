@@ -120,9 +120,10 @@ import {
  * and async wrappers are handled separately since they're route-level concerns.
  */
 function legacySuccessScreenProps(app, handlers, computed) {
-  // Destructure from app (via grouped admin slice)
-  const { state, groupGuest, mobile, admin, courtAssignment, streak, TENNIS_CONFIG } = app;
+  // Destructure from app (via grouped slices)
+  const { state, groupGuest, mobile, admin, session, courtAssignment, TENNIS_CONFIG } = app;
   const { blockAdmin } = admin;
+  const { streak } = session;
   const {
     replacedGroup,
     ballPriceCents,

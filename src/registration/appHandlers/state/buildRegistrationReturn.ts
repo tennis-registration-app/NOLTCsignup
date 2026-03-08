@@ -352,16 +352,6 @@ export function buildRegistrationReturn({
       handleCancelGuest: domain.handleCancelGuest,
     },
 
-    // From useStreak
-    streak: {
-      registrantStreak: domain.registrantStreak,
-      setRegistrantStreak: domain.setRegistrantStreak,
-      showStreakModal: domain.showStreakModal,
-      setShowStreakModal: domain.setShowStreakModal,
-      streakAcknowledged: domain.streakAcknowledged,
-      setStreakAcknowledged: domain.setStreakAcknowledged,
-    },
-
     // From useMemberIdentity
     memberIdentity: {
       memberNumber: domain.memberNumber,

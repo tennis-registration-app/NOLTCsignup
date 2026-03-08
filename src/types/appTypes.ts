@@ -334,7 +334,7 @@ export interface TennisBusinessLogicShape {
 /**
  * AppState — the registration app's complete state surface.
  *
- * 32 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * 31 top-level keys, frozen by contract test. Do not add new top-level keys;
  * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
  *
  * Logical groupings (governance only — access paths unchanged):
@@ -342,7 +342,7 @@ export interface TennisBusinessLogicShape {
  * UI State:       state, setters, refs
  * Domain Slices:  alert, guestCounterHook, timeout, search,
  *                 courtAssignment, clearCourtFlow, mobile,
- *                 groupGuest, streak, memberIdentity
+ *                 groupGuest, memberIdentity
  * Session Slice:  session (streak, timeout, guestCounterHook)
  * Admin Slice:    admin (adminPriceFeedback, waitlistAdmin, blockAdmin)
  * Derived:        derived
@@ -384,8 +384,6 @@ export interface AppState {
   mobile: MobileState;
   /** Group and guest management */
   groupGuest: GroupGuestState;
-  /** Registration streak tracking */
-  streak: StreakState;
   /** Member lookup state */
   memberIdentity: MemberIdentityState;
   /** Grouped session slice (backward-compatible alias) */
@@ -795,9 +793,10 @@ export interface BlockAdminState {
  * SessionSlice — grouped alias for per-registration-session utility slices.
  *
  * Introduced as Step 2 of the God Object decomposition. Consumers can
- * migrate from app.streak / app.timeout / app.guestCounterHook
- * to app.session.streak / app.session.timeout / app.session.guestCounterHook
+ * migrate from app.timeout / app.guestCounterHook
+ * to app.session.timeout / app.session.guestCounterHook
  * one at a time. The top-level keys remain for backward compatibility.
+ * streak migration is complete — flat alias removed.
  */
 export interface SessionSlice {
   streak: StreakState;

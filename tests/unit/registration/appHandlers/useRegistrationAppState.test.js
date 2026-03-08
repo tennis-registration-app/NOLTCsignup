@@ -176,7 +176,6 @@ describe('useRegistrationAppState contract', () => {
       'session',
       'setters',
       'state',
-      'streak',
       'timeout',
       'validateGroupCompat',
     ]);
@@ -207,7 +206,6 @@ describe('useRegistrationAppState contract', () => {
       clearCourtFlow: 'object',
       mobile: 'object',
       groupGuest: 'object',
-      streak: 'object',
       memberIdentity: 'object',
       admin: 'object',
       session: 'object',
