@@ -29,7 +29,7 @@ Single command. Runs lint ratchet, TypeScript type checking, unit tests with cov
 - **No CDN runtime dependencies** — Tailwind bundled via PostCSS
 - **`script-src 'self'`** enforced on all routes; `style-src 'self' 'unsafe-inline'` retained for React style injection
 - **All service errors** normalized to `AppError` with `ErrorCategories` (VALIDATION, CONFLICT, NOT_FOUND, NETWORK, AUTH, UNKNOWN)
-- **All `DenialCodes`** compared via enum — no raw string literals
+- **`DenialCodes`** compared via enum in most paths; 3 `message?.includes('Location required')` string checks remain in orchestrators (intentionally left pending backend confirmation of a structured error code)
 - **Coverage ratchets** prevent regression — lint warnings, type errors, and test coverage each have a baseline that can improve but never worsen
 - **`npm run verify`** is the single required gate before any merge
 - **TypeScript `strictNullChecks` enforced** — 0 errors, ratcheted at baseline 0. All null/undefined access caught at compile time

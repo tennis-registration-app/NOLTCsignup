@@ -84,6 +84,6 @@ Orchestrators → Backend (TennisCommands/TennisQueries)
 The courtboard has two module systems coexisting:
 
 - **ESM** (components, hooks, mobile): Modern, testable, fenced by ESLint rule. Must use `windowBridge` accessors instead of `window.Tennis.*`.
-- **IIFE scripts** (5 files, 995 lines): Legacy, boot-order dependent, tagged with deletion conditions. Exempted from ESLint fence.
+- **IIFE scripts** (5 files, 945 lines): Legacy, boot-order dependent, tagged with deletion conditions. Exempted from ESLint fence.
 
 See [docs/adr/006-courtboard-legacy-containment.md](adr/006-courtboard-legacy-containment.md) for the full containment strategy and global ownership table.

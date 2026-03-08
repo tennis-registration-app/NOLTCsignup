@@ -218,6 +218,9 @@ src/admin/
 │   ├── CalendarSection.jsx — Event calendar
 │   ├── AnalyticsSection.jsx — Usage analytics
 │   ├── WaitlistSection.jsx — Waitlist management
+│   ├── HistorySection.jsx — Session history
+│   ├── SystemSection.jsx — System settings
+│   ├── AIAssistantSection.jsx — AI assistant interface
 │   └── TabNavigation.jsx — Tab bar
 ├── blocks/ — Block manager components
 ├── calendar/ — Calendar components
@@ -342,7 +345,7 @@ function GroupRoute({ app, handlers }) {
 
 ### Unit Tests (Vitest)
 
-- **3,004 unit tests** across 147 test files
+- **2,997 unit tests** across 147 test files
 - Cover: reducers, services, transforms, error handling, contract fences,
   orchestrators, presenters
 - Mock external dependencies (API, storage)
@@ -458,12 +461,12 @@ The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfi
 
 | File | Lines | Notes |
 |------|-------|-------|
-| `src/types/appTypes.ts` | 1,234 | Type definitions only — acceptable exception (no logic) |
+| `src/types/appTypes.ts` | 1,237 | Type definitions only — acceptable exception (no logic) |
 | `src/lib/backend/TennisCommands.js` | 611 | Command methods |
 | `src/tennis/domain/availability.js` | 610 | Court availability logic |
 | `src/lib/ApiAdapter.js` | 546 | API client |
 | `src/tennis/domain/waitlist.js` | 538 | Waitlist domain logic |
-| `src/registration/orchestration/assignCourtOrchestrator.ts` | 527 | Court assignment orchestration |
+| `src/registration/orchestration/assignCourtOrchestrator.ts` | 545 | Court assignment orchestration |
 
 The remaining five files (excluding `appTypes.ts`) are candidates for extraction when next modified for functional changes.
 
@@ -625,7 +628,7 @@ Courtboard icons use emoji in `<span>` elements sized via `fontSize` — this is
 
 Contract tests (`*.contract.test.js`, `*.equivalence.test.js`) are non-negotiable CI gates. Any controller, presenter, or bridge surface change requires updating inline snapshots in the same PR with written rationale.
 
-Files: `useRegistrationAppState.contract.test.js`, `buildAdminController.contract.test.js`, `courtboardState.contract.test.js`, `buildHandlerDeps.contract.test.js`, plus 5 presenter equivalence tests.
+Contract test files (`*.contract.test.js`): `buildAdminController.contract.test.js`, `useCourtActions.contract.test.js`, `useAdminHandlers.contract.test.js`, `taxonomyChain.contract.test.js`, `normalizeSession.contract.test.js`, `waitlistPosition.contract.test.js`, `buildHandlerDeps.contract.test.js`. Additional contract-style test: `useRegistrationAppState.test.js` (freezes 33-key AppState shape). Equivalence tests: 5 registration + 4 admin presenter equivalence tests.
 
 Gate: `npm run verify`
 
