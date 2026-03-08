@@ -157,7 +157,7 @@ export async function sendGroupToWaitlistOrchestrated(
     if (result.ok) {
       // Extract waitlist entry info from API response
       const waitlistEntry = result.data?.waitlist;
-      const entryId = waitlistEntry?.id;
+      const entryId = waitlistEntry?.id || result.waitlistId;
       const position = waitlistEntry?.position || result.position || 1;
       logger.debug('Waitlist', `[T+${apiDuration}ms] Extracted`, { entryId, position });
 

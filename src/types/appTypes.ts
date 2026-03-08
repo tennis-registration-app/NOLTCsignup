@@ -211,7 +211,7 @@ export interface TennisBackendShape {
     // Evidence: TennisCommands.js:456 — resolves players, calls assignCourt
     assignCourtWithPlayers: (input: { courtId: string; players: GroupPlayer[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<AssignCourtResponse>;
     // Evidence: TennisCommands.js:526 — resolves players, calls joinWaitlist
-    joinWaitlistWithPlayers: (input: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number; data?: { waitlist?: { id?: string; position?: number } } }>;
+    joinWaitlistWithPlayers: (input: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number; waitlistId?: string; data?: { waitlist?: { id?: string; position?: number } } }>;
     // Evidence: TennisCommands.js:560 — returns CommandResponse
     updateSessionTournament: (input: { sessionId: string; isTournament: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:576 — returns { ok, token?, expiresAt? }

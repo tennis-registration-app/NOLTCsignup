@@ -147,9 +147,9 @@ describe('waitlist response shape contract', () => {
       );
     });
 
-    it('flat response: entryId is undefined — waitlistId path not read (known gap)', async () => {
-      // Shape A has waitlistId on the root, but the orchestrator reads
-      // result.data?.waitlist?.id which is undefined for this shape.
+    it('flat response: entryId resolves from result.waitlistId', async () => {
+      // Shape A has waitlistId on the root. The orchestrator falls back to
+      // result.waitlistId when result.data?.waitlist?.id is absent.
       const response = {
         ok: true,
         position: 1,
@@ -159,8 +159,10 @@ describe('waitlist response shape contract', () => {
 
       await sendGroupToWaitlistOrchestrated(group, deps);
 
-      // entryId is undefined → sessionStorage.setItem is never called
-      expect(sessionStorage.setItem).not.toHaveBeenCalled();
+      expect(sessionStorage.setItem).toHaveBeenCalledWith(
+        'mobile-waitlist-entry-id',
+        'wl-flat-1'
+      );
     });
   });
 });
