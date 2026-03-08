@@ -12,12 +12,10 @@
  *
  * The orchestrator reads:
  *   const waitlistEntry = result.data?.waitlist;
- *   const entryId      = waitlistEntry?.id;
+ *   const entryId      = waitlistEntry?.id || result.waitlistId;
  *   const position      = waitlistEntry?.position || result.position || 1;
  *
- * Note: entryId only resolves via the nested path (data.waitlist.id).
- * The flat-format waitlistId is never read.  This gap is documented here
- * but intentionally NOT fixed in this step.
+ * Both entryId and position resolve correctly for either shape.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -129,7 +127,7 @@ describe('waitlist response shape contract', () => {
     });
   });
 
-  // ── B: entryId resolution (documents current gap) ───────
+  // ── B: entryId resolution ────────────────────────────────
 
   describe('entryId resolution', () => {
     it('nested response: entryId resolves from data.waitlist.id', async () => {
