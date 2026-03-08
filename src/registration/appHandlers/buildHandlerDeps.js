@@ -23,7 +23,7 @@ export function buildCourtHandlerDeps(app, core) {
     courtAssignment: app.courtAssignment,
     services: app.services,
     helpers: app.helpers,
-    blockAdmin: app.blockAdmin,
+    blockAdmin: app.admin.blockAdmin,
     alert: app.alert,
     refs: app.refs,
     assignCourtToGroupOrchestrated: app.assignCourtToGroupOrchestrated,
