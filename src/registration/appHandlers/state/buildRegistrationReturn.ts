@@ -255,17 +255,6 @@ export function buildRegistrationReturn({
       showAlertMessage: domain.showAlertMessage,
     },
 
-    // From useGuestCounter
-    guestCounterHook: {
-      guestCounter: domain.guestCounter,
-      incrementGuestCounter: domain.incrementGuestCounter,
-    },
-
-    // From useSessionTimeout
-    timeout: {
-      showTimeoutWarning: timeout.showTimeoutWarning,
-    },
-
     // From useMemberSearch
     search: {
       searchInput: domain.searchInput,

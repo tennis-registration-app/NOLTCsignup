@@ -27,7 +27,6 @@ const mockApp = {
   session: { streak: { streakCount: 0 }, guestCounterHook: { count: 0 } },
   search: { searchTerm: '' },
   memberIdentity: { clearCache: () => {} },
-  guestCounterHook: { count: 0 },
   clearCourtFlow: { clearCourt: () => {} },
   admin: {
     adminPriceFeedback: { price: null },

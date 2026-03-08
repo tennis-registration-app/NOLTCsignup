@@ -162,7 +162,6 @@ describe('useRegistrationAppState contract', () => {
       'dbg',
       'derived',
       'groupGuest',
-      'guestCounterHook',
       'handleAddPlayerSuggestionClickOrchestrated',
       'handleSuggestionClickOrchestrated',
       'helpers',
@@ -176,7 +175,6 @@ describe('useRegistrationAppState contract', () => {
       'session',
       'setters',
       'state',
-      'timeout',
       'validateGroupCompat',
     ]);
     // Guard against duplicates
@@ -199,8 +197,6 @@ describe('useRegistrationAppState contract', () => {
       helpers: 'object',
       services: 'object',
       alert: 'object',
-      guestCounterHook: 'object',
-      timeout: 'object',
       search: 'object',
       courtAssignment: 'object',
       clearCourtFlow: 'object',

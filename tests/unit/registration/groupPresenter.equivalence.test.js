@@ -105,18 +105,19 @@ import {
  * This is the source of truth we're testing against.
  */
 function legacyGroupScreenProps(app, handlers) {
-  // Destructure from app (verbatim from GroupRoute)
+  // Destructure from app (via grouped session slice)
   const {
     state,
     groupGuest,
     memberIdentity,
     derived,
     alert,
-    timeout,
+    session,
     mobile,
     search,
     CONSTANTS,
   } = app;
+  const { timeout } = session;
   const { data, showAddPlayer, isAssigning, isJoiningWaitlist, availableCourts } = state;
   const { courtSelection } = data;
   const {
