@@ -277,27 +277,6 @@ export function buildRegistrationReturn({
       handleAddPlayerSearchFocus: domain.handleAddPlayerSearchFocus,
     },
 
-    // From useCourtAssignmentResult
-    courtAssignment: {
-      justAssignedCourt: domain.justAssignedCourt,
-      setJustAssignedCourt: domain.setJustAssignedCourt,
-      assignedSessionId: domain.assignedSessionId,
-      setAssignedSessionId: domain.setAssignedSessionId,
-      assignedEndTime: domain.assignedEndTime,
-      setAssignedEndTime: domain.setAssignedEndTime,
-      hasAssignedCourt: domain.hasAssignedCourt,
-      setHasAssignedCourt: domain.setHasAssignedCourt,
-    },
-
-    // From useClearCourtFlow
-    clearCourtFlow: {
-      selectedCourtToClear: domain.selectedCourtToClear,
-      setSelectedCourtToClear: domain.setSelectedCourtToClear,
-      clearCourtStep: domain.clearCourtStep,
-      setClearCourtStep: domain.setClearCourtStep,
-      decrementClearCourtStep: domain.decrementClearCourtStep,
-    },
-
     // From useMobileFlowController
     mobile: {
       mobileFlow: domain.mobileFlow,
