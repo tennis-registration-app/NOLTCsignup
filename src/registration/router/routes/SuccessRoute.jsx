@@ -21,7 +21,8 @@ import { TENNIS_CONFIG } from '../../../lib/config.js';
  */
 export function SuccessRoute({ app, handlers }) {
   // Route-internal state for alert display
-  const { alert, state, courtAssignment, CONSTANTS } = app;
+  const { alert, state, court, CONSTANTS } = app;
+  const { courtAssignment } = court;
   const { showAlert, alertMessage } = alert;
   const { waitlistPosition } = state;
   const { justAssignedCourt } = courtAssignment;

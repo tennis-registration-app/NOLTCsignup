@@ -50,7 +50,7 @@ export function useRegistrationHandlers({ app }) {
     () => ({
       actions: {
         ...app.setters,
-        ...app.courtAssignment,
+        ...app.court.courtAssignment,
         ...app.groupGuest,
         ...app.memberIdentity,
         ...app.search,

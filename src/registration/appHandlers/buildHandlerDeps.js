@@ -20,7 +20,7 @@ export function buildCourtHandlerDeps(app, core) {
     setters: app.setters,
     mobile: app.mobile,
     groupGuest: app.groupGuest,
-    courtAssignment: app.courtAssignment,
+    courtAssignment: app.court.courtAssignment,
     services: app.services,
     helpers: app.helpers,
     blockAdmin: app.admin.blockAdmin,
