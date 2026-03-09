@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 // ---------------------------------------------------------------------------
 // Mocks — must come before component imports
@@ -233,5 +233,147 @@ describe('HomeRoute overlay', () => {
     expect(screen.queryByText('Checking your location…')).not.toBeInTheDocument();
     // HomeScreen still renders
     expect(screen.getByText('Tennis Court Registration')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// C) HomeScreen interaction tests
+// ---------------------------------------------------------------------------
+
+describe('HomeScreen interactions', () => {
+  it('entering ADMIN_CODE triggers admin navigation', () => {
+    const setCurrentScreen = vi.fn();
+    const setSearchInput = vi.fn();
+    const markUserTyping = vi.fn();
+    const props = makeHomeProps({ setCurrentScreen, setSearchInput, markUserTyping });
+    render(<HomeScreen {...props} />);
+
+    const input = screen.getByPlaceholderText('Enter your member number or name');
+    fireEvent.change(input, { target: { value: '9999' } });
+
+    expect(markUserTyping).toHaveBeenCalled();
+    expect(setCurrentScreen).toHaveBeenCalledWith('admin');
+    // Input is cleared after admin code detection
+    expect(setSearchInput).toHaveBeenCalledWith('');
+  });
+
+  it('CTA #1 click sets group, member, priority, and navigates to court', () => {
+    const setCurrentGroup = vi.fn();
+    const setMemberNumber = vi.fn();
+    const setHasWaitlistPriority = vi.fn();
+    const setCurrentWaitlistEntryId = vi.fn();
+    const setCurrentScreen = vi.fn();
+    const findMemberNumber = vi.fn(() => '1001');
+
+    const props = makeHomeProps({
+      canFirstGroupPlay: true,
+      firstWaitlistEntry: {
+        id: 'w1',
+        players: [{ memberId: 'm1', name: 'Alice' }],
+      },
+      firstWaitlistEntryData: {
+        players: [{ displayName: 'Alice' }],
+      },
+      setCurrentGroup,
+      setMemberNumber,
+      setHasWaitlistPriority,
+      setCurrentWaitlistEntryId,
+      setCurrentScreen,
+      findMemberNumber,
+    });
+    render(<HomeScreen {...props} />);
+
+    fireEvent.click(screen.getByTestId('waitlist-cta-1'));
+
+    // findMemberNumber called with the player's memberId
+    expect(findMemberNumber).toHaveBeenCalledWith('m1');
+    // Group set with mapped players including resolved memberNumber
+    expect(setCurrentGroup).toHaveBeenCalledWith([
+      { memberId: 'm1', name: 'Alice', memberNumber: '1001' },
+    ]);
+    // First player's member number set
+    expect(setMemberNumber).toHaveBeenCalledWith('1001');
+    // Waitlist priority enabled
+    expect(setHasWaitlistPriority).toHaveBeenCalledWith(true);
+    // Waitlist entry ID stored
+    expect(setCurrentWaitlistEntryId).toHaveBeenCalledWith('w1');
+    // Navigates to court selection
+    expect(setCurrentScreen).toHaveBeenCalledWith('court');
+  });
+
+  it('CTA #2 click sets second group, member, priority, and navigates to court', () => {
+    const setCurrentGroup = vi.fn();
+    const setMemberNumber = vi.fn();
+    const setHasWaitlistPriority = vi.fn();
+    const setCurrentWaitlistEntryId = vi.fn();
+    const setCurrentScreen = vi.fn();
+    const findMemberNumber = vi.fn(() => '2002');
+
+    const props = makeHomeProps({
+      canSecondGroupPlay: true,
+      secondWaitlistEntry: {
+        id: 'w2',
+        players: [{ memberId: 'm2', name: 'Bob' }],
+      },
+      secondWaitlistEntryData: {
+        players: [{ displayName: 'Bob' }],
+      },
+      setCurrentGroup,
+      setMemberNumber,
+      setHasWaitlistPriority,
+      setCurrentWaitlistEntryId,
+      setCurrentScreen,
+      findMemberNumber,
+    });
+    render(<HomeScreen {...props} />);
+
+    fireEvent.click(screen.getByText('Court Available: Bob'));
+
+    expect(findMemberNumber).toHaveBeenCalledWith('m2');
+    expect(setCurrentGroup).toHaveBeenCalledWith([
+      { memberId: 'm2', name: 'Bob', memberNumber: '2002' },
+    ]);
+    expect(setMemberNumber).toHaveBeenCalledWith('2002');
+    expect(setHasWaitlistPriority).toHaveBeenCalledWith(true);
+    expect(setCurrentWaitlistEntryId).toHaveBeenCalledWith('w2');
+    expect(setCurrentScreen).toHaveBeenCalledWith('court');
+  });
+
+  it('pass-through CTA click sets group, member, priority, and navigates to court', () => {
+    const setCurrentGroup = vi.fn();
+    const setMemberNumber = vi.fn();
+    const setHasWaitlistPriority = vi.fn();
+    const setCurrentWaitlistEntryId = vi.fn();
+    const setCurrentScreen = vi.fn();
+    const findMemberNumber = vi.fn(() => '3003');
+
+    const props = makeHomeProps({
+      canPassThroughGroupPlay: true,
+      passThroughEntry: {
+        id: 'w3',
+        players: [{ memberId: 'm3', name: 'Carol' }],
+      },
+      passThroughEntryData: {
+        players: [{ displayName: 'Carol' }],
+      },
+      setCurrentGroup,
+      setMemberNumber,
+      setHasWaitlistPriority,
+      setCurrentWaitlistEntryId,
+      setCurrentScreen,
+      findMemberNumber,
+    });
+    render(<HomeScreen {...props} />);
+
+    fireEvent.click(screen.getByText('Court Available: Carol'));
+
+    expect(findMemberNumber).toHaveBeenCalledWith('m3');
+    expect(setCurrentGroup).toHaveBeenCalledWith([
+      { memberId: 'm3', name: 'Carol', memberNumber: '3003' },
+    ]);
+    expect(setMemberNumber).toHaveBeenCalledWith('3003');
+    expect(setHasWaitlistPriority).toHaveBeenCalledWith(true);
+    expect(setCurrentWaitlistEntryId).toHaveBeenCalledWith('w3');
+    expect(setCurrentScreen).toHaveBeenCalledWith('court');
   });
 });
