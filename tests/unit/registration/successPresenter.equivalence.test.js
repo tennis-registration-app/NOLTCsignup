@@ -121,7 +121,7 @@ import {
  */
 function legacySuccessScreenProps(app, handlers, computed) {
   // Destructure from app (via grouped slices)
-  const { state, groupGuest, mobile, admin, session, court, TENNIS_CONFIG } = app;
+  const { state, players, mobile, admin, session, court, TENNIS_CONFIG } = app;
   const { courtAssignment } = court;
   const { blockAdmin } = admin;
   const { streak } = session;
@@ -137,7 +137,7 @@ function legacySuccessScreenProps(app, handlers, computed) {
   const { blockWarningMinutes, getCourtBlockStatus } = blockAdmin;
   const { justAssignedCourt, assignedSessionId, assignedEndTime } = courtAssignment;
   const { registrantStreak } = streak;
-  const { currentGroup } = groupGuest;
+  const { currentGroup } = players.groupGuest;
   const { mobileFlow, mobileCountdown } = mobile;
 
   // Destructure from handlers

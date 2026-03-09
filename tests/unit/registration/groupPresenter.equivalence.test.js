@@ -108,8 +108,7 @@ function legacyGroupScreenProps(app, handlers) {
   // Destructure from app (via grouped session slice)
   const {
     state,
-    groupGuest,
-    memberIdentity,
+    players,
     derived,
     alert,
     session,
@@ -117,6 +116,7 @@ function legacyGroupScreenProps(app, handlers) {
     search,
     CONSTANTS,
   } = app;
+  const { groupGuest, memberIdentity } = players;
   const { timeout } = session;
   const { data, showAddPlayer, isAssigning, isJoiningWaitlist, availableCourts } = state;
   const { courtSelection } = data;

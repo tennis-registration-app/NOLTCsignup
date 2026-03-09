@@ -20,9 +20,9 @@ import { buildCourtModel, buildCourtActions } from '../presenters';
  */
 export function CourtRoute({ app, handlers }) {
   // Destructure only what the route template needs (not action handlers)
-  const { state, alert, mobile, groupGuest, computeRegistrationCourtSelection } = app;
+  const { state, alert, mobile, players, computeRegistrationCourtSelection } = app;
   const { hasWaitlistPriority } = state;
-  const { currentGroup } = groupGuest;
+  const { currentGroup } = players.groupGuest;
   const { showAlert, alertMessage } = alert;
   const {
     showQRScanner,

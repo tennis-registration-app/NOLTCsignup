@@ -51,14 +51,14 @@ export function useRegistrationHandlers({ app }) {
       actions: {
         ...app.setters,
         ...app.court.courtAssignment,
-        ...app.groupGuest,
-        ...app.memberIdentity,
+        ...app.players.groupGuest,
+        ...app.players.memberIdentity,
         ...app.search,
         ...app.session.streak,
         ...app.court.clearCourtFlow,
       },
       services: {
-        clearCache: app.memberIdentity.clearCache,
+        clearCache: app.players.memberIdentity.clearCache,
         clearSuccessResetTimer,
         refresh: () => app.services.backend.queries.refresh(),
       },
@@ -80,10 +80,10 @@ export function useRegistrationHandlers({ app }) {
       return TennisBusinessLogic.isPlayerAlreadyPlaying(
         playerId,
         courtData,
-        app.groupGuest.currentGroup ?? undefined
+        app.players.groupGuest.currentGroup ?? undefined
       );
     },
-    [app.helpers, app.groupGuest]
+    [app.helpers, app.players.groupGuest]
   );
 
   // ============================================

@@ -77,8 +77,8 @@ export interface GroupActions {
  * Build the model (data) props for GroupScreen
  */
 export function buildGroupModel(app: AppState): GroupModel {
-  // Destructure from app (verbatim from GroupRoute)
-  const { state, groupGuest, memberIdentity, derived, alert, session, mobile, search, CONSTANTS } =
+  // Destructure from app (verbatim from GroupRoute, migrated to players slice)
+  const { state, players, derived, alert, session, mobile, search, CONSTANTS } =
     app;
   const { timeout } = session;
   const { data, showAddPlayer, availableCourts } = state;
@@ -90,8 +90,8 @@ export function buildGroupModel(app: AppState): GroupModel {
     guestSponsor,
     showGuestNameError,
     showSponsorError,
-  } = groupGuest;
-  const { memberNumber, frequentPartners, frequentPartnersLoading } = memberIdentity;
+  } = players.groupGuest;
+  const { memberNumber, frequentPartners, frequentPartnersLoading } = players.memberIdentity;
   const { isMobileView } = derived;
   const { showAlert, alertMessage } = alert;
   const { showTimeoutWarning } = timeout;
@@ -149,9 +149,9 @@ export function buildGroupModel(app: AppState): GroupModel {
  */
 export function buildGroupActions(app: AppState, handlers: Handlers): GroupActions {
   // Destructure from app (verbatim from GroupRoute)
-  const { state, groupGuest, search } = app;
+  const { state, players, search } = app;
   const { isAssigning, isJoiningWaitlist } = state;
-  const { handleRemovePlayer, handleSelectSponsor, handleCancelGuest } = groupGuest;
+  const { handleRemovePlayer, handleSelectSponsor, handleCancelGuest } = players.groupGuest;
   const {
     handleGroupSearchChange,
     handleGroupSearchFocus,

@@ -13,6 +13,7 @@ import type {
   CourtSlice,
   SessionSlice,
   AdminSlice,
+  PlayersSlice,
   RegistrationConstants,
   RegistrationUiState,
   RegistrationSetters,
@@ -150,6 +151,36 @@ export function buildRegistrationReturn({
   // Validation
   validateGroupCompat,
 }: BuildRegistrationReturnParams): AppState {
+  // Bind groupGuest and memberIdentity once — reused in players slice.
+  const groupGuest: GroupGuestState = {
+    currentGroup: domain.currentGroup,
+    setCurrentGroup: domain.setCurrentGroup,
+    guestName: domain.guestName,
+    setGuestName: domain.setGuestName,
+    guestSponsor: domain.guestSponsor,
+    setGuestSponsor: domain.setGuestSponsor,
+    showGuestForm: domain.showGuestForm,
+    setShowGuestForm: domain.setShowGuestForm,
+    showGuestNameError: domain.showGuestNameError,
+    setShowGuestNameError: domain.setShowGuestNameError,
+    showSponsorError: domain.showSponsorError,
+    setShowSponsorError: domain.setShowSponsorError,
+    handleRemovePlayer: domain.handleRemovePlayer,
+    handleSelectSponsor: domain.handleSelectSponsor,
+    handleCancelGuest: domain.handleCancelGuest,
+  };
+
+  const memberIdentity: MemberIdentityState = {
+    memberNumber: domain.memberNumber,
+    setMemberNumber: domain.setMemberNumber,
+    currentMemberId: domain.currentMemberId,
+    setCurrentMemberId: domain.setCurrentMemberId,
+    frequentPartners: domain.frequentPartners,
+    frequentPartnersLoading: domain.frequentPartnersLoading,
+    fetchFrequentPartners: domain.fetchFrequentPartners,
+    clearCache: domain.clearCache,
+  };
+
   return {
     // Core state
     state: {
@@ -302,36 +333,8 @@ export function buildRegistrationReturn({
       dismissGpsPrompt: domain.dismissGpsPrompt,
     },
 
-    // From useGroupGuest
-    groupGuest: {
-      currentGroup: domain.currentGroup,
-      setCurrentGroup: domain.setCurrentGroup,
-      guestName: domain.guestName,
-      setGuestName: domain.setGuestName,
-      guestSponsor: domain.guestSponsor,
-      setGuestSponsor: domain.setGuestSponsor,
-      showGuestForm: domain.showGuestForm,
-      setShowGuestForm: domain.setShowGuestForm,
-      showGuestNameError: domain.showGuestNameError,
-      setShowGuestNameError: domain.setShowGuestNameError,
-      showSponsorError: domain.showSponsorError,
-      setShowSponsorError: domain.setShowSponsorError,
-      handleRemovePlayer: domain.handleRemovePlayer,
-      handleSelectSponsor: domain.handleSelectSponsor,
-      handleCancelGuest: domain.handleCancelGuest,
-    },
-
-    // From useMemberIdentity
-    memberIdentity: {
-      memberNumber: domain.memberNumber,
-      setMemberNumber: domain.setMemberNumber,
-      currentMemberId: domain.currentMemberId,
-      setCurrentMemberId: domain.setCurrentMemberId,
-      frequentPartners: domain.frequentPartners,
-      frequentPartnersLoading: domain.frequentPartnersLoading,
-      fetchFrequentPartners: domain.fetchFrequentPartners,
-      clearCache: domain.clearCache,
-    },
+    // Players slice — group/guest management and member identity.
+    players: { groupGuest, memberIdentity } satisfies PlayersSlice,
 
     // Grouped court slice — backward-compatible alias.
     court: {

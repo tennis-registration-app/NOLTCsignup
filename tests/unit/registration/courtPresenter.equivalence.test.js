@@ -106,9 +106,9 @@ import { buildCourtModel } from '../../../src/registration/router/presenters/cou
  */
 function legacyCourtScreenModelProps(app, computed) {
   // Destructure from app (verbatim from CourtRoute)
-  const { derived, groupGuest, state } = app;
+  const { derived, players, state } = app;
   const { isMobileView } = derived;
-  const { currentGroup } = groupGuest;
+  const { currentGroup } = players.groupGuest;
   const { hasWaitlistPriority, currentWaitlistEntryId } = state;
 
   return {

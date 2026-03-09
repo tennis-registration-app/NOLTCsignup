@@ -160,12 +160,11 @@ describe('useRegistrationAppState contract', () => {
       'court',
       'dbg',
       'derived',
-      'groupGuest',
       'handleAddPlayerSuggestionClickOrchestrated',
       'handleSuggestionClickOrchestrated',
       'helpers',
-      'memberIdentity',
       'mobile',
+      'players',
       'refs',
       'resetFormOrchestrated',
       'search',
@@ -198,8 +197,7 @@ describe('useRegistrationAppState contract', () => {
       alert: 'object',
       search: 'object',
       mobile: 'object',
-      groupGuest: 'object',
-      memberIdentity: 'object',
+      players: 'object',
       admin: 'object',
       court: 'object',
       session: 'object',
@@ -241,5 +239,15 @@ describe('useRegistrationAppState contract', () => {
     expect(typeof result.changeCourtOrchestrated).toBe('function');
     expect(typeof result.handleSuggestionClickOrchestrated).toBe('function');
     expect(typeof result.handleAddPlayerSuggestionClickOrchestrated).toBe('function');
+  });
+
+  it('players slice has expected sub-keys', () => {
+    expect(result.players).not.toBeNull();
+    expect(typeof result.players).toBe('object');
+    expect(Object.keys(result.players).sort()).toEqual(['groupGuest', 'memberIdentity']);
+    expect(typeof result.players.groupGuest).toBe('object');
+    expect(typeof result.players.memberIdentity).toBe('object');
+    expect(Object.keys(result.players.groupGuest).length).toBeGreaterThan(0);
+    expect(Object.keys(result.players.memberIdentity).length).toBeGreaterThan(0);
   });
 });

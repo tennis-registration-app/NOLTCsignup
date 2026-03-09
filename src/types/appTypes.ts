@@ -334,13 +334,14 @@ export interface TennisBusinessLogicShape {
 /**
  * AppState — the registration app's complete state surface.
  *
- * 28 top-level keys, frozen by contract test. Do not add new top-level keys;
+ * 27 top-level keys, frozen by contract test. Do not add new top-level keys;
  * instead add fields to the appropriate sub-interface (see CONTRIBUTING.md).
  *
  * Logical groupings (governance only — access paths unchanged):
  *
  * UI State:       state, setters, refs
- * Domain Slices:  alert, search, mobile, groupGuest, memberIdentity
+ * Domain Slices:  alert, search, mobile
+ * Players Slice:  players (groupGuest, memberIdentity)
  * Court Slice:    court (courtAssignment, clearCourtFlow)
  * Session Slice:  session (streak, timeout, guestCounterHook)
  * Admin Slice:    admin (adminPriceFeedback, waitlistAdmin, blockAdmin)
@@ -373,10 +374,8 @@ export interface AppState {
   search: SearchState;
   /** Mobile flow state */
   mobile: MobileState;
-  /** Group and guest management */
-  groupGuest: GroupGuestState;
-  /** Member lookup state */
-  memberIdentity: MemberIdentityState;
+  /** Players slice — group/guest management and member identity */
+  players: PlayersSlice;
   /** Grouped session slice (backward-compatible alias) */
   session: SessionSlice;
   /** Grouped court slice (backward-compatible alias) */
@@ -780,6 +779,17 @@ export interface BlockAdminState {
   onCancelBlock: (blockId: string, courtNumber: number) => Promise<void>;
   // Evidence: useBlockAdmin — calls handleBlockCreateOp with current state
   onBlockCreate: () => Promise<void>;
+}
+
+/**
+ * PlayersSlice — grouped alias for player-identity and group-composition slices.
+ *
+ * Introduced as Step 4 of the God Object decomposition (second-wave).
+ * All consumers access via app.players.groupGuest / app.players.memberIdentity.
+ */
+export interface PlayersSlice {
+  groupGuest: GroupGuestState;
+  memberIdentity: MemberIdentityState;
 }
 
 /**

@@ -107,12 +107,12 @@ export function buildHomeModel(app: AppState): HomeModel {
  * Build the actions (callback/setter) props for HomeScreen
  */
 export function buildHomeActions(app: AppState, handlers: Handlers): HomeActions {
-  // Destructure from app (verbatim from HomeRoute)
-  const { search, setters, memberIdentity, groupGuest } = app;
+  // Destructure from app (verbatim from HomeRoute, migrated to players slice)
+  const { search, setters, players } = app;
   const { setSearchInput, setShowSuggestions } = search;
   const { setCurrentScreen, setHasWaitlistPriority, setCurrentWaitlistEntryId } = setters;
-  const { setMemberNumber } = memberIdentity;
-  const { setCurrentGroup } = groupGuest;
+  const { setMemberNumber } = players.memberIdentity;
+  const { setCurrentGroup } = players.groupGuest;
 
   // Destructure from handlers (verbatim from HomeRoute)
   const { handleSuggestionClick, markUserTyping, findMemberNumber, checkLocationAndProceed } =

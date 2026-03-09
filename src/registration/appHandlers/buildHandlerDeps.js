@@ -19,7 +19,7 @@ export function buildCourtHandlerDeps(app, core) {
     state: app.state,
     setters: app.setters,
     mobile: app.mobile,
-    groupGuest: app.groupGuest,
+    groupGuest: app.players.groupGuest,
     courtAssignment: app.court.courtAssignment,
     services: app.services,
     helpers: app.helpers,
@@ -44,12 +44,12 @@ export function buildCourtHandlerDeps(app, core) {
  */
 export function buildGroupHandlerDeps(app, core, court) {
   return {
-    groupGuest: app.groupGuest,
+    groupGuest: app.players.groupGuest,
     derived: app.derived,
     mobile: app.mobile,
     streak: app.session.streak,
     search: app.search,
-    memberIdentity: app.memberIdentity,
+    memberIdentity: app.players.memberIdentity,
     setters: app.setters,
     alert: app.alert,
     refs: app.refs,
@@ -68,9 +68,9 @@ export function buildGroupHandlerDeps(app, core, court) {
  */
 export function buildGuestHandlerDeps(app) {
   return {
-    groupGuest: app.groupGuest,
+    groupGuest: app.players.groupGuest,
     guestCounterHook: app.session.guestCounterHook,
-    memberIdentity: app.memberIdentity,
+    memberIdentity: app.players.memberIdentity,
     derived: app.derived,
     setters: app.setters,
     search: app.search,
@@ -103,8 +103,8 @@ export function buildNavigationHandlerDeps(app) {
   return {
     state: app.state,
     setters: app.setters,
-    groupGuest: app.groupGuest,
-    memberIdentity: app.memberIdentity,
+    groupGuest: app.players.groupGuest,
+    memberIdentity: app.players.memberIdentity,
     mobile: app.mobile,
     clearCourtFlow: app.court.clearCourtFlow,
     alert: app.alert,

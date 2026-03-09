@@ -51,9 +51,9 @@ export interface CourtActions {
  */
 export function buildCourtModel(app: AppState, computed: CourtModelComputed): CourtModel {
   // Destructure from app (verbatim from CourtRoute)
-  const { derived, groupGuest, state } = app;
+  const { derived, players, state } = app;
   const { isMobileView } = derived;
-  const { currentGroup } = groupGuest;
+  const { currentGroup } = players.groupGuest;
   const { hasWaitlistPriority, currentWaitlistEntryId } = state;
 
   return {
@@ -80,11 +80,11 @@ export function buildCourtActions(
   computed: CourtActionsComputed
 ): CourtActions {
   // Destructure from app
-  const { state, mobile, refs, setters, groupGuest, court, CONSTANTS } = app;
+  const { state, mobile, refs, setters, players, court, CONSTANTS } = app;
   const { courtAssignment } = court;
   const { isChangingCourt, displacement, originalCourtData } = state;
   const { justAssignedCourt } = courtAssignment;
-  const { currentGroup } = groupGuest;
+  const { currentGroup } = players.groupGuest;
   const { mobileFlow } = mobile;
   const { successResetTimerRef } = refs;
   const {

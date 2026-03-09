@@ -106,7 +106,8 @@ import {
  */
 function legacyHomeScreenProps(app, handlers) {
   // Destructure from app (verbatim from HomeRoute)
-  const { search, setters, memberIdentity, derived, alert, groupGuest, CONSTANTS } = app;
+  const { search, setters, players, derived, alert, CONSTANTS } = app;
+  const { memberIdentity, groupGuest } = players;
   const {
     searchInput,
     setSearchInput,

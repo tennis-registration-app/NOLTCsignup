@@ -17,7 +17,7 @@ const mockApp = {
   state: { screen: 'home' },
   setters: { setScreen: () => {} },
   mobile: { isMobile: false },
-  groupGuest: { currentGroup: [] },
+  players: { groupGuest: { currentGroup: [] }, memberIdentity: { clearCache: () => {} } },
   services: { backend: { queries: { refresh: () => {} } } },
   helpers: { getCourtData: () => [], markUserTyping: () => {} },
   alert: { showAlert: () => {} },
@@ -25,7 +25,6 @@ const mockApp = {
   derived: { canSubmit: false },
   session: { streak: { streakCount: 0 }, guestCounterHook: { count: 0 } },
   search: { searchTerm: '' },
-  memberIdentity: { clearCache: () => {} },
   court: { courtAssignment: { selectedCourt: null }, clearCourtFlow: { clearCourt: () => {} } },
   admin: {
     adminPriceFeedback: { price: null },
