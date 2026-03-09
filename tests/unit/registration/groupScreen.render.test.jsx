@@ -188,3 +188,55 @@ describe('GroupScreen rendering', () => {
     expect(screen.getByText('Alice')).toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Frequent Partners rendering
+// ---------------------------------------------------------------------------
+
+describe('GroupScreen frequent partners', () => {
+  it('hides frequent partners section when memberNumber is empty', () => {
+    const props = makeGroupProps({ memberNumber: '' });
+    render(<GroupScreen {...props} />);
+    expect(screen.queryByText('Frequent Partners')).not.toBeInTheDocument();
+  });
+
+  it('hides frequent partners section when partners array is empty', () => {
+    const props = makeGroupProps({
+      memberNumber: '1001',
+      frequentPartners: [],
+      frequentPartnersLoading: false,
+    });
+    render(<GroupScreen {...props} />);
+    // FrequentPartnersList returns null when !loading && partners.length === 0
+    expect(screen.queryByText('Frequent Partners')).not.toBeInTheDocument();
+  });
+
+  it('renders loading skeleton when frequentPartnersLoading = true', () => {
+    const props = makeGroupProps({
+      memberNumber: '1001',
+      frequentPartners: [],
+      frequentPartnersLoading: true,
+    });
+    const { container } = render(<GroupScreen {...props} />);
+    // "Frequent Partners" heading visible during loading
+    expect(screen.getByText('Frequent Partners')).toBeInTheDocument();
+    // Skeleton pulse divs rendered (6 placeholders)
+    const pulses = container.querySelectorAll('.animate-pulse');
+    expect(pulses.length).toBe(6);
+  });
+
+  it('renders partner names as buttons from props', () => {
+    const props = makeGroupProps({
+      memberNumber: '1001',
+      frequentPartners: [
+        { player: { id: 'p1', name: 'Dana Smith', memberId: 'p1' } },
+        { player: { id: 'p2', name: 'Eve Jones', memberId: 'p2' } },
+      ],
+      frequentPartnersLoading: false,
+    });
+    render(<GroupScreen {...props} />);
+    expect(screen.getByText('Frequent Partners')).toBeInTheDocument();
+    expect(screen.getByText('Dana Smith')).toBeInTheDocument();
+    expect(screen.getByText('Eve Jones')).toBeInTheDocument();
+  });
+});
