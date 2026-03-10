@@ -10,7 +10,7 @@
  */
 
 import { useReducer, useCallback, useEffect } from 'react';
-import { wetCourtsReducer, initialWetCourtsState } from './wetCourtsReducer.js';
+import { wetCourtsReducer, initialWetCourtsState } from './wetCourtsReducer';
 import {
   activateWetCourtsOp,
   clearAllWetCourtsOp,

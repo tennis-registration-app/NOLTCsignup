@@ -4,39 +4,50 @@
  * NO side effects (no backend, no Events, no onRefresh).
  */
 
-// Initial state
-export const initialWetCourtsState = {
-  isActive: false,
-  wetCourtNumbers: /** @type {number[]} */ ([]), // Always sorted array of unique integers
-  suspendedBlocks: /** @type {any[]} */ ([]), // Snapshot at activation, cleared on deactivate
-  isBusy: false,
-  busyOp: /** @type {string | null} */ (null), // 'activate' | 'deactivate' | 'clearOne' | 'clearAll'
-  error: /** @type {string | null} */ (null),
-};
+type BusyOp = 'activate' | 'deactivate' | 'clearOne' | 'clearAll';
+
+export interface WetCourtsState {
+  isActive: boolean;
+  wetCourtNumbers: number[];
+  suspendedBlocks: unknown[];
+  isBusy: boolean;
+  busyOp: BusyOp | null;
+  error: string | null;
+}
+
+type WetCourtsAction =
+  | { type: 'WET_OP_STARTED'; op: BusyOp }
+  | { type: 'WET_OP_SUCCEEDED' }
+  | { type: 'WET_OP_FAILED'; error: string }
+  | { type: 'WET_ACTIVATED'; courtNumbers?: number[]; suspendedBlocks?: unknown[] }
+  | { type: 'WET_DEACTIVATED' }
+  | { type: 'WET_COURT_CLEARED'; courtNumber: number }
+  | { type: 'WET_COURTS_CLEARED_ALL' };
 
 /**
  * Normalize court numbers: unique + sorted ascending
- * @param {number[]} courtNumbers
- * @returns {number[]}
  */
-function normalizeCourtNumbers(courtNumbers) {
+function normalizeCourtNumbers(courtNumbers: number[]): number[] {
   return [...new Set(courtNumbers)].sort((a, b) => a - b);
 }
 
-/**
- * WetCourts Reducer
- * @param {typeof initialWetCourtsState} state
- * @param {Object} action
- * @returns {typeof initialWetCourtsState}
- */
-export function wetCourtsReducer(state, action) {
+export const initialWetCourtsState: WetCourtsState = {
+  isActive: false,
+  wetCourtNumbers: [],
+  suspendedBlocks: [],
+  isBusy: false,
+  busyOp: null,
+  error: null,
+};
+
+export function wetCourtsReducer(state: WetCourtsState, action: WetCourtsAction): WetCourtsState {
   switch (action.type) {
     case 'WET_OP_STARTED':
       // Sets isBusy, busyOp, clears error
       return {
         ...state,
         isBusy: true,
-        busyOp: action.op, // 'activate' | 'deactivate' | 'clearOne' | 'clearAll'
+        busyOp: action.op,
         error: null,
       };
 

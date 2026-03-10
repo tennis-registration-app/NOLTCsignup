@@ -2,7 +2,7 @@
  * WetCourts Reducer Unit Tests
  */
 import { describe, it, expect } from 'vitest';
-import { wetCourtsReducer, initialWetCourtsState } from '../../../../src/admin/wetCourts/wetCourtsReducer.js';
+import { wetCourtsReducer, initialWetCourtsState } from '../../../../src/admin/wetCourts/wetCourtsReducer';
 
 describe('wetCourtsReducer', () => {
   describe('initialWetCourtsState', () => {
