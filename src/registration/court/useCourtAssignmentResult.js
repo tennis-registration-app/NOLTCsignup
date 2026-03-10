@@ -7,7 +7,7 @@ import { useReducer, useCallback } from 'react';
 import {
   courtAssignmentResultReducer,
   initialCourtAssignmentResultState,
-} from './courtAssignmentResultReducer.js';
+} from './courtAssignmentResultReducer';
 
 export function useCourtAssignmentResult() {
   const [state, dispatch] = useReducer(

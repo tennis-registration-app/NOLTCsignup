@@ -7,7 +7,7 @@
  */
 
 import { useReducer, useCallback } from 'react';
-import { streakReducer, initialStreakState } from './streakReducer.js';
+import { streakReducer, initialStreakState } from './streakReducer';
 
 export function useStreak() {
   const [state, dispatch] = useReducer(streakReducer, initialStreakState);

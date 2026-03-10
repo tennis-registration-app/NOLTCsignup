@@ -3,7 +3,7 @@ import {
   guestCounterReducer,
   initialGuestCounterState,
   GUEST_COUNTER_ACTIONS,
-} from './guestCounterReducer.js';
+} from './guestCounterReducer';
 
 /**
  * useGuestCounter Hook
