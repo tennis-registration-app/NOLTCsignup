@@ -6,7 +6,7 @@
  */
 
 import { useReducer, useCallback } from 'react';
-import { groupGuestReducer, initialGroupGuestState } from './groupGuestReducer.js';
+import { groupGuestReducer, initialGroupGuestState } from './groupGuestReducer';
 
 export function useGroupGuest() {
   const [state, dispatch] = useReducer(groupGuestReducer, initialGroupGuestState);

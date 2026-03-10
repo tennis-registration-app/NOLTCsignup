@@ -6,7 +6,27 @@
  * NOTE: GROUP_RESET does not exist here - use individual resets or handle in App.jsx.
  */
 
-export const initialGroupGuestState = {
+export interface GroupGuestState {
+  currentGroup: unknown[];
+  guestName: string;
+  guestSponsor: string;
+  showGuestForm: boolean;
+  showGuestNameError: boolean;
+  showSponsorError: boolean;
+}
+
+type GroupGuestAction =
+  | { type: 'CURRENT_GROUP_SET'; value: unknown[] }
+  | { type: 'CURRENT_GROUP_PLAYER_REMOVED'; index: number }
+  | { type: 'GUEST_NAME_SET'; value: string }
+  | { type: 'GUEST_SPONSOR_SET'; value: string }
+  | { type: 'SHOW_GUEST_FORM_SET'; value: boolean }
+  | { type: 'SHOW_GUEST_NAME_ERROR_SET'; value: boolean }
+  | { type: 'SHOW_SPONSOR_ERROR_SET'; value: boolean }
+  | { type: 'GUEST_FORM_RESET' }
+  | { type: 'GROUP_RESET' };
+
+export const initialGroupGuestState: GroupGuestState = {
   currentGroup: [],
   guestName: '',
   guestSponsor: '',
@@ -15,7 +35,7 @@ export const initialGroupGuestState = {
   showSponsorError: false,
 };
 
-export function groupGuestReducer(state, action) {
+export function groupGuestReducer(state: GroupGuestState, action: GroupGuestAction): GroupGuestState {
   switch (action.type) {
     // Group
     case 'CURRENT_GROUP_SET':

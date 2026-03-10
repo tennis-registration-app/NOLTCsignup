@@ -6,7 +6,29 @@
  * IMPORTANT: ALL_SEARCH_RESET does NOT reset apiMembers (legacy never resets it).
  */
 
-export const initialMemberSearchState = {
+export interface MemberSearchState {
+  searchInput: string;
+  showSuggestions: boolean;
+  addPlayerSearch: string;
+  showAddPlayerSuggestions: boolean;
+  apiMembers: unknown[];
+  isSearching: boolean;
+}
+
+type MemberSearchAction =
+  | { type: 'SEARCH_INPUT_SET'; value: string }
+  | { type: 'SEARCH_SUGGESTIONS_SHOWN' }
+  | { type: 'SEARCH_SUGGESTIONS_HIDDEN' }
+  | { type: 'ADD_PLAYER_SEARCH_SET'; value: string }
+  | { type: 'ADD_PLAYER_SUGGESTIONS_SHOWN' }
+  | { type: 'ADD_PLAYER_SUGGESTIONS_HIDDEN' }
+  | { type: 'API_MEMBERS_SET'; value: unknown[] }
+  | { type: 'IS_SEARCHING_SET'; value: boolean }
+  | { type: 'SEARCH_RESET' }
+  | { type: 'ADD_PLAYER_SEARCH_RESET' }
+  | { type: 'ALL_SEARCH_RESET' };
+
+export const initialMemberSearchState: MemberSearchState = {
   searchInput: '',
   showSuggestions: false,
   addPlayerSearch: '',
@@ -15,7 +37,7 @@ export const initialMemberSearchState = {
   isSearching: false,
 };
 
-export function memberSearchReducer(state, action) {
+export function memberSearchReducer(state: MemberSearchState, action: MemberSearchAction): MemberSearchState {
   switch (action.type) {
     // Leader search
     case 'SEARCH_INPUT_SET':
