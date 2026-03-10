@@ -9,7 +9,7 @@
  */
 
 import { useReducer, useCallback } from 'react';
-import { blockAdminReducer, initialBlockAdminState } from './blockAdminReducer.js';
+import { blockAdminReducer, initialBlockAdminState } from './blockAdminReducer';
 import { handleBlockCreateOp, handleCancelBlockOp } from '../handlers/adminOperations.js';
 
 export function useBlockAdmin({ backend, showAlertMessage, getCourtData }) {

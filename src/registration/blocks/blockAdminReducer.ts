@@ -6,7 +6,28 @@
  * This is preserved behavior - do not "fix" it.
  */
 
-export const initialBlockAdminState = {
+export interface BlockAdminState {
+  showBlockModal: boolean;
+  blockingInProgress: boolean;
+  selectedCourtsToBlock: number[];
+  blockMessage: string;
+  blockStartTime: string;
+  blockEndTime: string;
+  blockWarningMinutes: number;
+}
+
+type BlockAdminAction =
+  | { type: 'BLOCK_MODAL_OPENED' }
+  | { type: 'BLOCK_MODAL_CLOSED' }
+  | { type: 'BLOCK_COURTS_SELECTED'; courts: number[] }
+  | { type: 'BLOCK_MESSAGE_SET'; message: string }
+  | { type: 'BLOCK_START_TIME_SET'; startTime: string }
+  | { type: 'BLOCK_END_TIME_SET'; endTime: string }
+  | { type: 'BLOCK_WARNING_MINUTES_SET'; warningMinutes: number }
+  | { type: 'BLOCK_IN_PROGRESS_SET'; value: boolean }
+  | { type: 'BLOCK_FORM_RESET' };
+
+export const initialBlockAdminState: BlockAdminState = {
   showBlockModal: false,
   blockingInProgress: false,
   selectedCourtsToBlock: [],
@@ -16,7 +37,7 @@ export const initialBlockAdminState = {
   blockWarningMinutes: 0,
 };
 
-export function blockAdminReducer(state, action) {
+export function blockAdminReducer(state: BlockAdminState, action: BlockAdminAction): BlockAdminState {
   switch (action.type) {
     case 'BLOCK_MODAL_OPENED':
       return { ...state, showBlockModal: true };
