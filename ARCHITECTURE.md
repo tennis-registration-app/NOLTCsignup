@@ -104,7 +104,7 @@ appHandlers/state/
 ├── useRegistrationDomainHooks.js — Feature hooks (streak, courts, etc.)
 ├── useRegistrationDerived.js — Computed values
 ├── useRegistrationHelpers.js — Helper functions
-└── buildRegistrationReturn.js — Return object assembly
+└── buildRegistrationReturn.ts — Return object assembly
 ```
 
 ### Handler Modules
@@ -322,10 +322,10 @@ The registration app uses JSDoc type boundaries with `// @ts-check` to prevent s
 
 | Type | Origin | Description |
 |------|--------|-------------|
-| `AppState` | `buildRegistrationReturn.js` | Application state object |
+| `AppState` | `buildRegistrationReturn.ts` | Application state object |
 | `Handlers` | `useRegistrationHandlers.js` | All handler functions |
 
-Type definitions live in `src/types/appTypes.js`.
+Type definitions live in `src/types/appTypes.ts`.
 
 ### TypeScript Checking
 
@@ -345,12 +345,12 @@ function GroupRoute({ app, handlers }) {
 
 ### Unit Tests (Vitest)
 
-- **2,997 unit tests** across 147 test files
+- **3,077 unit tests** across 157 test files
 - Cover: reducers, services, transforms, error handling, contract fences,
   orchestrators, presenters
 - Mock external dependencies (API, storage)
 
-Coverage ratchet enforced via CI (current baseline: 52.45% statements, 46.83% branches, 43.88% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
+Coverage ratchet enforced via CI (current baseline: 50.06% statements, 45.06% branches, 41.84% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
 
 ### E2E Tests (Playwright)
 
@@ -363,7 +363,7 @@ Coverage ratchet enforced via CI (current baseline: 52.45% statements, 46.83% br
 All gating CI via:
 
 ```bash
-npm run verify  # lint:ratchet + type:ratchet + test:unit + build + test:e2e
+npm run verify  # lint:ratchet + type:ratchet + coverage:ratchet + test:fixtures + build + test:e2e
 ```
 
 ## Code Standards

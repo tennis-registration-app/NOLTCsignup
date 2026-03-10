@@ -4,7 +4,7 @@
 
 This project uses TypeScript's `checkJs: true` mode to type-check all JavaScript files globally. Type checking is enforced via a ratchet mechanism that prevents type regressions.
 
-No `.ts` files are used (except orchestration layer `.ts` stubs). All type information is expressed through JSDoc annotations in `.js` / `.jsx` files.
+`.ts` files are used for orchestrators, presenters, reducers, and type definitions (31 files). Remaining application code uses JSDoc annotations in `.js` / `.jsx` files with `checkJs: true`.
 
 ## Why Type Check JS?
 
@@ -33,7 +33,7 @@ node scripts/type-ratchet.mjs --dry-run
 
 # Full verification pipeline
 npm run verify
-# (runs: lint:ratchet → type:ratchet → test:unit → build → test:e2e)
+# (runs: lint:ratchet → type:ratchet → coverage:ratchet → test:fixtures → build → test:e2e)
 ```
 
 ## Adding Type Coverage to a File

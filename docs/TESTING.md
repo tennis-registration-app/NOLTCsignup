@@ -24,8 +24,9 @@ This runs in order:
 1. `npm run lint:ratchet` — ESLint with baseline enforcement (0 errors, warnings must not increase)
 2. `npm run type:ratchet` — TypeScript with baseline enforcement (error count must not increase)
 3. `npm run coverage:ratchet` — Vitest unit tests + coverage baseline enforcement
-4. `npm run build` — Vite production build
-5. `npm run test:e2e` — Playwright E2E tests
+4. `npm run test:fixtures` — Fixture validation (API contract sentinels)
+5. `npm run build` — Vite production build
+6. `npm run test:e2e` — Playwright E2E tests
 
 **Do not merge if any step fails.**
 

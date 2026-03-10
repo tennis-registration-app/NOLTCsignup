@@ -29,27 +29,27 @@
 src/registration/
 ├── App.jsx                    # Main component + orchestrators (HIGH COUPLING)
 ├── blocks/
-│   ├── blockAdminReducer.js   # Pure state machine
+│   ├── blockAdminReducer.ts   # Pure state machine (TypeScript)
 │   └── useBlockAdmin.js       # Block admin hook
 ├── waitlist/
-│   ├── waitlistAdminReducer.js
+│   ├── waitlistAdminReducer.ts
 │   └── useWaitlistAdmin.js
 ├── search/
-│   ├── memberSearchReducer.js
+│   ├── memberSearchReducer.ts
 │   └── useMemberSearch.js     # Includes debounce logic
 ├── group/
-│   ├── groupGuestReducer.js
+│   ├── groupGuestReducer.ts
 │   └── useGroupGuest.js
 ├── streak/
-│   ├── streakReducer.js
+│   ├── streakReducer.ts
 │   └── useStreak.js
 ├── memberIdentity/
-│   ├── memberIdentityReducer.js
+│   ├── memberIdentityReducer.ts
 │   └── useMemberIdentity.js   # Includes cache + fetch
 ├── court/
-│   ├── courtAssignmentResultReducer.js
+│   ├── courtAssignmentResultReducer.ts
 │   ├── useCourtAssignmentResult.js
-│   ├── clearCourtFlowReducer.js
+│   ├── clearCourtFlowReducer.ts
 │   └── useClearCourtFlow.js
 ├── handlers/
 │   └── adminOperations.js     # Extracted admin handlers

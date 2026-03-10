@@ -58,7 +58,7 @@ Use conventional commit prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `ch
 ## How to Add an Admin Hook
 
 1. Create the hook in `src/admin/hooks/` (or the relevant subdirectory like `src/admin/blocks/hooks/`)
-2. For complex state, follow the reducer pattern from `src/admin/wetCourts/useWetCourts.js` + `wetCourtsReducer.js`
+2. For complex state, follow the reducer pattern from `src/admin/wetCourts/useWetCourts.js` + `wetCourtsReducer.ts`
 3. For simple state, a `useState`-based hook is fine
 4. Wire into `buildAdminController` if the hook needs to be accessible across admin tabs
 5. Add unit tests — test the hook's state transitions, backend calls, and notification behavior
