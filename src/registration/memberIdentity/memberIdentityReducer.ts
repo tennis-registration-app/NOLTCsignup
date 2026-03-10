@@ -7,14 +7,28 @@
  * NOTE: useEffect that triggers fetch stays in App.jsx.
  */
 
-export const initialMemberIdentityState = {
+export interface MemberIdentityState {
+  memberNumber: string;
+  currentMemberId: string | null;
+  frequentPartners: unknown[];
+  frequentPartnersLoading: boolean;
+}
+
+type MemberIdentityAction =
+  | { type: 'MEMBER_NUMBER_SET'; value: string }
+  | { type: 'CURRENT_MEMBER_ID_SET'; value: string | null }
+  | { type: 'FREQUENT_PARTNERS_SET'; value: unknown[] }
+  | { type: 'FREQUENT_PARTNERS_LOADING_SET'; value: boolean }
+  | { type: 'MEMBER_IDENTITY_RESET' };
+
+export const initialMemberIdentityState: MemberIdentityState = {
   memberNumber: '',
   currentMemberId: null,
   frequentPartners: [],
   frequentPartnersLoading: false,
 };
 
-export function memberIdentityReducer(state, action) {
+export function memberIdentityReducer(state: MemberIdentityState, action: MemberIdentityAction): MemberIdentityState {
   switch (action.type) {
     case 'MEMBER_NUMBER_SET':
       return { ...state, memberNumber: action.value };

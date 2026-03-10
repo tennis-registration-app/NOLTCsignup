@@ -6,7 +6,7 @@
  */
 
 import { useReducer, useCallback } from 'react';
-import { waitlistAdminReducer, initialWaitlistAdminState } from './waitlistAdminReducer.js';
+import { waitlistAdminReducer, initialWaitlistAdminState } from './waitlistAdminReducer';
 import { handleReorderWaitlistOp } from '../handlers/adminOperations.js';
 
 export function useWaitlistAdmin({ getCourtData, showAlertMessage, backend }) {

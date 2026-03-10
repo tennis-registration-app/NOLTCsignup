@@ -9,7 +9,7 @@
  */
 
 import { useReducer, useCallback, useRef } from 'react';
-import { memberIdentityReducer, initialMemberIdentityState } from './memberIdentityReducer.js';
+import { memberIdentityReducer, initialMemberIdentityState } from './memberIdentityReducer';
 import { logger } from '../../lib/logger.js';
 
 // TTL for frequent partners cache (10 minutes)

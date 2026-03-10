@@ -3,4 +3,4 @@ export {
   alertDisplayReducer,
   initialAlertDisplayState,
   ALERT_DISPLAY_ACTIONS,
-} from './alertDisplayReducer.js';
+} from './alertDisplayReducer';

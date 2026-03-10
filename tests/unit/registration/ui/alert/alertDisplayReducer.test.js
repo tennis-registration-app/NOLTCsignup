@@ -3,7 +3,7 @@ import {
   alertDisplayReducer,
   initialAlertDisplayState,
   ALERT_DISPLAY_ACTIONS,
-} from '../../../../../src/registration/ui/alert/alertDisplayReducer.js';
+} from '../../../../../src/registration/ui/alert/alertDisplayReducer';
 
 describe('alertDisplayReducer', () => {
   describe('initial state', () => {

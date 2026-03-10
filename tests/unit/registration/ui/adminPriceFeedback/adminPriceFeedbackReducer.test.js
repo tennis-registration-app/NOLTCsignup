@@ -3,7 +3,7 @@ import {
   adminPriceFeedbackReducer,
   initialAdminPriceFeedbackState,
   ADMIN_PRICE_FEEDBACK_ACTIONS,
-} from '../../../../../src/registration/ui/adminPriceFeedback/adminPriceFeedbackReducer.js';
+} from '../../../../../src/registration/ui/adminPriceFeedback/adminPriceFeedbackReducer';
 
 describe('adminPriceFeedbackReducer', () => {
   describe('initial state', () => {

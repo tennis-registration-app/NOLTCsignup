@@ -3,4 +3,4 @@ export {
   adminPriceFeedbackReducer,
   initialAdminPriceFeedbackState,
   ADMIN_PRICE_FEEDBACK_ACTIONS,
-} from './adminPriceFeedbackReducer.js';
+} from './adminPriceFeedbackReducer';

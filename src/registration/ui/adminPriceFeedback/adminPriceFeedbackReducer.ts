@@ -10,19 +10,30 @@
  * This preserves the original App.jsx behavior exactly.
  */
 
-export const initialAdminPriceFeedbackState = {
-  showPriceSuccess: false,
-  priceError: '',
-};
+export interface AdminPriceFeedbackState {
+  showPriceSuccess: boolean;
+  priceError: string;
+}
 
 export const ADMIN_PRICE_FEEDBACK_ACTIONS = {
   SET_SUCCESS: 'ADMIN_PRICE_SUCCESS_SET',
   SET_ERROR: 'ADMIN_PRICE_ERROR_SET',
   SHOW_SUCCESS: 'ADMIN_PRICE_SHOW_SUCCESS',
   RESET: 'ADMIN_PRICE_FEEDBACK_RESET',
+} as const;
+
+type AdminPriceFeedbackAction =
+  | { type: typeof ADMIN_PRICE_FEEDBACK_ACTIONS.SET_SUCCESS; payload: boolean }
+  | { type: typeof ADMIN_PRICE_FEEDBACK_ACTIONS.SET_ERROR; payload: string }
+  | { type: typeof ADMIN_PRICE_FEEDBACK_ACTIONS.SHOW_SUCCESS }
+  | { type: typeof ADMIN_PRICE_FEEDBACK_ACTIONS.RESET };
+
+export const initialAdminPriceFeedbackState: AdminPriceFeedbackState = {
+  showPriceSuccess: false,
+  priceError: '',
 };
 
-export function adminPriceFeedbackReducer(state, action) {
+export function adminPriceFeedbackReducer(state: AdminPriceFeedbackState, action: AdminPriceFeedbackAction): AdminPriceFeedbackState {
   switch (action.type) {
     case ADMIN_PRICE_FEEDBACK_ACTIONS.SET_SUCCESS:
       return { ...state, showPriceSuccess: action.payload };
