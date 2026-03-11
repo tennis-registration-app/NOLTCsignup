@@ -54,7 +54,30 @@ const mockCourt = { handleCourtSelect: () => {} };
 
 describe('buildHandlerDeps contract', () => {
   describe('buildCourtHandlerDeps', () => {
-    const deps = buildCourtHandlerDeps(mockApp, mockCore);
+    const mockCourtWorkflow = {
+      isAssigning: false,
+      currentWaitlistEntryId: null,
+      canChangeCourt: false,
+      isJoiningWaitlist: false,
+      replacedGroup: null,
+      setIsAssigning: () => {},
+      setCurrentWaitlistEntryId: () => {},
+      setHasWaitlistPriority: () => {},
+      setReplacedGroup: () => {},
+      setDisplacement: () => {},
+      setOriginalCourtData: () => {},
+      setIsChangingCourt: () => {},
+      setWasOvertimeCourt: () => {},
+      setCanChangeCourt: () => {},
+      setChangeTimeRemaining: () => {},
+      setIsTimeLimited: () => {},
+      setTimeLimitReason: () => {},
+      setIsJoiningWaitlist: () => {},
+      setWaitlistPosition: () => {},
+      groupGuest: { currentGroup: [], setCurrentGroup: () => {} },
+      courtAssignment: { selectedCourt: null, setSelectedCourt: () => {} },
+    };
+    const deps = buildCourtHandlerDeps(mockApp, mockCourtWorkflow, mockCore);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -80,9 +103,37 @@ describe('buildHandlerDeps contract', () => {
       ]);
     });
 
-    it('preserves reference equality for slices', () => {
-      expect(deps.state).toBe(mockApp.state);
+    it('sources workflow fields from workflow, not app', () => {
+      expect(deps.groupGuest).toBe(mockCourtWorkflow.groupGuest);
+      expect(deps.courtAssignment).toBe(mockCourtWorkflow.courtAssignment);
+      expect(deps.state.isAssigning).toBe(mockCourtWorkflow.isAssigning);
+      expect(deps.state.currentWaitlistEntryId).toBe(mockCourtWorkflow.currentWaitlistEntryId);
+      expect(deps.state.canChangeCourt).toBe(mockCourtWorkflow.canChangeCourt);
+      expect(deps.state.isJoiningWaitlist).toBe(mockCourtWorkflow.isJoiningWaitlist);
+      expect(deps.state.replacedGroup).toBe(mockCourtWorkflow.replacedGroup);
+      expect(deps.setters.setIsAssigning).toBe(mockCourtWorkflow.setIsAssigning);
+      expect(deps.setters.setCurrentWaitlistEntryId).toBe(mockCourtWorkflow.setCurrentWaitlistEntryId);
+      expect(deps.setters.setHasWaitlistPriority).toBe(mockCourtWorkflow.setHasWaitlistPriority);
+      expect(deps.setters.setReplacedGroup).toBe(mockCourtWorkflow.setReplacedGroup);
+      expect(deps.setters.setDisplacement).toBe(mockCourtWorkflow.setDisplacement);
+      expect(deps.setters.setOriginalCourtData).toBe(mockCourtWorkflow.setOriginalCourtData);
+      expect(deps.setters.setIsChangingCourt).toBe(mockCourtWorkflow.setIsChangingCourt);
+      expect(deps.setters.setWasOvertimeCourt).toBe(mockCourtWorkflow.setWasOvertimeCourt);
+      expect(deps.setters.setCanChangeCourt).toBe(mockCourtWorkflow.setCanChangeCourt);
+      expect(deps.setters.setChangeTimeRemaining).toBe(mockCourtWorkflow.setChangeTimeRemaining);
+      expect(deps.setters.setIsTimeLimited).toBe(mockCourtWorkflow.setIsTimeLimited);
+      expect(deps.setters.setTimeLimitReason).toBe(mockCourtWorkflow.setTimeLimitReason);
+      expect(deps.setters.setIsJoiningWaitlist).toBe(mockCourtWorkflow.setIsJoiningWaitlist);
+      expect(deps.setters.setWaitlistPosition).toBe(mockCourtWorkflow.setWaitlistPosition);
+    });
+
+    it('sources shell fields from app', () => {
       expect(deps.services).toBe(mockApp.services);
+      expect(deps.mobile).toBe(mockApp.mobile);
+      expect(deps.helpers).toBe(mockApp.helpers);
+      expect(deps.blockAdmin).toBe(mockApp.admin.blockAdmin);
+      expect(deps.alert).toBe(mockApp.alert);
+      expect(deps.refs).toBe(mockApp.refs);
     });
   });
 

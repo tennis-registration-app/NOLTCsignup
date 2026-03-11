@@ -85,10 +85,10 @@ export function useRegistrationHandlers({ app }) {
       return TennisBusinessLogic.isPlayerAlreadyPlaying(
         playerId,
         courtData,
-        app.players.groupGuest.currentGroup ?? undefined
+        workflow.groupGuest.currentGroup ?? undefined
       );
     },
-    [app.helpers, app.players.groupGuest]
+    [app.helpers, workflow.groupGuest]
   );
 
   // ============================================
@@ -96,7 +96,7 @@ export function useRegistrationHandlers({ app }) {
   // Must be first: adminHandlers and groupHandlers depend on court outputs
   // ============================================
   const core = { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying };
-  const courtHandlers = useCourtHandlers(buildCourtHandlerDeps(app, core));
+  const courtHandlers = useCourtHandlers(buildCourtHandlerDeps(app, workflow, core));
 
   // ============================================
   // Admin Screen Handlers (extracted to adminHandlers.js)

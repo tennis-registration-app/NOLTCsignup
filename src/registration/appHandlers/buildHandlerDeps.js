@@ -12,15 +12,39 @@
 
 /**
  * @param {import('../../types/appTypes').AppState} app
+ * @param {object} workflow - WorkflowContext value (subset for court)
  * @param {{ clearSuccessResetTimer: Function, resetForm: Function, isPlayerAlreadyPlaying: Function }} core
  */
-export function buildCourtHandlerDeps(app, core) {
+export function buildCourtHandlerDeps(app, workflow, core) {
   return {
-    state: app.state,
-    setters: app.setters,
+    state: {
+      ...app.state,
+      isAssigning: workflow.isAssigning,
+      currentWaitlistEntryId: workflow.currentWaitlistEntryId,
+      canChangeCourt: workflow.canChangeCourt,
+      isJoiningWaitlist: workflow.isJoiningWaitlist,
+      replacedGroup: workflow.replacedGroup,
+    },
+    setters: {
+      ...app.setters,
+      setIsAssigning: workflow.setIsAssigning,
+      setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
+      setHasWaitlistPriority: workflow.setHasWaitlistPriority,
+      setReplacedGroup: workflow.setReplacedGroup,
+      setDisplacement: workflow.setDisplacement,
+      setOriginalCourtData: workflow.setOriginalCourtData,
+      setIsChangingCourt: workflow.setIsChangingCourt,
+      setWasOvertimeCourt: workflow.setWasOvertimeCourt,
+      setCanChangeCourt: workflow.setCanChangeCourt,
+      setChangeTimeRemaining: workflow.setChangeTimeRemaining,
+      setIsTimeLimited: workflow.setIsTimeLimited,
+      setTimeLimitReason: workflow.setTimeLimitReason,
+      setIsJoiningWaitlist: workflow.setIsJoiningWaitlist,
+      setWaitlistPosition: workflow.setWaitlistPosition,
+    },
     mobile: app.mobile,
-    groupGuest: app.players.groupGuest,
-    courtAssignment: app.court.courtAssignment,
+    groupGuest: workflow.groupGuest,
+    courtAssignment: workflow.courtAssignment,
     services: app.services,
     helpers: app.helpers,
     blockAdmin: app.admin.blockAdmin,
