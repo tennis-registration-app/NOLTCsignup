@@ -11,6 +11,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { WorkflowProvider } from '../../../../src/registration/context/WorkflowProvider.jsx';
 
 // Mock all platform/window dependencies before importing the hook
 vi.mock('../../../../src/platform/windowBridge.js', () => ({
@@ -126,8 +127,38 @@ function captureHookResult() {
       resolve(result);
     };
 
+    // Create mock backend matching the vi.mock above
+    const mockBackend = {
+      queries: {
+        subscribeToBoardChanges: vi.fn(() => () => {}),
+        refresh: vi.fn().mockResolvedValue(undefined),
+        getBoard: vi.fn().mockResolvedValue({ courts: [], waitlist: [] }),
+      },
+      commands: {
+        assignCourtWithPlayers: vi.fn().mockResolvedValue({ ok: true }),
+        assignFromWaitlist: vi.fn().mockResolvedValue({ ok: true }),
+        joinWaitlistWithPlayers: vi.fn().mockResolvedValue({ ok: true }),
+      },
+      directory: {
+        getAllMembers: vi.fn().mockResolvedValue([]),
+        getFrequentPartners: vi.fn().mockResolvedValue([]),
+      },
+      admin: {
+        clearAllCourts: vi.fn().mockResolvedValue({ ok: true }),
+        removeFromWaitlist: vi.fn().mockResolvedValue({ ok: true }),
+        cancelBlock: vi.fn().mockResolvedValue({ ok: true }),
+        createBlock: vi.fn().mockResolvedValue({ ok: true }),
+      },
+    };
+
     const root = createRoot(container);
-    root.render(React.createElement(HookCapture, { onResult: callback }));
+    root.render(
+      React.createElement(
+        WorkflowProvider,
+        { backend: mockBackend },
+        React.createElement(HookCapture, { onResult: callback })
+      )
+    );
   });
 }
 
@@ -167,6 +198,7 @@ describe('useRegistrationAppState contract', () => {
       'players',
       'refs',
       'resetFormOrchestrated',
+      'resetWorkflow',
       'search',
       'sendGroupToWaitlistOrchestrated',
       'services',
@@ -214,6 +246,7 @@ describe('useRegistrationAppState contract', () => {
       handleAddPlayerSuggestionClickOrchestrated: 'function',
       changeCourtOrchestrated: 'function',
       resetFormOrchestrated: 'function',
+      resetWorkflow: 'function',
       validateGroupCompat: 'function',
     });
   });

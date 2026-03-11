@@ -24,7 +24,7 @@ import { vi } from 'vitest';
  * @param {Function} hookFn - Zero-arg function that calls the hook, e.g. () => useCourtHandlers(deps)
  * @returns {Promise<{ result: { current: any }, unmount: () => void }>}
  */
-export async function renderHandlerHook(hookFn) {
+export async function renderHandlerHook(hookFn, { wrapper } = {}) {
   const result = { current: null };
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -35,8 +35,12 @@ export async function renderHandlerHook(hookFn) {
     return null;
   }
 
+  const element = wrapper
+    ? React.createElement(wrapper, null, React.createElement(HookCapture))
+    : React.createElement(HookCapture);
+
   await act(async () => {
-    root.render(React.createElement(HookCapture));
+    root.render(element);
   });
 
   const unmount = () => {

@@ -33,7 +33,7 @@ import {
  * @returns {import('../../types/appTypes').Handlers}
  */
 export function useRegistrationHandlers({ app }) {
-  const { resetFormOrchestrated } = app;
+  const { resetFormOrchestrated, resetWorkflow } = app;
 
   // ===== UTILITY FUNCTIONS =====
 
@@ -45,19 +45,18 @@ export function useRegistrationHandlers({ app }) {
     }
   }, [app.refs.successResetTimerRef]);
 
-  // Factory function to assemble reset deps (grouped structure)
+  // Factory function to assemble reset deps (shell-level only — grouped structure)
   const createResetDeps = useCallback(
     () => ({
       actions: {
-        ...app.setters,
-        ...app.court.courtAssignment,
-        ...app.players.groupGuest,
-        ...app.players.memberIdentity,
-        ...app.search,
-        ...app.session.streak,
+        setShowSuccess: app.setters.setShowSuccess,
+        setCurrentScreen: app.setters.setCurrentScreen,
+        setSearchInput: app.search.setSearchInput,
+        setShowSuggestions: app.search.setShowSuggestions,
+        setAddPlayerSearch: app.search.setAddPlayerSearch,
+        setShowAddPlayerSuggestions: app.search.setShowAddPlayerSuggestions,
       },
       services: {
-        clearCache: app.players.memberIdentity.clearCache,
         clearSuccessResetTimer,
         refresh: () => app.services.backend.queries.refresh(),
       },
@@ -65,11 +64,12 @@ export function useRegistrationHandlers({ app }) {
     [app, clearSuccessResetTimer]
   );
 
-  // Reset form (moved to orchestration layer)
-  // deps now assembled by createResetDeps factory
+  // Reset form — bumps workflow key (remounts all workflow state),
+  // then runs shell-level cleanup via orchestrator.
   const resetForm = useCallback(() => {
+    resetWorkflow();
     resetFormOrchestrated(createResetDeps());
-  }, [resetFormOrchestrated, createResetDeps]);
+  }, [resetWorkflow, resetFormOrchestrated, createResetDeps]);
 
   // Check if player is already playing with detailed info
   // Note: This is used by both core handlers and groupHandlers, so it lives here

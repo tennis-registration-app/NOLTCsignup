@@ -16,6 +16,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { WorkflowProvider } from '../../../src/registration/context/WorkflowProvider.jsx';
 
 // Mock all platform/window dependencies before importing hooks
 vi.mock('../../../src/platform/windowBridge.js', () => ({
@@ -212,8 +213,41 @@ function captureHookResults() {
       resolve(result);
     };
 
+    // Create mock backend matching the vi.mock above
+    const mockBackend = {
+      queries: {
+        subscribeToBoardChanges: vi.fn(() => () => {}),
+        refresh: vi.fn().mockResolvedValue(undefined),
+        getBoard: vi.fn().mockResolvedValue({ courts: [], waitlist: [] }),
+      },
+      commands: {
+        assignCourtWithPlayers: vi.fn().mockResolvedValue({ ok: true }),
+        assignFromWaitlist: vi.fn().mockResolvedValue({ ok: true }),
+        joinWaitlistWithPlayers: vi.fn().mockResolvedValue({ ok: true }),
+        purchaseBalls: vi.fn().mockResolvedValue({ ok: true }),
+        updateSessionTournament: vi.fn().mockResolvedValue({ ok: true }),
+      },
+      directory: {
+        getAllMembers: vi.fn().mockResolvedValue([]),
+        getFrequentPartners: vi.fn().mockResolvedValue([]),
+        getMembersByAccount: vi.fn().mockResolvedValue([]),
+      },
+      admin: {
+        clearAllCourts: vi.fn().mockResolvedValue({ ok: true }),
+        removeFromWaitlist: vi.fn().mockResolvedValue({ ok: true }),
+        cancelBlock: vi.fn().mockResolvedValue({ ok: true }),
+        createBlock: vi.fn().mockResolvedValue({ ok: true }),
+      },
+    };
+
     const root = createRoot(container);
-    root.render(React.createElement(HookCapture, { onResult: callback }));
+    root.render(
+      React.createElement(
+        WorkflowProvider,
+        { backend: mockBackend },
+        React.createElement(HookCapture, { onResult: callback })
+      )
+    );
   });
 }
 

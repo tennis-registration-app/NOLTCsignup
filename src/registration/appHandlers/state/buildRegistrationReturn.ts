@@ -40,22 +40,31 @@ import type {
   CourtBlockStatusResult,
 } from '../../../types/appTypes.js';
 
-/** Fields from useRegistrationUiState — state values + setters */
-type UiModule = RegistrationUiState & RegistrationSetters;
+/**
+ * Fields from useRegistrationUiState — shell-owned state values + setters only.
+ * Workflow fields (15 useState) have moved to WorkflowProvider.
+ */
+type UiModule = Pick<RegistrationUiState,
+  'data' | 'currentScreen' | 'availableCourts' | 'operatingHours' |
+  'showSuccess' | 'currentTime' | 'courtToMove' | 'ballPriceInput' | 'ballPriceCents'
+> & Pick<RegistrationSetters,
+  'setData' | 'setCurrentScreen' | 'setAvailableCourts' | 'setOperatingHours' |
+  'setShowSuccess' | 'setLastActivity' | 'setCurrentTime' | 'setCourtToMove' |
+  'setBallPriceInput' | 'setBallPriceCents' | 'setIsUserTyping'
+>;
 
-/** Fields from useRegistrationDomainHooks — 12 sub-hooks flattened (ClearCourtFlow is route-local) */
+/**
+ * Fields from useRegistrationDomainHooks — shell-owned hooks only (8 hooks).
+ * Workflow hooks (GroupGuest, Streak, CourtAssignment, MemberIdentity) moved to WorkflowProvider.
+ */
 type DomainModule =
   & Omit<AlertState, never>
   & Omit<AdminPriceFeedback, never>
   & Omit<GuestCounterHook, never>
   & Omit<SearchState, never>
-  & Omit<CourtAssignmentState, never>
   & Omit<MobileState, never>
   & Omit<BlockAdminState, 'getCourtBlockStatus'>
-  & Omit<WaitlistAdminState, never>
-  & Omit<GroupGuestState, never>
-  & Omit<StreakState, never>
-  & Omit<MemberIdentityState, never>;
+  & Omit<WaitlistAdminState, never>;
 
 /** Fields from useRegistrationRuntime — React refs */
 type RuntimeModule = RegistrationRefs;
@@ -74,10 +83,49 @@ type DerivedModule = DerivedState;
 /** Fields from useSessionTimeout */
 type TimeoutModule = TimeoutState;
 
+/** Workflow context value — per-flow state that resets on key bump */
+interface WorkflowModule {
+  groupGuest: GroupGuestState;
+  streak: StreakState;
+  courtAssignment: CourtAssignmentState;
+  memberIdentity: MemberIdentityState;
+  // useState fields (15 moved from UiModule)
+  waitlistPosition: number;
+  setWaitlistPosition: (v: number) => void;
+  hasWaitlistPriority: boolean;
+  setHasWaitlistPriority: (v: boolean) => void;
+  currentWaitlistEntryId: string | null;
+  setCurrentWaitlistEntryId: (v: string | null) => void;
+  isAssigning: boolean;
+  setIsAssigning: (v: boolean) => void;
+  isJoiningWaitlist: boolean;
+  setIsJoiningWaitlist: (v: boolean) => void;
+  replacedGroup: import('../../../types/appTypes.js').ReplacedGroup | null;
+  setReplacedGroup: (v: import('../../../types/appTypes.js').ReplacedGroup | null) => void;
+  displacement: import('../../../types/appTypes.js').DisplacementInfo | null;
+  setDisplacement: (v: import('../../../types/appTypes.js').DisplacementInfo | null) => void;
+  originalCourtData: import('../../../types/appTypes.js').OriginalCourtData | null;
+  setOriginalCourtData: (v: import('../../../types/appTypes.js').OriginalCourtData | null) => void;
+  canChangeCourt: boolean;
+  setCanChangeCourt: (v: boolean) => void;
+  changeTimeRemaining: number;
+  setChangeTimeRemaining: (v: number | ((prev: number) => number)) => void;
+  isChangingCourt: boolean;
+  setIsChangingCourt: (v: boolean) => void;
+  setWasOvertimeCourt: (v: boolean) => void;
+  isTimeLimited: boolean;
+  setIsTimeLimited: (v: boolean) => void;
+  timeLimitReason: string | null;
+  setTimeLimitReason: (v: string | null) => void;
+  showAddPlayer: boolean;
+  setShowAddPlayer: (v: boolean) => void;
+}
+
 export interface BuildRegistrationReturnParams {
   // Module objects — typed to match each source hook's return shape
   ui: UiModule;
   domain: DomainModule;
+  workflow: WorkflowModule;
   runtime: RuntimeModule;
   _dataLayer: DataLayerModule;
   helpers: HelpersModule;
@@ -116,6 +164,7 @@ export function buildRegistrationReturn({
   // Module objects
   ui,
   domain,
+  workflow,
   runtime,
   _dataLayer,
   helpers,
@@ -149,89 +198,63 @@ export function buildRegistrationReturn({
   // Validation
   validateGroupCompat,
 }: BuildRegistrationReturnParams): AppState {
-  // Bind groupGuest and memberIdentity once — reused in players slice.
-  const groupGuest: GroupGuestState = {
-    currentGroup: domain.currentGroup,
-    setCurrentGroup: domain.setCurrentGroup,
-    guestName: domain.guestName,
-    setGuestName: domain.setGuestName,
-    guestSponsor: domain.guestSponsor,
-    setGuestSponsor: domain.setGuestSponsor,
-    showGuestForm: domain.showGuestForm,
-    setShowGuestForm: domain.setShowGuestForm,
-    showGuestNameError: domain.showGuestNameError,
-    setShowGuestNameError: domain.setShowGuestNameError,
-    showSponsorError: domain.showSponsorError,
-    setShowSponsorError: domain.setShowSponsorError,
-    handleRemovePlayer: domain.handleRemovePlayer,
-    handleSelectSponsor: domain.handleSelectSponsor,
-    handleCancelGuest: domain.handleCancelGuest,
-  };
-
-  const memberIdentity: MemberIdentityState = {
-    memberNumber: domain.memberNumber,
-    setMemberNumber: domain.setMemberNumber,
-    currentMemberId: domain.currentMemberId,
-    setCurrentMemberId: domain.setCurrentMemberId,
-    frequentPartners: domain.frequentPartners,
-    frequentPartnersLoading: domain.frequentPartnersLoading,
-    fetchFrequentPartners: domain.fetchFrequentPartners,
-    clearCache: domain.clearCache,
-  };
+  // Bind groupGuest and memberIdentity from workflow context (key-based reset).
+  const groupGuest: GroupGuestState = workflow.groupGuest;
+  const memberIdentity: MemberIdentityState = workflow.memberIdentity;
 
   return {
-    // Core state
+    // Core state — shell fields from ui, workflow fields from workflow context
     state: {
       data: ui.data,
       currentScreen: ui.currentScreen,
       availableCourts: ui.availableCourts,
-      waitlistPosition: ui.waitlistPosition,
+      waitlistPosition: workflow.waitlistPosition,
       operatingHours: ui.operatingHours,
       showSuccess: ui.showSuccess,
-      replacedGroup: ui.replacedGroup,
-      displacement: ui.displacement,
-      originalCourtData: ui.originalCourtData,
-      canChangeCourt: ui.canChangeCourt,
-      changeTimeRemaining: ui.changeTimeRemaining,
-      isTimeLimited: ui.isTimeLimited,
-      timeLimitReason: ui.timeLimitReason,
-      showAddPlayer: ui.showAddPlayer,
-      isChangingCourt: ui.isChangingCourt,
+      replacedGroup: workflow.replacedGroup,
+      displacement: workflow.displacement,
+      originalCourtData: workflow.originalCourtData,
+      canChangeCourt: workflow.canChangeCourt,
+      changeTimeRemaining: workflow.changeTimeRemaining,
+      isTimeLimited: workflow.isTimeLimited,
+      timeLimitReason: workflow.timeLimitReason,
+      showAddPlayer: workflow.showAddPlayer,
+      isChangingCourt: workflow.isChangingCourt,
       currentTime: ui.currentTime,
       courtToMove: ui.courtToMove,
-      hasWaitlistPriority: ui.hasWaitlistPriority,
-      currentWaitlistEntryId: ui.currentWaitlistEntryId,
-      isAssigning: ui.isAssigning,
-      isJoiningWaitlist: ui.isJoiningWaitlist,
+      hasWaitlistPriority: workflow.hasWaitlistPriority,
+      currentWaitlistEntryId: workflow.currentWaitlistEntryId,
+      isAssigning: workflow.isAssigning,
+      isJoiningWaitlist: workflow.isJoiningWaitlist,
       ballPriceInput: ui.ballPriceInput,
       ballPriceCents: ui.ballPriceCents,
     },
 
-    // Setters
+    // Setters — shell from ui, workflow from workflow context
     setters: {
       setData: ui.setData,
       setCurrentScreen: ui.setCurrentScreen,
       setAvailableCourts: ui.setAvailableCourts,
-      setWaitlistPosition: ui.setWaitlistPosition,
+      setWaitlistPosition: workflow.setWaitlistPosition,
       setOperatingHours: ui.setOperatingHours,
       setShowSuccess: ui.setShowSuccess,
-      setReplacedGroup: ui.setReplacedGroup,
-      setDisplacement: ui.setDisplacement,
-      setOriginalCourtData: ui.setOriginalCourtData,
-      setCanChangeCourt: ui.setCanChangeCourt,
-      setChangeTimeRemaining: ui.setChangeTimeRemaining,
-      setIsTimeLimited: ui.setIsTimeLimited,
-      setTimeLimitReason: ui.setTimeLimitReason,
-      setShowAddPlayer: ui.setShowAddPlayer,
-      setIsChangingCourt: ui.setIsChangingCourt,
-      setWasOvertimeCourt: ui.setWasOvertimeCourt,
+      setReplacedGroup: workflow.setReplacedGroup,
+      setDisplacement: workflow.setDisplacement,
+      setOriginalCourtData: workflow.setOriginalCourtData,
+      setCanChangeCourt: workflow.setCanChangeCourt,
+      setChangeTimeRemaining: workflow.setChangeTimeRemaining,
+      setIsTimeLimited: workflow.setIsTimeLimited,
+      setTimeLimitReason: workflow.setTimeLimitReason,
+      setShowAddPlayer: workflow.setShowAddPlayer,
+      setIsChangingCourt: workflow.setIsChangingCourt,
+      setWasOvertimeCourt: workflow.setWasOvertimeCourt,
       setLastActivity: ui.setLastActivity,
       setCurrentTime: ui.setCurrentTime,
       setCourtToMove: ui.setCourtToMove,
-      setHasWaitlistPriority: ui.setHasWaitlistPriority,
-      setCurrentWaitlistEntryId: ui.setCurrentWaitlistEntryId,
-      setIsAssigning: ui.setIsAssigning,
-      setIsJoiningWaitlist: ui.setIsJoiningWaitlist,
+      setHasWaitlistPriority: workflow.setHasWaitlistPriority,
+      setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
+      setIsAssigning: workflow.setIsAssigning,
+      setIsJoiningWaitlist: workflow.setIsJoiningWaitlist,
       setBallPriceInput: ui.setBallPriceInput,
       setBallPriceCents: ui.setBallPriceCents,
       setIsUserTyping: ui.setIsUserTyping,
@@ -334,30 +357,14 @@ export function buildRegistrationReturn({
     // Players slice — group/guest management and member identity.
     players: { groupGuest, memberIdentity } satisfies PlayersSlice,
 
-    // Grouped court slice — ClearCourtFlow removed (now route-local in ClearCourtRoute).
+    // Grouped court slice — sourced from workflow context (key-based reset).
     court: {
-      courtAssignment: {
-        justAssignedCourt: domain.justAssignedCourt,
-        setJustAssignedCourt: domain.setJustAssignedCourt,
-        assignedSessionId: domain.assignedSessionId,
-        setAssignedSessionId: domain.setAssignedSessionId,
-        assignedEndTime: domain.assignedEndTime,
-        setAssignedEndTime: domain.setAssignedEndTime,
-        hasAssignedCourt: domain.hasAssignedCourt,
-        setHasAssignedCourt: domain.setHasAssignedCourt,
-      },
+      courtAssignment: workflow.courtAssignment,
     } satisfies CourtSlice,
 
-    // Grouped session slice — backward-compatible alias.
+    // Grouped session slice — streak from workflow context (key-based reset).
     session: {
-      streak: {
-        registrantStreak: domain.registrantStreak,
-        setRegistrantStreak: domain.setRegistrantStreak,
-        showStreakModal: domain.showStreakModal,
-        setShowStreakModal: domain.setShowStreakModal,
-        streakAcknowledged: domain.streakAcknowledged,
-        setStreakAcknowledged: domain.setStreakAcknowledged,
-      },
+      streak: workflow.streak,
       timeout: {
         showTimeoutWarning: timeout.showTimeoutWarning,
       },
@@ -424,5 +431,10 @@ export function buildRegistrationReturn({
 
     // Validation
     validateGroupCompat,
+
+    // Workflow reset — placeholder, overwritten by App.jsx with actual key bump function
+    resetWorkflow: () => {
+      throw new Error('resetWorkflow not wired — AppInner must set app.resetWorkflow');
+    },
   };
 }

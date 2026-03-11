@@ -12,7 +12,7 @@ import { logger } from '../../../lib/logger.js';
  * @param {Object} deps - Dependencies
  * @param {Object} deps.CONSTANTS - App constants (defined in main hook)
  */
-export function useRegistrationUiState({ CONSTANTS }) {
+export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }) {
   // ===== NAVIGATION STATE =====
   const [currentScreen, _setCurrentScreen] = useState('home');
 
@@ -37,29 +37,12 @@ export function useRegistrationUiState({ CONSTANTS }) {
 
   // ===== COURT/AVAILABILITY STATE =====
   const [availableCourts, setAvailableCourts] = useState([]);
-  const [waitlistPosition, setWaitlistPosition] = useState(0);
   const [operatingHours, setOperatingHours] = useState(null);
 
-  // ===== SUCCESS/ASSIGNMENT STATE =====
+  // ===== SUCCESS STATE =====
   const [showSuccess, setShowSuccess] = useState(false);
-  const [replacedGroup, setReplacedGroup] = useState(null);
-  const [displacement, setDisplacement] = useState(null);
-  const [originalCourtData, setOriginalCourtData] = useState(null);
-
-  // ===== COURT CHANGE STATE =====
-  const [canChangeCourt, setCanChangeCourt] = useState(false);
-  const [changeTimeRemaining, setChangeTimeRemaining] = useState(
-    CONSTANTS.CHANGE_COURT_TIMEOUT_SEC
-  );
-  const [isChangingCourt, setIsChangingCourt] = useState(false);
-  const [, setWasOvertimeCourt] = useState(false);
-
-  // ===== TIME LIMIT STATE =====
-  const [isTimeLimited, setIsTimeLimited] = useState(false);
-  const [timeLimitReason, setTimeLimitReason] = useState(null);
 
   // ===== UI FLAGS =====
-  const [showAddPlayer, setShowAddPlayer] = useState(false);
   const [, setLastActivity] = useState(() => Date.now());
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [, setIsUserTyping] = useState(false);
@@ -69,64 +52,27 @@ export function useRegistrationUiState({ CONSTANTS }) {
   const [ballPriceInput, setBallPriceInput] = useState('');
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
 
-  // ===== WAITLIST CTA STATE =====
-  const [hasWaitlistPriority, setHasWaitlistPriority] = useState(false);
-  const [currentWaitlistEntryId, setCurrentWaitlistEntryId] = useState(null);
-
-  // ===== ASYNC OPERATION FLAGS =====
-  const [isAssigning, setIsAssigning] = useState(false);
-  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
-
   return {
-    // State values
+    // State values (shell-owned only — workflow fields moved to WorkflowProvider)
     data,
     currentScreen,
     availableCourts,
-    waitlistPosition,
     operatingHours,
     showSuccess,
-    replacedGroup,
-    displacement,
-    originalCourtData,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
-    showAddPlayer,
-    isChangingCourt,
     currentTime,
     courtToMove,
-    hasWaitlistPriority,
-    currentWaitlistEntryId,
-    isAssigning,
-    isJoiningWaitlist,
     ballPriceInput,
     ballPriceCents,
 
-    // Setters
+    // Setters (shell-owned only)
     setData,
     setCurrentScreen,
     setAvailableCourts,
-    setWaitlistPosition,
     setOperatingHours,
     setShowSuccess,
-    setReplacedGroup,
-    setDisplacement,
-    setOriginalCourtData,
-    setCanChangeCourt,
-    setChangeTimeRemaining,
-    setIsTimeLimited,
-    setTimeLimitReason,
-    setShowAddPlayer,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
     setLastActivity,
     setCurrentTime,
     setCourtToMove,
-    setHasWaitlistPriority,
-    setCurrentWaitlistEntryId,
-    setIsAssigning,
-    setIsJoiningWaitlist,
     setBallPriceInput,
     setBallPriceCents,
     setIsUserTyping,

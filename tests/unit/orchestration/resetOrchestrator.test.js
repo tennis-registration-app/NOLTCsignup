@@ -3,6 +3,10 @@
  *
  * Tests resetFormOrchestrated and applyInactivityTimeoutOrchestrated
  * with mocked dependencies.
+ *
+ * After WorkflowProvider introduction, these orchestrators only handle
+ * shell-owned state. Workflow state resets automatically via key-based
+ * remount of WorkflowProvider.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -16,88 +20,32 @@ vi.mock('../../../src/lib/logger.js', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
-function createResetFormActions() {
-  return {
-    setCurrentGroup: vi.fn(),
+function createResetFormDeps(overrides = {}) {
+  const actions = {
     setShowSuccess: vi.fn(),
-    setMemberNumber: vi.fn(),
-    setCurrentMemberId: vi.fn(),
-    setJustAssignedCourt: vi.fn(),
-    setAssignedSessionId: vi.fn(),
-    setAssignedEndTime: vi.fn(),
-    setReplacedGroup: vi.fn(),
-    setDisplacement: vi.fn(),
-    setOriginalCourtData: vi.fn(),
-    setCanChangeCourt: vi.fn(),
-    setIsTimeLimited: vi.fn(),
     setCurrentScreen: vi.fn(),
     setSearchInput: vi.fn(),
     setShowSuggestions: vi.fn(),
-    setShowAddPlayer: vi.fn(),
     setAddPlayerSearch: vi.fn(),
     setShowAddPlayerSuggestions: vi.fn(),
-    setHasWaitlistPriority: vi.fn(),
-    setCurrentWaitlistEntryId: vi.fn(),
-    setWaitlistPosition: vi.fn(),
-    setIsChangingCourt: vi.fn(),
-    setWasOvertimeCourt: vi.fn(),
-    setCourtToMove: vi.fn(),
-    setHasAssignedCourt: vi.fn(),
-    setShowGuestForm: vi.fn(),
-    setGuestName: vi.fn(),
-    setGuestSponsor: vi.fn(),
-    setShowGuestNameError: vi.fn(),
-    setShowSponsorError: vi.fn(),
-    setRegistrantStreak: vi.fn(),
-    setShowStreakModal: vi.fn(),
-    setStreakAcknowledged: vi.fn(),
+    ...overrides.actions,
   };
-}
-
-function createResetFormDeps(overrides = {}) {
-  const actions = createResetFormActions();
   const services = {
-    clearCache: vi.fn(),
     clearSuccessResetTimer: vi.fn(),
     refresh: vi.fn().mockResolvedValue({}),
     ...overrides.services,
   };
-  return { actions, services, ...overrides };
+  return { actions, services };
 }
 
 function createTimeoutDeps(overrides = {}) {
   return {
-    setCurrentGroup: vi.fn(),
     setShowSuccess: vi.fn(),
-    setMemberNumber: vi.fn(),
-    setCurrentMemberId: vi.fn(),
-    setJustAssignedCourt: vi.fn(),
-    setReplacedGroup: vi.fn(),
-    setDisplacement: vi.fn(),
-    setOriginalCourtData: vi.fn(),
-    setCanChangeCourt: vi.fn(),
-    setIsTimeLimited: vi.fn(),
     setCurrentScreen: vi.fn(),
-    setAssignedSessionId: vi.fn(),
-    setAssignedEndTime: vi.fn(),
-    setCurrentWaitlistEntryId: vi.fn(),
-    setWaitlistPosition: vi.fn(),
-    setCourtToMove: vi.fn(),
-    setHasAssignedCourt: vi.fn(),
-    setShowGuestForm: vi.fn(),
-    setGuestName: vi.fn(),
-    setGuestSponsor: vi.fn(),
-    setRegistrantStreak: vi.fn(),
-    setShowStreakModal: vi.fn(),
-    setStreakAcknowledged: vi.fn(),
     setSearchInput: vi.fn(),
     setShowSuggestions: vi.fn(),
-    setShowAddPlayer: vi.fn(),
     setAddPlayerSearch: vi.fn(),
     setShowAddPlayerSuggestions: vi.fn(),
-    setHasWaitlistPriority: vi.fn(),
-    setIsChangingCourt: vi.fn(),
-    setWasOvertimeCourt: vi.fn(),
     clearSuccessResetTimer: vi.fn(),
     refresh: vi.fn().mockResolvedValue({}),
     ...overrides,
@@ -116,56 +64,10 @@ describe('resetFormOrchestrated', () => {
     expect(deps.services.clearSuccessResetTimer).toHaveBeenCalled();
   });
 
-  it('clears the frequent partners cache', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.services.clearCache).toHaveBeenCalled();
-  });
-
-  it('resets currentGroup to empty array', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setCurrentGroup).toHaveBeenCalledWith([]);
-  });
-
   it('resets showSuccess to false', async () => {
     const deps = createResetFormDeps();
     await resetFormOrchestrated(deps);
     expect(deps.actions.setShowSuccess).toHaveBeenCalledWith(false);
-  });
-
-  it('clears member identity fields', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setMemberNumber).toHaveBeenCalledWith('');
-    expect(deps.actions.setCurrentMemberId).toHaveBeenCalledWith(null);
-  });
-
-  it('clears assignment state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setJustAssignedCourt).toHaveBeenCalledWith(null);
-    expect(deps.actions.setAssignedSessionId).toHaveBeenCalledWith(null);
-    expect(deps.actions.setAssignedEndTime).toHaveBeenCalledWith(null);
-    expect(deps.actions.setHasAssignedCourt).toHaveBeenCalledWith(false);
-  });
-
-  it('clears replacement/displacement state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setReplacedGroup).toHaveBeenCalledWith(null);
-    expect(deps.actions.setDisplacement).toHaveBeenCalledWith(null);
-    expect(deps.actions.setOriginalCourtData).toHaveBeenCalledWith(null);
-  });
-
-  it('resets court change state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setCanChangeCourt).toHaveBeenCalledWith(false);
-    expect(deps.actions.setIsChangingCourt).toHaveBeenCalledWith(false);
-    expect(deps.actions.setWasOvertimeCourt).toHaveBeenCalledWith(false);
-    expect(deps.actions.setCourtToMove).toHaveBeenCalledWith(null);
-    expect(deps.actions.setIsTimeLimited).toHaveBeenCalledWith(false);
   });
 
   it('navigates to home screen', async () => {
@@ -179,35 +81,8 @@ describe('resetFormOrchestrated', () => {
     await resetFormOrchestrated(deps);
     expect(deps.actions.setSearchInput).toHaveBeenCalledWith('');
     expect(deps.actions.setShowSuggestions).toHaveBeenCalledWith(false);
-    expect(deps.actions.setShowAddPlayer).toHaveBeenCalledWith(false);
     expect(deps.actions.setAddPlayerSearch).toHaveBeenCalledWith('');
     expect(deps.actions.setShowAddPlayerSuggestions).toHaveBeenCalledWith(false);
-  });
-
-  it('clears waitlist state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setHasWaitlistPriority).toHaveBeenCalledWith(false);
-    expect(deps.actions.setCurrentWaitlistEntryId).toHaveBeenCalledWith(null);
-    expect(deps.actions.setWaitlistPosition).toHaveBeenCalledWith(0);
-  });
-
-  it('clears guest form state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setShowGuestForm).toHaveBeenCalledWith(false);
-    expect(deps.actions.setGuestName).toHaveBeenCalledWith('');
-    expect(deps.actions.setGuestSponsor).toHaveBeenCalledWith('');
-    expect(deps.actions.setShowGuestNameError).toHaveBeenCalledWith(false);
-    expect(deps.actions.setShowSponsorError).toHaveBeenCalledWith(false);
-  });
-
-  it('clears streak state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setRegistrantStreak).toHaveBeenCalledWith(0);
-    expect(deps.actions.setShowStreakModal).toHaveBeenCalledWith(false);
-    expect(deps.actions.setStreakAcknowledged).toHaveBeenCalledWith(false);
   });
 
   it('calls refresh after reset when available', async () => {
@@ -247,32 +122,10 @@ describe('applyInactivityTimeoutOrchestrated', () => {
     expect(deps.setCurrentScreen).toHaveBeenCalledWith('home', 'sessionTimeout');
   });
 
-  it('clears all core state', async () => {
+  it('resets showSuccess to false', async () => {
     const deps = createTimeoutDeps();
     await applyInactivityTimeoutOrchestrated(deps);
-    expect(deps.setCurrentGroup).toHaveBeenCalledWith([]);
     expect(deps.setShowSuccess).toHaveBeenCalledWith(false);
-    expect(deps.setMemberNumber).toHaveBeenCalledWith('');
-    expect(deps.setCurrentMemberId).toHaveBeenCalledWith(null);
-    expect(deps.setJustAssignedCourt).toHaveBeenCalledWith(null);
-  });
-
-  it('clears privacy-sensitive state', async () => {
-    const deps = createTimeoutDeps();
-    await applyInactivityTimeoutOrchestrated(deps);
-    expect(deps.setAssignedSessionId).toHaveBeenCalledWith(null);
-    expect(deps.setAssignedEndTime).toHaveBeenCalledWith(null);
-    expect(deps.setCurrentWaitlistEntryId).toHaveBeenCalledWith(null);
-    expect(deps.setGuestName).toHaveBeenCalledWith('');
-    expect(deps.setGuestSponsor).toHaveBeenCalledWith('');
-  });
-
-  it('clears streak state', async () => {
-    const deps = createTimeoutDeps();
-    await applyInactivityTimeoutOrchestrated(deps);
-    expect(deps.setRegistrantStreak).toHaveBeenCalledWith(0);
-    expect(deps.setShowStreakModal).toHaveBeenCalledWith(false);
-    expect(deps.setStreakAcknowledged).toHaveBeenCalledWith(false);
   });
 
   it('clears search and add-player UI', async () => {
@@ -280,16 +133,8 @@ describe('applyInactivityTimeoutOrchestrated', () => {
     await applyInactivityTimeoutOrchestrated(deps);
     expect(deps.setSearchInput).toHaveBeenCalledWith('');
     expect(deps.setShowSuggestions).toHaveBeenCalledWith(false);
-    expect(deps.setShowAddPlayer).toHaveBeenCalledWith(false);
     expect(deps.setAddPlayerSearch).toHaveBeenCalledWith('');
     expect(deps.setShowAddPlayerSuggestions).toHaveBeenCalledWith(false);
-  });
-
-  it('resets court-change state', async () => {
-    const deps = createTimeoutDeps();
-    await applyInactivityTimeoutOrchestrated(deps);
-    expect(deps.setIsChangingCourt).toHaveBeenCalledWith(false);
-    expect(deps.setWasOvertimeCourt).toHaveBeenCalledWith(false);
   });
 
   it('calls refresh after timeout when available', async () => {

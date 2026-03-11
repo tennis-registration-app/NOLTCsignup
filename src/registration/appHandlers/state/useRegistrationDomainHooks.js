@@ -2,7 +2,9 @@
  * useRegistrationDomainHooks - Consolidated domain hook calls
  * Extracted from useRegistrationAppState.js
  *
- * Contains all 13 domain hook invocations with their destructured returns.
+ * Contains shell-owned domain hook invocations (8 hooks).
+ * Workflow hooks (useGroupGuest, useStreak, useCourtAssignmentResult, useMemberIdentity)
+ * have moved to WorkflowProvider.
  */
 
 import { logger } from '../../../lib/logger.js';
@@ -22,23 +24,11 @@ import { useMobileFlowController } from '../../ui/mobile';
 // Member search hook
 import { useMemberSearch } from '../../search/useMemberSearch.js';
 
-// Court assignment result hook
-import { useCourtAssignmentResult } from '../../court/useCourtAssignmentResult';
-
 // Block admin hook
 import { useBlockAdmin } from '../../blocks/useBlockAdmin';
 
 // Waitlist admin hook
 import { useWaitlistAdmin } from '../../waitlist/useWaitlistAdmin';
-
-// Group/Guest hook
-import { useGroupGuest } from '../../group/useGroupGuest';
-
-// Streak hook
-import { useStreak } from '../../streak/useStreak';
-
-// Member identity hook
-import { useMemberIdentity } from '../../memberIdentity/useMemberIdentity';
 
 // Debug utilities
 const DEBUG = false;
@@ -88,58 +78,8 @@ export function useRegistrationDomainHooks({
   // Guest counter hook
   const { guestCounter, incrementGuestCounter } = useGuestCounter();
 
-  // Court assignment result hook
-  const {
-    justAssignedCourt: courtAssignmentJustAssigned,
-    assignedSessionId,
-    assignedEndTime,
-    hasAssignedCourt,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setAssignedEndTime,
-    setHasAssignedCourt,
-  } = useCourtAssignmentResult();
-
-  // Group/Guest hook
-  const {
-    currentGroup,
-    guestName,
-    guestSponsor,
-    showGuestForm,
-    showGuestNameError,
-    showSponsorError,
-    setCurrentGroup,
-    setGuestName,
-    setGuestSponsor,
-    setShowGuestForm,
-    setShowGuestNameError,
-    setShowSponsorError,
-    handleRemovePlayer,
-    handleSelectSponsor,
-    handleCancelGuest,
-  } = useGroupGuest();
-
-  // Streak hook
-  const {
-    registrantStreak,
-    showStreakModal,
-    streakAcknowledged,
-    setRegistrantStreak,
-    setShowStreakModal,
-    setStreakAcknowledged,
-  } = useStreak();
-
-  // Member identity hook
-  const {
-    memberNumber,
-    currentMemberId,
-    frequentPartners,
-    frequentPartnersLoading,
-    setMemberNumber,
-    setCurrentMemberId,
-    fetchFrequentPartners,
-    clearCache,
-  } = useMemberIdentity({ backend });
+  // NOTE: useGroupGuest, useStreak, useCourtAssignmentResult, useMemberIdentity
+  // have moved to WorkflowProvider (key-based reset).
 
   // Member search hook
   const {
@@ -231,7 +171,9 @@ export function useRegistrationDomainHooks({
     backend,
   });
 
-  // Return all values in a flat object
+  // Return shell-owned values only.
+  // Workflow hooks (groupGuest, streak, courtAssignment, memberIdentity)
+  // now come from WorkflowContext.
   return {
     // Alert display
     showAlert,
@@ -250,51 +192,6 @@ export function useRegistrationDomainHooks({
     // Guest counter
     guestCounter,
     incrementGuestCounter,
-
-    // Court assignment result
-    justAssignedCourt: courtAssignmentJustAssigned,
-    assignedSessionId,
-    assignedEndTime,
-    hasAssignedCourt,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setAssignedEndTime,
-    setHasAssignedCourt,
-
-    // Group/Guest
-    currentGroup,
-    guestName,
-    guestSponsor,
-    showGuestForm,
-    showGuestNameError,
-    showSponsorError,
-    setCurrentGroup,
-    setGuestName,
-    setGuestSponsor,
-    setShowGuestForm,
-    setShowGuestNameError,
-    setShowSponsorError,
-    handleRemovePlayer,
-    handleSelectSponsor,
-    handleCancelGuest,
-
-    // Streak
-    registrantStreak,
-    showStreakModal,
-    streakAcknowledged,
-    setRegistrantStreak,
-    setShowStreakModal,
-    setStreakAcknowledged,
-
-    // Member identity
-    memberNumber,
-    currentMemberId,
-    frequentPartners,
-    frequentPartnersLoading,
-    setMemberNumber,
-    setCurrentMemberId,
-    fetchFrequentPartners,
-    clearCache,
 
     // Member search
     searchInput,

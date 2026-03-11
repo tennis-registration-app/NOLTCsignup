@@ -46,6 +46,9 @@ import { buildRegistrationReturn } from './state/buildRegistrationReturn';
 // Effects module
 import { useRegistrationEffects } from './effects/useRegistrationEffects';
 
+// Workflow context — provides per-flow state that resets via key-based remount
+import { useWorkflowContext } from '../context/WorkflowProvider';
+
 // Orchestration facade
 import {
   applyInactivityTimeoutOrchestrated,
@@ -116,7 +119,10 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     UPDATE_INTERVAL_MS: TENNIS_CONFIG.TIMING.UPDATE_INTERVAL_MS,
   };
 
-  // ===== UI STATE MODULE =====
+  // ===== WORKFLOW CONTEXT (per-flow state, resets on key bump) =====
+  const workflow = useWorkflowContext();
+
+  // ===== UI STATE MODULE (shell-owned only) =====
   const ui = useRegistrationUiState({ CONSTANTS });
   // Destructure for internal use
   const {
@@ -129,22 +135,10 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     setAvailableCourts,
     setOperatingHours,
     setShowSuccess,
-    setReplacedGroup,
-    setDisplacement,
-    setOriginalCourtData,
-    setCanChangeCourt,
-    setIsTimeLimited,
-    setShowAddPlayer,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
     setLastActivity,
     setCurrentTime,
-    setCourtToMove,
-    setHasWaitlistPriority,
-    setCurrentWaitlistEntryId,
     setBallPriceCents,
     setIsUserTyping,
-    setWaitlistPosition,
   } = ui;
 
   // ===== RUNTIME MODULE =====
@@ -173,13 +167,13 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     typingTimeoutRef,
   });
 
-  // ===== DOMAIN HOOKS MODULE =====
+  // ===== DOMAIN HOOKS MODULE (shell-owned only) =====
   const domain = useRegistrationDomainHooks({
     backend,
     CONSTANTS,
     setCurrentScreen,
     showSuccess,
-    justAssignedCourt: null, // Not available yet at this point
+    justAssignedCourt: workflow.courtAssignment.justAssignedCourt,
     isMobile: API_CONFIG.IS_MOBILE,
     toast: /** @type {Function} */ (typeof window !== 'undefined' ? _toast : () => {}),
     markUserTyping,
@@ -189,62 +183,26 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   // Destructure for internal use
   const {
     showAlertMessage,
-    setJustAssignedCourt,
-    setAssignedSessionId,
-    setAssignedEndTime,
-    setCurrentGroup,
-    setShowGuestForm,
-    setGuestName,
-    setGuestSponsor,
-    setRegistrantStreak,
-    setShowStreakModal,
-    setStreakAcknowledged,
     setSearchInput,
     setShowSuggestions,
     setAddPlayerSearch,
     setShowAddPlayerSuggestions,
-    setHasAssignedCourt,
-    setMemberNumber,
-    setCurrentMemberId,
     setApiMembers,
-    currentMemberId,
-    fetchFrequentPartners,
   } = domain;
+  // Workflow-owned fields come from context
+  const { currentMemberId, fetchFrequentPartners } = workflow.memberIdentity;
 
   // Inactivity timeout exit sequence (must be defined before useSessionTimeout)
+  // Workflow-owned state resets via key bump (resetWorkflow from App.jsx).
+  // This function handles shell-level cleanup only.
   function applyInactivityTimeoutExitSequence() {
     applyInactivityTimeoutOrchestrated({
-      setCurrentGroup,
       setShowSuccess,
-      setMemberNumber,
-      setCurrentMemberId,
-      setJustAssignedCourt,
-      setReplacedGroup,
-      setDisplacement,
-      setOriginalCourtData,
-      setCanChangeCourt,
-      setIsTimeLimited,
       setCurrentScreen,
-      setAssignedSessionId,
-      setAssignedEndTime,
-      setCurrentWaitlistEntryId,
-      setWaitlistPosition,
-      setCourtToMove,
-      setHasAssignedCourt,
-      setShowGuestForm,
-      setGuestName,
-      setGuestSponsor,
-      setRegistrantStreak,
-      setShowStreakModal,
-      setStreakAcknowledged,
       setSearchInput,
       setShowSuggestions,
-      setShowAddPlayer,
       setAddPlayerSearch,
       setShowAddPlayerSuggestions,
-      setHasWaitlistPriority,
-      setIsChangingCourt,
-      setWasOvertimeCourt,
       clearSuccessResetTimer,
       refresh: () => backend.queries.refresh(),
     });
@@ -307,6 +265,7 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   return buildRegistrationReturn({
     ui,
     domain,
+    workflow,
     runtime,
     _dataLayer: dataLayer,
     helpers,

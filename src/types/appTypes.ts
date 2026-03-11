@@ -404,8 +404,10 @@ export interface AppState {
   handleAddPlayerSuggestionClickOrchestrated: (suggestion: AutocompleteSuggestion, deps: AddPlayerSuggestionClickDeps) => Promise<void>;
   // Evidence: courtChangeOrchestrator.ts:19 — (deps) => void
   changeCourtOrchestrated: (deps: CourtChangeDeps) => void;
-  // Evidence: resetOrchestrator.ts:57 — async (deps) => void
+  // Evidence: resetOrchestrator.ts:44 — async (deps) => void
   resetFormOrchestrated: (deps: ResetFormDeps) => Promise<void>;
+  /** Bumps WorkflowProvider key, remounting all workflow-owned state to initial values */
+  resetWorkflow: () => void;
   // Evidence: useRegistrationDomainHooks.js:48 — (...args) => { if (DEBUG) logger.debug(...) }
   dbg: (...args: unknown[]) => void;
   /** Debug mode flag */
