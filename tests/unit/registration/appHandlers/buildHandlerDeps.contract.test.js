@@ -87,7 +87,14 @@ describe('buildHandlerDeps contract', () => {
   });
 
   describe('buildGroupHandlerDeps', () => {
-    const deps = buildGroupHandlerDeps(mockApp, mockCore, mockCourt);
+    const mockGroupWorkflow = {
+      groupGuest: { currentGroup: [], setCurrentGroup: () => {} },
+      streak: { streakCount: 0 },
+      memberIdentity: { setMemberNumber: () => {} },
+      setShowAddPlayer: () => {},
+      setHasWaitlistPriority: () => {},
+    };
+    const deps = buildGroupHandlerDeps(mockApp, mockGroupWorkflow, mockCore, mockCourt);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -110,10 +117,29 @@ describe('buildHandlerDeps contract', () => {
         'streak',
       ]);
     });
+
+    it('sources workflow fields from workflow, not app', () => {
+      expect(deps.groupGuest).toBe(mockGroupWorkflow.groupGuest);
+      expect(deps.streak).toBe(mockGroupWorkflow.streak);
+      expect(deps.memberIdentity).toBe(mockGroupWorkflow.memberIdentity);
+      expect(deps.setters.setShowAddPlayer).toBe(mockGroupWorkflow.setShowAddPlayer);
+      expect(deps.setters.setHasWaitlistPriority).toBe(mockGroupWorkflow.setHasWaitlistPriority);
+    });
+
+    it('sources shell fields from app', () => {
+      expect(deps.derived).toBe(mockApp.derived);
+      expect(deps.mobile).toBe(mockApp.mobile);
+      expect(deps.services).toBe(mockApp.services);
+    });
   });
 
   describe('buildGuestHandlerDeps', () => {
-    const deps = buildGuestHandlerDeps(mockApp);
+    const mockGuestWorkflow = {
+      groupGuest: { currentGroup: [], setCurrentGroup: () => {} },
+      memberIdentity: { memberNumber: '' },
+      setShowAddPlayer: () => {},
+    };
+    const deps = buildGuestHandlerDeps(mockApp, mockGuestWorkflow);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -126,6 +152,18 @@ describe('buildHandlerDeps contract', () => {
         'search',
         'setters',
       ]);
+    });
+
+    it('sources workflow fields from workflow, not app', () => {
+      expect(deps.groupGuest).toBe(mockGuestWorkflow.groupGuest);
+      expect(deps.memberIdentity).toBe(mockGuestWorkflow.memberIdentity);
+      expect(deps.setters.setShowAddPlayer).toBe(mockGuestWorkflow.setShowAddPlayer);
+    });
+
+    it('sources shell fields from app', () => {
+      expect(deps.guestCounterHook).toBe(mockApp.session.guestCounterHook);
+      expect(deps.derived).toBe(mockApp.derived);
+      expect(deps.search).toBe(mockApp.search);
     });
   });
 

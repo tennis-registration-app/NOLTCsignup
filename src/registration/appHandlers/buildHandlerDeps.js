@@ -39,18 +39,23 @@ export function buildCourtHandlerDeps(app, core) {
 
 /**
  * @param {import('../../types/appTypes').AppState} app
+ * @param {object} workflow - WorkflowContext value (subset for group)
  * @param {{ clearSuccessResetTimer: Function, resetForm: Function, isPlayerAlreadyPlaying: Function }} core
  * @param {object} court - Return value of useCourtHandlers
  */
-export function buildGroupHandlerDeps(app, core, court) {
+export function buildGroupHandlerDeps(app, workflow, core, court) {
   return {
-    groupGuest: app.players.groupGuest,
+    groupGuest: workflow.groupGuest,
     derived: app.derived,
     mobile: app.mobile,
-    streak: app.session.streak,
+    streak: workflow.streak,
     search: app.search,
-    memberIdentity: app.players.memberIdentity,
-    setters: app.setters,
+    memberIdentity: workflow.memberIdentity,
+    setters: {
+      ...app.setters,
+      setShowAddPlayer: workflow.setShowAddPlayer,
+      setHasWaitlistPriority: workflow.setHasWaitlistPriority,
+    },
     alert: app.alert,
     refs: app.refs,
     services: app.services,
@@ -65,14 +70,15 @@ export function buildGroupHandlerDeps(app, core, court) {
 
 /**
  * @param {import('../../types/appTypes').AppState} app
+ * @param {object} workflow - WorkflowContext value (subset for guest)
  */
-export function buildGuestHandlerDeps(app) {
+export function buildGuestHandlerDeps(app, workflow) {
   return {
-    groupGuest: app.players.groupGuest,
+    groupGuest: workflow.groupGuest,
     guestCounterHook: app.session.guestCounterHook,
-    memberIdentity: app.players.memberIdentity,
+    memberIdentity: workflow.memberIdentity,
     derived: app.derived,
-    setters: app.setters,
+    setters: { ...app.setters, setShowAddPlayer: workflow.setShowAddPlayer },
     search: app.search,
     helpers: app.helpers,
   };

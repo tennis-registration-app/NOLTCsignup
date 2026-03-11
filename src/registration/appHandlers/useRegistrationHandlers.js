@@ -106,12 +106,12 @@ export function useRegistrationHandlers({ app }) {
   // ============================================
   // Guest Handlers (extracted to guestHandlers.js)
   // ============================================
-  const guestHandlers = useGuestHandlers(buildGuestHandlerDeps(app));
+  const guestHandlers = useGuestHandlers(buildGuestHandlerDeps(app, workflow));
 
   // ============================================================
   // Group Handlers (extracted to groupHandlers.js)
   // ============================================================
-  const groupHandlers = useGroupHandlers(buildGroupHandlerDeps(app, core, courtHandlers));
+  const groupHandlers = useGroupHandlers(buildGroupHandlerDeps(app, workflow, core, courtHandlers));
 
   // ============================================================
   // Navigation Handlers (extracted to navigationHandlers.js)
