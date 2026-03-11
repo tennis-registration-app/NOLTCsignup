@@ -128,10 +128,33 @@ function legacyCourtScreenModelProps(app, computed) {
 }
 
 /**
+ * Extract workflow-shaped object from app — simulates what
+ * CourtRoute reads from useWorkflowContext().
+ * This verifies the presenter produces identical output whether
+ * the workflow fields come from context or from app.
+ */
+function extractWorkflowFromApp(app) {
+  return {
+    groupGuest: app.players.groupGuest,
+    courtAssignment: app.court.courtAssignment,
+    hasWaitlistPriority: app.state.hasWaitlistPriority,
+    currentWaitlistEntryId: app.state.currentWaitlistEntryId,
+    isChangingCourt: app.state.isChangingCourt,
+    displacement: app.state.displacement,
+    originalCourtData: app.state.originalCourtData,
+    setDisplacement: app.setters.setDisplacement,
+    setIsChangingCourt: app.setters.setIsChangingCourt,
+    setWasOvertimeCourt: app.setters.setWasOvertimeCourt,
+    setOriginalCourtData: app.setters.setOriginalCourtData,
+  };
+}
+
+/**
  * Presenter-based model prop mapping
  */
 function presenterCourtScreenModelProps(app, computed) {
-  return buildCourtModel(app, computed);
+  const workflow = extractWorkflowFromApp(app);
+  return buildCourtModel(app, workflow, computed);
 }
 
 /**

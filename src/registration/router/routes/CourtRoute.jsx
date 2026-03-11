@@ -7,11 +7,17 @@ import { API_CONFIG } from '../../../lib/apiConfig.js';
 import { logger } from '../../../lib/logger.js';
 import { buildCourtModel, buildCourtActions } from '../presenters';
 
+// Direct workflow context — CourtRoute reads workflow-owned state from context
+import { useWorkflowContext } from '../../context/WorkflowProvider';
+
 /**
  * CourtRoute
  * Extracted from RegistrationRouter
  * Collapsed to app/handlers only
  * Refactored to use presenter functions
+ *
+ * Workflow-owned state is read directly from WorkflowContext.
+ * Shell/global state continues to come from app.
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -19,10 +25,13 @@ import { buildCourtModel, buildCourtActions } from '../presenters';
  * }} props
  */
 export function CourtRoute({ app, handlers }) {
+  // Workflow state — read directly from context
+  const workflow = useWorkflowContext();
+
   // Destructure only what the route template needs (not action handlers)
-  const { state, alert, mobile, players, computeRegistrationCourtSelection } = app;
-  const { hasWaitlistPriority } = state;
-  const { currentGroup } = players.groupGuest;
+  const { alert, mobile, computeRegistrationCourtSelection } = app;
+  const { hasWaitlistPriority } = workflow;
+  const { currentGroup } = workflow.groupGuest;
   const { showAlert, alertMessage } = alert;
   const {
     showQRScanner,
@@ -68,8 +77,8 @@ export function CourtRoute({ app, handlers }) {
     waitingGroupsCount: courtData.waitlist.length,
     upcomingBlocks: courtData.upcomingBlocks,
   };
-  const model = buildCourtModel(app, computed);
-  const actions = buildCourtActions(app, handlers, { computedAvailableCourts });
+  const model = buildCourtModel(app, workflow, computed);
+  const actions = buildCourtActions(app, workflow, handlers, { computedAvailableCourts });
 
   return (
     <>

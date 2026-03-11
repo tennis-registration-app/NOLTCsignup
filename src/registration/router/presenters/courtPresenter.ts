@@ -7,8 +7,27 @@
  * Extracted from CourtRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, CourtDataMutable, GroupPlayer, Handlers, UpcomingBlock } from '../../../types/appTypes.js';
+import type { AppState, CourtDataMutable, DisplacementInfo, GroupPlayer, Handlers, OriginalCourtData, UpcomingBlock } from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger.js';
+
+/** Workflow-owned fields that buildCourtModel and buildCourtActions read. */
+export interface CourtWorkflow {
+  groupGuest: {
+    currentGroup: GroupPlayer[] | null;
+  };
+  courtAssignment: {
+    justAssignedCourt: number | null;
+  };
+  hasWaitlistPriority: boolean;
+  currentWaitlistEntryId: string | null;
+  isChangingCourt: boolean;
+  displacement: DisplacementInfo | null;
+  originalCourtData: OriginalCourtData | null;
+  setDisplacement: (v: DisplacementInfo | null) => void;
+  setIsChangingCourt: (v: boolean) => void;
+  setWasOvertimeCourt: (v: boolean) => void;
+  setOriginalCourtData: (v: OriginalCourtData | null) => void;
+}
 
 export interface CourtModelComputed {
   availableCourts: number[];
@@ -47,14 +66,19 @@ export interface CourtActions {
 }
 
 /**
- * Build the model (data) props for CourtSelectionScreen
+ * Build the model (data) props for CourtSelectionScreen.
+ *
+ * Workflow-owned fields come from the `workflow` parameter (WorkflowContext).
+ * Shell/global fields come from `app`.
  */
-export function buildCourtModel(app: AppState, computed: CourtModelComputed): CourtModel {
-  // Destructure from app (verbatim from CourtRoute)
-  const { derived, players, state } = app;
+export function buildCourtModel(app: AppState, workflow: CourtWorkflow, computed: CourtModelComputed): CourtModel {
+  // Shell fields from app
+  const { derived } = app;
   const { isMobileView } = derived;
-  const { currentGroup } = players.groupGuest;
-  const { hasWaitlistPriority, currentWaitlistEntryId } = state;
+
+  // Workflow fields from context
+  const { currentGroup } = workflow.groupGuest;
+  const { hasWaitlistPriority, currentWaitlistEntryId } = workflow;
 
   return {
     // Computed values (from route)
@@ -63,37 +87,45 @@ export function buildCourtModel(app: AppState, computed: CourtModelComputed): Co
     hasWaitingGroups: computed.hasWaitingGroups,
     waitingGroupsCount: computed.waitingGroupsCount,
     upcomingBlocks: computed.upcomingBlocks,
-    // Direct state values
+    // Direct state values — workflow-sourced
     currentGroup,
-    isMobileView,
     hasWaitlistPriority,
     currentWaitlistEntryId,
+    // Direct state values — shell-sourced
+    isMobileView,
   };
 }
 
 /**
- * Build the actions (callback) props for CourtSelectionScreen
+ * Build the actions (callback) props for CourtSelectionScreen.
+ *
+ * Workflow-owned reads/setters come from the `workflow` parameter (WorkflowContext).
+ * Shell/global fields come from `app` and `handlers`.
  */
 export function buildCourtActions(
   app: AppState,
+  workflow: CourtWorkflow,
   handlers: Handlers,
   computed: CourtActionsComputed
 ): CourtActions {
-  // Destructure from app
-  const { state, mobile, refs, setters, players, court, CONSTANTS } = app;
-  const { courtAssignment } = court;
-  const { isChangingCourt, displacement, originalCourtData } = state;
-  const { justAssignedCourt } = courtAssignment;
-  const { currentGroup } = players.groupGuest;
-  const { mobileFlow } = mobile;
-  const { successResetTimerRef } = refs;
+  // Workflow fields from context
+  const { isChangingCourt, displacement, originalCourtData } = workflow;
+  const { justAssignedCourt } = workflow.courtAssignment;
+  const { currentGroup } = workflow.groupGuest;
   const {
     setDisplacement,
     setIsChangingCourt,
     setWasOvertimeCourt,
+    setOriginalCourtData,
+  } = workflow;
+
+  // Shell fields from app
+  const { mobile, refs, setters, CONSTANTS } = app;
+  const { mobileFlow } = mobile;
+  const { successResetTimerRef } = refs;
+  const {
     setShowSuccess,
     setCurrentScreen,
-    setOriginalCourtData,
   } = setters;
 
   // Destructure from handlers
