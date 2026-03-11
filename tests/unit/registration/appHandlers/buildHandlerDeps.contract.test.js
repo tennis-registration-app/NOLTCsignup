@@ -149,7 +149,13 @@ describe('buildHandlerDeps contract', () => {
   });
 
   describe('buildNavigationHandlerDeps', () => {
-    const deps = buildNavigationHandlerDeps(mockApp);
+    const mockWorkflow = {
+      groupGuest: { currentGroup: [], setCurrentGroup: () => {} },
+      memberIdentity: { setMemberNumber: () => {} },
+      showAddPlayer: false,
+      setShowAddPlayer: () => {},
+    };
+    const deps = buildNavigationHandlerDeps(mockApp, mockWorkflow);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -162,6 +168,13 @@ describe('buildHandlerDeps contract', () => {
         'setters',
         'state',
       ]);
+    });
+
+    it('sources workflow fields from workflow, not app', () => {
+      expect(deps.groupGuest).toBe(mockWorkflow.groupGuest);
+      expect(deps.memberIdentity).toBe(mockWorkflow.memberIdentity);
+      expect(deps.state.showAddPlayer).toBe(mockWorkflow.showAddPlayer);
+      expect(deps.setters.setShowAddPlayer).toBe(mockWorkflow.setShowAddPlayer);
     });
   });
 });

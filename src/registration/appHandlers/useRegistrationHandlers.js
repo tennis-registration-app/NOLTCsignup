@@ -12,6 +12,9 @@ import {
 // Import validation services
 import { TennisBusinessLogic } from '@lib';
 
+// Workflow context — handler-context injection for workflow-owned state
+import { useWorkflowContext } from '../context/WorkflowProvider';
+
 // Centralized handler deps builders
 import {
   buildCourtHandlerDeps,
@@ -34,6 +37,9 @@ import {
  */
 export function useRegistrationHandlers({ app }) {
   const { resetFormOrchestrated, resetWorkflow } = app;
+
+  // Workflow context — sourced directly instead of via app compatibility layer
+  const workflow = useWorkflowContext();
 
   // ===== UTILITY FUNCTIONS =====
 
@@ -110,7 +116,7 @@ export function useRegistrationHandlers({ app }) {
   // ============================================================
   // Navigation Handlers (extracted to navigationHandlers.js)
   // ============================================================
-  const navigationHandlers = useNavigationHandlers(buildNavigationHandlerDeps(app));
+  const navigationHandlers = useNavigationHandlers(buildNavigationHandlerDeps(app, workflow));
 
   // ===== RETURN ALL HANDLERS =====
   return {

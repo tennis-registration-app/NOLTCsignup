@@ -98,13 +98,14 @@ export function buildAdminHandlerDeps(app, court) {
 
 /**
  * @param {import('../../types/appTypes').AppState} app
+ * @param {object} workflow - WorkflowContext value (subset for navigation)
  */
-export function buildNavigationHandlerDeps(app) {
+export function buildNavigationHandlerDeps(app, workflow) {
   return {
-    state: app.state,
-    setters: app.setters,
-    groupGuest: app.players.groupGuest,
-    memberIdentity: app.players.memberIdentity,
+    state: { ...app.state, showAddPlayer: workflow.showAddPlayer },
+    setters: { ...app.setters, setShowAddPlayer: workflow.setShowAddPlayer },
+    groupGuest: workflow.groupGuest,
+    memberIdentity: workflow.memberIdentity,
     mobile: app.mobile,
     alert: app.alert,
     TENNIS_CONFIG: app.TENNIS_CONFIG,
