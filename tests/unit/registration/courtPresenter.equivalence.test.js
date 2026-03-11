@@ -13,7 +13,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { WorkflowProvider } from '../../../src/registration/context/WorkflowProvider.jsx';
+import { WorkflowProvider, useWorkflowContext } from '../../../src/registration/context/WorkflowProvider.jsx';
 
 // Mock all platform/window dependencies before importing hooks
 vi.mock('../../../src/platform/windowBridge.js', () => ({
@@ -101,16 +101,15 @@ import { useRegistrationAppState } from '../../../src/registration/appHandlers/u
 import { buildCourtModel } from '../../../src/registration/router/presenters/courtPresenter.js';
 
 /**
- * Legacy CourtRoute model prop mapping — VERBATIM from CourtRoute.jsx
- * This is the source of truth we're testing against.
+ * Legacy CourtRoute model prop mapping — updated to match current CourtRoute.jsx
+ * which sources workflow fields from WorkflowContext (not app.state).
  * (Handlers excluded - only model props)
  */
-function legacyCourtScreenModelProps(app, computed) {
-  // Destructure from app (verbatim from CourtRoute)
-  const { derived, players, state } = app;
+function legacyCourtScreenModelProps(app, workflow, computed) {
+  const { derived } = app;
   const { isMobileView } = derived;
-  const { currentGroup } = players.groupGuest;
-  const { hasWaitlistPriority, currentWaitlistEntryId } = state;
+  const { currentGroup } = workflow.groupGuest;
+  const { hasWaitlistPriority, currentWaitlistEntryId } = workflow;
 
   return {
     // Computed values (from route)
@@ -128,33 +127,31 @@ function legacyCourtScreenModelProps(app, computed) {
 }
 
 /**
- * Extract workflow-shaped object from app — simulates what
- * CourtRoute reads from useWorkflowContext().
- * This verifies the presenter produces identical output whether
- * the workflow fields come from context or from app.
+ * Build workflow object from captured WorkflowContext value —
+ * mirrors what CourtRoute reads from useWorkflowContext().
  */
-function extractWorkflowFromApp(app) {
+function buildWorkflowForPresenter(workflow) {
   return {
-    groupGuest: app.players.groupGuest,
-    courtAssignment: app.court.courtAssignment,
-    hasWaitlistPriority: app.state.hasWaitlistPriority,
-    currentWaitlistEntryId: app.state.currentWaitlistEntryId,
-    isChangingCourt: app.state.isChangingCourt,
-    displacement: app.state.displacement,
-    originalCourtData: app.state.originalCourtData,
-    setDisplacement: app.setters.setDisplacement,
-    setIsChangingCourt: app.setters.setIsChangingCourt,
-    setWasOvertimeCourt: app.setters.setWasOvertimeCourt,
-    setOriginalCourtData: app.setters.setOriginalCourtData,
+    groupGuest: workflow.groupGuest,
+    courtAssignment: workflow.courtAssignment,
+    hasWaitlistPriority: workflow.hasWaitlistPriority,
+    currentWaitlistEntryId: workflow.currentWaitlistEntryId,
+    isChangingCourt: workflow.isChangingCourt,
+    displacement: workflow.displacement,
+    originalCourtData: workflow.originalCourtData,
+    setDisplacement: workflow.setDisplacement,
+    setIsChangingCourt: workflow.setIsChangingCourt,
+    setWasOvertimeCourt: workflow.setWasOvertimeCourt,
+    setOriginalCourtData: workflow.setOriginalCourtData,
   };
 }
 
 /**
  * Presenter-based model prop mapping
  */
-function presenterCourtScreenModelProps(app, computed) {
-  const workflow = extractWorkflowFromApp(app);
-  return buildCourtModel(app, workflow, computed);
+function presenterCourtScreenModelProps(app, workflow, computed) {
+  const w = buildWorkflowForPresenter(workflow);
+  return buildCourtModel(app, w, computed);
 }
 
 /**
@@ -162,11 +159,12 @@ function presenterCourtScreenModelProps(app, computed) {
  */
 function HookCapture({ onResult }) {
   const app = useRegistrationAppState({ isMobileView: false });
+  const workflow = useWorkflowContext();
 
   // Capture immediately during first render
   if (onResult._captured === undefined) {
-    onResult._captured = app;
-    onResult(app);
+    onResult._captured = { app, workflow };
+    onResult({ app, workflow });
   }
 
   return null;
@@ -221,6 +219,7 @@ function captureHookResult() {
 
 describe('CourtSelectionScreen presenter equivalence (model only)', () => {
   let app;
+  let workflow;
   let legacy;
   let presenter;
 
@@ -234,9 +233,11 @@ describe('CourtSelectionScreen presenter equivalence (model only)', () => {
   };
 
   beforeAll(async () => {
-    app = await captureHookResult();
-    legacy = legacyCourtScreenModelProps(app, mockComputed);
-    presenter = presenterCourtScreenModelProps(app, mockComputed);
+    const result = await captureHookResult();
+    app = result.app;
+    workflow = result.workflow;
+    legacy = legacyCourtScreenModelProps(app, workflow, mockComputed);
+    presenter = presenterCourtScreenModelProps(app, workflow, mockComputed);
   });
 
   it('captures hook successfully', () => {

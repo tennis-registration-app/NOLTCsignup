@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { WorkflowProvider } from '../../../src/registration/context/WorkflowProvider.jsx';
+import { WorkflowProvider, useWorkflowContext } from '../../../src/registration/context/WorkflowProvider.jsx';
 
 // Mock all platform/window dependencies before importing hooks
 vi.mock('../../../src/platform/windowBridge.js', () => ({
@@ -120,25 +120,20 @@ import {
  * NOTE: Computed values (isCourtAssignment, assignedCourt, position, estimatedWait)
  * and async wrappers are handled separately since they're route-level concerns.
  */
-function legacySuccessScreenProps(app, handlers, computed) {
-  // Destructure from app (via grouped slices)
-  const { state, players, mobile, admin, session, court, TENNIS_CONFIG } = app;
-  const { courtAssignment } = court;
+function legacySuccessScreenProps(app, workflow, handlers, computed) {
+  // Destructure from app (shell slices) and workflow (per-flow state)
+  const { state, mobile, admin, TENNIS_CONFIG } = app;
+  const { courtAssignment, streak, groupGuest } = workflow;
   const { blockAdmin } = admin;
-  const { streak } = session;
   const {
-    replacedGroup,
     ballPriceCents,
     data,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
   } = state;
+  const { replacedGroup, canChangeCourt, changeTimeRemaining, isTimeLimited, timeLimitReason } = workflow;
   const { blockWarningMinutes, getCourtBlockStatus } = blockAdmin;
   const { justAssignedCourt, assignedSessionId, assignedEndTime } = courtAssignment;
   const { registrantStreak } = streak;
-  const { currentGroup } = players.groupGuest;
+  const { currentGroup } = groupGuest;
   const { mobileFlow, mobileCountdown } = mobile;
 
   // Destructure from handlers
@@ -176,31 +171,29 @@ function legacySuccessScreenProps(app, handlers, computed) {
 }
 
 /**
- * Extract workflow-shaped object from app — simulates what
- * SuccessRoute reads from useWorkflowContext().
- * This verifies the presenter produces identical output whether
- * the workflow fields come from context or from app.
+ * Build workflow object from captured WorkflowContext value —
+ * mirrors what SuccessRoute reads from useWorkflowContext().
  */
-function extractWorkflowFromApp(app) {
+function buildWorkflowForPresenter(workflow) {
   return {
-    replacedGroup: app.state.replacedGroup,
-    canChangeCourt: app.state.canChangeCourt,
-    changeTimeRemaining: app.state.changeTimeRemaining,
-    isTimeLimited: app.state.isTimeLimited,
-    timeLimitReason: app.state.timeLimitReason,
-    courtAssignment: app.court.courtAssignment,
-    streak: app.session.streak,
-    groupGuest: app.players.groupGuest,
+    replacedGroup: workflow.replacedGroup,
+    canChangeCourt: workflow.canChangeCourt,
+    changeTimeRemaining: workflow.changeTimeRemaining,
+    isTimeLimited: workflow.isTimeLimited,
+    timeLimitReason: workflow.timeLimitReason,
+    courtAssignment: workflow.courtAssignment,
+    streak: workflow.streak,
+    groupGuest: workflow.groupGuest,
   };
 }
 
 /**
  * Presenter-based prop mapping
  */
-function presenterSuccessScreenProps(app, handlers, computed) {
-  const workflow = extractWorkflowFromApp(app);
+function presenterSuccessScreenProps(app, workflow, handlers, computed) {
+  const w = buildWorkflowForPresenter(workflow);
   return {
-    ...buildSuccessModel(app, workflow, computed),
+    ...buildSuccessModel(app, w, computed),
     ...buildSuccessActions(app, handlers),
   };
 }
@@ -211,11 +204,12 @@ function presenterSuccessScreenProps(app, handlers, computed) {
 function HookCapture({ onResult }) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
+  const workflow = useWorkflowContext();
 
   // Capture immediately during first render
   if (onResult._captured === undefined) {
-    onResult._captured = { app, handlers };
-    onResult({ app, handlers });
+    onResult._captured = { app, handlers, workflow };
+    onResult({ app, handlers, workflow });
   }
 
   return null;
@@ -289,8 +283,9 @@ describe('SuccessScreen presenter equivalence', () => {
     const result = await captureHookResults();
     app = result.app;
     handlers = result.handlers;
-    legacy = legacySuccessScreenProps(app, handlers, mockComputed);
-    presenter = presenterSuccessScreenProps(app, handlers, mockComputed);
+    const workflow = result.workflow;
+    legacy = legacySuccessScreenProps(app, workflow, handlers, mockComputed);
+    presenter = presenterSuccessScreenProps(app, workflow, handlers, mockComputed);
   });
 
   it('captures hooks successfully', () => {

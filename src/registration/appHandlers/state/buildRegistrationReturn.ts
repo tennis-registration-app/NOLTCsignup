@@ -83,42 +83,17 @@ type DerivedModule = DerivedState;
 /** Fields from useSessionTimeout */
 type TimeoutModule = TimeoutState;
 
-/** Workflow context value — per-flow state that resets on key bump */
+/** Workflow context value — per-flow state that resets on key bump.
+ *  Scalar useState fields removed from app.state/app.setters — now consumed
+ *  exclusively via WorkflowContext in routes/presenters/handlers.
+ *  Grouped slices (groupGuest, streak, courtAssignment, memberIdentity)
+ *  still exposed on app.players / app.court / app.session for now.
+ */
 interface WorkflowModule {
   groupGuest: GroupGuestState;
   streak: StreakState;
   courtAssignment: CourtAssignmentState;
   memberIdentity: MemberIdentityState;
-  // useState fields (15 moved from UiModule)
-  waitlistPosition: number;
-  setWaitlistPosition: (v: number) => void;
-  hasWaitlistPriority: boolean;
-  setHasWaitlistPriority: (v: boolean) => void;
-  currentWaitlistEntryId: string | null;
-  setCurrentWaitlistEntryId: (v: string | null) => void;
-  isAssigning: boolean;
-  setIsAssigning: (v: boolean) => void;
-  isJoiningWaitlist: boolean;
-  setIsJoiningWaitlist: (v: boolean) => void;
-  replacedGroup: import('../../../types/appTypes.js').ReplacedGroup | null;
-  setReplacedGroup: (v: import('../../../types/appTypes.js').ReplacedGroup | null) => void;
-  displacement: import('../../../types/appTypes.js').DisplacementInfo | null;
-  setDisplacement: (v: import('../../../types/appTypes.js').DisplacementInfo | null) => void;
-  originalCourtData: import('../../../types/appTypes.js').OriginalCourtData | null;
-  setOriginalCourtData: (v: import('../../../types/appTypes.js').OriginalCourtData | null) => void;
-  canChangeCourt: boolean;
-  setCanChangeCourt: (v: boolean) => void;
-  changeTimeRemaining: number;
-  setChangeTimeRemaining: (v: number | ((prev: number) => number)) => void;
-  isChangingCourt: boolean;
-  setIsChangingCourt: (v: boolean) => void;
-  setWasOvertimeCourt: (v: boolean) => void;
-  isTimeLimited: boolean;
-  setIsTimeLimited: (v: boolean) => void;
-  timeLimitReason: string | null;
-  setTimeLimitReason: (v: string | null) => void;
-  showAddPlayer: boolean;
-  setShowAddPlayer: (v: boolean) => void;
 }
 
 export interface BuildRegistrationReturnParams {
@@ -203,58 +178,31 @@ export function buildRegistrationReturn({
   const memberIdentity: MemberIdentityState = workflow.memberIdentity;
 
   return {
-    // Core state — shell fields from ui, workflow fields from workflow context
+    // Core state — shell-owned fields only.
+    // Workflow fields (14) removed — now consumed exclusively via WorkflowContext.
     state: {
       data: ui.data,
       currentScreen: ui.currentScreen,
       availableCourts: ui.availableCourts,
-      waitlistPosition: workflow.waitlistPosition,
       operatingHours: ui.operatingHours,
       showSuccess: ui.showSuccess,
-      replacedGroup: workflow.replacedGroup,
-      displacement: workflow.displacement,
-      originalCourtData: workflow.originalCourtData,
-      canChangeCourt: workflow.canChangeCourt,
-      changeTimeRemaining: workflow.changeTimeRemaining,
-      isTimeLimited: workflow.isTimeLimited,
-      timeLimitReason: workflow.timeLimitReason,
-      showAddPlayer: workflow.showAddPlayer,
-      isChangingCourt: workflow.isChangingCourt,
       currentTime: ui.currentTime,
       courtToMove: ui.courtToMove,
-      hasWaitlistPriority: workflow.hasWaitlistPriority,
-      currentWaitlistEntryId: workflow.currentWaitlistEntryId,
-      isAssigning: workflow.isAssigning,
-      isJoiningWaitlist: workflow.isJoiningWaitlist,
       ballPriceInput: ui.ballPriceInput,
       ballPriceCents: ui.ballPriceCents,
     },
 
-    // Setters — shell from ui, workflow from workflow context
+    // Setters — shell-owned only.
+    // Workflow setters (15) removed — now consumed exclusively via WorkflowContext.
     setters: {
       setData: ui.setData,
       setCurrentScreen: ui.setCurrentScreen,
       setAvailableCourts: ui.setAvailableCourts,
-      setWaitlistPosition: workflow.setWaitlistPosition,
       setOperatingHours: ui.setOperatingHours,
       setShowSuccess: ui.setShowSuccess,
-      setReplacedGroup: workflow.setReplacedGroup,
-      setDisplacement: workflow.setDisplacement,
-      setOriginalCourtData: workflow.setOriginalCourtData,
-      setCanChangeCourt: workflow.setCanChangeCourt,
-      setChangeTimeRemaining: workflow.setChangeTimeRemaining,
-      setIsTimeLimited: workflow.setIsTimeLimited,
-      setTimeLimitReason: workflow.setTimeLimitReason,
-      setShowAddPlayer: workflow.setShowAddPlayer,
-      setIsChangingCourt: workflow.setIsChangingCourt,
-      setWasOvertimeCourt: workflow.setWasOvertimeCourt,
       setLastActivity: ui.setLastActivity,
       setCurrentTime: ui.setCurrentTime,
       setCourtToMove: ui.setCourtToMove,
-      setHasWaitlistPriority: workflow.setHasWaitlistPriority,
-      setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
-      setIsAssigning: workflow.setIsAssigning,
-      setIsJoiningWaitlist: workflow.setIsJoiningWaitlist,
       setBallPriceInput: ui.setBallPriceInput,
       setBallPriceCents: ui.setBallPriceCents,
       setIsUserTyping: ui.setIsUserTyping,

@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { WorkflowProvider } from '../../../src/registration/context/WorkflowProvider.jsx';
+import { WorkflowProvider, useWorkflowContext } from '../../../src/registration/context/WorkflowProvider.jsx';
 
 // Mock all platform/window dependencies before importing hooks
 vi.mock('../../../src/platform/windowBridge.js', () => ({
@@ -105,11 +105,10 @@ import {
  * Legacy GroupRoute prop mapping — VERBATIM from GroupRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyGroupScreenProps(app, handlers) {
+function legacyGroupScreenProps(app, workflow, handlers) {
   // Destructure from app (via grouped session slice)
   const {
     state,
-    players,
     derived,
     alert,
     session,
@@ -117,9 +116,10 @@ function legacyGroupScreenProps(app, handlers) {
     search,
     CONSTANTS,
   } = app;
-  const { groupGuest, memberIdentity } = players;
+  // Workflow fields now sourced from WorkflowContext (not app.state/app.players)
+  const { groupGuest, memberIdentity, showAddPlayer, isAssigning, isJoiningWaitlist } = workflow;
   const { timeout } = session;
-  const { data, showAddPlayer, isAssigning, isJoiningWaitlist, availableCourts } = state;
+  const { data, availableCourts } = state;
   const { courtSelection } = data;
   const {
     currentGroup,
@@ -230,29 +230,27 @@ function legacyGroupScreenProps(app, handlers) {
 }
 
 /**
- * Extract workflow-shaped object from app — simulates what
- * GroupRoute reads from useWorkflowContext().
- * This verifies the presenter produces identical output whether
- * the workflow fields come from context or from app.
+ * Build workflow object from captured WorkflowContext value —
+ * mirrors what GroupRoute reads from useWorkflowContext().
  */
-function extractWorkflowFromApp(app) {
+function buildWorkflowForPresenter(workflow) {
   return {
-    groupGuest: app.players.groupGuest,
-    memberIdentity: app.players.memberIdentity,
-    showAddPlayer: app.state.showAddPlayer,
-    isAssigning: app.state.isAssigning,
-    isJoiningWaitlist: app.state.isJoiningWaitlist,
+    groupGuest: workflow.groupGuest,
+    memberIdentity: workflow.memberIdentity,
+    showAddPlayer: workflow.showAddPlayer,
+    isAssigning: workflow.isAssigning,
+    isJoiningWaitlist: workflow.isJoiningWaitlist,
   };
 }
 
 /**
  * Presenter-based prop mapping
  */
-function presenterGroupScreenProps(app, handlers) {
-  const workflow = extractWorkflowFromApp(app);
+function presenterGroupScreenProps(app, workflow, handlers) {
+  const w = buildWorkflowForPresenter(workflow);
   return {
-    ...buildGroupModel(app, workflow),
-    ...buildGroupActions(app, workflow, handlers),
+    ...buildGroupModel(app, w),
+    ...buildGroupActions(app, w, handlers),
   };
 }
 
@@ -262,11 +260,12 @@ function presenterGroupScreenProps(app, handlers) {
 function HookCapture({ onResult }) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
+  const workflow = useWorkflowContext();
 
   // Capture immediately during first render
   if (onResult._captured === undefined) {
-    onResult._captured = { app, handlers };
-    onResult({ app, handlers });
+    onResult._captured = { app, handlers, workflow };
+    onResult({ app, handlers, workflow });
   }
 
   return null;
@@ -329,8 +328,9 @@ describe('GroupScreen presenter equivalence', () => {
     const result = await captureHookResults();
     app = result.app;
     handlers = result.handlers;
-    legacy = legacyGroupScreenProps(app, handlers);
-    presenter = presenterGroupScreenProps(app, handlers);
+    const workflow = result.workflow;
+    legacy = legacyGroupScreenProps(app, workflow, handlers);
+    presenter = presenterGroupScreenProps(app, workflow, handlers);
   });
 
   it('captures hooks successfully', () => {

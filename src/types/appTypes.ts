@@ -414,6 +414,12 @@ export interface AppState {
   DEBUG: boolean;
 }
 
+/**
+ * RegistrationUiState — shell-owned state values only.
+ *
+ * Workflow fields (14) removed — now owned by WorkflowProvider and consumed
+ * exclusively via WorkflowContext in routes, presenters, and handlers.
+ */
 export interface RegistrationUiState {
   /** Court and registration data — board state plus courtSelection */
   data: {
@@ -437,24 +443,6 @@ export interface RegistrationUiState {
   currentScreen: string;
   /** Success screen visible */
   showSuccess: boolean;
-  /** Position in waitlist */
-  waitlistPosition: number;
-  /** Court change in progress */
-  isChangingCourt: boolean;
-  /** Assignment in progress */
-  isAssigning: boolean;
-  /** Waitlist join in progress */
-  isJoiningWaitlist: boolean;
-  /** Has waitlist priority */
-  hasWaitlistPriority: boolean;
-  /** Active waitlist entry ID */
-  currentWaitlistEntryId: string | null;
-  /** Displacement data from overtime takeover */
-  displacement: DisplacementInfo | null;
-  /** Court data snapshot before change */
-  originalCourtData: OriginalCourtData | null;
-  /** Add player form visible */
-  showAddPlayer: boolean;
   /** Available court numbers */
   availableCourts: number[];
   /** Current timestamp */
@@ -463,22 +451,18 @@ export interface RegistrationUiState {
   courtToMove: number | null;
   /** Ball price input value */
   ballPriceInput: string;
-  /** Group that was replaced on overtime takeover */
-  replacedGroup: ReplacedGroup | null;
   /** Ball price in cents */
   ballPriceCents: number | null;
-  /** Can change court flag */
-  canChangeCourt: boolean;
-  /** Time left to change court */
-  changeTimeRemaining: number | null;
-  /** Time-limited session flag */
-  isTimeLimited: boolean;
-  /** Reason for time limit */
-  timeLimitReason: string | null;
   /** Operating hours data */
   operatingHours: OperatingHoursEntry[] | null;
 }
 
+/**
+ * RegistrationSetters — shell-owned setter functions only.
+ *
+ * Workflow setters (15) removed — now owned by WorkflowProvider and consumed
+ * exclusively via WorkflowContext in routes, presenters, and handlers.
+ */
 export interface RegistrationSetters {
   // Evidence: useState(() => ({ courts: ..., waitlist: [], blocks: [] })) — uses functional updates
   setData: Updater<RegistrationUiState['data']>;
@@ -486,46 +470,16 @@ export interface RegistrationSetters {
   setCurrentScreen: (screen: string, source?: string) => void;
   // Evidence: useState([]) — court numbers
   setAvailableCourts: Setter<number[]>;
-  // Evidence: useState(0)
-  setWaitlistPosition: Setter<number>;
   // Evidence: useState(null) — operating hours array or null
   setOperatingHours: Setter<OperatingHoursEntry[] | null>;
   // Evidence: useState(false)
   setShowSuccess: Setter<boolean>;
-  // Evidence: useState(null) — replaced group snapshot or null
-  setReplacedGroup: Setter<ReplacedGroup | null>;
-  // Evidence: useState(null) — displacement info or null
-  setDisplacement: Setter<DisplacementInfo | null>;
-  // Evidence: useState(null) — court data snapshot or null
-  setOriginalCourtData: Setter<OriginalCourtData | null>;
-  // Evidence: useState(false)
-  setCanChangeCourt: Setter<boolean>;
-  // Evidence: useState(CONSTANTS.CHANGE_COURT_TIMEOUT_SEC) — uses functional updates (prev => ...)
-  setChangeTimeRemaining: Updater<number>;
-  // Evidence: useState(false)
-  setIsTimeLimited: Setter<boolean>;
-  // Evidence: useState(null) — string reason or null
-  setTimeLimitReason: Setter<string | null>;
-  // Evidence: useState(false)
-  setShowAddPlayer: Setter<boolean>;
-  // Evidence: useState(false)
-  setIsChangingCourt: Setter<boolean>;
-  // Evidence: useState(false)
-  setWasOvertimeCourt: Setter<boolean>;
   // Evidence: useState(() => Date.now()) — epoch ms
   setLastActivity: Setter<number>;
   // Evidence: useState(() => new Date())
   setCurrentTime: Setter<Date>;
   // Evidence: useState(null) — court number or null
   setCourtToMove: Setter<number | null>;
-  // Evidence: useState(false)
-  setHasWaitlistPriority: Setter<boolean>;
-  // Evidence: useState(null) — waitlist entry UUID or null
-  setCurrentWaitlistEntryId: Setter<string | null>;
-  // Evidence: useState(false)
-  setIsAssigning: Setter<boolean>;
-  // Evidence: useState(false)
-  setIsJoiningWaitlist: Setter<boolean>;
   // Evidence: useState('')
   setBallPriceInput: Setter<string>;
   // Evidence: useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100) — cents

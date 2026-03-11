@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { WorkflowProvider } from '../../../src/registration/context/WorkflowProvider.jsx';
+import { WorkflowProvider, useWorkflowContext } from '../../../src/registration/context/WorkflowProvider.jsx';
 
 // Mock all platform/window dependencies before importing hooks
 vi.mock('../../../src/platform/windowBridge.js', () => ({
@@ -105,10 +105,11 @@ import {
  * Legacy HomeRoute prop mapping — VERBATIM from HomeRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyHomeScreenProps(app, handlers) {
+function legacyHomeScreenProps(app, workflow, handlers) {
   // Destructure from app (verbatim from HomeRoute)
-  const { search, setters, players, derived, alert, CONSTANTS } = app;
-  const { memberIdentity, groupGuest } = players;
+  const { search, setters, derived, alert, CONSTANTS } = app;
+  // Workflow fields now sourced from WorkflowContext (not app.setters/app.players)
+  const { groupGuest, memberIdentity, setHasWaitlistPriority, setCurrentWaitlistEntryId } = workflow;
   const {
     searchInput,
     setSearchInput,
@@ -118,7 +119,7 @@ function legacyHomeScreenProps(app, handlers) {
     effectiveSearchInput,
     getAutocompleteSuggestions,
   } = search;
-  const { setCurrentScreen, setHasWaitlistPriority, setCurrentWaitlistEntryId } = setters;
+  const { setCurrentScreen } = setters;
   const { setMemberNumber } = memberIdentity;
   const {
     canFirstGroupPlay,
@@ -180,28 +181,26 @@ function legacyHomeScreenProps(app, handlers) {
 }
 
 /**
- * Extract workflow-shaped object from app — simulates what
- * HomeRoute reads from useWorkflowContext().
- * This verifies the presenter produces identical output whether
- * the workflow fields come from context or from app.
+ * Build workflow object from captured WorkflowContext value —
+ * mirrors what HomeRoute reads from useWorkflowContext().
  */
-function extractWorkflowFromApp(app) {
+function buildWorkflowForPresenter(workflow) {
   return {
-    groupGuest: app.players.groupGuest,
-    memberIdentity: app.players.memberIdentity,
-    setHasWaitlistPriority: app.setters.setHasWaitlistPriority,
-    setCurrentWaitlistEntryId: app.setters.setCurrentWaitlistEntryId,
+    groupGuest: workflow.groupGuest,
+    memberIdentity: workflow.memberIdentity,
+    setHasWaitlistPriority: workflow.setHasWaitlistPriority,
+    setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
   };
 }
 
 /**
  * Presenter-based prop mapping
  */
-function presenterHomeScreenProps(app, handlers) {
-  const workflow = extractWorkflowFromApp(app);
+function presenterHomeScreenProps(app, workflow, handlers) {
+  const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildHomeModel(app),
-    ...buildHomeActions(app, workflow, handlers),
+    ...buildHomeActions(app, w, handlers),
   };
 }
 
@@ -211,11 +210,12 @@ function presenterHomeScreenProps(app, handlers) {
 function HookCapture({ onResult }) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
+  const workflow = useWorkflowContext();
 
   // Capture immediately during first render
   if (onResult._captured === undefined) {
-    onResult._captured = { app, handlers };
-    onResult({ app, handlers });
+    onResult._captured = { app, handlers, workflow };
+    onResult({ app, handlers, workflow });
   }
 
   return null;
@@ -278,8 +278,9 @@ describe('HomeScreen presenter equivalence', () => {
     const result = await captureHookResults();
     app = result.app;
     handlers = result.handlers;
-    legacy = legacyHomeScreenProps(app, handlers);
-    presenter = presenterHomeScreenProps(app, handlers);
+    const workflow = result.workflow;
+    legacy = legacyHomeScreenProps(app, workflow, handlers);
+    presenter = presenterHomeScreenProps(app, workflow, handlers);
   });
 
   it('captures hooks successfully', () => {

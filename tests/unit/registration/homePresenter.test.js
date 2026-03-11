@@ -44,8 +44,6 @@ function makeMockApp() {
     },
     setters: {
       setCurrentScreen: vi.fn(),
-      setHasWaitlistPriority: vi.fn(),
-      setCurrentWaitlistEntryId: vi.fn(),
     },
     players: {
       memberIdentity: { setMemberNumber: vi.fn() },
@@ -59,8 +57,8 @@ function makeMockWorkflow(app) {
   return {
     groupGuest: app.players.groupGuest,
     memberIdentity: app.players.memberIdentity,
-    setHasWaitlistPriority: app.setters.setHasWaitlistPriority,
-    setCurrentWaitlistEntryId: app.setters.setCurrentWaitlistEntryId,
+    setHasWaitlistPriority: vi.fn(),
+    setCurrentWaitlistEntryId: vi.fn(),
   };
 }
 
