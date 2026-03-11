@@ -180,12 +180,28 @@ function legacyHomeScreenProps(app, handlers) {
 }
 
 /**
+ * Extract workflow-shaped object from app — simulates what
+ * HomeRoute reads from useWorkflowContext().
+ * This verifies the presenter produces identical output whether
+ * the workflow fields come from context or from app.
+ */
+function extractWorkflowFromApp(app) {
+  return {
+    groupGuest: app.players.groupGuest,
+    memberIdentity: app.players.memberIdentity,
+    setHasWaitlistPriority: app.setters.setHasWaitlistPriority,
+    setCurrentWaitlistEntryId: app.setters.setCurrentWaitlistEntryId,
+  };
+}
+
+/**
  * Presenter-based prop mapping
  */
 function presenterHomeScreenProps(app, handlers) {
+  const workflow = extractWorkflowFromApp(app);
   return {
     ...buildHomeModel(app),
-    ...buildHomeActions(app, handlers),
+    ...buildHomeActions(app, workflow, handlers),
   };
 }
 

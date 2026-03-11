@@ -7,7 +7,19 @@
  * Extracted from HomeRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, Handlers, WaitlistEntrySummary, RegistrationConstants } from '../../../types/appTypes.js';
+import type { AppState, GroupPlayer, Handlers, WaitlistEntrySummary, RegistrationConstants } from '../../../types/appTypes.js';
+
+/** Workflow-owned fields that buildHomeActions reads. */
+export interface HomeWorkflow {
+  groupGuest: {
+    setCurrentGroup: (group: GroupPlayer[]) => void;
+  };
+  memberIdentity: {
+    setMemberNumber: (v: string) => void;
+  };
+  setHasWaitlistPriority: (v: boolean) => void;
+  setCurrentWaitlistEntryId: (v: string | null) => void;
+}
 
 export interface HomeModel {
   // Search functionality (read-only)
@@ -104,15 +116,21 @@ export function buildHomeModel(app: AppState): HomeModel {
 }
 
 /**
- * Build the actions (callback/setter) props for HomeScreen
+ * Build the actions (callback/setter) props for HomeScreen.
+ *
+ * Workflow-owned setters come from the `workflow` parameter (WorkflowContext).
+ * Shell/global fields come from `app` and `handlers`.
  */
-export function buildHomeActions(app: AppState, handlers: Handlers): HomeActions {
-  // Destructure from app (verbatim from HomeRoute, migrated to players slice)
-  const { search, setters, players } = app;
+export function buildHomeActions(app: AppState, workflow: HomeWorkflow, handlers: Handlers): HomeActions {
+  // Workflow fields from context
+  const { setCurrentGroup } = workflow.groupGuest;
+  const { setMemberNumber } = workflow.memberIdentity;
+  const { setHasWaitlistPriority, setCurrentWaitlistEntryId } = workflow;
+
+  // Shell fields from app
+  const { search, setters } = app;
   const { setSearchInput, setShowSuggestions } = search;
-  const { setCurrentScreen, setHasWaitlistPriority, setCurrentWaitlistEntryId } = setters;
-  const { setMemberNumber } = players.memberIdentity;
-  const { setCurrentGroup } = players.groupGuest;
+  const { setCurrentScreen } = setters;
 
   // Destructure from handlers (verbatim from HomeRoute)
   const { handleSuggestionClick, markUserTyping, findMemberNumber, checkLocationAndProceed } =

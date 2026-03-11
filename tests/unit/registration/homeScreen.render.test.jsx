@@ -20,6 +20,18 @@ vi.mock('../../../src/shared/utils/toast.js', () => ({
   toast: vi.fn(),
 }));
 
+// Mock WorkflowContext — HomeRoute now reads workflow setters from useWorkflowContext()
+const noop = () => {};
+
+vi.mock('../../../src/registration/context/WorkflowProvider', () => ({
+  useWorkflowContext: () => ({
+    groupGuest: { setCurrentGroup: noop },
+    memberIdentity: { setMemberNumber: noop },
+    setHasWaitlistPriority: noop,
+    setCurrentWaitlistEntryId: noop,
+  }),
+}));
+
 // Transitive deps loaded through screens barrel (HomeRoute imports all screens)
 vi.mock('@lib', () => ({
   getUpcomingBlockWarningFromBlocks: vi.fn(() => null),
@@ -57,8 +69,6 @@ import { HomeRoute } from '../../../src/registration/router/routes/HomeRoute.jsx
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const noop = () => {};
 
 function makeHomeProps(overrides = {}) {
   return {
