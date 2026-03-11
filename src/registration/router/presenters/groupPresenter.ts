@@ -5,9 +5,36 @@
  * the props interface expected by GroupScreen.
  *
  * Extracted from GroupRoute.jsx — maintains exact prop mapping.
+ *
+ * Workflow-owned fields (15 in model+actions) are sourced from the
+ * `workflow` parameter, which GroupRoute reads directly from WorkflowContext.
+ * Shell/global fields continue to come from `app`.
  */
 
 import type { AppState, CourtSelectionResult, FrequentPartner, GroupPlayer, Handlers, RegistrationConstants, RegistrationUiState } from '../../../types/appTypes.js';
+
+/** Workflow-owned fields that buildGroupModel and buildGroupActions read. */
+export interface GroupWorkflow {
+  groupGuest: {
+    currentGroup: GroupPlayer[] | null;
+    showGuestForm: boolean;
+    guestName: string;
+    guestSponsor: string;
+    showGuestNameError: boolean;
+    showSponsorError: boolean;
+    handleRemovePlayer: Function;
+    handleSelectSponsor: Function;
+    handleCancelGuest: Function;
+  };
+  memberIdentity: {
+    memberNumber: string;
+    frequentPartners: FrequentPartner[];
+    frequentPartnersLoading: boolean;
+  };
+  showAddPlayer: boolean;
+  isAssigning: boolean;
+  isJoiningWaitlist: boolean;
+}
 
 export interface GroupModel {
   // Data
@@ -74,24 +101,17 @@ export interface GroupActions {
 }
 
 /**
- * Build the model (data) props for GroupScreen
+ * Build the model (data) props for GroupScreen.
+ *
+ * Workflow-owned fields come from the `workflow` parameter (WorkflowContext).
+ * Shell/global fields come from `app`.
  */
-export function buildGroupModel(app: AppState): GroupModel {
-  // Destructure from app (verbatim from GroupRoute, migrated to players slice)
-  const { state, players, derived, alert, session, mobile, search, CONSTANTS } =
-    app;
+export function buildGroupModel(app: AppState, workflow: GroupWorkflow): GroupModel {
+  // Shell fields from app
+  const { state, derived, alert, session, mobile, search, CONSTANTS } = app;
   const { timeout } = session;
-  const { data, showAddPlayer, availableCourts } = state;
+  const { data, availableCourts } = state;
   const { courtSelection } = data;
-  const {
-    currentGroup,
-    showGuestForm,
-    guestName,
-    guestSponsor,
-    showGuestNameError,
-    showSponsorError,
-  } = players.groupGuest;
-  const { memberNumber, frequentPartners, frequentPartnersLoading } = players.memberIdentity;
   const { isMobileView } = derived;
   const { showAlert, alertMessage } = alert;
   const { showTimeoutWarning } = timeout;
@@ -106,15 +126,28 @@ export function buildGroupModel(app: AppState): GroupModel {
     getAutocompleteSuggestions,
   } = search;
 
+  // Workflow fields from context
+  const {
+    currentGroup,
+    showGuestForm,
+    guestName,
+    guestSponsor,
+    showGuestNameError,
+    showSponsorError,
+  } = workflow.groupGuest;
+  const { memberNumber, frequentPartners, frequentPartnersLoading } = workflow.memberIdentity;
+  const { showAddPlayer } = workflow;
+
   return {
-    // Data
-    data,
+    // Data — workflow-sourced
     currentGroup,
     memberNumber,
-    availableCourts,
-    courtSelection,
     frequentPartners,
     frequentPartnersLoading,
+    // Data — shell-sourced
+    data,
+    availableCourts,
+    courtSelection,
     // UI state
     showAlert,
     alertMessage,
@@ -127,12 +160,13 @@ export function buildGroupModel(app: AppState): GroupModel {
     searchInput,
     showSuggestions,
     effectiveSearchInput,
-    // Add player state
+    // Add player state — workflow-sourced
     showAddPlayer,
+    // Add player state — shell-sourced
     addPlayerSearch,
     showAddPlayerSuggestions,
     effectiveAddPlayerSearch,
-    // Guest form state
+    // Guest form state — workflow-sourced
     showGuestForm,
     guestName,
     guestSponsor,
@@ -145,13 +179,18 @@ export function buildGroupModel(app: AppState): GroupModel {
 }
 
 /**
- * Build the actions (callback) props for GroupScreen
+ * Build the actions (callback) props for GroupScreen.
+ *
+ * Workflow-owned reads/pass-throughs come from the `workflow` parameter.
+ * Shell/handler fields come from `app` and `handlers`.
  */
-export function buildGroupActions(app: AppState, handlers: Handlers): GroupActions {
-  // Destructure from app (verbatim from GroupRoute)
-  const { state, players, search } = app;
-  const { isAssigning, isJoiningWaitlist } = state;
-  const { handleRemovePlayer, handleSelectSponsor, handleCancelGuest } = players.groupGuest;
+export function buildGroupActions(app: AppState, workflow: GroupWorkflow, handlers: Handlers): GroupActions {
+  // Workflow fields from context
+  const { isAssigning, isJoiningWaitlist } = workflow;
+  const { handleRemovePlayer, handleSelectSponsor, handleCancelGuest } = workflow.groupGuest;
+
+  // Shell fields from app
+  const { search } = app;
   const {
     handleGroupSearchChange,
     handleGroupSearchFocus,

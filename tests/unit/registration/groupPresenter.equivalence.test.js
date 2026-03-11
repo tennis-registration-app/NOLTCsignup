@@ -230,12 +230,29 @@ function legacyGroupScreenProps(app, handlers) {
 }
 
 /**
+ * Extract workflow-shaped object from app — simulates what
+ * GroupRoute reads from useWorkflowContext().
+ * This verifies the presenter produces identical output whether
+ * the workflow fields come from context or from app.
+ */
+function extractWorkflowFromApp(app) {
+  return {
+    groupGuest: app.players.groupGuest,
+    memberIdentity: app.players.memberIdentity,
+    showAddPlayer: app.state.showAddPlayer,
+    isAssigning: app.state.isAssigning,
+    isJoiningWaitlist: app.state.isJoiningWaitlist,
+  };
+}
+
+/**
  * Presenter-based prop mapping
  */
 function presenterGroupScreenProps(app, handlers) {
+  const workflow = extractWorkflowFromApp(app);
   return {
-    ...buildGroupModel(app),
-    ...buildGroupActions(app, handlers),
+    ...buildGroupModel(app, workflow),
+    ...buildGroupActions(app, workflow, handlers),
   };
 }
 

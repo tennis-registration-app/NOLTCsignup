@@ -26,6 +26,25 @@ vi.mock('../../../src/registration/router/presenters/index.ts', () => ({
   buildGroupActions: () => ({}),
 }));
 
+// Mock WorkflowContext — GroupRoute now reads streak from useWorkflowContext()
+// The mock returns a ref that tests can update per-test via mockWorkflow.
+const noop = () => {};
+
+const defaultWorkflow = {
+  streak: {
+    registrantStreak: 0,
+    showStreakModal: false,
+    streakAcknowledged: false,
+    setStreakAcknowledged: noop,
+  },
+};
+
+let mockWorkflow = { ...defaultWorkflow };
+
+vi.mock('../../../src/registration/context/WorkflowProvider', () => ({
+  useWorkflowContext: () => mockWorkflow,
+}));
+
 // ---------------------------------------------------------------------------
 // Component import (after mocks)
 // ---------------------------------------------------------------------------
@@ -36,8 +55,6 @@ import { GroupRoute } from '../../../src/registration/router/routes/GroupRoute.j
 // Helpers
 // ---------------------------------------------------------------------------
 
-const noop = () => {};
-
 function makeRouteApp(overrides = {}) {
   return {
     // Minimum shape for presenters (stubbed, but destructuring still runs)
@@ -45,15 +62,7 @@ function makeRouteApp(overrides = {}) {
     players: { groupGuest: {}, memberIdentity: {} },
     derived: {},
     alert: {},
-    session: {
-      timeout: {},
-      streak: {
-        registrantStreak: 0,
-        showStreakModal: false,
-        streakAcknowledged: false,
-        setStreakAcknowledged: noop,
-      },
-    },
+    session: { timeout: {} },
     mobile: {},
     search: {},
     CONSTANTS: {},
@@ -74,6 +83,7 @@ function makeRouteHandlers(overrides = {}) {
 
 describe('GroupRoute streak modal', () => {
   it('does not render streak modal when showStreakModal = false', () => {
+    mockWorkflow = { ...defaultWorkflow };
     const app = makeRouteApp();
     render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
     expect(screen.getByTestId('group-screen-stub')).toBeInTheDocument();
@@ -81,17 +91,16 @@ describe('GroupRoute streak modal', () => {
   });
 
   it('renders streak modal with content when showStreakModal = true', () => {
-    const app = makeRouteApp({
-      session: {
-        timeout: {},
-        streak: {
-          registrantStreak: 5,
-          showStreakModal: true,
-          streakAcknowledged: false,
-          setStreakAcknowledged: noop,
-        },
+    mockWorkflow = {
+      ...defaultWorkflow,
+      streak: {
+        registrantStreak: 5,
+        showStreakModal: true,
+        streakAcknowledged: false,
+        setStreakAcknowledged: noop,
       },
-    });
+    };
+    const app = makeRouteApp();
     render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
     expect(screen.getByText('Clear Court Reminder')).toBeInTheDocument();
     expect(
@@ -102,34 +111,32 @@ describe('GroupRoute streak modal', () => {
   });
 
   it('continue button is disabled when streakAcknowledged = false', () => {
-    const app = makeRouteApp({
-      session: {
-        timeout: {},
-        streak: {
-          registrantStreak: 3,
-          showStreakModal: true,
-          streakAcknowledged: false,
-          setStreakAcknowledged: noop,
-        },
+    mockWorkflow = {
+      ...defaultWorkflow,
+      streak: {
+        registrantStreak: 3,
+        showStreakModal: true,
+        streakAcknowledged: false,
+        setStreakAcknowledged: noop,
       },
-    });
+    };
+    const app = makeRouteApp();
     render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
     const button = screen.getByText('Return to Select Your Court');
     expect(button).toBeDisabled();
   });
 
   it('continue button is enabled when streakAcknowledged = true', () => {
-    const app = makeRouteApp({
-      session: {
-        timeout: {},
-        streak: {
-          registrantStreak: 3,
-          showStreakModal: true,
-          streakAcknowledged: true,
-          setStreakAcknowledged: noop,
-        },
+    mockWorkflow = {
+      ...defaultWorkflow,
+      streak: {
+        registrantStreak: 3,
+        showStreakModal: true,
+        streakAcknowledged: true,
+        setStreakAcknowledged: noop,
       },
-    });
+    };
+    const app = makeRouteApp();
     render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
     const button = screen.getByText('Return to Select Your Court');
     expect(button).not.toBeDisabled();

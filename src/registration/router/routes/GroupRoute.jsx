@@ -3,11 +3,17 @@ import React from 'react';
 import { GroupScreen } from '../../screens';
 import { buildGroupModel, buildGroupActions } from '../presenters';
 
+// Direct workflow context — GroupRoute reads workflow-owned state from context
+import { useWorkflowContext } from '../../context/WorkflowProvider';
+
 /**
  * GroupRoute
  * Extracted from RegistrationRouter
  * Collapsed to app/handlers only
  * Refactored to use presenter functions
+ *
+ * Workflow-owned state is read directly from WorkflowContext.
+ * Shell/global state continues to come from app.
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -15,12 +21,15 @@ import { buildGroupModel, buildGroupActions } from '../presenters';
  * }} props
  */
 export function GroupRoute({ app, handlers }) {
+  // Workflow state — read directly from context
+  const workflow = useWorkflowContext();
+
   // Build props via presenter functions
-  const model = buildGroupModel(app);
-  const actions = buildGroupActions(app, handlers);
+  const model = buildGroupModel(app, workflow);
+  const actions = buildGroupActions(app, workflow, handlers);
 
   // Route-internal state for Streak Modal (not passed to GroupScreen)
-  const { streak } = app.session;
+  const { streak } = workflow;
   const { registrantStreak, showStreakModal, streakAcknowledged, setStreakAcknowledged } = streak;
   const { handleStreakAcknowledge } = handlers;
 
