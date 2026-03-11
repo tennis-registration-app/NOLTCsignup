@@ -25,7 +25,7 @@ const mockApp = {
   derived: { canSubmit: false },
   session: { streak: { streakCount: 0 }, guestCounterHook: { count: 0 } },
   search: { searchTerm: '' },
-  court: { courtAssignment: { selectedCourt: null }, clearCourtFlow: { clearCourt: () => {} } },
+  court: { courtAssignment: { selectedCourt: null } },
   admin: {
     adminPriceFeedback: { price: null },
     waitlistAdmin: {},
@@ -156,7 +156,6 @@ describe('buildHandlerDeps contract', () => {
       expect(keys).toEqual([
         'TENNIS_CONFIG',
         'alert',
-        'clearCourtFlow',
         'groupGuest',
         'memberIdentity',
         'mobile',

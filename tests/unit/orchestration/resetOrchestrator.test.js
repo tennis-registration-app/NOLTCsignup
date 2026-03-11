@@ -39,8 +39,6 @@ function createResetFormActions() {
     setHasWaitlistPriority: vi.fn(),
     setCurrentWaitlistEntryId: vi.fn(),
     setWaitlistPosition: vi.fn(),
-    setSelectedCourtToClear: vi.fn(),
-    setClearCourtStep: vi.fn(),
     setIsChangingCourt: vi.fn(),
     setWasOvertimeCourt: vi.fn(),
     setCourtToMove: vi.fn(),
@@ -98,8 +96,6 @@ function createTimeoutDeps(overrides = {}) {
     setAddPlayerSearch: vi.fn(),
     setShowAddPlayerSuggestions: vi.fn(),
     setHasWaitlistPriority: vi.fn(),
-    setSelectedCourtToClear: vi.fn(),
-    setClearCourtStep: vi.fn(),
     setIsChangingCourt: vi.fn(),
     setWasOvertimeCourt: vi.fn(),
     clearSuccessResetTimer: vi.fn(),
@@ -196,13 +192,6 @@ describe('resetFormOrchestrated', () => {
     expect(deps.actions.setWaitlistPosition).toHaveBeenCalledWith(0);
   });
 
-  it('clears clear-court state', async () => {
-    const deps = createResetFormDeps();
-    await resetFormOrchestrated(deps);
-    expect(deps.actions.setSelectedCourtToClear).toHaveBeenCalledWith(null);
-    expect(deps.actions.setClearCourtStep).toHaveBeenCalledWith(1);
-  });
-
   it('clears guest form state', async () => {
     const deps = createResetFormDeps();
     await resetFormOrchestrated(deps);
@@ -296,11 +285,9 @@ describe('applyInactivityTimeoutOrchestrated', () => {
     expect(deps.setShowAddPlayerSuggestions).toHaveBeenCalledWith(false);
   });
 
-  it('resets clear-court and court-change state', async () => {
+  it('resets court-change state', async () => {
     const deps = createTimeoutDeps();
     await applyInactivityTimeoutOrchestrated(deps);
-    expect(deps.setSelectedCourtToClear).toHaveBeenCalledWith(null);
-    expect(deps.setClearCourtStep).toHaveBeenCalledWith(1);
     expect(deps.setIsChangingCourt).toHaveBeenCalledWith(false);
     expect(deps.setWasOvertimeCourt).toHaveBeenCalledWith(false);
   });

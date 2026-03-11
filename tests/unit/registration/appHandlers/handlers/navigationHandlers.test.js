@@ -149,17 +149,4 @@ describe('handleGroupGoBack', () => {
     expect(mocks.setCurrentGroup).not.toHaveBeenCalled();
   });
 
-  it('decrements clear court step when in clearCourt screen with step > 1', async () => {
-    ({ deps, mocks } = createNavigationHandlerDeps({
-      mobile: { mobileFlow: true },
-      state: { currentScreen: 'clearCourt' },
-      clearCourtFlow: { clearCourtStep: 2 },
-    }));
-    ({ result, unmount } = await renderHandlerHook(() => useNavigationHandlers(deps)));
-
-    result.current.handleGroupGoBack();
-
-    expect(mocks.decrementClearCourtStep).toHaveBeenCalled();
-    expect(mocks.requestMobileReset).not.toHaveBeenCalled();
-  });
 });

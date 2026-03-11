@@ -2,6 +2,7 @@
 import React from 'react';
 import { ClearCourtScreen } from '../../screens';
 import { TennisBusinessLogic } from '@lib';
+import { useClearCourtFlow } from '../../court/useClearCourtFlow';
 
 /**
  * ClearCourtRoute
@@ -9,17 +10,21 @@ import { TennisBusinessLogic } from '@lib';
  * Collapsed to app/handlers only
  * Verbatim JSX. No behavior change.
  *
+ * ClearCourt state is route-local: useClearCourtFlow is called here,
+ * not in the central state aggregation. Unmount resets state.
+ *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
 export function ClearCourtRoute({ app, handlers }) {
-  // Destructure from app
-  const { court, alert, helpers, mobile, CONSTANTS } = app;
-  const { clearCourtFlow } = court;
+  // Route-local state — lives only while ClearCourt is mounted
   const { clearCourtStep, setClearCourtStep, selectedCourtToClear, setSelectedCourtToClear } =
-    clearCourtFlow;
+    useClearCourtFlow();
+
+  // Destructure from app
+  const { alert, helpers, mobile, CONSTANTS } = app;
   const { showAlert, alertMessage } = alert;
   const { getCourtsOccupiedForClearing } = helpers;
   const { mobileFlow } = mobile;

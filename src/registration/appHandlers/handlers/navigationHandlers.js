@@ -15,11 +15,10 @@ export function useNavigationHandlers({
   groupGuest,
   memberIdentity,
   mobile,
-  clearCourtFlow,
   alert,
   TENNIS_CONFIG,
 }) {
-  const { showAddPlayer, currentScreen } = state;
+  const { showAddPlayer } = state;
   const { setShowAddPlayer, setCurrentScreen } = setters;
   const {
     showGuestForm,
@@ -32,7 +31,6 @@ export function useNavigationHandlers({
   } = groupGuest;
   const { setMemberNumber, setCurrentMemberId } = memberIdentity;
   const { mobileFlow, setCheckingLocation, requestMobileReset } = mobile;
-  const { clearCourtStep, decrementClearCourtStep } = clearCourtFlow;
   const { showAlertMessage } = alert;
 
   // VERBATIM COPY: checkLocationAndProceed from line ~170
@@ -93,22 +91,11 @@ export function useNavigationHandlers({
     setShowAddPlayer,
   ]);
 
-  // VERBATIM COPY: handleGroupGoBack from line ~692
+  // handleGroupGoBack — used by GroupScreen and CourtSelectionScreen only.
+  // ClearCourtScreen handles its own back navigation directly.
   const handleGroupGoBack = useCallback(() => {
     if (mobileFlow) {
-      // Check if we're in Clear Court workflow - handle navigation properly
-      if (currentScreen === 'clearCourt') {
-        // In Clear Court, Back should go to previous step or exit
-        if (clearCourtStep > 1) {
-          decrementClearCourtStep();
-        } else {
-          // Exit Clear Court workflow
-          requestMobileReset();
-        }
-      } else {
-        // For other screens, close the registration overlay
-        requestMobileReset();
-      }
+      requestMobileReset();
     } else {
       // Desktop behavior - go back to home
       setCurrentGroup([]);
@@ -118,9 +105,6 @@ export function useNavigationHandlers({
     }
   }, [
     mobileFlow,
-    currentScreen,
-    clearCourtStep,
-    decrementClearCourtStep,
     requestMobileReset,
     setCurrentGroup,
     setMemberNumber,

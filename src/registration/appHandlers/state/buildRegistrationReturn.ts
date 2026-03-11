@@ -25,7 +25,6 @@ import type {
   GuestCounterHook,
   SearchState,
   CourtAssignmentState,
-  ClearCourtFlow,
   MobileState,
   BlockAdminState,
   WaitlistAdminState,
@@ -44,14 +43,13 @@ import type {
 /** Fields from useRegistrationUiState — state values + setters */
 type UiModule = RegistrationUiState & RegistrationSetters;
 
-/** Fields from useRegistrationDomainHooks — 13 sub-hooks flattened */
+/** Fields from useRegistrationDomainHooks — 12 sub-hooks flattened (ClearCourtFlow is route-local) */
 type DomainModule =
   & Omit<AlertState, never>
   & Omit<AdminPriceFeedback, never>
   & Omit<GuestCounterHook, never>
   & Omit<SearchState, never>
   & Omit<CourtAssignmentState, never>
-  & Omit<ClearCourtFlow, never>
   & Omit<MobileState, never>
   & Omit<BlockAdminState, 'getCourtBlockStatus'>
   & Omit<WaitlistAdminState, never>
@@ -336,7 +334,7 @@ export function buildRegistrationReturn({
     // Players slice — group/guest management and member identity.
     players: { groupGuest, memberIdentity } satisfies PlayersSlice,
 
-    // Grouped court slice — backward-compatible alias.
+    // Grouped court slice — ClearCourtFlow removed (now route-local in ClearCourtRoute).
     court: {
       courtAssignment: {
         justAssignedCourt: domain.justAssignedCourt,
@@ -347,13 +345,6 @@ export function buildRegistrationReturn({
         setAssignedEndTime: domain.setAssignedEndTime,
         hasAssignedCourt: domain.hasAssignedCourt,
         setHasAssignedCourt: domain.setHasAssignedCourt,
-      },
-      clearCourtFlow: {
-        selectedCourtToClear: domain.selectedCourtToClear,
-        setSelectedCourtToClear: domain.setSelectedCourtToClear,
-        clearCourtStep: domain.clearCourtStep,
-        setClearCourtStep: domain.setClearCourtStep,
-        decrementClearCourtStep: domain.decrementClearCourtStep,
       },
     } satisfies CourtSlice,
 

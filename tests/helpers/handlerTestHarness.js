@@ -854,9 +854,6 @@ export function createNavigationHandlerDeps(overrides = {}) {
   const setCheckingLocation = vi.fn();
   const requestMobileReset = vi.fn();
 
-  // --- clearCourtFlow slice ---
-  const decrementClearCourtStep = vi.fn();
-
   // --- alert slice ---
   const showAlertMessage = vi.fn();
 
@@ -873,7 +870,6 @@ export function createNavigationHandlerDeps(overrides = {}) {
     setCurrentMemberId,
     setCheckingLocation,
     requestMobileReset,
-    decrementClearCourtStep,
     showAlertMessage,
   };
 
@@ -904,10 +900,6 @@ export function createNavigationHandlerDeps(overrides = {}) {
         mobileFlow: false,
         setCheckingLocation,
         requestMobileReset,
-      },
-      clearCourtFlow: {
-        clearCourtStep: 1,
-        decrementClearCourtStep,
       },
       alert: {
         showAlertMessage,

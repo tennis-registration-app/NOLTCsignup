@@ -25,9 +25,6 @@ import { useMemberSearch } from '../../search/useMemberSearch.js';
 // Court assignment result hook
 import { useCourtAssignmentResult } from '../../court/useCourtAssignmentResult';
 
-// Clear court flow hook
-import { useClearCourtFlow } from '../../court/useClearCourtFlow';
-
 // Block admin hook
 import { useBlockAdmin } from '../../blocks/useBlockAdmin';
 
@@ -102,15 +99,6 @@ export function useRegistrationDomainHooks({
     setAssignedEndTime,
     setHasAssignedCourt,
   } = useCourtAssignmentResult();
-
-  // Clear court flow hook
-  const {
-    selectedCourtToClear,
-    clearCourtStep,
-    setSelectedCourtToClear,
-    setClearCourtStep,
-    decrementClearCourtStep,
-  } = useClearCourtFlow();
 
   // Group/Guest hook
   const {
@@ -272,13 +260,6 @@ export function useRegistrationDomainHooks({
     setAssignedSessionId,
     setAssignedEndTime,
     setHasAssignedCourt,
-
-    // Clear court flow
-    selectedCourtToClear,
-    clearCourtStep,
-    setSelectedCourtToClear,
-    setClearCourtStep,
-    decrementClearCourtStep,
 
     // Group/Guest
     currentGroup,

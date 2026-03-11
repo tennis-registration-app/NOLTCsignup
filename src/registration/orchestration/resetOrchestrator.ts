@@ -35,8 +35,6 @@ export interface ResetFormActions {
   setHasWaitlistPriority: Setter<boolean>;
   setCurrentWaitlistEntryId: Setter<string | null>;
   setWaitlistPosition: Setter<number>;
-  setSelectedCourtToClear: Setter<number | null>;
-  setClearCourtStep: Setter<number>;
   setIsChangingCourt: Setter<boolean>;
   setWasOvertimeCourt: Setter<boolean>;
   setCourtToMove: Setter<number | null>;
@@ -87,8 +85,6 @@ export async function resetFormOrchestrated(deps: ResetFormDeps): Promise<void> 
       setHasWaitlistPriority,
       setCurrentWaitlistEntryId,
       setWaitlistPosition,
-      setSelectedCourtToClear,
-      setClearCourtStep,
       setIsChangingCourt,
       setWasOvertimeCourt,
       setCourtToMove,
@@ -133,8 +129,7 @@ export async function resetFormOrchestrated(deps: ResetFormDeps): Promise<void> 
   setWaitlistPosition(0); // Reset API waitlist position
   // NOTE: Do NOT clear mobile-waitlist-entry-id here - user is still on waitlist
   // It should only be cleared when they successfully get assigned a court
-  setSelectedCourtToClear(null);
-  setClearCourtStep(1);
+  // ClearCourt state resets by unmount (route-local hook)
   setIsChangingCourt(false);
   setWasOvertimeCourt(false);
   setCourtToMove(null);
@@ -192,8 +187,6 @@ export interface InactivityTimeoutDeps {
   setAddPlayerSearch: Setter<string>;
   setShowAddPlayerSuggestions: Setter<boolean>;
   setHasWaitlistPriority: Setter<boolean>;
-  setSelectedCourtToClear: Setter<number | null>;
-  setClearCourtStep: Setter<number>;
   setIsChangingCourt: Setter<boolean>;
   setWasOvertimeCourt: Setter<boolean>;
   // Helpers
@@ -235,8 +228,6 @@ export async function applyInactivityTimeoutOrchestrated(
     setAddPlayerSearch,
     setShowAddPlayerSuggestions,
     setHasWaitlistPriority,
-    setSelectedCourtToClear,
-    setClearCourtStep,
     setIsChangingCourt,
     setWasOvertimeCourt,
     // Helpers
@@ -280,8 +271,7 @@ export async function applyInactivityTimeoutOrchestrated(
   setAddPlayerSearch('');
   setShowAddPlayerSuggestions(false);
   setHasWaitlistPriority(false);
-  setSelectedCourtToClear(null);
-  setClearCourtStep(1);
+  // ClearCourt state resets by unmount (route-local hook)
   setIsChangingCourt(false);
   setWasOvertimeCourt(false);
   // ===== END ORIGINAL FUNCTION BODY =====

@@ -342,7 +342,7 @@ export interface TennisBusinessLogicShape {
  * UI State:       state, setters, refs
  * Domain Slices:  alert, search, mobile
  * Players Slice:  players (groupGuest, memberIdentity)
- * Court Slice:    court (courtAssignment, clearCourtFlow)
+ * Court Slice:    court (courtAssignment) — clearCourtFlow is route-local
  * Session Slice:  session (streak, timeout, guestCounterHook)
  * Admin Slice:    admin (adminPriceFeedback, waitlistAdmin, blockAdmin)
  * Derived:        derived
@@ -685,16 +685,17 @@ export interface CourtAssignmentState {
   setHasAssignedCourt: Setter<boolean>;
 }
 
+/**
+ * ClearCourtFlow — route-local state for the Clear Court wizard.
+ * No longer part of AppState/CourtSlice; instantiated in ClearCourtRoute.
+ */
 export interface ClearCourtFlow {
   /** Court selected for clearing */
   selectedCourtToClear: number | null;
-  // Evidence: useClearCourtFlow — dispatch SET_SELECTED_COURT_TO_CLEAR
   setSelectedCourtToClear: Setter<number | null>;
   /** Current step in clear flow (1-4) */
   clearCourtStep: number;
-  // Evidence: useClearCourtFlow — dispatch SET_CLEAR_COURT_STEP
   setClearCourtStep: Setter<number>;
-  // Evidence: useClearCourtFlow — decrements step for handleGroupGoBack
   decrementClearCourtStep: () => void;
 }
 
@@ -796,11 +797,10 @@ export interface PlayersSlice {
  * CourtSlice — grouped alias for court-lifecycle domain slices.
  *
  * Introduced as Step 3 of the God Object decomposition.
- * All flat aliases removed — consumers use app.court.* exclusively.
+ * ClearCourtFlow extracted to route-local hook in ClearCourtRoute (pilot).
  */
 export interface CourtSlice {
   courtAssignment: CourtAssignmentState;
-  clearCourtFlow: ClearCourtFlow;
 }
 
 /**
