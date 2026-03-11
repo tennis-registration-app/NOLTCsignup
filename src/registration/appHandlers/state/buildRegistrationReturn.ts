@@ -10,10 +10,8 @@
 
 import type {
   AppState,
-  CourtSlice,
   SessionSlice,
   AdminSlice,
-  PlayersSlice,
   RegistrationConstants,
   RegistrationUiState,
   RegistrationSetters,
@@ -24,13 +22,9 @@ import type {
   AdminPriceFeedback,
   GuestCounterHook,
   SearchState,
-  CourtAssignmentState,
   MobileState,
   BlockAdminState,
   WaitlistAdminState,
-  GroupGuestState,
-  StreakState,
-  MemberIdentityState,
   TimeoutState,
   TennisConfig,
   ApiConfig,
@@ -83,24 +77,10 @@ type DerivedModule = DerivedState;
 /** Fields from useSessionTimeout */
 type TimeoutModule = TimeoutState;
 
-/** Workflow context value — per-flow state that resets on key bump.
- *  Scalar useState fields removed from app.state/app.setters — now consumed
- *  exclusively via WorkflowContext in routes/presenters/handlers.
- *  Grouped slices (groupGuest, streak, courtAssignment, memberIdentity)
- *  still exposed on app.players / app.court / app.session for now.
- */
-interface WorkflowModule {
-  groupGuest: GroupGuestState;
-  streak: StreakState;
-  courtAssignment: CourtAssignmentState;
-  memberIdentity: MemberIdentityState;
-}
-
 export interface BuildRegistrationReturnParams {
   // Module objects — typed to match each source hook's return shape
   ui: UiModule;
   domain: DomainModule;
-  workflow: WorkflowModule;
   runtime: RuntimeModule;
   _dataLayer: DataLayerModule;
   helpers: HelpersModule;
@@ -139,7 +119,6 @@ export function buildRegistrationReturn({
   // Module objects
   ui,
   domain,
-  workflow,
   runtime,
   _dataLayer,
   helpers,
@@ -173,10 +152,6 @@ export function buildRegistrationReturn({
   // Validation
   validateGroupCompat,
 }: BuildRegistrationReturnParams): AppState {
-  // Bind groupGuest and memberIdentity from workflow context (key-based reset).
-  const groupGuest: GroupGuestState = workflow.groupGuest;
-  const memberIdentity: MemberIdentityState = workflow.memberIdentity;
-
   return {
     // Core state — shell-owned fields only.
     // Workflow fields (14) removed — now consumed exclusively via WorkflowContext.
@@ -302,17 +277,10 @@ export function buildRegistrationReturn({
       dismissGpsPrompt: domain.dismissGpsPrompt,
     },
 
-    // Players slice — group/guest management and member identity.
-    players: { groupGuest, memberIdentity } satisfies PlayersSlice,
-
-    // Grouped court slice — sourced from workflow context (key-based reset).
-    court: {
-      courtAssignment: workflow.courtAssignment,
-    } satisfies CourtSlice,
-
-    // Grouped session slice — streak from workflow context (key-based reset).
+    // Session slice — shell-owned timeout + guestCounter only.
+    // Workflow slices (players, court, streak) removed — now consumed
+    // exclusively via WorkflowContext in routes/presenters/handlers.
     session: {
-      streak: workflow.streak,
       timeout: {
         showTimeoutWarning: timeout.showTimeoutWarning,
       },

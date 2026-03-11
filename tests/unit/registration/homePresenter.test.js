@@ -45,18 +45,14 @@ function makeMockApp() {
     setters: {
       setCurrentScreen: vi.fn(),
     },
-    players: {
-      memberIdentity: { setMemberNumber: vi.fn() },
-      groupGuest: { setCurrentGroup: vi.fn() },
-    },
     CONSTANTS: { ADMIN_CODE: '9999', MAX_PLAYERS: 4 },
   };
 }
 
-function makeMockWorkflow(app) {
+function makeMockWorkflow() {
   return {
-    groupGuest: app.players.groupGuest,
-    memberIdentity: app.players.memberIdentity,
+    groupGuest: { setCurrentGroup: vi.fn() },
+    memberIdentity: { setMemberNumber: vi.fn() },
     setHasWaitlistPriority: vi.fn(),
     setCurrentWaitlistEntryId: vi.fn(),
   };
@@ -128,7 +124,7 @@ describe('homePresenter', () => {
   describe('buildHomeActions', () => {
     it('returns all 11 expected keys', () => {
       const app = makeMockApp();
-      const actions = buildHomeActions(app, makeMockWorkflow(app), makeMockHandlers());
+      const actions = buildHomeActions(app, makeMockWorkflow(), makeMockHandlers());
       const expectedKeys = [
         'setSearchInput',
         'setShowSuggestions',
@@ -148,7 +144,7 @@ describe('homePresenter', () => {
     it('onClearCourtClick calls checkLocationAndProceed then navigates', () => {
       const app = makeMockApp();
       const handlers = makeMockHandlers();
-      const actions = buildHomeActions(app, makeMockWorkflow(app), handlers);
+      const actions = buildHomeActions(app, makeMockWorkflow(), handlers);
 
       actions.onClearCourtClick();
 

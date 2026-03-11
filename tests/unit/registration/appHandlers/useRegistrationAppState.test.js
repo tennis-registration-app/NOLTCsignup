@@ -188,14 +188,12 @@ describe('useRegistrationAppState contract', () => {
       'assignCourtToGroupOrchestrated',
       'changeCourtOrchestrated',
       'computeRegistrationCourtSelection',
-      'court',
       'dbg',
       'derived',
       'handleAddPlayerSuggestionClickOrchestrated',
       'handleSuggestionClickOrchestrated',
       'helpers',
       'mobile',
-      'players',
       'refs',
       'resetFormOrchestrated',
       'resetWorkflow',
@@ -229,9 +227,7 @@ describe('useRegistrationAppState contract', () => {
       alert: 'object',
       search: 'object',
       mobile: 'object',
-      players: 'object',
       admin: 'object',
-      court: 'object',
       session: 'object',
       CONSTANTS: 'object',
       TENNIS_CONFIG: 'object',
@@ -274,13 +270,4 @@ describe('useRegistrationAppState contract', () => {
     expect(typeof result.handleAddPlayerSuggestionClickOrchestrated).toBe('function');
   });
 
-  it('players slice has expected sub-keys', () => {
-    expect(result.players).not.toBeNull();
-    expect(typeof result.players).toBe('object');
-    expect(Object.keys(result.players).sort()).toEqual(['groupGuest', 'memberIdentity']);
-    expect(typeof result.players.groupGuest).toBe('object');
-    expect(typeof result.players.memberIdentity).toBe('object');
-    expect(Object.keys(result.players.groupGuest).length).toBeGreaterThan(0);
-    expect(Object.keys(result.players.memberIdentity).length).toBeGreaterThan(0);
-  });
 });

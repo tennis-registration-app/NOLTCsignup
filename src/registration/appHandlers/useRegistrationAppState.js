@@ -265,7 +265,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
   return buildRegistrationReturn({
     ui,
     domain,
-    workflow,
     runtime,
     _dataLayer: dataLayer,
     helpers,

@@ -374,12 +374,8 @@ export interface AppState {
   search: SearchState;
   /** Mobile flow state */
   mobile: MobileState;
-  /** Players slice — group/guest management and member identity */
-  players: PlayersSlice;
-  /** Grouped session slice (backward-compatible alias) */
+  /** Session slice — timeout + guestCounter (shell-owned) */
   session: SessionSlice;
-  /** Grouped court slice (backward-compatible alias) */
-  court: CourtSlice;
   /** Grouped admin slice (backward-compatible alias) */
   admin: AdminSlice;
   /** App constants */
@@ -739,34 +735,12 @@ export interface BlockAdminState {
 }
 
 /**
- * PlayersSlice — grouped alias for player-identity and group-composition slices.
+ * SessionSlice — shell-owned per-registration-session utility slices.
  *
- * Introduced as Step 4 of the God Object decomposition (second-wave).
- * All consumers access via app.players.groupGuest / app.players.memberIdentity.
- */
-export interface PlayersSlice {
-  groupGuest: GroupGuestState;
-  memberIdentity: MemberIdentityState;
-}
-
-/**
- * CourtSlice — grouped alias for court-lifecycle domain slices.
- *
- * Introduced as Step 3 of the God Object decomposition.
- * ClearCourtFlow extracted to route-local hook in ClearCourtRoute (pilot).
- */
-export interface CourtSlice {
-  courtAssignment: CourtAssignmentState;
-}
-
-/**
- * SessionSlice — grouped alias for per-registration-session utility slices.
- *
- * Introduced as Step 2 of the God Object decomposition.
- * All flat aliases removed — consumers use app.session.* exclusively.
+ * Workflow slices (players/groupGuest, court/courtAssignment, streak)
+ * have been removed — now consumed exclusively via WorkflowContext.
  */
 export interface SessionSlice {
-  streak: StreakState;
   timeout: TimeoutState;
   guestCounterHook: GuestCounterHook;
 }
