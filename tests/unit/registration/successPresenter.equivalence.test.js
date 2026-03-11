@@ -176,11 +176,31 @@ function legacySuccessScreenProps(app, handlers, computed) {
 }
 
 /**
+ * Extract workflow-shaped object from app — simulates what
+ * SuccessRoute reads from useWorkflowContext().
+ * This verifies the presenter produces identical output whether
+ * the workflow fields come from context or from app.
+ */
+function extractWorkflowFromApp(app) {
+  return {
+    replacedGroup: app.state.replacedGroup,
+    canChangeCourt: app.state.canChangeCourt,
+    changeTimeRemaining: app.state.changeTimeRemaining,
+    isTimeLimited: app.state.isTimeLimited,
+    timeLimitReason: app.state.timeLimitReason,
+    courtAssignment: app.court.courtAssignment,
+    streak: app.session.streak,
+    groupGuest: app.players.groupGuest,
+  };
+}
+
+/**
  * Presenter-based prop mapping
  */
 function presenterSuccessScreenProps(app, handlers, computed) {
+  const workflow = extractWorkflowFromApp(app);
   return {
-    ...buildSuccessModel(app, computed),
+    ...buildSuccessModel(app, workflow, computed),
     ...buildSuccessActions(app, handlers),
   };
 }

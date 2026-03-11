@@ -9,6 +9,10 @@
  * NOTE: Some props require computed values or wrapped handlers
  * that depend on route-level context. These are passed in via
  * the `computed` parameter.
+ *
+ * Workflow-owned fields (11) are sourced from the `workflow` parameter,
+ * which SuccessRoute reads directly from WorkflowContext.
+ * Shell/global fields continue to come from `app`.
  */
 
 import type { AppState, CommandResponse, DirectoryMember, DomainCourt, GroupPlayer, Handlers, ReplacedGroup, TennisConfig, UpcomingBlock } from '../../../types/appTypes.js';
@@ -21,6 +25,26 @@ export interface SuccessModelComputed {
   assignedCourt: DomainCourt | null;
   position: number;
   estimatedWait: number;
+}
+
+/** Workflow-owned fields that buildSuccessModel reads. */
+export interface SuccessWorkflow {
+  replacedGroup: ReplacedGroup | null;
+  canChangeCourt: boolean;
+  changeTimeRemaining: number;
+  isTimeLimited: boolean;
+  timeLimitReason: string | null;
+  courtAssignment: {
+    justAssignedCourt: number | null;
+    assignedSessionId: string | null;
+    assignedEndTime: string | null;
+  };
+  streak: {
+    registrantStreak: number;
+  };
+  groupGuest: {
+    currentGroup: GroupPlayer[] | null;
+  };
 }
 
 export interface SuccessModel {
@@ -59,28 +83,24 @@ export interface SuccessActions {
 }
 
 /**
- * Build the model (data) props for SuccessScreen
+ * Build the model (data) props for SuccessScreen.
+ *
+ * Workflow-owned fields come from the `workflow` parameter (WorkflowContext).
+ * Shell/global fields come from `app`.
  */
-export function buildSuccessModel(app: AppState, computed: SuccessModelComputed): SuccessModel {
-  // Destructure from app (verbatim from SuccessRoute)
-  const { state, players, mobile, admin, session, court, TENNIS_CONFIG } = app;
-  const { courtAssignment } = court;
+export function buildSuccessModel(app: AppState, workflow: SuccessWorkflow, computed: SuccessModelComputed): SuccessModel {
+  // Shell fields from app
+  const { state, mobile, admin, TENNIS_CONFIG } = app;
   const { blockAdmin } = admin;
-  const { streak } = session;
-  const {
-    replacedGroup,
-    ballPriceCents,
-    data,
-    canChangeCourt,
-    changeTimeRemaining,
-    isTimeLimited,
-    timeLimitReason,
-  } = state;
+  const { ballPriceCents, data } = state;
   const { blockWarningMinutes, getCourtBlockStatus } = blockAdmin;
-  const { justAssignedCourt, assignedSessionId, assignedEndTime } = courtAssignment;
-  const { registrantStreak } = streak;
-  const { currentGroup } = players.groupGuest;
   const { mobileFlow, mobileCountdown } = mobile;
+
+  // Workflow fields from context
+  const { replacedGroup, canChangeCourt, changeTimeRemaining, isTimeLimited, timeLimitReason } = workflow;
+  const { justAssignedCourt, assignedSessionId, assignedEndTime } = workflow.courtAssignment;
+  const { registrantStreak } = workflow.streak;
+  const { currentGroup } = workflow.groupGuest;
 
   return {
     // Computed values (from route)
@@ -88,7 +108,7 @@ export function buildSuccessModel(app: AppState, computed: SuccessModelComputed)
     assignedCourt: computed.assignedCourt,
     position: computed.position,
     estimatedWait: computed.estimatedWait,
-    // Direct state values
+    // Direct state values — workflow-sourced
     justAssignedCourt,
     sessionId: assignedSessionId,
     assignedEndTime,
@@ -96,11 +116,12 @@ export function buildSuccessModel(app: AppState, computed: SuccessModelComputed)
     canChangeCourt,
     changeTimeRemaining,
     currentGroup,
-    mobileCountdown: mobileFlow ? mobileCountdown : null,
-    isMobile: mobileFlow,
     isTimeLimited,
     timeLimitReason,
     registrantStreak,
+    // Direct state values — shell-sourced
+    mobileCountdown: mobileFlow ? mobileCountdown : null,
+    isMobile: mobileFlow,
     ballPriceCents,
     // Utilities
     TENNIS_CONFIG,

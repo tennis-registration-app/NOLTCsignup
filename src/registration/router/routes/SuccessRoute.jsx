@@ -8,11 +8,17 @@ import { buildSuccessModel, buildSuccessActions } from '../presenters';
 import { simulateWaitlistEstimates } from '../../../tennis/domain/waitlist.js';
 import { TENNIS_CONFIG } from '../../../lib/config.js';
 
+// Direct workflow context — SuccessRoute reads workflow-owned state from context
+import { useWorkflowContext } from '../../context/WorkflowProvider';
+
 /**
  * SuccessRoute
  * Extracted from RegistrationRouter
  * Collapsed to app/handlers only
  * Refactored to use presenter functions
+ *
+ * Workflow-owned state is read directly from WorkflowContext.
+ * Shell/global state continues to come from app.
  *
  * @param {{
  *   app: import('../../../types/appTypes').AppState,
@@ -20,12 +26,14 @@ import { TENNIS_CONFIG } from '../../../lib/config.js';
  * }} props
  */
 export function SuccessRoute({ app, handlers }) {
-  // Route-internal state for alert display
-  const { alert, state, court, CONSTANTS } = app;
-  const { courtAssignment } = court;
+  // Workflow state — read directly from context
+  const workflow = useWorkflowContext();
+  const { waitlistPosition } = workflow;
+  const { justAssignedCourt } = workflow.courtAssignment;
+
+  // Shell state — continue to read from app
+  const { alert, CONSTANTS } = app;
   const { showAlert, alertMessage } = alert;
-  const { waitlistPosition } = state;
-  const { justAssignedCourt } = courtAssignment;
 
   // Get court data for computed values
   const { getCourtData } = handlers;
@@ -87,7 +95,7 @@ export function SuccessRoute({ app, handlers }) {
 
   // Build props via presenter functions
   const computed = { isCourtAssignment, assignedCourt, position, estimatedWait };
-  const model = buildSuccessModel(app, computed);
+  const model = buildSuccessModel(app, workflow, computed);
   const actions = buildSuccessActions(app, handlers);
 
   return (
