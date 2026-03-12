@@ -125,6 +125,7 @@ npx playwright test e2e/registration-happy-path.spec.js
 | `null-courts-handling.spec.js` | Courtboard renders with null court entries | `/src/courtboard/index.html` | `board-state-with-nulls.json` |
 | `block-refresh-wiring.spec.js` | Admin blocks tab reflects new block after refresh | `/src/admin/index.html` | `blocks-data-empty.json` → `blocks-data-with-new-block.json` |
 | `block-state-transition.spec.js` | Courtboard blocked → available after refresh | `/src/courtboard/index.html` | `board-state-blocked.json` → `board-state-unblocked.json` |
+| `failure-paths.spec.js` | Backend mutation failures show error, no false success | `/src/registration/index.html` | `board-state.json`, `board-state-waitlist.json` |
 
 ### E2E Test Mode
 

@@ -351,17 +351,18 @@ function GroupRoute({ app, handlers }) {
 
 ### Unit Tests (Vitest)
 
-- **3,077 unit tests** across 157 test files
+- **3,128 unit tests** across 161 test files
 - Cover: reducers, services, transforms, error handling, contract fences,
-  orchestrators, presenters
+  orchestrators, presenters (including behavioral presenter tests)
 - Mock external dependencies (API, storage)
 
-Coverage ratchet enforced via CI (current baseline: 50.06% statements, 45.06% branches, 41.84% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
+Coverage ratchet enforced via CI (current baseline: 53.92% statements, 49.22% branches, 45.84% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
 
 ### E2E Tests (Playwright)
 
-- **18 tests** covering critical user flows
+- **22 tests** across 15 spec files covering critical user flows
 - Golden flows: registration, court assignment, waitlist, blocks
+- Failure-path tests: assign-court failure, court-occupied race, assign-from-waitlist failure, clear-court failure
 - Run against preview server with mock API
 
 ### Verification Gate

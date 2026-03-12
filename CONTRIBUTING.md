@@ -130,7 +130,7 @@ When refactoring (moving code, extracting modules):
 1. **Verbatim extraction** — Copy exact code, no "improvements"
 2. **Same API surface** — Return same identifiers
 3. **Same dependency arrays** — Don't "fix" useCallback/useEffect deps
-4. **Playwright gate** — Must pass 14/14 after each commit
+4. **Playwright gate** — Must pass 22/22 after each commit
 
 ### Integration Order
 When wiring state modules:

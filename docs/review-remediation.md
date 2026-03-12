@@ -37,7 +37,7 @@ Based on two independent architectural reviews (Claude Code Opus) evaluating the
 ### Quality Gates
 - **Coverage ratchet:** Added, CI-enforced (follows lint/type ratchet pattern).
 - **Fixture validation:** Wired into CI verify chain.
-- **Unit tests:** 994 -> 1048.
+- **Unit tests:** 994 -> 1048 (at time of initial review). Current: 3,128 tests across 161 files.
 
 ### Documentation
 - **ADRs:** 5 initial Architecture Decision Records (backend-authoritative, layered architecture, normalization boundary, ratchet gates, no state management library).
@@ -68,7 +68,7 @@ Based on two independent architectural reviews (Claude Code Opus) evaluating the
 - **Gate:** Consider when converting more files to .tsx or adopting a JSX type declaration strategy.
 
 ### Test Coverage
-- **Status:** ~50% statement coverage (ratcheted at 50.06%), enforced by coverage ratchet (cannot regress).
+- **Status:** ~54% statement coverage (ratcheted at 53.92%), enforced by coverage ratchet (cannot regress).
 - **Rationale:** Testing strategy prioritizes orchestrator unit tests, command/domain logic, and E2E user flows over component-level coverage. Coverage ratchet locks in improvements.
 - **Gate:** Next uplift would target remaining handler/hook files and screen components.
 
