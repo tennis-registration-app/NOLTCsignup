@@ -119,6 +119,21 @@ describe('homePresenter', () => {
       expect(model.passThroughEntry).toBeNull();
       expect(model.isMobileView).toBe(false);
     });
+
+    it('maps alert slice correctly', () => {
+      const app = makeMockApp();
+      app.alert.showAlert = true;
+      app.alert.alertMessage = 'Court blocked';
+      const model = buildHomeModel(app);
+      expect(model.showAlert).toBe(true);
+      expect(model.alertMessage).toBe('Court blocked');
+    });
+
+    it('maps CONSTANTS by reference', () => {
+      const app = makeMockApp();
+      const model = buildHomeModel(app);
+      expect(model.CONSTANTS).toBe(app.CONSTANTS);
+    });
   });
 
   describe('buildHomeActions', () => {
@@ -158,6 +173,30 @@ describe('homePresenter', () => {
         'clearCourt',
         'homeClearCourtClick'
       );
+    });
+
+    it('passes workflow setters by reference', () => {
+      const workflow = makeMockWorkflow();
+      const actions = buildHomeActions(makeMockApp(), workflow, makeMockHandlers());
+      expect(actions.setCurrentGroup).toBe(workflow.groupGuest.setCurrentGroup);
+      expect(actions.setMemberNumber).toBe(workflow.memberIdentity.setMemberNumber);
+      expect(actions.setHasWaitlistPriority).toBe(workflow.setHasWaitlistPriority);
+      expect(actions.setCurrentWaitlistEntryId).toBe(workflow.setCurrentWaitlistEntryId);
+    });
+
+    it('passes handler callbacks by reference', () => {
+      const handlers = makeMockHandlers();
+      const actions = buildHomeActions(makeMockApp(), makeMockWorkflow(), handlers);
+      expect(actions.handleSuggestionClick).toBe(handlers.handleSuggestionClick);
+      expect(actions.markUserTyping).toBe(handlers.markUserTyping);
+      expect(actions.findMemberNumber).toBe(handlers.findMemberNumber);
+    });
+
+    it('passes search setters from app.search by reference', () => {
+      const app = makeMockApp();
+      const actions = buildHomeActions(app, makeMockWorkflow(), makeMockHandlers());
+      expect(actions.setSearchInput).toBe(app.search.setSearchInput);
+      expect(actions.setShowSuggestions).toBe(app.search.setShowSuggestions);
     });
   });
 });
