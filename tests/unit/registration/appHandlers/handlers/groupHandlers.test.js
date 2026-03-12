@@ -282,9 +282,9 @@ describe('handleStreakAcknowledge', () => {
 // 9. handleGroupJoinWaitlist — try/catch + timer → 2 tests
 // ============================================================
 describe('handleGroupJoinWaitlist', () => {
-  it('calls sendGroupToWaitlist, shows success, sets reset timer', async () => {
+  it('shows success and sets reset timer when orchestrator returns true', async () => {
     vi.useFakeTimers();
-    mocks.sendGroupToWaitlist.mockResolvedValue(undefined);
+    mocks.sendGroupToWaitlist.mockResolvedValue(true);
     await result.current.handleGroupJoinWaitlist();
 
     expect(mocks.sendGroupToWaitlist).toHaveBeenCalledWith([]);
@@ -297,16 +297,25 @@ describe('handleGroupJoinWaitlist', () => {
     vi.useRealTimers();
   });
 
-  it('catches error and still sets up reset timer', async () => {
+  it('does NOT show success when orchestrator returns false', async () => {
+    vi.useFakeTimers();
+    mocks.sendGroupToWaitlist.mockResolvedValue(false);
+    await result.current.handleGroupJoinWaitlist();
+
+    expect(mocks.setShowSuccess).not.toHaveBeenCalled();
+    expect(mocks.clearSuccessResetTimer).not.toHaveBeenCalled();
+    expect(mocks.resetForm).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('does NOT show success when orchestrator throws', async () => {
     vi.useFakeTimers();
     mocks.sendGroupToWaitlist.mockRejectedValue(new Error('network'));
     await result.current.handleGroupJoinWaitlist();
 
-    // Error caught — no throw
-    expect(mocks.clearSuccessResetTimer).toHaveBeenCalled();
-
-    vi.advanceTimersByTime(5000);
-    expect(mocks.resetForm).toHaveBeenCalled();
+    // Error caught — no throw, no success
+    expect(mocks.setShowSuccess).not.toHaveBeenCalled();
+    expect(mocks.clearSuccessResetTimer).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 });

@@ -34,7 +34,7 @@ export async function sendGroupToWaitlistOrchestrated(
   group: GroupPlayer[] | null,
   deps: WaitlistDeps,
   options: WaitlistOptions = {}
-): Promise<void> {
+): Promise<boolean> {
   const {
     // Read values
     isJoiningWaitlist,
@@ -58,7 +58,7 @@ export async function sendGroupToWaitlistOrchestrated(
   if (isJoiningWaitlist) {
     logger.debug('Waitlist', 'Waitlist join already in progress, ignoring duplicate request');
     // SILENT-GUARD: double-submit prevention — no user feedback needed
-    return;
+    return false;
   }
 
   const traceId = `WL-${Date.now()}`;
@@ -74,7 +74,7 @@ export async function sendGroupToWaitlistOrchestrated(
     if (!group || !group.length) {
       logger.warn('Waitlist', 'no players selected');
       // EARLY-EXIT: empty group — nothing to do
-      return;
+      return false;
     }
 
     // Build the players array (keep guests for waitlist display)
@@ -114,7 +114,7 @@ export async function sendGroupToWaitlistOrchestrated(
       toast(validation.errors.join(' '), { type: 'error' });
       showAlertMessage(validation.errors.join('\n'));
       // FEEDBACK: toast and alert provide user feedback above
-      return;
+      return false;
     }
 
     // Check if any player is already playing
@@ -123,7 +123,7 @@ export async function sendGroupToWaitlistOrchestrated(
       if (playerStatus.isPlaying && playerStatus.location !== 'current') {
         showAlertMessage(`${player.name} is already registered elsewhere.`);
         // FEEDBACK: alert provides user feedback above
-        return;
+        return false;
       }
     }
 
@@ -193,6 +193,7 @@ export async function sendGroupToWaitlistOrchestrated(
       });
       const successTime = Math.round(performance.now() - waitlistStartTime);
       logger.debug('Waitlist', `[T+${successTime}ms] joined ok, UI updated`);
+      return true;
     } else {
       logger.error('Waitlist', `[T+${apiDuration}ms] Failed`, {
         code: result.code,
@@ -202,9 +203,10 @@ export async function sendGroupToWaitlistOrchestrated(
       if (API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
         setGpsFailedPrompt(true);
         // FEEDBACK: GPS prompt modal provides user feedback
-        return;
+        return false;
       }
       toast(result.message || 'Could not join waitlist', { type: 'error' });
+      return false;
     }
   } catch (e) {
     const meta = normalizeError(e);
@@ -215,6 +217,7 @@ export async function sendGroupToWaitlistOrchestrated(
       message: meta.message,
     });
     toast('Could not join waitlist', { type: 'error' });
+    return false;
   }
   // ===== END ORIGINAL FUNCTION BODY =====
 }

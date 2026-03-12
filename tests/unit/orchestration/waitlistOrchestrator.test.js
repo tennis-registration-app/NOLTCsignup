@@ -82,37 +82,40 @@ describe('sendGroupToWaitlistOrchestrated', () => {
   });
 
   describe('guard: double-submit prevention', () => {
-    it('returns early when isJoiningWaitlist is true', async () => {
+    it('returns false when isJoiningWaitlist is true', async () => {
       const deps = createMockDeps({ isJoiningWaitlist: true });
       const group = createGroup();
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
 
+      expect(ok).toBe(false);
       expect(deps.setIsJoiningWaitlist).not.toHaveBeenCalled();
       expect(deps.backend.commands.joinWaitlistWithPlayers).not.toHaveBeenCalled();
     });
   });
 
   describe('guard: empty group', () => {
-    it('returns early when group is null', async () => {
+    it('returns false when group is null', async () => {
       const deps = createMockDeps();
 
-      await sendGroupToWaitlistOrchestrated(null, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(null, deps);
 
+      expect(ok).toBe(false);
       expect(deps.backend.commands.joinWaitlistWithPlayers).not.toHaveBeenCalled();
     });
 
-    it('returns early when group is empty array', async () => {
+    it('returns false when group is empty array', async () => {
       const deps = createMockDeps();
 
-      await sendGroupToWaitlistOrchestrated([], deps);
+      const ok = await sendGroupToWaitlistOrchestrated([], deps);
 
+      expect(ok).toBe(false);
       expect(deps.backend.commands.joinWaitlistWithPlayers).not.toHaveBeenCalled();
     });
   });
 
   describe('guard: group validation', () => {
-    it('shows alert when validateGroupCompat returns errors', async () => {
+    it('returns false and shows alert when validateGroupCompat returns errors', async () => {
       const deps = createMockDeps({
         validateGroupCompat: vi.fn().mockReturnValue({
           ok: false,
@@ -121,15 +124,16 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       });
       const group = createGroup();
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
 
+      expect(ok).toBe(false);
       expect(deps.showAlertMessage).toHaveBeenCalledWith('Maximum group size is 4.');
       expect(deps.backend.commands.joinWaitlistWithPlayers).not.toHaveBeenCalled();
     });
   });
 
   describe('guard: player already playing', () => {
-    it('shows alert when player is already registered elsewhere', async () => {
+    it('returns false and shows alert when player is already registered elsewhere', async () => {
       const deps = createMockDeps({
         isPlayerAlreadyPlaying: vi.fn().mockReturnValue({
           isPlaying: true,
@@ -138,8 +142,9 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       });
       const group = createGroup();
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
 
+      expect(ok).toBe(false);
       expect(deps.showAlertMessage).toHaveBeenCalledWith(
         expect.stringContaining('is already registered elsewhere')
       );
@@ -162,15 +167,16 @@ describe('sendGroupToWaitlistOrchestrated', () => {
   });
 
   describe('successful waitlist join', () => {
-    it('calls joinWaitlistWithPlayers with correct players', async () => {
+    it('returns true and calls joinWaitlistWithPlayers with correct players', async () => {
       const deps = createMockDeps();
       const group = createGroup([
         { id: 'p1', name: 'Alice', memberNumber: '1001' },
         { id: 'p2', name: 'Bob', memberNumber: '1002' },
       ]);
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
 
+      expect(ok).toBe(true);
       expect(deps.backend.commands.joinWaitlistWithPlayers).toHaveBeenCalledWith(
         expect.objectContaining({
           players: expect.arrayContaining([
@@ -287,7 +293,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
   });
 
   describe('error handling', () => {
-    it('shows GPS prompt on mobile location error', async () => {
+    it('returns false and shows GPS prompt on mobile location error', async () => {
       const deps = createMockDeps({
         API_CONFIG: { IS_MOBILE: true },
       });
@@ -297,18 +303,33 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       });
       const group = createGroup();
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
 
+      expect(ok).toBe(false);
       expect(deps.setGpsFailedPrompt).toHaveBeenCalledWith(true);
     });
 
-    it('resets isJoiningWaitlist on exception', async () => {
+    it('returns false on generic backend failure', async () => {
+      const deps = createMockDeps();
+      deps.backend.commands.joinWaitlistWithPlayers.mockResolvedValue({
+        ok: false,
+        message: 'Could not join waitlist',
+      });
+      const group = createGroup();
+
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
+
+      expect(ok).toBe(false);
+    });
+
+    it('returns false and resets isJoiningWaitlist on exception', async () => {
       const deps = createMockDeps();
       deps.backend.commands.joinWaitlistWithPlayers.mockRejectedValue(new Error('Network error'));
       const group = createGroup();
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
 
+      expect(ok).toBe(false);
       expect(deps.setIsJoiningWaitlist).toHaveBeenLastCalledWith(false);
     });
   });

@@ -327,14 +327,17 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleGroupJoinWaitlist from line ~897
   const handleGroupJoinWaitlist = useCallback(async () => {
+    let ok = false;
     try {
-      await sendGroupToWaitlist(currentGroup);
-      setShowSuccess(true);
+      ok = await sendGroupToWaitlist(currentGroup);
     } catch (error) {
       logger.error('GroupHandlers', '[handleGroupJoinWaitlist] Error', error);
     }
+    if (ok) {
+      setShowSuccess(true);
+    }
     // Don't auto-reset in mobile flow - let the overlay handle timing
-    if (!mobileFlow) {
+    if (ok && !mobileFlow) {
       clearSuccessResetTimer();
       successResetTimerRef.current = setTimeout(() => {
         successResetTimerRef.current = null;

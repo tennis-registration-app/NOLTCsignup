@@ -392,8 +392,8 @@ export interface AppState {
   validateGroupCompat: (players: GroupPlayer[], guests: number) => { ok: boolean; errors: string[] };
   // Evidence: assignCourtOrchestrator.ts:74 — async (courtNumber, selectableCount, deps) => void
   assignCourtToGroupOrchestrated: (courtNumber: number | null | undefined, selectableCountAtSelection: number | null, deps: AssignCourtDeps) => Promise<void>;
-  // Evidence: waitlistOrchestrator.ts:31 — async (group, deps, options?) => void
-  sendGroupToWaitlistOrchestrated: (group: GroupPlayer[] | null, deps: WaitlistDeps, options?: { deferred?: boolean }) => Promise<void>;
+  // Evidence: waitlistOrchestrator.ts:31 — async (group, deps, options?) => boolean
+  sendGroupToWaitlistOrchestrated: (group: GroupPlayer[] | null, deps: WaitlistDeps, options?: { deferred?: boolean }) => Promise<boolean>;
   // Evidence: memberSelectionOrchestrator.ts:43 — async (suggestion, deps) => void
   handleSuggestionClickOrchestrated: (suggestion: AutocompleteSuggestion, deps: SuggestionClickDeps) => Promise<void>;
   // Evidence: memberSelectionOrchestrator.ts:235 — async (suggestion, deps) => void
@@ -916,8 +916,8 @@ export interface Handlers {
   assignCourtToGroup: (courtNumber: number, selectableCountAtSelection?: number | null) => Promise<void>;
   // Evidence: useCallback(() => { changeCourtOrchestrated({...}) })
   changeCourt: () => void;
-  // Evidence: useCallback(async (group, options) => { await sendGroupToWaitlistOrchestrated(...) })
-  sendGroupToWaitlist: (group: GroupPlayer[], options?: { deferred?: boolean }) => Promise<void>;
+  // Evidence: useCallback(async (group, options) => { return await sendGroupToWaitlistOrchestrated(...) })
+  sendGroupToWaitlist: (group: GroupPlayer[], options?: { deferred?: boolean }) => Promise<boolean>;
   // Evidence: useCallback(async (entryId) => { await backend.commands.deferWaitlistEntry(...) })
   deferWaitlistEntry: (entryId: string) => Promise<void>;
   // Evidence: useCallback(async (previousCourtNumber, displacement) => { ... })

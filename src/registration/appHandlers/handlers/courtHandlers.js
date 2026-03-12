@@ -315,7 +315,7 @@ export function useCourtHandlers({
   // VERBATIM COPY: sendGroupToWaitlist from line ~527
   const sendGroupToWaitlist = useCallback(
     async (group, options) => {
-      await sendGroupToWaitlistOrchestrated(
+      return await sendGroupToWaitlistOrchestrated(
         group,
         {
           // Read values
