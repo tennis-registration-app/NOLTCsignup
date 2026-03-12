@@ -89,17 +89,18 @@ chore(scope): maintenance tasks
 
 #### Route Components (`src/registration/router/routes/`)
 - One file per screen
-- Receives `{ app, handlers }` props only
-- Destructures what it needs internally
+- Receives `{ app, handlers }` props, plus workflow context via `useWorkflowContext()`
+- Passes slices to presenters, which build screen props
 
 ### Component Patterns
 
-**Route Components** receive only `{ app, handlers }`:
+**Route Components** receive `{ app, handlers }` and consume workflow from context:
 ```jsx
-export function HomeRoute({ app, handlers }) {
-  const { search, derived, CONSTANTS } = app;
-  const { handleSuggestionClick } = handlers;
-  // ...
+export function GroupRoute({ app, handlers }) {
+  const workflow = useWorkflowContext();
+  const model = buildGroupModel(app);
+  const actions = buildGroupActions(app, workflow, handlers);
+  return <GroupScreen {...model} {...actions} />;
 }
 ```
 
@@ -215,9 +216,10 @@ See `ARCHITECTURE.md` for full details.
 - **Idempotent operations** — Safe to retry
 
 ### State Management
-- **App state**: `useRegistrationAppState` hook
+- **Shell state**: `useRegistrationAppState` hook (26-key `app` object)
+- **Per-flow state**: `WorkflowProvider` context (group, court assignment, member identity, streak) — resets via key-based remount
 - **Handlers**: `useRegistrationHandlers` hook
-- **Grouped props**: `app` object (state/config) and `handlers` object (actions)
+- **Grouped props**: `app` object (shell state/config), `handlers` object (actions), workflow context (per-flow state)
 
 ### Data Flow
 ```
@@ -250,7 +252,7 @@ Current exemptions: entry points (`main.jsx`), legacy interop (`helpers.js`, `co
 
 ### AppState Top-Level Key Governance
 
-Do not add new top-level keys to the `AppState` interface. The current 33 keys are frozen by contract test (`useRegistrationAppState.test.js`).
+Do not add new top-level keys to the `AppState` interface. The current 26 keys are frozen by contract test (`useRegistrationAppState.test.js`).
 
 New state should be added to the appropriate existing sub-interface:
 
@@ -258,14 +260,14 @@ New state should be added to the appropriate existing sub-interface:
 |---------|--------------|
 | UI state (visibility, modes, selections) | `RegistrationUiState` |
 | UI setters | `RegistrationSetters` |
-| Court management | `CourtAssignmentState` or `ClearCourtFlow` |
+| Clear-court flow | `ClearCourtFlow` |
 | Waitlist features | `WaitlistAdminState` |
 | Block scheduling | `BlockAdminState` |
-| Group/guest management | `GroupGuestState` |
-| Member lookup | `MemberIdentityState` or `SearchState` |
+| Member search | `SearchState` |
 | Mobile-specific | `MobileState` |
 | Alerts/feedback | `AlertState` or `AdminPriceFeedback` |
-| Streak tracking | `StreakState` |
+
+Per-flow state (group composition, court assignment, member identity, streak) is owned by `WorkflowProvider` and consumed via `useWorkflowContext()` — not part of AppState. Add per-flow fields to the appropriate workflow slice, not to AppState sub-interfaces.
 
 If a new top-level key is genuinely required:
 1. Document why an existing sub-interface doesn't fit

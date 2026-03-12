@@ -23,7 +23,7 @@ Use conventional commit prefixes: `feat`, `fix`, `refactor`, `docs`, `test`, `ch
 ## How to Add a New Screen
 
 1. Create the component in `src/registration/screens/` (or `src/admin/screens/`)
-2. Create a presenter in `src/registration/router/presenters/` that builds the screen's model from AppState — pure function, no hooks
+2. Create a presenter in `src/registration/router/presenters/` that builds the screen's model from AppState + workflow context — pure function, no hooks
 3. Wire the presenter into the route in `src/registration/router/RegistrationRouter.jsx`
 4. If the screen needs backend calls, create or extend an orchestrator in `src/registration/orchestration/`
 5. Add a smoke test in `tests/unit/smoke/` — render with minimal props, assert key elements are present

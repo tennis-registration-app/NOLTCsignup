@@ -30,7 +30,7 @@ Based on two independent architectural reviews (Claude Code Opus) evaluating the
 - **3 thin sections** (Analytics 12 lines, History 5, System 6) assessed — too thin for presenter pattern.
 
 ### AppState Governance
-- **Contract test:** Pre-existing test freezes all 33 top-level keys (useRegistrationAppState.test.js).
+- **Contract test:** Pre-existing test freezes all 26 top-level keys (useRegistrationAppState.test.js). Per-flow state moved to WorkflowProvider.
 - **Governance rule:** CONTRIBUTING.md — no new top-level keys, add to existing sub-interfaces.
 - **Logical groupings:** Documented in appTypes.ts (8 groups: UI, Domain Slices, Derived, Helpers, Services, Config, Orchestrators, Debug).
 
@@ -52,9 +52,9 @@ Based on two independent architectural reviews (Claude Code Opus) evaluating the
 - **Gate:** Must be implemented before any public-network deployment.
 
 ### AppState Context Decomposition
-- **Status:** Evaluated 6 times across reviews. Rejected each time.
-- **Rationale:** Presenters already decompose AppState per-screen. Context migration would change access paths (`app.x` -> `app.ui.x`) across every consumer with no behavioral benefit at current team size.
-- **Gate:** Revisit if team exceeds 3 developers and merge conflicts in buildRegistrationReturn.ts become frequent.
+- **Status:** Partially completed. Per-flow state (group, court assignment, member identity, streak) moved to `WorkflowProvider` context. Remaining shell state (26 keys) still in `useRegistrationAppState`.
+- **Rationale:** WorkflowProvider handles the workflow-lifecycle state that needed reset-on-remount. Remaining shell state is stable across flows and doesn't benefit from further context splitting at current team size.
+- **Gate:** Revisit further decomposition if team exceeds 3 developers and merge conflicts in buildRegistrationReturn.ts become frequent.
 - **ADR:** 005-composed-hooks-no-state-library.md
 
 ### State Management Library (Redux/Zustand)

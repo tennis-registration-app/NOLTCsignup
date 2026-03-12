@@ -144,21 +144,27 @@ router/
 
 ### Props Pattern
 
-Routes receive two grouped objects instead of individual props:
-- `app` — All state, setters, refs, derived values, services
+Routes receive two grouped objects plus workflow context:
+- `app` — Shell-owned state, setters, refs, derived values, services (26 keys)
 - `handlers` — All handler functions
+- Per-flow state (group composition, court assignment, member identity, streak) is owned by `WorkflowProvider` and consumed via `useWorkflowContext()` in routes, presenters, and handler deps builders
 
 ```javascript
 // In App.jsx
 const app = useRegistrationAppState();
 const handlers = useRegistrationHandlers({ ...app });
-return <RegistrationRouter app={app} handlers={handlers} />;
+return (
+  <WorkflowProvider backend={backend}>
+    <RegistrationRouter app={app} handlers={handlers} />
+  </WorkflowProvider>
+);
 
-// In routes
+// In routes — shell state from app, per-flow state from workflow context
 function GroupRoute({ app, handlers }) {
-  const { groupGuest, search, derived } = app;
-  const { handleSuggestionClick, handleAddGuest } = handlers;
-  // ...
+  const workflow = useWorkflowContext();
+  const model = buildGroupModel(app);
+  const actions = buildGroupActions(app, workflow, handlers);
+  return <GroupScreen {...model} {...actions} />;
 }
 ```
 
@@ -628,7 +634,7 @@ Courtboard icons use emoji in `<span>` elements sized via `fontSize` — this is
 
 Contract tests (`*.contract.test.js`, `*.equivalence.test.js`) are non-negotiable CI gates. Any controller, presenter, or bridge surface change requires updating inline snapshots in the same PR with written rationale.
 
-Contract test files (`*.contract.test.js`): `buildAdminController.contract.test.js`, `useCourtActions.contract.test.js`, `useAdminHandlers.contract.test.js`, `taxonomyChain.contract.test.js`, `normalizeSession.contract.test.js`, `waitlistPosition.contract.test.js`, `buildHandlerDeps.contract.test.js`. Additional contract-style test: `useRegistrationAppState.test.js` (freezes 33-key AppState shape). Equivalence tests: 5 registration + 4 admin presenter equivalence tests.
+Contract test files (`*.contract.test.js`): `buildAdminController.contract.test.js`, `useCourtActions.contract.test.js`, `useAdminHandlers.contract.test.js`, `taxonomyChain.contract.test.js`, `normalizeSession.contract.test.js`, `waitlistPosition.contract.test.js`, `buildHandlerDeps.contract.test.js`. Additional contract-style test: `useRegistrationAppState.test.js` (freezes 26-key AppState shape). Equivalence tests: 5 registration + 4 admin presenter equivalence tests.
 
 Gate: `npm run verify`
 

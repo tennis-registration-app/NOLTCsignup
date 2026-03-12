@@ -33,4 +33,4 @@ Layer rules:
 
 ## Consequences
 - **Positive**: Orchestrators and presenters are testable without React runtime. Screens are pure UI components. Clear extension path for new features. ESLint enforces boundaries automatically.
-- **Negative**: AppState "God Object" assembles all 33 keys in one interface (governed by contract test and top-level key policy, see ADR-005). Handler dependency arrays can be long. New developers must learn the layer conventions.
+- **Negative**: AppState assembles 26 shell-state keys in one interface; per-flow state owned by WorkflowProvider (governed by contract test and top-level key policy, see ADR-005). Handler dependency arrays can be long. New developers must learn the layer conventions.

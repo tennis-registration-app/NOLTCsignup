@@ -153,8 +153,8 @@ Architectural boundaries and enforcement mechanisms prevent common drift pattern
 
 ### 3. Orchestrator Deps Grouping
 - **Pattern:** Large dependency objects grouped into `{ state, actions, services, ui }`
-- **resetOrchestrator:** 36 → 2 top-level keys (`actions`, `services`)
-- **assignCourtOrchestrator:** 36 → 4 top-level keys
+- **resetOrchestrator:** Shell-level cleanup only (6 setters + 1 service). Workflow state resets via WorkflowProvider key-based remount — no explicit setter calls needed
+- **assignCourtOrchestrator:** Grouped deps (`{ state, actions, services, ui }`) sourced from `app` + workflow context via `buildHandlerDeps`
 
 ### 4. Boundary Normalization Rule
 - **Rule:** snake_case allowed only at boundaries; internal UI/services use camelCase

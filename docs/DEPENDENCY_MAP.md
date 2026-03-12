@@ -28,7 +28,7 @@ Each app has its own entry point (`main.jsx`), HTML file, and Vite config. They 
 ## Registration App Layers (most complex)
 
 ```
-Screens → Presenters → AppState (33 slices)
+Screens → Presenters → AppState (26 keys) + WorkflowContext
                            │
 Handlers ← buildHandlerDeps ← AppState
     │
@@ -71,13 +71,13 @@ Orchestrators → Backend (TennisCommands/TennisQueries)
 
 | Module | Why | Risk |
 |--------|-----|------|
-| `buildRegistrationReturn.ts` | 33-key AppState assembly | Breaks all consumers |
+| `buildRegistrationReturn.ts` | 26-key AppState assembly | Breaks all consumers |
 | `normalizeBoard.js` | Wire format → domain model | Breaks all court display |
-| `useRegistrationHandlers.js` | Handler wiring (18 `app.` reads) | Breaks all user interactions |
+| `useRegistrationHandlers.js` | Handler wiring (`app` + workflow context reads) | Breaks all user interactions |
 | `buildHandlerDeps.js` | Handler deps assembly (contract-tested) | Breaks all handlers |
 | `courtboardPreInit.js` | Boot-order dependent IIFE | Breaks courtboard display |
 | `index.html` (courtboard) | Script load order matters | Breaks courtboard boot |
-| `appTypes.ts` | 33 top-level keys frozen by contract test | Breaks type safety |
+| `appTypes.ts` | 26 top-level keys frozen by contract test | Breaks type safety |
 
 ## Courtboard Legacy (ADR-006)
 

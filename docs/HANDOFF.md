@@ -42,7 +42,7 @@ Single command. Runs lint ratchet, TypeScript type checking, unit tests with cov
 `AppError` with `ErrorCategories`. `mapResponseToCategory()` provides deterministic DenialCode-to-category mapping. `normalizeError()` in orchestrator catch blocks extracts category metadata without altering user-facing messages. See [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
 ### State Management
-Presenters (pure transforms) → Orchestrators (async coordination) → Handlers (UI callbacks). Screens receive props from presenters; handlers receive named slices, not the full AppState. See [CONTRIBUTING.md](../CONTRIBUTING.md) for slice-access discipline.
+Shell state (`useRegistrationAppState`, 26 keys) + per-flow state (`WorkflowProvider` context: group, court assignment, member identity, streak). Workflow state resets via key-based remount — no explicit setter calls. Presenters (pure transforms) → Orchestrators (async coordination) → Handlers (UI callbacks). Screens receive props from presenters; handlers receive named slices from `app` + workflow context, not the full objects directly. See [CONTRIBUTING.md](../CONTRIBUTING.md) for slice-access discipline.
 
 ### Content Security Policy
 `script-src 'self'` enforced globally via `vercel.json`. All inline scripts extracted to ES modules (Stages 1-2). Tailwind built via PostCSS, no CDN (Stage 3). Full enforcement on all routes (Stage 4). See [CSP_ROLLOUT.md](CSP_ROLLOUT.md).
@@ -98,7 +98,7 @@ All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md) for details. One
 
 - Admin authentication: auth-ready seam in place (`AdminAccessMode` config + guard wrapper). Enable at production deployment time. Requires Supabase Auth + Edge Function JWT verification.
 - Remaining TypeScript `strict: true` flags (strictBindCallApply, strictFunctionTypes, etc.) — can follow same ratchet pattern used for strictNullChecks
-- Registration state decomposition into React contexts
+- Further registration state decomposition into React contexts (WorkflowProvider handles per-flow state; remaining shell state is a candidate)
 - Category-aware UX decisions (retry for NETWORK, inline feedback for VALIDATION)
 - Registration notification unification (toast vs showAlertMessage)
 - Performance instrumentation (see [PERFORMANCE.md](PERFORMANCE.md) for current hotspots and profiling)

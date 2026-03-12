@@ -4,10 +4,10 @@
 Accepted
 
 ## Context
-The registration app assembles state from 6 sub-hooks into a 33-key AppState object consumed by all screens. As the state surface grew, the question arose: should the project adopt Redux, Zustand, or another state management library?
+The registration app assembles state from 6 sub-hooks into a 26-key AppState object consumed by all screens (per-flow state is separately owned by WorkflowProvider). As the state surface grew, the question arose: should the project adopt Redux, Zustand, or another state management library?
 
 ## Decision
-Use composed `useState`/`useCallback` hooks assembled by `buildRegistrationReturn.ts` rather than an external state library. The `AppState` interface in `appTypes.ts` is the formal contract, frozen by a contract test that asserts all 33 keys and their types. Presenters decompose AppState into per-screen prop sets, avoiding the need for selectors or context splitting.
+Use composed `useState`/`useCallback` hooks assembled by `buildRegistrationReturn.ts` rather than an external state library. The `AppState` interface in `appTypes.ts` is the formal contract, frozen by a contract test that asserts all 26 keys and their types. Per-flow state (group composition, court assignment, member identity, streak) is owned by `WorkflowProvider` and consumed via `useWorkflowContext()`. Presenters decompose AppState + workflow context into per-screen prop sets, avoiding the need for selectors or additional context splitting.
 
 Key governance rules (see CONTRIBUTING.md):
 - No new top-level keys — add fields to existing sub-interfaces
