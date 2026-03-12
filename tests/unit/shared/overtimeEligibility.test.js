@@ -1,8 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   computeRegistrationCourtSelection,
   computePlayableCourts,
 } from '../../../src/shared/courts/overtimeEligibility.js';
+
+// Freeze time so Date.now() / new Date() in the implementation return the same
+// instant the test used to build its fixtures. Without this, the milliseconds
+// elapsed between fixture construction and implementation execution can cause
+// Math.floor to round a boundary value down (e.g. 6 min → 5 min), making tests
+// at exact thresholds flaky under CI load.
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('computeRegistrationCourtSelection', () => {
   it('returns empty selection for null/undefined courts', () => {
