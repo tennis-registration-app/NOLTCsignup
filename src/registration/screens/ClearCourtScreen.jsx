@@ -83,14 +83,16 @@ const ClearCourtScreen = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- resetForm/CONSTANTS excluded: timer should only reset on step change, not on parent re-renders
   }, [clearCourtStep]);
-  const occupiedCourts = clearableCourts.map((courtNumber) => ({
-    courtNumber,
-    players:
-      data?.courts?.[courtNumber - 1]?.session?.group?.players ||
-      data?.courts?.[courtNumber - 1]?.players ||
-      [],
-    isBlocked: false,
-  }));
+  const courts = data?.courts || [];
+  const findCourt = (num) => courts.find((c) => c && c.number === num) || courts[num - 1];
+  const occupiedCourts = clearableCourts.map((courtNumber) => {
+    const c = findCourt(courtNumber);
+    return {
+      courtNumber,
+      players: c?.session?.group?.players || c?.players || [],
+      isBlocked: false,
+    };
+  });
 
   // Step 1: Choose court to clear
   if (clearCourtStep === 1) {
@@ -145,12 +147,29 @@ const ClearCourtScreen = ({
 
   // Step 2: Confirm clearing method
   if (clearCourtStep === 2) {
-    // Find court by number (API may return courts in different order than array index)
-    const courts = data.courts || [];
-    const court =
-      courts.find((c) => c.number === selectedCourtToClear) || courts[selectedCourtToClear - 1];
+    // Find court by number (null-safe: board refresh may contain null entries after a clear)
+    const court = findCourt(selectedCourtToClear);
+
+    // Court was cleared between selection and render — bounce back to step 1
+    if (!court) {
+      return (
+        <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-3xl text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Court {selectedCourtToClear}</h2>
+            <p className="text-lg sm:text-xl text-gray-600 mb-6">That court is no longer active.</p>
+            <button
+              onClick={() => setClearCourtStep(1)}
+              className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors"
+            >
+              Choose another court
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // Get players from session.group.players (Domain format) or top-level players (fallback)
-    const players = court?.session?.group?.players || court?.players || [];
+    const players = court.session?.group?.players || court.players || [];
 
     // Handle players as array of strings or objects with name/displayName property
     // Use camelCase only (data is pre-normalized)

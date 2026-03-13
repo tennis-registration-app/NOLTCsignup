@@ -179,6 +179,49 @@ describe('ClearCourtScreen step 4 (observed empty)', () => {
   });
 });
 
+describe('ClearCourtScreen null-safety regression', () => {
+  it('step 1 does not crash when courts array contains null entries', () => {
+    const props = makeClearCourtProps({
+      clearCourtStep: 1,
+      getCourtsOccupiedForClearing: () => [3, 5],
+      courtData: {
+        courts: [null, { number: 3, players: [{ name: 'Alice' }] }, null, { number: 5, players: [] }],
+      },
+    });
+    // Should render without throwing
+    render(<ClearCourtScreen {...props} />);
+    expect(screen.getByText('Court 3')).toBeInTheDocument();
+    expect(screen.getByText('Court 5')).toBeInTheDocument();
+  });
+
+  it('step 2 does not crash when courts array contains null entries', () => {
+    const props = makeClearCourtProps({
+      clearCourtStep: 2,
+      selectedCourtToClear: 3,
+      courtData: {
+        courts: [null, { number: 3, session: { group: { players: [{ name: 'Bob' }] } } }, null],
+      },
+    });
+    render(<ClearCourtScreen {...props} />);
+    expect(screen.getByText('Court 3')).toBeInTheDocument();
+    expect(screen.getByText('Bob')).toBeInTheDocument();
+  });
+
+  it('step 2 shows fallback when selected court is no longer in data', () => {
+    const props = makeClearCourtProps({
+      clearCourtStep: 2,
+      selectedCourtToClear: 7,
+      courtData: {
+        courts: [{ number: 3, players: [] }],
+      },
+    });
+    render(<ClearCourtScreen {...props} />);
+    expect(screen.getByText('Court 7')).toBeInTheDocument();
+    expect(screen.getByText('That court is no longer active.')).toBeInTheDocument();
+    expect(screen.getByText('Choose another court')).toBeInTheDocument();
+  });
+});
+
 describe('ClearCourtScreen fallback', () => {
   it('returns null for unrecognized step', () => {
     const props = makeClearCourtProps({ clearCourtStep: 99 });
