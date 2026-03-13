@@ -8,9 +8,9 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 
 // ---------------------------------------------------------------------------
 // Mocks — must come before component import
@@ -176,6 +176,44 @@ describe('ClearCourtScreen step 4 (observed empty)', () => {
     expect(screen.getByText('Thank you!')).toBeInTheDocument();
     expect(screen.getByText('Court 2 is now available')).toBeInTheDocument();
     expect(screen.getByTestId('typed-icon')).toBeInTheDocument();
+  });
+});
+
+describe('ClearCourtScreen delayed empty-state', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('shows "Checking courts" instead of "no courts" immediately when list is empty', () => {
+    const props = makeClearCourtProps({
+      clearCourtStep: 1,
+      getCourtsOccupiedForClearing: () => [],
+    });
+    render(<ClearCourtScreen {...props} />);
+    expect(screen.queryByText('No courts are currently in use.')).not.toBeInTheDocument();
+    expect(screen.getByText(/Checking courts/)).toBeInTheDocument();
+  });
+
+  it('shows "No courts" after delay when list stays empty', () => {
+    const props = makeClearCourtProps({
+      clearCourtStep: 1,
+      getCourtsOccupiedForClearing: () => [],
+    });
+    render(<ClearCourtScreen {...props} />);
+    act(() => { vi.advanceTimersByTime(1500); });
+    expect(screen.getByText('No courts are currently in use.')).toBeInTheDocument();
+    expect(screen.queryByText(/Checking courts/)).not.toBeInTheDocument();
+  });
+
+  it('shows court buttons immediately when courts are available (no delay)', () => {
+    const props = makeClearCourtProps({
+      clearCourtStep: 1,
+      getCourtsOccupiedForClearing: () => [3],
+      courtData: { courts: [{ number: 3, session: { id: 's1' } }] },
+    });
+    render(<ClearCourtScreen {...props} />);
+    expect(screen.getByText('Court 3')).toBeInTheDocument();
+    expect(screen.queryByText(/Checking courts/)).not.toBeInTheDocument();
+    expect(screen.queryByText('No courts are currently in use.')).not.toBeInTheDocument();
   });
 });
 

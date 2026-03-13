@@ -21,7 +21,7 @@
  * - CONSTANTS: object - App constants
  * - TennisBusinessLogic: object - Business logic service
  */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
 import { TypedIcon } from '../../components/icons/TypedIcon';
 import { readDataSafe } from '../../lib/storage.js';
@@ -83,6 +83,20 @@ const ClearCourtScreen = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- resetForm/CONSTANTS excluded: timer should only reset on step change, not on parent re-renders
   }, [clearCourtStep]);
+  // Delayed empty-state: avoid brief false "no courts occupied" during board refresh
+  const [emptyConfirmed, setEmptyConfirmed] = useState(false);
+  useEffect(() => {
+    if (hasAny) {
+      // Courts found — cancel any pending empty-state confirmation
+      setEmptyConfirmed(false);
+      return;
+    }
+    // No courts found — wait briefly for board refresh to settle before confirming empty
+    setEmptyConfirmed(false);
+    const delay = setTimeout(() => setEmptyConfirmed(true), 1500);
+    return () => clearTimeout(delay);
+  }, [hasAny]);
+
   const courts = data?.courts || [];
   const findCourt = (num) => courts.find((c) => c && c.number === num) || courts[num - 1];
   const occupiedCourts = clearableCourts.map((courtNumber) => {
@@ -120,9 +134,13 @@ const ClearCourtScreen = ({
                 </button>
               ))}
             </div>
-          ) : (
+          ) : emptyConfirmed ? (
             <p className="text-center text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">
               No courts are currently in use.
+            </p>
+          ) : (
+            <p className="text-center text-lg sm:text-xl text-gray-500 mb-6 sm:mb-8">
+              Checking courts…
             </p>
           )}
 

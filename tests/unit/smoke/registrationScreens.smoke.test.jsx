@@ -3,9 +3,9 @@
  *
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 
 // ---------------------------------------------------------------------------
 // Mocks — must come before component imports
@@ -327,7 +327,8 @@ describe('ClearCourtScreen', () => {
     expect(screen.getByText('Court 4')).toBeInTheDocument();
   });
 
-  it('shows empty message when no courts occupied', () => {
+  it('shows empty message when no courts occupied (after delay)', () => {
+    vi.useFakeTimers();
     render(
       <ClearCourtScreen
         clearCourtStep={1}
@@ -344,6 +345,11 @@ describe('ClearCourtScreen', () => {
         TennisBusinessLogic={{ formatPlayerDisplayName: (n) => n }}
       />
     );
+    // Initially shows "Checking courts…" during grace period
+    expect(screen.getByText(/Checking courts/)).toBeInTheDocument();
+    // After delay, confirms empty state
+    act(() => { vi.advanceTimersByTime(1500); });
     expect(screen.getByText(/No courts are currently in use/)).toBeInTheDocument();
+    vi.useRealTimers();
   });
 });
