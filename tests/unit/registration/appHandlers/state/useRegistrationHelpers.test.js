@@ -149,6 +149,21 @@ describe('getCourtsOccupiedForClearing', () => {
     const helpers = createHelpers({ data: {} });
     expect(helpers.getCourtsOccupiedForClearing()).toEqual([]);
   });
+
+  it('skips null entries in courts array without crashing', () => {
+    const data = {
+      courts: [
+        null,
+        { number: 2, session: { id: 's1' }, isBlocked: false },
+        null,
+        { number: 4, isOccupied: true, isBlocked: false },
+        null,
+      ],
+      waitlist: [],
+    };
+    const helpers = createHelpers({ data });
+    expect(helpers.getCourtsOccupiedForClearing()).toEqual([2, 4]);
+  });
 });
 
 // ── guardAddPlayerEarly ────────────────────────────────────────

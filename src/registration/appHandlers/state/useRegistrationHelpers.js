@@ -57,6 +57,7 @@ export function useRegistrationHelpers({
 
     const clearableCourts = courts
       .filter((c) => {
+        if (!c) return false; // null-safe: board refresh can produce null entries after a clear
         if (c.session || c.isOccupied) {
           if (c.isBlocked) return false;
           return true;
