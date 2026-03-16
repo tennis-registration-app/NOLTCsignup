@@ -118,8 +118,10 @@ const smartFormatTime = (input: string): string | null => {
 
 // --- Date formatting ---
 
-const formatDate = (isoDate: string): string => {
-  const date = new Date(isoDate + 'T12:00:00');
+const formatDate = (dateInput: string | Date): string => {
+  if (!dateInput) return '';
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput + 'T12:00:00');
+  if (isNaN(date.getTime())) return '';
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${days[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}`;
@@ -174,7 +176,7 @@ interface SmartTimeRangePickerProps {
   onEndTimeChange: (val: string) => void;
   endManuallySet: boolean;
   onEndManuallySet: (val: boolean) => void;
-  selectedDate?: string;
+  selectedDate?: string | Date;
 }
 
 const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTimeChange, endManuallySet, onEndManuallySet, selectedDate }: SmartTimeRangePickerProps) => {
@@ -337,10 +339,10 @@ const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTime
             onBlur={handleStartBlur}
             onKeyDown={handleStartKeyDown}
           />
-          {activePicker === 'start' && !isEditingStart && (
+          {activePicker === 'start' && (
             <TimeDropdown
               slots={timeSlots}
-              onSelect={(val) => { handleStartChange(val); setActivePicker(null); }}
+              onSelect={(val) => { handleStartChange(val); setActivePicker(null); setIsEditingStart(false); }}
               current={startTime}
             />
           )}
@@ -365,10 +367,10 @@ const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTime
             onBlur={handleEndBlur}
             onKeyDown={handleEndKeyDown}
           />
-          {activePicker === 'end' && !isEditingEnd && (
+          {activePicker === 'end' && (
             <TimeDropdown
               slots={endSlots}
-              onSelect={(val) => { handleEndChange(val); setActivePicker(null); }}
+              onSelect={(val) => { handleEndChange(val); setActivePicker(null); setIsEditingEnd(false); }}
               current={endTime}
             />
           )}
