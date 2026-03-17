@@ -22,7 +22,6 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
   const [eventTitle, setEventTitle] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showCustomReason, setShowCustomReason] = useState(false);
-  const [showRecurrence, setShowRecurrence] = useState(false);
   const [endManuallySet, setEndManuallySet] = useState(false);
   const [originalValues, setOriginalValues] = useState(null);
 
@@ -232,8 +231,6 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
     setShowTemplates,
     showCustomReason,
     setShowCustomReason,
-    showRecurrence,
-    setShowRecurrence,
     endManuallySet,
     setEndManuallySet,
     // Editing state

@@ -169,6 +169,16 @@ const TimeDropdown = ({ slots, onSelect, current }: {
   );
 };
 
+const toISODateString = (dateInput: string | Date): string => {
+  if (!dateInput) return '';
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput + 'T12:00:00');
+  if (isNaN(date.getTime())) return '';
+  const y = date.getFullYear();
+  const m = (date.getMonth() + 1).toString().padStart(2, '0');
+  const d = date.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
 interface SmartTimeRangePickerProps {
   startTime: string;
   endTime: string;
@@ -177,9 +187,10 @@ interface SmartTimeRangePickerProps {
   endManuallySet: boolean;
   onEndManuallySet: (val: boolean) => void;
   selectedDate?: string | Date;
+  onDateChange?: (val: Date) => void;
 }
 
-const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTimeChange, endManuallySet, onEndManuallySet, selectedDate }: SmartTimeRangePickerProps) => {
+const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTimeChange, endManuallySet, onEndManuallySet, selectedDate, onDateChange }: SmartTimeRangePickerProps) => {
   const [activePicker, setActivePicker] = useState<string | null>(null);
   const [editTextStart, setEditTextStart] = useState('');
   const [editTextEnd, setEditTextEnd] = useState('');
@@ -187,6 +198,7 @@ const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTime
   const [isEditingEnd, setIsEditingEnd] = useState(false);
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const timeSlots = Array.from({ length: 48 }, (_, i) => {
@@ -318,9 +330,25 @@ const SmartTimeRangePicker = ({ startTime, endTime, onStartTimeChange, onEndTime
       <div className="flex items-center gap-2">
         {/* Date box */}
         {selectedDate && (
-          <span className="px-4 py-2.5 text-sm font-medium bg-gray-100 rounded-lg whitespace-nowrap">
+          <div
+            className={`relative px-4 py-2.5 text-sm font-medium bg-gray-100 rounded-lg whitespace-nowrap inline-block ${onDateChange ? 'cursor-pointer hover:bg-gray-200 transition-colors' : ''}`}
+            onClick={onDateChange ? () => dateInputRef.current?.showPicker() : undefined}
+          >
             {formatDate(selectedDate)}
-          </span>
+            {onDateChange && (
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={toISODateString(selectedDate)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.value) {
+                    onDateChange(new Date(e.target.value + 'T12:00:00'));
+                  }
+                }}
+                className="absolute inset-0 opacity-0 pointer-events-none"
+              />
+            )}
+          </div>
         )}
 
         {/* Start time box */}

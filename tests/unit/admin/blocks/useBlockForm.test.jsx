@@ -143,11 +143,10 @@ describe('default initialization', () => {
     h.cleanup();
   });
 
-  it('showTemplates is false, showCustomReason is false, showRecurrence is false', () => {
+  it('showTemplates is false, showCustomReason is false', () => {
     const h = createHarness();
     expect(h.hook.showTemplates).toBe(false);
     expect(h.hook.showCustomReason).toBe(false);
-    expect(h.hook.showRecurrence).toBe(false);
     h.cleanup();
   });
 });
@@ -687,13 +686,6 @@ describe('UI toggle setters', () => {
     const h = createHarness();
     act(() => h.hook.setShowCustomReason(true));
     expect(h.hook.showCustomReason).toBe(true);
-    h.cleanup();
-  });
-
-  it('setShowRecurrence toggles showRecurrence', () => {
-    const h = createHarness();
-    act(() => h.hook.setShowRecurrence(true));
-    expect(h.hook.showRecurrence).toBe(true);
     h.cleanup();
   });
 

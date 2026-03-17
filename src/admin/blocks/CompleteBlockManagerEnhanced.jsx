@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { Edit2, X, CalendarDays } from '../components';
 import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle.js';
 import BlockTimeline from './BlockTimeline.jsx';
-import RecurrenceConfig from './RecurrenceConfig.jsx';
+import RecurrenceDropdown from './RecurrenceDropdown.jsx';
 import CourtSelectionGrid from './CourtSelectionGrid.jsx';
 import BlockReasonSelector from './BlockReasonSelector.jsx';
 import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
@@ -98,8 +98,6 @@ const CompleteBlockManagerEnhanced = ({
     activeView,
     showTemplates,
     setShowTemplates,
-    showRecurrence,
-    setShowRecurrence,
     endManuallySet,
     setEndManuallySet,
     editingBlock,
@@ -216,54 +214,36 @@ const CompleteBlockManagerEnhanced = ({
                       endManuallySet={endManuallySet}
                       onEndManuallySet={setEndManuallySet}
                       selectedDate={selectedDate}
+                      onDateChange={setSelectedDate}
                     />
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            if (showRecurrence) {
-                              setShowRecurrence(false);
-                              setRecurrence(null);
-                            } else {
-                              setShowRecurrence(true);
-                            }
-                          }}
-                          className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
-                            showRecurrence
-                              ? 'bg-blue-50 border-blue-300 text-blue-700'
-                              : 'bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400'
-                          }`}
-                        >
-                          {showRecurrence ? 'Repeat ▵' : 'Repeat ▽'}
-                        </button>
-                        <button
-                          onClick={() => setShowManageRecurring((prev) => !prev)}
-                          className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
-                            showManageRecurring
-                              ? 'bg-blue-50 border-blue-300 text-blue-700'
-                              : 'bg-white hover:bg-blue-50 text-gray-700 border-blue-300 hover:border-blue-400'
-                          }`}
-                        >
-                          Manage Recurring
-                        </button>
-                      </div>
-
-                      <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={!isEvent}
-                          onChange={(e) => setIsEvent(!e.target.checked)}
-                          className="w-4 h-4 text-red-600 rounded"
-                        />
-                        Hide on Calendar View
-                      </label>
-                    </div>
-                    {showRecurrence && (
-                      <RecurrenceConfig
+                    <div className="mt-3">
+                      <RecurrenceDropdown
                         recurrence={recurrence}
                         onRecurrenceChange={setRecurrence}
-                      />
-                    )}
+                        selectedDate={selectedDate}
+                        triggerRowExtra={
+                          <label className="ml-auto flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!isEvent}
+                              onChange={(e) => setIsEvent(!e.target.checked)}
+                              className="w-4 h-4 text-red-600 rounded"
+                            />
+                            Hide on Calendar View
+                          </label>
+                        }
+                      >
+                        <div className="flex justify-end mt-1">
+                          <button
+                            type="button"
+                            onClick={() => setShowManageRecurring((prev) => !prev)}
+                            className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                          >
+                            Manage Recurring
+                          </button>
+                        </div>
+                      </RecurrenceDropdown>
+                    </div>
                     {showManageRecurring && (
                       <div className="mt-3">
                         <ManageRecurringPanel
