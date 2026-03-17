@@ -287,13 +287,14 @@ const RecurrenceDropdown = ({
   const handleCustomClick = () => {
     setSavedRecurrence(recurrence);
     if (!recurrence) {
+      const date = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
       onRecurrenceChange({
-        pattern: 'daily',
+        pattern: 'weekly',
         frequency: 1,
         endType: 'after',
         occurrences: 7,
         endDate: '',
-        daysOfWeek: [],
+        daysOfWeek: [date.getDay()],
       });
     }
     setCustomPanelOpen(true);
