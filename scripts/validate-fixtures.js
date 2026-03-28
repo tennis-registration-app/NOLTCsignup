@@ -8,7 +8,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { buildSync } from '/Users/claudewilliams/Desktop/NOLTCsignup/node_modules/esbuild/lib/main.js';
+import { buildSync } from 'esbuild';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
