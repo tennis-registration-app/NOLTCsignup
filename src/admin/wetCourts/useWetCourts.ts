@@ -15,7 +15,7 @@ import {
   activateWetCourtsOp,
   clearAllWetCourtsOp,
   clearWetCourtOp,
-} from '../handlers/wetCourtOperations.js';
+} from '../handlers/wetCourtOperations';
 
 /**
  * @param {Object} deps - External dependencies

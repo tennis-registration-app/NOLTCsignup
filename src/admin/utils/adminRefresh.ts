@@ -12,7 +12,7 @@ import {
   setScheduleAdminRefreshGlobal,
   setWiredAdminListeners,
   getWiredAdminListeners,
-} from '../../platform/registerGlobals.js';
+} from '../../platform/registerGlobals';
 
 // Idempotent coalescer - executes immediately at module load
 (function () {

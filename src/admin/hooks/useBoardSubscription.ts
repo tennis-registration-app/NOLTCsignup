@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../../lib/logger';
-import { transformBoardUpdate } from './boardSubscriptionLogic.js';
+import { transformBoardUpdate } from './boardSubscriptionLogic';
 
 /**
  * Hook for managing board subscription state and realtime updates.

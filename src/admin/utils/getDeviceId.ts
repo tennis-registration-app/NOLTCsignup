@@ -1,4 +1,4 @@
-import { getPref } from '../../platform/prefsStorage.js';
+import { getPref } from '../../platform/prefsStorage';
 
 /**
  * Get device ID for admin API calls.

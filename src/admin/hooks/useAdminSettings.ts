@@ -18,7 +18,7 @@ import {
   updateBallPriceApi,
   refreshSettingsApi,
   refreshAISettingsApi,
-} from './adminSettingsLogic.js';
+} from './adminSettingsLogic';
 
 // Singleton guard to prevent duplicate listener attachment on re-mount
 const _one = (key) =>

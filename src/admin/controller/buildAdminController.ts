@@ -24,7 +24,7 @@ import {
   createAIAssistantActions,
   createAIAssistantServices,
   createAIAssistantComponents,
-} from '../types/domainObjects.js';
+} from '../types/domainObjects';
 
 /**
  * @typedef {Object} AdminControllerDeps

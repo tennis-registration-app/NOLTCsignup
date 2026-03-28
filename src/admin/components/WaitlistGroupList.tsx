@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Trash2 } from './Icons.jsx';
+import { ChevronLeft, ChevronRight, Trash2 } from './Icons';
 
 /**
  * WaitlistGroupList - Shared presentational component for waitlist group rows.

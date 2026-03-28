@@ -5,11 +5,11 @@
  * Thin render shell — all state + API logic lives in useSystemSettingsState.
  */
 import React from 'react';
-import useSystemSettingsState from './system/useSystemSettingsState.js';
-import PricingSettingsCard from './system/PricingSettingsCard.jsx';
-import AutoClearSettingsCard from './system/AutoClearSettingsCard.jsx';
-import OperatingHoursCard from './system/OperatingHoursCard.jsx';
-import HoursOverridesCard from './system/HoursOverridesCard.jsx';
+import useSystemSettingsState from './system/useSystemSettingsState';
+import PricingSettingsCard from './system/PricingSettingsCard';
+import AutoClearSettingsCard from './system/AutoClearSettingsCard';
+import OperatingHoursCard from './system/OperatingHoursCard';
+import HoursOverridesCard from './system/HoursOverridesCard';
 
 const SystemSettings = ({ backend, onSettingsChanged }) => {
   const state = useSystemSettingsState({ backend, onSettingsChanged });

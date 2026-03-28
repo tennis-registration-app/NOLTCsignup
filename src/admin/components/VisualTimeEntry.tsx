@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { TimeScrollPicker, getNowSlot } from './TimeScrollPicker.jsx';
+import { TimeScrollPicker, getNowSlot } from './TimeScrollPicker';
 
 /**
  * Adapter between the form's HH:MM string contract and the

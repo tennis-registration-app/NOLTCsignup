@@ -1,7 +1,7 @@
 import React from 'react';
 import { CourtStatusGrid } from '../courts';
-import { buildStatusModel, buildStatusActions } from '../presenters/statusPresenter.js';
-import { WaitlistGroupList } from '../components/WaitlistGroupList.jsx';
+import { buildStatusModel, buildStatusActions } from '../presenters/statusPresenter';
+import { WaitlistGroupList } from '../components/WaitlistGroupList';
 
 /**
  * StatusSection - Delegates to presenter, renders CourtStatusGrid + waitlist UI.

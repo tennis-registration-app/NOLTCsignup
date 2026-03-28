@@ -8,7 +8,7 @@
  * Integration point: wrap admin App.jsx render in this guard.
  * See docs/OPERATIONS.md "Admin Access Control" for deployment modes.
  */
-import { featureFlags } from '../../config/runtimeConfig.js';
+import { featureFlags } from '../../config/runtimeConfig';
 
 /**
  * Check whether admin access is allowed under the current mode.

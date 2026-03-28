@@ -6,7 +6,7 @@
  */
 import React, { useState } from 'react';
 import { Edit2, X, CalendarDays } from '../components';
-import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle.js';
+import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle';
 import BlockTimeline from './BlockTimeline';
 import RecurrenceDropdown from './RecurrenceDropdown';
 import CourtSelectionGrid from './CourtSelectionGrid';

@@ -8,7 +8,7 @@
  * ONE implementation — prevents duplicate optimistic wrappers.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from '../../shared/utils/toast.js';
+import { toast } from '../../shared/utils/toast';
 
 /**
  * @param {Object} deps

@@ -5,7 +5,7 @@
  * Used in the court management view.
  */
 import React, { useState } from 'react';
-import { X } from './Icons.jsx';
+import { X } from './Icons';
 
 const EditGameModal = ({ game, onSave, onClose, saving = false }) => {
   // Initialize 4 player slots, pre-filled with existing players

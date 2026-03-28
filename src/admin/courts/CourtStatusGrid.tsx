@@ -7,10 +7,10 @@
 import React from 'react';
 import { EditGameModal } from '../components';
 import EventDetailsModal from '../calendar/EventDetailsModal';
-import { getCourtStatus } from './courtStatusUtils.js';
-import { useCourtActions } from './useCourtActions.js';
-import CourtCard from './CourtCard.jsx';
-import WetCourtsToolbar from './WetCourtsToolbar.jsx';
+import { getCourtStatus } from './courtStatusUtils';
+import { useCourtActions } from './useCourtActions';
+import CourtCard from './CourtCard';
+import WetCourtsToolbar from './WetCourtsToolbar';
 
 /**
  * 12-court status grid with wet court indicators.

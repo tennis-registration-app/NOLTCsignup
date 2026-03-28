@@ -1,5 +1,5 @@
 import React from 'react';
-import { buildCalendarModel, buildCalendarActions } from '../presenters/calendarPresenter.js';
+import { buildCalendarModel, buildCalendarActions } from '../presenters/calendarPresenter';
 
 /**
  * CalendarSection - Thin wrapper that delegates to presenter.

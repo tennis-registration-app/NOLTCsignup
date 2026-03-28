@@ -1,6 +1,6 @@
 import React from 'react';
-import { buildWaitlistModel, buildWaitlistActions } from '../presenters/waitlistPresenter.js';
-import { WaitlistGroupList } from '../components/WaitlistGroupList.jsx';
+import { buildWaitlistModel, buildWaitlistActions } from '../presenters/waitlistPresenter';
+import { WaitlistGroupList } from '../components/WaitlistGroupList';
 
 /**
  * WaitlistSection - Delegates to presenter, renders waitlist UI.

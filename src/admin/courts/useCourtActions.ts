@@ -5,11 +5,11 @@
  */
 import { useState, useEffect } from 'react';
 import { logger } from '../../lib/logger';
-import { toast } from '../../shared/utils/toast.js';
+import { toast } from '../../shared/utils/toast';
 import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore';
-import { getDeviceId } from '../utils/getDeviceId.js';
+import { getDeviceId } from '../utils/getDeviceId';
 import { TENNIS_CONFIG } from '../../lib/config';
-import { useOptimisticWetToggle } from './useOptimisticWetToggle.js';
+import { useOptimisticWetToggle } from './useOptimisticWetToggle';
 
 // Get dataStore reference
 const getDataStore = () => _getDataStore();

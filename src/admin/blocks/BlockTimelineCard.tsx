@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, Edit2, Copy, Trash2 } from '../components';
-import { getStatusColor } from '../presenters/blockTimelinePresenter.js';
+import { getStatusColor } from '../presenters/blockTimelinePresenter';
 
 export interface TimelineBlock {
   id: string;

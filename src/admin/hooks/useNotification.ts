@@ -4,8 +4,8 @@
  */
 
 import { useState, useMemo } from 'react';
-import { addTimer } from '../utils/timerRegistry.js';
-import { createShowNotification } from './notificationLogic.js';
+import { addTimer } from '../utils/timerRegistry';
+import { createShowNotification } from './notificationLogic';
 
 /**
  * Hook for managing notification state and display.

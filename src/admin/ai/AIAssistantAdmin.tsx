@@ -5,13 +5,13 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from '../components';
-import AIAssistantMessages from './AIAssistantMessages.jsx';
-import AIAssistantInput from './AIAssistantInput.jsx';
-import AIAssistantActionCard from './AIAssistantActionCard.jsx';
-import { getCache } from '../../platform/prefsStorage.js';
+import AIAssistantMessages from './AIAssistantMessages';
+import AIAssistantInput from './AIAssistantInput';
+import AIAssistantActionCard from './AIAssistantActionCard';
+import { getCache } from '../../platform/prefsStorage';
 import { useAdminNotification } from '../context/NotificationContext';
 import { logger } from '../../lib/logger';
-import { emitDom } from '../../platform/attachLegacyEvents.js';
+import { emitDom } from '../../platform/attachLegacyEvents';
 
 // Access global dependencies
 const Storage = /** @type {any} */ (window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } });

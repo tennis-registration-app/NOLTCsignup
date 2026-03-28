@@ -1,5 +1,5 @@
 import React from 'react';
-import { buildBlockingModel, buildBlockingActions } from '../presenters/blockingPresenter.js';
+import { buildBlockingModel, buildBlockingActions } from '../presenters/blockingPresenter';
 
 /**
  * BlockingSection - Thin wrapper that delegates to presenter.

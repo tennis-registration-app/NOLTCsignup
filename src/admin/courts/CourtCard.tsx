@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { Edit2, X, RefreshCw } from '../components';
-import { getStatusColor, formatTimeRemaining, getPlayerNames } from './courtStatusUtils.js';
+import { getStatusColor, formatTimeRemaining, getPlayerNames } from './courtStatusUtils';
 
 /** @param {Object} props */
 const CourtCard = ({
