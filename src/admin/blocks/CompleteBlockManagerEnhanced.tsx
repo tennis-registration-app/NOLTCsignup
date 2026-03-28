@@ -7,21 +7,21 @@
 import React, { useState } from 'react';
 import { Edit2, X, CalendarDays } from '../components';
 import { useOptimisticWetToggle } from '../courts/useOptimisticWetToggle.js';
-import BlockTimeline from './BlockTimeline.jsx';
-import RecurrenceDropdown from './RecurrenceDropdown.jsx';
-import CourtSelectionGrid from './CourtSelectionGrid.jsx';
-import BlockReasonSelector from './BlockReasonSelector.jsx';
-import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
-import ConflictDetector from '../components/blocks/ConflictDetector.jsx';
+import BlockTimeline from './BlockTimeline';
+import RecurrenceDropdown from './RecurrenceDropdown';
+import CourtSelectionGrid from './CourtSelectionGrid';
+import BlockReasonSelector from './BlockReasonSelector';
+import EventDetailsModal from '../calendar/EventDetailsModal';
+import ConflictDetector from '../components/blocks/ConflictDetector';
 import { useBlockForm } from './hooks/useBlockForm';
 import { useBlockActions } from './hooks/useBlockActions';
-import EditModeBanner from './EditModeBanner.jsx';
-import QuickTemplatesCard from './QuickTemplatesCard.jsx';
-import DateSelectionCard from './DateSelectionCard.jsx';
-import WetCourtManagementPanel from './WetCourtManagementPanel.jsx';
-import BlockSummaryCard from './BlockSummaryCard.jsx';
-import BlockActionButtons from './BlockActionButtons.jsx';
-import ManageRecurringPanel from './ManageRecurringPanel.jsx';
+import EditModeBanner from './EditModeBanner';
+import QuickTemplatesCard from './QuickTemplatesCard';
+import DateSelectionCard from './DateSelectionCard';
+import WetCourtManagementPanel from './WetCourtManagementPanel';
+import BlockSummaryCard from './BlockSummaryCard';
+import BlockActionButtons from './BlockActionButtons';
+import ManageRecurringPanel from './ManageRecurringPanel';
 import SmartTimeRangePicker from '../../components/admin/SmartTimeRangePicker';
 
 const DURATION_2H = 120; // minutes

@@ -1,14 +1,19 @@
+interface RecurrenceConfig {
+  pattern: string;
+  frequency: number;
+  endType: string;
+  occurrences?: number;
+  endDate?: string;
+  daysOfWeek?: number[];
+}
+
 /**
  * Expands the recurrence config into an array of date entries.
  * Mechanical extraction from CompleteBlockManagerEnhanced.
  * No side effects. Do not reorder logic.
- *
- * @param {Date} selectedDate - The starting date
- * @param {Object|null} recurrence - Recurrence config with pattern, frequency, endType, etc.
- * @returns {Array<{date: Date}>} Array of date objects
  */
-export function expandRecurrenceDates(selectedDate, recurrence) {
-  const blocks = [];
+export function expandRecurrenceDates(selectedDate: Date, recurrence: RecurrenceConfig | null): Array<{ date: Date }> {
+  const blocks: Array<{ date: Date }> = [];
 
   if (!recurrence) {
     blocks.push({ date: selectedDate });
@@ -21,7 +26,7 @@ export function expandRecurrenceDates(selectedDate, recurrence) {
     const days = recurrence.daysOfWeek;
     let currentDate = new Date(selectedDate);
     let occurrenceCount = 0;
-    const endDate = recurrence.endType === 'date' ? new Date(recurrence.endDate) : null;
+    const endDate = recurrence.endType === 'date' ? new Date(recurrence.endDate!) : null;
     let safety = 0;
 
     while (safety < 365 * 2) {
@@ -29,7 +34,7 @@ export function expandRecurrenceDates(selectedDate, recurrence) {
       if (days.includes(currentDate.getDay())) {
         blocks.push({ date: new Date(currentDate) });
         occurrenceCount++;
-        if (recurrence.endType === 'after' && occurrenceCount >= recurrence.occurrences) break;
+        if (recurrence.endType === 'after' && occurrenceCount >= recurrence.occurrences!) break;
         if (endDate && currentDate > endDate) break;
       }
       // Advance: if today is the last selected day of the week, skip ahead by (frequency - 1) weeks
@@ -50,10 +55,10 @@ export function expandRecurrenceDates(selectedDate, recurrence) {
       blocks.push({ date: new Date(currentDate) });
       occurrenceCount++;
 
-      if (recurrence.endType === 'after' && occurrenceCount >= recurrence.occurrences) {
+      if (recurrence.endType === 'after' && occurrenceCount >= recurrence.occurrences!) {
         break;
       }
-      if (recurrence.endType === 'date' && currentDate > new Date(recurrence.endDate)) {
+      if (recurrence.endType === 'date' && currentDate > new Date(recurrence.endDate!)) {
         break;
       }
 

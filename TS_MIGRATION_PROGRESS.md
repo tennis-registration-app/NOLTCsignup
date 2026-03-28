@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress (Phase 4 complete, Phase 5 next)
+## Status: In Progress (Phase 5 complete, Phase 6 next)
 
 ---
 
@@ -63,10 +63,20 @@
 - [x] Run `npm run verify` — PASS (lint ✅, type-check ✅, coverage ✅, fixtures ✅, build ✅, e2e ✅)
 - [x] Unit tests: 161 files, 3134 tests all pass
 
-## Phase 5: Admin Blocks — `src/admin/blocks/` — PENDING
-- [ ] Convert all .js/.jsx (SmartTimeRangePicker.tsx already done)
-- [ ] Run `npm run verify`
-
+## Phase 5: Admin Blocks — `src/admin/blocks/` — COMPLETE
+- [x] Renamed all 24 .js/.jsx files to .ts/.tsx (16 components, 3 hooks, 2 utils, 1 index, 2 sub-components)
+- [x] Force-added 4 files from .git/info/exclude: useBlockFormState, blockValidation, BlockForm, ConflictDetector
+- [x] Added TypeScript interfaces: TimelineBlock, BlockTimelineCardProps, BlockFormState, AdminBackend, ConflictDetectorProps
+- [x] Fixed never[] inference for blocks/conflicts/appliedBlocks arrays
+- [x] Fixed form destructuring: typed form as BlockFormState with all setters
+- [x] Fixed backend.admin typing with explicit cancelBlock/cancelBlockGroup signatures
+- [x] Fixed populateFromBlock block parameter with specific optional field types
+- [x] Converted BlockTimelineCard from @type JSDoc to React.FC<BlockTimelineCardProps>
+- [x] Exported TimelineBlock from BlockTimelineCard for reuse in BlockTimeline
+- [x] Removed .jsx/.js extensions from all internal imports
+- [x] Updated test: wetCourtsDedup.test.js .jsx to .tsx path reference
+- [x] Run npm run verify — PASS (lint, type-check, coverage, fixtures, e2e all pass)
+- [x] Unit tests: 161 files, 3134 tests all pass
 ## Phase 6: Admin Calendar — `src/admin/calendar/` — PENDING
 - [ ] Convert all .js/.jsx
 - [ ] Run `npm run verify`

@@ -138,7 +138,15 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
    * @param {Object} [opts]
    * @param {boolean} [opts.duplicate] - If true, treat as duplicate (no editingBlock, "(Copy)" suffix)
    */
-  const populateFromBlock = (block, opts = {}) => {
+  const populateFromBlock = (block: {
+    courtNumbers?: number[];
+    courtNumber?: number;
+    reason?: string;
+    startTime?: string;
+    endTime?: string;
+    isEvent?: boolean;
+    eventDetails?: { title?: string; type?: string };
+  }, opts: { duplicate?: boolean } = {}) => {
     const { duplicate = false } = opts;
 
     setActiveView('create');
@@ -151,8 +159,8 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
 
       const nowTime = new Date();
       setStartTime(nowTime.toTimeString().slice(0, 5));
-      const originalStart = new Date(block.startTime);
-      const originalEnd = new Date(block.endTime);
+      const originalStart = new Date(block.startTime || "");
+      const originalEnd = new Date(block.endTime || "");
       const durationMs = originalEnd.getTime() - originalStart.getTime();
       const newEnd = new Date(nowTime.getTime() + durationMs);
       setEndTime(newEnd.toTimeString().slice(0, 5));
@@ -169,12 +177,12 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
         setEventType('event');
       }
     } else {
-      setEditingBlock(block);
-      setSelectedCourts([block.courtNumber]);
+      setEditingBlock(block as Record<string, unknown>);
+      setSelectedCourts(block.courtNumber !== undefined ? [block.courtNumber] : []);
       setBlockReason(block.reason);
 
-      const startDate = new Date(block.startTime);
-      const endDate = new Date(block.endTime);
+      const startDate = new Date(block.startTime || "");
+      const endDate = new Date(block.endTime || "");
       const parsedStartTime = startDate.toTimeString().slice(0, 5);
       const parsedEndTime = endDate.toTimeString().slice(0, 5);
 

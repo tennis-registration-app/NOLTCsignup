@@ -14,9 +14,9 @@ import {
   sortGroupedBlocks,
   getBlockStatus,
   getDateLabel,
-} from '../presenters/blockTimelinePresenter.js';
-import BlockTimelineToolbar from './BlockTimelineToolbar.jsx';
-import BlockTimelineCard from './BlockTimelineCard.jsx';
+} from '../presenters/blockTimelinePresenter';
+import BlockTimelineToolbar from './BlockTimelineToolbar';
+import BlockTimelineCard, { TimelineBlock } from './BlockTimelineCard';
 
 const BlockTimeline = ({
   courts: _courts,
@@ -34,9 +34,9 @@ const BlockTimeline = ({
   const [filterCourt, setFilterCourt] = useState('all');
 
   // API-sourced block state
-  const [blocks, setBlocks] = useState([]);
+  const [blocks, setBlocks] = useState<TimelineBlock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch blocks from API when date range or view changes
   useEffect(() => {

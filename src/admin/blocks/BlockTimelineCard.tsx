@@ -2,8 +2,25 @@ import React from 'react';
 import { Clock, Edit2, Copy, Trash2 } from '../components';
 import { getStatusColor } from '../presenters/blockTimelinePresenter.js';
 
-/** @type {React.FC<{block: any, status: any, onEdit: any, onDuplicate: any, onRemove: any}>} */
-const BlockTimelineCard = function BlockTimelineCard({
+export interface TimelineBlock {
+  id: string;
+  courtNumber: number;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+  title?: string;
+  isRecurring?: boolean;
+  recurrenceGroupId?: string | null;
+  [key: string]: unknown;
+}
+interface BlockTimelineCardProps {
+  block: TimelineBlock;
+  status: string;
+  onEdit: (block: TimelineBlock) => void;
+  onDuplicate: (block: TimelineBlock) => void;
+  onRemove: (block: TimelineBlock) => void | Promise<void>;
+}
+const BlockTimelineCard: React.FC<BlockTimelineCardProps> = function BlockTimelineCard({
   block,
   status,
   onEdit,

@@ -6,7 +6,40 @@ import { logger } from '../../../lib/logger';
  * Block management action handlers.
  * Reads form state from the useBlockForm hook and domain objects from props.
  */
-export function useBlockActions({ form, backend, onApplyBlocks, onNotification }) {
+interface BlockFormState {
+  selectedCourts: number[];
+  blockReason: string;
+  startTime: string;
+  endTime: string;
+  selectedDate: Date;
+  recurrence: { pattern: string; frequency: number; endType: string; occurrences?: number; endDate?: string; daysOfWeek?: number[] } | null;
+  isEvent: boolean;
+  eventType: string;
+  eventTitle: string;
+  editingBlock: Record<string, unknown> | null;
+  setSelectedCourts: (v: number[] | ((p: number[]) => number[])) => void;
+  setBlockReason: (v: string) => void;
+  setStartTime: (v: string) => void;
+  setEndTime: (v: string) => void;
+  setActiveView: (v: string) => void;
+  setShowTemplates: (v: boolean) => void;
+  setShowCustomReason: (v: boolean) => void;
+  setIsEvent: (v: boolean) => void;
+  setEventType: (v: string) => void;
+  setEventTitle: (v: string) => void;
+  setSelectedBlock: (v: Record<string, unknown> | null) => void;
+  setRefreshTrigger: (v: number | ((p: number) => number)) => void;
+  resetForm: () => void;
+}
+
+type AdminBackend = { admin: { cancelBlock: (opts: {blockId: string}) => Promise<{ok: boolean; message?: string; cancelledCount?: number}>; cancelBlockGroup: (opts: {recurrenceGroupId: string; futureOnly: boolean}) => Promise<{ok: boolean; message?: string; cancelledCount?: number}> } };
+
+export function useBlockActions({ form, backend, onApplyBlocks, onNotification }: {
+  form: BlockFormState;
+  backend: AdminBackend | null;
+  onApplyBlocks: (blocks: unknown[]) => void;
+  onNotification: (msg: string, type: string) => void;
+}) {
   const {
     selectedCourts,
     blockReason,
@@ -110,7 +143,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
 
   const handleBlockCourts = async () => {
     const blocks = expandRecurrenceDates(selectedDate, recurrence);
-    const appliedBlocks = [];
+    const appliedBlocks: unknown[] = [];
     const groupId = recurrence ? crypto.randomUUID() : null;
 
     blocks.forEach((blockInfo) => {
@@ -150,7 +183,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
 
     // If editing, remove the old block first — abort if cancel fails to prevent ghost duplicates
     if (editingBlock) {
-      const removed = await handleRemoveBlock(editingBlock.id);
+      const removed = await handleRemoveBlock((editingBlock as {id: string}).id);
       if (!removed) return;
     }
 

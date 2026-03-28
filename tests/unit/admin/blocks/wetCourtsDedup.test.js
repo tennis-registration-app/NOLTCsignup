@@ -116,20 +116,20 @@ describe('wetCourts dedup (bug #12 fix)', () => {
   // E) CompleteBlockManagerEnhanced no longer imports legacy hook
   // ============================================================
 
-  it('CompleteBlockManagerEnhanced.jsx does not import legacy useWetCourts', () => {
+  it('CompleteBlockManagerEnhanced.tsx does not import legacy useWetCourts', () => {
     const componentPath = path.resolve(
       __dirname,
-      '../../../../src/admin/blocks/CompleteBlockManagerEnhanced.jsx'
+      '../../../../src/admin/blocks/CompleteBlockManagerEnhanced.tsx'
     );
     const content = fs.readFileSync(componentPath, 'utf-8');
     expect(content).not.toContain("from './hooks/useWetCourts'");
     expect(content).not.toContain('blocks/hooks/useWetCourts');
   });
 
-  it('CompleteBlockManagerEnhanced.jsx uses controller actions directly', () => {
+  it('CompleteBlockManagerEnhanced.tsx uses controller actions directly', () => {
     const componentPath = path.resolve(
       __dirname,
-      '../../../../src/admin/blocks/CompleteBlockManagerEnhanced.jsx'
+      '../../../../src/admin/blocks/CompleteBlockManagerEnhanced.tsx'
     );
     const content = fs.readFileSync(componentPath, 'utf-8');
     expect(content).toContain('wetCourtsActions.activateEmergency');
