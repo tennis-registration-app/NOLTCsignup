@@ -5,15 +5,35 @@
  * Shows events for all 12 courts across hours 6am-9pm.
  */
 import React, { memo, useMemo } from 'react';
-import InteractiveEvent from './InteractiveEvent.jsx';
-import { getEventColor, calculateEventLayout } from './utils.js';
+import InteractiveEvent from './InteractiveEvent';
+import type { CalendarEvent } from './utils';
+import { getEventColor, calculateEventLayout } from './utils';
 
-const DayViewEnhanced = memo(
+export interface HoursOverride {
+  date: string;
+  isClosed?: boolean;
+  reason?: string;
+  opensAt?: string;
+  closesAt?: string;
+}
+
+interface DayViewEnhancedProps {
+  selectedDate: Date;
+  events: CalendarEvent[];
+  currentTime: Date;
+  hoursOverrides?: HoursOverride[];
+  onEventClick?: (event: CalendarEvent) => void;
+  onEventHover?: (event: CalendarEvent, element: HTMLElement) => void;
+  onEventLeave?: () => void;
+  onQuickAction?: (event: CalendarEvent, position: { top: number; left: number }) => void;
+}
+
+const DayViewEnhanced = memo<DayViewEnhancedProps>(
   ({
     selectedDate,
     events,
     currentTime,
-    hoursOverrides = [],
+    hoursOverrides = [] as HoursOverride[],
     onEventClick,
     onEventHover,
     onEventLeave,
@@ -36,7 +56,7 @@ const DayViewEnhanced = memo(
       });
 
       // Group events by court and calculate layout
-      const eventsByCourt = {};
+      const eventsByCourt: Record<number, (CalendarEvent & { top: number; height: number; startHour: number; endHour: number; column: number; totalColumns: number; courtNumber: number })[]> = {};
       courtsArray.forEach((courtNum) => {
         const courtEvents = dayEvents.filter(
           (event) => event.courtNumbers?.includes(courtNum) || event.courtNumber === courtNum

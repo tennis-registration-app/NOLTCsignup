@@ -5,8 +5,8 @@
  * All fields are always editable - no view/edit toggle.
  */
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { getEventColor } from './utils.js';
-import { getDeviceId } from '../utils/getDeviceId.js';
+import { getEventColor } from './utils';
+import { getDeviceId } from '../utils/getDeviceId';
 import { useAdminConfirm } from '../context/ConfirmContext';
 
 const BLOCK_TYPES = [
@@ -17,9 +17,31 @@ const BLOCK_TYPES = [
   { value: 'other', label: 'Other' },
 ];
 
-const EventDetailsModal = ({
+interface CourtOption {
+  id: string;
+  courtNumber: number;
+}
+
+interface AdminBackend {
+  admin: {
+    updateBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    createBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    cancelBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    cancelBlockGroup: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+  };
+}
+
+interface EventDetailsModalProps {
+  event: Record<string, unknown> | null;
+  courts?: CourtOption[];
+  backend?: AdminBackend | null;
+  onClose: () => void;
+  onSaved?: () => void;
+}
+
+const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   event,
-  courts = /** @type {any[]} */ ([]),
+  courts = [] as CourtOption[],
   backend,
   onClose,
   onSaved,
@@ -36,8 +58,8 @@ const EventDetailsModal = ({
   // UI state
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [originalValues, setOriginalValues] = useState(null);
-  const initialBlockTypeRef = useRef('other');
+  const [originalValues, setOriginalValues] = useState<Record<string, string> | null>(null);
+  const initialBlockTypeRef = useRef<string>('other');
 
   // Get device ID
   const deviceId = getDeviceId();
@@ -143,7 +165,7 @@ const EventDetailsModal = ({
 
       const blockTypeChanged = blockType !== initialBlockTypeRef.current;
       const result = await backend.admin.updateBlock({
-        blockId: event.id,
+        blockId: (event as Record<string, unknown>).id as string,
         courtId,
         ...(blockTypeChanged ? { blockType } : {}),
         title: title.trim(),
@@ -160,7 +182,7 @@ const EventDetailsModal = ({
       }
     } catch (err) {
       console.error('Error updating block:', err);
-      setError(err.message || 'Error updating block');
+      setError((err as Error).message || 'Error updating block');
     } finally {
       setSaving(false);
     }
@@ -194,7 +216,7 @@ const EventDetailsModal = ({
       }
     } catch (err) {
       console.error('Error creating block:', err);
-      setError(err.message || 'Error creating block');
+      setError((err as Error).message || 'Error creating block');
     } finally {
       setSaving(false);
     }
@@ -204,8 +226,9 @@ const EventDetailsModal = ({
   const handleDelete = async () => {
     if (!backend || !event) return;
 
-    const courtNum = event.courtNumber || event.courtNumbers?.[0] || 'Unknown';
-    const groupId = event.recurrenceGroupId;
+    const ev = event as Record<string, unknown>;
+  const courtNum = ev.courtNumber || (ev.courtNumbers as number[]|undefined)?.[0] || 'Unknown';
+    const groupId = (event as Record<string, unknown>).recurrenceGroupId as string | undefined;
 
     if (groupId) {
       // Series block: offer choices via sequential confirms
@@ -228,7 +251,7 @@ const EventDetailsModal = ({
             setError(result.message || 'Failed to delete series');
           }
         } catch (err) {
-          setError(err.message || 'Error deleting series');
+          setError((err as Error).message || 'Error deleting series');
         } finally {
           setSaving(false);
         }
@@ -249,7 +272,7 @@ const EventDetailsModal = ({
             setError(result.message || 'Failed to delete future blocks');
           }
         } catch (err) {
-          setError(err.message || 'Error deleting future blocks');
+          setError((err as Error).message || 'Error deleting future blocks');
         } finally {
           setSaving(false);
         }
@@ -269,7 +292,7 @@ const EventDetailsModal = ({
 
     try {
       const result = await backend.admin.cancelBlock({
-        blockId: event.id,
+        blockId: (event as Record<string, unknown>).id as string,
         deviceId,
       });
 
@@ -281,7 +304,7 @@ const EventDetailsModal = ({
       }
     } catch (err) {
       console.error('Error deleting block:', err);
-      setError(err.message || 'Error deleting block');
+      setError((err as Error).message || 'Error deleting block');
     } finally {
       setSaving(false);
     }

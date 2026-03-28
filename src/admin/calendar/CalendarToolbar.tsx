@@ -1,6 +1,15 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from '../components';
 
+interface CalendarToolbarProps {
+  headerText: string;
+  viewMode: string;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+  onViewModeChange: (mode: string) => void;
+}
+
 export default function CalendarToolbar({
   headerText,
   viewMode,
@@ -8,7 +17,7 @@ export default function CalendarToolbar({
   onNext,
   onToday,
   onViewModeChange,
-}) {
+}: CalendarToolbarProps) {
   return (
     <div className="flex items-center justify-between mb-2 px-4">
       {/* Day/Week/Month buttons on the left */}

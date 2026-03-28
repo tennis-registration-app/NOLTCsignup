@@ -5,15 +5,28 @@
  * Shows 7 days with events displayed in time slots.
  */
 import React, { memo, useMemo } from 'react';
-import InteractiveEvent from './InteractiveEvent.jsx';
-import { getEventColor, calculateEventLayout } from './utils.js';
+import InteractiveEvent from './InteractiveEvent';
+import type { CalendarEvent } from './utils';
+import type { HoursOverride } from './DayViewEnhanced';
+import { getEventColor, calculateEventLayout } from './utils';
 
-const WeekView = memo(
+interface WeekViewProps {
+  selectedDate: Date;
+  events: CalendarEvent[];
+  currentTime: Date;
+  hoursOverrides?: HoursOverride[];
+  onEventClick?: (event: CalendarEvent) => void;
+  onEventHover?: (event: CalendarEvent, element: HTMLElement) => void;
+  onEventLeave?: () => void;
+  onQuickAction?: (event: CalendarEvent, position: { top: number; left: number }) => void;
+}
+
+const WeekView = memo<WeekViewProps>(
   ({
     selectedDate,
     events,
     currentTime,
-    hoursOverrides = [],
+    hoursOverrides = [] as HoursOverride[],
     onEventClick,
     onEventHover,
     onEventLeave,
@@ -21,7 +34,7 @@ const WeekView = memo(
   }) => {
     // Create a map for quick lookup of overrides by date
     const overridesByDate = useMemo(() => {
-      const map = {};
+      const map: Record<string, HoursOverride> = {};
       hoursOverrides.forEach((o) => {
         map[o.date] = o;
       });
@@ -32,7 +45,7 @@ const WeekView = memo(
       start.setDate(start.getDate() - start.getDay());
       start.setHours(0, 0, 0, 0);
 
-      const weekDays = [];
+      const weekDays: Date[] = [];
       for (let i = 0; i < 7; i++) {
         const day = new Date(start);
         day.setDate(day.getDate() + i);
@@ -42,7 +55,7 @@ const WeekView = memo(
       const hoursArray = Array.from({ length: 16 }, (_, i) => i + 6);
 
       // Group events by day and calculate layout
-      const eventsByDay = {};
+      const eventsByDay: Record<number, (CalendarEvent & { top: number; height: number; startHour: number; endHour: number; column: number; totalColumns: number; dayIndex: number; hasConflict: boolean })[]> = {};
       weekDays.forEach((day, dayIndex) => {
         const dayEvents = events.filter((event) => {
           const eventDate = new Date(event.startTime);
@@ -62,6 +75,7 @@ const WeekView = memo(
           ) || {
             column: 0,
             totalColumns: 1,
+            group: [] as CalendarEvent[],
           };
 
           return {

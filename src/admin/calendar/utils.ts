@@ -7,7 +7,43 @@
 /**
  * Get CSS classes for event color based on event type or reason
  */
-export const getEventColor = (event) => {
+
+export interface CalendarEvent {
+  id?: string;
+  eventType?: string;
+  type?: string;
+  reason?: string;
+  startTime: string;
+  endTime: string;
+  courtNumbers?: number[];
+  courtNumber?: number;
+  title?: string;
+  eventDetails?: { title?: string };
+  blockType?: string;
+  isRecurring?: boolean;
+  recurrenceRule?: string | null;
+  recurrenceGroupId?: string | null;
+  isBlock?: boolean;
+  isEvent?: boolean;
+  isWetCourt?: boolean;
+  courtId?: string;
+  dayIndex?: number;
+  top?: number;
+  height?: number;
+  startHour?: number;
+  endHour?: number;
+  column?: number;
+  totalColumns?: number;
+  hasConflict?: boolean;
+}
+
+export interface LayoutInfo {
+  column: number;
+  totalColumns: number;
+  group: CalendarEvent[];
+}
+
+export const getEventColor = (event: CalendarEvent): string => {
   const eventType = event.eventType || event.type;
   const reason = (event.reason || '').toUpperCase();
 
@@ -54,7 +90,7 @@ export const getEventColor = (event) => {
 /**
  * Get event type from reason string
  */
-export const getEventTypeFromReason = (reason) => {
+export const getEventTypeFromReason = (reason: string): string | null => {
   const reasonUpper = reason.toUpperCase();
 
   if (reasonUpper.includes('TOURNAMENT')) return 'tournament';
@@ -72,7 +108,7 @@ export const getEventTypeFromReason = (reason) => {
 /**
  * Get emoji for event type
  */
-export const getEventEmoji = (type) => {
+export const getEventEmoji = (type: string): string => {
   switch (type) {
     case 'league':
       return '🏆';
@@ -93,7 +129,7 @@ export const getEventEmoji = (type) => {
  * Collision detection algorithm for overlapping events
  * Returns a Map with layout info for each event
  */
-export const calculateEventLayout = (events) => {
+export const calculateEventLayout = (events: CalendarEvent[]): Map<string, LayoutInfo> => {
   // Sort events by start time, then by duration (longer events first)
   const sortedEvents = [...events].sort((a, b) => {
     const aStart = new Date(a.startTime).getTime();
@@ -106,7 +142,7 @@ export const calculateEventLayout = (events) => {
   });
 
   // Group overlapping events
-  const groups = [];
+  const groups: CalendarEvent[][] = [];
   sortedEvents.forEach(event => {
     const eventStart = new Date(event.startTime).getTime();
     const eventEnd = new Date(event.endTime).getTime();
@@ -130,10 +166,10 @@ export const calculateEventLayout = (events) => {
   });
 
   // Assign columns within each group
-  const layoutInfo = new Map();
+  const layoutInfo = new Map<string, LayoutInfo>();
 
   groups.forEach(group => {
-    const columns = [];
+    const columns: CalendarEvent[][] = [];
 
     group.forEach(event => {
       const eventStart = new Date(event.startTime).getTime();

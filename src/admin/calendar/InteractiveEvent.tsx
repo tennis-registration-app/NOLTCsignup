@@ -5,9 +5,20 @@
  * Used by DayViewEnhanced and WeekView for displaying events.
  */
 import React, { useRef } from 'react';
+import type { CalendarEvent } from './utils';
 
-/** @type {React.FC<{event: any, className: any, style: any, onEventClick: any, onEventHover: any, onEventLeave: any, onQuickAction: any, isWeekView: any}>} */
-const InteractiveEvent = ({
+interface InteractiveEventProps {
+  event: CalendarEvent;
+  className: string;
+  style: React.CSSProperties;
+  onEventClick?: (event: CalendarEvent) => void;
+  onEventHover?: (event: CalendarEvent, element: HTMLElement) => void;
+  onEventLeave?: () => void;
+  onQuickAction?: (event: CalendarEvent, position: { top: number; left: number }) => void;
+  isWeekView: boolean;
+}
+
+const InteractiveEvent: React.FC<InteractiveEventProps> = ({
   event,
   className,
   style,
@@ -17,7 +28,7 @@ const InteractiveEvent = ({
   onQuickAction: _onQuickAction,
   isWeekView,
 }) => {
-  const eventRef = useRef(null);
+  const eventRef = useRef<HTMLDivElement>(null);
 
   const handleMouseEnter = () => {
     if (onEventHover && eventRef.current) {

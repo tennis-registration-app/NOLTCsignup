@@ -1,5 +1,5 @@
 import { expandRecurrenceDates } from '../utils/expandRecurrenceDates';
-import { getEventTypeFromReason } from '../../calendar/utils.js';
+import { getEventTypeFromReason } from '../../calendar/utils';
 import { logger } from '../../../lib/logger';
 
 /**

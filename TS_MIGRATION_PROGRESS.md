@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress (Phase 5 complete, Phase 6 next)
+## Status: In Progress (Phase 6 complete, Phase 7 next)
 
 ---
 
@@ -77,9 +77,20 @@
 - [x] Updated test: wetCourtsDedup.test.js .jsx to .tsx path reference
 - [x] Run npm run verify — PASS (lint, type-check, coverage, fixtures, e2e all pass)
 - [x] Unit tests: 161 files, 3134 tests all pass
-## Phase 6: Admin Calendar — `src/admin/calendar/` — PENDING
-- [ ] Convert all .js/.jsx
-- [ ] Run `npm run verify`
+## Phase 6: Admin Calendar — `src/admin/calendar/` — COMPLETE
+- [x] Renamed all 8 .js/.jsx files to .ts/.tsx via `git mv`:
+  - utils.js, index.js, CalendarToolbar.jsx, InteractiveEvent.jsx
+  - EventDetailsModal.jsx, DayViewEnhanced.jsx, WeekView.jsx, EventCalendarEnhanced.jsx
+- [x] Added CalendarEvent and LayoutInfo interfaces to utils.ts (exported for reuse)
+- [x] Added HoursOverride and DayViewEnhancedProps interfaces to DayViewEnhanced.tsx (exported HoursOverride)
+- [x] Added WeekViewProps, CalendarToolbarProps, InteractiveEventProps, EventDetailsModalProps interfaces
+- [x] Added EventCalendarEnhancedProps and CalendarAdminBackend interfaces to EventCalendarEnhanced.tsx
+- [x] Typed all React.FC components with proper generic props
+- [x] Typed useState, useRef hooks with proper generics
+- [x] Fixed hoursOverrides default as [] as HoursOverride[] to prevent never[] inference
+- [x] Fixed layoutInfo fallback object to include group: [] as CalendarEvent[] for union type safety
+- [x] Fixed .jsx/.js import extensions in 3 external files (useBlockActions.ts, eventCalendarPresenter.js, CourtStatusGrid.jsx)
+- [x] Run npm run verify — PASS (lint, type-check, coverage, fixtures, build, e2e all pass)
 
 ## Phase 7: Admin Remaining — analytics, system, guards, etc. — PENDING
 - [ ] Convert remaining .js/.jsx in src/admin/

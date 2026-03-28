@@ -3,7 +3,7 @@
  * Each function corresponds to an existing useMemo computation.
  * Returns identical shapes to what the component previously computed inline.
  */
-import { getEventTypeFromReason } from '../calendar/utils.js';
+import { getEventTypeFromReason } from '../calendar/utils';
 
 /**
  * Build calendar events from blocks and courts data.

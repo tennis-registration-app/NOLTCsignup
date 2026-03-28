@@ -6,11 +6,13 @@
  * Fetches block data from API via TennisBackend.
  */
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import CalendarToolbar from './CalendarToolbar.jsx';
-import DayViewEnhanced from './DayViewEnhanced.jsx';
-import WeekView from './WeekView.jsx';
-import EventDetailsModal from './EventDetailsModal.jsx';
-import { getEventTypeFromReason } from './utils.js';
+import CalendarToolbar from './CalendarToolbar';
+import DayViewEnhanced from './DayViewEnhanced';
+import WeekView from './WeekView';
+import EventDetailsModal from './EventDetailsModal';
+import { getEventTypeFromReason } from './utils';
+import type { CalendarEvent } from './utils';
+import type { HoursOverride } from './DayViewEnhanced';
 import { logger } from '../../lib/logger';
 import { normalizeCalendarBlock } from '../../lib/normalize/index';
 import { useAdminNotification } from '../context/NotificationContext';
@@ -19,9 +21,40 @@ import {
   buildCalendarEvents,
   filterCalendarEvents,
   formatCalendarHeader,
-} from '../presenters/eventCalendarPresenter.js';
+} from '../presenters/eventCalendarPresenter';
 
-const EventCalendarEnhanced = ({
+interface CalendarAdminBackend {
+  admin: {
+    getBlocks: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }> & { blocks?: Record<string, unknown>[] };
+    cancelBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    cancelBlockGroup: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+  };
+}
+
+interface CalendarCourt {
+  id?: string;
+  court_number?: number;
+  courtNumber?: number;
+}
+
+interface EventCalendarEnhancedProps {
+  courts: CalendarCourt[];
+  currentTime: Date;
+  refreshTrigger?: unknown;
+  onRefresh: () => void;
+  onEditEvent?: (event: CalendarEvent) => void;
+  onDuplicateEvent: (event: CalendarEvent) => void;
+  defaultView?: string;
+  disableEventClick?: boolean;
+  backend?: CalendarAdminBackend | null;
+  hoursOverrides?: HoursOverride[];
+  MonthView?: React.ComponentType<any>;
+  EventSummary?: React.ComponentType<any>;
+  HoverCard?: React.ComponentType<any>;
+  QuickActionsMenu?: React.ComponentType<any>;
+}
+
+const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
   courts,
   currentTime,
   refreshTrigger,
@@ -32,7 +65,7 @@ const EventCalendarEnhanced = ({
   disableEventClick = false,
   backend,
   hoursOverrides = [],
-  // These components are passed from parent until they're extracted
+  // These components are passed from parent until they are extracted
   MonthView,
   EventSummary: _EventSummary,
   HoverCard,
@@ -42,16 +75,16 @@ const EventCalendarEnhanced = ({
   const confirmDialog = useAdminConfirm();
   const [viewMode, setViewMode] = useState(defaultView);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [hoveredEvent, setHoveredEvent] = useState(null);
-  const [hoverPosition, setHoverPosition] = useState({ top: 0, left: 0 });
-  const [quickActionEvent, setQuickActionEvent] = useState(null);
-  const [quickActionPosition, setQuickActionPosition] = useState({ top: 0, left: 0 });
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
+  const [hoverPosition, setHoverPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [quickActionEvent, setQuickActionEvent] = useState<CalendarEvent | null>(null);
+  const [quickActionPosition, setQuickActionPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   // API-sourced block state
-  const [blocks, setBlocks] = useState([]);
+  const [blocks, setBlocks] = useState<CalendarEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setViewMode(defaultView);

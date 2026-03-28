@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { EditGameModal } from '../components';
-import EventDetailsModal from '../calendar/EventDetailsModal.jsx';
+import EventDetailsModal from '../calendar/EventDetailsModal';
 import { getCourtStatus } from './courtStatusUtils.js';
 import { useCourtActions } from './useCourtActions.js';
 import CourtCard from './CourtCard.jsx';
