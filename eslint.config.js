@@ -8,11 +8,46 @@ import globals from 'globals';
 
 export default [
   js.configs.recommended,
+  // TypeScript React files — use TS parser with JSX support
+  {
+    files: ['**/*.tsx'],
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      react,
+      'react-hooks': reactHooks,
+    },
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    settings: {
+      react: { version: 'detect' },
+    },
+    rules: {
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-undef': 'off',
+      'no-redeclare': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+    },
+  },
   // TypeScript files — use TS parser, no React rules (pure logic files)
   {
     files: ['**/*.ts'],
     plugins: {
       '@typescript-eslint': tsPlugin,
+      'react-hooks': reactHooks,
     },
     languageOptions: {
       parser: tsParser,
@@ -28,6 +63,7 @@ export default [
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-undef': 'off', // TypeScript handles this
       'no-redeclare': 'off', // TypeScript handles this (interfaces merge)
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
   {
@@ -315,7 +351,7 @@ export default [
   },
   // Architecture boundary: no window global assignments outside platform layer
   {
-    files: ['src/registration/**/*.{js,jsx,ts}', 'src/admin/**/*.{js,jsx,ts}'],
+    files: ['src/registration/**/*.{js,jsx,ts,tsx}', 'src/admin/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-syntax': [
         'error',
@@ -334,11 +370,14 @@ export default [
     files: [
       // Entry points — check window.Tennis readiness before rendering
       'src/registration/main.jsx',
+      'src/registration/main.tsx',
       'src/admin/main.jsx',
       // Bootstrap scripts extracted from inline HTML for CSP compliance
       'src/registration/bootstrap/**/*.js',
+      'src/registration/bootstrap/**/*.ts',
       // Legacy interop — use window.Tennis directly (migrate to windowBridge over time)
       'src/registration/utils/helpers.js',
+      'src/registration/utils/helpers.ts',
       'src/admin/handlers/courtOperations.js',
       'src/admin/ai/AIAssistantAdmin.jsx',
       // Singleton guard uses window[key] assignment pattern

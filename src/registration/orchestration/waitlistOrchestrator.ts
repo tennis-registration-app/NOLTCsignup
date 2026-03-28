@@ -3,9 +3,9 @@
  * Moved from App.jsx
  */
 
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { toast } from '../../shared/utils/toast.js';
-import { normalizeError } from '../../lib/errors/normalizeError.js';
+import { normalizeError } from '../../lib/errors/normalizeError';
 import type { ApiConfig, TennisBackendShape, Setter, GroupPlayer } from '../../types/appTypes.js';
 
 export interface WaitlistDeps {

@@ -5,8 +5,10 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { buildSync } from 'esbuild';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,10 +31,19 @@ async function main() {
 
   console.log(`\nValidating ${files.length} fixture(s)...\n`);
 
-  // Dynamic import ES modules
-  const { normalizeBoard } = await import('../src/lib/normalize/index.js');
-  const { validateBoardResponse } = await import('../src/lib/schemas/apiEnvelope.js');
-  const { validateBoard } = await import('../src/lib/schemas/domain.js');
+  // Use esbuild to bundle TS modules into temp JS files for Node.js execution
+  const tmpDir = os.tmpdir();
+  
+  function buildAndLoad(entryPoint, outName) {
+    const outfile = path.join(tmpDir, outName + '.mjs');
+    const absEntry = path.resolve(__dirname, entryPoint);
+    buildSync({ entryPoints: [absEntry], bundle: true, format: 'esm', outfile, platform: 'node', target: 'node22' });
+    return import(outfile);
+  }
+  
+  const { normalizeBoard } = await buildAndLoad('../src/lib/normalize/index.ts', 'normalize-bundle');
+  const { validateBoardResponse } = await buildAndLoad('../src/lib/schemas/apiEnvelope.ts', 'envelope-bundle');
+  const { validateBoard } = await buildAndLoad('../src/lib/schemas/domain.ts', 'domain-bundle');
 
   let passed = 0;
   let failed = 0;

@@ -8,7 +8,7 @@
  * remount of WorkflowProvider.
  */
 
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import type {
   DomainBoard,
 } from '../../types/appTypes.js';

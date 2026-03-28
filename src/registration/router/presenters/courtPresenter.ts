@@ -8,7 +8,7 @@
  */
 
 import type { AppState, CourtDataMutable, DisplacementInfo, GroupPlayer, Handlers, OriginalCourtData, UpcomingBlock } from '../../../types/appTypes.js';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 /** Workflow-owned fields that buildCourtModel and buildCourtActions read. */
 export interface CourtWorkflow {

@@ -36,16 +36,16 @@
   -->
 
   <!-- IIFE: pre-init globals, mobile bridge, fallback bar (ADR-006 Phase 2 consolidated) -->
-  <script src="./bootstrap/courtboard-bootstrap.js"></script>
+  <script src="./bootstrap/courtboard-bootstrap.ts"></script>
 
   <!-- ESM (side-effect only): syncs waitlist promotions; reads window.Tennis.Domain.availability -->
-  <script type="module" src="./sync-promotions.js"></script>
+  <script type="module" src="./sync-promotions.ts"></script>
 
   <!-- Vite-bundled React app (ESM entry point) -->
-  <script type="module" src="./main.jsx"></script>
+  <script type="module" src="./main.tsx"></script>
 
   <!-- IIFE: dev-only debug overlay; reads window.Tennis.Events; gated by ?debug=1 -->
-  <script src="./debug-panel.js"></script>
+  <script src="./debug-panel.ts"></script>
 
 </body>
 </html>

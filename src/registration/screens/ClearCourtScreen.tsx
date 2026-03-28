@@ -1,0 +1,321 @@
+// @ts-check
+/**
+ * ClearCourtScreen Component
+ *
+ * Multi-step flow for clearing an occupied court.
+ * Step 1: Select which court to clear
+ * Step 2: Confirm clearing method (players leaving vs observed empty)
+ * Step 3/4: Success confirmation
+ *
+ * Props:
+ * - clearCourtStep: number - Current step (1-4)
+ * - setClearCourtStep: (step: number) => void - Step setter
+ * - selectedCourtToClear: number | null - Selected court number
+ * - setSelectedCourtToClear: (courtNum: number) => void - Court setter
+ * - clearCourt: (courtNum: number, reason: string) => Promise<void> - Clear court handler
+ * - resetForm: () => void - Reset form handler
+ * - showAlert: boolean - Whether to show alert
+ * - alertMessage: string - Alert message
+ * - getCourtsOccupiedForClearing: () => number[] - Get clearable courts
+ * - courtData: object - Court data from React state (API backend) or localStorage
+ * - CONSTANTS: object - App constants
+ * - TennisBusinessLogic: object - Business logic service
+ */
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, ToastHost, AlertDisplay } from '../components';
+import { TypedIcon } from '../../components/icons/TypedIcon';
+import { readDataSafe } from '../../lib/storage';
+import { logger } from '../../lib/logger';
+
+const ClearCourtScreen = ({
+  clearCourtStep,
+  setClearCourtStep,
+  selectedCourtToClear,
+  setSelectedCourtToClear,
+  clearCourt,
+  resetForm,
+  showAlert,
+  alertMessage,
+  getCourtsOccupiedForClearing,
+  courtData,
+  CONSTANTS,
+  TennisBusinessLogic,
+  mobileFlow = false,
+}) => {
+  const clearableCourts = getCourtsOccupiedForClearing();
+  const hasAny = clearableCourts.length > 0;
+  // Use courtData prop (from React state for API backend, or from parent)
+  // Fall back to localStorage only if courtData is not provided
+  const data = courtData || readDataSafe() || { courts: [] };
+
+  // Auto-reset timer for success screens (step 3 and 4)
+  const timerRef = useRef(null);
+  const timerStepRef = useRef(null); // Track which step the timer was set for
+
+  useEffect(() => {
+    // Only set timer when on success screens (step 3 or 4)
+    // AND we haven't already set a timer for this step
+    if ((clearCourtStep === 3 || clearCourtStep === 4) && timerStepRef.current !== clearCourtStep) {
+      // Clear any existing timer from a different step
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+
+      timerStepRef.current = clearCourtStep; // Mark that we've set timer for this step
+      const timeoutMs = CONSTANTS?.AUTO_RESET_CLEAR_MS || 2000;
+      logger.debug('ClearCourt', `Starting ${timeoutMs}ms timer for step ${clearCourtStep}`);
+
+      timerRef.current = setTimeout(() => {
+        logger.debug('ClearCourt', 'Auto-reset timer fired');
+        timerStepRef.current = null; // Reset so we can set timer again if needed
+        resetForm();
+      }, timeoutMs);
+    }
+
+    // Only cleanup on unmount, NOT on every re-render
+    return () => {
+      if (timerRef.current && timerStepRef.current !== clearCourtStep) {
+        logger.debug('ClearCourt', 'Cleaning up timer on unmount');
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+        timerStepRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resetForm/CONSTANTS excluded: timer should only reset on step change, not on parent re-renders
+  }, [clearCourtStep]);
+  // Delayed empty-state: avoid brief false "no courts occupied" during board refresh
+  const [emptyConfirmed, setEmptyConfirmed] = useState(false);
+  useEffect(() => {
+    if (hasAny) {
+      // Courts found — cancel any pending empty-state confirmation
+      setEmptyConfirmed(false);
+      return;
+    }
+    // No courts found — wait briefly for board refresh to settle before confirming empty
+    setEmptyConfirmed(false);
+    const delay = setTimeout(() => setEmptyConfirmed(true), 1500);
+    return () => clearTimeout(delay);
+  }, [hasAny]);
+
+  const courts = data?.courts || [];
+  const findCourt = (num) => courts.find((c) => c && c.number === num) || courts[num - 1];
+  const occupiedCourts = clearableCourts.map((courtNumber) => {
+    const c = findCourt(courtNumber);
+    return {
+      courtNumber,
+      players: c?.session?.group?.players || c?.players || [],
+      isBlocked: false,
+    };
+  });
+
+  // Step 1: Choose court to clear
+  if (clearCourtStep === 1) {
+    return (
+      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+        <ToastHost />
+        <AlertDisplay show={showAlert} message={alertMessage} />
+        <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-4xl">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8">
+            Choose a court to clear
+          </h2>
+
+          {hasAny ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+              {occupiedCourts.map(({ courtNumber }) => (
+                <button
+                  key={courtNumber}
+                  onClick={() => {
+                    setSelectedCourtToClear(courtNumber);
+                    setClearCourtStep(2);
+                  }}
+                  className="p-6 sm:p-8 rounded-xl text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-500 text-white hover:from-blue-500 hover:to-blue-600 transition-all transform hover:scale-105 shadow-lg"
+                >
+                  Court {courtNumber}
+                </button>
+              ))}
+            </div>
+          ) : emptyConfirmed ? (
+            <p className="text-center text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8">
+              No courts are currently in use.
+            </p>
+          ) : (
+            <p className="text-center text-lg sm:text-xl text-gray-500 mb-6 sm:mb-8">
+              Checking courts…
+            </p>
+          )}
+
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                if (mobileFlow) {
+                  window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                } else {
+                  resetForm();
+                }
+              }}
+              className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors"
+            >
+              {mobileFlow ? 'Back' : 'Go Back'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Confirm clearing method
+  if (clearCourtStep === 2) {
+    // Find court by number (null-safe: board refresh may contain null entries after a clear)
+    const court = findCourt(selectedCourtToClear);
+
+    // Court was cleared between selection and render — bounce back to step 1
+    if (!court) {
+      return (
+        <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-3xl text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">Court {selectedCourtToClear}</h2>
+            <p className="text-lg sm:text-xl text-gray-600 mb-6">That court is no longer active.</p>
+            <button
+              onClick={() => setClearCourtStep(1)}
+              className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors"
+            >
+              Choose another court
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Get players from session.group.players (Domain format) or top-level players (fallback)
+    const players = court.session?.group?.players || court.players || [];
+
+    // Handle players as array of strings or objects with name/displayName property
+    // Use camelCase only (data is pre-normalized)
+    const displayNames = players
+      .map((p) => {
+        const name = typeof p === 'string' ? p : p.name || p.displayName || 'Unknown';
+        return TennisBusinessLogic.formatPlayerDisplayName(name);
+      })
+      .filter(Boolean)
+      .join(' and ');
+
+    return (
+      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4 sm:p-8 flex items-center justify-center">
+        <ToastHost />
+        <AlertDisplay show={showAlert} message={alertMessage} />
+        <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-3xl">
+          <div className="mb-6 sm:mb-8 text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Court {selectedCourtToClear}</h2>
+            <p className="text-xl sm:text-2xl text-gray-600">{displayNames}</p>
+          </div>
+
+          <div className="space-y-4 sm:space-y-8 mb-6 sm:mb-8">
+            <button
+              onClick={() => {
+                // Optimistic UI: show success immediately
+                logger.debug(
+                  'ClearCourt',
+                  `Clearing court ${selectedCourtToClear} - players leaving`
+                );
+                setClearCourtStep(3);
+
+                // API call in background
+                clearCourt(selectedCourtToClear, 'Cleared').catch((error) => {
+                  logger.error('ClearCourt', 'API error', error);
+                  // Error will be logged; Thank You screen auto-dismisses anyway
+                });
+              }}
+              className="w-full bg-green-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-green-600 transition-colors"
+              data-testid="clear-confirm-leaving"
+            >
+              We are finished our game and leaving court {selectedCourtToClear}
+            </button>
+
+            <button
+              onClick={() => {
+                // Optimistic UI: show success immediately
+                logger.debug(
+                  'ClearCourt',
+                  `Clearing court ${selectedCourtToClear} - observed empty`
+                );
+                setClearCourtStep(4);
+
+                // API call in background
+                clearCourt(selectedCourtToClear, 'Observed-Cleared').catch((error) => {
+                  logger.error('ClearCourt', 'API error', error);
+                  // Error will be logged; Thank You screen auto-dismisses anyway
+                });
+              }}
+              className="w-full bg-blue-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-lg sm:text-xl font-semibold hover:bg-blue-600 transition-colors"
+            >
+              Players have finished and court {selectedCourtToClear} is open (I&apos;m sure!)
+            </button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
+            <button
+              onClick={() => setClearCourtStep(1)}
+              className="bg-gray-100 text-gray-700 border border-gray-300 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-gray-200 transition-colors order-2 sm:order-1"
+            >
+              {mobileFlow ? 'Back' : 'Go Back'}
+            </button>
+
+            <button
+              onClick={() => {
+                resetForm();
+                if (mobileFlow) {
+                  window.parent.postMessage({ type: 'resetRegistration' }, '*');
+                }
+              }}
+              className="bg-white text-red-500 border-2 border-red-400 py-2 sm:py-3 px-4 sm:px-6 rounded-xl text-base sm:text-lg hover:bg-red-50 hover:border-red-500 transition-colors order-1 sm:order-2"
+            >
+              {mobileFlow ? 'Exit' : 'Start Over'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 3: Success - players leaving
+  // Timer is handled by useEffect above - no setTimeout during render
+  if (clearCourtStep === 3) {
+    return (
+      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <ToastHost />
+        <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
+            <TypedIcon icon={Check} size={48} className="text-white sm:w-16 sm:h-16" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thanks, have a great day!</h1>
+          <p className="text-lg sm:text-xl text-gray-600">
+            Court {selectedCourtToClear} is now available
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 4: Success - observed empty
+  // Timer is handled by useEffect above - no setTimeout during render
+  if (clearCourtStep === 4) {
+    return (
+      <div className="w-full h-full min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <ToastHost />
+        <div className="bg-white rounded-3xl p-8 sm:p-16 shadow-2xl text-center max-w-2xl">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8">
+            <TypedIcon icon={Check} size={48} className="text-white sm:w-16 sm:h-16" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">Thank you!</h1>
+          <p className="text-lg sm:text-xl text-gray-600">
+            Court {selectedCourtToClear} is now available
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+export default ClearCourtScreen;

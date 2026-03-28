@@ -293,8 +293,8 @@ export interface TennisBusinessLogicShape {
   // currentGroup uses UI-layer GroupPlayer (accesses .id, .name)
   isPlayerAlreadyPlaying: (
     playerId: string | number,
-    data: RegistrationUiState['data'],
-    currentGroup?: GroupPlayer[],
+    data: Record<string, unknown> | null | undefined,
+    currentGroup?: Array<{ id?: string | number; name?: string; displayName?: string; [key: string]: unknown }>,
   ) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
   calculateGameDuration: (
     groupSize: number,
@@ -322,7 +322,7 @@ export interface TennisBusinessLogicShape {
     recentlyCleared: Array<{ originalEndTime: string; players: GroupPlayer[] }>,
   ) => string | null;
   // Evidence: TennisBusinessLogic.js:29 — compares by .memberId, .id, .name
-  sameGroup: (a: GroupPlayer[], b: GroupPlayer[]) => boolean;
+  sameGroup: (a?: Array<Record<string, unknown>>, b?: Array<Record<string, unknown>>) => boolean;
 }
 
 // ============================================
@@ -539,7 +539,7 @@ export interface Services {
   /** TennisBackend instance */
   backend: TennisBackendShape;
   /** Data store instance */
-  dataStore: DataStoreShape;
+  dataStore: DataStoreShape | null;
 }
 
 export interface AlertState {
@@ -1068,7 +1068,7 @@ export interface DomainBoard {
   waitlist: DomainWaitlistEntry[];
   blocks?: BoardBlock[];
   upcomingBlocks?: UpcomingBlock[];
-  operatingHours?: OperatingHoursEntry[];
+  operatingHours?: OperatingHoursEntry[] | object[];
 }
 
 /** UI player in currentGroup. Evidence: assignCourtOrchestrator.ts:143-159, groupHandlers.js */
