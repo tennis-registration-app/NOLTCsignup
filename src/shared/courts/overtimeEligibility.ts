@@ -23,7 +23,7 @@ import { isCourtEligibleForGroup } from '../../lib/types/domain';
  * @param {Array} upcomingBlocks - Upcoming blocks for filtering usable courts
  * @returns {Object} Selection result
  */
-export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
+export function computeRegistrationCourtSelection(courts: Array<{ number?: number; isAvailable?: boolean; isBlocked?: boolean; isOvertime?: boolean; isTournament?: boolean }>, upcomingBlocks: Array<{ courtNumber?: number | string; startTime?: string }> = []) {
   if (!courts?.length) {
     return {
       showingOvertimeCourts: false,
@@ -50,10 +50,10 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
     if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
     const now = new Date();
     const nextBlock = upcomingBlocks.find(
-      (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > now
+      (b) => Number(b.courtNumber) === court.number && new Date(b.startTime ?? 0) > now
     );
     if (!nextBlock) return true;
-    const minutesUntilBlock = (new Date(nextBlock.startTime).getTime() - now.getTime()) / 60000;
+    const minutesUntilBlock = (new Date(nextBlock.startTime ?? 0).getTime() - now.getTime()) / 60000;
     return minutesUntilBlock >= MIN_USEFUL_MINUTES;
   });
 
@@ -68,22 +68,22 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
     const isPrimary = primaryCourts.some((c) => c.number === court.number);
     const isFallback = fallbackOvertimeCourts.some((c) => c.number === court.number);
 
-    eligibilityByCourtNumber[court.number] = {
+    eligibilityByCourtNumber[court.number!] = {
       eligible: isPrimary || (showingOvertimeCourts && isFallback),
       reason: !isPrimary && !isFallback ? 'not_available' : undefined,
     };
   }
 
   // Build selectableCourts with metadata
-  const selectableCourts = [];
+  const selectableCourts: Array<{ number: number | undefined; reason: string; minutesAvailable: number | null; isUsable: boolean }> = [];
   const MIN_SELECTABLE_MINUTES = 5;
 
   for (const court of primaryCourts) {
     const nextBlock = (upcomingBlocks || []).find(
-      (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > new Date()
+      (b) => Number(b.courtNumber) === court.number && new Date(b.startTime ?? 0) > new Date()
     );
     const minutesAvailable = nextBlock
-      ? Math.floor((new Date(nextBlock.startTime).getTime() - Date.now()) / 60000)
+      ? Math.floor((new Date(nextBlock.startTime ?? 0).getTime() - Date.now()) / 60000)
       : null;
 
     // Skip courts with <= 5 min — unselectable by backend rules
@@ -102,10 +102,10 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
   if (showingOvertimeCourts) {
     for (const court of fallbackOvertimeCourts) {
       const nextBlock = (upcomingBlocks || []).find(
-        (b) => Number(b.courtNumber) === court.number && new Date(b.startTime) > new Date()
+        (b) => Number(b.courtNumber) === court.number && new Date(b.startTime ?? 0) > new Date()
       );
       const minutesAvailable = nextBlock
-        ? Math.floor((new Date(nextBlock.startTime).getTime() - Date.now()) / 60000)
+        ? Math.floor((new Date(nextBlock.startTime ?? 0).getTime() - Date.now()) / 60000)
         : null;
 
       // Skip courts with <= 5 min — unselectable by backend rules
@@ -125,7 +125,7 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
   function getSelectableForGroup(playerCount) {
     // First check: any selectable courts eligible for this group?
     const eligible = selectableCourts.filter((sc) =>
-      isCourtEligibleForGroup(sc.number, playerCount)
+      isCourtEligibleForGroup(sc.number!, playerCount)
     );
 
     // If eligible courts exist, return them
@@ -136,13 +136,13 @@ export function computeRegistrationCourtSelection(courts, upcomingBlocks = []) {
     // (handles: Court 8 free but doubles can't use it)
     if (!showingOvertimeCourts) {
       const eligibleOvertime = fallbackOvertimeCourts
-        .filter((c) => isCourtEligibleForGroup(c.number, playerCount))
+        .filter((c) => isCourtEligibleForGroup(c.number!, playerCount))
         .map((c) => {
           const nextBlock = (upcomingBlocks || []).find(
-            (b) => Number(b.courtNumber) === c.number && new Date(b.startTime) > new Date()
+            (b) => Number(b.courtNumber) === c.number && new Date(b.startTime ?? 0) > new Date()
           );
           const minutesAvailable = nextBlock
-            ? Math.floor((new Date(nextBlock.startTime).getTime() - Date.now()) / 60000)
+            ? Math.floor((new Date(nextBlock.startTime ?? 0).getTime() - Date.now()) / 60000)
             : null;
           return {
             number: c.number,

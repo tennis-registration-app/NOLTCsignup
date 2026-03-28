@@ -21,8 +21,8 @@ import {
 } from './adminSettingsLogic';
 
 // Singleton guard to prevent duplicate listener attachment on re-mount
-const _one = (key) =>
-  /** @type {any} */ (window)[key] ? true : ((/** @type {any} */ (window)[key] = true), false);
+const _one = (key: string) =>
+  (window as unknown as Record<string, unknown>)[key] ? true : (((window as unknown as Record<string, unknown>)[key] = true), false);
 
 /**
  * Hook for managing admin settings state and operations.
@@ -69,7 +69,7 @@ export function useAdminSettings(deps) {
 
   // Stable ref for loadData to avoid stale closures in event listeners
   const loadDataRef = useRef(loadData);
-  // eslint-disable-next-line react-hooks/refs -- Intentional: update ref on every render to avoid stale closure in event listener
+   
   loadDataRef.current = loadData;
 
   // Effect #1: Event-driven refresh bridge listener

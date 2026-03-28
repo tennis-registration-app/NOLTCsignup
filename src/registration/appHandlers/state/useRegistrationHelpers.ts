@@ -134,7 +134,8 @@ export function validateGroupCompat(players, guests) {
   // 1) Prefer domain-level validator if available
   try {
     if (typeof domainValidateGroup === 'function') {
-      const out = domainValidateGroup({ players, guests } as never);
+       
+      const out = domainValidateGroup({ players, guests } as never) as any;
       if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
         return norm(out.ok, out.errors);
       }

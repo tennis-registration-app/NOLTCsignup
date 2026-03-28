@@ -48,7 +48,7 @@ export function getRuntimeConfig(env = import.meta.env) {
   };
 
   if (env.PROD) {
-    const missing = [];
+    const missing: string[] = [];
     for (const [key, value] of Object.entries(config)) {
       // Only fail if value is empty/falsy — dev defaults are valid working credentials
       if (!value) {

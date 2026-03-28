@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-properties, no-restricted-globals */
+// Bootstrap bridge: intentionally sets up window.Tennis and reads localStorage for preflight cache warm
 // @ts-nocheck — plain script loaded via <script> tag; cannot use ESM or type annotations
 /**
  * Courtboard Bootstrap
@@ -98,7 +100,7 @@ document.documentElement.classList.toggle('variant-mobile', window.IS_MOBILE_VIE
 // Section 2: Mobile Bridge (formerly mobile-bridge.js)
 // ============================================================
 
-/* eslint-disable no-console -- IIFE loaded via <script> tag; cannot import logger */
+ 
 (function boardMobileBridge() {
   // Mobile-only: only active when embedded
   const MOBILE = window.top !== window.self;

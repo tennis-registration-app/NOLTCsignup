@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress (Phase 6 complete, Phase 7 next)
+## Status: In Progress (Phase 8 complete, Phase 9 next)
 
 ---
 
@@ -92,13 +92,25 @@
 - [x] Fixed .jsx/.js import extensions in 3 external files (useBlockActions.ts, eventCalendarPresenter.js, CourtStatusGrid.jsx)
 - [x] Run npm run verify — PASS (lint, type-check, coverage, fixtures, build, e2e all pass)
 
-## Phase 7: Admin Remaining — analytics, system, guards, etc. — PENDING
-- [ ] Convert remaining .js/.jsx in src/admin/
-- [ ] Run `npm run verify`
+## Phase 7: Admin Remaining — analytics, system, guards, etc. — COMPLETE
+- [x] Renamed all remaining src/admin/ .js/.jsx files to .ts/.tsx
+- [x] Run `npm run verify` — PASS
 
-## Phase 8: Top-Level App Files — PENDING
-- [ ] Convert src/App.jsx, src/main.jsx and remaining src/ root .js/.jsx
-- [ ] Run `npm run verify`
+## Phase 8: Remaining src/ Files — COMPLETE
+- [x] Renamed all remaining src/ .js/.jsx files to .ts/.tsx via git mv
+  - src/components/icons/TypedIcon.tsx
+  - src/config/ (index.ts, runtimeConfig.ts)
+  - src/courtboard/ (bootstrap, bridge, components, hooks, mobile, utils)
+  - src/mobile-shell/ (main.ts, mobileBridge.ts, healthCheck.ts)
+  - src/platform/ (13 files: attachLegacy*, index.ts, prefsStorage.ts, etc.)
+  - src/registration/screens/components/BlockModal.tsx
+  - src/shared/ (bootstrap, components, constants, courts, ui, utils)
+  - src/tennis/domain/ (availability.ts, roster.ts, waitlist.ts)
+  - src/test-react/main.tsx
+- [x] Fixed cascading TypeScript errors from type narrowing in bridge/domain files
+- [x] Updated HTML entry points (courtboard, admin, registration, Mobile.html, test-react)
+- [x] Added file-level eslint-disable to bridge/bootstrap files (intentional window.Tennis usage)
+- [x] Run `npm run verify` — PASS (lint, type-check, coverage, fixtures, build, e2e all pass)
 
 ## Phase 9: Test Files — PENDING
 - [ ] Convert tests/ from .js/.jsx to .ts/.tsx

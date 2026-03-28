@@ -105,7 +105,7 @@ export function useCourtHandlers({
 
         // Get blocks from the board data if available, otherwise localStorage
         const blocks = courtData?.blocks || readJSON(STORAGE.BLOCKS) || [];
-        const wetSet = new Set();
+        const wetSet: Set<number> = new Set();
 
         let selectable: number[] = [];
 

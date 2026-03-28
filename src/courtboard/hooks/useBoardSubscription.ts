@@ -86,7 +86,7 @@ export function useBoardSubscription() {
           const activeBlocks = board.courts
             .filter((c) => c && c.block)
             .map((c) => {
-              const block = /** @type {NonNullable<typeof c.block>} */ (c.block);
+              const block = c.block!;
               return {
                 id: block.id,
                 courtNumber: c.number,

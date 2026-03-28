@@ -57,7 +57,7 @@ export function selectReservedSafe(blocks, now) {
 
     return Array.from(byKey.values()).map((v) => ({
       key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
-      courts: Array.from(v.courts).sort((a, b) => a - b),
+      courts: (Array.from(v.courts) as number[]).sort((a, b) => a - b),
       start: v.start,
       end: v.end,
       reason: v.reason,

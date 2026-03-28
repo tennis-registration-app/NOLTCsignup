@@ -247,21 +247,22 @@ export function TennisCourtDisplay() {
             <div className="mobile-layout">
               <div className="mobile-courts-grid">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                  <CourtCard
-                    key={num}
-                    courtNumber={num}
-                    currentTime={currentTime}
-                    statusByCourt={statusByCourt}
-                    selectableByCourt={selectableByCourt}
-                    statusObjectByCourt={statusObjectByCourt}
-                    data={data}
-                    isMobileView={mobile}
-                    checkStatusMinutes={checkStatusMinutes}
-                    upcomingBlocks={upcomingBlocks}
-                    blockWarningMinutes={blockWarningMinutes}
-                    courts={courts}
-                    courtBlocks={courtBlocks}
-                  />
+                  <div key={num}>
+                    <CourtCard
+                      courtNumber={num}
+                      currentTime={currentTime}
+                      statusByCourt={statusByCourt}
+                      selectableByCourt={selectableByCourt}
+                      statusObjectByCourt={statusObjectByCourt}
+                      data={data}
+                      isMobileView={mobile}
+                      checkStatusMinutes={checkStatusMinutes}
+                      upcomingBlocks={upcomingBlocks}
+                      blockWarningMinutes={blockWarningMinutes}
+                      courts={courts}
+                      courtBlocks={courtBlocks}
+                    />
+                  </div>
                 ))}
               </div>
 

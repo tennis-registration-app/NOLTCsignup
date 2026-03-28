@@ -12,7 +12,6 @@ import {
  * CourtCard - Display card for a single tennis court
  * Shows court status, player names, time remaining, and block warnings
  */
-/** @type {React.FC<{courtNumber: any, currentTime: any, statusByCourt: any, selectableByCourt: any, statusObjectByCourt: any, data: any, isMobileView: any, checkStatusMinutes?: number, upcomingBlocks?: any[], blockWarningMinutes?: number, courts?: any[], courtBlocks?: any[]}>} */
 export const CourtCard = function CourtCard({
   courtNumber,
   currentTime: _currentTime,
@@ -26,9 +25,23 @@ export const CourtCard = function CourtCard({
   blockWarningMinutes = 60,
   courts = [],
   courtBlocks = [],
+}: {
+  courtNumber: number;
+  currentTime: unknown;
+  statusByCourt: Record<number, string>;
+  selectableByCourt: unknown;
+  statusObjectByCourt: Record<number, unknown>;
+  data: { courts?: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean } | null; blockedLabel?: string; blockedEnd?: string }> } | null;
+  isMobileView: boolean;
+  checkStatusMinutes?: number;
+  upcomingBlocks?: unknown[]; // Block-shaped objects
+  blockWarningMinutes?: number;
+  courts?: Array<{ session?: unknown }>;
+  courtBlocks?: unknown[];
 }) {
   const status = statusByCourt[courtNumber] || 'free';
-  const statusObj = statusObjectByCourt?.[courtNumber] || {};
+   
+  const statusObj = (statusObjectByCourt?.[courtNumber] || {}) as any;
   const cObj = data?.courts?.[courtNumber - 1] || {};
 
   const now = new Date();
@@ -115,11 +128,11 @@ export const CourtCard = function CourtCard({
     // Court is truly occupied (not overtime) - handle clear court flow
     const registeredCourt = sessionStorage.getItem('mobile-registered-court');
 
-    const mobileModal = getMobileModal();
+    const mobileModal = getMobileModal() as { open: (modal: string, data?: unknown) => void } | null | undefined;
     if (registeredCourt) {
       // User has a registration - only allow clearing THEIR court
       if (Number(registeredCourt) === courtNumber) {
-        mobileModal?.open('clear-court-confirm', { courtNumber });
+        (mobileModal as { open: (m: string, d?: unknown) => void } | null)?.open('clear-court-confirm', { courtNumber });
       }
       // Tapping other occupied courts does nothing when registered
     } else {
@@ -164,11 +177,7 @@ export const CourtCard = function CourtCard({
             <div className="relative flex-1 flex flex-col items-center justify-center w-full">
               {/* Block warning - absolutely positioned at top */}
               {(() => {
-                const blockWarning = getUpcomingBlockWarningFromBlocks(
-                  courtNumber,
-                  blockWarningMinutes,
-                  upcomingBlocks
-                );
+                const blockWarning = getUpcomingBlockWarningFromBlocks(courtNumber, blockWarningMinutes, upcomingBlocks as any[]);
                 if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
                   return null;
 
@@ -242,11 +251,7 @@ export const CourtCard = function CourtCard({
                 {/* For occupied: show block warning instead of "X min" if applicable */}
                 {status === 'occupied' &&
                   (() => {
-                    const blockWarning = getUpcomingBlockWarningFromBlocks(
-                      courtNumber,
-                      0,
-                      upcomingBlocks
-                    );
+                    const blockWarning = getUpcomingBlockWarningFromBlocks(courtNumber, 0, upcomingBlocks as any[]);
                     if (blockWarning && blockWarning.minutesUntilBlock < blockWarningMinutes) {
                       return (
                         <div
@@ -270,11 +275,7 @@ export const CourtCard = function CourtCard({
                       {primary}
                     </div>
                     {(() => {
-                      const blockWarning = getUpcomingBlockWarningFromBlocks(
-                        courtNumber,
-                        0,
-                        upcomingBlocks
-                      );
+                      const blockWarning = getUpcomingBlockWarningFromBlocks(courtNumber, 0, upcomingBlocks as any[]);
                       if (!blockWarning || blockWarning.minutesUntilBlock >= blockWarningMinutes)
                         return null;
                       return (

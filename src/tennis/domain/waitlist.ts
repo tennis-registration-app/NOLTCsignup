@@ -16,6 +16,9 @@ const SINGLES_ONLY_COURT_NUMBER = 8;
 // Object Literal Methods
 // ============================================================
 
+type TimelineEntry = { courtNumber: number; availableAt: Date };
+
+
 /**
  * Validate that a group is properly formed
  * @param {Array} group - Array of player objects
@@ -74,7 +77,7 @@ function validateGroup(group) {
  * @param {number} params.avgGame - Average game time in minutes
  * @returns {number} Estimated wait in minutes
  */
-function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }) {
+function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }: { position: number; courts?: Array<{ current?: { endTime?: string } | null; endTime?: string } | null>; now: Date; avgGame?: number }) {
   if (typeof position !== 'number' || position < 1) {
     throw new Error('Position must be a positive number');
   }
@@ -91,7 +94,7 @@ function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }) {
   // If first in line, check for immediate availability
   if (position === 1) {
     // Count courts that will be available soon
-    const availabilityTimes = [];
+    const availabilityTimes: number[] = [];
 
     for (let i = 0; i < courts.length; i++) {
       const court = courts[i];
@@ -101,7 +104,7 @@ function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }) {
         return 0;
       }
 
-      let endTime = null;
+      let endTime: Date | null = null;
 
       // Check new structure (court.current)
       if (court.current && court.current.endTime) {
@@ -138,7 +141,7 @@ function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }) {
     const court = courts[i];
 
     if (court) {
-      let endTime = null;
+      let endTime: Date | null = null;
 
       // Check new structure (court.current)
       if (court.current && court.current.endTime) {
@@ -188,15 +191,15 @@ function estimateWaitMinutes({ position, courts = [], now, avgGame = 75 }) {
  *       * push back `t + avgGameMinutes`
  *   - Return ETAs indexed by order of `positions`
  */
-function estimateWaitForPositions({ positions, currentFreeCount, nextFreeTimes, avgGameMinutes }) {
+function estimateWaitForPositions({ positions, currentFreeCount, nextFreeTimes, avgGameMinutes }: { positions: number[]; currentFreeCount: number; nextFreeTimes?: Date[]; avgGameMinutes?: number }) {
   const now = new Date();
   /** @type {number} */
   const avg =
-    Number.isFinite(avgGameMinutes) && /** @type {number} */ (avgGameMinutes) > 0
-      ? Math.floor(/** @type {number} */ (avgGameMinutes))
+    Number.isFinite(avgGameMinutes) && (avgGameMinutes as number) > 0
+      ? Math.floor(avgGameMinutes as number)
       : window.Tennis?.Config?.Timing?.AVG_GAME || 75;
   const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || nextFreeTimes?.length || 12;
-  const times = [];
+  const times: Date[] = [];
 
   // Build array of court availability times
   // First, add 'now' for each currently free court
@@ -270,13 +273,13 @@ function isCourtEligibleForGroup(courtNumber, playerCount) {
  * @param {number} [params.closingHour=22] - Club closing hour (for wet court fallback)
  * @returns {number[]} - Estimated minutes for each waitlist position
  */
-function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinutes, closingHour }) {
+function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinutes, closingHour }: { courts?: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean } | null } | null>; waitlist?: Array<{ players?: unknown[]; deferred?: boolean }>; blocks?: Array<{ courtNumber?: number | string; startTime?: string; endTime?: string; isWetCourt?: boolean }>; now: Date; avgGameMinutes?: number; closingHour?: number }) {
   /** @type {number} */
   const avg =
-    Number.isFinite(avgGameMinutes) && /** @type {number} */ (avgGameMinutes) > 0
-      ? /** @type {number} */ (avgGameMinutes)
+    Number.isFinite(avgGameMinutes) && (avgGameMinutes as number) > 0
+      ? (avgGameMinutes as number)
       : window.Tennis?.Config?.Timing?.AVG_GAME || 75;
-  const closing = Number.isFinite(closingHour) ? /** @type {number} */ (closingHour) : 22;
+  const closing = Number.isFinite(closingHour) ? (closingHour as number) : 22;
   const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || 12;
   const normalizedBlocks = Array.isArray(blocks) ? blocks : [];
   const normalizedCourts = Array.isArray(courts) ? courts : [];
@@ -291,7 +294,7 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
   closingTime.setHours(closing, 0, 0, 0);
 
   // PHASE A: Build court availability timeline
-  const timeline = [];
+  const timeline: TimelineEntry[] = [];
 
   for (let n = 1; n <= total; n++) {
     const court = normalizedCourts[n - 1];
@@ -304,8 +307,8 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
     // Check if court is currently wet
     const isWet = normalizedBlocks.some((b) => {
       if (!b.isWetCourt || Number(b.courtNumber) !== n) return false;
-      const start = new Date(b.startTime);
-      const end = new Date(b.endTime);
+      const start = new Date(b.startTime ?? 0);
+      const end = new Date(b.endTime ?? 0);
       return start <= now && now < end;
     });
 
@@ -335,8 +338,8 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
         if (Number(b.courtNumber) !== n) continue;
         if (b.isWetCourt) continue; // Wet already handled above
 
-        const blockStart = new Date(b.startTime);
-        const blockEnd = new Date(b.endTime);
+        const blockStart = new Date(b.startTime ?? 0);
+        const blockEnd = new Date(b.endTime ?? 0);
         const effectiveStart = new Date(blockStart.getTime() - REGISTRATION_BUFFER_MS);
 
         if (effectiveStart <= base && base < blockEnd) {
@@ -352,14 +355,15 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
     while (needsRecheck) {
       needsRecheck = false;
 
-      let nextBlock = null;
+      type WaitBlock = { courtNumber?: number | string; startTime?: string; endTime?: string; isWetCourt?: boolean };
+      let nextBlock: WaitBlock | null = null;
       let nextBlockStart = Infinity;
 
       for (const b of normalizedBlocks) {
         if (Number(b.courtNumber) !== n) continue;
         if (b.isWetCourt) continue;
 
-        const blockStart = new Date(b.startTime);
+        const blockStart = new Date(b.startTime ?? 0);
         if (blockStart > base && blockStart.getTime() < nextBlockStart) {
           nextBlock = b;
           nextBlockStart = blockStart.getTime();
@@ -370,7 +374,7 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
         const usableMs = nextBlockStart - base.getTime();
         if (usableMs < MIN_USEFUL_SESSION_MS) {
           // Not enough time - advance past this block
-          base = new Date(nextBlock.endTime);
+          base = new Date(nextBlock.endTime ?? 0);
           needsRecheck = true;
 
           // Re-walk overlapping blocks from new base
@@ -381,8 +385,8 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
               if (Number(b.courtNumber) !== n) continue;
               if (b.isWetCourt) continue;
 
-              const blockStart = new Date(b.startTime);
-              const blockEnd = new Date(b.endTime);
+              const blockStart = new Date(b.startTime ?? 0);
+              const blockEnd = new Date(b.endTime ?? 0);
               const effectiveStart = new Date(blockStart.getTime() - REGISTRATION_BUFFER_MS);
 
               if (effectiveStart <= base && base < blockEnd) {
@@ -399,11 +403,11 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
   }
 
   // Sort timeline by availableAt ascending
-  timeline.sort((a, b) => a.availableAt.getTime() - b.availableAt.getTime());
+  timeline.sort((a: TimelineEntry, b: TimelineEntry) => a.availableAt.getTime() - b.availableAt.getTime());
 
   // PHASE B: Simulate waitlist assignment
-  const results = [];
-  const mutableTimeline = timeline.map((t) => ({ ...t }));
+  const results: number[] = [];
+  const mutableTimeline: TimelineEntry[] = timeline.map((t) => ({ ...t }));
 
   for (let i = 0; i < normalizedWaitlist.length; i++) {
     const group = normalizedWaitlist[i];
@@ -430,7 +434,7 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
           if (Number(b.courtNumber) !== entry.courtNumber) continue;
           if (b.isWetCourt) continue;
 
-          const blockStart = new Date(b.startTime);
+          const blockStart = new Date(b.startTime ?? 0);
           if (blockStart > entry.availableAt && blockStart.getTime() < nextBlockStart) {
             nextBlockStart = blockStart.getTime();
           }
@@ -483,10 +487,10 @@ function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinut
 const Waitlist = {
   validateGroup,
   estimateWaitMinutes,
+  estimateWaitForPositions,
+  simulateWaitlistEstimates,
+  signature: waitlistSignature,
 };
-Waitlist.estimateWaitForPositions = estimateWaitForPositions;
-Waitlist.simulateWaitlistEstimates = simulateWaitlistEstimates;
-Waitlist.signature = waitlistSignature;
 
 // ============================================================
 // Legacy Window Attachment

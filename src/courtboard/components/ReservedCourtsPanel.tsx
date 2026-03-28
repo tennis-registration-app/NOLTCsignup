@@ -75,13 +75,13 @@ function normalizeBlock(raw) {
     end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
   }
 
-  let courts = [];
+  let courts: number[] = [];
   if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
   if (raw.eventDetails && Array.isArray(raw.eventDetails.courts))
     courts = courts.concat(raw.eventDetails.courts);
   if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
 
-  courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a, b) => a - b);
+  courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a: number, b: number) => a - b);
   if (!start || !end || courts.length === 0) {
     return null;
   }
@@ -112,7 +112,7 @@ export function selectReservedItemsFromBlocks(blocks, now = new Date()) {
 
   return Array.from(byKey.values()).map((v) => ({
     key: `${v.reason}|${v.start.getTime()}|${v.end.getTime()}`,
-    courts: Array.from(v.courts).sort((a, b) => a - b),
+    courts: (Array.from(v.courts) as number[]).sort((a, b) => a - b),
     start: v.start,
     end: v.end,
     label: v.reason || 'RESERVED',

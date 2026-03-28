@@ -77,7 +77,7 @@ if (window.IS_MOBILE_VIEW) {
 
     // Debug listener
     document.addEventListener('mm:open', (e) =>
-      logger.debug('ModalRoot', 'mm:open seen', /** @type {CustomEvent} */ (e).detail)
+      logger.debug('ModalRoot', 'mm:open seen', (e as CustomEvent).detail)
     );
     document.addEventListener('mm:close', () => logger.debug('ModalRoot', 'mm:close seen'));
   }

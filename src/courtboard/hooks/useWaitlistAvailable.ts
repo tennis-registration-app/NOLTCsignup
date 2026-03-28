@@ -5,6 +5,8 @@ import { listPlayableCourts } from '../../shared/courts/courtAvailability.js';
 import { isCourtEligibleForGroup } from '../../lib/types/domain';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 
+type MobileModalApi = { open: (type: string, data?: unknown) => void; close: () => void; currentType?: string } | null;
+
 /**
  * Auto-show waitlist-available notice when a court is free
  * and THIS mobile user is first in the waitlist.
@@ -24,7 +26,7 @@ export function useWaitlistAvailable({
     const hasWaitlist = waitlist.length > 0;
     if (!hasWaitlist) {
       // No waitlist - close notice if open
-      const mobileModal = getMobileModal();
+      const mobileModal = getMobileModal() as MobileModalApi;
       if (mobileModal?.currentType === 'waitlist-available') {
         mobileModal?.close?.();
       }
@@ -90,7 +92,7 @@ export function useWaitlistAvailable({
       courtsWithSession: courts?.filter((c) => c?.session).length,
     });
 
-    const mobileModal = getMobileModal();
+    const mobileModal = getMobileModal() as MobileModalApi;
     if (freeCourtCount > 0 && isUserFirstInWaitlist) {
       // Court available AND this mobile user is first in waitlist - show notice
       mobileModal?.open('waitlist-available', { firstGroup });

@@ -98,7 +98,7 @@ export function computeOccupiedCourts() {
   const now = new Date();
   const data = readDataSafe();
   const blocks = readJSON(STORAGE.BLOCKS) || [];
-  const wetSet = new Set(
+  const wetSet: Set<number> = new Set(
     (blocks || [])
       .filter(
         (b) =>
@@ -108,7 +108,7 @@ export function computeOccupiedCourts() {
       )
       .map((b) => b.courtNumber)
   );
-  const statuses = getCourtStatuses({ data, now, blocks, wetSet });
+  const statuses = getCourtStatuses({ data: data as any, now, blocks, wetSet });
   const occupied = statuses.filter((s) => s.status === 'occupied').map((s) => s.courtNumber);
   return { occupied, data };
 }
@@ -122,7 +122,7 @@ export function getCourtsOccupiedForClearing() {
   const now = new Date();
   const data = readDataSafe();
   const blocks = readJSON(STORAGE.BLOCKS) || [];
-  const wetSet = new Set(
+  const wetSet: Set<number> = new Set(
     blocks
       .filter(
         (b) =>
@@ -133,7 +133,7 @@ export function getCourtsOccupiedForClearing() {
       .map((b) => b.courtNumber)
   );
 
-  const statuses = getCourtStatuses({ data, now, blocks, wetSet });
+  const statuses = getCourtStatuses({ data: data as any, now, blocks, wetSet });
   const clearableCourts = statuses
     .filter((s) => (s.isOccupied || s.isOvertime) && !s.isBlocked)
     .map((s) => s.courtNumber)

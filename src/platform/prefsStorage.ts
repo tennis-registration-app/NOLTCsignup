@@ -109,7 +109,7 @@ export function migrateOldKeys() {
         }
       }
       // Remove old key
-      localStorage.removeItem(/** @type {string} */ (oldKey));
+      localStorage.removeItem(oldKey as string);
     }
   }
 }

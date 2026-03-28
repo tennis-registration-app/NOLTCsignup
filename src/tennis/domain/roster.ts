@@ -91,8 +91,8 @@ function checkGroupConflicts({ data, groupPlayers }) {
     .map(normName);
   const uniq = Array.from(new Set(names));
 
-  const playing = [];
-  const waiting = [];
+  const playing: Array<{ key: string; name: string; court: number }> = [];
+  const waiting: Array<{ key: string; name: string; position: number }> = [];
   uniq.forEach((k) => {
     if (active.has(k)) playing.push({ key: k, name: k, court: active.get(k).court });
     else if (queued.has(k)) waiting.push({ key: k, name: k, position: queued.get(k).position });

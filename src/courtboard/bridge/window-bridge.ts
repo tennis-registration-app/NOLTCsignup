@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-properties */
+// Bridge file: intentionally reads window.Tennis to expose legacy domain helpers to TypeScript modules
 /**
  * Courtboard Window Bridge
  *

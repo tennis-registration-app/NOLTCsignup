@@ -9,6 +9,10 @@ import { logger } from '../lib/logger';
 
 // Circular debug log for tracking events
 class CircularDebugLog {
+  maxSize: number;
+  events: Array<{ timestamp: string; type: string; eventName: string; data: unknown }>;
+  enabled: boolean;
+
   constructor(maxSize = 10) {
     this.maxSize = maxSize;
     this.events = [];

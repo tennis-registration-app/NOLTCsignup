@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-properties */
+// Debug panel: intentionally reads window.Tennis for debug introspection
 // Retention: dev-only diagnostic panel, gated by ?debug=1. Stays separate.
 // Debug Panel - Only visible when ?debug=1
 (function () {

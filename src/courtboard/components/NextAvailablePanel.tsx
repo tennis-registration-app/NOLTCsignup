@@ -7,21 +7,14 @@ import { getLegacyAvailabilityDomain } from '../bridge/window-bridge';
  * NextAvailablePanel - Display panel showing next available courts
  * Shows timeline of when courts will become available
  */
-export function NextAvailablePanel({
-  courts,
-  currentTime,
-  waitlist = /** @type {any[]} */ ([]),
-  blocks = /** @type {any[]} */ ([]),
-  operatingHours = /** @type {any[]} */ ([]),
-  maxDisplay,
-}) {
+export function NextAvailablePanel({ courts, currentTime, waitlist = [], blocks = [], operatingHours = [], maxDisplay }: { courts: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean; group?: { players?: unknown[] } | null } | null; endTime?: string } | null>; currentTime: Date; waitlist?: unknown[]; blocks?: Array<{ isWetCourt?: boolean; startTime?: string; endTime?: string; courtNumber?: number | string }>; operatingHours?: Array<{ dayOfWeek?: number; closesAt?: string }> | { closesAt?: string }; maxDisplay?: number }) {
   const A = getLegacyAvailabilityDomain();
 
   // Convert React courts state to the data format expected by availability functions
   const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
 
   // Calculate court availability timeline
-  const getCourtAvailabilityTimeline = (waitlist = []) => {
+  const getCourtAvailabilityTimeline = (waitlist: unknown[] = []) => {
     if (!courts || !Array.isArray(courts)) {
       return [];
     }
@@ -43,9 +36,9 @@ export function NextAvailablePanel({
     closingTime.setHours(closingHour, 0, 0, 0);
     const closingBufferTime = new Date(closingTime.getTime() - REGISTRATION_BUFFER_MS);
 
-    const courtAvailability = [];
-    const overtimeCourts = [];
-    const emptyCourts = [];
+    const courtAvailability: Array<{ courtNumber: number; endTime: Date | null; isOvertime?: boolean; isEmpty?: boolean; minutesUntilBlock?: number | null } | { allCourtsWet: boolean }> = [];
+    const overtimeCourts: Array<{ courtNumber: number; endTime: Date | null; isOvertime?: boolean }> = [];
+    const emptyCourts: Array<{ courtNumber: number; endTime: null; isEmpty: boolean; minutesUntilBlock: number | null }> = [];
 
     // blocks prop is already merged by parent
 
@@ -53,8 +46,8 @@ export function NextAvailablePanel({
     const activeWetBlocks = blocks.filter(
       (block) =>
         block.isWetCourt === true &&
-        new Date(block.startTime) <= currentTime &&
-        new Date(block.endTime) > currentTime
+        new Date(block.startTime ?? 0) <= currentTime &&
+        new Date(block.endTime ?? 0) > currentTime
     );
     const wetCourtNumbers = new Set(activeWetBlocks.map((block) => block.courtNumber));
 
@@ -71,21 +64,21 @@ export function NextAvailablePanel({
       // Tournament courts have no predictable end time — exclude entirely
       if (court?.session?.isTournament) return;
 
-      let endTime = null;
+      let endTime: string | null = null;
 
       // Check for blocks that affect this court's availability
-      let blockingUntil = null;
+      let blockingUntil: string | null = null;
 
       // First check currently active blocks (including those starting within buffer)
       const activeBlock = blocks.find(
         (block) =>
           block.courtNumber === courtNumber &&
-          new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <= currentTime.getTime() &&
-          new Date(block.endTime) > currentTime
+          new Date(block.startTime ?? 0).getTime() - REGISTRATION_BUFFER_MS <= currentTime.getTime() &&
+          new Date(block.endTime ?? 0) > currentTime
       );
 
       if (activeBlock) {
-        blockingUntil = activeBlock.endTime;
+        blockingUntil = activeBlock.endTime ?? null;
       } else if (court) {
         // Court has players - check for overtime or regular game
         if (court.session && court.session.scheduledEndAt) {
@@ -103,14 +96,14 @@ export function NextAvailablePanel({
           const futureBlock = blocks.find(
             (block) =>
               block.courtNumber === courtNumber &&
-              new Date(block.startTime).getTime() > currentTime.getTime() &&
-              (new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS < gameEndTime ||
-                new Date(block.startTime).getTime() - gameEndTime < MIN_USEFUL_SESSION_MS) &&
-              new Date(block.endTime).getTime() > currentTime.getTime()
+              new Date(block.startTime ?? 0).getTime() > currentTime.getTime() &&
+              (new Date(block.startTime ?? 0).getTime() - REGISTRATION_BUFFER_MS < gameEndTime ||
+                new Date(block.startTime ?? 0).getTime() - gameEndTime < MIN_USEFUL_SESSION_MS) &&
+              new Date(block.endTime ?? 0).getTime() > currentTime.getTime()
           );
 
           if (futureBlock) {
-            blockingUntil = futureBlock.endTime;
+            blockingUntil = futureBlock.endTime ?? null;
           }
         }
 
@@ -118,23 +111,23 @@ export function NextAvailablePanel({
         if (endTime) {
           const parsedEndTime = new Date(endTime);
           // Domain format: session.group.players
-          const hasPlayers = court.session?.group?.players?.length > 0;
+          const hasPlayers = (court.session?.group?.players?.length ?? 0) > 0;
 
           if (hasPlayers && parsedEndTime <= currentTime) {
             // Check if a block starts within buffer OR within 20 min (not useful session)
             const imminentBlock = blocks.find(
               (block) =>
                 block.courtNumber === courtNumber &&
-                new Date(block.startTime).getTime() > currentTime.getTime() &&
-                (new Date(block.startTime).getTime() - REGISTRATION_BUFFER_MS <=
+                new Date(block.startTime ?? 0).getTime() > currentTime.getTime() &&
+                (new Date(block.startTime ?? 0).getTime() - REGISTRATION_BUFFER_MS <=
                   currentTime.getTime() ||
-                  new Date(block.startTime).getTime() - currentTime.getTime() <
+                  new Date(block.startTime ?? 0).getTime() - currentTime.getTime() <
                     MIN_USEFUL_SESSION_MS)
             );
 
             if (imminentBlock) {
               // Don't show as "Now" - extend availability to after the block
-              blockingUntil = imminentBlock.endTime;
+              blockingUntil = imminentBlock.endTime ?? null;
             } else {
               overtimeCourts.push({
                 courtNumber,
@@ -171,19 +164,19 @@ export function NextAvailablePanel({
       } else {
         // Empty court (no session, no active block) - available now
         // Check for upcoming blocks that would limit available time
-        const hasSession = court?.session?.group?.players?.length > 0;
+        const hasSession = (court?.session?.group?.players?.length ?? 0) > 0;
         if (!hasSession && !activeBlock) {
           const upcomingBlock = blocks.find(
             (block) =>
               block.courtNumber === courtNumber &&
-              new Date(block.startTime) > currentTime &&
-              new Date(block.startTime) <= closingBufferTime
+              new Date(block.startTime ?? 0) > currentTime &&
+              new Date(block.startTime ?? 0) <= closingBufferTime
           );
 
           // Calculate minutes until block starts (if any)
           const minutesUntilBlock = upcomingBlock
             ? Math.floor(
-                (new Date(upcomingBlock.startTime).getTime() - currentTime.getTime()) / 60000
+                (new Date(upcomingBlock.startTime ?? 0).getTime() - currentTime.getTime()) / 60000
               )
             : null;
 
@@ -198,7 +191,7 @@ export function NextAvailablePanel({
     });
 
     // Sort future availability by time
-    courtAvailability.sort((a, b) => a.endTime.getTime() - b.endTime.getTime());
+    courtAvailability.sort((a, b) => { const ae = 'endTime' in a ? a.endTime?.getTime() ?? 0 : 0; const be = 'endTime' in b ? b.endTime?.getTime() ?? 0 : 0; return ae - be; });
 
     // Check if we should show overtime courts as "Now"
     // Only show overtime as available if there aren't surplus empty courts
@@ -211,7 +204,7 @@ export function NextAvailablePanel({
         const wetSet = new Set(
           blocks
             .filter(
-              (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+              (b) => b?.isWetCourt && new Date(b.startTime ?? 0) <= now && new Date(b.endTime ?? 0) > now
             )
             .map((b) => b.courtNumber)
         );
@@ -234,7 +227,8 @@ export function NextAvailablePanel({
     return [...emptyCourts, ...filteredOvertimeCourts, ...courtAvailability];
   };
 
-  const timeline = getCourtAvailabilityTimeline(waitlist);
+   
+  const timeline = getCourtAvailabilityTimeline(waitlist) as any[];
 
   // Calculate if courts are available after serving the waitlist
   let emptyCourtCount = 0;
@@ -244,7 +238,7 @@ export function NextAvailablePanel({
       const data = courtsToData(courts); // Use React state instead of localStorage
       const wetSet = new Set(
         blocks
-          .filter((b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now)
+          .filter((b) => b?.isWetCourt && new Date(b.startTime ?? 0) <= now && new Date(b.endTime ?? 0) > now)
           .map((b) => b.courtNumber)
       );
       const info = A.getFreeCourtsInfo({ data, now, blocks, wetSet });

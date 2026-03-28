@@ -1,9 +1,7 @@
 {
-  "errors": 1,
-  "warnings": 2,
+  "errors": 0,
+  "warnings": 1,
   "byRule": {
-    "no-restricted-syntax": 1,
-    "react-hooks/exhaustive-deps": 1,
-    "unknown": 1
+    "react-hooks/exhaustive-deps": 1
   }
 }

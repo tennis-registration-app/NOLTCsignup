@@ -23,7 +23,7 @@ const backend = createBackend();
 export function MobileModalSheet({ type, payload, onClose }) {
   // Focus trap & return focus
   useEffect(() => {
-    const opener = /** @type {HTMLElement|null} */ (document.activeElement);
+    const opener = document.activeElement as HTMLElement | null;
     return () => opener?.focus();
   }, []);
 
@@ -75,7 +75,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
       case 'roster': {
         // Member roster display
-        let rosterData = [];
+        let rosterData: Array<{ id?: number; name?: string; fullName?: string; memberNumber?: string; clubNumber?: string; memberId?: string }> = [];
         try {
           // Use storage wrapper or test data only (no direct localStorage fallbacks)
           const S = getTennisStorage();
@@ -277,7 +277,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
                 </div>
                 <div className="space-y-3">
                   {waitlistData.map((group, idx) => {
-                    let names = [];
+                    let names: string[] = [];
                     if (Array.isArray(group.players)) {
                       // Use displayName (domain format) first, then name (legacy), then id as fallback
                       names = group.players.map(

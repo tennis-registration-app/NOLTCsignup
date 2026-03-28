@@ -20,7 +20,7 @@ function computeFreeCourts({ data, now, blocks }) {
   } catch {
     // Intentionally ignored (Phase 3.5 lint): domain helper optional, fallback below
   }
-  const free = [];
+  const free: number[] = [];
   const activeBlocks = (Array.isArray(blocks) ? blocks : []).filter((b) => {
     return new Date(b.startTime) <= now && now < new Date(b.endTime);
   });
@@ -68,7 +68,7 @@ function syncWaitlistPromotions() {
       };
     });
 
-    const prev = Array.isArray(data.waitlistPromotions) ? data.waitlistPromotions : [];
+    const prev: Array<{ groupSig: string; courtNumbers: number[]; expiresAt: string }> = [];
     const live = prev.filter((p) => new Date(p.expiresAt) > now);
     const bySig = new Map(live.map((p) => [p.groupSig, p]));
     desired.forEach((d) => {
