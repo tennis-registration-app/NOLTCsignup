@@ -89,7 +89,7 @@ export interface BuildRegistrationReturnParams {
 
   // Services
   backend: TennisBackendShape;
-  dataStore: DataStoreShape;
+  dataStore: DataStoreShape | null;
 
   // Constants and config
   CONSTANTS: RegistrationConstants;

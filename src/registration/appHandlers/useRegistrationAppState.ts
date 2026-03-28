@@ -11,7 +11,7 @@ import { logger } from '../../lib/logger';
 
 // Platform bridge for window global access
 import { toast as _toast } from '../../shared/utils/toast.js';
-import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore';
+import { getDataStore as _getDataStore, TennisCourtDataStore } from '../../lib/TennisCourtDataStore';
 
 // TennisBackend interface layer
 import { createBackend } from '../../lib/backend/index';
@@ -66,12 +66,12 @@ const getCourtBlockStatus = _sharedGetCourtBlockStatus;
 
 // Debug utilities
 const DEBUG = false;
-const dbg = (/** @type {any[]} */ ...args) => {
-  if (DEBUG) logger.debug('RegistrationAppState', .../** @type {[any, ...any[]]} */ (args));
+const dbg = (...args: unknown[]) => {
+  if (DEBUG) logger.debug('RegistrationAppState', ...(args as [string, ...unknown[]]));
 };
 
 // DataStore reference
-let dataStore = null;
+let dataStore: TennisCourtDataStore | null = null;
 if (typeof window !== 'undefined') {
   dataStore = _getDataStore() || null;
 }

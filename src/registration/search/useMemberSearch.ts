@@ -73,7 +73,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
     (input) => {
       if (!input || input.length < 1) return [];
 
-      const suggestions = [];
+      const suggestions: Array<{ memberNumber: string; member: { id: unknown; name: string; accountId: unknown; isPrimary: boolean; unclearedStreak: number; playCount: number }; displayText: string }> = [];
       const lowerInput = input.toLowerCase();
 
       // If API members haven't loaded yet, return empty

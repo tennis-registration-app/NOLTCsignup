@@ -65,7 +65,7 @@ export function useGroupHandlers({
       }
 
       // Then check family members
-      for (const [memberNum, member] of Object.entries(memberDatabase)) {
+      for (const [memberNum, member] of Object.entries(memberDatabase as Record<string, { familyMembers: Array<{ id: unknown }> }>)) {
         if (member.familyMembers.some((m) => String(m.id) === String(playerId))) {
           return memberNum;
         }

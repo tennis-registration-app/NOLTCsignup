@@ -107,7 +107,7 @@ export function useCourtHandlers({
         const blocks = courtData?.blocks || readJSON(STORAGE.BLOCKS) || [];
         const wetSet = new Set();
 
-        let selectable = [];
+        let selectable: number[] = [];
 
         if (checkWaitlistPriority) {
           // Waitlist priority mode: ONLY show truly free courts (no overtime fallback)

@@ -105,10 +105,10 @@ const useBallPurchase = ({
         });
 
         // Get account IDs for split purchase
-        let splitAccountIds = null;
+        let splitAccountIds: string[] | null = null;
         if (isSplit && currentNonGuestPlayers > 1) {
           const nonGuestPlayers = currentGroup.filter((p) => !p.isGuest);
-          splitAccountIds = [];
+          splitAccountIds = [] as string[];
 
           for (const player of nonGuestPlayers) {
             // Check if player already has accountId
@@ -215,11 +215,11 @@ const useBallPurchase = ({
       logger.debug('SuccessScreen', 'Purchase object', purchase);
 
       // Get existing purchases and save
-      let existingPurchases = [];
+      let existingPurchases: unknown[] = [];
       const dataStore = getDataStore();
       const dataStoreResult = await dataStore?.get?.('tennisBallPurchases');
       if (dataStoreResult !== undefined) {
-        existingPurchases = /** @type {any[]} */ (dataStoreResult) || [];
+        existingPurchases = (dataStoreResult as unknown[]) || [];
         existingPurchases.push(purchase);
         await dataStore?.set?.('tennisBallPurchases', existingPurchases, {
           immediate: true,

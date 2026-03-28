@@ -32,8 +32,8 @@ import { useWaitlistAdmin } from '../../waitlist/useWaitlistAdmin';
 
 // Debug utilities
 const DEBUG = false;
-const dbg = (/** @type {any[]} */ ...args) => {
-  if (DEBUG) logger.debug('RegistrationDomainHooks', .../** @type {[any, ...any[]]} */ (args));
+const dbg = (...args: unknown[]) => {
+  if (DEBUG) logger.debug('RegistrationDomainHooks', ...(args as [string, ...unknown[]]));
 };
 
 /**

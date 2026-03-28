@@ -76,7 +76,7 @@ export function useRegistrationEffects({
             document.querySelector('#playerNameInput') ||
             document.querySelector('input[type="text"]');
           if (input) {
-            const el = /** @type {HTMLInputElement} */ (input);
+            const el = input as HTMLInputElement;
             el.focus({ preventScroll: true });
             try {
               const v = el.value || '';

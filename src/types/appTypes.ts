@@ -539,7 +539,7 @@ export interface Services {
   /** TennisBackend instance */
   backend: TennisBackendShape;
   /** Data store instance */
-  dataStore: DataStoreShape;
+  dataStore: DataStoreShape | null;
 }
 
 export interface AlertState {

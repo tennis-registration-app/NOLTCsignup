@@ -239,7 +239,7 @@ export async function handleBlockCreateOp(ctx) {
 
   // Block selected courts via backend API
   let successCount = 0;
-  let failedCourts = [];
+  let failedCourts: number[] = [];
 
   for (const courtNum of selectedCourtsToBlock) {
     const court = boardData.courts[courtNum - 1];

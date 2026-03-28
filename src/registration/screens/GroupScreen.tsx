@@ -11,8 +11,7 @@ import GroupScreenActions from './group/GroupScreenActions.jsx';
  * GroupScreen - Player group builder screen
  * @param {Object} props - All props are passed through; see destructuring below
  */
-const GroupScreen = (
-  /** @type {any} */ {
+const GroupScreen = ({
     // Data
     data,
     currentGroup,
@@ -77,8 +76,7 @@ const GroupScreen = (
     isPlayerAlreadyPlaying,
     sameGroup,
     CONSTANTS,
-  }
-) => {
+  }: any) => {
   const addPlayerInputRef = useRef(null);
   const guestInputRef = useRef(null);
 

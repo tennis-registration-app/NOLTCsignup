@@ -46,7 +46,7 @@ export function useNavigationHandlers({
       setCheckingLocation(true);
 
       try {
-        const locationResult = await GeolocationService.verifyAtClub();
+        const locationResult = await GeolocationService.verifyAtClub() as { success: boolean; message: string };
 
         if (locationResult.success) {
           // Location verified, proceed with action

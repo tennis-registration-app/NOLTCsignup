@@ -19,7 +19,7 @@ const CourtGrid = ({
       const courtNum = index + 1;
 
       // Check block status using unified system only
-      let blockStatus = null;
+      let blockStatus: 'current' | 'future' | null = null;
       const blockStatusResult = getCourtBlockStatus(courtNum);
 
       if (blockStatusResult && blockStatusResult.isBlocked) {

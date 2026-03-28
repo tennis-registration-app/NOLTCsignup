@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress (Phase 2 complete, Phase 3 next)
+## Status: In Progress (Phase 3 complete, Phase 4 next)
 
 ---
 
@@ -38,9 +38,18 @@
 
 ---
 
-## Phase 3: Registration Module — `src/registration/` — PENDING
-- [ ] Convert all .js/.jsx files to .ts/.tsx
-- [ ] Run `npm run verify`
+## Phase 3: Registration Module — `src/registration/` — COMPLETE
+- [x] Renamed all 90 `.js`/`.jsx` files to `.ts`/`.tsx` via `git mv`
+  - Root: `App.jsx → App.tsx`, `main.jsx → main.tsx`
+  - appHandlers/, appHandlers/effects/, appHandlers/handlers/, appHandlers/state/
+  - blocks/, bootstrap/, components/, context/, court/, group/, handlers/, hooks/
+  - memberIdentity/, modals/, router/, router/routes/, screens/, screens/admin/
+  - screens/group/, screens/success/, search/, services/, streak/, ui/, utils/, waitlist/
+- [x] Special case: `screens/components/BlockModal.tsx` (in .git/info/exclude — created fresh)
+- [x] Fixed 38 TypeScript errors → 0
+- [x] Fixed 48 ESLint errors → 0 (added `**/*.tsx` ESLint config block)
+- [x] Updated `src/registration/index.html` entry point references
+- [x] Run `npm run verify` — PASS (lint ✅, type-check ✅, coverage ✅, fixtures ✅, build ✅, e2e ✅)
 
 ## Phase 4: Admin Shared — `src/admin/` root + handlers — PENDING
 - [ ] Convert .js/.jsx in src/admin/ root and src/admin/handlers/

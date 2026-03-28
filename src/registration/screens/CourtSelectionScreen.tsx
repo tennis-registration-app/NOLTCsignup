@@ -33,19 +33,19 @@ const CourtSelectionScreen = ({
   onCourtSelect,
   onGoBack,
   onStartOver,
-  currentGroup = /** @type {any[]} */ ([]),
+  currentGroup = [] as unknown[],
   isMobileView = false,
-  upcomingBlocks = /** @type {any[]} */ ([]),
+  upcomingBlocks = [] as unknown[],
   // These props are passed but not used in component - accept them to avoid caller type errors
   hasWaitingGroups: _hasWaitingGroups,
   waitingGroupsCount: _waitingGroupsCount,
   onJoinWaitlist: _onJoinWaitlist,
   onAssignNext: _onAssignNext,
   hasWaitlistPriority = false,
-  currentWaitlistEntryId = /** @type {string | null} */ (null),
+  currentWaitlistEntryId = null as string | null,
   onDeferWaitlist,
   onJoinWaitlistDeferred,
-}) => {
+}: any) => {
   const [blockWarning, setBlockWarning] = useState(null);
   const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
   const [loadingCourt, setLoadingCourt] = useState(null);
@@ -64,7 +64,7 @@ const CourtSelectionScreen = ({
     if (loadingCourt) return;
 
     const duration = getSessionDuration(currentGroup);
-    const warning = getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks);
+    const warning = getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
 
     if (warning) {
       if (warning.type === 'blocked') {
@@ -102,7 +102,7 @@ const CourtSelectionScreen = ({
   // Get warning info for a court to show visual indicators
   const getCourtWarningInfo = (courtNumber) => {
     const duration = getSessionDuration(currentGroup);
-    return getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks);
+    return getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
   };
 
   // Determine if ALL available courts are time-restricted for this group
@@ -112,7 +112,7 @@ const CourtSelectionScreen = ({
     availableCourts.length > 0 &&
     availableCourts.every((courtNum) => {
       const duration = getSessionDuration(currentGroup);
-      const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks);
+      const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
       return warning != null;
     });
 
@@ -122,7 +122,7 @@ const CourtSelectionScreen = ({
     availableCourts.length > 0 &&
     availableCourts.every((courtNum) => {
       const duration = getSessionDuration(currentGroup);
-      const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks);
+      const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
       return warning != null;
     });
 

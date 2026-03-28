@@ -134,7 +134,7 @@ export function validateGroupCompat(players, guests) {
   // 1) Prefer domain-level validator if available
   try {
     if (typeof domainValidateGroup === 'function') {
-      const out = domainValidateGroup(/** @type {any} */ ({ players, guests }));
+      const out = domainValidateGroup({ players, guests } as never);
       if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
         return norm(out.ok, out.errors);
       }
@@ -162,7 +162,7 @@ export function validateGroupCompat(players, guests) {
     : [];
   const namedCount = namedPlayers.length;
 
-  const errs = [];
+  const errs: string[] = [];
   if (namedCount < 1 && Math.max(guestRowCount, gVal) < 1) errs.push('Enter at least one player.');
   if (!Number.isFinite(gVal) || gVal < 0) errs.push('Guests must be 0 or more.');
 

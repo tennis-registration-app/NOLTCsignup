@@ -76,7 +76,7 @@ export function useRegistrationDerived({
 
     // Pass-through: if neither position 0 nor 1 can play,
     // find the first group from position 2+ that CAN play
-    let passThrough = null;
+    let passThrough: { id: unknown; position: unknown; players: unknown } | null = null;
     if (!live1 && !live2 && courtSelection && courtSelection.selectableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];

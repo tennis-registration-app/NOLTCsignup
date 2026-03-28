@@ -23,7 +23,7 @@ import { useMemberIdentity } from '../memberIdentity/useMemberIdentity';
 
 const WorkflowContext = createContext(null);
 
-export function WorkflowProvider(/** @type {any} */ { backend, children }) {
+export function WorkflowProvider({ backend, children }: { backend: any; key?: React.Key; children: React.ReactNode }) {
   // ===== HOOKS (4) — remount resets all internal useReducer state =====
   const groupGuest = useGroupGuest();
   const streak = useStreak();

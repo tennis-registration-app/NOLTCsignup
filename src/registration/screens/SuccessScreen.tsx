@@ -39,8 +39,7 @@ import CourtAssignmentSuccess from './success/CourtAssignmentSuccess.jsx';
 import useBallPurchase from './success/useBallPurchase.js';
 import SuccessCard from './success/SuccessCard.jsx';
 
-const SuccessScreen = (
-  /** @type {any} */ {
+const SuccessScreen = ({
     isCourtAssignment,
     justAssignedCourt,
     assignedCourt,
@@ -67,8 +66,7 @@ const SuccessScreen = (
     upcomingBlocks = [],
     blockWarningMinutes = 60,
     onUpdateSessionTournament,
-  }
-) => {
+  }: any) => {
   const [isTournament, setIsTournament] = useState(false);
   const [showTournamentConfirm, setShowTournamentConfirm] = useState(false);
 
