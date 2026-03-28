@@ -5,7 +5,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { Download } from '../components';
-import { useAdminNotification } from '../context/NotificationContext.jsx';
+import { useAdminNotification } from '../context/NotificationContext';
 
 // Helper function for formatting date/time
 const formatDateTime = (timestamp) => {

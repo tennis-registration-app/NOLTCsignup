@@ -1,3 +1,4 @@
+import type { CommandResponse } from '../../types/appTypes';
 /**
  * useAdminAppState
  *
@@ -14,17 +15,17 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../../lib/backend/index';
 import { logger } from '../../lib/logger';
-import { legacyEvents as Events } from '../../platform/attachLegacyEvents.js';
-import { setRefreshAdminViewGlobal } from '../../platform/registerGlobals.js';
+import { legacyEvents as Events } from '../../platform/attachLegacyEvents';
+import { setRefreshAdminViewGlobal } from '../../platform/registerGlobals';
 
 // Admin refresh utilities - IIFEs execute at import time (same as original module-level)
-import '../utils/adminRefresh.js';
+import '../utils/adminRefresh';
 
 // TennisBackend singleton for API operations
 const backend = createBackend();
 
 // Shared device ID utility
-import { getDeviceId } from '../utils/getDeviceId.js';
+import { getDeviceId } from '../utils/getDeviceId';
 
 // Import extracted components
 import {
@@ -55,7 +56,7 @@ import { useAdminHandlers } from './useAdminHandlers';
 import { useWetCourts } from '../wetCourts/useWetCourts';
 
 // Admin controller (replaces 14 inline useMemo domain object calls)
-import { buildAdminController } from '../controller/buildAdminController.js';
+import { buildAdminController } from '../controller/buildAdminController';
 
 // Admin hooks
 import { useAdminSettings } from './useAdminSettings';
@@ -65,7 +66,7 @@ import { useBoardSubscription } from './useBoardSubscription';
 import { addTimer, clearAllTimers } from '../utils/timerRegistry';
 
 // Feature flags
-import { featureFlags } from '../../config/runtimeConfig.js';
+import { featureFlags } from '../../config/runtimeConfig';
 
 // ESM canonical imports (replacing window.APP_UTILS reads)
 import { readDataSafe } from '../../lib/storage';
@@ -74,7 +75,7 @@ import { TENNIS_CONFIG } from '../../lib/config';
 
 // ---- Dev flag & assert (no UI change) ----
 const DEV = import.meta?.env?.DEV ?? false;
-const assert = (cond, msg, obj) => {
+const assert = (cond: boolean, msg: string, obj?: unknown) => {
   if (DEV && !cond) logger.warn('AdminApp', `ASSERT: ${msg}`, obj || '');
 };
 
@@ -94,7 +95,7 @@ const dataStore = new TennisCourtDataStore();
  * @param {Function} deps.showNotification - From useAdminNotification context
  * @param {Function} deps.confirm - From useAdminConfirm context
  */
-export function useAdminAppState({ showNotification, confirm }) {
+export function useAdminAppState({ showNotification, confirm }: { showNotification: (message: string, type: string) => void; confirm: (message: string) => Promise<boolean> }) {
   const [activeTab, setActiveTab] = useState('status');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [blockingView, setBlockingView] = useState('create');
@@ -136,7 +137,7 @@ export function useAdminAppState({ showNotification, confirm }) {
   // Board-in-response helper — normalize raw API board and apply to state.
   // Single definition shared by useWetCourts and useAdminHandlers.
   const applyBoardResponse = useCallback(
-    (apiResponse) => {
+    (apiResponse: CommandResponse & { board?: unknown }) => {
       if (!apiResponse?.board) {
         refreshBoard?.();
         return;

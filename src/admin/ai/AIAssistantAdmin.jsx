@@ -9,7 +9,7 @@ import AIAssistantMessages from './AIAssistantMessages.jsx';
 import AIAssistantInput from './AIAssistantInput.jsx';
 import AIAssistantActionCard from './AIAssistantActionCard.jsx';
 import { getCache } from '../../platform/prefsStorage.js';
-import { useAdminNotification } from '../context/NotificationContext.jsx';
+import { useAdminNotification } from '../context/NotificationContext';
 import { logger } from '../../lib/logger';
 import { emitDom } from '../../platform/attachLegacyEvents.js';
 

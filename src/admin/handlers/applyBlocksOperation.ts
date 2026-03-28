@@ -5,8 +5,29 @@
  */
 
 import { logger } from '../../lib/logger';
+import type { TennisBackendShape, DomainCourt, TennisConfig, CommandResponse } from '../../types/appTypes';
 
-export async function applyBlocksOp(ctx, blocks) {
+interface BlockInput {
+  title?: string;
+  name?: string;
+  reason?: string;
+  startTime: string;
+  endTime: string;
+  courts?: number[];
+  courtNumber?: number;
+  recurrenceGroupId?: string;
+}
+
+interface ApplyBlocksCtx {
+  courts: DomainCourt[];
+  backend: TennisBackendShape;
+  showNotification: (message: string, type: string) => void;
+  TENNIS_CONFIG: TennisConfig;
+  applyBoardResponse?: (result: CommandResponse) => void;
+  refreshBoard?: () => void;
+}
+
+export async function applyBlocksOp(ctx: ApplyBlocksCtx, blocks: BlockInput[]): Promise<void> {
   const { courts, backend, showNotification, TENNIS_CONFIG } = ctx;
 
   if (!blocks || !Array.isArray(blocks)) {
@@ -15,19 +36,16 @@ export async function applyBlocksOp(ctx, blocks) {
 
   let successCount = 0;
   let failCount = 0;
-  let lastSuccessResult = null;
+  let lastSuccessResult: CommandResponse | null = null;
 
-  // Process all blocks and courts
   for (const block of blocks) {
-    // read form values from existing variables
     const name = block.title || block.name || '';
     const reason = block.reason || '';
     const startTime = new Date(block.startTime);
     const endTime = new Date(block.endTime);
     const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
-    const selectedCourts = Array.isArray(block.courts) ? block.courts : [block.courtNumber];
+    const selectedCourts = Array.isArray(block.courts) ? block.courts : [block.courtNumber as number];
 
-    // validate minimally
     if (
       !name ||
       !reason ||
@@ -44,7 +62,6 @@ export async function applyBlocksOp(ctx, blocks) {
       continue;
     }
 
-    // Map reason to block type for API
     const reasonLower = reason.toLowerCase();
     let blockType = 'other';
     if (reasonLower.includes('wet') || reasonLower.includes('rain')) {
@@ -59,17 +76,25 @@ export async function applyBlocksOp(ctx, blocks) {
       blockType = 'league';
     }
 
-    // Create blocks via backend API for each selected court
     for (const courtNumber of selectedCourts) {
       const court = courts.find((c) => c.number === courtNumber);
       if (!court) {
-        console.error(`[Admin] Court ${courtNumber} not found`);
+        console.error('[Admin] Court ' + String(courtNumber) + ' not found');
         failCount++;
         continue;
       }
 
       try {
-        const createPayload = {
+        const createPayload: {
+          courtId: string;
+          blockType: string;
+          title: string;
+          startsAt: string;
+          endsAt: string;
+          deviceId: string;
+          deviceType: string;
+          recurrenceGroupId?: string;
+        } = {
           courtId: court.id,
           blockType: blockType,
           title: name,
@@ -81,7 +106,7 @@ export async function applyBlocksOp(ctx, blocks) {
         if (block.recurrenceGroupId) {
           createPayload.recurrenceGroupId = block.recurrenceGroupId;
         }
-        const result = await backend.admin.createBlock(createPayload);
+        const result = await backend.admin.createBlock(createPayload) as CommandResponse & { block?: unknown; board?: unknown };
 
         if (result.ok) {
           logger.info('Admin', 'Created block via API', result.block);
@@ -100,16 +125,17 @@ export async function applyBlocksOp(ctx, blocks) {
 
   if (failCount > 0) {
     showNotification(
-      `Applied ${successCount} block(s), ${failCount} failed`,
+      'Applied ' + String(successCount) + ' block(s), ' + String(failCount) + ' failed',
       failCount === 0 ? 'success' : 'warning'
     );
   } else {
-    showNotification(`Applied ${successCount} block(s) successfully`, 'success');
+    showNotification('Applied ' + String(successCount) + ' block(s) successfully', 'success');
   }
 
   // Use board from last successful response if available, otherwise fall back to refresh
-  if (successCount > 0 && lastSuccessResult?.board) {
-    ctx.applyBoardResponse?.(lastSuccessResult);
+  type WithBoard = CommandResponse & { block?: unknown; board?: unknown };
+  if (successCount > 0 && (lastSuccessResult as WithBoard)?.board) {
+    ctx.applyBoardResponse?.(lastSuccessResult!);
   } else if (successCount > 0) {
     ctx.refreshBoard?.();
   }

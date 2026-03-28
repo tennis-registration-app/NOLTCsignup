@@ -5,7 +5,7 @@
  * Appears on right-click or action button click on calendar events.
  */
 import React, { memo } from 'react';
-import { useAdminConfirm } from '../context/ConfirmContext.jsx';
+import { useAdminConfirm } from '../context/ConfirmContext';
 
 const QuickActionsMenu = memo(({ event, position, onClose, onEdit, onDelete, onDuplicate }) => {
   const confirm = useAdminConfirm();

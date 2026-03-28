@@ -1,3 +1,4 @@
+import type { TennisBackendShape, DomainCourt, DomainWaitlistEntry, DataStoreShape, TennisConfig, CommandResponse } from '../../types/appTypes';
 /**
  * useAdminHandlers
  *
@@ -27,6 +28,23 @@ import { applyBlocksOp } from '../handlers/applyBlocksOperation';
  * @param {Function} deps.refreshBoard - Fetch board from backend and apply update immediately
  * @param {Function} deps.applyBoardResponse - Normalize raw API board and apply to state
  */
+interface UseAdminHandlersDeps {
+  backend: TennisBackendShape;
+  dataStore: DataStoreShape;
+  TENNIS_CONFIG: TennisConfig;
+  courts: DomainCourt[];
+  waitingGroups: DomainWaitlistEntry[];
+  showNotification: (message: string, type: string) => void;
+  confirm: (message: string) => Promise<boolean>;
+  setBlockToEdit: (block: unknown) => void;
+  setActiveTab: (tab: string) => void;
+  setBlockingView: (view: string) => void;
+  reloadSettings: () => void;
+  bumpRefreshTrigger: () => void;
+  refreshBoard: () => void;
+  applyBoardResponse: (result: CommandResponse) => void;
+}
+
 export function useAdminHandlers({
   backend,
   dataStore,
@@ -42,7 +60,7 @@ export function useAdminHandlers({
   bumpRefreshTrigger,
   refreshBoard,
   applyBoardResponse,
-}) {
+}: UseAdminHandlersDeps) {
   const handleEditBlockFromStatus = useCallback(
     (block) => {
       setBlockToEdit(block);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAdminConfirm } from '../context/ConfirmContext.jsx';
+import { useAdminConfirm } from '../context/ConfirmContext';
 import { logger } from '../../lib/logger';
 import { formatTo12h } from '../../components/admin/SmartTimeRangePicker';
 

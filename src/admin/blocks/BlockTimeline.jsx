@@ -6,7 +6,7 @@
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { CalendarDays } from '../components';
-import { useAdminConfirm } from '../context/ConfirmContext.jsx';
+import { useAdminConfirm } from '../context/ConfirmContext';
 import { logger } from '../../lib/logger';
 import {
   filterBlocksByDateAndCourt,

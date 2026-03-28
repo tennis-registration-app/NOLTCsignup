@@ -7,7 +7,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { getEventColor } from './utils.js';
 import { getDeviceId } from '../utils/getDeviceId.js';
-import { useAdminConfirm } from '../context/ConfirmContext.jsx';
+import { useAdminConfirm } from '../context/ConfirmContext';
 
 const BLOCK_TYPES = [
   { value: 'lesson', label: 'Lesson' },

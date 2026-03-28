@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress (Phase 3 complete, Phase 4 next)
+## Status: In Progress (Phase 4 complete, Phase 5 next)
 
 ---
 
@@ -51,9 +51,17 @@
 - [x] Updated `src/registration/index.html` entry point references
 - [x] Run `npm run verify` — PASS (lint ✅, type-check ✅, coverage ✅, fixtures ✅, build ✅, e2e ✅)
 
-## Phase 4: Admin Shared — `src/admin/` root + handlers — PENDING
-- [ ] Convert .js/.jsx in src/admin/ root and src/admin/handlers/
-- [ ] Run `npm run verify`
+## Phase 4: Admin Shared — `src/admin/` root + handlers — COMPLETE
+- [x] Renamed src/admin/App.jsx → .tsx, main.jsx → .tsx
+- [x] Renamed src/admin/handlers/ 4 files: courtOperations, waitlistOperations, applyBlocksOperation, wetCourtOperations → .ts
+- [x] Cascade conversions: useAdminHandlers, useAdminAppState, useWetCourts → .ts; NotificationContext, ConfirmContext → .tsx
+- [x] Added typed interfaces: CourtOpCtx, WaitlistOpCtx, ApplyBlocksCtx, WetCourtOpCtx, UseAdminHandlersDeps
+- [x] Preserved board-check pattern (if result.board → applyBoardResponse else refreshBoard) via WithBoard casts
+- [x] Fixed validate-fixtures.js (pre-existing break): added esbuild bundling with path.resolve() for .ts entry points
+- [x] Fixed context import paths: removed .tsx extension from all importers (TS5097)
+- [x] Updated src/admin/index.html: main.jsx → main.tsx
+- [x] Run `npm run verify` — PASS (lint ✅, type-check ✅, coverage ✅, fixtures ✅, build ✅, e2e ✅)
+- [x] Unit tests: 161 files, 3134 tests all pass
 
 ## Phase 5: Admin Blocks — `src/admin/blocks/` — PENDING
 - [ ] Convert all .js/.jsx (SmartTimeRangePicker.tsx already done)

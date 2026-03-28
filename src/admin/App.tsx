@@ -9,8 +9,8 @@
  * Wire useAdminAccess() here when VITE_ADMIN_ACCESS_MODE=authenticated
  */
 import React, { useState } from 'react';
-import { NotificationProvider, useAdminNotification } from './context/NotificationContext.jsx';
-import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext.jsx';
+import { NotificationProvider, useAdminNotification } from './context/NotificationContext';
+import { ConfirmProvider, useAdminConfirm } from './context/ConfirmContext';
 
 // Block management components
 import { CompleteBlockManagerEnhanced } from './blocks';
@@ -37,8 +37,8 @@ import { useAdminAppState } from './hooks/useAdminAppState';
 
 // Main Admin Panel Component
 const AdminPanelV2 = ({ onExit }) => {
-  const showNotification = useAdminNotification();
-  const confirm = useAdminConfirm();
+  const showNotification = useAdminNotification() as (message: string, type: string) => void;
+  const confirm = useAdminConfirm() as (message: string) => Promise<boolean>;
 
   const {
     wetCourtsController,

@@ -13,8 +13,8 @@ import EventDetailsModal from './EventDetailsModal.jsx';
 import { getEventTypeFromReason } from './utils.js';
 import { logger } from '../../lib/logger';
 import { normalizeCalendarBlock } from '../../lib/normalize/index';
-import { useAdminNotification } from '../context/NotificationContext.jsx';
-import { useAdminConfirm } from '../context/ConfirmContext.jsx';
+import { useAdminNotification } from '../context/NotificationContext';
+import { useAdminConfirm } from '../context/ConfirmContext';
 import {
   buildCalendarEvents,
   filterCalendarEvents,
