@@ -16,12 +16,12 @@ import {
   UsageComparisonControls,
   UsageComparisonChart,
 } from '../analytics';
-import { logger } from '../../lib/logger.js';
-import { normalizeTransaction } from '../../lib/normalize/index.js';
+import { logger } from '../../lib/logger';
+import { normalizeTransaction } from '../../lib/normalize/index';
 
 // Config imports (ESM canonical sources)
-import { TENNIS_CONFIG } from '../../lib/config.js';
-import { EVENTS } from '../../lib/constants.js';
+import { TENNIS_CONFIG } from '../../lib/config';
+import { EVENTS } from '../../lib/constants';
 
 // Debounce helper
 const debounce = (fn, ms = 150) => {

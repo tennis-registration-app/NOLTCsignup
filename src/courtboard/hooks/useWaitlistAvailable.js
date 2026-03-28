@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { getMobileModal } from '../../platform/windowBridge.js';
 import { listPlayableCourts } from '../../shared/courts/courtAvailability.js';
-import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
+import { isCourtEligibleForGroup } from '../../lib/types/domain';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
 
 /**

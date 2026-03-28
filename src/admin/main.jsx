@@ -10,7 +10,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';
 import { migrateOldKeys } from '../platform/prefsStorage.js';
-import { logger } from '../lib/logger.js';
+import { logger } from '../lib/logger';
 
 // Run migration for legacy localStorage keys (idempotent, safe to call multiple times)
 migrateOldKeys();

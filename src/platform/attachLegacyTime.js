@@ -5,8 +5,8 @@
  * Delete this file when <script src="domain/time.js"> is removed from HTML files
  */
 
-import { formatTime, formatDate } from '../lib/formatters.js';
-import { addMinutes, isOverTime, durationForGroupSize } from '../lib/dateUtils.js';
+import { formatTime, formatDate } from '../lib/formatters';
+import { addMinutes, isOverTime, durationForGroupSize } from '../lib/dateUtils';
 
 const legacyTime = {
   addMinutes,

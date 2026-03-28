@@ -4,7 +4,7 @@
  * Confirmation dialog for designating a session as a tournament match.
  */
 import React from 'react';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 const TournamentConfirmModal = ({ sessionId, onUpdateSessionTournament, onConfirm, onClose }) => {
   const handleConfirm = async () => {

@@ -5,7 +5,7 @@
  */
 
 import { TENNIS_CONFIG } from '@lib';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 export async function handleClearWaitlistOp(ctx) {
   const { backend, showAlertMessage, getCourtData, confirm: confirmFn = globalThis.confirm } = ctx;

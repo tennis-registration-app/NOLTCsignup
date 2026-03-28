@@ -6,7 +6,7 @@
  */
 
 import { isOccupiedNow, isBlockedNow } from './courtAvailability.js';
-import { isCourtEligibleForGroup } from '../../lib/types/domain.js';
+import { isCourtEligibleForGroup } from '../../lib/types/domain';
 
 /**
  * REGISTRATION COURT SELECTION

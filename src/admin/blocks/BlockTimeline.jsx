@@ -7,7 +7,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { CalendarDays } from '../components';
 import { useAdminConfirm } from '../context/ConfirmContext.jsx';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import {
   filterBlocksByDateAndCourt,
   groupBlocksByDate,

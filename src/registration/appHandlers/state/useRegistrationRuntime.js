@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { normalizeSettings } from '../../../lib/normalize/index.js';
-import { logger } from '../../../lib/logger.js';
+import { normalizeSettings } from '../../../lib/normalize/index';
+import { logger } from '../../../lib/logger';
 
 /**
  * useRegistrationRuntime

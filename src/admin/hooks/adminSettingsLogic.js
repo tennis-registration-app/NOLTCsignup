@@ -4,12 +4,12 @@
  * This enables direct unit testing without React hooks.
  */
 
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import {
   normalizeOperatingHours,
   normalizeOverrides,
   normalizeSettings,
-} from '../../lib/normalize/index.js';
+} from '../../lib/normalize/index';
 
 /**
  * Default pricing values (fallback when API returns null/undefined)

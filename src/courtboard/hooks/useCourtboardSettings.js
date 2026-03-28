@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { logger } from '../../lib/logger.js';
-import { normalizeSettings } from '../../lib/normalize/index.js';
-import { createBackend } from '../../lib/backend/index.js';
+import { logger } from '../../lib/logger';
+import { normalizeSettings } from '../../lib/normalize/index';
+import { createBackend } from '../../lib/backend/index';
 
 const backend = createBackend();
 

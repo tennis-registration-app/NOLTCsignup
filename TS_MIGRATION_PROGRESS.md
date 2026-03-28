@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress
+## Status: In Progress (Phase 2 complete, Phase 3 next)
 
 ---
 
@@ -20,31 +20,21 @@
 
 ---
 
-## Phase 2: Utility Layer — `src/lib/` — PENDING
-- [ ] Convert `src/lib/ApiAdapter.js` to `.ts`
-- [ ] Convert `src/lib/TennisBusinessLogic.js` to `.ts`
-- [ ] Convert `src/lib/TennisCourtDataStore.js` to `.ts`
-- [ ] Convert `src/lib/config.js` to `.ts`
-- [ ] Convert `src/lib/apiConfig.js` to `.ts`
-- [ ] Convert `src/lib/constants.js` to `.ts`
-- [ ] Convert `src/lib/court-blocks.js` to `.ts`
-- [ ] Convert `src/lib/dateUtils.js` to `.ts`
-- [ ] Convert `src/lib/DataValidation.js` to `.ts`
-- [ ] Convert `src/lib/formatters.js` to `.ts`
-- [ ] Convert `src/lib/logger.js` to `.ts`
-- [ ] Convert `src/lib/index.js` to `.ts`
-- [ ] Convert `src/lib/storage.js` to `.ts`
-- [ ] Convert `src/lib/StorageAdapter.js` to `.ts`
-- [ ] Convert `src/lib/normalizeWaitlist.js` to `.ts`
-- [ ] Convert `src/lib/api/` files to `.ts`
-- [ ] Convert `src/lib/backend/` files to `.ts`
-- [ ] Convert `src/lib/commands/` files to `.ts`
-- [ ] Convert `src/lib/domain/` files to `.ts`
-- [ ] Convert `src/lib/errors/` files to `.ts`
-- [ ] Convert `src/lib/normalize/` files to `.ts`
-- [ ] Convert `src/lib/schemas/` files to `.ts`
-- [ ] Convert `src/lib/types/` files to `.ts`
-- [ ] Run `npm run verify`
+## Phase 2: Utility Layer — `src/lib/` — COMPLETE
+- [x] Renamed all 60 `src/lib/**/*.js` files to `.ts` via `git mv`
+- [x] Added TypeScript class property declarations (ApiAdapter, AdminCommands, TennisCourtDataStore, StorageAdapter, TennisCommands, TennisDirectory, TennisBackend, TennisQueries)
+- [x] Fixed `const errors: string[] = []` in all 10 command files (was inferred `never[]`)
+- [x] Typed all `options = {}` parameters with explicit interfaces
+- [x] Fixed `Record<string, unknown>` property accesses with targeted casts
+- [x] Added `ApiConfigShape` interface and typed Proxy in `apiConfig.ts`
+- [x] Fixed `wire.ts` payload types with `Record<string, unknown>`
+- [x] Fixed `normalizeCourt.ts` and `normalizeMember.ts` null variable declarations
+- [x] Fixed all logger call type errors (data: unknown)
+- [x] Fixed `TennisBackendShape` / `TennisBusinessLogicShape` compatibility in `appTypes.ts`
+- [x] Fixed `AdminCommands` API response typing with `ApiResponse` type
+- [x] Fixed `useBallPurchase.js` `existingPurchases` JSDoc cast
+- [x] Reduced TS errors from 478 → 0
+- [x] Run `npm run verify` — PASS (lint ✅, type-check ✅, coverage ✅, fixtures ✅, build ✅, e2e ✅)
 
 ---
 

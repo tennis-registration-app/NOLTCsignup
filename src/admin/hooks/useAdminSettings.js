@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import {
   loadSettingsData,
   updateBallPriceApi,
@@ -22,7 +22,7 @@ import {
 
 // Singleton guard to prevent duplicate listener attachment on re-mount
 const _one = (key) =>
-  /** @type {any} */ (window)[key] ? true : ((/** @type {any} */ (window)[key] = true), false);
+  /** @type {any} */ (window)[key] ? true : (/** @type {any} */ ((window)[key] = true), false);
 
 /**
  * Hook for managing admin settings state and operations.

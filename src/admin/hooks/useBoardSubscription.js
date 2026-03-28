@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { transformBoardUpdate } from './boardSubscriptionLogic.js';
 
 /**

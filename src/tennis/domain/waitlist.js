@@ -5,7 +5,7 @@
  * Ported from domain/waitlist.js IIFE.
  */
 
-import { waitlistSignature } from '../../lib/storage.js';
+import { waitlistSignature } from '../../lib/storage';
 
 // Constants for simulation
 const REGISTRATION_BUFFER_MS = 15 * 60 * 1000; // 15 minutes

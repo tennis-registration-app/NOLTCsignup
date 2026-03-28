@@ -3,7 +3,7 @@ import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
 import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { getTennisDomain, isMobileView } from '../../platform/windowBridge.js';
 import { useClockTick } from '../hooks/useClockTick.js';
 import { useMobileBridge } from '../hooks/useMobileBridge.js';

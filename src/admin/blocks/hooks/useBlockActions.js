@@ -1,6 +1,6 @@
 import { expandRecurrenceDates } from '../utils/expandRecurrenceDates';
 import { getEventTypeFromReason } from '../../calendar/utils.js';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 /**
  * Block management action handlers.

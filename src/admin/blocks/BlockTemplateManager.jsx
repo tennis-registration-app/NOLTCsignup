@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Plus, CheckCircle, Trash2 } from '../components';
 
 // Config import (ESM canonical source)
-import { TENNIS_CONFIG } from '../../lib/config.js';
+import { TENNIS_CONFIG } from '../../lib/config';
 
 const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
   const [showCreate, setShowCreate] = useState(false);

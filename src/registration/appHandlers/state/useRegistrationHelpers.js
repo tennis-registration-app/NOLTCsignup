@@ -7,11 +7,11 @@
  */
 
 // Import Domain engagement helpers
-import { findEngagementByMemberId, getEngagementMessage } from '../../../lib/domain/engagement.js';
+import { findEngagementByMemberId, getEngagementMessage } from '../../../lib/domain/engagement';
 import { normalizeName } from '../../../tennis/domain/roster.js';
 import { validateGroup as domainValidateGroup } from '../../../tennis/domain/waitlist.js';
 import { toast } from '../../../shared/utils/toast.js';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 // Debug utilities
 const DEBUG = false;

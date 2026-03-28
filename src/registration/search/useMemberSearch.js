@@ -11,7 +11,7 @@
 import { useReducer, useCallback, useEffect } from 'react';
 import { memberSearchReducer, initialMemberSearchState } from './memberSearchReducer';
 import { useDebounce } from '../hooks/useDebounce.js';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUserTyping }) {
   const [state, dispatch] = useReducer(memberSearchReducer, initialMemberSearchState);

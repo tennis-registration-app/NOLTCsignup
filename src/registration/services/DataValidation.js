@@ -2,7 +2,7 @@
 // Extracted from App.jsx for modularity
 
 import { TENNIS_CONFIG as _sharedTennisConfig } from '@lib';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 const TENNIS_CONFIG = _sharedTennisConfig;
 

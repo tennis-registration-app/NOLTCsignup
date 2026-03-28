@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 // Import services for handlers that need them
 import { GeolocationService } from '../../services';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 /**
  * Navigation Handlers

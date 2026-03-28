@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { logger } from '../../lib/logger.js';
-import { createBackend } from '../../lib/backend/index.js';
+import { logger } from '../../lib/logger';
+import { createBackend } from '../../lib/backend/index';
 import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
 
 const backend = createBackend();

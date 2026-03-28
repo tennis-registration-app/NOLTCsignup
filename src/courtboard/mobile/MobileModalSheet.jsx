@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
 
 // TennisBackend for clear court functionality
-import { createBackend } from '../../lib/backend/index.js';
+import { createBackend } from '../../lib/backend/index';
 import {
   getTennisStorage,
   getTennisDomain,
   getTennisNamespaceConfig,
 } from '../../platform/windowBridge.js';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import {
   getTitle,
   getModalClass,

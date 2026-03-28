@@ -6,7 +6,7 @@ import '../platform/attachLegacyEvents.js';
 import '../platform/attachLegacyStorage.js';
 import '../platform/attachLegacyAvailability.js';
 import '../platform/attachLegacyWaitlist.js';
-import { logger } from '../lib/logger.js';
+import { logger } from '../lib/logger';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import ErrorBoundary from '../shared/components/ErrorBoundary.jsx';

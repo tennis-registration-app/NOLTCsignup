@@ -4,7 +4,7 @@
  * Pure handler logic - no React hooks or state.
  */
 
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 export async function applyBlocksOp(ctx, blocks) {
   const { courts, backend, showNotification, TENNIS_CONFIG } = ctx;

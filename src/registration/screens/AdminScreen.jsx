@@ -11,7 +11,7 @@ import MoveCourtUI from './admin/MoveCourtUI.jsx';
 import CourtGrid from './admin/CourtGrid.jsx';
 import WaitlistManagement from './admin/WaitlistManagement.jsx';
 import SystemSettingsSection from './admin/SystemSettingsSection.jsx';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 const AdminScreen = ({
   // Data

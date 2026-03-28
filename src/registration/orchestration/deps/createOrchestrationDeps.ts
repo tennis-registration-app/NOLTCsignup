@@ -9,7 +9,7 @@
  * wrapper later without changing call sites.
  */
 
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 export interface OrchestrationLogger {
   debug: (scope: string, msg: string, data?: unknown) => void;

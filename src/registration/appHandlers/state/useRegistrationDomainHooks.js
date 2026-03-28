@@ -7,7 +7,7 @@
  * have moved to WorkflowProvider.
  */
 
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 // Alert display hook
 import { useAlertDisplay } from '../../ui/alert';

@@ -6,7 +6,7 @@
  * Ported from Mobile.html inline script.
  */
 
-import { logger } from '../lib/logger.js';
+import { logger } from '../lib/logger';
 
 // DOM references (resolved lazily to handle module loading before DOM ready)
 let overlay, iframeReg, iframeBoard;

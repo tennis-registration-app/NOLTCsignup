@@ -4,11 +4,11 @@
  * and the local UI state that only those actions touch.
  */
 import { useState, useEffect } from 'react';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { toast } from '../../shared/utils/toast.js';
-import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore.js';
+import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore';
 import { getDeviceId } from '../utils/getDeviceId.js';
-import { TENNIS_CONFIG } from '../../lib/config.js';
+import { TENNIS_CONFIG } from '../../lib/config';
 import { useOptimisticWetToggle } from './useOptimisticWetToggle.js';
 
 // Get dataStore reference

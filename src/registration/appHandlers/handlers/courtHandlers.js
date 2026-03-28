@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
-import { logger } from '../../../lib/logger.js';
-import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
+import { logger } from '../../../lib/logger';
+import { isCourtEligibleForGroup } from '../../../lib/types/domain';
 import {
   getSelectableCourtsStrict,
   getFreeCourtsInfo,
 } from '../../../tennis/domain/availability.js';
 import { toast } from '../../../shared/utils/toast.js';
-import { readJSON, readDataSafe } from '../../../lib/storage.js';
-import { STORAGE } from '../../../lib/constants.js';
+import { readJSON, readDataSafe } from '../../../lib/storage';
+import { STORAGE } from '../../../lib/constants';
 import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
 
 /**

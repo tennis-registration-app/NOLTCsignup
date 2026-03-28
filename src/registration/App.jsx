@@ -17,7 +17,7 @@ import { useRegistrationHandlers, useRegistrationAppState } from './appHandlers'
 import { WorkflowProvider } from './context/WorkflowProvider';
 
 // TennisBackend singleton (shared with useRegistrationAppState)
-import { createBackend } from '../lib/backend/index.js';
+import { createBackend } from '../lib/backend/index';
 
 // Window global setters
 import { ensureTennisGlobal, setGeolocationServiceGlobal } from '../platform/registerGlobals.js';

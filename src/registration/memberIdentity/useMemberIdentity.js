@@ -10,7 +10,7 @@
 
 import { useReducer, useCallback, useRef } from 'react';
 import { memberIdentityReducer, initialMemberIdentityState } from './memberIdentityReducer';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 // TTL for frequent partners cache (10 minutes)
 const FREQUENT_PARTNERS_CACHE_TTL_MS = 10 * 60 * 1000;

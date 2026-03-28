@@ -6,15 +6,15 @@ import {
 } from '@lib';
 
 // Import API config for mobile detection
-import { API_CONFIG } from '../../lib/apiConfig.js';
-import { logger } from '../../lib/logger.js';
+import { API_CONFIG } from '../../lib/apiConfig';
+import { logger } from '../../lib/logger';
 
 // Platform bridge for window global access
 import { toast as _toast } from '../../shared/utils/toast.js';
-import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore.js';
+import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore';
 
 // TennisBackend interface layer
-import { createBackend } from '../../lib/backend/index.js';
+import { createBackend } from '../../lib/backend/index';
 
 // Overtime eligibility policy
 import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';

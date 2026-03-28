@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 /**
  * useRegistrationDataLayer

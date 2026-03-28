@@ -3,11 +3,11 @@
  * Moved from App.jsx
  */
 
-import { logger } from '../../lib/logger.js';
-import { DenialCodes } from '../../lib/backend/types.js';
-import { normalizeError } from '../../lib/errors/normalizeError.js';
+import { logger } from '../../lib/logger';
+import { DenialCodes } from '../../lib/backend/types';
+import { normalizeError } from '../../lib/errors/normalizeError';
 import { createOrchestrationDeps } from './deps/index.js';
-import { durationForGroupSize } from '../../lib/dateUtils.js';
+import { durationForGroupSize } from '../../lib/dateUtils';
 import {
   guardNotAssigning,
   guardOperatingHours,

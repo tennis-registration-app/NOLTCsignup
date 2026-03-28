@@ -1,5 +1,5 @@
 // Sync Waitlist Promotions for CourtBoard (ESM)
-import { waitlistSignature } from '../lib/storage.js';
+import { waitlistSignature } from '../lib/storage';
 import { getLegacyAvailabilityDomain } from './bridge/window-bridge.js';
 
 /**

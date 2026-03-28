@@ -5,7 +5,7 @@
  * Delete this file when <script src="shared/events.js"> is removed from HTML files
  */
 
-import { logger } from '../lib/logger.js';
+import { logger } from '../lib/logger';
 
 // Circular debug log for tracking events
 class CircularDebugLog {

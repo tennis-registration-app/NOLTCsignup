@@ -12,8 +12,8 @@
  * they come from React context providers above AdminPanelV2.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { createBackend } from '../../lib/backend/index.js';
-import { logger } from '../../lib/logger.js';
+import { createBackend } from '../../lib/backend/index';
+import { logger } from '../../lib/logger';
 import { legacyEvents as Events } from '../../platform/attachLegacyEvents.js';
 import { setRefreshAdminViewGlobal } from '../../platform/registerGlobals.js';
 
@@ -46,7 +46,7 @@ import { MonthView } from '../components/MonthView';
 import { EventSummary } from '../components/EventSummary';
 
 // Board normalization (shared between applyBoardResponse consumers)
-import { normalizeBoard } from '../../lib/normalize/index.js';
+import { normalizeBoard } from '../../lib/normalize/index';
 
 // Extracted callbacks hook (replaces 8 inline useCallbacks)
 import { useAdminHandlers } from './useAdminHandlers';
@@ -68,9 +68,9 @@ import { addTimer, clearAllTimers } from '../utils/timerRegistry';
 import { featureFlags } from '../../config/runtimeConfig.js';
 
 // ESM canonical imports (replacing window.APP_UTILS reads)
-import { readDataSafe } from '../../lib/storage.js';
-import { TennisCourtDataStore } from '../../lib/TennisCourtDataStore.js';
-import { TENNIS_CONFIG } from '../../lib/config.js';
+import { readDataSafe } from '../../lib/storage';
+import { TennisCourtDataStore } from '../../lib/TennisCourtDataStore';
+import { TENNIS_CONFIG } from '../../lib/config';
 
 // ---- Dev flag & assert (no UI change) ----
 const DEV = import.meta?.env?.DEV ?? false;

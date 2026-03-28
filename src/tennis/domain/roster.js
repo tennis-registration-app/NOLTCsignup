@@ -5,9 +5,9 @@
  * Ported from shared/domain/roster.js IIFE.
  */
 
-import { STORAGE } from '../../lib/constants.js';
-import { readJSON, writeJSON } from '../../lib/storage.js';
-import { logger } from '../../lib/logger.js';
+import { STORAGE } from '../../lib/constants';
+import { readJSON, writeJSON } from '../../lib/storage';
+import { logger } from '../../lib/logger';
 
 // ============================================================
 // IIFE #1 - Core roster conflict checking

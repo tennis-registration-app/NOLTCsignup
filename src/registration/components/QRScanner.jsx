@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 export function QRScanner({ onScan, onClose, onError }) {
   const [, setIsScanning] = useState(false); // Getter unused, setter used

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { TENNIS_CONFIG } from '@lib';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 /**
  * useRegistrationUiState

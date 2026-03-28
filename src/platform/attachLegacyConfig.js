@@ -5,7 +5,7 @@
  * Delete this file when <script src="shared/config.js"> is removed from HTML files
  */
 
-import { TENNIS_CONFIG } from '../lib/config.js';
+import { TENNIS_CONFIG } from '../lib/config';
 
 const legacyConfig = {
   Courts: {

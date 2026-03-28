@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAdminConfirm } from '../context/ConfirmContext.jsx';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { formatTo12h } from '../../components/admin/SmartTimeRangePicker';
 
 const BLOCK_TYPE_LABELS = {

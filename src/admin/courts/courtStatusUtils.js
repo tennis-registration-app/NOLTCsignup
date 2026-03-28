@@ -1,4 +1,4 @@
-import { formatTimeRemaining as formatTimeRemainingCore } from '../../lib/formatters.js';
+import { formatTimeRemaining as formatTimeRemainingCore } from '../../lib/formatters';
 
 /**
  * Pure utility functions extracted from CourtStatusGrid.

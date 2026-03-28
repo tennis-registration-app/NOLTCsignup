@@ -3,8 +3,8 @@ import React from 'react';
 import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
 import ErrorBoundary from '../../../shared/components/ErrorBoundary.jsx';
-import { API_CONFIG } from '../../../lib/apiConfig.js';
-import { logger } from '../../../lib/logger.js';
+import { API_CONFIG } from '../../../lib/apiConfig';
+import { logger } from '../../../lib/logger';
 import { buildCourtModel, buildCourtActions } from '../presenters';
 
 // Direct workflow context — CourtRoute reads workflow-owned state from context

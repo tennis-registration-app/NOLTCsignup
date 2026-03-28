@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 import { setLoadDataGlobal } from '../../../platform/registerGlobals.js';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 /**
  * @param {Object} deps - Effect dependencies

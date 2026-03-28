@@ -3,7 +3,7 @@
  * Moved from App.jsx
  */
 
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import {
   ALREADY_IN_GROUP,
   ALREADY_ON_COURT,

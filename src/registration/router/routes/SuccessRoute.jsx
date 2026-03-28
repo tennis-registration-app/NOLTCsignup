@@ -2,11 +2,11 @@
 import React from 'react';
 import { SuccessScreen } from '../../screens';
 import { AlertDisplay, ToastHost } from '../../components';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 import { buildSuccessModel, buildSuccessActions } from '../presenters';
 
 import { simulateWaitlistEstimates } from '../../../tennis/domain/waitlist.js';
-import { TENNIS_CONFIG } from '../../../lib/config.js';
+import { TENNIS_CONFIG } from '../../../lib/config';
 
 // Direct workflow context — SuccessRoute reads workflow-owned state from context
 import { useWorkflowContext } from '../../context/WorkflowProvider';

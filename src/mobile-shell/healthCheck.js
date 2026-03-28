@@ -5,7 +5,7 @@
  * Ported from Mobile.html inline script.
  */
 
-import { logger } from '../lib/logger.js';
+import { logger } from '../lib/logger';
 
 logger.info('Mobile Shell', 'Health check module loaded');
 

@@ -3,14 +3,14 @@
  * Extracted verbatim from SystemSettings.jsx.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 import {
   normalizeOperatingHours,
   normalizeOverrides,
   normalizeSettings,
   denormalizeOperatingHours,
   denormalizeOverride,
-} from '../../../lib/normalize/index.js';
+} from '../../../lib/normalize/index';
 
 export default function useSystemSettingsState({ backend, onSettingsChanged }) {
   // Settings state

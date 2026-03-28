@@ -16,7 +16,7 @@
  */
 
 import type { AppState, CommandResponse, DirectoryMember, DomainCourt, GroupPlayer, Handlers, ReplacedGroup, TennisConfig, UpcomingBlock } from '../../../types/appTypes.js';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 
 type PurchaseBallsOptions = { splitBalls?: boolean; splitAccountIds?: string[] | null };
 

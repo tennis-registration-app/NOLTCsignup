@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { getRefreshBoard } from '../../platform/windowBridge.js';
 
 /**

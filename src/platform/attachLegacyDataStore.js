@@ -8,7 +8,7 @@
  *               attachLegacyEvents (for Events.emitDom)
  */
 
-import { getDataStore } from '../lib/TennisCourtDataStore.js';
+import { getDataStore } from '../lib/TennisCourtDataStore';
 
 // Attach the ESM singleton to window.Tennis.DataStore
 if (typeof window !== 'undefined') {

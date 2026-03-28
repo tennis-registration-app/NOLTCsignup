@@ -4,7 +4,7 @@
  * This enables direct unit testing without React hooks or subscriptions.
  */
 
-import { normalizeWaitlist } from '../../lib/normalizeWaitlist.js';
+import { normalizeWaitlist } from '../../lib/normalizeWaitlist';
 
 /**
  * Generate fingerprint from blocks to detect actual changes.

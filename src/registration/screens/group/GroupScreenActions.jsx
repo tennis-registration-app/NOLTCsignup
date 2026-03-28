@@ -1,6 +1,6 @@
 // @ts-check
 import React from 'react';
-import { isCourtEligibleForGroup } from '../../../lib/types/domain.js';
+import { isCourtEligibleForGroup } from '../../../lib/types/domain';
 import LoadingBorderSpinner from './LoadingBorderSpinner.jsx';
 
 /**

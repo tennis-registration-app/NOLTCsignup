@@ -5,7 +5,7 @@
  * Only loads Events adapter (required for health check) plus shell modules.
  */
 
-import { logger } from '../lib/logger.js';
+import { logger } from '../lib/logger';
 
 (async () => {
   try {

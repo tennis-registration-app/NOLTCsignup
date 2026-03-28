@@ -8,8 +8,8 @@
  *               attachLegacyEvents (for emitDom)
  */
 
-import { STORAGE } from '../lib/constants.js';
-import { writeJSON } from '../lib/storage.js';
+import { STORAGE } from '../lib/constants';
+import { writeJSON } from '../lib/storage';
 import { emitDom } from './attachLegacyEvents.js';
 
 /**

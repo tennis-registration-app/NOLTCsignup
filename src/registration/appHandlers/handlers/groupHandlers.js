@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 // Import validation services
 import { DataValidation } from '@lib';
-import { logger } from '../../../lib/logger.js';
+import { logger } from '../../../lib/logger';
 import { toast } from '../../../shared/utils/toast.js';
 import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
 

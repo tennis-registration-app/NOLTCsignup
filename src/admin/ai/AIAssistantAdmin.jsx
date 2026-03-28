@@ -10,7 +10,7 @@ import AIAssistantInput from './AIAssistantInput.jsx';
 import AIAssistantActionCard from './AIAssistantActionCard.jsx';
 import { getCache } from '../../platform/prefsStorage.js';
 import { useAdminNotification } from '../context/NotificationContext.jsx';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { emitDom } from '../../platform/attachLegacyEvents.js';
 
 // Access global dependencies

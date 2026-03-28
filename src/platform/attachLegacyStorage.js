@@ -13,8 +13,8 @@ import {
   deepFreeze,
   listAllKeys,
   readDataClone,
-} from '../lib/storage.js';
-import { STORAGE } from '../lib/constants.js';
+} from '../lib/storage';
+import { STORAGE } from '../lib/constants';
 
 // ============================================================
 // KEYS object - matches IIFE shape exactly

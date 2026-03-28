@@ -6,8 +6,8 @@
  */
 
 import { getCourtStatuses } from '../../tennis/domain/availability.js';
-import { readDataSafe, readJSON } from '../../lib/storage.js';
-import { STORAGE } from '../../lib/constants.js';
+import { readDataSafe, readJSON } from '../../lib/storage';
+import { STORAGE } from '../../lib/constants';
 
 /**
  * Normalize a player name for comparison

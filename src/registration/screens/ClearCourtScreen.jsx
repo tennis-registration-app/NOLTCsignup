@@ -24,8 +24,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, ToastHost, AlertDisplay } from '../components';
 import { TypedIcon } from '../../components/icons/TypedIcon';
-import { readDataSafe } from '../../lib/storage.js';
-import { logger } from '../../lib/logger.js';
+import { readDataSafe } from '../../lib/storage';
+import { logger } from '../../lib/logger';
 
 const ClearCourtScreen = ({
   clearCourtStep,
