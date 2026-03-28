@@ -14,6 +14,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { TENNIS_CONFIG } from '@lib';
+import type { TennisBackendShape } from '../../types/appTypes';
 
 // Domain hooks — zero or single-dep, all reset on remount
 import { useGroupGuest } from '../group/useGroupGuest';
@@ -23,7 +24,7 @@ import { useMemberIdentity } from '../memberIdentity/useMemberIdentity';
 
 const WorkflowContext = createContext(null);
 
-export function WorkflowProvider({ backend, children }: { backend: any; key?: React.Key; children: React.ReactNode }) {
+export function WorkflowProvider({ backend, children }: { backend: TennisBackendShape; key?: React.Key; children: React.ReactNode }) {
   // ===== HOOKS (4) — remount resets all internal useReducer state =====
   const groupGuest = useGroupGuest();
   const streak = useStreak();

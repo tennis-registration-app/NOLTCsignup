@@ -2,10 +2,11 @@
  * @fileoverview TennisDirectory - Member lookup operations
  */
 import { logger } from '../logger';
+import type { BackendMember } from './types';
 
 export class TennisDirectory {
   api: { get(url: string): Promise<Record<string, unknown>> };
-  _cache: Map<string, { timestamp: number; members: any[] }>;
+  _cache: Map<string, { timestamp: number; members: BackendMember[] }>;
   _cacheTimeout: number;
 
   constructor(apiAdapter: TennisDirectory['api']) {
