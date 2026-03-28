@@ -1,6 +1,6 @@
 # TypeScript Migration Progress
 
-## Status: In Progress (Phase 8 complete, Phase 9 next)
+## Status: In Progress (Phase 9 complete, Phase 10 next)
 
 ---
 
@@ -112,9 +112,11 @@
 - [x] Added file-level eslint-disable to bridge/bootstrap files (intentional window.Tennis usage)
 - [x] Run `npm run verify` — PASS (lint, type-check, coverage, fixtures, build, e2e all pass)
 
-## Phase 9: Test Files — PENDING
-- [ ] Convert tests/ from .js/.jsx to .ts/.tsx
-- [ ] Run `npm run verify`
+## Phase 9: Test Files — COMPLETE
+- [x] Updated vitest.config.js: include pattern extended to `*.test.{js,jsx,ts,tsx}`
+- [x] Renamed all 155 .js/.jsx test files to .ts/.tsx via git mv
+- [x] Run `npm run verify` — PASS (lint, type-check, coverage, fixtures, build, e2e all pass)
+- [x] Unit tests: 161 files, 3134 tests all pass
 
 ## Phase 10: Cleanup and Verification — PENDING
 - [ ] Search for remaining .js/.jsx in src/
