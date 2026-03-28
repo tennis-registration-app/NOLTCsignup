@@ -10,9 +10,9 @@ function copyPlainJsFiles() {
     writeBundle() {
       const filesToCopy = [
         // Courtboard plain JS files (ADR-006 Phase 2: consolidated bootstrap)
-        'src/courtboard/bootstrap/courtboard-bootstrap.js',
-        'src/courtboard/sync-promotions.js',
-        'src/courtboard/debug-panel.js',
+        'src/courtboard/bootstrap/courtboard-bootstrap.ts',
+        'src/courtboard/sync-promotions.ts',
+        'src/courtboard/debug-panel.ts',
       ];
 
       filesToCopy.forEach((file) => {

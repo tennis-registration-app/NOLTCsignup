@@ -40,7 +40,7 @@ function runEslint() {
     // Run ESLint with JSON format
     // Note: ESLint exits non-zero if there are errors, so we handle that
     const result = execSync(
-      'npx eslint src/ --ext .js,.jsx --format json',
+      'npx eslint src/ --ext .js,.jsx,.ts,.tsx --format json',
       {
         cwd: ROOT_DIR,
         encoding: 'utf-8',
