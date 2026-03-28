@@ -9,14 +9,14 @@ import { AlertTriangle } from '../../components';
 
 const ConflictDetector = ({
   courts,
-  courtBlocks = /** @type {any[]} */ ([]),
+  courtBlocks = [] as Array<{courtNumber: number; id?: string; startTime: string; endTime: string; reason?: string}>,
   selectedCourts,
   startTime,
   endTime,
   selectedDate,
   editingBlock,
 }) => {
-  const [conflicts, setConflicts] = useState([]);
+  const [conflicts, setConflicts] = useState<Array<{courtNumber: number; type: string; reason?: string; players?: string[]; time: string}>>([]);
 
   useEffect(() => {
     if (!selectedCourts.length || !startTime || !endTime) {
@@ -24,7 +24,7 @@ const ConflictDetector = ({
       return;
     }
 
-    const detectedConflicts = [];
+    const detectedConflicts: Array<{courtNumber: number; type: string; reason?: string; players?: string[]; time: string}> = [];
 
     selectedCourts.forEach((courtNum) => {
       const court = courts[courtNum - 1];

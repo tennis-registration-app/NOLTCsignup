@@ -43,7 +43,7 @@ const EditGameModal = ({ game, onSave, onClose, saving = false }) => {
       }));
 
     // Calculate scheduled end time
-    let scheduledEndAt = null;
+    let scheduledEndAt: string | null = null;
     if (!noEndTime) {
       const endDate = new Date(game.endTime);
       const [endHours, endMinutes] = endTime.split(':');

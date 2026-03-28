@@ -109,7 +109,7 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
   };
 
   const validateOverrideForm = () => {
-    const errors = {};
+    const errors: {date?: string; reason?: string; times?: string} = {};
 
     if (!overrideDate) {
       errors.date = 'Date is required';

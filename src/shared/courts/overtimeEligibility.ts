@@ -75,7 +75,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
   }
 
   // Build selectableCourts with metadata
-  const selectableCourts: Array<{ number: number | undefined; reason: string; minutesAvailable: number | null; isUsable: boolean }> = [];
+  const selectableCourts: Array<{ number: number; reason: string; minutesAvailable: number | null; isUsable: boolean }> = [];
   const MIN_SELECTABLE_MINUTES = 5;
 
   for (const court of primaryCourts) {
@@ -92,7 +92,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
     }
 
     selectableCourts.push({
-      number: court.number,
+      number: court.number!,
       reason: 'free',
       minutesAvailable,
       isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,
@@ -114,7 +114,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
       }
 
       selectableCourts.push({
-        number: court.number,
+        number: court.number!,
         reason: 'overtime_fallback',
         minutesAvailable,
         isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,
@@ -145,7 +145,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
             ? Math.floor((new Date(nextBlock.startTime ?? 0).getTime() - Date.now()) / 60000)
             : null;
           return {
-            number: c.number,
+            number: c.number!,
             reason: 'overtime_fallback',
             minutesAvailable,
             isUsable: minutesAvailable === null || minutesAvailable >= MIN_USEFUL_MINUTES,

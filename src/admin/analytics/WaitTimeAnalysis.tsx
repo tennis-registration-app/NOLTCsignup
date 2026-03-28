@@ -5,7 +5,7 @@
  */
 import React, { useMemo } from 'react';
 
-const WaitTimeAnalysis = ({ waitlistData = [], loading }) => {
+const WaitTimeAnalysis = ({ waitlistData = [] as Array<{id: string; playerNames?: string; joinedAt?: string; minutesWaited: number}>, loading }) => {
   // Calculate summary stats
   const stats = useMemo(() => {
     if (waitlistData.length === 0) return null;

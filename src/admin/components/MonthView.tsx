@@ -7,7 +7,7 @@ export const MonthView = memo(function MonthView({
   selectedDate,
   events,
   currentTime,
-  hoursOverrides = [],
+  hoursOverrides = [] as Array<{date: string; reason?: string; isClosed?: boolean; opensAt?: string; closesAt?: string}>,
   onEventClick,
 }) {
   // Create a map for quick lookup of overrides by date
@@ -28,7 +28,7 @@ export const MonthView = memo(function MonthView({
       0
     ).getDate();
 
-    const days = [];
+    const days: (Date | null)[] = [];
     // Add empty cells for days before month starts
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);

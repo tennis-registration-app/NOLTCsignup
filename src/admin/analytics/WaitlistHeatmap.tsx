@@ -7,7 +7,7 @@
  */
 import React, { useMemo } from 'react';
 
-const WaitlistHeatmap = ({ heatmapData = [] }) => {
+const WaitlistHeatmap = ({ heatmapData = [] as Array<{dow: number; hour: number; count: number; avgWait: number}> }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 

@@ -71,20 +71,14 @@ export function filterBlocksByDateAndCourt({ blocks, viewMode, selectedDate, fil
  * Extracted from BlockTimeline inline reduce (lines 184-197).
  */
 export function groupBlocksByDate(blocks) {
-  return blocks.reduce((groups, block) => {
-    const blockDate = new Date(block.startTime);
-    const dateKey = blockDate.toDateString();
-
-    if (!groups[dateKey]) {
-      groups[dateKey] = {
-        date: blockDate,
-        blocks: [],
-      };
-    }
-
+  var groups = {};
+  for (var block of blocks) {
+    var blockDate = new Date(block.startTime);
+    var dateKey = blockDate.toDateString();
+    if (!groups[dateKey]) { groups[dateKey] = { date: blockDate, blocks: [] }; }
     groups[dateKey].blocks.push(block);
-    return groups;
-  }, {});
+  }
+  return groups;
 }
 
 /**
@@ -92,7 +86,7 @@ export function groupBlocksByDate(blocks) {
  *
  * Extracted from BlockTimeline inline sort (lines 199-201).
  */
-export function sortGroupedBlocks(grouped) {
+export function sortGroupedBlocks(grouped: Record<string, {date: Date; blocks: Array<Record<string, unknown>>}>) {
   return Object.values(grouped).sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 

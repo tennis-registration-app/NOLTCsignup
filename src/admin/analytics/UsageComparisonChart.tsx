@@ -130,7 +130,7 @@ export function UsageComparisonChart({ data, loading, error }) {
               const comparisonHeight = (comparisonValue / maxValue) * 100;
 
               // Calculate percent change for tooltip
-              let percentChange = null;
+              let percentChange: number | null = null;
               if (hasComparison && comparisonValue > 0) {
                 percentChange = ((bucket.value - comparisonValue) / comparisonValue) * 100;
               }
