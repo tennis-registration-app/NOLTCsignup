@@ -49,15 +49,23 @@ export function getRuntimeConfig(env = import.meta.env) {
 
   if (env.PROD) {
     const missing: string[] = [];
+    const defaulted: string[] = [];
     for (const [key, value] of Object.entries(config)) {
-      // Only fail if value is empty/falsy — dev defaults are valid working credentials
+      // Fail if empty/falsy or if the value still equals the dev default.
+      // Both conditions mean a real production credential was not supplied.
       if (!value) {
         missing.push(`VITE_${key}`);
+      } else if (value === DEV_DEFAULTS[key as keyof typeof DEV_DEFAULTS]) {
+        defaulted.push(`VITE_${key}`);
       }
     }
-    if (missing.length > 0) {
+    const hasProblem = missing.length > 0 || defaulted.length > 0;
+    if (hasProblem) {
+      const parts: string[] = [];
+      if (missing.length > 0) parts.push(`missing: ${missing.join(', ')}`);
+      if (defaulted.length > 0) parts.push(`still using dev defaults: ${defaulted.join(', ')}`);
       throw new Error(
-        `Missing required environment variables for production build: ${missing.join(', ')}. ` +
+        `Production build requires explicit environment variables (${parts.join('; ')}). ` +
           'See docs/ENVIRONMENT.md for required configuration.'
       );
     }

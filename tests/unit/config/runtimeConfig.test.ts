@@ -10,7 +10,9 @@ import { getRuntimeConfig } from '../../../src/config/runtimeConfig.js';
  *
  * Validation matrix:
  * - env.PROD falsy: falls back to DEV_DEFAULTS silently
- * - env.PROD truthy: throws on missing env vars (empty values)
+ * - env.PROD truthy: throws on missing env vars (empty values) OR on values
+ *   that still equal DEV_DEFAULTS (to prevent silent misconfigured deployments
+ *   from hitting the dev Supabase project instead of production)
  */
 
 describe('getRuntimeConfig', () => {
@@ -52,9 +54,12 @@ describe('getRuntimeConfig', () => {
   });
 
   describe('production mode (PROD truthy)', () => {
-    it('does not throw when dev defaults are used (they are valid credentials)', () => {
-      // Dev defaults are working credentials, so production builds should succeed
-      expect(() => getRuntimeConfig({ PROD: true })).not.toThrow();
+    it('throws when dev defaults are used (production must supply explicit credentials)', () => {
+      // Dev defaults must be rejected in production to prevent misconfigured deployments
+      // from silently hitting the dev Supabase project instead of production.
+      expect(() => getRuntimeConfig({ PROD: true })).toThrow(
+        'still using dev defaults'
+      );
     });
 
     it('does not throw when valid production env vars are set', () => {
@@ -68,19 +73,17 @@ describe('getRuntimeConfig', () => {
       ).not.toThrow();
     });
 
-    it('falls back to dev defaults when env vars are empty strings', () => {
-      // Empty string triggers || fallback to DEV_DEFAULTS, which are valid
-      const config = getRuntimeConfig({
-        PROD: true,
-        VITE_SUPABASE_URL: '',
-        VITE_SUPABASE_ANON_KEY: '',
-        VITE_BASE_URL: '',
-      });
-
-      // Should get dev defaults, not empty strings
-      expect(config.SUPABASE_URL).toContain('supabase.co');
-      expect(config.SUPABASE_ANON_KEY).toContain('eyJ');
-      expect(config.BASE_URL).toContain('/functions/v1');
+    it('throws when env vars are empty strings (falls back to dev defaults, which are rejected in production)', () => {
+      // Empty strings trigger || fallback to DEV_DEFAULTS.
+      // DEV_DEFAULTS are then detected and rejected — same protection as omitting vars entirely.
+      expect(() =>
+        getRuntimeConfig({
+          PROD: true,
+          VITE_SUPABASE_URL: '',
+          VITE_SUPABASE_ANON_KEY: '',
+          VITE_BASE_URL: '',
+        })
+      ).toThrow('still using dev defaults');
     });
 
     it('uses provided values over dev defaults', () => {

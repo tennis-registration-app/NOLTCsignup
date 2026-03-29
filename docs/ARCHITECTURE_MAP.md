@@ -9,17 +9,17 @@
 | I need to... | Start here |
 |--------------|------------|
 | Add a new court UI feature | `src/registration/court/` hooks |
-| Change member search behavior | `src/registration/search/useMemberSearch.js` |
-| Modify group/guest logic | `src/registration/group/useGroupGuest.js` |
-| Update streak warning | `src/registration/streak/useStreak.js` |
-| Change block admin behavior | `src/registration/blocks/useBlockAdmin.js` |
-| Modify waitlist admin | `src/registration/waitlist/useWaitlistAdmin.js` |
-| Change frequent partners | `src/registration/memberIdentity/useMemberIdentity.js` |
-| Modify tournament match logic | `src/lib/commands/updateSessionTournament.js` |
-| Change deferred waitlist behavior | `src/lib/commands/deferWaitlist.js` |
-| Modify court availability logic | `src/tennis/domain/availability.js` + `src/shared/courts/overtimeEligibility.js` |
+| Change member search behavior | `src/registration/search/useMemberSearch.ts` |
+| Modify group/guest logic | `src/registration/group/useGroupGuest.ts` |
+| Update streak warning | `src/registration/streak/useStreak.ts` |
+| Change block admin behavior | `src/registration/blocks/useBlockAdmin.ts` |
+| Modify waitlist admin | `src/registration/waitlist/useWaitlistAdmin.ts` |
+| Change frequent partners | `src/registration/memberIdentity/useMemberIdentity.ts` |
+| Modify tournament match logic | `src/lib/backend/TennisCommands.ts` (`updateSessionTournament`) |
+| Change deferred waitlist behavior | `src/lib/commands/deferWaitlist.ts` |
+| Modify court availability logic | `src/tennis/domain/availability.ts` + `src/shared/courts/overtimeEligibility.ts` |
 | **Touch court assignment flow** | ⚠️ READ ORCHESTRATION.md FIRST |
-| **Touch navigation/screens** | ⚠️ App.jsx — high coupling zone |
+| **Touch navigation/screens** | ⚠️ App.tsx — high coupling zone |
 
 ---
 
@@ -27,34 +27,68 @@
 
 ```
 src/registration/
-├── App.jsx                    # Main component + orchestrators (HIGH COUPLING)
+├── App.tsx                         # Composition root + WorkflowProvider key reset
+├── appHandlers/                    # State composition layer
+│   ├── useRegistrationAppState.ts  # Main state hook — composes 7 sub-modules
+│   ├── useRegistrationHandlers.ts  # Handler composition hook
+│   ├── buildHandlerDeps.ts         # Orchestrator dependency builder
+│   ├── state/                      # 7 focused state sub-modules
+│   │   ├── useRegistrationUiState.ts
+│   │   ├── useRegistrationRuntime.ts
+│   │   ├── useRegistrationDataLayer.ts
+│   │   ├── useRegistrationDomainHooks.ts
+│   │   ├── useRegistrationDerived.ts
+│   │   ├── useRegistrationHelpers.ts
+│   │   └── buildRegistrationReturn.ts
+│   ├── handlers/                   # 5 handler modules (useCallback wrappers)
+│   │   ├── adminHandlers.ts
+│   │   ├── courtHandlers.ts
+│   │   ├── groupHandlers.ts
+│   │   ├── guestHandlers.ts
+│   │   └── navigationHandlers.ts
+│   └── effects/
+│       └── useRegistrationEffects.ts
+├── orchestration/                  # Pure workflow orchestrators (no React)
+│   ├── assignCourtOrchestrator.ts  # ⚠️ HIGH COUPLING — see Do-Not-Touch Zones
+│   ├── courtChangeOrchestrator.ts
+│   ├── waitlistOrchestrator.ts
+│   ├── memberSelectionOrchestrator.ts
+│   └── resetOrchestrator.ts
+├── router/                         # Routing + presenter pattern
+│   ├── RegistrationRouter.tsx
+│   ├── routes/
+│   │   └── *.tsx                   # Thin route components (presenter + screen)
+│   └── presenters/
+│       └── *.ts                    # Pure prop-mapping functions
+├── context/
+│   └── WorkflowProvider.tsx        # Per-flow state (resets on key bump)
 ├── blocks/
-│   ├── blockAdminReducer.ts   # Pure state machine (TypeScript)
-│   └── useBlockAdmin.js       # Block admin hook
+│   ├── blockAdminReducer.ts
+│   └── useBlockAdmin.ts
 ├── waitlist/
 │   ├── waitlistAdminReducer.ts
-│   └── useWaitlistAdmin.js
+│   └── useWaitlistAdmin.ts
 ├── search/
 │   ├── memberSearchReducer.ts
-│   └── useMemberSearch.js     # Includes debounce logic
+│   └── useMemberSearch.ts          # Includes debounce logic
 ├── group/
 │   ├── groupGuestReducer.ts
-│   └── useGroupGuest.js
+│   └── useGroupGuest.ts
 ├── streak/
 │   ├── streakReducer.ts
-│   └── useStreak.js
+│   └── useStreak.ts
 ├── memberIdentity/
 │   ├── memberIdentityReducer.ts
-│   └── useMemberIdentity.js   # Includes cache + fetch
+│   └── useMemberIdentity.ts        # Includes cache + fetch
 ├── court/
 │   ├── courtAssignmentResultReducer.ts
-│   ├── useCourtAssignmentResult.js
+│   ├── useCourtAssignmentResult.ts
 │   ├── clearCourtFlowReducer.ts
-│   └── useClearCourtFlow.js
+│   └── useClearCourtFlow.ts
 ├── handlers/
-│   └── adminOperations.js     # Extracted admin handlers
+│   └── adminOperations.ts          # Extracted admin handlers
 └── screens/
-    └── *.jsx                  # UI components (render only)
+    └── *.tsx                       # UI components (render only)
 ```
 
 ---
@@ -93,7 +127,7 @@ src/registration/
 
 | Zone | Reason | Required Before Change |
 |------|--------|----------------------|
-| `assignCourtToGroup` | 370-line orchestrator | Approval + decomposition plan |
+| `assignCourtToGroup` | 545-line orchestrator | Approval + decomposition plan |
 | `sendGroupToWaitlist` | GPS + validation coupling | Approval |
 | `handleSuggestionClick` | Crosses 5+ clusters | Approval |
 | `src/tennis/domain/*` | Shared business logic | Unit test coverage |
@@ -145,8 +179,8 @@ Architectural boundaries and enforcement mechanisms prevent common drift pattern
 - **Docs:** `docs/ENVIRONMENT.md`, `docs/DEPLOYMENT.md`
 
 ### 2. Window Globals Policy
-- **Writes:** Centralized in `src/platform/registerGlobals.js` via setter helpers
-- **Reads:** Via `src/platform/windowBridge.js`
+- **Writes:** Centralized in `src/platform/registerGlobals.ts` via setter helpers
+- **Reads:** Via `src/platform/windowBridge.ts`
 - **Rule:** No `window.X = ...` outside platform layer (except documented IIFE exceptions)
 - **Enforcement:** ESLint `no-restricted-syntax` blocks `window.X =` assignments in `registration/` and `admin/`. ESLint `no-restricted-globals` and `no-restricted-properties` block reads of `Tennis`, `APP_UTILS`, `localStorage`, `alert`, `confirm`. Entry points and legacy interop files are narrowly exempted.
 - **Docs:** `docs/WINDOW_GLOBALS.md`
@@ -210,7 +244,7 @@ These rules are mechanically enforced — CI rejects violations via `npm run ver
 
 Plus global bans: `localStorage`, `alert`, `confirm`, `window.Tennis` (outside platform bridge).
 
-Exemptions are narrowly scoped to entry points (`main.jsx`), legacy interop files, and test files. See `eslint.config.js` for the full list.
+Exemptions are narrowly scoped to entry points (`main.tsx`), legacy interop files, and test files. See `eslint.config.js` for the full list.
 
 ---
 
@@ -234,14 +268,14 @@ Tournament matches allow sessions to play until completion, bypassing scheduled 
 └───────────────┘              │                       │
                                ▼                       ▼
                       ┌───────────────────────────────────────┐
-                      │ src/lib/normalize/normalizeSession.js │
+                      │ src/lib/normalize/normalizeSession.ts │
                       │ is_tournament → isTournament          │
                       └───────────────────┬───────────────────┘
                                           │
                       ┌───────────────────┼───────────────────┐
                       ▼                   ▼                   ▼
              ┌─────────────┐    ┌─────────────────┐   ┌──────────────┐
-             │ Registration│    │ availability.js │   │ Courtboard   │
+             │ Registration│    │ availability.ts │   │ Courtboard   │
              │ Success     │    │ getFreeCourts   │   │ Display      │
              │ Screen      │    │ (exclusion)     │   │ (override)   │
              └─────────────┘    └─────────────────┘   └──────────────┘
@@ -249,10 +283,10 @@ Tournament matches allow sessions to play until completion, bypassing scheduled 
 
 **Key files:**
 - `supabase/functions/update-session-tournament/` — Edge Function to toggle flag
-- `src/lib/commands/updateSessionTournament.js` — Frontend command wrapper
-- `src/lib/normalize/normalizeSession.js` — snake_case → camelCase conversion
-- `src/tennis/domain/availability.js` — Two-layer exclusion (see below)
-- `src/shared/courts/overtimeEligibility.js` — Excludes from fallback courts
+- `src/lib/backend/TennisCommands.ts` (`updateSessionTournament`) — Frontend command wrapper
+- `src/lib/normalize/normalizeSession.ts` — snake_case → camelCase conversion
+- `src/tennis/domain/availability.ts` — Two-layer exclusion (see below)
+- `src/shared/courts/overtimeEligibility.ts` — Excludes from fallback courts
 
 **Two-layer availability approach:**
 1. `getFreeCourtsInfo()` — Excludes tournament courts from "free" count (no waitlist CTA triggers)
@@ -276,8 +310,8 @@ Full-time court detection:
 ```
 
 **Key files:**
-- `src/lib/commands/deferWaitlist.js` — Marks entry as deferred
-- `src/tennis/domain/availability.js` — Full-time court detection
+- `src/lib/commands/deferWaitlist.ts` — Marks entry as deferred
+- `src/tennis/domain/availability.ts` — Full-time court detection
 
 **Behavioral invariants:**
 - Deferred entries are invisible to queue position calculation
