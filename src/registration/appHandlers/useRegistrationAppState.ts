@@ -90,7 +90,7 @@ const backend = createBackend();
  * @param {boolean} [options.isMobileView] - Whether the app is in mobile view mode
  * @returns {Object} - All state, setters, refs, derived values, helpers, and hook results
  */
-export function useRegistrationAppState({ isMobileView = false } = {}) {
+export function useRegistrationAppState({ isMobileView = false, resetWorkflow = () => {} }: { isMobileView?: boolean; resetWorkflow?: () => void } = {}) {
   // ===== CONSTANTS =====
   const CONSTANTS = {
     ADMIN_CODE: TENNIS_CONFIG.ADMIN.ACCESS_CODE,
@@ -287,5 +287,6 @@ export function useRegistrationAppState({ isMobileView = false } = {}) {
     changeCourtOrchestrated,
     resetFormOrchestrated,
     validateGroupCompat,
+    resetWorkflow,
   });
 }

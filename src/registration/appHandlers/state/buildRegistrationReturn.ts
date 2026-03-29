@@ -113,6 +113,9 @@ export interface BuildRegistrationReturnParams {
 
   // Validation
   validateGroupCompat: AppState['validateGroupCompat'];
+
+  // Workflow reset — must be supplied by the caller (App.tsx passes the key-bump function)
+  resetWorkflow: AppState['resetWorkflow'];
 }
 
 export function buildRegistrationReturn({
@@ -151,6 +154,9 @@ export function buildRegistrationReturn({
 
   // Validation
   validateGroupCompat,
+
+  // Workflow reset
+  resetWorkflow,
 }: BuildRegistrationReturnParams): AppState {
   return {
     // Core state — shell-owned fields only.
@@ -348,9 +354,6 @@ export function buildRegistrationReturn({
     // Validation
     validateGroupCompat,
 
-    // Workflow reset — placeholder, overwritten by App.jsx with actual key bump function
-    resetWorkflow: () => {
-      throw new Error('resetWorkflow not wired — AppInner must set app.resetWorkflow');
-    },
+    resetWorkflow,
   };
 }

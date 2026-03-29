@@ -33,16 +33,16 @@ const backend = createBackend();
  * AppInner — calls useRegistrationAppState (which reads WorkflowContext)
  * and useRegistrationHandlers.
  *
+ * resetWorkflow is passed directly into useRegistrationAppState so it is
+ * wired at construction time — no post-construction mutation needed.
+ *
  * Lives inside WorkflowProvider so all workflow hooks are available via context.
  *
  * @param {{ isMobileView: boolean, resetWorkflow: () => void }} props
  */
 function AppInner({ isMobileView, resetWorkflow }) {
   // Get all state, effects, hooks, and derived values
-  const app = useRegistrationAppState({ isMobileView });
-
-  // Attach resetWorkflow so handlers can trigger key-based reset
-  app.resetWorkflow = resetWorkflow;
+  const app = useRegistrationAppState({ isMobileView, resetWorkflow });
 
   // Get all handlers, passing the app object
   const handlers = useRegistrationHandlers({ app });
