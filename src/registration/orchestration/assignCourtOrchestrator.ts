@@ -137,6 +137,42 @@ function startAutoResetTimer(
   }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
 }
 
+// =============================================================================
+// ARCHITECTURAL ROADMAP — read before modifying this file
+//
+// This is the most critical path in the system. Every court assignment —
+// direct and waitlist — flows through assignCourtToGroupOrchestrated.
+//
+// Conceptual stages (in execution order):
+//
+//   1. GUARD GAUNTLET — five sequential early-exit guards:
+//        double-submit prevention → operating hours → court number validity
+//        → group has players → group compatibility (domain rules)
+//        Each guard returns early with the appropriate feedback channel
+//        (silent / toast / alert) documented inline.
+//
+//   2. PLAYER NORMALIZATION — splits currentGroup into two arrays
+//        (members-only for domain validation, all players for assignment),
+//        derives session duration and group type from player count.
+//
+//   3. BLOCK-CONFLICT CHECK — async: fetches upcoming block on selected court;
+//        if the block starts before the session would end, prompts to confirm.
+//
+//   4. WAITLIST BRANCH (early-exit) — when currentWaitlistEntryId is set,
+//        calls assignFromWaitlist, clears waitlist state, shows success, returns.
+//        Stages 5–6 are skipped entirely.
+//
+//   5. DIRECT ASSIGNMENT — calls assignCourtWithPlayers; handles denial codes
+//        (COURT_OCCUPIED → refresh, GPS failure → fallback prompt);
+//        applies success state and starts the court-change countdown timer.
+//
+// Safe modification protocol:
+//   - Run the test suite first: tests/unit/orchestration/assignCourtOrchestrator.test.ts
+//   - Add a failing test before changing behaviour (guards, denial codes, success state)
+//   - Each stage above is a natural extraction boundary if decomposition is needed
+//   - Do not reorder stages — guards must run before normalization, normalization
+//     before the branch split, branch split before direct assignment
+// =============================================================================
 export async function assignCourtToGroupOrchestrated(
   courtNumber: number | null | undefined,
   selectableCountAtSelection: number | null,
