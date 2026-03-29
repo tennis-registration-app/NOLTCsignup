@@ -6,7 +6,7 @@ const OPERATING_START = 6;
 const OPERATING_END = 21;
 
 function generateTimeSlots() {
-  const slots = [];
+  const slots: Array<{ hour: number; minute: number; label: string; value: number }> = [];
   for (let h = OPERATING_START; h <= OPERATING_END; h++) {
     for (let m = 0; m < 60; m += 30) {
       if (h === OPERATING_END && m > 0) break;
@@ -51,7 +51,7 @@ function formatDuration(startVal, endVal) {
  * @param {string} props.label
  * @param {((slot: {value: number, label: string, hour: number, minute: number}) => boolean)} [props.filterFn]
  */
-function ScrollPicker({ slots, selectedValue, onChange, label, filterFn }) {
+function ScrollPicker({ slots, selectedValue, onChange, label, filterFn = undefined }) {
   const listRef = useRef(null);
   const itemRefs = useRef({});
   const filtered = filterFn ? slots.filter(filterFn) : slots;

@@ -33,7 +33,7 @@ const debounce = (fn, ms = 150) => {
 };
 
 // Timer management
-const _timers = [];
+const _timers: Array<{ id: number; type: string }> = [];
 const addTimer = (id) => {
   _timers.push({ id, type: 'interval' });
   return id;

@@ -14,13 +14,11 @@ import { logger } from '../../lib/logger';
 import { emitDom } from '../../platform/attachLegacyEvents';
 
 // Access global dependencies
-const Storage = /** @type {any} */ (window.TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } });
-const BL = /** @type {any} */ (
-  window.BL || {
-    applyTemplate: () => [],
-    overlaps: () => false,
-  }
-);
+const Storage = ((window as any).TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } }) as {STORAGE: Record<string, string>; readJSON?: (key: string) => unknown; writeJSON?: (key: string, val: unknown) => void};
+const BL = ((window as any).BL || {
+    applyTemplate: (): object[] => [],
+    overlaps: (): boolean => false,
+  }) as {applyTemplate: (opts: object) => Array<{courtNumber: number; id?: string; createdAt?: string; [key: string]: unknown}>; overlaps: (a: object, b: object) => boolean};
 
 const AIAssistantAdmin = ({
   onClose,
@@ -241,10 +239,10 @@ const AIAssistantAdmin = ({
 
         // load/persist using existing key
         const key = Storage.STORAGE.BLOCKS;
-        const existing = Storage.readJSON ? Storage.readJSON(key) || [] : [];
+        const existing = (Storage.readJSON ? Storage.readJSON(key) || [] : []) as Array<{courtNumber: number; id?: string; createdAt?: string; [key: string]: unknown}>;
 
         // Prevent conflicts: if any new block overlaps an existing block on the same court, abort with a clear message.
-        const conflicts = [];
+        const conflicts: number[] = [];
         for (const nb of newBlocks) {
           for (const b of existing) {
             if (b.courtNumber === nb.courtNumber && BL.overlaps(nb, b)) {
@@ -321,7 +319,7 @@ const AIAssistantAdmin = ({
         }
 
       case 'showStatus': {
-        const occupied = [];
+        const occupied: Array<{court: number; players: string}> = [];
         data.courts.forEach((court, idx) => {
           // Domain format: court.session.group.players
           const sessionPlayers = court?.session?.group?.players;
@@ -358,7 +356,7 @@ const AIAssistantAdmin = ({
         );
 
       case 'showBallSales': {
-        let sales = [];
+        let sales: Array<{timestamp: string; totalAmount: number}> = [];
         try {
           sales = getCache('ballPurchases') || [];
         } catch {

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*ralph-wiggum*)",
+      "Bash(*setup-ralph-loop*)",
+      "Bash(```!*```*)"
+    ]
+  }
+}

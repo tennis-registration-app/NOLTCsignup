@@ -15,6 +15,118 @@
 
 /** @typedef {import('react').ComponentType<unknown>} ComponentType */
 
+import type React from 'react';
+
+// TypeScript parameter interfaces for factory functions
+interface WetCourtsModelParams {
+  wetCourtsActive?: boolean;
+  wetCourts?: Set<number>;
+  ENABLE_WET_COURTS?: boolean;
+}
+
+interface WetCourtsActionsParams {
+  handleEmergencyWetCourt?: (...args: unknown[]) => void;
+  deactivateWetCourts?: (...args: unknown[]) => void;
+  onClearWetCourt?: (...args: unknown[]) => void;
+  onClearAllWetCourts?: (...args: unknown[]) => void;
+}
+
+interface BlockModelParams {
+  courts?: object[];
+  courtBlocks?: object[];
+  hoursOverrides?: object[];
+  initialEditingBlock?: object | null;
+  suspendedBlocks?: object[];
+}
+
+interface BlockActionsParams {
+  onApplyBlocks?: (...args: unknown[]) => void;
+  onEditingBlockConsumed?: (...args: unknown[]) => void;
+  onNotification?: (...args: unknown[]) => void;
+}
+
+interface BlockComponentsParams {
+  VisualTimeEntry?: React.ComponentType<unknown>;
+  MiniCalendar?: React.ComponentType<unknown>;
+  EventCalendarEnhanced?: React.ComponentType<unknown>;
+  MonthView?: React.ComponentType<unknown>;
+  EventSummary?: React.ComponentType<unknown>;
+  HoverCard?: React.ComponentType<unknown>;
+  QuickActionsMenu?: React.ComponentType<unknown>;
+}
+
+interface AdminServicesParams {
+  backend?: object;
+}
+
+interface StatusModelParams {
+  courts?: object[];
+  courtBlocks?: object[];
+  selectedDate?: Date;
+  currentTime?: Date;
+  waitingGroups?: object[];
+}
+
+interface StatusActionsParams {
+  clearCourt?: (...args: unknown[]) => void;
+  moveCourt?: (...args: unknown[]) => void;
+  clearAllCourts?: (...args: unknown[]) => void;
+  handleEditBlockFromStatus?: (...args: unknown[]) => void;
+  moveInWaitlist?: (...args: unknown[]) => void;
+  removeFromWaitlist?: (...args: unknown[]) => void;
+}
+
+interface WaitlistModelParams {
+  waitingGroups?: object[];
+}
+
+interface WaitlistActionsParams {
+  moveInWaitlist?: (...args: unknown[]) => void;
+  removeFromWaitlist?: (...args: unknown[]) => void;
+}
+
+interface CalendarModelParams {
+  courts?: object[];
+  currentTime?: unknown;
+  hoursOverrides?: object[];
+  calendarView?: string;
+  refreshTrigger?: number;
+}
+
+interface CalendarActionsParams {
+  onRefresh?: (...args: unknown[]) => void;
+}
+
+interface AIAssistantModelParams {
+  activeTab?: string;
+  showAIAssistant?: boolean;
+  USE_REAL_AI?: boolean;
+  courts?: object[];
+  settings?: object;
+  waitingGroups?: object[];
+}
+
+interface AIAssistantActionsParams {
+  setShowAIAssistant?: (...args: unknown[]) => void;
+  onAISettingsChanged?: (...args: unknown[]) => void;
+  loadData?: (...args: unknown[]) => void;
+  clearCourt?: (...args: unknown[]) => void;
+  clearAllCourts?: (...args: unknown[]) => void;
+  moveCourt?: (...args: unknown[]) => void;
+  updateBallPrice?: (...args: unknown[]) => void;
+  refreshData?: (...args: unknown[]) => void;
+}
+
+interface AIAssistantServicesParams {
+  backend?: object;
+  dataStore?: object;
+}
+
+interface AIAssistantComponentsParams {
+  AIAssistant?: React.ComponentType<unknown>;
+  AIAssistantAdmin?: React.ComponentType<unknown>;
+}
+
 // ============================================================
 // WET COURTS (cross-cutting, used by multiple components)
 // ============================================================
@@ -49,7 +161,7 @@
  * @param {boolean} [params.ENABLE_WET_COURTS] - Feature flag
  * @returns {WetCourtsModel}
  */
-export function createWetCourtsModel(params = {}) {
+export function createWetCourtsModel(params: WetCourtsModelParams = {}) {
   const { wetCourtsActive, wetCourts, ENABLE_WET_COURTS } = params;
   return {
     active: wetCourtsActive,
@@ -67,7 +179,7 @@ export function createWetCourtsModel(params = {}) {
  * @param {Function} [params.onClearAllWetCourts] - Clear all wet courts
  * @returns {WetCourtsActions}
  */
-export function createWetCourtsActions(params = {}) {
+export function createWetCourtsActions(params: WetCourtsActionsParams = {}) {
   const { handleEmergencyWetCourt, deactivateWetCourts, onClearWetCourt, onClearAllWetCourts } =
     params;
   return {
@@ -114,7 +226,7 @@ export function createWetCourtsActions(params = {}) {
  * @param {Array<Object>} [params.suspendedBlocks] - Blocks paused during wet courts
  * @returns {BlockModel}
  */
-export function createBlockModel(params = {}) {
+export function createBlockModel(params: BlockModelParams = {}) {
   const { courts, courtBlocks, hoursOverrides, initialEditingBlock, suspendedBlocks } = params;
   return {
     courts,
@@ -133,7 +245,7 @@ export function createBlockModel(params = {}) {
  * @param {Function} [params.onNotification] - Show notification
  * @returns {BlockActions}
  */
-export function createBlockActions(params = {}) {
+export function createBlockActions(params: BlockActionsParams = {}) {
   const { onApplyBlocks, onEditingBlockConsumed, onNotification } = params;
   return {
     applyBlocks: onApplyBlocks,
@@ -174,7 +286,7 @@ export function createBlockActions(params = {}) {
  * @param {ComponentType} [params.QuickActionsMenu] - Context menu
  * @returns {BlockComponents}
  */
-export function createBlockComponents(params = {}) {
+export function createBlockComponents(params: BlockComponentsParams = {}) {
   const {
     VisualTimeEntry,
     MiniCalendar,
@@ -217,7 +329,7 @@ export function createBlockComponents(params = {}) {
  * @param {Object} [params.backend] - TennisBackend instance
  * @returns {AdminServices}
  */
-export function createAdminServices(params = {}) {
+export function createAdminServices(params: AdminServicesParams = {}) {
   const { backend } = params;
   return {
     backend,
@@ -243,7 +355,7 @@ export function createAdminServices(params = {}) {
  * @param {Object} [params={}]
  * @returns {StatusModel}
  */
-export function createStatusModel(params = {}) {
+export function createStatusModel(params: StatusModelParams = {}) {
   const { courts, courtBlocks, selectedDate, currentTime, waitingGroups } = params;
   return {
     courts,
@@ -277,7 +389,7 @@ export function createStatusModel(params = {}) {
  * @param {Object} [params={}]
  * @returns {StatusActions}
  */
-export function createStatusActions(params = {}) {
+export function createStatusActions(params: StatusActionsParams = {}) {
   const {
     clearCourt,
     moveCourt,
@@ -312,7 +424,7 @@ export function createStatusActions(params = {}) {
  * @param {Array<Object>} [params.waitingGroups] - Waitlist entries
  * @returns {WaitlistModel}
  */
-export function createWaitlistModel(params = {}) {
+export function createWaitlistModel(params: WaitlistModelParams = {}) {
   const { waitingGroups } = params;
   return {
     waitingGroups,
@@ -332,7 +444,7 @@ export function createWaitlistModel(params = {}) {
  * @param {Object} [params={}]
  * @returns {WaitlistActions}
  */
-export function createWaitlistActions(params = {}) {
+export function createWaitlistActions(params: WaitlistActionsParams = {}) {
   const { moveInWaitlist, removeFromWaitlist } = params;
   return {
     moveInWaitlist,
@@ -366,7 +478,7 @@ export function createWaitlistActions(params = {}) {
  * @param {number} [params.refreshTrigger] - Refresh trigger value
  * @returns {CalendarModel}
  */
-export function createCalendarModel(params = {}) {
+export function createCalendarModel(params: CalendarModelParams = {}) {
   const { courts, currentTime, hoursOverrides, calendarView, refreshTrigger } = params;
   return {
     courts,
@@ -391,7 +503,7 @@ export function createCalendarModel(params = {}) {
  * @param {Function} [params.onRefresh] - Refresh callback
  * @returns {CalendarActions}
  */
-export function createCalendarActions(params = {}) {
+export function createCalendarActions(params: CalendarActionsParams = {}) {
   const { onRefresh } = params;
   return {
     onRefresh,
@@ -426,7 +538,7 @@ export function createCalendarActions(params = {}) {
  * @param {Array<Object>} [params.waitingGroups] - Waitlist entries
  * @returns {AIAssistantModel}
  */
-export function createAIAssistantModel(params = {}) {
+export function createAIAssistantModel(params: AIAssistantModelParams = {}) {
   const { activeTab, showAIAssistant, USE_REAL_AI, courts, settings, waitingGroups } = params;
   return {
     activeTab,
@@ -470,7 +582,7 @@ export function createAIAssistantModel(params = {}) {
  * @param {Function} [params.refreshData] - Refresh data
  * @returns {AIAssistantActions}
  */
-export function createAIAssistantActions(params = {}) {
+export function createAIAssistantActions(params: AIAssistantActionsParams = {}) {
   const {
     setShowAIAssistant,
     onAISettingsChanged,
@@ -510,7 +622,7 @@ export function createAIAssistantActions(params = {}) {
  * @param {Object} [params.dataStore] - TennisCourtDataStore instance
  * @returns {AIAssistantServices}
  */
-export function createAIAssistantServices(params = {}) {
+export function createAIAssistantServices(params: AIAssistantServicesParams = {}) {
   const { backend, dataStore } = params;
   return {
     backend,
@@ -534,7 +646,7 @@ export function createAIAssistantServices(params = {}) {
  * @param {ComponentType} [params.AIAssistantAdmin] - AI assistant admin
  * @returns {AIAssistantComponents}
  */
-export function createAIAssistantComponents(params = {}) {
+export function createAIAssistantComponents(params: AIAssistantComponentsParams = {}) {
   const { AIAssistant, AIAssistantAdmin } = params;
   return {
     AIAssistant,

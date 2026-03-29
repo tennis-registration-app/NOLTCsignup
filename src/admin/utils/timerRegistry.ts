@@ -7,7 +7,7 @@
  */
 
 // Private timer registry - NOT exported
-const _timers = [];
+const _timers: Array<{ id: number; type: string }> = [];
 
 /**
  * Register a timer (interval or timeout) for centralized cleanup.

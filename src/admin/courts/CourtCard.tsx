@@ -6,8 +6,7 @@ import React from 'react';
 import { Edit2, X, RefreshCw } from '../components';
 import { getStatusColor, formatTimeRemaining, getPlayerNames } from './courtStatusUtils';
 
-/** @param {Object} props */
-const CourtCard = ({
+const CourtCard: React.FC<{courtNum: number; status: string; info: object | null; currentTime: Date; movingFrom: number | null; showActionsMenu: boolean; handlers: object}> = ({
   courtNum,
   status,
   info,
