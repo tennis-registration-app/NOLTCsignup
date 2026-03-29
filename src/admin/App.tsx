@@ -36,7 +36,7 @@ import { clearWaitlistOp } from './handlers/waitlistOperations';
 import { useAdminAppState } from './hooks/useAdminAppState';
 
 // Main Admin Panel Component
-const AdminPanelV2 = ({ onExit }) => {
+const AdminPanel = ({ onExit }) => {
   const showNotification = useAdminNotification() as (message: string, type: string) => void;
   const confirm = useAdminConfirm() as (message: string) => Promise<boolean>;
 
@@ -129,7 +129,6 @@ const AdminPanelV2 = ({ onExit }) => {
   );
 };
 
-// Export the main App component (renamed from TestMenu)
 export default function App() {
   const [view, setView] = useState('menu');
 
@@ -155,7 +154,7 @@ export default function App() {
     return (
       <NotificationProvider>
         <ConfirmProvider>
-          <AdminPanelV2 onExit={() => setView('menu')} />
+          <AdminPanel onExit={() => setView('menu')} />
         </ConfirmProvider>
       </NotificationProvider>
     );

@@ -74,14 +74,10 @@ export function getRuntimeConfig(env = import.meta.env) {
   return Object.freeze(config);
 }
 
-// =============================================================================
-// Legacy Exports (preserve backward compatibility during migration)
-// =============================================================================
-
 export const MODE = import.meta.env.MODE;
 
 /**
- * Legacy getSupabaseConfig - now wraps getRuntimeConfig for backward compat.
+ * Returns Supabase connection config in the shape expected by existing consumers.
  * @returns {{ url: string, anonKey: string, baseUrl: string }}
  */
 export function getSupabaseConfig() {

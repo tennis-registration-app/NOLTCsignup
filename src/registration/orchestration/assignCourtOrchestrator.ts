@@ -1,6 +1,5 @@
 /**
  * Assign Court Orchestrator
- * Moved from App.jsx
  */
 
 import { logger } from '../../lib/logger';

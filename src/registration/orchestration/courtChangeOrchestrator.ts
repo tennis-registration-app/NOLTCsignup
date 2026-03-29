@@ -1,6 +1,5 @@
 /**
  * Court Change Orchestrator
- * Moved from App.jsx
  */
 
 import type { ReplacedGroup, OriginalCourtData, Setter } from '../../types/appTypes.js';

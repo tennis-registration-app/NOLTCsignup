@@ -1,7 +1,4 @@
 // Registration App - Vite-bundled React
-// Converted from inline Babel to ES module JSX
-// Streamlined to use useRegistrationAppState and useRegistrationHandlers
-// Collapsed prop enumeration - handlers now receive { app } directly
 import React, { useState, useCallback } from 'react';
 
 // Import registration-specific services
@@ -30,7 +27,7 @@ if (!window.GeolocationService) setGeolocationServiceGlobal(GeolocationService);
 const backend = createBackend();
 
 /**
- * AppInner — calls useRegistrationAppState (which reads WorkflowContext)
+ * RegistrationApp — calls useRegistrationAppState (which reads WorkflowContext)
  * and useRegistrationHandlers.
  *
  * resetWorkflow is passed directly into useRegistrationAppState so it is
@@ -40,7 +37,7 @@ const backend = createBackend();
  *
  * @param {{ isMobileView: boolean, resetWorkflow: () => void }} props
  */
-function AppInner({ isMobileView, resetWorkflow }) {
+function RegistrationApp({ isMobileView, resetWorkflow }) {
   // Get all state, effects, hooks, and derived values
   const app = useRegistrationAppState({ isMobileView, resetWorkflow });
 
@@ -67,7 +64,7 @@ const TennisRegistration = ({ isMobileView = window.IS_MOBILE_VIEW }) => {
 
   return (
     <WorkflowProvider key={workflowKey} backend={backend}>
-      <AppInner isMobileView={isMobileView ?? false} resetWorkflow={resetWorkflow} />
+      <RegistrationApp isMobileView={isMobileView ?? false} resetWorkflow={resetWorkflow} />
     </WorkflowProvider>
   );
 };

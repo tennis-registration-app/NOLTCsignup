@@ -2,15 +2,12 @@ import type { CommandResponse } from '../../types/appTypes';
 /**
  * useAdminAppState
  *
- * Extracted from AdminPanelV2 in App.jsx — all useState, custom hooks,
- * useEffect side-effects, and controller assembly. Bodies are verbatim;
- * dependency arrays match the original closures.
- *
- * Module-level singletons and no-op setters defined at file scope for
- * stable identity (same pattern as original App.jsx).
+ * All useState, custom hooks, useEffect side-effects, and controller assembly
+ * for the admin panel. Module-level singletons and no-op setters are defined
+ * at file scope for stable identity.
  *
  * Receives context hooks (showNotification, confirm) as params because
- * they come from React context providers above AdminPanelV2.
+ * they come from React context providers above AdminPanel.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../../lib/backend/index';

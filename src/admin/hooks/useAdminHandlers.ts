@@ -2,9 +2,7 @@ import type { TennisBackendShape, DomainCourt, DomainWaitlistEntry, DataStoreSha
 /**
  * useAdminHandlers
  *
- * Extracted from AdminPanelV2 in App.jsx — the 8 useCallback wrappers
- * around handler operation modules. Bodies are verbatim; dependency
- * arrays match the original closures.
+ * useCallback wrappers around handler operation modules for the admin panel.
  */
 import { useCallback } from 'react';
 import { removeFromWaitlistOp, moveInWaitlistOp } from '../handlers/waitlistOperations';

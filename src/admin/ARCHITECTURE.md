@@ -34,7 +34,7 @@ The following changes were made as part of the system-wide convergence plan:
   `src/admin/utils/getDeviceId.js`
 - **USE_REAL_AI** — replaced hardcoded `true` flag with `featureFlags.USE_REAL_AI`
   from `runtimeConfig.js` (env-driven)
-- **AdminPanelV2 guard** — removed dead `typeof` check (always true)
+- **AdminPanel guard** — removed dead `typeof` check (always true)
 - **beforeunload** — moved from module-level to `useEffect` with cleanup
 - **TabNavigation** — converted 5 `React.createElement()` calls to JSX
 - **Block durations** — named magic numbers (`DURATION_2H`, `DURATION_4H`)

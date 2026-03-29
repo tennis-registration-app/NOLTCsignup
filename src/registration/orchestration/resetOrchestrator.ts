@@ -1,6 +1,5 @@
 /**
  * Reset Orchestrators
- * Moved from App.jsx
  *
  * After WorkflowProvider introduction (Step 1), these orchestrators only
  * handle shell-owned state. Workflow state (group, member identity, streak,

@@ -1,6 +1,5 @@
 /**
  * Apply Blocks Operation
- * Extracted from AdminPanelV2 for maintainability.
  * Pure handler logic - no React hooks or state.
  */
 

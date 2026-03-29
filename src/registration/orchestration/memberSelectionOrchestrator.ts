@@ -1,6 +1,5 @@
 /**
  * Member Selection Orchestrators
- * Moved from App.jsx
  */
 
 import { logger } from '../../lib/logger';

@@ -1,7 +1,6 @@
 /**
  * Waitlist Operations
- * Extracted from AdminPanelV2 for maintainability.
- * These are pure handler logic - no React hooks or state.
+ * Pure handler logic - no React hooks or state.
  */
 
 import type { TennisBackendShape, DomainWaitlistEntry, CommandResponse } from '../../types/appTypes';
