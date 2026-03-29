@@ -160,7 +160,7 @@ function startAutoResetTimer(
 //
 //   4. WAITLIST BRANCH (early-exit) — when currentWaitlistEntryId is set,
 //        calls assignFromWaitlist, clears waitlist state, shows success, returns.
-//        Stages 5–6 are skipped entirely.
+//        Stage 5 is skipped entirely.
 //
 //   5. DIRECT ASSIGNMENT — calls assignCourtWithPlayers; handles denial codes
 //        (COURT_OCCUPIED → refresh, GPS failure → fallback prompt);
