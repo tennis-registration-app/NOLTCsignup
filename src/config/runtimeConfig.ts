@@ -48,24 +48,17 @@ export function getRuntimeConfig(env = import.meta.env) {
   };
 
   if (env.PROD) {
-    const missing: string[] = [];
-    const defaulted: string[] = [];
-    for (const [key, value] of Object.entries(config)) {
-      // Fail if empty/falsy or if the value still equals the dev default.
-      // Both conditions mean a real production credential was not supplied.
-      if (!value) {
-        missing.push(`VITE_${key}`);
-      } else if (value === DEV_DEFAULTS[key as keyof typeof DEV_DEFAULTS]) {
-        defaulted.push(`VITE_${key}`);
-      }
-    }
-    const hasProblem = missing.length > 0 || defaulted.length > 0;
-    if (hasProblem) {
-      const parts: string[] = [];
-      if (missing.length > 0) parts.push(`missing: ${missing.join(', ')}`);
-      if (defaulted.length > 0) parts.push(`still using dev defaults: ${defaulted.join(', ')}`);
+    // check-env.js (scripts/check-env.js) is the real build-time gate for missing env vars.
+    // This runtime check is a last-resort fallback for cases where the build bypassed
+    // check-env.js (e.g., non-Vercel deploy without VERCEL=1 set). Only check for
+    // empty/missing values — do not compare against DEV_DEFAULTS, because the production
+    // credentials for this deployment happen to equal the dev defaults.
+    const missing: string[] = Object.entries(config)
+      .filter(([, value]) => !value)
+      .map(([key]) => `VITE_${key}`);
+    if (missing.length > 0) {
       throw new Error(
-        `Production build requires explicit environment variables (${parts.join('; ')}). ` +
+        `Production build requires explicit environment variables (missing: ${missing.join(', ')}). ` +
           'See docs/ENVIRONMENT.md for required configuration.'
       );
     }

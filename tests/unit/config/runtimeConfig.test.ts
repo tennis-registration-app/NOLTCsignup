@@ -10,9 +10,11 @@ import { getRuntimeConfig } from '../../../src/config/runtimeConfig.js';
  *
  * Validation matrix:
  * - env.PROD falsy: falls back to DEV_DEFAULTS silently
- * - env.PROD truthy: throws on missing env vars (empty values) OR on values
- *   that still equal DEV_DEFAULTS (to prevent silent misconfigured deployments
- *   from hitting the dev Supabase project instead of production)
+ * - env.PROD truthy: throws only if a value is genuinely falsy (completely
+ *   absent after fallback). Does NOT reject values that equal DEV_DEFAULTS,
+ *   because this deployment's production credentials happen to equal the
+ *   dev defaults. check-env.js (scripts/check-env.js) is the real build-time
+ *   gate for missing vars in Vercel deployments.
  */
 
 describe('getRuntimeConfig', () => {
@@ -54,12 +56,11 @@ describe('getRuntimeConfig', () => {
   });
 
   describe('production mode (PROD truthy)', () => {
-    it('throws when dev defaults are used (production must supply explicit credentials)', () => {
-      // Dev defaults must be rejected in production to prevent misconfigured deployments
-      // from silently hitting the dev Supabase project instead of production.
-      expect(() => getRuntimeConfig({ PROD: true })).toThrow(
-        'still using dev defaults'
-      );
+    it('does not throw when no env vars set (DEV_DEFAULTS are valid production values for this deployment)', () => {
+      // DEV_DEFAULTS contain the real production Supabase credentials for this club.
+      // Falling back to them in production is acceptable — the build-time gate in
+      // check-env.js (scripts/check-env.js) enforces explicit vars in Vercel builds.
+      expect(() => getRuntimeConfig({ PROD: true })).not.toThrow();
     });
 
     it('does not throw when valid production env vars are set', () => {
@@ -73,9 +74,10 @@ describe('getRuntimeConfig', () => {
       ).not.toThrow();
     });
 
-    it('throws when env vars are empty strings (falls back to dev defaults, which are rejected in production)', () => {
-      // Empty strings trigger || fallback to DEV_DEFAULTS.
-      // DEV_DEFAULTS are then detected and rejected — same protection as omitting vars entirely.
+    it('does not throw when env vars are empty strings (falls back to DEV_DEFAULTS, which are production-valid)', () => {
+      // Empty strings trigger || fallback to DEV_DEFAULTS. Since DEV_DEFAULTS are the
+      // real production credentials, this produces a valid config. check-env.js catches
+      // empty-string vars at Vercel build time before they can reach production.
       expect(() =>
         getRuntimeConfig({
           PROD: true,
@@ -83,7 +85,7 @@ describe('getRuntimeConfig', () => {
           VITE_SUPABASE_ANON_KEY: '',
           VITE_BASE_URL: '',
         })
-      ).toThrow('still using dev defaults');
+      ).not.toThrow();
     });
 
     it('uses provided values over dev defaults', () => {
