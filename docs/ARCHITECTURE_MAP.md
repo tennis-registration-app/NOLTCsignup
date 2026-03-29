@@ -211,13 +211,13 @@ Most boundaries are now ESLint-enforced — `npm run verify` will fail if violat
 
 ```bash
 # Config: no hardcoded secrets outside the config module(s)
-rg "supabase.*url|anon.*key" src/ --glob "*.js" | rg -v "src/config/"
+rg "supabase.*url|anon.*key" src/ --glob "*.ts" | rg -v "src/config/"
 
 # Window writes: ESLint-enforced (no-restricted-syntax) — this rg check is supplementary
-rg "\bwindow\.\w+\s*=" src/ --glob "*.js" --glob "*.jsx" | rg -v "src/platform/"
+rg "\bwindow\.\w+\s*=" src/ --glob "*.ts" --glob "*.tsx" | rg -v "src/platform/"
 
 # Naming: no snake_case in JSX outside boundary modules
-rg -n "\b[a-z]+_[a-z]+\b" src/ --glob "*.jsx" | rg -v "src/lib/normalize|src/registration/backend"
+rg -n "\b[a-z]+_[a-z]+\b" src/ --glob "*.tsx" | rg -v "src/lib/normalize|src/registration/backend"
 
 # Dual-format: no fallback patterns
 rg -n "accountId\s*\|\|.*account_id|isPrimary\s*\|\|.*is_primary" src/
@@ -233,7 +233,7 @@ These rules are mechanically enforced — CI rejects violations via `npm run ver
 
 | Rule | Scope | What it prevents |
 |------|-------|-----------------|
-| No raw ApiAdapter | `*.jsx` | UI bypassing the backend facade |
+| No raw ApiAdapter | `*.tsx` | UI bypassing the backend facade |
 | No orchestration/backend from screens | `*/screens/**` | Screens doing business logic |
 | No backend from presenters | `*/presenters/**` | Presenters making API calls |
 | No React in presenters | `*/presenters/**` | Impure presenters |
