@@ -85,7 +85,7 @@ The registration app is the most complex frontend, handling member check-in, cou
 
 ```
 src/registration/
-├── App.jsx (36 lines) — Composition root
+├── App.tsx (36 lines) — Composition root
 │   ├── useRegistrationAppState() — All state/hooks
 │   ├── useRegistrationHandlers() — All handlers
 │   └── <RegistrationRouter app={app} handlers={handlers} />
@@ -97,13 +97,13 @@ The app state is composed from 7 focused sub-modules:
 
 ```
 appHandlers/state/
-├── useRegistrationAppState.js — Composition hook
-├── useRegistrationUiState.js — useState declarations
-├── useRegistrationRuntime.js — Timers, refs, effects
-├── useRegistrationDataLayer.js — Backend subscription
-├── useRegistrationDomainHooks.js — Feature hooks (streak, courts, etc.)
-├── useRegistrationDerived.js — Computed values
-├── useRegistrationHelpers.js — Helper functions
+├── useRegistrationAppState.ts — Composition hook
+├── useRegistrationUiState.ts — useState declarations
+├── useRegistrationRuntime.ts — Timers, refs, effects
+├── useRegistrationDataLayer.ts — Backend subscription
+├── useRegistrationDomainHooks.ts — Feature hooks (streak, courts, etc.)
+├── useRegistrationDerived.ts — Computed values
+├── useRegistrationHelpers.ts — Helper functions
 └── buildRegistrationReturn.ts — Return object assembly
 ```
 
@@ -113,27 +113,27 @@ Handlers are grouped by domain concern:
 
 ```
 appHandlers/handlers/
-├── useRegistrationHandlers.js — Composition hook
-├── useAdminHandlers.js — Admin operations
-├── useGuestHandlers.js — Guest player management
-├── useGroupHandlers.js — Group composition
-├── useCourtHandlers.js — Court assignment
-└── useNavigationHandlers.js — Screen navigation
+├── useRegistrationHandlers.ts — Composition hook
+├── useAdminHandlers.ts — Admin operations
+├── useGuestHandlers.ts — Guest player management
+├── useGroupHandlers.ts — Group composition
+├── useCourtHandlers.ts — Court assignment
+└── useNavigationHandlers.ts — Screen navigation
 ```
 
 ### Router & Routes
 
 ```
 router/
-├── RegistrationRouter.jsx — Thin switch (59 lines)
+├── RegistrationRouter.tsx — Thin switch (59 lines)
 └── routes/
-    ├── HomeRoute.jsx — Home/search
-    ├── AdminRoute.jsx — Admin interface
-    ├── GroupRoute.jsx — Group management
-    ├── CourtRoute.jsx — Court selection
-    ├── SuccessRoute.jsx — Success screen
-    ├── ClearCourtRoute.jsx — Court clearing
-    └── SilentAssignRoute.jsx — Direct assignment
+    ├── HomeRoute.tsx — Home/search
+    ├── AdminRoute.tsx — Admin interface
+    ├── GroupRoute.tsx — Group management
+    ├── CourtRoute.tsx — Court selection
+    ├── SuccessRoute.tsx — Success screen
+    ├── ClearCourtRoute.tsx — Court clearing
+    └── SilentAssignRoute.tsx — Direct assignment
 ```
 
 ### Business Features
@@ -150,7 +150,7 @@ Routes receive two grouped objects plus workflow context:
 - Per-flow state (group composition, court assignment, member identity, streak) is owned by `WorkflowProvider` and consumed via `useWorkflowContext()` in routes, presenters, and handler deps builders
 
 ```javascript
-// In App.jsx
+// In App.tsx
 const app = useRegistrationAppState();
 const handlers = useRegistrationHandlers({ ...app });
 return (
@@ -178,10 +178,10 @@ The registration app uses a façade pattern for backend communication.
 
 ```
 backend/
-├── TennisBackend.js — Façade (composes queries + commands)
-├── TennisQueries.js — Read operations (getBoard, getSettings)
-├── TennisCommands.js — Write operations (assignCourt, endSession)
-└── TennisDirectory.js — Member search and lookup
+├── TennisBackend.ts — Façade (composes queries + commands)
+├── TennisQueries.ts — Read operations (getBoard, getSettings)
+├── TennisCommands.ts — Write operations (assignCourt, endSession)
+└── TennisDirectory.ts — Member search and lookup
 ```
 
 ### ApiTennisService
@@ -190,13 +190,13 @@ backend/
 
 | Module | Responsibility |
 |--------|----------------|
-| `courtsService.js` | Court assignment and session operations |
-| `waitlistService.js` | Waitlist CRUD and promotion |
-| `membersService.js` | Member lookup and caching |
-| `settingsService.js` | System settings access |
-| `purchasesService.js` | Ball purchase recording |
-| `lifecycleService.js` | Data initialization and refresh |
-| `participantResolution.js` | Member/guest resolution logic |
+| `courtsService.ts` | Court assignment and session operations |
+| `waitlistService.ts` | Waitlist CRUD and promotion |
+| `membersService.ts` | Member lookup and caching |
+| `settingsService.ts` | System settings access |
+| `purchasesService.ts` | Ball purchase recording |
+| `lifecycleService.ts` | Data initialization and refresh |
+| `participantResolution.ts` | Member/guest resolution logic |
 
 Each service module uses dependency injection for testability:
 
@@ -213,21 +213,21 @@ function createCourtsService({ api, getWaitlistData, notifyListeners }) {
 
 ```
 src/admin/
-├── App.jsx — Entry point + state management
+├── App.tsx — Entry point + state management
 ├── handlers/
-│   ├── applyBlocksOperation.js — Block creation logic
-│   ├── courtOperations.js — Clear/move court operations
-│   └── waitlistOperations.js — Waitlist management
+│   ├── applyBlocksOperation.ts — Block creation logic
+│   ├── courtOperations.ts — Clear/move court operations
+│   └── waitlistOperations.ts — Waitlist management
 ├── tabs/
-│   ├── StatusSection.jsx — Court status tab
-│   ├── BlockingSection.jsx — Block management
-│   ├── CalendarSection.jsx — Event calendar
-│   ├── AnalyticsSection.jsx — Usage analytics
-│   ├── WaitlistSection.jsx — Waitlist management
-│   ├── HistorySection.jsx — Session history
-│   ├── SystemSection.jsx — System settings
-│   ├── AIAssistantSection.jsx — AI assistant interface
-│   └── TabNavigation.jsx — Tab bar
+│   ├── StatusSection.tsx — Court status tab
+│   ├── BlockingSection.tsx — Block management
+│   ├── CalendarSection.tsx — Event calendar
+│   ├── AnalyticsSection.tsx — Usage analytics
+│   ├── WaitlistSection.tsx — Waitlist management
+│   ├── HistorySection.tsx — Session history
+│   ├── SystemSection.tsx — System settings
+│   ├── AIAssistantSection.tsx — AI assistant interface
+│   └── TabNavigation.tsx — Tab bar
 ├── blocks/ — Block manager components
 ├── calendar/ — Calendar components
 ├── courts/ — Court grid components
@@ -263,33 +263,33 @@ Admin sections use domain object props to reduce prop drilling:
 
 ```
 src/courtboard/
-├── main.jsx — Entry point
+├── main.tsx — Entry point
 ├── bridge/
-│   └── window-bridge.js — Single writer for window.CourtboardState
+│   └── window-bridge.ts — Single writer for window.CourtboardState
 ├── components/
-│   ├── TennisCourtDisplay.jsx — Main court grid (state owner)
-│   ├── CourtCard.jsx — Individual court display
-│   ├── WaitingList.jsx — Waitlist display
-│   └── NextAvailablePanel.jsx — Next available courts
+│   ├── TennisCourtDisplay.tsx — Main court grid (state owner)
+│   ├── CourtCard.tsx — Individual court display
+│   ├── WaitingList.tsx — Waitlist display
+│   └── NextAvailablePanel.tsx — Next available courts
 └── mobile/
-    ├── MobileModalApp.jsx — Mobile shell
-    └── MobileModalSheet.jsx — Modal content
+    ├── MobileModalApp.tsx — Mobile shell
+    └── MobileModalSheet.tsx — Modal content
 ```
 
 ### Single Writer Pattern
 
-`window.CourtboardState` is written ONLY by `bridge/window-bridge.js`. This prevents race conditions from multiple components updating shared state.
+`window.CourtboardState` is written ONLY by `bridge/window-bridge.ts`. This prevents race conditions from multiple components updating shared state.
 
 ### Court Status Logic
 
-Court display status is computed client-side by `availability.js`. Tournament courts use a two-layer approach: excluded from the availability overtime list (preventing waitlist offers) but overridden to display as overtime (dark blue) on the courtboard. Tournament courts never turn dark green (selectable).
+Court display status is computed client-side by `availability.ts`. Tournament courts use a two-layer approach: excluded from the availability overtime list (preventing waitlist offers) but overridden to display as overtime (dark blue) on the courtboard. Tournament courts never turn dark green (selectable).
 
 ## Error Handling
 
 ### AppError Contract
 
 The application uses a single structured error class (`AppError`, defined in
-`src/lib/errors/AppError.js`) for programmatic error handling. All other errors
+`src/lib/errors/AppError.ts`) for programmatic error handling. All other errors
 flow as plain `Error` instances.
 
 ```javascript
@@ -329,7 +329,7 @@ The registration app uses JSDoc type boundaries with `// @ts-check` to prevent s
 | Type | Origin | Description |
 |------|--------|-------------|
 | `AppState` | `buildRegistrationReturn.ts` | Application state object |
-| `Handlers` | `useRegistrationHandlers.js` | All handler functions |
+| `Handlers` | `useRegistrationHandlers.ts` | All handler functions |
 
 Type definitions live in `src/types/appTypes.ts`.
 
@@ -390,8 +390,8 @@ import { getFreeCourts } from '@domain';  // domain/
 ### ESLint Boundaries
 
 Architecture boundaries are enforced via ESLint:
-- UI components (*.jsx) cannot import `ApiAdapter` directly
-- Application code cannot use raw `localStorage` (use `prefsStorage.js`)
+- UI components (*.tsx) cannot import `ApiAdapter` directly
+- Application code cannot use raw `localStorage` (use `prefsStorage.ts`)
 - camelCase enforced in application code (snake_case allowed at API boundaries)
 
 ## Security Model
@@ -414,13 +414,13 @@ Architecture boundaries are enforced via ESLint:
 - **Device IDs:** Client-supplied constants (spoofable)
 - **Admin access:** Anyone who navigates to `/admin/` has full access
 
-An auth-ready seam is in place: `src/admin/guards/adminAccessGuard.js` provides `checkAdminAccess()` and `useAdminAccess()` hooks that currently return `{ allowed: true }` in all modes. `ADMIN_ACCESS_MODE` in `src/config/runtimeConfig.js` defaults to `'open'`. When authentication is implemented, this seam activates without structural changes.
+An auth-ready seam is in place: `src/admin/guards/adminAccessGuard.ts` provides `checkAdminAccess()` and `useAdminAccess()` hooks that currently return `{ allowed: true }` in all modes. `ADMIN_ACCESS_MODE` in `src/config/runtimeConfig.ts` defaults to `'open'`. When authentication is implemented, this seam activates without structural changes.
 
 ### Production Hardening Checklist
 
 When leaving demo mode:
 
-- [ ] Add admin authentication (auth-ready seam scaffolded in `adminAccessGuard.js` — implement Supabase Auth + JWT verification)
+- [ ] Add admin authentication (auth-ready seam scaffolded in `adminAccessGuard.ts` — implement Supabase Auth + JWT verification)
 - [ ] Implement device enrollment with server-issued tokens
 - [ ] Audit RLS policies in Supabase
 - [ ] Verify Edge Function authorization
@@ -462,17 +462,17 @@ When leaving demo mode:
 
 ### Hardcoded Credentials
 
-The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfig.js` as development fallbacks. Production deployments should use environment variables.
+The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfig.ts` as development fallbacks. Production deployments should use environment variables.
 
 ### Files Over 500 Lines
 
 | File | Lines | Notes |
 |------|-------|-------|
 | `src/types/appTypes.ts` | 1,237 | Type definitions only — acceptable exception (no logic) |
-| `src/lib/backend/TennisCommands.js` | 611 | Command methods |
-| `src/tennis/domain/availability.js` | 610 | Court availability logic |
-| `src/lib/ApiAdapter.js` | 546 | API client |
-| `src/tennis/domain/waitlist.js` | 538 | Waitlist domain logic |
+| `src/lib/backend/TennisCommands.ts` | 611 | Command methods |
+| `src/tennis/domain/availability.ts` | 610 | Court availability logic |
+| `src/lib/ApiAdapter.ts` | 546 | API client |
+| `src/tennis/domain/waitlist.ts` | 538 | Waitlist domain logic |
 | `src/registration/orchestration/assignCourtOrchestrator.ts` | 545 | Court assignment orchestration |
 
 The remaining five files (excluding `appTypes.ts`) are candidates for extraction when next modified for functional changes.
@@ -481,22 +481,22 @@ The remaining five files (excluding `appTypes.ts`) are candidates for extraction
 
 | Entry | HTML | Main Module |
 |-------|------|-------------|
-| Registration | `src/registration/index.html` | `src/registration/main.jsx` |
-| Courtboard | `src/courtboard/index.html` | `src/courtboard/main.jsx` |
-| Admin | `src/admin/index.html` | `src/admin/main.jsx` |
-| Mobile Shell | `Mobile.html` | `src/mobile-shell/main.js` |
+| Registration | `src/registration/index.html` | `src/registration/main.tsx` |
+| Courtboard | `src/courtboard/index.html` | `src/courtboard/main.tsx` |
+| Admin | `src/admin/index.html` | `src/admin/main.tsx` |
+| Mobile Shell | `Mobile.html` | `src/mobile-shell/main.ts` |
 
-All domain logic lives in ES modules under `src/`. Legacy `window.Tennis.*` globals are populated by adapter modules in `src/platform/attachLegacy*.js`, imported at the top of each entry point.
+All domain logic lives in ES modules under `src/`. Legacy `window.Tennis.*` globals are populated by adapter modules in `src/platform/attachLegacy*.ts`, imported at the top of each entry point.
 
 ### Mobile Shell
 
-`Mobile.html` is an ESM entry that coordinates Registration and Courtboard iframes. It loads `src/mobile-shell/main.js` which imports only the Events adapter. Shell logic:
-- `mobileBridge.js` — iframe coordination, state sync via sessionStorage, postMessage
-- `healthCheck.js` — iframe health monitoring, debug-only selfTest (`?debug=1`)
+`Mobile.html` is an ESM entry that coordinates Registration and Courtboard iframes. It loads `src/mobile-shell/main.ts` which imports only the Events adapter. Shell logic:
+- `mobileBridge.ts` — iframe coordination, state sync via sessionStorage, postMessage
+- `healthCheck.ts` — iframe health monitoring, debug-only selfTest (`?debug=1`)
 
 ### Adapter Pattern
 
-Each `attachLegacy*.js` module:
+Each `attachLegacy*.ts` module:
 1. Imports canonical ESM implementation
 2. Attaches to `window.Tennis.*` for legacy compat
 3. Self-registers on import (no explicit init call)
@@ -505,29 +505,29 @@ Adapters (in import order):
 
 | # | Adapter | Global |
 |---|---------|--------|
-| 1 | `attachLegacyConfig.js` | `window.Tennis.Config` |
-| 2 | `attachLegacyTime.js` | `window.Tennis.Domain.Time` |
-| 3 | `attachLegacyStorage.js` | `window.Tennis.Storage` |
-| 4 | `attachLegacyEvents.js` | `window.Tennis.Events` |
-| 5 | `attachLegacyDataStore.js` | `window.Tennis.DataStore` |
-| 6 | `attachLegacyBlocks.js` | `window.Tennis.Domain.Blocks` |
-| 7 | `attachLegacyAvailability.js` | `window.Tennis.Domain.Availability` |
-| 8 | `attachLegacyRoster.js` | `window.Tennis.Domain.Roster` |
-| 9 | `attachLegacyWaitlist.js` | `window.Tennis.Domain.Waitlist` |
+| 1 | `attachLegacyConfig.ts` | `window.Tennis.Config` |
+| 2 | `attachLegacyTime.ts` | `window.Tennis.Domain.Time` |
+| 3 | `attachLegacyStorage.ts` | `window.Tennis.Storage` |
+| 4 | `attachLegacyEvents.ts` | `window.Tennis.Events` |
+| 5 | `attachLegacyDataStore.ts` | `window.Tennis.DataStore` |
+| 6 | `attachLegacyBlocks.ts` | `window.Tennis.Domain.Blocks` |
+| 7 | `attachLegacyAvailability.ts` | `window.Tennis.Domain.Availability` |
+| 8 | `attachLegacyRoster.ts` | `window.Tennis.Domain.Roster` |
+| 9 | `attachLegacyWaitlist.ts` | `window.Tennis.Domain.Waitlist` |
 
 ### ESM → Legacy Global Mapping
 
 | ESM Module | Legacy Global |
 |------------|---------------|
-| `src/tennis/config.js` | `Tennis.Config` |
-| `src/tennis/domain/time.js` | `Tennis.Domain.Time` |
-| `src/lib/storage.js` | `Tennis.Storage` |
-| `src/tennis/events.js` | `Tennis.Events` |
-| `src/tennis/datastore.js` | `Tennis.DataStore` |
-| `src/tennis/domain/blocks.js` | `Tennis.Domain.Blocks` |
-| `src/tennis/domain/availability.js` | `Tennis.Domain.Availability` |
-| `src/tennis/domain/roster.js` | `Tennis.Domain.Roster` |
-| `src/tennis/domain/waitlist.js` | `Tennis.Domain.Waitlist` |
+| `src/tennis/config.ts` | `Tennis.Config` |
+| `src/tennis/domain/time.ts` | `Tennis.Domain.Time` |
+| `src/lib/storage.ts` | `Tennis.Storage` |
+| `src/tennis/events.ts` | `Tennis.Events` |
+| `src/tennis/datastore.ts` | `Tennis.DataStore` |
+| `src/tennis/domain/blocks.ts` | `Tennis.Domain.Blocks` |
+| `src/tennis/domain/availability.ts` | `Tennis.Domain.Availability` |
+| `src/tennis/domain/roster.ts` | `Tennis.Domain.Roster` |
+| `src/tennis/domain/waitlist.ts` | `Tennis.Domain.Waitlist` |
 
 ## Error Boundaries
 
@@ -538,8 +538,8 @@ App-level boundaries wrap each entry point:
 - Mobile Shell: try/catch with fallback HTML
 
 Feature boundaries protect known-risk areas:
-- Court Selection (`CourtRoute.jsx`)
-- Waitlist Display (`TennisCourtDisplay.jsx`, both instances)
+- Court Selection (`CourtRoute.tsx`)
+- Waitlist Display (`TennisCourtDisplay.tsx`, both instances)
 
 All boundaries: log to console, emit `clientError` via `Tennis.Events.emitDom` (falls back to raw `CustomEvent` dispatch), show Reload + Copy Diagnostic Info buttons.
 
@@ -595,33 +595,33 @@ function GroupRoute({ app, handlers }) {
 ```
 
 Presenter files: `src/registration/router/presenters/`
-Tests: `tests/unit/registration/*Presenter.equivalence.test.js`
+Tests: `tests/unit/registration/*Presenter.equivalence.test.ts`
 
 ### Admin: Domain Object Factories
 
-Admin uses factory functions to create domain objects via `buildAdminController.js`:
+Admin uses factory functions to create domain objects via `buildAdminController.ts`:
 
 ```js
 <StatusSection statusModel={statusModel} statusActions={statusActions} />
 ```
 
-Controller assembly: `src/admin/controller/buildAdminController.js`
-Tests: `tests/unit/admin/controller/buildAdminController.contract.test.js`
+Controller assembly: `src/admin/controller/buildAdminController.ts`
+Tests: `tests/unit/admin/controller/buildAdminController.contract.test.ts`
 
 ## Courtboard State Bridge
 
 Courtboard shares state with non-React code via a window global:
 
 ```
-API (get-board) → React State (main.jsx) → window.CourtboardState
+API (get-board) → React State (main.tsx) → window.CourtboardState
                                                     │
               ┌─────────────────────────────────────┤
               ▼                  ▼                   ▼
-    mobile-fallback-bar.js  mobile-bridge.js   MobileModal
+    mobile-fallback-bar.ts  mobile-bridge.ts   MobileModal
 ```
 
-- **Writer** (exactly one): `main.jsx` useEffect syncs React state
-- **Readers**: `getCourtboardState()` from `courtboardState.js`
+- **Writer** (exactly one): `main.tsx` useEffect syncs React state
+- **Readers**: `getCourtboardState()` from `courtboardState.ts`
 - **Guaranteed fields**: `courts`, `courtBlocks`, `waitingGroups`
 - **Optional fields**: `upcomingBlocks`, `freeCourts`, `timestamp`
 
@@ -629,13 +629,13 @@ See [docs/adr/006-courtboard-legacy-containment.md](./docs/adr/006-courtboard-le
 
 ## Courtboard Icon Contract
 
-Courtboard icons use emoji in `<span>` elements sized via `fontSize` — this is intentional. SVG icons (lucide-react) break courtboard layout because `<svg>` elements have a different sizing model than inline text spans. Courtboard must never import from `src/shared/ui/icons/Icons.jsx`.
+Courtboard icons use emoji in `<span>` elements sized via `fontSize` — this is intentional. SVG icons (lucide-react) break courtboard layout because `<svg>` elements have a different sizing model than inline text spans. Courtboard must never import from `src/shared/ui/icons/Icons.tsx`.
 
 ## Contract Tests
 
-Contract tests (`*.contract.test.js`, `*.equivalence.test.js`) are non-negotiable CI gates. Any controller, presenter, or bridge surface change requires updating inline snapshots in the same PR with written rationale.
+Contract tests (`*.contract.test.ts`, `*.equivalence.test.ts`) are non-negotiable CI gates. Any controller, presenter, or bridge surface change requires updating inline snapshots in the same PR with written rationale.
 
-Contract test files (`*.contract.test.js`): `buildAdminController.contract.test.js`, `useCourtActions.contract.test.js`, `useAdminHandlers.contract.test.js`, `taxonomyChain.contract.test.js`, `normalizeSession.contract.test.js`, `waitlistPosition.contract.test.js`, `buildHandlerDeps.contract.test.js`. Additional contract-style test: `useRegistrationAppState.test.js` (freezes 26-key AppState shape). Equivalence tests: 5 registration + 4 admin presenter equivalence tests.
+Contract test files (`*.contract.test.ts`): `buildAdminController.contract.test.ts`, `useCourtActions.contract.test.ts`, `useAdminHandlers.contract.test.ts`, `taxonomyChain.contract.test.ts`, `normalizeSession.contract.test.ts`, `waitlistPosition.contract.test.ts`, `buildHandlerDeps.contract.test.ts`. Additional contract-style test: `useRegistrationAppState.test.ts` (freezes 26-key AppState shape). Equivalence tests: 5 registration + 4 admin presenter equivalence tests.
 
 Gate: `npm run verify`
 
