@@ -5,8 +5,8 @@
  * All state setup, hook orchestration, and controller assembly
  * live in useAdminAppState.
  *
- * Auth-ready seam: see src/admin/guards/adminAccessGuard.js
- * Wire useAdminAccess() here when VITE_ADMIN_ACCESS_MODE=authenticated
+ * TODO(pre-production): Wire useAdminAccess() here when ready to enforce admin authentication.
+ * Currently open for testing/evaluation. See adminAccessGuard.ts and SECURITY_WP.md Phase 1.
  */
 import React, { useState } from 'react';
 import { NotificationProvider, useAdminNotification } from './context/NotificationContext';

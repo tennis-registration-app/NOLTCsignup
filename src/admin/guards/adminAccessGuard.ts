@@ -1,11 +1,12 @@
 /**
  * Admin access guard — auth-ready seam.
  *
- * Current behavior: always allows access (test/development mode).
- * Production behavior: when VITE_ADMIN_ACCESS_MODE=authenticated,
- * this guard will check Supabase Auth session and redirect to login.
+ * AUTH STATUS: Currently returns allowed:true for all requests (testing/demo mode).
+ * BEFORE PRODUCTION: This guard must be wired into App.tsx via useAdminAccess() with
+ * VITE_ADMIN_ACCESS_MODE=authenticated. See SECURITY_WP.md Phase 1 for implementation steps.
+ * The seam is ready — the guard just needs to be connected and the auth logic implemented.
  *
- * Integration point: wrap admin App.jsx render in this guard.
+ * Integration point: wrap admin App.tsx render in this guard.
  * See docs/OPERATIONS.md "Admin Access Control" for deployment modes.
  */
 import { featureFlags } from '../../config/runtimeConfig';

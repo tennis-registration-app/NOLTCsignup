@@ -87,6 +87,14 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 | Operations runbook | [docs/RUNBOOK.md](RUNBOOK.md) |
 | Error handling patterns | [docs/ERROR_HANDLING.md](ERROR_HANDLING.md), [docs/error-contracts.md](error-contracts.md) |
 
+## Pre-Production Requirements
+
+Before this system is deployed to production, the following must be implemented:
+
+- **Admin authentication** — the admin panel is currently open to anyone with the URL, intentionally, for testing and evaluation. Authentication must be implemented before production deployment. See [docs/SECURITY_WP.md](SECURITY_WP.md) Phase 1 for the implementation plan.
+- **Current state** — all admin features are accessible without any credentials. This is by design for the testing period.
+- **Auth seam is in place** — `src/admin/guards/adminAccessGuard.ts` contains the `useAdminAccess()` hook and `checkAdminAccess()` function. The architecture is ready; implementation (Supabase Auth session check) and wiring into `src/admin/App.tsx` are required, not an architectural change.
+
 ## Additional References
 
 - [docs/SECURITY_WP.md](SECURITY_WP.md) — Security threat model and posture
