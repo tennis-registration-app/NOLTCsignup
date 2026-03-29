@@ -31,6 +31,12 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Non-default placeholder values so the production guard in runtimeConfig.ts
+          # does not throw during CI. E2E tests mock all API calls via setupMockApi,
+          # so these credentials are never actually used.
+          VITE_SUPABASE_URL: https://ci-placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key-for-testing-only
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v6
