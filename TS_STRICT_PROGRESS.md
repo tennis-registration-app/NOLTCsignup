@@ -14,3 +14,4 @@
 | Iteration | Errors before | Errors after | Files touched | Notes |
 |-----------|--------------|-------------|---------------|-------|
 | 1         | 5679         | 2014        | tsconfig.json, package.json, src/admin/ai/AIAssistant.tsx, src/admin/ai/AIAssistantAdmin.tsx, src/admin/ai/AIAssistantInput.tsx, src/admin/ai/AIAssistantMessages.tsx, src/admin/ai/AIAssistantActionCard.tsx | Enabled strict:true, installed @types/react+@types/react-dom (eliminated 3627 errors), typed AI assistant component props |
+| 2         | 2014         | 1940        | src/lib/ApiAdapter.ts, src/lib/backend/TennisCommands.ts, src/lib/backend/admin/AdminCommands.ts | Fix unknown error types, add param types to lib layer |

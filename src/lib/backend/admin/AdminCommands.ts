@@ -27,7 +27,7 @@ export class AdminCommands {
    * @param {string} input.deviceType - Device type
    * @param {string} [input.recurrenceGroupId] - Optional recurrence group UUID
    */
-  async createBlock(input) {
+  async createBlock(input: { courtId: string; blockType: string; title: string; startsAt: string; endsAt: string; deviceId: string; deviceType?: string; recurrenceGroupId?: string }) {
     const payload: Record<string, unknown> = {
       court_id: input.courtId,
       block_type: input.blockType,
@@ -64,7 +64,7 @@ export class AdminCommands {
    * @param {string} input.deviceId - Admin device ID
    * @param {string} input.deviceType - Device type
    */
-  async updateBlock(input) {
+  async updateBlock(input: { blockId: string; courtId?: string; blockType?: string; title?: string; startsAt?: string; endsAt?: string; deviceId: string; deviceType?: string }) {
     const payload: Record<string, unknown> = {
       block_id: input.blockId,
       device_id: input.deviceId,
@@ -95,7 +95,7 @@ export class AdminCommands {
    * @param {string} input.deviceId - Admin device ID
    * @param {string} input.deviceType - Device type
    */
-  async cancelBlock(input) {
+  async cancelBlock(input: { blockId: string; deviceId: string; deviceType?: string }) {
     const payload = {
       block_id: input.blockId,
       device_id: input.deviceId,
@@ -120,7 +120,7 @@ export class AdminCommands {
    * @param {string} input.deviceId - Admin device ID
    * @param {string} input.deviceType - Device type
    */
-  async cancelBlockGroup(input) {
+  async cancelBlockGroup(input: { recurrenceGroupId: string; futureOnly?: boolean; deviceId: string; deviceType?: string }) {
     const payload = {
       recurrence_group_id: input.recurrenceGroupId,
       device_id: input.deviceId,
@@ -165,7 +165,7 @@ export class AdminCommands {
    * @param {string} [input.reason] - Reason for ending
    * @param {string} input.deviceId - Admin device ID
    */
-  async adminEndSession(input) {
+  async adminEndSession(input: { sessionId?: string; courtId?: string; reason?: string; deviceId: string }) {
     const payload = {
       session_id: input.sessionId,
       court_id: input.courtId,
@@ -190,7 +190,7 @@ export class AdminCommands {
    * @param {string} [input.reason] - Reason for clearing all
    * @param {string} input.deviceId - Admin device ID
    */
-  async clearAllCourts(input) {
+  async clearAllCourts(input: { reason?: string; deviceId: string }) {
     const payload = {
       reason: input.reason || 'admin_clear_all',
       device_id: input.deviceId,
@@ -214,7 +214,7 @@ export class AdminCommands {
    * @param {string} [input.reason] - Reason for removal
    * @param {string} input.deviceId - Admin device ID
    */
-  async removeFromWaitlist(input) {
+  async removeFromWaitlist(input: { waitlistEntryId: string; reason?: string; deviceId: string }) {
     const payload = {
       waitlist_entry_id: input.waitlistEntryId,
       reason: input.reason || 'admin_removed',
@@ -236,7 +236,7 @@ export class AdminCommands {
    * @param {Object} input
    * @param {string} input.deviceId - Admin device ID
    */
-  async cleanupSessions(input) {
+  async cleanupSessions(input: { deviceId: string }) {
     const payload = {
       device_id: input.deviceId,
     };
@@ -260,7 +260,7 @@ export class AdminCommands {
    * @param {string} [input.reason] - Reason (default: 'WET COURT')
    * @param {string} [input.idempotencyKey] - Prevent duplicate operations
    */
-  async markWetCourts(input) {
+  async markWetCourts(input: { deviceId: string; durationMinutes?: number; courtIds?: string[]; reason?: string; idempotencyKey?: string }) {
     const payload = {
       device_id: input.deviceId,
       duration_minutes: input.durationMinutes,
@@ -291,7 +291,7 @@ export class AdminCommands {
    * @param {string[]} [input.courtIds] - Specific court UUIDs (default: all courts)
    * @param {string} [input.idempotencyKey] - Prevent duplicate operations
    */
-  async clearWetCourts(input) {
+  async clearWetCourts(input: { deviceId: string; courtIds?: string[]; idempotencyKey?: string }) {
     const payload = {
       device_id: input.deviceId,
       court_ids: input.courtIds,
@@ -400,7 +400,7 @@ export class AdminCommands {
    * @param {number} params.newPosition - Target position (1-based)
    * @returns {Promise<{ok: boolean, old_position?: number, new_position?: number}>}
    */
-  async reorderWaitlist({ entryId, newPosition }) {
+  async reorderWaitlist({ entryId, newPosition }: { entryId: string; newPosition: number }) {
     return this.api.post('/reorder-waitlist', {
       entry_id: entryId,
       new_position: newPosition,
@@ -444,7 +444,7 @@ export class AdminCommands {
    * @param {string} params.end - End date (YYYY-MM-DD, inclusive)
    * @returns {Promise<{ok: boolean, summary: Object, heatmap: Array}>}
    */
-  async getAnalytics({ start, end }) {
+  async getAnalytics({ start, end }: { start: string; end: string }) {
     return this.api.post('/get-analytics', { start, end });
   }
 
@@ -464,6 +464,12 @@ export class AdminCommands {
     primaryEnd,
     granularity = 'auto',
     comparisonStart = null,
+  }: {
+    metric?: string;
+    primaryStart: string;
+    primaryEnd: string;
+    granularity?: string;
+    comparisonStart?: string | null;
   }) {
     const snakePayload = {
       metric,
@@ -491,7 +497,7 @@ export class AdminCommands {
     return result;
   }
 
-  async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }) {
+  async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }: { prompt: string; mode?: string; actions_token?: string | null; confirm_destructive?: boolean }) {
     return this.api.aiAssistant({ prompt, mode, actions_token, confirm_destructive });
   }
 
@@ -504,7 +510,7 @@ export class AdminCommands {
    * @param {string} input.deviceId - Admin device ID
    * @returns {Promise<{ok: boolean, session?: Object, code?: string, message?: string, serverNow?: string}>}
    */
-  async updateSession(input) {
+  async updateSession(input: { sessionId: string; participants: Array<{ name: string; type: 'member' | 'guest'; member_id?: string }>; scheduledEndAt: string | null; deviceId: string }) {
     const payload = {
       session_id: input.sessionId,
       participants: input.participants,
