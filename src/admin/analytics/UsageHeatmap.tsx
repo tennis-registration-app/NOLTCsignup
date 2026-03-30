@@ -8,7 +8,8 @@
 import React, { useMemo } from 'react';
 import { normalizeHeatmapRow } from '../../lib/normalize/index';
 
-const UsageHeatmap = ({ heatmapData = [] }) => {
+interface HeatmapRow { dow?: number; hour?: number; count?: number; [key: string]: unknown }
+const UsageHeatmap = ({ heatmapData = [] }: { heatmapData?: HeatmapRow[] }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 

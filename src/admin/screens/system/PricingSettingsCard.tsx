@@ -1,9 +1,18 @@
-// @ts-check
 import React from 'react';
 
 /**
  * PricingSettingsCard - Ball price and guest fees settings
  */
+interface PricingSettingsCardProps {
+  ballPriceInput: string;
+  weekdayFeeInput: string;
+  weekendFeeInput: string;
+  pricingChanged: boolean;
+  pricingSaveStatus: string | null;
+  handlePricingChange: (field: string, value: string) => void;
+  savePricing: () => void;
+}
+
 const PricingSettingsCard = ({
   ballPriceInput,
   weekdayFeeInput,
@@ -12,7 +21,7 @@ const PricingSettingsCard = ({
   pricingSaveStatus,
   handlePricingChange,
   savePricing,
-}) => (
+}: PricingSettingsCardProps) => (
   <div className="bg-white rounded-lg shadow-sm p-6">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-lg font-semibold text-gray-900">Pricing</h3>

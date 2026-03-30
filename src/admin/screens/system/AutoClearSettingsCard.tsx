@@ -1,9 +1,20 @@
-// @ts-check
 import React from 'react';
 
 /**
  * AutoClearSettingsCard - Auto-clear and block warning settings
  */
+interface AutoClearSettingsCardProps {
+  autoClearEnabled: boolean;
+  autoClearMinutes: string;
+  checkStatusMinutes: string;
+  blockWarningMinutes: string;
+  autoClearChanged: boolean;
+  autoClearSaveStatus: string | null;
+  autoClearError: string | null;
+  handleAutoClearChange: (field: string, value: string | boolean) => void;
+  saveAutoClear: () => void;
+}
+
 const AutoClearSettingsCard = ({
   autoClearEnabled,
   autoClearMinutes,
@@ -14,7 +25,7 @@ const AutoClearSettingsCard = ({
   autoClearError,
   handleAutoClearChange,
   saveAutoClear,
-}) => (
+}: AutoClearSettingsCardProps) => (
   <div className="bg-white rounded-lg shadow-sm p-6">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-lg font-semibold text-gray-900">Court Auto-Clear</h3>

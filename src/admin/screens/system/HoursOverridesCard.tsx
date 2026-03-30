@@ -1,9 +1,28 @@
-// @ts-check
 import React from 'react';
 
 /**
  * HoursOverridesCard - Holiday and special hours overrides
  */
+interface HoursOverridesCardProps {
+  hoursOverrides: { date: string; opensAt?: string; closesAt?: string; isClosed?: boolean; reason?: string }[];
+  overrideDate: string;
+  setOverrideDate: (v: string) => void;
+  overrideOpens: string;
+  setOverrideOpens: (v: string) => void;
+  overrideCloses: string;
+  setOverrideCloses: (v: string) => void;
+  overrideReason: string;
+  setOverrideReason: (v: string) => void;
+  overrideClosed: boolean;
+  setOverrideClosed: (v: boolean) => void;
+  overrideErrors: Record<string, string | null | undefined>;
+  setOverrideErrors: (v: Record<string, string | null | undefined>) => void;
+  clearOverrideError: (field: string) => void;
+  validateOverrideForm: () => boolean;
+  addHoursOverride: (date: string, opensAt: string | null, closesAt: string | null, isClosed: boolean, reason: string) => void;
+  deleteHoursOverride: (date: string) => void;
+}
+
 const HoursOverridesCard = ({
   hoursOverrides,
   overrideDate,
@@ -22,7 +41,7 @@ const HoursOverridesCard = ({
   validateOverrideForm,
   addHoursOverride,
   deleteHoursOverride,
-}) => (
+}: HoursOverridesCardProps) => (
   <div className="bg-white rounded-lg shadow-sm p-6 h-full">
     <h3 className="text-lg font-semibold text-gray-800 mb-4">Holiday &amp; Special Hours</h3>
 
@@ -138,7 +157,7 @@ const HoursOverridesCard = ({
         <p className="text-gray-500 text-sm italic">No overrides scheduled</p>
       ) : (
         <div className="space-y-2">
-          {hoursOverrides.map((override) => (
+          {hoursOverrides.map((override: { date: string; opensAt?: string; closesAt?: string; isClosed?: boolean; reason?: string }) => (
             <div
               key={override.date}
               className={`flex items-center justify-between p-3 rounded-lg ${

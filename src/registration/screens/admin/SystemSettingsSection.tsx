@@ -1,10 +1,19 @@
-// @ts-check
 import React from 'react';
 import { Check } from '../../components';
 
 /**
  * SystemSettingsSection - System settings section (ball price)
  */
+interface SystemSettingsSectionProps {
+  ballPriceInput: string;
+  setBallPriceInput: (v: string) => void;
+  priceError: string;
+  setPriceError: (v: string) => void;
+  showPriceSuccess: boolean;
+  setShowPriceSuccess: (v: boolean) => void;
+  onPriceUpdate: () => void;
+}
+
 const SystemSettingsSection = ({
   ballPriceInput,
   setBallPriceInput,
@@ -13,7 +22,7 @@ const SystemSettingsSection = ({
   showPriceSuccess,
   setShowPriceSuccess,
   onPriceUpdate,
-}) => (
+}: SystemSettingsSectionProps) => (
   <div className="mb-6 sm:mb-8 bg-gray-800 rounded-xl p-4 sm:p-6">
     <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">System Settings</h2>
 

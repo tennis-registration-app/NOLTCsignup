@@ -1,16 +1,23 @@
-// @ts-check
 import React from 'react';
 
 /**
  * OperatingHoursCard - Weekly operating hours settings
  */
+interface OperatingHoursCardProps {
+  operatingHours: { dayOfWeek: number; dayName?: string; opensAt?: string; closesAt?: string; isClosed: boolean }[];
+  hoursChanged: boolean;
+  hoursSaveStatus: string | null;
+  handleHoursChange: (dayOfWeek: number, opensAt: string, closesAt: string, isClosed: boolean) => void;
+  saveOperatingHours: () => void;
+}
+
 const OperatingHoursCard = ({
   operatingHours,
   hoursChanged,
   hoursSaveStatus,
   handleHoursChange,
   saveOperatingHours,
-}) => (
+}: OperatingHoursCardProps) => (
   <div className="bg-white rounded-lg shadow-sm p-6">
     <div className="flex items-center justify-between mb-4">
       <h3 className="text-lg font-semibold text-gray-800">Regular Tennis Court Hours</h3>
@@ -46,7 +53,7 @@ const OperatingHoursCard = ({
               type="checkbox"
               checked={day.isClosed}
               onChange={(e) =>
-                handleHoursChange(day.dayOfWeek, day.opensAt, day.closesAt, e.target.checked)
+                handleHoursChange(day.dayOfWeek, day.opensAt || "", day.closesAt || "", e.target.checked)
               }
             />
             Closed
@@ -58,7 +65,7 @@ const OperatingHoursCard = ({
                 value={day.opensAt?.slice(0, 5) || '06:00'}
                 onChange={(e) =>
                   e.target.value &&
-                  handleHoursChange(day.dayOfWeek, e.target.value + ':00', day.closesAt, false)
+                  handleHoursChange(day.dayOfWeek, e.target.value + ':00', day.closesAt || "", false)
                 }
                 className="px-2 py-1 rounded border border-gray-300"
               />
@@ -68,7 +75,7 @@ const OperatingHoursCard = ({
                 value={day.closesAt?.slice(0, 5) || '21:00'}
                 onChange={(e) =>
                   e.target.value &&
-                  handleHoursChange(day.dayOfWeek, day.opensAt, e.target.value + ':00', false)
+                  handleHoursChange(day.dayOfWeek, day.opensAt || "", e.target.value + ':00', false)
                 }
                 className="px-2 py-1 rounded border border-gray-300"
               />
