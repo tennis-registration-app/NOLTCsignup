@@ -13,7 +13,25 @@ import { memberSearchReducer, initialMemberSearchState } from './memberSearchRed
 import { useDebounce } from '../hooks/useDebounce.js';
 import { logger } from '../../lib/logger';
 
-export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUserTyping }) {
+interface ApiMember {
+  displayName?: string;
+  name?: string;
+  memberNumber?: string;
+  id: unknown;
+  accountId: unknown;
+  isPrimary: boolean;
+  unclearedStreak?: number;
+  playCount?: number;
+}
+
+interface UseMemberSearchDeps {
+  backend: { directory: { getAllMembers: () => Promise<ApiMember[]> } };
+  setCurrentScreen: (screen: string, reason: string) => void;
+  CONSTANTS: { ADMIN_CODE: string; MAX_AUTOCOMPLETE_RESULTS: number };
+  markUserTyping: () => void;
+}
+
+export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUserTyping }: UseMemberSearchDeps) {
   const [state, dispatch] = useReducer(memberSearchReducer, initialMemberSearchState);
 
   // ============================================
@@ -70,7 +88,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
   // Verbatim copy of legacy logic from App.jsx lines 2189-2253
   // ============================================
   const getAutocompleteSuggestions = useCallback(
-    (input) => {
+    (input: string) => {
       if (!input || input.length < 1) return [];
 
       const suggestions: Array<{ memberNumber: string; member: { id: unknown; name: string; accountId: unknown; isPrimary: boolean; unclearedStreak: number; playCount: number }; displayText: string }> = [];
@@ -81,7 +99,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
         return [];
       }
 
-      state.apiMembers.forEach((apiMember) => {
+      (state.apiMembers as ApiMember[]).forEach((apiMember) => {
         // Use camelCase properties (normalized by TennisDirectory)
         const displayName = apiMember.displayName || apiMember.name || '';
         const memberNumber = apiMember.memberNumber || '';
@@ -93,15 +111,15 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
         const inputWords = lowerInput
           .trim()
           .split(/\s+/)
-          .filter((word) => word.length > 0);
+          .filter((word: string) => word.length > 0);
 
         // Check if member number matches (only check first word for member number)
         const memberNumberMatch = memberNumber.startsWith(inputWords[0]);
 
         // Check if all input words match the start of some name part
-        const namePartsLower = nameParts.map((part) => part.toLowerCase());
-        const nameMatch = inputWords.every((inputWord) =>
-          namePartsLower.some((namePart) => namePart.startsWith(inputWord))
+        const namePartsLower = nameParts.map((part: string) => part.toLowerCase());
+        const nameMatch = inputWords.every((inputWord: string) =>
+          namePartsLower.some((namePart: string) => namePart.startsWith(inputWord))
         );
 
         if (memberNumberMatch || nameMatch) {
@@ -152,7 +170,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
   // ============================================
 
   const handleGroupSearchChange = useCallback(
-    (e) => {
+    (e: { target: { value: string } }) => {
       markUserTyping();
       const value = e.target.value || '';
 
@@ -182,7 +200,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
   }, [state.searchInput, markUserTyping]);
 
   const handleAddPlayerSearchChange = useCallback(
-    (e) => {
+    (e: { target: { value: string } }) => {
       markUserTyping();
       const value = e.target.value || '';
       dispatch({ type: 'ADD_PLAYER_SEARCH_SET', value });
@@ -232,17 +250,17 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
     effectiveAddPlayerSearch,
 
     // Setters (for components/legacy code that calls setX directly)
-    setSearchInput: (value) => dispatch({ type: 'SEARCH_INPUT_SET', value }),
-    setShowSuggestions: (show) =>
+    setSearchInput: (value: string) => dispatch({ type: 'SEARCH_INPUT_SET', value }),
+    setShowSuggestions: (show: boolean) =>
       dispatch({
         type: show ? 'SEARCH_SUGGESTIONS_SHOWN' : 'SEARCH_SUGGESTIONS_HIDDEN',
       }),
-    setAddPlayerSearch: (value) => dispatch({ type: 'ADD_PLAYER_SEARCH_SET', value }),
-    setShowAddPlayerSuggestions: (show) =>
+    setAddPlayerSearch: (value: string) => dispatch({ type: 'ADD_PLAYER_SEARCH_SET', value }),
+    setShowAddPlayerSuggestions: (show: boolean) =>
       dispatch({
         type: show ? 'ADD_PLAYER_SUGGESTIONS_SHOWN' : 'ADD_PLAYER_SUGGESTIONS_HIDDEN',
       }),
-    setApiMembers: (value) => dispatch({ type: 'API_MEMBERS_SET', value }),
+    setApiMembers: (value: unknown[]) => dispatch({ type: 'API_MEMBERS_SET', value }),
 
     // Handlers
     handleGroupSearchChange,

@@ -14,6 +14,37 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
  * Handles group management: player selection, frequent partners,
  * streak acknowledgment, waitlist joining, court selection.
  */
+interface Player {
+  id: unknown;
+  name: string;
+  memberNumber?: string;
+  memberId?: unknown;
+  phone?: string;
+  ranking?: number | null;
+  winRate?: number;
+  accountId?: unknown;
+}
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface UseGroupHandlersDeps {
+  groupGuest: { currentGroup: unknown[]; setCurrentGroup: AnyFn };
+  derived: { memberDatabase: Record<string, unknown> };
+  mobile: { mobileFlow: unknown; preselectedCourt: unknown };
+  streak: { registrantStreak: number; streakAcknowledged: boolean; setRegistrantStreak: AnyFn; setStreakAcknowledged: AnyFn; setShowStreakModal: AnyFn };
+  search: { setSearchInput: AnyFn; setShowSuggestions: AnyFn; setAddPlayerSearch: AnyFn; setShowAddPlayerSuggestions: AnyFn };
+  memberIdentity: { setMemberNumber: AnyFn; setCurrentMemberId: AnyFn; fetchFrequentPartners: AnyFn };
+  setters: { setCurrentScreen: AnyFn; setShowAddPlayer: AnyFn; setHasWaitlistPriority: AnyFn; setShowSuccess: AnyFn };
+  alert: { setAlertMessage: AnyFn; setShowAlert: AnyFn; showAlertMessage: AnyFn };
+  refs: { successResetTimerRef: { current: ReturnType<typeof setTimeout> | null } };
+  services: { backend: unknown };
+  helpers: { guardAddPlayerEarly: AnyFn; guardAgainstGroupDuplicate: AnyFn; getCourtData: AnyFn };
+  court: { getAvailableCourts: AnyFn; saveCourtData: AnyFn; assignCourtToGroup: AnyFn; sendGroupToWaitlist: AnyFn };
+  core: { clearSuccessResetTimer: AnyFn; resetForm: AnyFn; isPlayerAlreadyPlaying: AnyFn };
+  handleSuggestionClickOrchestrated: AnyFn;
+  handleAddPlayerSuggestionClickOrchestrated: AnyFn;
+  CONSTANTS: { MAX_PLAYERS: number; MAX_AUTOCOMPLETE_RESULTS: number; AUTO_RESET_SUCCESS_MS: number; ADMIN_CODE: string };
+}
 export function useGroupHandlers({
   groupGuest,
   derived,
@@ -34,7 +65,7 @@ export function useGroupHandlers({
   handleSuggestionClickOrchestrated,
   handleAddPlayerSuggestionClickOrchestrated,
   CONSTANTS,
-}) {
+}: UseGroupHandlersDeps) {
   const { currentGroup, setCurrentGroup } = groupGuest;
   const { memberDatabase } = derived;
   const { mobileFlow, preselectedCourt } = mobile;
@@ -58,7 +89,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: findMemberNumber from line ~366
   const findMemberNumber = useCallback(
-    (playerId) => {
+    (playerId: string) => {
       // First check if the playerId itself is a member number
       if (memberDatabase[playerId]) {
         return playerId;
@@ -77,7 +108,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: addFrequentPartner from line ~385
   const addFrequentPartner = useCallback(
-    (player) => {
+    (player: Player) => {
       logger.debug(
         'GroupHandlers',
         'addFrequentPartner called with',
@@ -128,7 +159,7 @@ export function useGroupHandlers({
       // For API backend, use the data directly; for legacy, look up memberNumber
       const newPlayer = {
         name: enriched.name,
-        memberNumber: enriched.memberNumber || findMemberNumber(enriched.id),
+        memberNumber: enriched.memberNumber || findMemberNumber(String(enriched.id)),
         id: enriched.id,
         memberId: enriched.memberId || enriched.id,
         phone: enriched.phone || '',
@@ -152,8 +183,8 @@ export function useGroupHandlers({
   );
 
   // VERBATIM COPY: sameGroup from line ~457
-  const sameGroup = useCallback((a = [], b = []) => {
-    const norm = (p) => {
+  const sameGroup = useCallback((a: Player[] = [], b: Player[] = []) => {
+    const norm = (p: Player) => {
       // Ensure we're working with strings before calling toLowerCase
       const memberId = String(p?.memberId || '');
       const id = String(p?.id || '');
@@ -169,7 +200,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleSuggestionClick from line ~671
   const handleSuggestionClick = useCallback(
-    async (suggestion) => {
+    async (suggestion: unknown) => {
       await handleSuggestionClickOrchestrated(suggestion, {
         // Read values
         currentGroup,
@@ -215,7 +246,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleGroupSuggestionClick from line ~767
   const handleGroupSuggestionClick = useCallback(
-    async (suggestion) => {
+    async (suggestion: unknown) => {
       await handleSuggestionClick(suggestion);
       // For mobile flow, clear search after adding first player
       if (mobileFlow) {
@@ -228,7 +259,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleAddPlayerSuggestionClick from line ~780
   const handleAddPlayerSuggestionClick = useCallback(
-    async (suggestion) => {
+    async (suggestion: unknown) => {
       await handleAddPlayerSuggestionClickOrchestrated(suggestion, {
         // Read values
         currentGroup,
@@ -329,7 +360,7 @@ export function useGroupHandlers({
   const handleGroupJoinWaitlist = useCallback(async () => {
     let ok = false;
     try {
-      ok = await sendGroupToWaitlist(currentGroup);
+      ok = Boolean(await sendGroupToWaitlist(currentGroup));
     } catch (error) {
       logger.error('GroupHandlers', '[handleGroupJoinWaitlist] Error', error);
     }
