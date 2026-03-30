@@ -10,11 +10,11 @@ export function useClearCourtFlow() {
   const [state, dispatch] = useReducer(clearCourtFlowReducer, initialClearCourtFlowState);
 
   // Setters (passed to ClearCourtScreen)
-  const setSelectedCourtToClear = useCallback((value) => {
+  const setSelectedCourtToClear = useCallback((value: number | null) => {
     dispatch({ type: 'SELECTED_COURT_TO_CLEAR_SET', value });
   }, []);
 
-  const setClearCourtStep = useCallback((value) => {
+  const setClearCourtStep = useCallback((value: number) => {
     dispatch({ type: 'CLEAR_COURT_STEP_SET', value });
   }, []);
 

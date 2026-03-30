@@ -9,12 +9,18 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { logger } from '../../lib/logger';
 
-export function QRScanner({ onScan, onClose, onError }) {
+interface QRScannerProps {
+  onScan: (token: string) => void;
+  onClose?: () => void;
+  onError?: (err: unknown) => void;
+}
+
+export function QRScanner({ onScan, onClose, onError }: QRScannerProps) {
   const [, setIsScanning] = useState(false); // Getter unused, setter used
-  const [error, setError] = useState(null);
-  const [hasPermission, setHasPermission] = useState(null);
-  const scannerRef = useRef(null);
-  const containerRef = useRef(null);
+  const [error, setError] = useState<string | null>(null);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const scannerRef = useRef<InstanceType<typeof Html5Qrcode> | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -68,13 +74,13 @@ export function QRScanner({ onScan, onClose, onError }) {
       console.error('[QRScanner] Error starting scanner:', err);
       setIsScanning(false);
 
-      if (err.message?.includes('Permission')) {
+      if ((err as Error).message?.includes('Permission')) {
         setHasPermission(false);
         setError('Camera permission denied. Please enable camera access.');
-      } else if (err.message?.includes('NotFoundError')) {
+      } else if ((err as Error).message?.includes('NotFoundError')) {
         setError('No camera found on this device.');
       } else {
-        setError(`Failed to start camera: ${err.message}`);
+        setError(`Failed to start camera: ${(err as Error).message}`);
       }
 
       if (onError) onError(err);

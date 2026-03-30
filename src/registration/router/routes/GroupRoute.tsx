@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface GroupRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { GroupScreen } from '../../screens';
 import { buildGroupModel, buildGroupActions } from '../presenters';
 
@@ -20,7 +25,7 @@ import { useWorkflowContext } from '../../context/WorkflowProvider';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function GroupRoute({ app, handlers }) {
+export function GroupRoute({ app, handlers }: GroupRouteProps) {
   // Workflow state — read directly from context
   const workflow = useWorkflowContext();
 

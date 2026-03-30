@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface SuccessRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { SuccessScreen } from '../../screens';
 import { AlertDisplay, ToastHost } from '../../components';
 import { logger } from '../../../lib/logger';
@@ -25,7 +30,7 @@ import { useWorkflowContext } from '../../context/WorkflowProvider';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function SuccessRoute({ app, handlers }) {
+export function SuccessRoute({ app, handlers }: SuccessRouteProps) {
   // Workflow state — read directly from context
   const workflow = useWorkflowContext();
   const { waitlistPosition } = workflow;

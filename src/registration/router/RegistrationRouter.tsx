@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../types/appTypes';
+
+interface RegistrationRouterProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import {
   SuccessRoute,
   SilentAssignRoute,
@@ -24,7 +29,7 @@ import {
  *   handlers: import('../../types/appTypes').Handlers
  * }} props
  */
-export default function RegistrationRouter({ app, handlers }) {
+export default function RegistrationRouter({ app, handlers }: RegistrationRouterProps) {
   const { currentScreen } = app.state;
   const { mobileMode } = app.mobile;
   const { showSuccess } = app.state;

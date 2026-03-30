@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface ClearCourtRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { ClearCourtScreen } from '../../screens';
 import { TennisBusinessLogic } from '@lib';
 import { useClearCourtFlow } from '../../court/useClearCourtFlow';
@@ -18,7 +23,7 @@ import { useClearCourtFlow } from '../../court/useClearCourtFlow';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function ClearCourtRoute({ app, handlers }) {
+export function ClearCourtRoute({ app, handlers }: ClearCourtRouteProps) {
   // Route-local state — lives only while ClearCourt is mounted
   const { clearCourtStep, setClearCourtStep, selectedCourtToClear, setSelectedCourtToClear } =
     useClearCourtFlow();

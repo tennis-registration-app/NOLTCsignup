@@ -9,34 +9,48 @@
  */
 
 import { useReducer, useCallback, useRef } from 'react';
+interface FrequentPartnerCacheEntry {
+  status: 'loading' | 'error' | 'ready';
+  ts: number;
+  data?: unknown[];
+}
+
+interface MemberIdentityBackend {
+  queries: {
+    getFrequentPartners: (memberId: string) => Promise<{ ok: boolean; partners?: Array<{ member_id: string; display_name: string; member_number: string; play_count: number }> }>;  };
+}
+
+interface MemberIdentityDeps {
+  backend: MemberIdentityBackend | null | undefined;
+}
 import { memberIdentityReducer, initialMemberIdentityState } from './memberIdentityReducer';
 import { logger } from '../../lib/logger';
 
 // TTL for frequent partners cache (10 minutes)
 const FREQUENT_PARTNERS_CACHE_TTL_MS = 10 * 60 * 1000;
 
-export function useMemberIdentity({ backend }) {
+export function useMemberIdentity({ backend }: MemberIdentityDeps) {
   const [state, dispatch] = useReducer(memberIdentityReducer, initialMemberIdentityState);
 
   // Cache ref for frequent partners (preserves exact legacy shape)
-  const frequentPartnersCacheRef = useRef({});
+  const frequentPartnersCacheRef = useRef<Record<string, FrequentPartnerCacheEntry>>({});
 
   // ============================================
   // Setters
   // ============================================
-  const setMemberNumber = useCallback((value) => {
+  const setMemberNumber = useCallback((value: string) => {
     dispatch({ type: 'MEMBER_NUMBER_SET', value });
   }, []);
 
-  const setCurrentMemberId = useCallback((value) => {
+  const setCurrentMemberId = useCallback((value: string | null) => {
     dispatch({ type: 'CURRENT_MEMBER_ID_SET', value });
   }, []);
 
-  const setFrequentPartners = useCallback((value) => {
+  const setFrequentPartners = useCallback((value: unknown[]) => {
     dispatch({ type: 'FREQUENT_PARTNERS_SET', value });
   }, []);
 
-  const setFrequentPartnersLoading = useCallback((value) => {
+  const setFrequentPartnersLoading = useCallback((value: boolean) => {
     dispatch({ type: 'FREQUENT_PARTNERS_LOADING_SET', value });
   }, []);
 
@@ -44,7 +58,7 @@ export function useMemberIdentity({ backend }) {
   // fetchFrequentPartners (EXACT LEGACY LOGIC)
   // ============================================
   const fetchFrequentPartners = useCallback(
-    async (memberId) => {
+    async (memberId: string) => {
       logger.debug('MemberIdentity', 'fetchFrequentPartners called', {
         memberId,
         cacheState: frequentPartnersCacheRef.current[memberId],
@@ -66,7 +80,7 @@ export function useMemberIdentity({ backend }) {
       }
       if (cached?.status === 'ready' && now - cached.ts < FREQUENT_PARTNERS_CACHE_TTL_MS) {
         logger.debug('MemberIdentity', 'Cache hit, using cached data');
-        setFrequentPartners(cached.data);
+        setFrequentPartners(cached.data || []);
         return; // Use cached data (still fresh)
       }
 
@@ -79,7 +93,7 @@ export function useMemberIdentity({ backend }) {
         const result = await backend.queries.getFrequentPartners(memberId);
         if (result.ok && result.partners) {
           // Transform API response to expected format
-          const partners = result.partners.map((p) => ({
+          const partners = result.partners!.map((p) => ({
             player: {
               id: p.member_id,
               name: p.display_name,

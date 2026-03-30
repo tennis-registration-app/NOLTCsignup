@@ -27,7 +27,7 @@ const CACHE_PREFIX = 'noltc_cache_';
 
 // === UI Preferences (persistent) ===
 
-export function getPref(key) {
+export function getPref(key: string) {
   if (!PREF_KEYS.has(key)) {
     throw new Error(
       `prefsStorage: "${key}" is not an allowed preference key. Allowed: ${[...PREF_KEYS].join(', ')}`
@@ -43,7 +43,7 @@ export function getPref(key) {
 
 // === Session Cache (non-authoritative, discardable) ===
 
-export function getCache(key) {
+export function getCache(key: string) {
   if (!CACHE_KEYS.has(key)) {
     throw new Error(
       `prefsStorage: "${key}" is not an allowed cache key. Allowed: ${[...CACHE_KEYS].join(', ')}`
@@ -57,7 +57,7 @@ export function getCache(key) {
   }
 }
 
-export function setCache(key, value) {
+export function setCache(key: string, value: unknown) {
   if (!CACHE_KEYS.has(key)) {
     throw new Error(
       `prefsStorage: "${key}" is not an allowed cache key. Allowed: ${[...CACHE_KEYS].join(', ')}`

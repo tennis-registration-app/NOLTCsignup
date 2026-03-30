@@ -22,7 +22,7 @@
  * Set window.Tennis namespace (or merge with existing)
  * @param {Object} tennis - Tennis namespace object
  */
-export function setTennisGlobal(tennis) {
+export function setTennisGlobal(tennis: Record<string, unknown>) {
   window.Tennis = tennis;
 }
 
@@ -44,8 +44,8 @@ export function ensureTennisGlobal() {
  * Set window.GeolocationService
  * @param {Object} service - GeolocationService instance
  */
-export function setGeolocationServiceGlobal(service) {
-  window.GeolocationService = service;
+export function setGeolocationServiceGlobal(service: unknown) {
+  (window as any).GeolocationService = service;
 }
 
 // ============================================
@@ -56,7 +56,7 @@ export function setGeolocationServiceGlobal(service) {
  * Set window.NOLTC_USE_API flag
  * @param {boolean} value - Whether API mode is enabled
  */
-export function setNoltcUseApiGlobal(value) {
+export function setNoltcUseApiGlobal(value: boolean) {
   window.NOLTC_USE_API = value;
 }
 
@@ -68,7 +68,7 @@ export function setNoltcUseApiGlobal(value) {
  * Set window.loadData function
  * @param {Function} fn - Data loader function
  */
-export function setLoadDataGlobal(fn) {
+export function setLoadDataGlobal(fn: () => void | Promise<void>) {
   window.loadData = /** @type {any} */ (fn);
 }
 
@@ -76,7 +76,7 @@ export function setLoadDataGlobal(fn) {
  * Set window.refreshBoard function
  * @param {Function} fn - Board refresh function
  */
-export function setRefreshBoardGlobal(fn) {
+export function setRefreshBoardGlobal(fn: () => void) {
   window.refreshBoard = /** @type {any} */ (fn);
 }
 
@@ -84,7 +84,7 @@ export function setRefreshBoardGlobal(fn) {
  * Set window.refreshAdminView function
  * @param {Function} fn - Admin view refresh function
  */
-export function setRefreshAdminViewGlobal(fn) {
+export function setRefreshAdminViewGlobal(fn: () => void) {
   window.refreshAdminView = /** @type {any} */ (fn);
 }
 
@@ -96,7 +96,7 @@ export function setRefreshAdminViewGlobal(fn) {
  * Set window.__adminRefreshPending flag
  * @param {boolean} value - Whether a refresh is pending
  */
-export function setAdminRefreshPending(value) {
+export function setAdminRefreshPending(value: boolean) {
   window.__adminRefreshPending = value;
 }
 
@@ -112,7 +112,7 @@ export function getAdminRefreshPending() {
  * Set window.__adminCoalesceHits counter
  * @param {number} value - Coalesce hit count
  */
-export function setAdminCoalesceHits(value) {
+export function setAdminCoalesceHits(value: number) {
   window.__adminCoalesceHits = value;
 }
 
@@ -135,7 +135,7 @@ export function incrementAdminCoalesceHits() {
  * Set window.scheduleAdminRefresh function
  * @param {Function} fn - Admin refresh scheduler function
  */
-export function setScheduleAdminRefreshGlobal(fn) {
+export function setScheduleAdminRefreshGlobal(fn: () => void) {
   window.scheduleAdminRefresh = /** @type {any} */ (fn);
 }
 
@@ -143,7 +143,7 @@ export function setScheduleAdminRefreshGlobal(fn) {
  * Set window.__wiredAdminListeners flag
  * @param {boolean} value - Whether admin listeners are wired
  */
-export function setWiredAdminListeners(value) {
+export function setWiredAdminListeners(value: boolean) {
   window.__wiredAdminListeners = value;
 }
 

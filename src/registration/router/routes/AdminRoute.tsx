@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface AdminRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { AdminScreen } from '../../screens';
 import { buildAdminModel, buildAdminActions } from '../presenters';
 
@@ -14,7 +19,7 @@ import { buildAdminModel, buildAdminActions } from '../presenters';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function AdminRoute({ app, handlers }) {
+export function AdminRoute({ app, handlers }: AdminRouteProps) {
   // Build props via presenter functions
   const model = buildAdminModel(app, handlers);
   const actions = buildAdminActions(app, handlers);

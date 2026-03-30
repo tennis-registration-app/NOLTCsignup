@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface CourtRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
 import ErrorBoundary from '../../../shared/components/ErrorBoundary.jsx';
@@ -24,7 +29,7 @@ import { useWorkflowContext } from '../../context/WorkflowProvider';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function CourtRoute({ app, handlers }) {
+export function CourtRoute({ app, handlers }: CourtRouteProps) {
   // Workflow state — read directly from context
   const workflow = useWorkflowContext();
 
