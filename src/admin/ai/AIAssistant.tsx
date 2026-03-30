@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import ProposedActions from './ProposedActions';
+import ProposedActions, { ProposedAction } from './ProposedActions';
 import {
   normalizeAiResponse,
   normalizeAiAnalyticsSummary,
@@ -39,7 +39,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
   const [error, setError] = useState<string | null>(null);
 
   // Pending actions from draft response
-  const [pendingActions, setPendingActions] = useState<unknown[] | null>(null);
+  const [pendingActions, setPendingActions] = useState<ProposedAction[] | null>(null);
   const [actionsToken, setActionsToken] = useState<unknown>(null);
   const [requiresConfirmation, setRequiresConfirmation] = useState(false);
 
@@ -88,7 +88,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
 
       // If draft mode returned proposed actions
       if (response.proposedToolCalls && response.proposedToolCalls.length > 0) {
-        setPendingActions(response.proposedToolCalls);
+        setPendingActions(response.proposedToolCalls as ProposedAction[]);
         setActionsToken(response.actionsToken);
         setRequiresConfirmation(response.requiresConfirmation || false);
       }
@@ -131,18 +131,19 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
               return `${a.tool}: ✗ ${a.error}`;
             }
             // For analytics/read tools, show the actual data
-            if (a.tool === 'get_analytics' && a.result?.data) {
-              const data = a.result.data;
+            if (a.tool === 'get_analytics' && (a.result as Record<string, unknown>)?.data) {
+              const data = (a.result as Record<string, unknown>).data as Record<string, unknown>;
               const normalizedSummary = normalizeAiAnalyticsSummary(data.summary);
               let summary = `${a.tool}: ✓\n`;
               if (normalizedSummary) {
                 summary += `Sessions: ${normalizedSummary.totalSessions || 0}\n`;
                 summary += `Total hours: ${normalizedSummary.totalHours?.toFixed(1) || 0}\n`;
               }
-              if (data.heatmap && data.heatmap.length > 0) {
+              const dataHeatmap = data.heatmap as Record<string, unknown>[];
+              if (dataHeatmap && dataHeatmap.length > 0) {
                 // Find busiest day - normalize heatmap rows
                 const dayTotals: Record<string, number> = {};
-                data.heatmap.forEach((h: Record<string, unknown>) => {
+                dataHeatmap.forEach((h) => {
                   const normalized = normalizeAiHeatmapRow(h);
                   dayTotals[normalized.dayOfWeek] =
                     (dayTotals[normalized.dayOfWeek] || 0) + normalized.sessionCount;
@@ -155,8 +156,9 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
                   summary += `Busiest day: ${days[Number(busiest[0])]} (${busiest[1]} sessions)`;
                 }
               }
-              if (data.buckets) {
-                summary += `Data points: ${data.buckets.length}`;
+              const dataBuckets = data.buckets as unknown[] | undefined;
+              if (dataBuckets) {
+                summary += `Data points: ${dataBuckets.length}`;
               }
               return summary;
             }

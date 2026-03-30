@@ -1,5 +1,23 @@
 import React from 'react';
 
+interface UsageComparisonControlsProps {
+  metric: string;
+  onMetricChange: (value: string) => void;
+  primaryStart: Date | string | null;
+  primaryEnd: Date | string | null;
+  onPrimaryStartChange: (value: string) => void;
+  onPrimaryEndChange: (value: string) => void;
+  granularity: string;
+  onGranularityChange: (value: string) => void;
+  comparisonEnabled: boolean;
+  onComparisonEnabledChange: (value: boolean) => void;
+  comparisonStart: Date | string | null;
+  onComparisonStartChange: (value: string) => void;
+  effectiveGranularity: string | null;
+  comparisonEnd: string | null | undefined;
+}
+
+
 /**
  * Controls for the usage comparison chart
  * - Metric selector (usage only for Phase 1)
@@ -22,9 +40,9 @@ export function UsageComparisonControls({
   onComparisonStartChange,
   effectiveGranularity,
   comparisonEnd, // Auto-calculated, display only
-}) {
+}: UsageComparisonControlsProps) {
   // Format date for input value
-  const formatForInput = (date) => {
+  const formatForInput = (date: Date | string | null | undefined): string => {
     if (!date) return '';
     if (typeof date === 'string') return date;
     return date.toISOString().split('T')[0];

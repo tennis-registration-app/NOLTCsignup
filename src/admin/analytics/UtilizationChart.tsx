@@ -5,7 +5,22 @@
  */
 import React from 'react';
 
-const UtilizationChart = ({ summary, loading, dateRange: _dateRange }) => {
+interface UtilizationSummary {
+  courtHoursUsed?: number;
+  courtHoursScheduled?: number;
+  utilizationPct?: number;
+  avgCourtHoursPerDay?: number;
+  sessions?: number;
+  previous?: { courtHoursUsed: number; utilizationPct: number };
+}
+
+interface DateRange {
+  start: Date | string;
+  end: Date | string;
+}
+
+const UtilizationChart = ({ summary, loading, dateRange: _dateRange }: { summary: UtilizationSummary | null | undefined; loading: boolean; dateRange?: DateRange | null }) => {
+
   // Default values when no data
   const stats = {
     courtHoursUsed: summary?.courtHoursUsed ?? 0,

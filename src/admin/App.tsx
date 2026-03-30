@@ -122,7 +122,7 @@ const AdminPanel = ({ onExit }) => {
         aiModel={ai.model}
         aiActions={ai.actions}
         services={ai.services}
-        components={ai.components}
+        components={(ai.components ?? {}) as Record<string, React.ElementType | undefined>}
         clearWaitlist={() => clearWaitlistOp(backend)}
       />
     </div>

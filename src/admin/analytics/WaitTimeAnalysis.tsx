@@ -5,7 +5,14 @@
  */
 import React, { useMemo } from 'react';
 
-const WaitTimeAnalysis = ({ waitlistData = [] as Array<{id: string; playerNames?: string; joinedAt?: string; minutesWaited: number}>, loading }) => {
+interface WaitlistEntry {
+  id: string;
+  playerNames?: string[];
+  joinedAt?: string;
+  minutesWaited: number;
+}
+
+const WaitTimeAnalysis = ({ waitlistData = [] as WaitlistEntry[], loading }: { waitlistData?: WaitlistEntry[]; loading: boolean }) => {
   // Calculate summary stats
   const stats = useMemo(() => {
     if (waitlistData.length === 0) return null;
@@ -16,7 +23,7 @@ const WaitTimeAnalysis = ({ waitlistData = [] as Array<{id: string; playerNames?
   }, [waitlistData]);
 
   // Format time for display (convert UTC to Central)
-  const formatTime = (isoString) => {
+  const formatTime = (isoString: string): string => {
     const date = new Date(isoString);
     return date.toLocaleString('en-US', {
       timeZone: 'America/Chicago',
@@ -29,7 +36,7 @@ const WaitTimeAnalysis = ({ waitlistData = [] as Array<{id: string; playerNames?
   };
 
   // Format player names (join with commas)
-  const formatPlayers = (names) => {
+  const formatPlayers = (names: string[] | undefined): string => {
     if (!names || names.length === 0) return 'Unknown';
     return names.join(', ');
   };
@@ -89,7 +96,7 @@ const WaitTimeAnalysis = ({ waitlistData = [] as Array<{id: string; playerNames?
               {waitlistData.map((entry) => (
                 <tr key={entry.id}>
                   <td className="py-2">{formatPlayers(entry.playerNames)}</td>
-                  <td className="py-2 text-gray-600">{formatTime(entry.joinedAt)}</td>
+                  <td className="py-2 text-gray-600">{entry.joinedAt ? formatTime(entry.joinedAt) : ''}</td>
                   <td className="py-2 text-right font-medium">
                     <span
                       className={entry.minutesWaited > 30 ? 'text-orange-600' : 'text-green-600'}

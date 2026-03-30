@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 
-interface ProposedAction {
+export interface ProposedAction {
   id?: string;
   tool?: string;
   description?: string;

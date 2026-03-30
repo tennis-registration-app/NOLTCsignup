@@ -19,7 +19,7 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
 
   // Build lookup from normalized data
   const heatmapLookup = useMemo(() => {
-    const lookup = {};
+    const lookup: Record<string, number> = {};
     normalizedData.forEach((d) => {
       lookup[`${d.dayOfWeek}-${d.hour}`] = d.sessionCount;
     });
@@ -32,7 +32,7 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
     return Math.max(1, ...normalizedData.map((d) => d.sessionCount));
   }, [normalizedData]);
 
-  const getColor = (dayIndex, hour) => {
+  const getColor = (dayIndex: number, hour: number): string => {
     const count = heatmapLookup[`${dayIndex}-${hour}`] || 0;
     if (count === 0) return 'bg-gray-100';
     const intensity = count / maxCount;
@@ -42,11 +42,11 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
     return 'bg-green-200';
   };
 
-  const getCount = (dayIndex, hour) => {
+  const getCount = (dayIndex: number, hour: number): number => {
     return heatmapLookup[`${dayIndex}-${hour}`] || 0;
   };
 
-  const formatHour = (hour) => {
+  const formatHour = (hour: number): string => {
     if (hour === 12) return '12p';
     if (hour > 12) return `${hour - 12}p`;
     return `${hour}a`;
