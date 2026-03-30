@@ -11,7 +11,37 @@ import { normalizeWaitlist } from '../../lib/normalizeWaitlist';
  * @param {Array} blocks - Array of block objects
  * @returns {string} Fingerprint string for comparison
  */
-export function generateBlocksFingerprint(blocks) {
+interface RawBlock {
+  id?: string;
+  startsAt?: string;
+  starts_at?: string;
+  endsAt?: string;
+  ends_at?: string;
+}
+
+interface RawCourt {
+  id?: string;
+  number?: number;
+  block?: {
+    id?: string;
+    reason?: string;
+    blockType?: string;
+    block_type?: string;
+    startsAt?: string;
+    startTime?: string;
+    endsAt?: string;
+    endTime?: string;
+  };
+}
+
+export interface RawBoard {
+  courts?: RawCourt[];
+  waitlist?: unknown[];
+  blocks?: RawBlock[];
+  upcomingBlocks?: RawBlock[];
+}
+
+export function generateBlocksFingerprint(blocks: RawBlock[]) {
   if (!blocks || !Array.isArray(blocks)) return '';
   return blocks
     .map((b) => `${b.id}:${b.startsAt || b.starts_at}:${b.endsAt || b.ends_at}`)
@@ -26,11 +56,11 @@ export function generateBlocksFingerprint(blocks) {
  * @param {Array} courts - Array of court objects from API
  * @returns {Array} Array of court block objects for UI
  */
-export function extractCourtBlocks(courts) {
+export function extractCourtBlocks(courts: RawCourt[]) {
   if (!courts || !Array.isArray(courts)) return [];
 
   return courts
-    .filter((c) => c.block)
+    .filter((c): c is RawCourt & { block: NonNullable<RawCourt['block']> } => !!c.block)
     .map((c) => ({
       id: c.block.id,
       courtId: c.id,
@@ -53,7 +83,7 @@ export function extractCourtBlocks(courts) {
  * @param {string} lastFingerprint - Previous blocks fingerprint for change detection
  * @returns {Object} Transformed state object with shouldBumpRefreshTrigger flag
  */
-export function transformBoardUpdate(board, lastFingerprint = '') {
+export function transformBoardUpdate(board: RawBoard | null | undefined, lastFingerprint = '') {
   // Handle null/undefined board
   if (!board) {
     return {

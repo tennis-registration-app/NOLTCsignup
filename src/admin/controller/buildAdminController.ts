@@ -1,14 +1,51 @@
 import type React from 'react';
+import type { TennisBackendShape, DataStoreShape, DomainCourt, DomainWaitlistEntry } from '../../types/appTypes';
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface AdminControllerActions {
+  clearCourt?: AnyFn;
+  moveCourt?: AnyFn;
+  clearAllCourts?: AnyFn;
+  clearWetCourt?: AnyFn;
+  clearAllWetCourts?: AnyFn;
+  removeFromWaitlist?: AnyFn;
+  moveInWaitlist?: AnyFn;
+  handleEditBlockFromStatus?: AnyFn;
+  handleEmergencyWetCourt?: AnyFn;
+  deactivateWetCourts?: AnyFn;
+  applyBlocks?: AnyFn;
+  onEditingBlockConsumed?: AnyFn;
+  showNotification?: (...args: unknown[]) => unknown;
+  setShowAIAssistant?: (value: boolean) => void;
+  handleAISettingsChanged?: AnyFn;
+  reloadSettings?: AnyFn;
+  updateBallPrice?: AnyFn;
+  refreshData?: AnyFn;
+  bumpRefreshTrigger?: AnyFn;
+}
+
+interface AdminControllerComponents {
+  VisualTimeEntry?: React.ComponentType<unknown>;
+  MiniCalendar?: React.ComponentType<unknown>;
+  EventCalendarEnhanced?: React.ComponentType<unknown>;
+  MonthView?: React.ComponentType<unknown>;
+  EventSummary?: React.ComponentType<unknown>;
+  HoverCard?: React.ComponentType<unknown>;
+  QuickActionsMenu?: React.ComponentType<unknown>;
+  AIAssistant?: React.ComponentType<unknown>;
+  AIAssistantAdmin?: React.ComponentType<unknown>;
+}
 
 interface AdminControllerDeps {
-  backend: Record<string, unknown>;
-  dataStore?: Record<string, unknown>;
-  courts: Record<string, unknown>[];
-  courtBlocks: Record<string, unknown>[];
-  waitingGroups: Record<string, unknown>[];
-  hoursOverrides: Record<string, unknown>[];
-  blockToEdit?: Record<string, unknown> | null;
-  suspendedBlocks: Record<string, unknown>[];
+  backend: TennisBackendShape;
+  dataStore?: DataStoreShape;
+  courts: DomainCourt[];
+  courtBlocks: object[];
+  waitingGroups: DomainWaitlistEntry[];
+  hoursOverrides: object[];
+  blockToEdit?: object | null;
+  suspendedBlocks: object[];
   wetCourtsActive: boolean;
   wetCourts: Set<number>;
   ENABLE_WET_COURTS: boolean;
@@ -20,8 +57,8 @@ interface AdminControllerDeps {
   showAIAssistant: boolean;
   USE_REAL_AI: boolean;
   settings: Record<string, unknown>;
-  actions: Record<string, ((...args: unknown[]) => unknown) | undefined>;
-  components?: Record<string, unknown>;
+  actions: AdminControllerActions;
+  components?: AdminControllerComponents;
 }
 /**
  * Admin Controller Builder
@@ -205,7 +242,7 @@ export function buildAdminController(deps: AdminControllerDeps) {
     waitingGroups,
   });
   const aiActions = createAIAssistantActions({
-    setShowAIAssistant: actions?.setShowAIAssistant,
+    setShowAIAssistant: actions?.setShowAIAssistant as AnyFn | undefined,
     onAISettingsChanged: actions?.handleAISettingsChanged,
     loadData: actions?.reloadSettings,
     clearCourt: actions?.clearCourt,

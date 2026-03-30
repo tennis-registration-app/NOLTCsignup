@@ -93,6 +93,38 @@ type AnyFn = (...args: unknown[]) => unknown;
 interface UseGroupHandlersDeps {
   [key: string]: unknown;
 }
+interface Player {
+  id: unknown;
+  name: string;
+  memberNumber?: string;
+  memberId?: unknown;
+  phone?: string;
+  ranking?: number | null;
+  winRate?: number;
+  accountId?: unknown;
+}
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface UseGroupHandlersDeps {
+  [key: string]: unknown;
+}
+interface Player {
+  id: unknown;
+  name: string;
+  memberNumber?: string;
+  memberId?: unknown;
+  phone?: string;
+  ranking?: number | null;
+  winRate?: number;
+  accountId?: unknown;
+}
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface UseGroupHandlersDeps {
+  [key: string]: unknown;
+}
 export function useGroupHandlers({
   groupGuest,
   derived,

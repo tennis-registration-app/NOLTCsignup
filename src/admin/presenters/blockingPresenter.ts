@@ -29,13 +29,13 @@ const VIEW_MAP = {
  * @param {import('../types/domainObjects.js').AdminServices} services
  * @returns {Object} Data props for CompleteBlockManagerEnhanced
  */
-export function buildBlockingModel(blockingView, wetCourtsModel, blockModel, components, services) {
+export function buildBlockingModel(blockingView: string, wetCourtsModel: unknown, blockModel: unknown, components: unknown, services: unknown) {
   return {
     wetCourtsModel,
     blockModel,
     components,
     services,
-    defaultView: VIEW_MAP[blockingView] || blockingView,
+    defaultView: VIEW_MAP[blockingView as keyof typeof VIEW_MAP] || blockingView,
   };
 }
 
@@ -46,7 +46,7 @@ export function buildBlockingModel(blockingView, wetCourtsModel, blockModel, com
  * @param {import('../types/domainObjects.js').BlockActions} blockActions
  * @returns {Object} Action props for CompleteBlockManagerEnhanced
  */
-export function buildBlockingActions(wetCourtsActions, blockActions) {
+export function buildBlockingActions(wetCourtsActions: unknown, blockActions: unknown) {
   return {
     wetCourtsActions,
     blockActions,

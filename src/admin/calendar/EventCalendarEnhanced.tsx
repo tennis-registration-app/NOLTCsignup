@@ -183,14 +183,14 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
 
   // Memoized event extraction and processing
   const events = useMemo(
-    () => buildCalendarEvents({ blocks, courts }),
+    () => buildCalendarEvents({ blocks: blocks as unknown as Record<string,unknown>[], courts: courts as unknown as Record<string,unknown>[] }) as CalendarEvent[],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshTrigger intentionally forces re-compute on external events (block creation/deletion)
     [blocks, courts, refreshTrigger]
   );
 
   // Memoized filtered events based on view and date range
   const filteredEvents = useMemo(
-    () => filterCalendarEvents({ events, viewMode, selectedDate }),
+    () => filterCalendarEvents({ events: events as unknown as Record<string,unknown>[], viewMode, selectedDate }) as unknown as CalendarEvent[],
     [events, viewMode, selectedDate]
   );
 
@@ -436,7 +436,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
               <div className="h-[600px] overflow-auto">
                 <WeekView
                   selectedDate={selectedDate}
-                  events={filteredEvents}
+                  events={filteredEvents as unknown as CalendarEvent[]}
                   currentTime={currentTime}
                   hoursOverrides={hoursOverrides}
                   onEventClick={handleEventClick}
@@ -451,7 +451,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
               <div className="h-[600px] overflow-auto">
                 <DayViewEnhanced
                   selectedDate={selectedDate}
-                  events={filteredEvents}
+                  events={filteredEvents as unknown as CalendarEvent[]}
                   currentTime={currentTime}
                   hoursOverrides={hoursOverrides}
                   onEventClick={handleEventClick}
