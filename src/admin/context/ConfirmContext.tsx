@@ -1,16 +1,18 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 
-const ConfirmContext = createContext(null);
+type ConfirmFn = (message: string) => Promise<boolean>;
+
+const ConfirmContext = createContext<ConfirmFn | null>(null);
 
 /**
  * Provider that exposes an async confirm(message) function to any admin component.
  * Renders a modal dialog overlay when confirmation is requested.
  */
-export function ConfirmProvider({ children }) {
-  const [state, setState] = useState(null); // { message, resolve }
-  const resolveRef = useRef(null);
+export function ConfirmProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<{ message: string } | null>(null); // { message, resolve }
+  const resolveRef = useRef<((value: boolean) => void) | null>(null);
 
-  const confirm = useCallback((message) => {
+  const confirm = useCallback((message: string): Promise<boolean> => {
     return new Promise((resolve) => {
       resolveRef.current = resolve;
       setState({ message });
@@ -59,7 +61,7 @@ export function ConfirmProvider({ children }) {
  * Hook to access the async confirm function from any admin component.
  * @returns {Function} confirm(message) - resolves to true/false
  */
-export function useAdminConfirm() {
+export function useAdminConfirm(): ConfirmFn {
   const confirm = useContext(ConfirmContext);
   if (!confirm) {
     throw new Error('useAdminConfirm must be used within ConfirmProvider');

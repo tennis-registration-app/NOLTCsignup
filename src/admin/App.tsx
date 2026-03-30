@@ -36,7 +36,8 @@ import { clearWaitlistOp } from './handlers/waitlistOperations';
 import { useAdminAppState } from './hooks/useAdminAppState';
 
 // Main Admin Panel Component
-const AdminPanel = ({ onExit }) => {
+interface AdminPanelProps { onExit: () => void; }
+const AdminPanel = ({ onExit }: AdminPanelProps) => {
   const showNotification = useAdminNotification() as (message: string, type: string) => void;
   const confirm = useAdminConfirm() as (message: string) => Promise<boolean>;
 

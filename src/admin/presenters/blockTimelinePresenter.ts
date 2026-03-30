@@ -1,3 +1,5 @@
+import type { TimelineBlock } from '../blocks/BlockTimelineCard';
+
 /**
  * Pure presenter for BlockTimeline.
  * Each function corresponds to an existing useMemo or inline computation.
@@ -9,7 +11,8 @@
  *
  * Extracted from BlockTimeline useMemo (lines 106-160).
  */
-export function filterBlocksByDateAndCourt({ blocks, viewMode, selectedDate, filterCourt }) {
+interface FilterParams { blocks: TimelineBlock[]; viewMode: string; selectedDate: Date; filterCourt: string | number; }
+export function filterBlocksByDateAndCourt({ blocks, viewMode, selectedDate, filterCourt }: FilterParams): TimelineBlock[] {
   let filtered = [...blocks];
 
   // Filter by date range based on view mode
@@ -56,7 +59,7 @@ export function filterBlocksByDateAndCourt({ blocks, viewMode, selectedDate, fil
 
   // Filter by court if specific court selected
   if (filterCourt !== 'all') {
-    filtered = filtered.filter((block) => block.courtNumber === parseInt(filterCourt));
+    filtered = filtered.filter((block) => block.courtNumber === parseInt(String(filterCourt)));
   }
 
   // Sort by start time
@@ -70,8 +73,8 @@ export function filterBlocksByDateAndCourt({ blocks, viewMode, selectedDate, fil
  *
  * Extracted from BlockTimeline inline reduce (lines 184-197).
  */
-export function groupBlocksByDate(blocks) {
-  var groups = {};
+export function groupBlocksByDate(blocks: TimelineBlock[]) {
+  const groups: Record<string, {date: Date; blocks: TimelineBlock[]}> = {};
   for (var block of blocks) {
     var blockDate = new Date(block.startTime);
     var dateKey = blockDate.toDateString();
@@ -86,7 +89,7 @@ export function groupBlocksByDate(blocks) {
  *
  * Extracted from BlockTimeline inline sort (lines 199-201).
  */
-export function sortGroupedBlocks(grouped: Record<string, {date: Date; blocks: Array<Record<string, unknown>>}>) {
+export function sortGroupedBlocks(grouped: Record<string, {date: Date; blocks: TimelineBlock[]}>) {
   return Object.values(grouped).sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
@@ -95,7 +98,7 @@ export function sortGroupedBlocks(grouped: Record<string, {date: Date; blocks: A
  *
  * Extracted from BlockTimeline getBlockStatus (lines 162-169).
  */
-export function getBlockStatus(block, currentTime) {
+export function getBlockStatus(block: TimelineBlock, currentTime: Date): string {
   const start = new Date(block.startTime);
   const end = new Date(block.endTime);
 
@@ -109,7 +112,7 @@ export function getBlockStatus(block, currentTime) {
  *
  * Extracted from BlockTimeline getStatusColor (lines 171-182).
  */
-export function getStatusColor(status) {
+export function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
       return 'bg-red-50 border-red-300 text-red-900';
@@ -127,7 +130,7 @@ export function getStatusColor(status) {
  *
  * Extracted from BlockTimeline getDateLabel + isToday + isTomorrow (lines 203-226).
  */
-export function getDateLabel(date) {
+export function getDateLabel(date: Date): string {
   if (date.toDateString() === new Date().toDateString()) return 'Today';
 
   const tomorrow = new Date();

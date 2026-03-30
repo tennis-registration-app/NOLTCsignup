@@ -10,6 +10,7 @@
  * NO EXECUTABLE LOGIC IN THIS FILE — types only.
  */
 
+import type { ParticipantInput } from '../lib/backend/types';
 // Orchestrator deps types — no circular dependency (orchestrators do not import appTypes)
 import type { AssignCourtDeps } from '../registration/orchestration/assignCourtOrchestrator.js';
 import type { WaitlistDeps } from '../registration/orchestration/waitlistOrchestrator.js';
@@ -186,11 +187,11 @@ export interface TennisBackendShape {
   };
   commands: {
     // Evidence: TennisCommands.js:58 — returns CommandResponse & { session? }
-    assignCourt: (input: { courtId: string; participants: unknown[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
+    assignCourt: (input: { courtId: string; participants: ParticipantInput[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:69 — returns CommandResponse
     endSession: (input: { courtId: string; reason?: string; endReason?: string; sessionId?: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:90 — returns CommandResponse & { entry?, position? }
-    joinWaitlist: (input: { participants: unknown[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
+    joinWaitlist: (input: { participants: ParticipantInput[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
     // Evidence: TennisCommands.js:101 — returns CommandResponse
     cancelWaitlist: (input: { entryId: string; reason?: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:118 — returns CommandResponse

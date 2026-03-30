@@ -1,3 +1,4 @@
+import type { GroupPlayer } from '../../types/appTypes';
 /**
  * @fileoverview TennisCommands - Mutation operations
  *
@@ -488,7 +489,7 @@ export class TennisCommands {
     longitude,
   }: {
     courtId: string;
-    players: Array<Record<string, unknown>>;
+    players: GroupPlayer[];
     groupType: 'singles' | 'doubles';
     addBalls?: boolean;
     splitBalls?: boolean;
@@ -518,7 +519,7 @@ export class TennisCommands {
     });
 
     // 2. Resolve players to participants (member lookup)
-    const participants = await this.resolvePlayersToParticipants(players);
+    const participants = await this.resolvePlayersToParticipants(players as unknown as Array<Record<string, unknown>>);
     logger.debug('TennisCommands', 'Resolved participants', {
       durationMs: (performance.now() - tStart).toFixed(0),
     });
@@ -556,7 +557,7 @@ export class TennisCommands {
    * @param {boolean} [params.deferred] - Wait for Full Time flow
    * @returns {Promise<import('./types').CommandResponse & { entry?: Object, position?: number }>}
    */
-  async joinWaitlistWithPlayers({ players, groupType, latitude, longitude, deferred }: { players: Array<Record<string, unknown>>; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) {
+  async joinWaitlistWithPlayers({ players, groupType, latitude, longitude, deferred }: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) {
     // 1. Validate command structure (fail-fast)
     // INPUT-NORMALIZE: Accept either format from UI, normalize to camelCase for validation
     const validPlayers = players.map((p) => ({
@@ -571,7 +572,7 @@ export class TennisCommands {
     });
 
     // 2. Resolve players to participants (member lookup)
-    const participants = await this.resolvePlayersToParticipants(players);
+    const participants = await this.resolvePlayersToParticipants(players as unknown as Array<Record<string, unknown>>);
 
     // 3. Send to API
     return this.joinWaitlist({

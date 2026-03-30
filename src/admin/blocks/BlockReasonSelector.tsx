@@ -22,6 +22,16 @@ const quickReasons = [
   { label: 'LEAGUE', icon: Trophy, color: 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700' },
 ];
 
+interface BlockReasonSelectorProps {
+  blockReason: string;
+  onQuickReasonSelect: (label: string) => void;
+  onCustomReasonChange: (value: string) => void;
+  wetCourtsActive: boolean;
+  wetCourts: Set<number>;
+  deactivateWetCourts: () => void;
+  handleEmergencyWetCourt: () => void;
+}
+
 const BlockReasonSelector = ({
   blockReason,
   onQuickReasonSelect,
@@ -30,7 +40,7 @@ const BlockReasonSelector = ({
   wetCourts,
   deactivateWetCourts,
   handleEmergencyWetCourt,
-}) => {
+}: BlockReasonSelectorProps) => {
   return (
     <div className="order-2">
       <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">

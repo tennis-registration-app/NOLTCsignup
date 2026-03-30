@@ -18,6 +18,27 @@ import {
 import BlockTimelineToolbar from './BlockTimelineToolbar';
 import BlockTimelineCard, { TimelineBlock } from './BlockTimelineCard';
 
+interface BlockTimelineBackend {
+  admin: {
+    getBlocks: (params: {fromDate: string; toDate: string}) => Promise<{
+      ok: boolean;
+      blocks: Array<{id: string; courtId?: string; courtNumber: number; startsAt: string; endsAt: string; blockType: string; title?: string; isRecurring?: boolean; recurrenceRule?: string; recurrenceGroupId?: string | null}>;
+      message?: string;
+    }>;
+  };
+}
+
+interface BlockTimelineProps {
+  courts?: object[];
+  currentTime: Date;
+  onEditBlock: (block: import('./BlockTimelineCard').TimelineBlock) => void;
+  onRemoveBlock: (id: string) => void;
+  onRemoveBlockGroup: (groupId: string, futureOnly: boolean) => void;
+  onDuplicateBlock: (block: import('./BlockTimelineCard').TimelineBlock) => void;
+  refreshTrigger?: number;
+  backend: BlockTimelineBackend | null;
+}
+
 const BlockTimeline = ({
   courts: _courts,
   currentTime,
@@ -27,7 +48,7 @@ const BlockTimeline = ({
   onDuplicateBlock,
   refreshTrigger,
   backend,
-}) => {
+}: BlockTimelineProps) => {
   const confirm = useAdminConfirm();
   const [viewMode, setViewMode] = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -122,7 +143,7 @@ const BlockTimeline = ({
   const groupedBlocks = groupBlocksByDate(filteredBlocks);
   const sortedGroups = sortGroupedBlocks(groupedBlocks);
 
-  const navigateDate = (direction) => {
+  const navigateDate = (direction: number) => {
     setSelectedDate((prevDate) => {
       const newDate = new Date(prevDate);
 
