@@ -9,6 +9,77 @@ import { toast } from '../../../shared/utils/toast.js';
 import { readJSON, readDataSafe } from '../../../lib/storage';
 import { STORAGE } from '../../../lib/constants';
 import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
+import type {
+  RegistrationUiState,
+  RegistrationSetters,
+  MobileState,
+  GroupGuestState,
+  CourtAssignmentState,
+  Services,
+  HelperFunctions,
+  BlockAdminState,
+  AlertState,
+  RegistrationRefs,
+  RegistrationConstants,
+  ApiConfig,
+  GroupPlayer,
+  DisplacementInfo,
+  AssignCourtDeps,
+  WaitlistDeps,
+  CourtChangeDeps,
+} from '../../../types/appTypes';
+
+interface CourtHandlerState extends RegistrationUiState {
+  isAssigning: boolean;
+  currentWaitlistEntryId: string | null;
+  canChangeCourt: boolean;
+  isJoiningWaitlist: boolean;
+  replacedGroup: { players: Array<{ name: string }>; endTime: string } | null;
+}
+
+interface CourtHandlerSetters extends RegistrationSetters {
+  setIsAssigning: (v: boolean) => void;
+  setCurrentWaitlistEntryId: (v: string | null) => void;
+  setHasWaitlistPriority: (v: boolean) => void;
+  setReplacedGroup: (v: { players: Array<{ name: string }>; endTime: string } | null) => void;
+  setDisplacement: (v: DisplacementInfo | null) => void;
+  setOriginalCourtData: (v: unknown) => void;
+  setIsChangingCourt: (v: boolean) => void;
+  setWasOvertimeCourt: (v: boolean) => void;
+  setCanChangeCourt: (v: boolean) => void;
+  setChangeTimeRemaining: (v: number | ((prev: number) => number)) => void;
+  setIsTimeLimited: (v: boolean) => void;
+  setTimeLimitReason: (v: string | null) => void;
+  setIsJoiningWaitlist: (v: boolean) => void;
+  setWaitlistPosition: (v: number | null) => void;
+}
+
+interface CoreHandlers {
+  clearSuccessResetTimer: () => void;
+  resetForm: () => void;
+  isPlayerAlreadyPlaying: (playerId: string) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
+}
+
+interface CourtHandlerDeps {
+  state: CourtHandlerState;
+  setters: CourtHandlerSetters;
+  mobile: MobileState;
+  groupGuest: GroupGuestState;
+  courtAssignment: CourtAssignmentState;
+  services: Services;
+  helpers: HelperFunctions;
+  blockAdmin: BlockAdminState;
+  alert: AlertState;
+  refs: RegistrationRefs;
+  assignCourtToGroupOrchestrated: (courtNumber: number | null | undefined, selectableCountAtSelection: number | null, deps: AssignCourtDeps) => Promise<void>;
+  changeCourtOrchestrated: (deps: CourtChangeDeps) => void;
+  sendGroupToWaitlistOrchestrated: (group: GroupPlayer[] | null, deps: WaitlistDeps, options?: { deferred?: boolean }) => Promise<boolean>;
+  validateGroupCompat: (players: GroupPlayer[], guests: number) => { ok: boolean; errors: string[] };
+  dbg: (...args: unknown[]) => void;
+  CONSTANTS: RegistrationConstants;
+  API_CONFIG: ApiConfig;
+  core: CoreHandlers;
+}
 
 /**
  * Court Handlers
@@ -36,7 +107,7 @@ export function useCourtHandlers({
   API_CONFIG,
   // Core handlers created in parent scope
   core,
-}) {
+}: CourtHandlerDeps) {
   const {
     data,
     isAssigning,
@@ -82,7 +153,7 @@ export function useCourtHandlers({
 
   // VERBATIM COPY: saveCourtData from line ~206
   // @deprecated — localStorage persistence removed; API commands handle state
-  const saveCourtData = useCallback(async (_data) => {
+  const saveCourtData = useCallback(async (_data: RegistrationUiState["data"]) => {
     // TennisDataService.saveData removed — API is source of truth
     // Callers should migrate to TennisCommands for write operations
     logger.warn('CourtHandlers', 'DEPRECATED: localStorage persistence removed. Use API commands.');
@@ -111,12 +182,12 @@ export function useCourtHandlers({
 
         if (checkWaitlistPriority) {
           // Waitlist priority mode: ONLY show truly free courts (no overtime fallback)
-          const info = getFreeCourtsInfo({ data: boardData, now, blocks, wetSet });
+          const info = getFreeCourtsInfo({ data: boardData as { courts: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean } | null }> }, now, blocks, wetSet });
           selectable = info.free || [];
           dbg('Waitlist priority mode - free courts only:', selectable);
         } else {
           // Non-waitlist mode: use standard selectable logic (free first, then overtime fallback)
-          selectable = getSelectableCourtsStrict({ data: boardData, now, blocks, wetSet });
+          selectable = getSelectableCourtsStrict({ data: boardData as { courts: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean } | null }> }, now, blocks, wetSet });
           dbg('Standard selectable courts:', selectable);
         }
 
@@ -136,7 +207,7 @@ export function useCourtHandlers({
 
   // VERBATIM COPY: clearViaService from line ~367 (internal helper, not exported)
   const clearViaService = useCallback(
-    async (courtNumber, clearReason) => {
+    async (courtNumber: number, clearReason: string) => {
       // Get court UUID from court number
       const court = data.courts.find((c) => c.number === courtNumber);
       if (!court) {
@@ -159,7 +230,7 @@ export function useCourtHandlers({
         };
       } catch (error) {
         logger.error('CourtHandlers', '[clearViaService] Error', error);
-        return { success: false, error: error.message || 'Failed to clear court' };
+        return { success: false, error: (error as Error).message || 'Failed to clear court' };
       }
     },
     [data.courts, backend]
@@ -167,7 +238,7 @@ export function useCourtHandlers({
 
   // VERBATIM COPY: clearCourt from line ~397
   const clearCourt = useCallback(
-    async (courtNumber, clearReason = 'Cleared') => {
+    async (courtNumber: number, clearReason = "Cleared") => {
       logger.debug(
         'CourtHandlers',
         `[Registration UI] clearCourt called for court ${courtNumber} with reason: ${clearReason}`
@@ -193,7 +264,7 @@ export function useCourtHandlers({
         mobileFlow,
         preselectedCourt,
         operatingHours,
-        currentGroup,
+        currentGroup: currentGroup ?? [],
         courts: data.courts,
         currentWaitlistEntryId,
         CONSTANTS,
@@ -278,7 +349,7 @@ export function useCourtHandlers({
   // VERBATIM COPY: assignCourtToGroup from line ~416
   // deps now assembled by createAssignCourtDeps factory
   const assignCourtToGroup = useCallback(
-    async (courtNumber, selectableCountAtSelection = null) => {
+    async (courtNumber: number, selectableCountAtSelection: number | null = null) => {
       return assignCourtToGroupOrchestrated(
         courtNumber,
         selectableCountAtSelection,
@@ -314,13 +385,13 @@ export function useCourtHandlers({
 
   // VERBATIM COPY: sendGroupToWaitlist from line ~527
   const sendGroupToWaitlist = useCallback(
-    async (group, options) => {
+    async (group: GroupPlayer[], options?: { deferred?: boolean }) => {
       return await sendGroupToWaitlistOrchestrated(
         group,
         {
           // Read values
           isJoiningWaitlist,
-          currentGroup,
+          currentGroup: currentGroup ?? [],
           mobileFlow,
           // Setters
           setIsJoiningWaitlist,
@@ -356,7 +427,7 @@ export function useCourtHandlers({
 
   // Defer waitlist entry — moved from courtPresenter.js onDeferWaitlist
   const deferWaitlistEntry = useCallback(
-    async (entryId) => {
+    async (entryId: string) => {
       try {
         const res = await backend.commands.deferWaitlistEntry({
           entryId,
@@ -380,7 +451,7 @@ export function useCourtHandlers({
 
   // Undo overtime takeover — moved from courtPresenter.js onCourtSelect pre-step
   const undoOvertimeAndClearPrevious = useCallback(
-    async (previousCourtNumber, displacement) => {
+    async (previousCourtNumber: number, displacement: DisplacementInfo & { displacedSessionId?: string; takeoverSessionId?: string }) => {
       if (displacement && displacement.displacedSessionId && displacement.takeoverSessionId) {
         try {
           const undoResult = await backend.commands.undoOvertimeTakeover({
@@ -418,7 +489,7 @@ export function useCourtHandlers({
       const board = await backend.queries.getBoard();
 
       // Find first waiting entry
-      const firstWaiting = board?.waitlist?.find((e) => e.status === 'waiting');
+      const firstWaiting = board?.waitlist?.find((e) => (e as { status?: string }).status === 'waiting');
       if (!firstWaiting) {
         showAlertMessage('No entries waiting in queue');
         return;
@@ -454,13 +525,13 @@ export function useCourtHandlers({
       }
     } catch (err) {
       logger.error('CourtHandlers', 'ASSIGN NEXT error', err);
-      showAlertMessage(err.message || 'Failed assigning next');
+      showAlertMessage((err as Error).message || 'Failed assigning next');
     }
   }, [backend, showAlertMessage]);
 
   // Join waitlist as deferred — moved from courtPresenter.js onJoinWaitlistDeferred
   const joinWaitlistDeferred = useCallback(
-    async (group) => {
+    async (group: GroupPlayer[]) => {
       try {
         await sendGroupToWaitlist(group, { deferred: true });
         toast("You'll be notified when a full-time court is available", {
