@@ -78,11 +78,11 @@ const SuccessScreen = ({
   // Ball price from API (passed as prop in cents, converted to dollars)
   const ballPrice = ballPriceCents ? ballPriceCents / 100 : TENNIS_CONFIG.PRICING.TENNIS_BALLS;
 
-  const nonGuestPlayers = currentGroup.filter((p) => !p.isGuest).length;
+  const nonGuestPlayers = currentGroup.filter((p: { isGuest?: boolean }) => !p.isGuest).length;
   const splitPrice = nonGuestPlayers > 0 ? ballPrice / nonGuestPlayers : ballPrice;
 
   // Get member's last 4 digits
-  const getLastFourDigits = useCallback((memberNumber) => {
+  const getLastFourDigits = useCallback((memberNumber: string | number | null | undefined) => {
     if (!memberNumber) return '****';
     const str = String(memberNumber);
     return str.length >= 4 ? str.slice(-4) : str.padStart(4, '0');

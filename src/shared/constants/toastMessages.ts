@@ -13,9 +13,9 @@ export const COURT_CLEAR_FAILED = `Couldn't clear court — please try again`;
 export const NO_MEMBER_FOUND = `No member found`;
 
 // ============ WARNING ============
-export const ALREADY_IN_GROUP = (name) => `${name} is already in this group`;
-export const ALREADY_ON_COURT = (name, n) => `${name} is already on Court ${n}`;
-export const ALREADY_ON_WAITLIST = (name, n) =>
+export const ALREADY_IN_GROUP = (name: string) => `${name} is already in this group`;
+export const ALREADY_ON_COURT = (name: string, n: number) => `${name} is already on Court ${n}`;
+export const ALREADY_ON_WAITLIST = (name: string, n: number) =>
   `${name} is already on the waitlist (position ${n})`;
 
 // ============ INFO ============

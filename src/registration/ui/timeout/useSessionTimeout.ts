@@ -38,10 +38,10 @@ import { TENNIS_CONFIG } from '@lib';
  * @param {Function} deps.onTimeout
  * @returns {{ showTimeoutWarning: boolean }}
  */
-export function useSessionTimeout({ currentScreen, setLastActivity, showAlertMessage, onTimeout }) {
+export function useSessionTimeout({ currentScreen, setLastActivity, showAlertMessage, onTimeout }: { currentScreen: string; setLastActivity: (ts: number) => void; showAlertMessage: (msg: string) => void; onTimeout: () => void; }) {
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  const timeoutTimerRef = useRef(null);
-  const warningTimerRef = useRef(null);
+  const timeoutTimerRef = useRef(null as number|null);
+  const warningTimerRef = useRef(null as number|null);
 
   // Activity handler — resets timers and warning state
   // Not exposed; used internally and by event listeners

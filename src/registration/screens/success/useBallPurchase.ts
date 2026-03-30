@@ -17,6 +17,9 @@ import { getCache, setCache } from '../../../platform/prefsStorage.js';
  * @param {function} params.onLookupMemberAccount - Member lookup handler
  * @param {function} params.getLastFourDigits - Helper to get last 4 digits of member number
  */
+interface Player { memberNumber?: string; memberNumberRaw?: string; originalMemberNumber?: string; memberNo?: string; member?: string; id?: string; isGuest?: boolean; name?: string; accountId?: string; memberId?: string; }
+interface PurchaseDetails { type: string; amount: number; accounts: string[]; }
+interface BallPurchaseDeps { ballPrice: number; splitPrice: number; currentGroup: Player[]; justAssignedCourt: number | null; sessionIdProp?: string | null; assignedCourt?: { session?: { id?: string } } | null; onPurchaseBalls?: (sessionId: string, accountId: string, opts: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>; onLookupMemberAccount?: (n: string) => Promise<{ isPrimary?: boolean; accountId: string }[]>; getLastFourDigits: (n?: string) => string; }
 const useBallPurchase = ({
   ballPrice,
   splitPrice,
@@ -27,11 +30,11 @@ const useBallPurchase = ({
   onPurchaseBalls,
   onLookupMemberAccount,
   getLastFourDigits,
-}) => {
+}: BallPurchaseDeps) => {
   const [showBallPurchaseModal, setShowBallPurchaseModal] = useState(false);
   const [ballPurchaseOption, setBallPurchaseOption] = useState('');
   const [ballsPurchased, setBallsPurchased] = useState(false);
-  const [purchaseDetails, setPurchaseDetails] = useState(null);
+  const [purchaseDetails, setPurchaseDetails] = useState<PurchaseDetails | null>(null);
   const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
 
   const handleBallPurchase = useCallback(async () => {
@@ -54,7 +57,7 @@ const useBallPurchase = ({
       });
 
       // Calculate nonGuestPlayers fresh in the callback
-      const currentNonGuestPlayers = currentGroup.filter((p) => !p.isGuest).length;
+      const currentNonGuestPlayers = currentGroup.filter((p: Player) => !p.isGuest).length;
       const isSplit = ballPurchaseOption === 'split';
 
       // Set purchase details for UI
@@ -69,8 +72,8 @@ const useBallPurchase = ({
           type: 'split',
           amount: splitPrice,
           accounts: currentGroup
-            .filter((p) => !p.isGuest)
-            .map((p) => getLastFourDigits(p.memberNumber)),
+            .filter((p: Player) => !p.isGuest)
+            .map((p: Player) => getLastFourDigits(p.memberNumber)),
         });
       }
 
@@ -89,7 +92,7 @@ const useBallPurchase = ({
           const memberNumber = currentGroup[0].memberNumber;
           const members = (await onLookupMemberAccount(memberNumber)) || [];
           if (members.length > 0) {
-            const member = members.find((m) => m.isPrimary) || members[0];
+            const member = members.find((m: { isPrimary?: boolean; accountId: string }) => m.isPrimary) || members[0];
             primaryAccountId = member.accountId;
             logger.debug('SuccessScreen', 'Found accountId by member lookup', primaryAccountId);
           }
@@ -107,7 +110,7 @@ const useBallPurchase = ({
         // Get account IDs for split purchase
         let splitAccountIds: string[] | null = null;
         if (isSplit && currentNonGuestPlayers > 1) {
-          const nonGuestPlayers = currentGroup.filter((p) => !p.isGuest);
+          const nonGuestPlayers = currentGroup.filter((p: Player) => !p.isGuest);
           splitAccountIds = [] as string[];
 
           for (const player of nonGuestPlayers) {
@@ -119,7 +122,7 @@ const useBallPurchase = ({
               try {
                 const members = await onLookupMemberAccount(player.memberNumber);
                 if (members.length > 0) {
-                  const member = members.find((m) => m.isPrimary) || members[0];
+                  const member = members.find((m: { isPrimary?: boolean; accountId: string }) => m.isPrimary) || members[0];
                   accountId = member.accountId;
                 }
               } catch (err) {
@@ -178,7 +181,7 @@ const useBallPurchase = ({
       logger.debug('SuccessScreen', 'Using localStorage fallback');
 
       /** Return the raw member number for a player (never masked). */
-      function getRawMemberNumber(p) {
+      function getRawMemberNumber(p: Player) {
         const n = p?.memberNumber ?? p?.memberNo ?? p?.member ?? p?.id ?? '';
         if (!n) return '';
         const s = String(n);
@@ -202,8 +205,8 @@ const useBallPurchase = ({
           ballPurchaseOption === 'charge' ? ballPrice : splitPrice * currentNonGuestPlayers,
         players: (ballPurchaseOption === 'charge'
           ? [currentGroup[0]]
-          : currentGroup.filter((p) => !p.isGuest)
-        ).map((p) => ({
+          : currentGroup.filter((p: Player) => !p.isGuest)
+        ).map((p: Player) => ({
           name: p?.name ?? '',
           memberId: p?.memberId ?? p?.id ?? null,
           memberNumber: getRawMemberNumber(p),

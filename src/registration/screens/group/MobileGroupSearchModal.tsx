@@ -6,6 +6,7 @@ import SearchSuggestions from './SearchSuggestions.jsx';
 /**
  * MobileGroupSearchModal - Compact modal for mobile flow with no players yet
  */
+interface MobileGroupSearchModalProps { showAlert: boolean; alertMessage: string; preselectedCourt?: number | null; searchInput: string; onSearchChange: (val: string) => void; onSearchFocus: () => void; showSuggestions: boolean; effectiveSearchInput: string; getAutocompleteSuggestions: () => unknown[]; onSuggestionClick: (s: unknown) => void; }
 const MobileGroupSearchModal = ({
   showAlert,
   alertMessage,
@@ -17,7 +18,7 @@ const MobileGroupSearchModal = ({
   effectiveSearchInput,
   getAutocompleteSuggestions,
   onSuggestionClick,
-}) => {
+}: MobileGroupSearchModalProps) => {
   return (
     <div className="w-full h-full min-h-screen flex items-start justify-center pt-[12vh] p-4">
       <ToastHost />

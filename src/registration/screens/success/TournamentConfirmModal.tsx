@@ -6,7 +6,8 @@
 import React from 'react';
 import { logger } from '../../../lib/logger';
 
-const TournamentConfirmModal = ({ sessionId, onUpdateSessionTournament, onConfirm, onClose }) => {
+interface TournamentConfirmModalProps { sessionId: string | null; onUpdateSessionTournament: (sessionId: string, isTournament: boolean) => Promise<{ok?: boolean; error?: unknown}>; onConfirm: () => void; onClose: () => void; }
+const TournamentConfirmModal = ({ sessionId, onUpdateSessionTournament, onConfirm, onClose }: TournamentConfirmModalProps) => {
   const handleConfirm = async () => {
     if (!sessionId || !onUpdateSessionTournament) {
       logger.error(

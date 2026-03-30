@@ -79,7 +79,7 @@ export class TennisCourtDataStore {
    * @param {string} key - Storage key
    * @returns {Promise<any>} The stored value or null
    */
-  async get(key) {
+  async get(key: string) {
     const t0 = performance.now();
     this.metrics.totalOperations++;
 
@@ -152,7 +152,7 @@ export class TennisCourtDataStore {
    *
    * @param {string} key - Storage key to delete
    */
-  async delete(key) {
+  async delete(key: string) {
     this.cache.delete(key);
     try {
       localStorage.removeItem(key);
@@ -227,7 +227,7 @@ export class TennisCourtDataStore {
  * @param {string} name - Event name
  * @param {any} detail - Event detail payload
  */
-export function broadcastEvent(name, detail) {
+export function broadcastEvent(name: string, detail: unknown) {
   try {
     window.dispatchEvent(new CustomEvent(name, { detail }));
   } catch {
@@ -242,7 +242,7 @@ export function broadcastEvent(name, detail) {
  * @param {Object} opts - addEventListener options
  * @returns {Function} Cleanup function to remove listener
  */
-export function listenForEvent(name, handler, opts) {
+export function listenForEvent(name: string, handler: EventListenerOrEventListenerObject, opts?: AddEventListenerOptions) {
   try {
     // @ts-ignore — custom event names not in lib.dom.d.ts
     window.addEventListener(name, handler, opts);

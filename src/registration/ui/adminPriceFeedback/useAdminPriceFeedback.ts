@@ -26,11 +26,11 @@ import {
 export function useAdminPriceFeedback() {
   const [state, dispatch] = useReducer(adminPriceFeedbackReducer, initialAdminPriceFeedbackState);
 
-  const setShowPriceSuccess = useCallback((visible) => {
+  const setShowPriceSuccess = useCallback((visible: boolean) => {
     dispatch({ type: ADMIN_PRICE_FEEDBACK_ACTIONS.SET_SUCCESS, payload: visible });
   }, []);
 
-  const setPriceError = useCallback((error) => {
+  const setPriceError = useCallback((error: string) => {
     dispatch({ type: ADMIN_PRICE_FEEDBACK_ACTIONS.SET_ERROR, payload: error });
   }, []);
 

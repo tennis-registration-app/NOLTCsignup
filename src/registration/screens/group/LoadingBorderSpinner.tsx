@@ -6,7 +6,7 @@ import React from 'react';
  * @param {Object} props
  * @param {string} props.animationId - Unique ID for the keyframe animation (e.g., 'select', 'waitlist')
  */
-const LoadingBorderSpinner = ({ animationId }) => (
+const LoadingBorderSpinner = ({ animationId }: { animationId: string }) => (
   <svg
     className="absolute -inset-[3px] w-[calc(100%+6px)] h-[calc(100%+6px)] pointer-events-none"
     viewBox="0 0 100 100"

@@ -44,6 +44,16 @@ import { logger } from '../../../lib/logger';
  * @param {Function} deps.dbg
  * @param {boolean} deps.DEBUG
  */
+interface MobileFlowDeps {
+  showSuccess: boolean;
+  justAssignedCourt: number | string | null;
+  backend: { commands: { assignFromWaitlist: (args: Record<string, unknown>) => Promise<{ ok: boolean; code?: string; message?: string }> } };
+  isMobile: boolean;
+  toast: ((msg: string, opts?: Record<string, unknown>) => void) | null;
+  dbg: (...args: unknown[]) => void;
+  DEBUG: boolean;
+}
+
 export function useMobileFlowController({
   showSuccess,
   justAssignedCourt,
@@ -52,14 +62,14 @@ export function useMobileFlowController({
   toast,
   dbg,
   DEBUG,
-}) {
+}: MobileFlowDeps) {
   // ===== STATE (8 variables) =====
   const [mobileFlow, setMobileFlow] = useState(false);
-  const [preselectedCourt, setPreselectedCourt] = useState(null);
-  const [mobileMode, setMobileMode] = useState(null);
+  const [preselectedCourt, setPreselectedCourt] = useState<number | null>(null);
+  const [mobileMode, setMobileMode] = useState<string | null>(null);
   const [mobileCountdown, setMobileCountdown] = useState(5);
   const [checkingLocation, setCheckingLocation] = useState(false);
-  const [locationToken, setLocationToken] = useState(null);
+  const [locationToken, setLocationToken] = useState<string | null>(null);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [gpsFailedPrompt, setGpsFailedPrompt] = useState(false);
 
@@ -124,7 +134,7 @@ export function useMobileFlowController({
    * Preserves exact original behavior from App.jsx.
    */
   const onQRScanToken = useCallback(
-    (token) => {
+    (token: string) => {
       logger.debug('MobileFlow', 'QR token scanned', token);
       setLocationToken(token);
       setShowQRScanner(false);
@@ -159,7 +169,7 @@ export function useMobileFlowController({
 
   // Mobile: Listen for messages from parent window
   useEffect(() => {
-    const handleMessage = async (event) => {
+    const handleMessage = async (event: MessageEvent) => {
       const { type, courtNumber, waitlistEntryId } = event.data || {};
 
       if (type === 'register') {

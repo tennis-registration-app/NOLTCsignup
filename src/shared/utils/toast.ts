@@ -5,7 +5,7 @@
  * @param {string} message - Toast message
  * @param {{ type?: 'success' | 'error' | 'info' | 'warning', duration?: number }} [options]
  */
-export function toast(message, options = {}) {
+export function toast(message: string, options: { type?: string; duration?: number } = {}) {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent('UI_TOAST', { detail: { msg: message, ...options } }));
 }

@@ -9,7 +9,9 @@ import React from 'react';
  * @param {number} props.maxPartners - Maximum number of partners to show
  * @param {function} props.onSelect - Callback when a partner is clicked
  */
-const FrequentPartnersList = ({ partners, loading, maxPartners, onSelect }) => {
+interface Partner { name?: string; memberNumber?: string; id?: string; }
+interface FrequentPartnersListProps { partners: Partner[]; loading: boolean; maxPartners?: number; onSelect: (p: Partner) => void; }
+const FrequentPartnersList = ({ partners, loading, maxPartners, onSelect }: FrequentPartnersListProps) => {
   if (!loading && partners.length === 0) {
     return null;
   }

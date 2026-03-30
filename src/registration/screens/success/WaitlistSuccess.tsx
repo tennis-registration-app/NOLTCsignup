@@ -9,7 +9,8 @@ import { TypedIcon } from '../../../components/icons/TypedIcon';
  * @param {number} props.position - Waitlist position
  * @param {number} props.estimatedWait - Estimated wait time in minutes
  */
-const WaitlistSuccess = ({ position, estimatedWait }) => (
+interface WaitlistSuccessProps { position: number; estimatedWait: number; }
+const WaitlistSuccess = ({ position, estimatedWait }: WaitlistSuccessProps) => (
   <>
     <div className="flex flex-col items-center mb-4 sm:mb-6">
       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-green-500 rounded-full flex items-center justify-center mb-2 sm:mb-3">

@@ -14,27 +14,27 @@ export function useGroupGuest() {
   // ============================================
   // Setters (for external callers like selection handlers)
   // ============================================
-  const setCurrentGroup = useCallback((value) => {
+  const setCurrentGroup = useCallback((value: unknown[]) => {
     dispatch({ type: 'CURRENT_GROUP_SET', value });
   }, []);
 
-  const setGuestName = useCallback((value) => {
+  const setGuestName = useCallback((value: string) => {
     dispatch({ type: 'GUEST_NAME_SET', value });
   }, []);
 
-  const setGuestSponsor = useCallback((value) => {
+  const setGuestSponsor = useCallback((value: string) => {
     dispatch({ type: 'GUEST_SPONSOR_SET', value });
   }, []);
 
-  const setShowGuestForm = useCallback((value) => {
+  const setShowGuestForm = useCallback((value: boolean) => {
     dispatch({ type: 'SHOW_GUEST_FORM_SET', value });
   }, []);
 
-  const setShowGuestNameError = useCallback((value) => {
+  const setShowGuestNameError = useCallback((value: boolean) => {
     dispatch({ type: 'SHOW_GUEST_NAME_ERROR_SET', value });
   }, []);
 
-  const setShowSponsorError = useCallback((value) => {
+  const setShowSponsorError = useCallback((value: boolean) => {
     dispatch({ type: 'SHOW_SPONSOR_ERROR_SET', value });
   }, []);
 
@@ -43,12 +43,12 @@ export function useGroupGuest() {
   // ============================================
 
   // handleRemovePlayer - COPY EXACT LEGACY LOGIC (index-based removal)
-  const handleRemovePlayer = useCallback((idx) => {
+  const handleRemovePlayer = useCallback((idx: number) => {
     dispatch({ type: 'CURRENT_GROUP_PLAYER_REMOVED', index: idx });
   }, []);
 
   // handleSelectSponsor - COPY EXACT LEGACY LOGIC
-  const handleSelectSponsor = useCallback((memberNum) => {
+  const handleSelectSponsor = useCallback((memberNum: string) => {
     dispatch({ type: 'GUEST_SPONSOR_SET', value: memberNum });
     dispatch({ type: 'SHOW_SPONSOR_ERROR_SET', value: false });
   }, []);
