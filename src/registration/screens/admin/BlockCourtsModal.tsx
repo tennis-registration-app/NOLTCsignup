@@ -1,6 +1,23 @@
 // @ts-check
 import React from 'react';
 
+
+interface BlockCourtsModalProps {
+  selectedCourtsToBlock: number[];
+  setSelectedCourtsToBlock: (v: number[]) => void;
+  blockMessage: string;
+  setBlockMessage: (v: string) => void;
+  blockStartTime: string;
+  setBlockStartTime: (v: string) => void;
+  blockEndTime: string;
+  setBlockEndTime: (v: string) => void;
+  blockingInProgress: boolean;
+  setBlockingInProgress: (v: boolean) => void;
+  setShowBlockModal: (v: boolean) => void;
+  onBlockCreate: () => void;
+  CONSTANTS: { COURT_COUNT: number };
+}
+
 /**
  * BlockCourtsModal - Modal for blocking multiple courts
  */
@@ -18,7 +35,7 @@ const BlockCourtsModal = ({
   setShowBlockModal,
   onBlockCreate,
   CONSTANTS,
-}) => (
+}: BlockCourtsModalProps) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div className="bg-gray-800 rounded-xl p-4 sm:p-6 max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto modal-mobile-full">
       <h3 className="text-lg sm:text-xl font-bold text-white mb-4">Block Courts</h3>
@@ -36,7 +53,7 @@ const BlockCourtsModal = ({
                 key={courtNum}
                 onClick={() => {
                   if (isSelected) {
-                    setSelectedCourtsToBlock(selectedCourtsToBlock.filter((c) => c !== courtNum));
+                    setSelectedCourtsToBlock(selectedCourtsToBlock.filter((c: number) => c !== courtNum));
                   } else {
                     setSelectedCourtsToBlock([...selectedCourtsToBlock, courtNum]);
                   }

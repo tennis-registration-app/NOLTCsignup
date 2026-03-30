@@ -45,7 +45,7 @@ type CourtData = {
  * @param {Date|string} d - Date or string to coerce
  * @returns {Date} Valid Date object
  */
-function coerceDate(d) {
+function coerceDate(d: Date | string): Date {
   // Accept Date or string; never NaN
   if (d instanceof Date) return d;
   const parsed = new Date(d);
@@ -58,7 +58,7 @@ function coerceDate(d) {
  * @param {Date} now - Current time
  * @returns {boolean} True if session is overtime
  */
-function isOvertime(session, now) {
+function isOvertime(session: { scheduledEndAt?: string | Date } | null | undefined, now: Date): boolean {
   // Domain format: session.scheduledEndAt
   if (!session?.scheduledEndAt) return false;
   return coerceDate(session.scheduledEndAt) <= now; // strict "ended before or at now"
@@ -69,7 +69,7 @@ function isOvertime(session, now) {
  * @param {Array} arr - Blocks array
  * @returns {Array} Normalized array
  */
-function normalizeBlocks(arr) {
+function normalizeBlocks(arr: CourtBlock[]): CourtBlock[] {
   return Array.isArray(arr) ? arr : [];
 }
 
@@ -79,10 +79,10 @@ function normalizeBlocks(arr) {
  * @param {Date} now - Current time
  * @returns {boolean} True if block is active
  */
-function isBlockActiveNow(b, now) {
+function isBlockActiveNow(b: CourtBlock | null | undefined, now: Date): boolean {
   if (!b) return false;
-  const st = new Date(b.startTime ?? b.start);
-  const et = new Date(b.endTime ?? b.end);
+  const st = new Date((b.startTime ?? b.start ?? '') as string | Date);
+  const et = new Date((b.endTime ?? b.end ?? '') as string | Date);
   return (
     st instanceof Date &&
     !isNaN(st.getTime()) &&
@@ -99,10 +99,10 @@ function isBlockActiveNow(b, now) {
  * @param {Date} now - Current time
  * @returns {boolean} True if block is active
  */
-function isActiveBlock(b, now) {
+function isActiveBlock(b: CourtBlock | null | undefined, now: Date): boolean {
   if (!b) return false;
-  const st = new Date(b.startTime ?? b.start);
-  const et = new Date(b.endTime ?? b.end);
+  const st = new Date((b.startTime ?? b.start ?? '') as string | Date);
+  const et = new Date((b.endTime ?? b.end ?? '') as string | Date);
   return (
     st instanceof Date &&
     !isNaN(st.getTime()) &&
@@ -133,7 +133,7 @@ function getFreeCourts({ data, now, blocks = [], wetSet = new Set() }: { data: C
 
   // Use hardened normalization
   now = coerceDate(now);
-  blocks = normalizeBlocks(blocks);
+  blocks = normalizeBlocks(blocks ?? []);
   wetSet = wetSet instanceof Set ? wetSet : new Set();
 
   const freeCourts: number[] = [];
@@ -167,8 +167,8 @@ function getFreeCourts({ data, now, blocks = [], wetSet = new Set() }: { data: C
       const courtNum = Number(block.courtNumber || block.court);
       if (!courtNum || courtNum !== courtNumber) return false;
 
-      const blockStart = coerceDate(block.startTime || block.start);
-      const blockEnd = coerceDate(block.endTime || block.end);
+      const blockStart = coerceDate((block.startTime || block.start) ?? '');
+      const blockEnd = coerceDate((block.endTime || block.end) ?? '');
 
       return blockStart <= now && now < blockEnd;
     });
@@ -304,7 +304,7 @@ function getFreeCourtsInfo({ data, now, blocks, wetSet }: { data: CourtData; now
 
   // Normalize inputs for consistent handling
   now = coerceDate(now);
-  blocks = normalizeBlocks(blocks);
+  blocks = normalizeBlocks(blocks ?? []);
   wetSet = wetSet instanceof Set ? wetSet : new Set();
 
   const free: number[] = [];
@@ -320,8 +320,8 @@ function getFreeCourtsInfo({ data, now, blocks, wetSet }: { data: CourtData; now
     const isBlocked = blocks.some((b) => {
       const courtNum = Number(b.courtNumber || b.court);
       if (!courtNum || courtNum !== n) return false;
-      const start = coerceDate(b.startTime || b.start);
-      const end = coerceDate(b.endTime || b.end);
+      const start = coerceDate((b.startTime || b.start) ?? '');
+      const end = coerceDate((b.endTime || b.end) ?? '');
       return start <= now && now < end;
     });
 
@@ -403,7 +403,7 @@ function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }: { 
   const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
 
   // sets for quick lookup
-  const S = (arr) => new Set(Array.isArray(arr) ? arr : []);
+  const S = (arr: unknown[]) => new Set(Array.isArray(arr) ? arr : []);
   const freeSet = S(info.free);
   const occSet = S(info.occupied);
   const overtimeSet = S(info.overtime);

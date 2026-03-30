@@ -17,7 +17,7 @@ import { emitDom } from './attachLegacyEvents.js';
  * @param {Array} blocks - Array of block objects
  * @returns {Promise<{success: boolean}>} Result object
  */
-async function saveBlocks(blocks) {
+async function saveBlocks(blocks: unknown[]): Promise<{success: boolean}> {
   const arr = Array.isArray(blocks) ? blocks : [];
 
   // Persist via writeJSON

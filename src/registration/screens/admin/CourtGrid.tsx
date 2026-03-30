@@ -1,6 +1,21 @@
 // @ts-check
 import React from 'react';
 
+
+interface CourtGridProps {
+  data: { courts: Array<{
+    session?: { group?: { players?: Array<{ name?: string; displayName?: string }> }; scheduledEndAt?: string } | null;
+    wasCleared?: boolean;
+    block?: { id?: string } | null;
+  } | null> };
+  currentTime: Date;
+  setCourtToMove: (n: number | null) => void;
+  onClearCourt: (n: number) => void;
+  onCancelBlock: (blockId: string, courtNum: number) => void;
+  showAlertMessage: (msg: string) => void;
+  getCourtBlockStatus: (n: number) => { isBlocked: boolean; isCurrent: boolean; reason?: string; startTime?: string; endTime?: string } | null;
+}
+
 /**
  * CourtGrid - Grid of court cards showing status
  */
@@ -12,7 +27,7 @@ const CourtGrid = ({
   onCancelBlock,
   showAlertMessage,
   getCourtBlockStatus,
-}) => (
+}: CourtGridProps) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     {[...Array(12)].map((_, index) => {
       const court = data.courts[index];
@@ -32,7 +47,7 @@ const CourtGrid = ({
       // Domain format: court.session.group.players, court.session.scheduledEndAt
       const sessionPlayers = court?.session?.group?.players;
       const sessionEndTime = court?.session?.scheduledEndAt;
-      const isOccupied = court && sessionPlayers?.length > 0 && !isCleared;
+      const isOccupied = court && (sessionPlayers?.length ?? 0) > 0 && !isCleared;
       const isOvertime =
         court &&
         sessionEndTime &&
@@ -73,12 +88,12 @@ const CourtGrid = ({
               {isBlocked ? (
                 <div>
                   <p className="text-red-400 font-medium text-sm sm:text-base">
-                    🚫 {blockStatusResult ? blockStatusResult.reason : 'BLOCKED'}
+                    🚫 {blockStatusResult?.reason ?? 'BLOCKED'}
                   </p>
 
                   <p className="text-gray-400 text-xs sm:text-sm">
                     Until{' '}
-                    {new Date(blockStatusResult.endTime).toLocaleTimeString([], {
+                    {new Date(blockStatusResult?.endTime ?? '').toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
@@ -87,15 +102,15 @@ const CourtGrid = ({
               ) : isFutureBlock ? (
                 <div>
                   <p className="text-yellow-400 font-medium text-sm sm:text-base">
-                    Future: {blockStatusResult.reason}
+                    Future: {blockStatusResult?.reason}
                   </p>
                   <p className="text-gray-400 text-xs sm:text-sm">
-                    {new Date(blockStatusResult.startTime).toLocaleTimeString([], {
+                    {new Date(blockStatusResult?.startTime ?? '').toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}{' '}
                     -{' '}
-                    {new Date(blockStatusResult.endTime).toLocaleTimeString([], {
+                    {new Date(blockStatusResult?.endTime ?? '').toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
@@ -104,7 +119,7 @@ const CourtGrid = ({
               ) : isOccupied ? (
                 <div>
                   <div className="flex flex-col">
-                    {sessionPlayers.map((player, idx) => (
+                    {(sessionPlayers ?? []).map((player: { name?: string; displayName?: string }, idx: number) => (
                       <span key={idx} className="text-gray-300 text-xs sm:text-sm">
                         {player.name?.split(' ').pop() ||
                           player.displayName?.split(' ').pop() ||

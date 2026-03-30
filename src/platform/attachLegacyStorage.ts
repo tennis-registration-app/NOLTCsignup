@@ -33,11 +33,11 @@ const KEYS = {
 // Write Guard Helpers (ported from IIFE)
 // ============================================================
 
-function countAssigned(obj) {
+function countAssigned(obj: { courts?: Array<{ current?: unknown }> } | null | undefined): number {
   return (obj?.courts || []).filter((c) => !!c?.current).length;
 }
 
-function hasFutureCurrent(obj, now) {
+function hasFutureCurrent(obj: { courts?: Array<{ current?: { endTime?: string } | null }> } | null | undefined, now: Date): boolean {
   return (obj?.courts || []).some((c) => {
     const end = c?.current?.endTime ? new Date(c.current.endTime) : null;
     return end && !isNaN(end.getTime()) && end > now;
@@ -54,21 +54,22 @@ function hasFutureCurrent(obj, now) {
  * @param {any} value - Value to write
  * @returns {boolean|Object} True if written, or current data if skipped
  */
-function guardedWriteJSON(key, value) {
+function guardedWriteJSON(key: string, value: unknown): unknown {
   try {
     if (key === KEYS.DATA) {
       const now = new Date();
       const current = readDataSafe();
-      const currAssigned = countAssigned(current);
-      const nextAssigned = countAssigned(value);
+      const currAssigned = countAssigned(current as { courts?: Array<{ current?: unknown }> });
+      const nextAssigned = countAssigned(value as { courts?: Array<{ current?: unknown }> });
 
       // Core guard: don't overwrite active courts with an empty snapshot
       // EXCEPT when this is a legitimate clearCourt operation (marked with __clearCourtOperation flag)
-      const isClearCourtOp = value && value.__clearCourtOperation === true;
+      const valObj = value as Record<string, unknown>;
+      const isClearCourtOp = value && valObj.__clearCourtOperation === true;
       if (
         currAssigned > 0 &&
         nextAssigned === 0 &&
-        hasFutureCurrent(current, now) &&
+        hasFutureCurrent(current as { courts?: Array<{ current?: { endTime?: string } | null }> }, now) &&
         !isClearCourtOp
       ) {
         console.warn(
@@ -89,7 +90,7 @@ function guardedWriteJSON(key, value) {
 
       // Monotonic update tick (helps future freshness checks)
       const currTick = readJSON(KEYS.UPDATE_TICK) || 0;
-      const incomingTick = (value && value.__tick) || 0;
+      const incomingTick = (value && valObj.__tick) || 0;
       const newTick = Math.max(currTick + 1, Date.now(), incomingTick);
 
       const res = writeJSON(key, value);
@@ -97,7 +98,8 @@ function guardedWriteJSON(key, value) {
       return res;
     }
   } catch (e) {
-    console.warn('[StorageGuard] guard error:', e && e.message);
+    const errMsg = e instanceof Error ? e.message : String(e);
+    console.warn('[StorageGuard] guard error:', errMsg);
   }
   return writeJSON(key, value);
 }

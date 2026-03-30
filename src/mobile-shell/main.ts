@@ -16,9 +16,10 @@ import { logger } from '../lib/logger';
     logger.info('Mobile Shell', 'ESM bootstrap complete');
   } catch (error) {
     logger.error('MobileShell', 'Bootstrap failed', error);
+    const err = error instanceof Error ? error : new Error(String(error));
     const detail = {
-      message: error?.message,
-      stack: error?.stack,
+      message: err.message,
+      stack: err.stack,
       context: 'MobileShell',
       timestamp: new Date().toISOString(),
     };
@@ -33,7 +34,7 @@ import { logger } from '../lib/logger';
       root.innerHTML = `
         <div style="padding:2rem;text-align:center;font-family:system-ui">
           <h1 style="color:#dc2626">Mobile Shell Error</h1>
-          <p>${error?.message || 'Unknown error'}</p>
+          <p>${err.message || 'Unknown error'}</p>
           <button onclick="location.reload()" style="padding:.5rem 1rem;background:#2563eb;color:#fff;border:none;border-radius:.25rem;cursor:pointer">Reload</button>
         </div>`;
     }

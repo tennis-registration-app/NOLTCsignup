@@ -14,6 +14,19 @@ import React from 'react';
  * @param {function} props.onAddGuest - Callback when Add Guest is clicked
  * @param {function} props.onCancelGuest - Callback when Cancel is clicked
  */
+
+interface GuestFormInlineProps {
+  show: boolean;
+  currentGroup: Array<{ id?: string; name?: string; memberNumber?: string; isGuest?: boolean }>;
+  memberNumber: string;
+  guestSponsor: string;
+  showSponsorError: boolean;
+  showGuestNameError: boolean;
+  onSelectSponsor: (memberNumber: string) => void;
+  onAddGuest: () => void;
+  onCancelGuest: () => void;
+}
+
 const GuestFormInline = ({
   show,
   currentGroup,
@@ -24,8 +37,8 @@ const GuestFormInline = ({
   onSelectSponsor,
   onAddGuest,
   onCancelGuest,
-}) => {
-  const nonGuestMembers = currentGroup.filter((p) => !p.isGuest);
+}: GuestFormInlineProps) => {
+  const nonGuestMembers = currentGroup.filter((p: { isGuest?: boolean }) => !p.isGuest);
 
   return (
     <div
@@ -41,10 +54,10 @@ const GuestFormInline = ({
               <span className={`text-sm ${showSponsorError ? 'text-red-500' : 'text-gray-600'}`}>
                 Sponsor:
               </span>
-              {nonGuestMembers.map((member) => (
+              {nonGuestMembers.map((member: { id?: string; memberNumber?: string; name?: string }) => (
                 <button
                   key={member.id}
-                  onClick={() => onSelectSponsor(member.memberNumber)}
+                  onClick={() => onSelectSponsor(member.memberNumber ?? '')}
                   className={`px-3 py-1 rounded-lg text-sm transition-colors ${
                     guestSponsor === member.memberNumber
                       ? 'bg-blue-500 text-white'

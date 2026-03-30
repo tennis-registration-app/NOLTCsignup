@@ -24,7 +24,9 @@ type TimelineEntry = { courtNumber: number; availableAt: Date };
  * @param {Array} group - Array of player objects
  * @returns {Object} { valid: boolean, error?: string }
  */
-function validateGroup(group) {
+type ValidateGroupPlayer = { name?: string; id?: string };
+
+function validateGroup(group: unknown[]): { valid: boolean; error?: string } {
   if (!Array.isArray(group)) {
     return { valid: false, error: 'Group must be an array' };
   }
@@ -45,7 +47,8 @@ function validateGroup(group) {
       return { valid: false, error: `Player ${i + 1} is invalid` };
     }
 
-    if (!player.name || typeof player.name !== 'string' || player.name.trim().length === 0) {
+    const typedPlayer = player as ValidateGroupPlayer;
+    if (!typedPlayer.name || typeof typedPlayer.name !== 'string' || typedPlayer.name.trim().length === 0) {
       return { valid: false, error: `Player ${i + 1} must have a valid name` };
     }
 
@@ -56,9 +59,9 @@ function validateGroup(group) {
   }
 
   // Check for duplicate players (by ID if available, otherwise by normalized name)
-  const playerKeys = group.map((p) => {
+  const playerKeys = (group as ValidateGroupPlayer[]).map((p) => {
     if (p.id) return `id:${p.id}`;
-    return `name:${p.name.trim().toLowerCase()}`;
+    return `name:${(p.name ?? '').trim().toLowerCase()}`;
   });
   const uniqueKeys = new Set(playerKeys);
   if (playerKeys.length !== uniqueKeys.size) {
@@ -254,7 +257,7 @@ function estimateWaitForPositions({ positions, currentFreeCount, nextFreeTimes, 
  * @param {number} playerCount
  * @returns {boolean}
  */
-function isCourtEligibleForGroup(courtNumber, playerCount) {
+function isCourtEligibleForGroup(courtNumber: number, playerCount: number): boolean {
   if (courtNumber === SINGLES_ONLY_COURT_NUMBER && playerCount >= 4) {
     return false;
   }
@@ -518,7 +521,7 @@ if (typeof window !== 'undefined') {
       currentFreeCount,
       nextFreeTimes,
       avgGameMinutes,
-    }) {
+    }: { position?: number; currentFreeCount: number; nextFreeTimes: Date[]; avgGameMinutes?: number }) {
       return estimateWaitForPositions({
         positions: [position],
         currentFreeCount,

@@ -1,6 +1,16 @@
 // @ts-check
 import React from 'react';
 
+
+interface WaitlistManagementProps {
+  data: { waitlist: Array<{ deferred?: boolean; group?: { players?: Array<{ displayName?: string }> } }> };
+  waitlistMoveFrom: number | null;
+  setWaitlistMoveFrom: (v: number | null) => void;
+  onClearWaitlist: () => void;
+  onRemoveFromWaitlist: (group: unknown, index: number) => void;
+  onReorderWaitlist: (from: number, to: number) => void;
+}
+
 /**
  * WaitlistManagement - Waitlist management section
  */
@@ -11,7 +21,7 @@ const WaitlistManagement = ({
   onClearWaitlist,
   onRemoveFromWaitlist,
   onReorderWaitlist,
-}) => (
+}: WaitlistManagementProps) => (
   <div className="mb-6 sm:mb-8 bg-gray-800 rounded-xl p-4 sm:p-6">
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2 sm:gap-0">
       <h2 className="text-xl sm:text-2xl font-bold text-white">
@@ -39,7 +49,7 @@ const WaitlistManagement = ({
               Moving group from position {waitlistMoveFrom + 1} to:
             </p>
             <div className="flex gap-2 flex-wrap mb-3">
-              {data.waitlist.map((_, index) => {
+              {data.waitlist.map((_: unknown, index: number) => {
                 const position = index + 1;
                 const isCurrentPosition = index === waitlistMoveFrom;
 
@@ -67,7 +77,7 @@ const WaitlistManagement = ({
             </button>
           </div>
         )}
-        {data.waitlist.map((group, index) => (
+        {data.waitlist.map((group: { deferred?: boolean; group?: { players?: Array<{ displayName?: string }> } }, index: number) => (
           <div
             key={index}
             className="bg-gray-700 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2"
@@ -75,7 +85,7 @@ const WaitlistManagement = ({
             <div className="flex-1">
               <p className="text-white font-medium text-sm sm:text-base">
                 Position {index + 1}:{' '}
-                {(group.group?.players || []).map((p) => p.displayName || 'Unknown').join(', ')}
+                {(group.group?.players || []).map((p: { displayName?: string }) => p.displayName || 'Unknown').join(', ')}
               </p>
               <p className="text-gray-400 text-xs sm:text-sm">
                 {(group.group?.players || []).length} player

@@ -1,10 +1,19 @@
 // @ts-check
 import React from 'react';
 
+
+interface MoveCourtUIProps {
+  courtToMove: number;
+  setCourtToMove: (v: number | null) => void;
+  data: { courts: Array<unknown | null> };
+  onMoveCourt: (from: number, to: number) => void;
+  CONSTANTS: { COURT_COUNT: number };
+}
+
 /**
  * MoveCourtUI - UI for moving players from one court to another
  */
-const MoveCourtUI = ({ courtToMove, setCourtToMove, data, onMoveCourt, CONSTANTS }) => (
+const MoveCourtUI = ({ courtToMove, setCourtToMove, data, onMoveCourt, CONSTANTS }: MoveCourtUIProps) => (
   <div className="mb-4 p-3 sm:p-4 bg-blue-900/30 border-2 border-blue-600 rounded-lg">
     <p className="text-white font-medium mb-3 text-sm sm:text-base">
       Moving players from Court {courtToMove} to:
