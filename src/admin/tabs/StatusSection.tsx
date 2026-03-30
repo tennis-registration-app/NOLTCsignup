@@ -1,29 +1,42 @@
-import React from 'react';
-import { CourtStatusGrid } from '../courts';
-import { buildStatusModel, buildStatusActions } from '../presenters/statusPresenter';
-import { WaitlistGroupList } from '../components/WaitlistGroupList';
+import React from "react";
+import { CourtStatusGrid } from "../courts";
+import { buildStatusModel, buildStatusActions } from "../presenters/statusPresenter";
+import { WaitlistGroupList } from "../components/WaitlistGroupList";
+import type {
+  createStatusModel,
+  createWetCourtsModel,
+  createAdminServices,
+  createStatusActions,
+  createWetCourtsActions,
+} from "../types/domainObjects";
 
-/**
- * StatusSection - Delegates to presenter, renders CourtStatusGrid + waitlist UI.
- *
- * @param {Object} props
- * @param {import('../types/domainObjects.js').StatusModel} props.statusModel
- * @param {import('../types/domainObjects.js').StatusActions} props.statusActions
- * @param {import('../types/domainObjects.js').WetCourtsModel} props.wetCourtsModel
- * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
- * @param {import('../types/domainObjects.js').AdminServices} props.services
- */
+type StatusModel = ReturnType<typeof createStatusModel>;
+type WetCourtsModel = ReturnType<typeof createWetCourtsModel>;
+type AdminServices = ReturnType<typeof createAdminServices>;
+type StatusActions = ReturnType<typeof createStatusActions>;
+type WetCourtsActions = ReturnType<typeof createWetCourtsActions>;
+
+interface WaitlistGroup { names?: string[]; [key: string]: unknown; }
+
+interface StatusSectionProps {
+  statusModel: StatusModel;
+  statusActions: StatusActions;
+  wetCourtsModel: WetCourtsModel;
+  wetCourtsActions: WetCourtsActions;
+  services: AdminServices;
+}
+
 export function StatusSection({
   statusModel,
   statusActions,
   wetCourtsModel,
   wetCourtsActions,
   services,
-}) {
+}: StatusSectionProps) {
   const model = buildStatusModel(statusModel, wetCourtsModel, services);
   const actions = buildStatusActions(statusActions, wetCourtsActions);
 
-  const { waitingGroups } = model;
+  const waitingGroups = (model.waitingGroups ?? []) as WaitlistGroup[];
   const { moveInWaitlist, removeFromWaitlist } = actions;
 
   return (
@@ -36,9 +49,8 @@ export function StatusSection({
         services={model.services}
       />
 
-      {/* Waitlist Section */}
       <div
-        className={`bg-white rounded-lg shadow-sm ${waitingGroups.length === 0 ? 'p-4' : 'p-6'}`}
+        className={waitingGroups.length === 0 ? "bg-white rounded-lg shadow-sm p-4" : "bg-white rounded-lg shadow-sm p-6"}
       >
         {waitingGroups.length > 0 && (
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
@@ -54,8 +66,8 @@ export function StatusSection({
         ) : (
           <WaitlistGroupList
             waitingGroups={waitingGroups}
-            moveInWaitlist={moveInWaitlist}
-            removeFromWaitlist={removeFromWaitlist}
+            moveInWaitlist={moveInWaitlist as (fromIndex: number, toIndex: number) => void}
+            removeFromWaitlist={removeFromWaitlist as (index: number) => void}
           />
         )}
       </div>

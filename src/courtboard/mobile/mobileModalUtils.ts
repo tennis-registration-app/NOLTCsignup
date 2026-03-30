@@ -9,7 +9,7 @@
  * @param {Object} [payload] - Modal payload (used by clear-court-confirm)
  * @returns {string}
  */
-export function getTitle(type, payload) {
+export function getTitle(type: string, payload: Record<string, unknown> = {}) {
   switch (type) {
     case 'court-conditions':
       return 'Court Conditions';
@@ -33,7 +33,7 @@ export function getTitle(type, payload) {
  * @param {string} type - Modal type
  * @returns {string}
  */
-export function getModalClass(type) {
+export function getModalClass(type: string) {
   if (type === 'court-conditions') return ' modal-court-conditions-full';
   if (type === 'roster') return ' modal-court-conditions-full';
   if (type === 'reserved') return ' modal-reserved-large';
@@ -51,10 +51,10 @@ export function getModalClass(type) {
  * @param {string[]|null|undefined} nameArray
  * @returns {string}
  */
-export function formatMobileNamesModal(nameArray) {
+export function formatMobileNamesModal(nameArray: string[] | null | undefined) {
   if (!nameArray || !nameArray.length) return 'Group';
   const SUFFIXES = new Set(['Jr.', 'Sr.', 'II', 'III', 'IV']);
-  const formatOne = (full) => {
+  const formatOne = (full: string) => {
     const tokens = full.replace(/\s+/g, ' ').trim().split(' ');
     if (tokens.length === 1) {
       // Single name (e.g., "Bob" or "Player") - return as-is, no formatting
@@ -84,13 +84,13 @@ export function formatMobileNamesModal(nameArray) {
  * @param {{ name?: string, fullName?: string }} b
  * @returns {number}
  */
-export function compareRosterEntries(a, b) {
-  const getLastName = (fullName) => {
+export function compareRosterEntries(a: { name?: string; fullName?: string }, b: { name?: string; fullName?: string }) {
+  const getLastName = (fullName: string) => {
     const parts = (fullName || '').trim().split(' ');
     return parts[parts.length - 1] || '';
   };
-  const lastNameA = getLastName(a.name || a.fullName).toLowerCase();
-  const lastNameB = getLastName(b.name || b.fullName).toLowerCase();
+  const lastNameA = getLastName(a.name || a.fullName || "").toLowerCase();
+  const lastNameB = getLastName(b.name || b.fullName || "").toLowerCase();
   if (lastNameA === lastNameB) {
     const firstNameA = (a.name || a.fullName || '').toLowerCase();
     const firstNameB = (b.name || b.fullName || '').toLowerCase();

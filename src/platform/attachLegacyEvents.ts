@@ -29,7 +29,7 @@ class CircularDebugLog {
     }
   }
 
-  add(type, eventName, data) {
+  add(type: string, eventName: string, data: unknown) {
     if (!this.enabled) return;
 
     const entry = {
@@ -75,7 +75,7 @@ const MessageTypes = {
  * @param {Object} options - addEventListener options
  * @returns {Function} Unsubscribe function
  */
-function onDom(eventName, handler, options) {
+function onDom(eventName: string, handler: (event: Event) => void, options?: AddEventListenerOptions) {
   if (typeof window === 'undefined') return () => {};
 
   try {
@@ -103,7 +103,7 @@ function onDom(eventName, handler, options) {
  * @param {string} eventName - Event name to dispatch
  * @param {*} detail - Event detail payload
  */
-function emitDom(eventName, detail) {
+function emitDom(eventName: string, detail: unknown) {
   if (typeof window === 'undefined') return;
 
   try {
@@ -121,10 +121,10 @@ function emitDom(eventName, detail) {
  * @param {string} targetOrigin - Origin filter ('*' for any)
  * @returns {Function} Unsubscribe function
  */
-function onMessage(handler, targetOrigin = '*') {
+function onMessage(handler: (event: MessageEvent) => void, targetOrigin = '*') {
   if (typeof window === 'undefined') return () => {};
 
-  const wrappedHandler = function (event) {
+  const wrappedHandler = function (event: MessageEvent) {
     // Security check if origin specified
     if (targetOrigin !== '*' && event.origin !== targetOrigin) {
       return;
@@ -158,14 +158,14 @@ function onMessage(handler, targetOrigin = '*') {
  * @param {Object} message - Message to send
  * @param {string} targetOrigin - Target origin ('*' for any)
  */
-function emitMessage(target, message, targetOrigin = '*') {
+function emitMessage(target: Window, message: Record<string, unknown>, targetOrigin = '*') {
   try {
     if (!target || !target.postMessage) {
       throw new Error('Invalid target for postMessage');
     }
 
     target.postMessage(message, targetOrigin);
-    debugLog.add('MESSAGE_SENT', message.type || 'unknown', message);
+    debugLog.add('MESSAGE_SENT', String(message.type || 'unknown'), message);
   } catch (e) {
     console.error('Error sending message:', e);
   }

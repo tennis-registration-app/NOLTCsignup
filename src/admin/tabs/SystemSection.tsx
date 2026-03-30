@@ -1,6 +1,11 @@
 import React from 'react';
 import SystemSettings from '../screens/SystemSettings';
 
-export function SystemSection({ backend, onSettingsChanged }) {
+interface SystemSectionProps {
+  backend?: unknown;
+  onSettingsChanged?: () => void;
+}
+
+export function SystemSection({ backend, onSettingsChanged }: SystemSectionProps) {
   return <SystemSettings backend={backend} onSettingsChanged={onSettingsChanged} />;
 }

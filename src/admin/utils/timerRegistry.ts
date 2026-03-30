@@ -16,7 +16,7 @@ const _timers: Array<{ id: number; type: string }> = [];
  * @param {string} type - 'interval' or 'timeout'
  * @returns {number} The same timer ID (for chaining)
  */
-export const addTimer = (id, type = 'interval') => {
+export const addTimer = (id: number, type: string = 'interval') => {
   _timers.push({ id, type });
   return id;
 };

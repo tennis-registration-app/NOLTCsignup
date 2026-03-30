@@ -1,3 +1,4 @@
+import React from 'react';
 /**
  * useMemberSearch Hook
  * Orchestrates member search state + derived values + handlers.

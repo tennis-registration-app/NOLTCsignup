@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 
-/**
- * ToastHost - Global toast notification container
- * Listens for UI_TOAST events and displays notifications
- */
+interface Toast {
+  id: number;
+  duration: number;
+  type: string;
+  msg?: string;
+  message?: string;
+}
+
 export function ToastHost() {
-  const [toasts, setToasts] = useState([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   useEffect(() => {
-    const onToast = (e) => {
-      const t = { id: Date.now() + Math.random(), duration: 3000, type: 'warning', ...e.detail };
-      setToasts((xs) => [...xs, t]);
-      setTimeout(() => setToasts((xs) => xs.filter((x) => x.id !== t.id)), t.duration);
+    const onToast = (e: Event) => {
+      const ce = e as CustomEvent;
+      const t: Toast = { id: Date.now() + Math.random(), duration: 3000, type: 'warning', ...(ce.detail as Partial<Toast>) };
+      setToasts((xS) => [...xS, t]);
+      setTimeout(() => setToasts((xS) => xS.filter((z) => z.id !== t.id)), t.duration);
     };
     window.addEventListener('UI_TOAST', onToast);
     return () => window.removeEventListener('UI_TOAST', onToast);

@@ -13,7 +13,7 @@ export function useMobileBridge() {
   }));
 
   useEffect(() => {
-    const handleMessage = (event) => {
+    const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'mobile:state-updated') {
         logger.debug('CourtDisplay', 'Mobile state updated', event.data.payload);
         setMobileState(event.data.payload);
