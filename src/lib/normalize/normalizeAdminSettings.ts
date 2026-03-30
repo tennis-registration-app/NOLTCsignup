@@ -7,11 +7,11 @@
  * @param {Object} raw - Raw API response from getSettings()
  * @returns {Object} Normalized settings with camelCase keys
  */
-export function normalizeAdminSettingsResponse(raw) {
+export function normalizeAdminSettingsResponse(raw: Record<string, unknown>) {
   return {
-    operatingHours: normalizeOperatingHours(raw.operating_hours),
-    upcomingOverrides: normalizeOverrides(raw.upcoming_overrides),
-    settings: normalizeSettings(raw.settings),
+    operatingHours: normalizeOperatingHours(raw.operating_hours as unknown[] | null),
+    upcomingOverrides: normalizeOverrides(raw.upcoming_overrides as unknown[] | null),
+    settings: normalizeSettings(raw.settings as Record<string, unknown> | null),
   };
 }
 
@@ -20,7 +20,7 @@ export function normalizeAdminSettingsResponse(raw) {
  * @param {Object|null|undefined} settings - Raw settings from API
  * @returns {Object|null}
  */
-export function normalizeSettings(settings) {
+export function normalizeSettings(settings: Record<string, unknown> | null | undefined) {
   if (!settings) return null;
 
   return {
@@ -46,12 +46,12 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
  * @param {Array|null|undefined} hours - Raw operating hours from API
  * @returns {Array|null}
  */
-export function normalizeOperatingHours(hours) {
+export function normalizeOperatingHours(hours: unknown[] | null | undefined) {
   if (!hours || !Array.isArray(hours)) return null;
 
-  return hours.map((h) => ({
+  return (hours as Record<string, unknown>[]).map((h) => ({
     dayOfWeek: h.day_of_week,
-    dayName: h.day_name || DAY_NAMES[h.day_of_week],
+    dayName: h.day_name || DAY_NAMES[h.day_of_week as number],
     opensAt: h.opens_at,
     closesAt: h.closes_at,
     isClosed: h.is_closed,
@@ -63,10 +63,10 @@ export function normalizeOperatingHours(hours) {
  * @param {Array|null|undefined} overrides - Raw overrides from API
  * @returns {Array|null}
  */
-export function normalizeOverrides(overrides) {
+export function normalizeOverrides(overrides: unknown[] | null | undefined) {
   if (!overrides || !Array.isArray(overrides)) return null;
 
-  return overrides.map((o) => ({
+  return (overrides as Record<string, unknown>[]).map((o) => ({
     date: o.date,
     opensAt: o.opens_at,
     closesAt: o.closes_at,
@@ -80,7 +80,7 @@ export function normalizeOverrides(overrides) {
  * @param {Array} hours - Internal camelCase hours
  * @returns {Array} API-ready snake_case hours
  */
-export function denormalizeOperatingHours(hours) {
+export function denormalizeOperatingHours(hours: Record<string, unknown>[]) {
   return hours.map((h) => ({
     day_of_week: h.dayOfWeek,
     opens_at: h.opensAt,
@@ -94,7 +94,7 @@ export function denormalizeOperatingHours(hours) {
  * @param {Object} override - Internal camelCase override
  * @returns {Object} API-ready snake_case override
  */
-export function denormalizeOverride(override) {
+export function denormalizeOverride(override: Record<string, unknown>) {
   return {
     date: override.date,
     opens_at: override.opensAt,

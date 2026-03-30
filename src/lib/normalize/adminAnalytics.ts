@@ -10,7 +10,7 @@
  * @param {Object} raw - Single row from API
  * @returns {Object} Normalized heatmap row
  */
-export function normalizeHeatmapRow(raw) {
+export function normalizeHeatmapRow(raw: Record<string, unknown>) {
   return {
     dayOfWeek: raw.dow ?? raw.day_of_week,
     hour: raw.hour,
@@ -23,7 +23,7 @@ export function normalizeHeatmapRow(raw) {
  * @param {Object} raw - Single transaction row from API
  * @returns {Object} Normalized transaction
  */
-export function normalizeTransaction(raw) {
+export function normalizeTransaction(raw: Record<string, unknown>) {
   return {
     id: raw.id,
     date: raw.date,
@@ -41,7 +41,7 @@ export function normalizeTransaction(raw) {
  * @param {Object} raw - Single session row from API
  * @returns {Object} Normalized session
  */
-export function normalizeGameSession(raw) {
+export function normalizeGameSession(raw: Record<string, unknown>) {
   return {
     id: raw.id,
     courtNumber: raw.court_number,
@@ -57,7 +57,7 @@ export function normalizeGameSession(raw) {
  * @param {Object} raw - Single block from API
  * @returns {Object} Normalized block
  */
-export function normalizeCalendarBlock(raw) {
+export function normalizeCalendarBlock(raw: Record<string, unknown>) {
   return {
     id: raw.id,
     courtId: raw.courtId ?? raw.court_id,
@@ -77,7 +77,7 @@ export function normalizeCalendarBlock(raw) {
  * @param {Object} raw - Raw AI assistant response
  * @returns {Object} Normalized response
  */
-export function normalizeAiResponse(raw) {
+export function normalizeAiResponse(raw: Record<string, unknown>) {
   return {
     ok: raw.ok,
     error: raw.error,
@@ -94,7 +94,7 @@ export function normalizeAiResponse(raw) {
  * @param {Object} raw - Raw analytics summary
  * @returns {Object} Normalized summary
  */
-export function normalizeAiAnalyticsSummary(raw) {
+export function normalizeAiAnalyticsSummary(raw: Record<string, unknown> | null) {
   if (!raw) return null;
   return {
     totalSessions: raw.total_sessions,
@@ -107,7 +107,7 @@ export function normalizeAiAnalyticsSummary(raw) {
  * @param {Object} raw - Raw heatmap row from AI response
  * @returns {Object} Normalized row
  */
-export function normalizeAiHeatmapRow(raw) {
+export function normalizeAiHeatmapRow(raw: Record<string, unknown>) {
   return {
     dayOfWeek: raw.day_of_week,
     sessionCount: raw.session_count,

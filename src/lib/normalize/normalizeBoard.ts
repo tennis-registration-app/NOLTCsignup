@@ -10,7 +10,7 @@ import { normalizeWaitlistEntry } from './normalizeWaitlistEntry';
  * @param {Object} raw - Raw response from /get-board API
  * @returns {import('../types/domain.js').Board}
  */
-export function normalizeBoard(raw) {
+export function normalizeBoard(raw: Record<string, unknown> | null) {
   if (!raw) {
     console.error('[normalizeBoard] Received null/undefined response');
     return {
@@ -28,17 +28,17 @@ export function normalizeBoard(raw) {
     console.warn('[normalizeBoard] Missing serverNow');
   }
 
-  const serverNow = raw.serverNow || new Date().toISOString();
+  const serverNow = String(raw.serverNow || new Date().toISOString());
 
   // Normalize courts
   const courts = Array.isArray(raw.courts)
-    ? raw.courts.map((c) => normalizeCourt(c, serverNow))
+    ? (raw.courts as Record<string, unknown>[]).map((c) => normalizeCourt(c, serverNow))
     : [];
 
   // Normalize waitlist
   const rawWaitlist = raw.waitlist || raw.waitingGroups || [];
   const waitlist = Array.isArray(rawWaitlist)
-    ? rawWaitlist.map((w) => normalizeWaitlistEntry(w, serverNow))
+    ? (rawWaitlist as Record<string, unknown>[]).map((w) => normalizeWaitlistEntry(w, serverNow))
     : [];
 
   // Sort waitlist by position
@@ -51,16 +51,16 @@ export function normalizeBoard(raw) {
     .filter((c) => c.block !== null)
     .map((c) => ({
       courtNumber: c.number,
-      startTime: c.block.startsAt,
-      endTime: c.block.endsAt,
-      title: c.block.reason,
-      isActive: c.block.isActive,
+      startTime: c.block!.startsAt,
+      endTime: c.block!.endsAt,
+      title: c.block!.reason,
+      isActive: c.block!.isActive,
     }));
 
   // Normalize upcoming blocks from API (future blocks for today)
   // This is SEPARATE from blocks - for display only, not availability calculations
   const upcomingBlocks = Array.isArray(raw.upcomingBlocks)
-    ? raw.upcomingBlocks.map((b) => ({
+    ? (raw.upcomingBlocks as Record<string, unknown>[]).map((b) => ({
         id: b.id,
         courtNumber: b.courtNumber,
         startTime: b.startsAt,
@@ -72,7 +72,7 @@ export function normalizeBoard(raw) {
     : [];
 
   // Pass through operating hours from API (already in correct format)
-  const operatingHours = raw.operatingHours || [];
+  const operatingHours = (raw.operatingHours as unknown[]) || [];
 
   return {
     serverNow,

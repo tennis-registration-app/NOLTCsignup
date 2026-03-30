@@ -8,7 +8,7 @@ import { normalizeGroup } from './normalizeGroup';
  * @param {string} serverNow - Server time for minutesWaiting calculation
  * @returns {import('../types/domain.js').WaitlistEntry}
  */
-export function normalizeWaitlistEntry(raw, serverNow) {
+export function normalizeWaitlistEntry(raw: Record<string, unknown>, serverNow: string) {
   if (!raw) {
     console.warn('[normalizeWaitlistEntry] Received null/undefined entry');
     return {
@@ -22,22 +22,22 @@ export function normalizeWaitlistEntry(raw, serverNow) {
     };
   }
 
-  const joinedAt = raw.joinedAt || raw.joined_at || raw.createdAt || raw.created_at || '';
+  const joinedAt = String(raw.joinedAt || raw.joined_at || raw.createdAt || raw.created_at || '');
 
   // Calculate minutes waiting (derived field)
-  let minutesWaiting = raw.minutesWaiting || raw.minutes_waiting || 0;
+  let minutesWaiting = Number(raw.minutesWaiting || raw.minutes_waiting || 0);
   if (!minutesWaiting && joinedAt && serverNow) {
-    const diffMs = new Date(serverNow).getTime() - new Date(joinedAt).getTime();
+    const diffMs = new Date(serverNow).getTime() - new Date(String(joinedAt)).getTime();
     minutesWaiting = Math.floor(diffMs / 60000);
   }
 
   return {
     id: raw.id || raw.entryId || raw.entry_id || 'unknown',
-    position: raw.position ?? raw.queue_position ?? 0,
+    position: Number(raw.position ?? raw.queue_position ?? 0),
     group: normalizeGroup(raw),
     joinedAt,
     minutesWaiting,
-    estimatedCourtTime: raw.estimatedCourtTime || raw.estimated_court_time || null,
-    deferred: raw.deferred ?? false,
+    estimatedCourtTime: (raw.estimatedCourtTime || raw.estimated_court_time || null) as string | null,
+    deferred: Boolean(raw.deferred ?? false),
   };
 }

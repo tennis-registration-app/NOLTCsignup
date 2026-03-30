@@ -8,7 +8,7 @@ import { logger } from '../logger';
  * @param {Object} raw - Raw member from API
  * @returns {import('../types/domain.js').Member}
  */
-export function normalizeMember(raw) {
+export function normalizeMember(raw: Record<string, unknown>) {
   if (!raw) {
     logger.warn('normalizeMember', 'Received null/undefined member');
     return { memberId: 'unknown', displayName: 'Unknown', isGuest: false };
@@ -33,9 +33,9 @@ export function normalizeMember(raw) {
   }
 
   return {
-    memberId: raw.memberId || raw.member_id || raw.id || 'unknown',
-    displayName: raw.displayName || raw.display_name || raw.name || 'Unknown',
-    isGuest: raw.isGuest ?? raw.is_guest ?? false,
+    memberId: String(raw.memberId || raw.member_id || raw.id || 'unknown'),
+    displayName: String(raw.displayName || raw.display_name || raw.name || 'Unknown'),
+    isGuest: Boolean(raw.isGuest ?? raw.is_guest ?? false),
   };
 }
 
@@ -46,14 +46,14 @@ export function normalizeMember(raw) {
  * @param {Object} raw - Raw member from getMembersByAccount API
  * @returns {Object} Normalized member with camelCase keys
  */
-export function normalizeAccountMember(raw) {
+export function normalizeAccountMember(raw: Record<string, unknown> | null | undefined) {
   if (!raw) return null;
 
   return {
     id: raw.id,
     displayName: raw.display_name,
     accountId: raw.account_id,
-    isPrimary: raw.is_primary ?? false,
+    isPrimary: Boolean(raw.is_primary ?? false),
     memberNumber: raw.member_number,
   };
 }
@@ -64,7 +64,7 @@ export function normalizeAccountMember(raw) {
  * @param {Array} members - Raw members array from API
  * @returns {Array} Normalized members with camelCase keys
  */
-export function normalizeAccountMembers(members) {
+export function normalizeAccountMembers(members: unknown[] | null | undefined) {
   if (!members || !Array.isArray(members)) return [];
-  return members.map(normalizeAccountMember);
+  return (members as Record<string, unknown>[]).map(normalizeAccountMember);
 }

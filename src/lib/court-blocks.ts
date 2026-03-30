@@ -15,7 +15,7 @@ import { readJSON } from './storage';
  * @param {number} courtNumber - Court number to check
  * @returns {{ isBlocked: boolean, isCurrent: boolean, reason?: string, title?: string, eventDetails?: Object, startTime?: string, endTime?: string, remainingMinutes?: number, isWetCourt: boolean }}
  */
-export function getCourtBlockStatus(courtNumber) {
+export function getCourtBlockStatus(courtNumber: number) {
   const now = new Date();
 
   try {
@@ -176,7 +176,7 @@ export function getUpcomingBlockWarningFromBlocks(
  * @param {number} [duration=60] - Intended play duration in minutes
  * @returns {Object|null} Warning object or null if no warning needed
  */
-export function getUpcomingBlockWarning(courtNumber, duration = 60) {
+export function getUpcomingBlockWarning(courtNumber: number, duration = 60) {
   try {
     const allBlocks = (readJSON(STORAGE.BLOCKS) as Array<{ courtNumber: number; isWetCourt?: boolean; startTime: string; endTime: string; reason?: string; title?: string; eventDetails?: unknown }>) || [];
     return getUpcomingBlockWarningFromBlocks(courtNumber, duration, allBlocks);

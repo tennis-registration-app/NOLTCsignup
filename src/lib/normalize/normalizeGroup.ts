@@ -9,7 +9,7 @@ import { GROUP_TYPES } from '../types/domain';
  * @param {Object} raw - Raw group from API
  * @returns {import('../types/domain.js').Group}
  */
-export function normalizeGroup(raw) {
+export function normalizeGroup(raw: Record<string, unknown>) {
   if (!raw) {
     console.warn('[normalizeGroup] Received null/undefined group');
     return { id: 'unknown', players: [], type: 'singles' };
@@ -28,17 +28,17 @@ export function normalizeGroup(raw) {
     }
   }
 
-  const players = Array.isArray(rawPlayers) ? rawPlayers.map(normalizeMember) : [];
+  const players = Array.isArray(rawPlayers) ? (rawPlayers as Record<string, unknown>[]).map(normalizeMember) : [];
 
   // Determine group type from player count
-  let type = raw.type || raw.group_type || raw.groupType;
+  let type: string = String(raw.type || raw.group_type || raw.groupType || '');
   if (!type || !GROUP_TYPES.includes(type)) {
     if (players.length <= 3) type = 'singles';
     else type = 'doubles';
   }
 
   return {
-    id: raw.id || raw.groupId || raw.group_id || 'unknown',
+    id: String(raw.id || raw.groupId || raw.group_id || 'unknown'),
     players,
     type,
   };

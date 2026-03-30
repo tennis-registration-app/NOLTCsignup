@@ -5,22 +5,17 @@
  * Uses ONLY memberId for matching — no name-based fallbacks.
  */
 
-/**
- * @typedef {Object} Engagement
- * @property {'court'|'waitlist'} kind - Type of engagement
- * @property {number} [courtNumber] - Court number if on court
- * @property {number} [waitlistPosition] - Position if on waitlist
- * @property {string} [groupId] - Group ID
- * @property {string} [displayName] - Player display name
- */
+import type { Board } from '../types/domain';
 
-/**
- * Find engagement for a member by ID
- * @param {import('../types/domain.js').Board} board - Domain board
- * @param {string} memberId - Member UUID to check
- * @returns {Engagement|null} - Engagement info or null if not engaged
- */
-export function findEngagementByMemberId(board, memberId) {
+export interface Engagement {
+  kind: 'court' | 'waitlist';
+  courtNumber?: number;
+  waitlistPosition?: number;
+  groupId?: string;
+  displayName?: string;
+}
+
+export function findEngagementByMemberId(board: Board, memberId: string): Engagement | null {
   if (!board || !memberId) return null;
 
   // Check courts
@@ -59,8 +54,8 @@ export function findEngagementByMemberId(board, memberId) {
  * @param {import('../types/domain.js').Board} board - Domain board
  * @returns {Map<string, Engagement>} - Map of memberId to Engagement
  */
-export function buildEngagementIndex(board) {
-  const index = new Map();
+export function buildEngagementIndex(board: Board): Map<string, Engagement> {
+  const index: Map<string, Engagement> = new Map();
 
   if (!board) return index;
 
@@ -102,7 +97,7 @@ export function buildEngagementIndex(board) {
  * @param {Engagement} engagement
  * @returns {string}
  */
-export function getEngagementMessage(engagement) {
+export function getEngagementMessage(engagement: Engagement): string {
   if (!engagement) return '';
 
   if (engagement.kind === 'court') {

@@ -19,12 +19,12 @@ export class LocalStorageAdapter {
     this.latencyMs = options.latencyMs || 0; // Set to 50 for testing async behavior
   }
 
-  async read(key) {
+  async read(key: string) {
     await simulateLatency(this.latencyMs);
     return readJSON(key);
   }
 
-  async write(key, data) {
+  async write(key: string, data: unknown) {
     await simulateLatency(this.latencyMs);
     writeJSON(key, data);
     return data;
@@ -35,18 +35,18 @@ export class LocalStorageAdapter {
     return readJSON(STORAGE.DATA);
   }
 
-  async saveData(data) {
+  async saveData(data: unknown) {
     await simulateLatency(this.latencyMs);
     writeJSON(STORAGE.DATA, data);
     return data;
   }
 
   // Direct sync access for methods that require it
-  readSync(key) {
+  readSync(key: string) {
     return readJSON(key);
   }
 
-  writeSync(key, data) {
+  writeSync(key: string, data: unknown) {
     writeJSON(key, data);
     return data;
   }

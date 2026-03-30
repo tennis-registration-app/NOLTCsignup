@@ -14,7 +14,7 @@ import { normalizeBlock } from './normalizeBlock';
  * @param {string} serverNow - Server time for calculations
  * @returns {import('../types/domain.js').Court}
  */
-export function normalizeCourt(raw, serverNow) {
+export function normalizeCourt(raw: Record<string, unknown>, serverNow: string) {
   if (!raw) {
     console.warn('[normalizeCourt] Received null/undefined court');
     return {
@@ -41,7 +41,7 @@ export function normalizeCourt(raw, serverNow) {
   let sessionInput: Record<string, unknown> | null = null;
   if (raw.session) {
     // Nested format (e.g., from mock data or future API changes)
-    sessionInput = raw.session;
+    sessionInput = raw.session as Record<string, unknown>;
   } else if (raw.session_id) {
     // Flattened format from get_court_board RPC
     sessionInput = {
@@ -61,7 +61,7 @@ export function normalizeCourt(raw, serverNow) {
   let blockInput: Record<string, unknown> | null = null;
   if (raw.block) {
     // Nested format
-    blockInput = raw.block;
+    blockInput = raw.block as Record<string, unknown>;
   } else if (raw.block_id) {
     // Flattened format from get_court_board RPC
     blockInput = {

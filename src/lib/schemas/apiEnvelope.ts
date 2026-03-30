@@ -35,7 +35,7 @@ export const ApiResponseSchema = z
  * @param {Object} raw - Raw API response
  * @returns {{ success: boolean, data?: Object, error?: z.ZodError }}
  */
-export function validateBoardResponse(raw) {
+export function validateBoardResponse(raw: unknown) {
   const result = BoardResponseSchema.safeParse(raw);
   if (!result.success) {
     console.error('[validateBoardResponse] Invalid API envelope:', result.error.format());

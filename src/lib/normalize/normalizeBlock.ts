@@ -6,11 +6,11 @@
  * @param {string} serverNow - Server time for isActive calculation
  * @returns {import('../types/domain.js').Block | null}
  */
-export function normalizeBlock(raw, serverNow) {
+export function normalizeBlock(raw: Record<string, unknown>, serverNow: string) {
   if (!raw) return null;
 
-  const startsAt = raw.startsAt || raw.starts_at || raw.startTime || '';
-  const endsAt = raw.endsAt || raw.ends_at || raw.endTime || '';
+  const startsAt = String(raw.startsAt || raw.starts_at || raw.startTime || '');
+  const endsAt = String(raw.endsAt || raw.ends_at || raw.endTime || '');
 
   // Calculate if block is currently active
   const now = serverNow ? new Date(serverNow) : new Date();
