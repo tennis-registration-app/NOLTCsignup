@@ -56,7 +56,7 @@ export function preflightJoinWaitlist(command: z.infer<typeof JoinWaitlistComman
 
   // Check no players already engaged
   for (const player of command.players) {
-    const engagement = findEngagementByMemberId(board, player.memberId);
+    const engagement = board ? findEngagementByMemberId(board, player.memberId) : null;
     if (engagement) {
       errors.push(getEngagementMessage(engagement));
     }

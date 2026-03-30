@@ -27,7 +27,24 @@ import { TypedIcon } from '../../components/icons/TypedIcon';
 import { readDataSafe } from '../../lib/storage';
 import { logger } from '../../lib/logger';
 
-const ClearCourtScreen = ({
+
+interface ClearCourtScreenProps {
+  clearCourtStep: number;
+  setClearCourtStep: (step: number) => void;
+  selectedCourtToClear: number | null;
+  setSelectedCourtToClear: (courtNum: number) => void;
+  clearCourt: (courtNum: number, reason: string) => Promise<void>;
+  resetForm: () => void;
+  showAlert: boolean;
+  alertMessage: string;
+  getCourtsOccupiedForClearing: () => number[];
+  courtData: Record<string, unknown> | null;
+  CONSTANTS: { AUTO_RESET_CLEAR_MS?: number };
+  TennisBusinessLogic: { formatPlayerDisplayName: (name: string) => string };
+  mobileFlow?: boolean;
+}
+
+const ClearCourtScreen: React.FC<ClearCourtScreenProps> = ({
   clearCourtStep,
   setClearCourtStep,
   selectedCourtToClear,
@@ -49,8 +66,8 @@ const ClearCourtScreen = ({
   const data = courtData || readDataSafe() || { courts: [] };
 
   // Auto-reset timer for success screens (step 3 and 4)
-  const timerRef = useRef(null);
-  const timerStepRef = useRef(null); // Track which step the timer was set for
+  const timerRef = useRef(null) as React.MutableRefObject<ReturnType<typeof setTimeout>|null>
+  const timerStepRef = useRef(null) as React.MutableRefObject<number|null> // Track which step the timer was set for
 
   useEffect(() => {
     // Only set timer when on success screens (step 3 or 4)
@@ -98,12 +115,12 @@ const ClearCourtScreen = ({
   }, [hasAny]);
 
   const courts = data?.courts || [];
-  const findCourt = (num) => courts.find((c) => c && c.number === num) || courts[num - 1];
+  const findCourt = (num: number) => (courts as Array<Record<string,unknown>>).find((c) => c && c.number === num) || (courts as Array<Record<string,unknown>>)[num - 1];
   const occupiedCourts = clearableCourts.map((courtNumber) => {
     const c = findCourt(courtNumber);
     return {
       courtNumber,
-      players: c?.session?.group?.players || c?.players || [],
+      players: (c as any)?.session?.group?.players || (c as any)?.players || [],
       isBlocked: false,
     };
   });
@@ -166,7 +183,7 @@ const ClearCourtScreen = ({
   // Step 2: Confirm clearing method
   if (clearCourtStep === 2) {
     // Find court by number (null-safe: board refresh may contain null entries after a clear)
-    const court = findCourt(selectedCourtToClear);
+    const court = selectedCourtToClear != null ? findCourt(selectedCourtToClear) : undefined;
 
     // Court was cleared between selection and render — bounce back to step 1
     if (!court) {
@@ -187,13 +204,13 @@ const ClearCourtScreen = ({
     }
 
     // Get players from session.group.players (Domain format) or top-level players (fallback)
-    const players = court.session?.group?.players || court.players || [];
+    const players = (court as any)?.session?.group?.players || (court as any)?.players || [];
 
     // Handle players as array of strings or objects with name/displayName property
     // Use camelCase only (data is pre-normalized)
     const displayNames = players
-      .map((p) => {
-        const name = typeof p === 'string' ? p : p.name || p.displayName || 'Unknown';
+      .map((p: Record<string,unknown>|string) => {
+        const name = typeof p === 'string' ? p : String((p as Record<string,unknown>).name || (p as Record<string,unknown>).displayName || 'Unknown');
         return TennisBusinessLogic.formatPlayerDisplayName(name);
       })
       .filter(Boolean)
@@ -220,7 +237,7 @@ const ClearCourtScreen = ({
                 setClearCourtStep(3);
 
                 // API call in background
-                clearCourt(selectedCourtToClear, 'Cleared').catch((error) => {
+                clearCourt(selectedCourtToClear!, 'Cleared').catch((error: unknown) => {
                   logger.error('ClearCourt', 'API error', error);
                   // Error will be logged; Thank You screen auto-dismisses anyway
                 });
@@ -241,7 +258,7 @@ const ClearCourtScreen = ({
                 setClearCourtStep(4);
 
                 // API call in background
-                clearCourt(selectedCourtToClear, 'Observed-Cleared').catch((error) => {
+                clearCourt(selectedCourtToClear!, 'Observed-Cleared').catch((error: unknown) => {
                   logger.error('ClearCourt', 'API error', error);
                   // Error will be logged; Thank You screen auto-dismisses anyway
                 });

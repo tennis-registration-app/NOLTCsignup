@@ -108,7 +108,8 @@ export const API_CONFIG = new Proxy(
     {},
     {
       get(_, prop) {
-        return computeApiConfig()[prop];
+        if (typeof prop === "symbol") return undefined;
+        return computeApiConfig()[prop as keyof ReturnType<typeof computeApiConfig>];
       },
       ownKeys() {
         return Object.keys(computeApiConfig());
@@ -116,7 +117,7 @@ export const API_CONFIG = new Proxy(
       getOwnPropertyDescriptor(_, prop) {
         const config = computeApiConfig();
         if (prop in config) {
-          return { enumerable: true, configurable: true, value: config[prop] };
+          return { enumerable: true, configurable: true, value: config[prop as keyof typeof config] };
         }
         return undefined;
       },

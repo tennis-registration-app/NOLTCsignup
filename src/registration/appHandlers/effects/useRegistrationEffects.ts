@@ -22,6 +22,19 @@ import { logger } from '../../../lib/logger';
  * @param {Function} deps.fetchFrequentPartners - Function to fetch frequent partners
  * @param {Function} deps.loadData - Function to load data
  */
+
+interface UseRegistrationEffectsDeps {
+  currentScreen: string;
+  currentMemberId: string | null;
+  dataStore: { get: (key: string) => Promise<Record<string, unknown> | null | undefined> } | null | undefined;
+  TENNIS_CONFIG: { PRICING: { TENNIS_BALLS: number }; STORAGE: { SETTINGS_KEY: string } };
+  setBallPriceInput: (value: string) => void;
+  setPreselectedCourt: (courtNumber: number) => void;
+  setCurrentScreen: (screen: string, source?: string) => void;
+  fetchFrequentPartners: (memberId: string) => void;
+  loadData: () => void;
+}
+
 export function useRegistrationEffects({
   currentScreen,
   currentMemberId,
@@ -32,7 +45,7 @@ export function useRegistrationEffects({
   setCurrentScreen,
   fetchFrequentPartners,
   loadData,
-}) {
+}: UseRegistrationEffectsDeps) {
   // Stable primitives for effect deps (avoids object identity churn)
   const ballPriceCents = TENNIS_CONFIG.PRICING.TENNIS_BALLS;
   const settingsKey = TENNIS_CONFIG.STORAGE.SETTINGS_KEY;
@@ -45,7 +58,7 @@ export function useRegistrationEffects({
           const settings = await dataStore?.get(settingsKey);
           if (settings) {
             const parsed = settings || {};
-            setBallPriceInput((parsed.tennisBallPrice || ballPriceCents).toFixed(2));
+            setBallPriceInput(((parsed.tennisBallPrice as number) || ballPriceCents).toFixed(2));
           } else {
             setBallPriceInput(ballPriceCents.toFixed(2));
           }
@@ -60,12 +73,12 @@ export function useRegistrationEffects({
   // Mobile Bridge Integration
   useEffect(() => {
     if (typeof window !== 'undefined' && window.RegistrationUI) {
-      window.RegistrationUI.setSelectedCourt = (courtNumber) => {
+      window.RegistrationUI.setSelectedCourt = (courtNumber: number) => {
         logger.info('Mobile', 'Setting selected court to', courtNumber);
         setPreselectedCourt(courtNumber);
       };
 
-      window.RegistrationUI.startRegistration = (courtNumber) => {
+      window.RegistrationUI.startRegistration = (courtNumber: number) => {
         logger.info('Mobile', 'Starting registration for court', courtNumber);
         setCurrentScreen('group', 'mobileStartRegistration');
         requestAnimationFrame(() => {

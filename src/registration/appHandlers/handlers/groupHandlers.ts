@@ -14,6 +14,7 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
  * Handles group management: player selection, frequent partners,
  * streak acknowledgment, waitlist joining, court selection.
  */
+
 interface Player {
   id: unknown;
   name: string;
@@ -45,86 +46,7 @@ interface UseGroupHandlersDeps {
   handleAddPlayerSuggestionClickOrchestrated: AnyFn;
   CONSTANTS: { MAX_PLAYERS: number; MAX_AUTOCOMPLETE_RESULTS: number; AUTO_RESET_SUCCESS_MS: number; ADMIN_CODE: string };
 }
-interface Player {
-  id: unknown;
-  name: string;
-  memberNumber?: string;
-  memberId?: unknown;
-  phone?: string;
-  ranking?: number | null;
-  winRate?: number;
-  accountId?: unknown;
-}
 
-type AnyFn = (...args: unknown[]) => unknown;
-
-interface UseGroupHandlersDeps {
-  [key: string]: unknown;
-}
-interface Player {
-  id: unknown;
-  name: string;
-  memberNumber?: string;
-  memberId?: unknown;
-  phone?: string;
-  ranking?: number | null;
-  winRate?: number;
-  accountId?: unknown;
-}
-
-type AnyFn = (...args: unknown[]) => unknown;
-
-interface UseGroupHandlersDeps {
-  [key: string]: unknown;
-}
-interface Player {
-  id: unknown;
-  name: string;
-  memberNumber?: string;
-  memberId?: unknown;
-  phone?: string;
-  ranking?: number | null;
-  winRate?: number;
-  accountId?: unknown;
-}
-
-type AnyFn = (...args: unknown[]) => unknown;
-
-interface UseGroupHandlersDeps {
-  [key: string]: unknown;
-}
-interface Player {
-  id: unknown;
-  name: string;
-  memberNumber?: string;
-  memberId?: unknown;
-  phone?: string;
-  ranking?: number | null;
-  winRate?: number;
-  accountId?: unknown;
-}
-
-type AnyFn = (...args: unknown[]) => unknown;
-
-interface UseGroupHandlersDeps {
-  [key: string]: unknown;
-}
-interface Player {
-  id: unknown;
-  name: string;
-  memberNumber?: string;
-  memberId?: unknown;
-  phone?: string;
-  ranking?: number | null;
-  winRate?: number;
-  accountId?: unknown;
-}
-
-type AnyFn = (...args: unknown[]) => unknown;
-
-interface UseGroupHandlersDeps {
-  [key: string]: unknown;
-}
 export function useGroupHandlers({
   groupGuest,
   derived,
@@ -196,7 +118,7 @@ export function useGroupHandlers({
       );
 
       // Validate player object
-      if (!DataValidation.isValidPlayer(player)) {
+      if (!DataValidation.isValidPlayer(player as unknown as Record<string, unknown>)) {
         logger.debug('GroupHandlers', 'Invalid player data - validation failed', {
           player,
           hasId: !!player?.id,

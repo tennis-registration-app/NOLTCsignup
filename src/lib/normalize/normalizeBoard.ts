@@ -1,5 +1,6 @@
 import { normalizeCourt } from './normalizeCourt';
 import { normalizeWaitlistEntry } from './normalizeWaitlistEntry';
+import type { Board } from '../types/domain';
 
 /**
  * Normalize complete board from API response to Domain Board
@@ -10,7 +11,7 @@ import { normalizeWaitlistEntry } from './normalizeWaitlistEntry';
  * @param {Object} raw - Raw response from /get-board API
  * @returns {import('../types/domain.js').Board}
  */
-export function normalizeBoard(raw: Record<string, unknown> | null) {
+export function normalizeBoard(raw: Record<string, unknown> | null): Board {
   if (!raw) {
     console.error('[normalizeBoard] Received null/undefined response');
     return {
@@ -72,7 +73,7 @@ export function normalizeBoard(raw: Record<string, unknown> | null) {
     : [];
 
   // Pass through operating hours from API (already in correct format)
-  const operatingHours = (raw.operatingHours as unknown[]) || [];
+  const operatingHours = (raw.operatingHours as object[]) || [];
 
   return {
     serverNow,
