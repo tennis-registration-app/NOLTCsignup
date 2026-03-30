@@ -9,6 +9,36 @@ import { logger } from '../../../lib/logger';
  * Extracted from useRegistrationHandlers
  * Accepts named slices from the app state object.
  */
+interface UseNavigationHandlersDeps {
+  state: { showAddPlayer: boolean };
+  setters: {
+    setShowAddPlayer: (val: boolean) => void;
+    setCurrentScreen: (screen: string, source?: string) => void;
+  };
+  groupGuest: {
+    showGuestForm: boolean;
+    setShowGuestForm: (val: boolean) => void;
+    setGuestName: (val: string) => void;
+    setGuestSponsor: (val: string) => void;
+    setShowGuestNameError: (val: boolean) => void;
+    setShowSponsorError: (val: boolean) => void;
+    setCurrentGroup: (val: unknown[]) => void;
+  };
+  memberIdentity: {
+    setMemberNumber: (val: string) => void;
+    setCurrentMemberId: (val: string | null) => void;
+  };
+  mobile: {
+    mobileFlow: boolean;
+    setCheckingLocation: (val: boolean) => void;
+    requestMobileReset: () => void;
+  };
+  alert: { showAlertMessage: (msg: string) => void };
+  TENNIS_CONFIG: {
+    GEOLOCATION: { ENABLED: boolean; ERROR_MESSAGE: string };
+  };
+}
+
 export function useNavigationHandlers({
   state,
   setters,
@@ -17,7 +47,7 @@ export function useNavigationHandlers({
   mobile,
   alert,
   TENNIS_CONFIG,
-}) {
+}: UseNavigationHandlersDeps) {
   const { showAddPlayer } = state;
   const { setShowAddPlayer, setCurrentScreen } = setters;
   const {
@@ -35,7 +65,7 @@ export function useNavigationHandlers({
 
   // VERBATIM COPY: checkLocationAndProceed from line ~170
   const checkLocationAndProceed = useCallback(
-    async (onSuccess) => {
+    async (onSuccess: () => void) => {
       // Skip location check if disabled
       if (!TENNIS_CONFIG.GEOLOCATION.ENABLED) {
         logger.warn('Geolocation', 'Geolocation check disabled for development');

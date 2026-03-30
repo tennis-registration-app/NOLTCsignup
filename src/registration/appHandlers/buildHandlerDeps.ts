@@ -1,3 +1,4 @@
+import type { AppState } from '../../types/appTypes';
 /**
  * buildHandlerDeps
  * ================
@@ -15,10 +16,10 @@
  * @param {object} workflow - WorkflowContext value (subset for court)
  * @param {{ clearSuccessResetTimer: Function, resetForm: Function, isPlayerAlreadyPlaying: Function }} core
  */
-export function buildCourtHandlerDeps(app: Record<string, unknown>, workflow: Record<string, unknown>, core: Record<string, unknown>) {
+export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, unknown>, core: Record<string, unknown>) {
   return {
     state: {
-      ...(app.state as Record<string, unknown>),
+      ...(app.state as unknown as Record<string, unknown>),
       isAssigning: workflow.isAssigning,
       currentWaitlistEntryId: workflow.currentWaitlistEntryId,
       canChangeCourt: workflow.canChangeCourt,
@@ -26,7 +27,7 @@ export function buildCourtHandlerDeps(app: Record<string, unknown>, workflow: Re
       replacedGroup: workflow.replacedGroup,
     },
     setters: {
-      ...(app.setters as Record<string, unknown>),
+      ...(app.setters as unknown as Record<string, unknown>),
       setIsAssigning: workflow.setIsAssigning,
       setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
       setHasWaitlistPriority: workflow.setHasWaitlistPriority,
@@ -67,7 +68,7 @@ export function buildCourtHandlerDeps(app: Record<string, unknown>, workflow: Re
  * @param {{ clearSuccessResetTimer: Function, resetForm: Function, isPlayerAlreadyPlaying: Function }} core
  * @param {object} court - Return value of useCourtHandlers
  */
-export function buildGroupHandlerDeps(app: Record<string, unknown>, workflow: Record<string, unknown>, core: Record<string, unknown>, court: Record<string, unknown>) {
+export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, unknown>, core: Record<string, unknown>, court: Record<string, unknown>) {
   return {
     groupGuest: workflow.groupGuest,
     derived: app.derived,
@@ -76,7 +77,7 @@ export function buildGroupHandlerDeps(app: Record<string, unknown>, workflow: Re
     search: app.search,
     memberIdentity: workflow.memberIdentity,
     setters: {
-      ...(app.setters as Record<string, unknown>),
+      ...(app.setters as unknown as Record<string, unknown>),
       setShowAddPlayer: workflow.setShowAddPlayer,
       setHasWaitlistPriority: workflow.setHasWaitlistPriority,
     },
@@ -96,13 +97,13 @@ export function buildGroupHandlerDeps(app: Record<string, unknown>, workflow: Re
  * @param {import('../../types/appTypes').AppState} app
  * @param {object} workflow - WorkflowContext value (subset for guest)
  */
-export function buildGuestHandlerDeps(app: Record<string, unknown>, workflow: Record<string, unknown>) {
+export function buildGuestHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
   return {
     groupGuest: workflow.groupGuest,
     guestCounterHook: (app.session as Record<string, unknown>).guestCounterHook,
     memberIdentity: workflow.memberIdentity,
     derived: app.derived,
-    setters: { ...(app.setters as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
+    setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
     search: app.search,
     helpers: app.helpers,
   };
@@ -112,7 +113,7 @@ export function buildGuestHandlerDeps(app: Record<string, unknown>, workflow: Re
  * @param {import('../../types/appTypes').AppState} app
  * @param {object} court - Return value of useCourtHandlers
  */
-export function buildAdminHandlerDeps(app: Record<string, unknown>, court: Record<string, unknown>) {
+export function buildAdminHandlerDeps(app: AppState, court: Record<string, unknown>) {
   return {
     services: app.services,
     alert: app.alert,
@@ -130,10 +131,10 @@ export function buildAdminHandlerDeps(app: Record<string, unknown>, court: Recor
  * @param {import('../../types/appTypes').AppState} app
  * @param {object} workflow - WorkflowContext value (subset for navigation)
  */
-export function buildNavigationHandlerDeps(app: Record<string, unknown>, workflow: Record<string, unknown>) {
+export function buildNavigationHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
   return {
-    state: { ...(app.state as Record<string, unknown>), showAddPlayer: workflow.showAddPlayer },
-    setters: { ...(app.setters as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
+    state: { ...(app.state as unknown as Record<string, unknown>), showAddPlayer: workflow.showAddPlayer },
+    setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
     mobile: app.mobile,

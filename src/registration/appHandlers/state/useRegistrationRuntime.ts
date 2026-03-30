@@ -9,6 +9,14 @@ import { logger } from '../../../lib/logger';
  * Owns runtime effects: timer cleanups, CSS optimizations, time interval.
  * Verbatim extraction, no logic changes.
  */
+interface UseRegistrationRuntimeDeps {
+  setCurrentTime: (time: Date) => void;
+  setBallPriceCents: (cents: number) => void;
+  setBlockWarningMinutes: (minutes: number) => void;
+  availableCourts: number[];
+  backend: { admin: { getSettings: () => Promise<{ ok: boolean; settings: Record<string, unknown> }> } };
+}
+
 export function useRegistrationRuntime({
   // Setters needed by effects
   setCurrentTime,
@@ -18,7 +26,7 @@ export function useRegistrationRuntime({
   availableCourts,
   // Services
   backend,
-}) {
+}: UseRegistrationRuntimeDeps) {
   // ===== REFS =====
   const successResetTimerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -49,10 +57,10 @@ export function useRegistrationRuntime({
         if (result.ok) {
           const settings = normalizeSettings(result.settings);
           if (settings?.ballPriceCents) {
-            setBallPriceCents(settings.ballPriceCents);
+            setBallPriceCents(settings.ballPriceCents as number);
           }
           if (settings?.blockWarningMinutes) {
-            const blockWarnMin = parseInt(settings.blockWarningMinutes, 10);
+            const blockWarnMin = parseInt(settings.blockWarningMinutes as string, 10);
             if (blockWarnMin > 0) {
               setBlockWarningMinutes(blockWarnMin);
             }

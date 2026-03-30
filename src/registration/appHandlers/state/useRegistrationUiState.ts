@@ -12,13 +12,17 @@ import { logger } from '../../../lib/logger';
  * @param {Object} deps - Dependencies
  * @param {Object} deps.CONSTANTS - App constants (defined in main hook)
  */
-export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }) {
+interface UseRegistrationUiStateDeps {
+  CONSTANTS: { MEMBER_COUNT: number; MEMBER_ID_START: number; [key: string]: unknown };
+}
+
+export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }: UseRegistrationUiStateDeps) {
   // ===== NAVIGATION STATE =====
   const [currentScreen, _setCurrentScreen] = useState('home');
 
   // VERBATIM COPY: setCurrentScreen wrapper from lines ~151-156
   const setCurrentScreen = useCallback(
-    (screen, source = 'unknown') => {
+    (screen: string, source = 'unknown') => {
       logger.info('NAV', `${currentScreen} → ${screen} (from: ${source})`);
       logger.debug('NAV', 'Stack trace');
       _setCurrentScreen(screen);

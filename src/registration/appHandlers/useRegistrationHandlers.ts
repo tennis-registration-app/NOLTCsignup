@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { AppState } from '../../types/appTypes';
 
 // Extracted handler modules
 import {
@@ -35,7 +36,7 @@ import {
  * @param {{ app: import('../../types/appTypes').AppState }} params
  * @returns {import('../../types/appTypes').Handlers}
  */
-export function useRegistrationHandlers({ app }) {
+export function useRegistrationHandlers({ app }: { app: AppState }) {
   const { resetFormOrchestrated, resetWorkflow } = app;
 
   // Workflow context — sourced directly instead of via app compatibility layer
@@ -80,7 +81,7 @@ export function useRegistrationHandlers({ app }) {
   // Check if player is already playing with detailed info
   // Note: This is used by both core handlers and groupHandlers, so it lives here
   const isPlayerAlreadyPlaying = useCallback(
-    (playerId) => {
+    (playerId: string) => {
       const courtData = app.helpers.getCourtData();
       return TennisBusinessLogic.isPlayerAlreadyPlaying(
         playerId,

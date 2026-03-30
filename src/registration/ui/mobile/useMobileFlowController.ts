@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import type { TennisBackendShape } from '../../../types/appTypes';
 import { logger } from '../../../lib/logger';
 
 /**
@@ -47,7 +48,7 @@ import { logger } from '../../../lib/logger';
 interface MobileFlowDeps {
   showSuccess: boolean;
   justAssignedCourt: number | string | null;
-  backend: { commands: { assignFromWaitlist: (args: Record<string, unknown>) => Promise<{ ok: boolean; code?: string; message?: string }> } };
+  backend: TennisBackendShape;
   isMobile: boolean;
   toast: ((msg: string, opts?: Record<string, unknown>) => void) | null;
   dbg: (...args: unknown[]) => void;

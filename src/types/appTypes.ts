@@ -198,7 +198,7 @@ export interface TennisBackendShape {
     deferWaitlistEntry: (input: { entryId: string; deferred: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:135 — returns CommandResponse & { session? }
     // Note: raw API may return scheduled_end_at; normalizeCommandSession() in assignCourtOrchestrator handles conversion
-    assignFromWaitlist: (input: { waitlistEntryId: string; courtId: string; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
+    assignFromWaitlist: (input: { waitlistEntryId: string; courtId?: string; courtNumber?: number; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
     // Evidence: TennisCommands.js:190 — returns CommandResponse & { endedSessionId?, restoredSessionId? }
     undoOvertimeTakeover: (input: { takeoverSessionId: string; displacedSessionId: string }) => Promise<CommandResponse & { endedSessionId?: string; restoredSessionId?: string }>;
     // Evidence: TennisCommands.js:173 — returns CommandResponse & { restoredSessionId? }

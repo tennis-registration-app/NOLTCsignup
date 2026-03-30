@@ -9,40 +9,47 @@
  */
 
 import { useReducer, useCallback } from 'react';
+import type { TennisBackendShape } from '../../types/appTypes';
 import { blockAdminReducer, initialBlockAdminState } from './blockAdminReducer';
 import { handleBlockCreateOp, handleCancelBlockOp } from '../handlers/adminOperations.js';
 
-export function useBlockAdmin({ backend, showAlertMessage, getCourtData }) {
+interface UseBlockAdminDeps {
+  backend: TennisBackendShape;
+  showAlertMessage: (message: string) => void;
+  getCourtData: () => { courts: Array<{ id?: string; number?: number; [key: string]: unknown }>};
+}
+
+export function useBlockAdmin({ backend, showAlertMessage, getCourtData }: UseBlockAdminDeps) {
   const [state, dispatch] = useReducer(blockAdminReducer, initialBlockAdminState);
 
   // Setter-style functions (match AdminScreen props)
-  const setShowBlockModal = useCallback((value) => {
+  const setShowBlockModal = useCallback((value: boolean) => {
     dispatch({ type: value ? 'BLOCK_MODAL_OPENED' : 'BLOCK_MODAL_CLOSED' });
   }, []);
 
-  const setSelectedCourtsToBlock = useCallback((courts) => {
+  const setSelectedCourtsToBlock = useCallback((courts: number[]) => {
     dispatch({ type: 'BLOCK_COURTS_SELECTED', courts });
   }, []);
 
-  const setBlockMessage = useCallback((message) => {
+  const setBlockMessage = useCallback((message: string) => {
     dispatch({ type: 'BLOCK_MESSAGE_SET', message });
   }, []);
 
-  const setBlockStartTime = useCallback((startTime) => {
+  const setBlockStartTime = useCallback((startTime: string) => {
     dispatch({ type: 'BLOCK_START_TIME_SET', startTime });
   }, []);
 
-  const setBlockEndTime = useCallback((endTime) => {
+  const setBlockEndTime = useCallback((endTime: string) => {
     dispatch({ type: 'BLOCK_END_TIME_SET', endTime });
   }, []);
 
-  const setBlockWarningMinutes = useCallback((warningMinutes) => {
+  const setBlockWarningMinutes = useCallback((warningMinutes: number) => {
     dispatch({ type: 'BLOCK_WARNING_MINUTES_SET', warningMinutes });
   }, []);
 
   // Bridge setter for handleBlockCreateOp compatibility
   // Direct boolean assignment - preserves exact legacy semantics
-  const setBlockingInProgress = useCallback((value) => {
+  const setBlockingInProgress = useCallback((value: boolean) => {
     dispatch({ type: 'BLOCK_IN_PROGRESS_SET', value });
   }, []);
 
@@ -73,7 +80,7 @@ export function useBlockAdmin({ backend, showAlertMessage, getCourtData }) {
   // Block cancellation - calls existing op
   // NOTE: No refresh call (legacy doesn't have one)
   const handleCancelBlock = useCallback(
-    (blockId, courtNum) => {
+    (blockId: string, courtNum: number) => {
       return handleCancelBlockOp({ backend, showAlertMessage }, blockId, courtNum);
     },
     [backend, showAlertMessage]

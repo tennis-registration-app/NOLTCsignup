@@ -16,14 +16,14 @@ const REFRESH_BEFORE_EXPIRY_MS = 60 * 1000; // Refresh 1 minute before expiry
 // Backend singleton for API operations
 const backend = createBackend();
 
-export function LocationQRCode({ onError }) {
-  const [token, setToken] = useState(/** @type {string | null} */ (null));
-  const [expiresAt, setExpiresAt] = useState(/** @type {Date | null} */ (null));
+export function LocationQRCode({ onError }: { onError?: (err: Error) => void }) {
+  const [token, setToken] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(/** @type {string | null} */ (null));
-  const [timeLeft, setTimeLeft] = useState(/** @type {number | null} */ (null));
-  const refreshTimeoutRef = useRef(/** @type {ReturnType<typeof setTimeout> | null} */ (null));
-  const countdownIntervalRef = useRef(/** @type {ReturnType<typeof setInterval> | null} */ (null));
+  const [error, setError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const generateToken = useCallback(async () => {
     setLoading(true);
@@ -57,9 +57,9 @@ export function LocationQRCode({ onError }) {
       }
     } catch (err) {
       console.error('Failed to generate location token:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
       setLoading(false);
-      if (onError) onError(err);
+      if (onError) onError(err instanceof Error ? err : new Error(String(err)));
     }
   }, [onError]);
 
@@ -103,7 +103,7 @@ export function LocationQRCode({ onError }) {
     };
   }, [expiresAt, generateToken]);
 
-  const formatTimeLeft = (seconds) => {
+  const formatTimeLeft = (seconds: number | null) => {
     if (seconds === null) return '--:--';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -136,7 +136,7 @@ export function LocationQRCode({ onError }) {
   }
 
   // Build the QR code value - just the token (mobile app will know how to use it)
-  const qrValue = token;
+  const qrValue = token ?? '';
 
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-white rounded-lg shadow-md">

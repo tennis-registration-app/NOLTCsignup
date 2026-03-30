@@ -7,6 +7,7 @@
  * have moved to WorkflowProvider.
  */
 
+import type { TennisBackendShape } from '../../../types/appTypes';
 import { logger } from '../../../lib/logger';
 
 // Alert display hook
@@ -50,6 +51,19 @@ const dbg = (...args: unknown[]) => {
  * @param {Function} deps.getCourtData - Get court data function
  * @param {Function|null} [deps.showAlertMessage] - External alert message function
  */
+interface UseRegistrationDomainHooksDeps {
+  backend: TennisBackendShape;
+  CONSTANTS: { ALERT_DISPLAY_MS: number; ADMIN_CODE: string; MAX_AUTOCOMPLETE_RESULTS: number; [key: string]: unknown };
+  setCurrentScreen: (screen: string, source?: string) => void;
+  showSuccess: boolean;
+  justAssignedCourt: string | null;
+  isMobile: boolean;
+  toast: (message: string, options?: { type?: string; duration?: number }) => void;
+  markUserTyping: () => void;
+  getCourtData: () => { courts: unknown[]; waitlist: { id?: string; group?: { id?: string } }[]; [key: string]: unknown };
+  showAlertMessage?: ((message: string) => void) | null;
+}
+
 export function useRegistrationDomainHooks({
   backend,
   CONSTANTS,
@@ -61,7 +75,7 @@ export function useRegistrationDomainHooks({
   markUserTyping,
   getCourtData,
   showAlertMessage: externalShowAlertMessage,
-}) {
+}: UseRegistrationDomainHooksDeps) {
   // Alert display hook
   const { showAlert, alertMessage, setShowAlert, setAlertMessage, showAlertMessage } =
     useAlertDisplay({ alertDurationMs: CONSTANTS.ALERT_DISPLAY_MS });
