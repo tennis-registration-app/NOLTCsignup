@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
 
+
+interface ProposedAction {
+  id?: string;
+  tool?: string;
+  description?: string;
+  risk?: string;
+}
+
+interface ProposedActionsProps {
+  actions: ProposedAction[];
+  requiresConfirmation?: boolean;
+  onExecute: (confirmed: boolean) => void;
+  onCancel: () => void;
+  loading: boolean;
+}
+
 /**
  * Renders proposed actions from AI and handles confirmation/execution
  */
@@ -9,10 +25,10 @@ export default function ProposedActions({
   onExecute,
   onCancel,
   loading,
-}) {
+}: ProposedActionsProps) {
   const [confirmed, setConfirmed] = useState(false);
 
-  const getRiskBadge = (risk) => {
+  const getRiskBadge = (risk: string | undefined) => {
     switch (risk) {
       case 'high':
         return (
@@ -37,7 +53,7 @@ export default function ProposedActions({
     }
   };
 
-  const hasHighRisk = actions.some((a) => a.risk === 'high');
+  const hasHighRisk = actions.some((a: ProposedAction) => a.risk === 'high');
 
   return (
     <div className="border-t bg-amber-50 p-4">
@@ -60,7 +76,7 @@ export default function ProposedActions({
 
       <div className="bg-white rounded border border-amber-200 mb-4 max-h-48 overflow-y-auto">
         <ul className="divide-y divide-amber-100">
-          {actions.map((action, idx) => (
+          {actions.map((action: ProposedAction, idx: number) => (
             <li
               key={action.id || idx}
               className="px-3 py-2 flex items-center justify-between gap-2"

@@ -7,8 +7,24 @@ import React, { useState, useMemo } from 'react';
 import { Download } from '../components';
 import { useAdminNotification } from '../context/NotificationContext';
 
+
+interface GuestCharge {
+  id?: string;
+  timestamp: string;
+  guestName?: string;
+  sponsorName?: string;
+  sponsorNumber?: string;
+  amount?: number;
+  [key: string]: unknown;
+}
+
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
 // Helper function for formatting date/time
-const formatDateTime = (timestamp) => {
+const formatDateTime = (timestamp: string): string => {
   const date = new Date(timestamp);
   return date.toLocaleString([], {
     month: 'short',
@@ -19,7 +35,7 @@ const formatDateTime = (timestamp) => {
 };
 
 // Helper function for CSV download
-const downloadCSV = (data, filename, notify) => {
+const downloadCSV = (data: Record<string, string>[], filename: string, notify: (msg: string, type: string) => void): void => {
   if (!data || data.length === 0) {
     notify('No data to export', 'error');
     return;
@@ -27,7 +43,7 @@ const downloadCSV = (data, filename, notify) => {
 
   const headers = Object.keys(data[0]);
   const csvHeaders = headers.join(',');
-  const csvRows = data.map((row) =>
+  const csvRows = data.map((row: Record<string, string>) =>
     headers
       .map((header) => {
         const value = row[header];
@@ -53,37 +69,37 @@ const downloadCSV = (data, filename, notify) => {
   document.body.removeChild(link);
 };
 
-const GuestChargeLog = ({ charges, dateRange }) => {
+const GuestChargeLog = ({ charges, dateRange }: { charges: GuestCharge[]; dateRange: DateRange }) => {
   const showNotification = useAdminNotification();
   const [sortField, setSortField] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState('desc');
 
   const filteredCharges = useMemo(() => {
-    return charges.filter((charge) => {
+    return charges.filter((charge: GuestCharge) => {
       const chargeDate = new Date(charge.timestamp);
       return chargeDate >= dateRange.start && chargeDate <= dateRange.end;
     });
   }, [charges, dateRange]);
 
   const sortedCharges = useMemo(() => {
-    return [...filteredCharges].sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
+    return [...filteredCharges].sort((a: GuestCharge, b: GuestCharge) => {
+      let aVal: unknown = a[sortField];
+      let bVal: unknown = b[sortField];
 
       if (sortField === 'timestamp') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+        aVal = new Date(aVal as string);
+        bVal = new Date(bVal as string);
       }
 
       if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
+        return (aVal as number | Date) > (bVal as number | Date) ? 1 : -1;
       } else {
-        return aVal < bVal ? 1 : -1;
+        return (aVal as number | Date) < (bVal as number | Date) ? 1 : -1;
       }
     });
   }, [filteredCharges, sortField, sortOrder]);
 
-  const handleSort = (field) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -159,7 +175,7 @@ const GuestChargeLog = ({ charges, dateRange }) => {
           <tbody>
             {sortedCharges.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center p-4 text-gray-500">
+                <td colSpan={5} className="text-center p-4 text-gray-500">
                   No guest charges in selected date range
                 </td>
               </tr>
