@@ -10,6 +10,38 @@ import { getDataStore as _getDataStore } from '../../lib/TennisCourtDataStore';
 import { getDeviceId } from '../utils/getDeviceId';
 import { TENNIS_CONFIG } from '../../lib/config';
 import { useOptimisticWetToggle } from './useOptimisticWetToggle';
+import type { CourtBlock, CourtStatusInfo } from './courtStatusUtils';
+import type { AdminBackend } from '../calendar/EventDetailsModal';
+
+interface CourtRecord {
+  number?: number;
+  session?: unknown;
+  players?: unknown[];
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  sessionId?: string;
+  id?: string;
+  block?: unknown;
+  [key: string]: unknown;
+}
+
+interface UseCourtActionsParams {
+  statusActions: Record<string, unknown>;
+  wetCourtsActions: {
+    activateEmergency?: () => Promise<{success?: boolean; error?: string}>;
+    deactivateAll?: () => Promise<{success?: boolean; error?: string}>;
+    clearCourt?: (n: number) => void;
+    clearAllCourts?: () => Promise<{success?: boolean; error?: string}>;
+  };
+  services: {
+    backend: AdminBackend;
+  };
+  courts: CourtRecord[];
+  courtBlocks: CourtBlock[];
+  wetCourts: Set<number>;
+}
+
 
 // Get dataStore reference
 const getDataStore = () => _getDataStore();
@@ -38,23 +70,22 @@ export function useCourtActions({
   courts,
   courtBlocks,
   wetCourts,
-}) {
-  const { clearCourt: onClearCourt, moveCourt: onMoveCourt } = statusActions;
-  const {
-    activateEmergency: onActivateWet,
-    deactivateAll: onDeactivateWet,
-    clearCourt: onClearWetCourt,
-    clearAllCourts: onClearAllWetCourts,
-  } = wetCourtsActions;
+}: UseCourtActionsParams) {
+  const onClearCourt = statusActions.clearCourt as ((n: number) => Promise<{success?: boolean; error?: string}>) | undefined;
+  const onMoveCourt = statusActions.moveCourt as ((from: number, to: number) => Promise<{success?: boolean; error?: string}>) | undefined;
+  const onActivateWet = wetCourtsActions.activateEmergency as (() => Promise<{success?: boolean; error?: string}>) | undefined;
+  const onDeactivateWet = wetCourtsActions.deactivateAll as (() => Promise<{success?: boolean; error?: string}>) | undefined;
+  const onClearWetCourt = wetCourtsActions.clearCourt as ((n: number) => void) | undefined;
+  const onClearAllWetCourts = wetCourtsActions.clearAllCourts as (() => Promise<{success?: boolean; error?: string}>) | undefined;
   const { backend } = services;
 
-  const [movingFrom, setMovingFrom] = useState(null);
+  const [movingFrom, setMovingFrom] = (useState as (init: number | null) => [number | null, (v: number | null) => void])(null);
   const [moveInFlight, setMoveInFlight] = useState(false); // prevents double-click during move API call
   const [clearInFlight, setClearInFlight] = useState(false); // prevents double-click during clear API call
-  const [optimisticCourts, setOptimisticCourts] = useState(null); // local override while operation is in-flight
-  const [showActions, setShowActions] = useState(null);
-  const [editingGame, setEditingGame] = useState(null);
-  const [editingBlock, setEditingBlock] = useState(null);
+  const [optimisticCourts, setOptimisticCourts] = (useState as (init: CourtRecord[] | null) => [CourtRecord[] | null, (v: CourtRecord[] | null) => void])(null); // local override while operation is in-flight
+  const [showActions, setShowActions] = (useState as (init: number | null) => [number | null, (v: number | null) => void])(null);
+  const [editingGame, setEditingGame] = (useState as (init: Record<string,unknown> | null) => [Record<string,unknown> | null, (v: Record<string,unknown> | null) => void])(null);
+  const [editingBlock, setEditingBlock] = (useState as (init: Record<string,unknown> | null) => [Record<string,unknown> | null, (v: Record<string,unknown> | null) => void])(null);
   const [, setRefreshTick] = useState(0); // Getter unused, setter used
   const [savingGame, setSavingGame] = useState(false);
 
@@ -87,7 +118,7 @@ export function useCourtActions({
     };
   }, []);
 
-  const handleClearCourt = async (courtNum) => {
+  const handleClearCourt = async (courtNum: number) => {
     if (clearInFlight) return; // prevent double-click
     if (!dataStore) return;
 
@@ -97,8 +128,8 @@ export function useCourtActions({
 
     const updatedBlocks = existingBlocks.map((block) => {
       if (block.courtNumber === courtNum) {
-        const blockStart = new Date(block.startTime);
-        const blockEnd = new Date(block.endTime);
+        const blockStart = new Date(block.startTime as string);
+        const blockEnd = new Date(block.endTime as string);
 
         // Only end blocks that are currently active
         if (blockStart <= currentTimeNow && blockEnd > currentTimeNow) {
@@ -136,24 +167,24 @@ export function useCourtActions({
       'block',
     ];
     const sourceCourts = courts || [];
-    const updated = sourceCourts.map((c) => {
+    const updated = sourceCourts.map((c: CourtRecord) => {
       if (c.number === courtNum) {
-        const rest = {};
+        const rest: CourtRecord = {};
         for (const key of Object.keys(c)) {
-          if (!SESSION_KEYS.includes(key)) rest[key] = c[key];
+          if (!SESSION_KEYS.includes(key)) (rest as Record<string, unknown>)[key] = c[key];
         }
         return rest;
       }
       return c;
     });
-    setOptimisticCourts(updated);
+    setOptimisticCourts(updated as CourtRecord[]);
 
     // Clear UI state immediately — court already looks empty
     setShowActions(null);
     setClearInFlight(true);
 
     try {
-      const res = await onClearCourt(courtNum);
+      const res = onClearCourt ? await onClearCourt(courtNum) : null;
       if (!res?.success) {
         // Rollback: discard optimistic state so real data shows
         setOptimisticCourts(null);
@@ -169,19 +200,19 @@ export function useCourtActions({
     }
   };
 
-  const handleEditClick = (courtNum, info) => {
-    if (info.type === 'block') {
-      const block = courtBlocks.find((b) => b.id === info.id);
+  const handleEditClick = (courtNum: number, info: CourtStatusInfo | null) => {
+    if (info?.type === 'block') {
+      const block = courtBlocks.find((b: CourtBlock) => b.id === info?.id);
       if (block) {
-        setEditingBlock({ ...block, courtNumber: courtNum });
+        setEditingBlock({ ...block as Record<string,unknown>, courtNumber: courtNum });
       }
-    } else if (info.type === 'game') {
-      setEditingGame({ ...info, courtNumber: courtNum });
+    } else if (info?.type === 'game') {
+      setEditingGame({ ...info as Record<string,unknown>, courtNumber: courtNum });
     }
     setShowActions(null);
   };
 
-  const handleMoveCourt = async (from, to) => {
+  const handleMoveCourt = async (from: number, to: number) => {
     if (moveInFlight || clearInFlight) return; // prevent double-click or concurrent operations
 
     // Build optimistic courts: swap session from source → target
@@ -191,12 +222,12 @@ export function useCourtActions({
 
     if (fromCourt && toCourt) {
       const SESSION_KEYS = ['session', 'players', 'startTime', 'endTime', 'duration', 'sessionId'];
-      const updated = sourceCourts.map((c) => {
+      const updated = sourceCourts.map((c: CourtRecord) => {
         if (c.number === Number(from)) {
           // Source becomes empty: strip session/players
-          const rest = {};
+          const rest: CourtRecord = {};
           for (const key of Object.keys(c)) {
-            if (!SESSION_KEYS.includes(key)) rest[key] = c[key];
+            if (!SESSION_KEYS.includes(key)) (rest as Record<string, unknown>)[key] = c[key];
           }
           return rest;
         }
@@ -222,7 +253,7 @@ export function useCourtActions({
     setMoveInFlight(true);
 
     try {
-      const res = await onMoveCourt(from, to);
+      const res = onMoveCourt ? await onMoveCourt(from, to) : null;
       if (!res?.success) {
         // Rollback: discard optimistic state so real data shows
         setOptimisticCourts(null);
@@ -238,12 +269,12 @@ export function useCourtActions({
     }
   };
 
-  const initiateMove = (courtNum) => {
+  const initiateMove = (courtNum: number) => {
     setMovingFrom(courtNum);
     setShowActions(null);
   };
 
-  const handleSaveGame = async (updatedGame) => {
+  const handleSaveGame = async (updatedGame: Record<string, unknown>) => {
     if (!backend?.admin?.updateSession) {
       logger.error('CourtStatusGrid', 'Backend updateSession not available');
       toast('Backend not available', { type: 'error' });
@@ -270,7 +301,7 @@ export function useCourtActions({
       }
     } catch (error) {
       logger.error('CourtStatusGrid', 'Error saving game', error);
-      toast(error.message || 'Failed to save game', { type: 'error' });
+      const errMsg = error instanceof Error ? error.message : 'Failed to save game'; toast(errMsg, { type: 'error' });
     } finally {
       setSavingGame(false);
     }
@@ -357,7 +388,7 @@ export function useCourtActions({
     setMovingFrom(null);
   };
 
-  const toggleActions = (courtNum) => {
+  const toggleActions = (courtNum: number) => {
     setShowActions(showActions === courtNum ? null : courtNum);
     cancelMove();
   };

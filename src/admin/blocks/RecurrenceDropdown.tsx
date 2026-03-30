@@ -113,7 +113,8 @@ const CustomRecurrencePanel = ({ recurrence, onRecurrenceChange, onCancel, onDon
   const selectedDays = recurrence?.daysOfWeek || [];
 
   const update = (fields: Record<string, unknown>) => {
-    onRecurrenceChange({ ...recurrence, ...fields });
+    const base: RecurrenceValue = recurrence || { pattern: 'daily' };
+    onRecurrenceChange({ ...base, ...fields } as RecurrenceValue);
   };
 
   const handlePatternChange = (newPattern: string) => {

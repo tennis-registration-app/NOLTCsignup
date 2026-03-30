@@ -12,7 +12,15 @@ import { ChevronLeft, ChevronRight, Trash2 } from './Icons';
  * @param {Function} props.moveInWaitlist - Reorder waitlist entry (fromIndex, toIndex)
  * @param {Function} props.removeFromWaitlist - Remove waitlist entry (index)
  */
-export function WaitlistGroupList({ waitingGroups, moveInWaitlist, removeFromWaitlist }) {
+interface WaitlistGroup { names?: string[]; [key: string]: unknown; }
+
+interface WaitlistGroupListProps {
+  waitingGroups: WaitlistGroup[];
+  moveInWaitlist: (fromIndex: number, toIndex: number) => void;
+  removeFromWaitlist: (index: number) => void;
+}
+
+export function WaitlistGroupList({ waitingGroups, moveInWaitlist, removeFromWaitlist }: WaitlistGroupListProps) {
   return (
     <div className="space-y-3">
       {waitingGroups.map((group, index) => (

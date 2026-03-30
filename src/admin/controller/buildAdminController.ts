@@ -1,3 +1,28 @@
+import type React from 'react';
+
+interface AdminControllerDeps {
+  backend: Record<string, unknown>;
+  dataStore?: Record<string, unknown>;
+  courts: Record<string, unknown>[];
+  courtBlocks: Record<string, unknown>[];
+  waitingGroups: Record<string, unknown>[];
+  hoursOverrides: Record<string, unknown>[];
+  blockToEdit?: Record<string, unknown> | null;
+  suspendedBlocks: Record<string, unknown>[];
+  wetCourtsActive: boolean;
+  wetCourts: Set<number>;
+  ENABLE_WET_COURTS: boolean;
+  selectedDate: Date;
+  currentTime: Date;
+  calendarView: string;
+  refreshTrigger: number;
+  activeTab: string;
+  showAIAssistant: boolean;
+  USE_REAL_AI: boolean;
+  settings: Record<string, unknown>;
+  actions: Record<string, ((...args: unknown[]) => unknown) | undefined>;
+  components?: Record<string, unknown>;
+}
 /**
  * Admin Controller Builder
  *
@@ -60,7 +85,7 @@ import {
  * @param {AdminControllerDeps} deps - Dependencies from React state/hooks
  * @returns {Object} Controller with all domain objects grouped by section
  */
-export function buildAdminController(deps) {
+export function buildAdminController(deps: AdminControllerDeps) {
   const {
     // Services
     backend,
@@ -119,15 +144,16 @@ export function buildAdminController(deps) {
     onEditingBlockConsumed: actions?.onEditingBlockConsumed,
     onNotification: actions?.showNotification,
   });
+  type CompType = React.ComponentType<unknown> | undefined;
   const blockComponents = components
     ? createBlockComponents({
-        VisualTimeEntry: components.VisualTimeEntry,
-        MiniCalendar: components.MiniCalendar,
-        EventCalendarEnhanced: components.EventCalendarEnhanced,
-        MonthView: components.MonthView,
-        EventSummary: components.EventSummary,
-        HoverCard: components.HoverCard,
-        QuickActionsMenu: components.QuickActionsMenu,
+        VisualTimeEntry: components.VisualTimeEntry as CompType,
+        MiniCalendar: components.MiniCalendar as CompType,
+        EventCalendarEnhanced: components.EventCalendarEnhanced as CompType,
+        MonthView: components.MonthView as CompType,
+        EventSummary: components.EventSummary as CompType,
+        HoverCard: components.HoverCard as CompType,
+        QuickActionsMenu: components.QuickActionsMenu as CompType,
       })
     : undefined;
 
@@ -190,8 +216,8 @@ export function buildAdminController(deps) {
   });
   const aiComponents = components
     ? createAIAssistantComponents({
-        AIAssistant: components.AIAssistant,
-        AIAssistantAdmin: components.AIAssistantAdmin,
+        AIAssistant: components.AIAssistant as CompType,
+        AIAssistantAdmin: components.AIAssistantAdmin as CompType,
       })
     : undefined;
 

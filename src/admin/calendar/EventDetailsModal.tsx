@@ -28,6 +28,7 @@ export interface AdminBackend {
     updateBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     createBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     cancelBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    updateSession?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     cancelBlockGroup: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
   };
 }
