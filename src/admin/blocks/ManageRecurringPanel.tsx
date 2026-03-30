@@ -44,7 +44,7 @@ interface RecurringGroup {
   lastStart: string;
 }
 
-interface ManageRecurringBackend {
+export interface ManageRecurringBackend {
   admin: {
     listBlockGroups: () => Promise<{ok: boolean; groups: RecurringGroup[]; message?: string}>;
     cancelBlockGroup: (opts: {recurrenceGroupId: string; futureOnly: boolean}) => Promise<{ok: boolean; cancelledCount?: number; message?: string}>;

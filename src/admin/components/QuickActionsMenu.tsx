@@ -6,8 +6,18 @@
  */
 import React, { memo } from 'react';
 import { useAdminConfirm } from '../context/ConfirmContext';
+import type { CalendarEvent } from '../calendar/utils';
 
-const QuickActionsMenu = memo(({ event, position, onClose, onEdit, onDelete, onDuplicate }) => {
+interface QuickActionsMenuProps {
+  event: CalendarEvent | null;
+  position: { top: number; left: number };
+  onClose: () => void;
+  onEdit: (event: CalendarEvent) => void;
+  onDelete: (event: CalendarEvent) => void;
+  onDuplicate: (event: CalendarEvent) => void;
+}
+
+const QuickActionsMenu = memo(({ event, position, onClose, onEdit, onDelete, onDuplicate }: QuickActionsMenuProps) => {
   const confirm = useAdminConfirm();
   if (!event) return null;
 

@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { TimeScrollPicker, getNowSlot } from './TimeScrollPicker';
 
+type TimeSlot = { hour: number; minute: number; label: string; value: number };
+
 /**
  * Adapter between the form's HH:MM string contract and the
  * TimeScrollPicker's integer-minutes slot contract.
@@ -13,6 +15,19 @@ import { TimeScrollPicker, getNowSlot } from './TimeScrollPicker';
  *   onTimeChange(startSlot, endSlot)  — slot objects with .value (minutes), .hour, .minute
  *   initialStartValue / initialEndValue — integer minutes
  */
+interface VisualTimeEntryProps {
+  startTime: string;
+  endTime: string;
+  onStartTimeChange: (t: string) => void;
+  onEndTimeChange: (t: string) => void;
+  selectedDate?: Date;
+  selectedCourts?: unknown;
+  blockReason?: unknown;
+  timePickerMode?: unknown;
+  setTimePickerMode?: unknown;
+  hideToggleButton?: unknown;
+}
+
 export function VisualTimeEntry({
   startTime,
   endTime,
@@ -25,7 +40,7 @@ export function VisualTimeEntry({
   timePickerMode: _timePickerMode,
   setTimePickerMode: _setTimePickerMode,
   hideToggleButton: _hideToggleButton,
-}) {
+}: VisualTimeEntryProps) {
   const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   // Convert HH:MM string → integer minutes for the picker
@@ -48,7 +63,7 @@ export function VisualTimeEntry({
 
   // Convert slot objects back to HH:MM strings for the form
   const handleTimeChange = useCallback(
-    (startSlot, endSlot) => {
+    (startSlot: TimeSlot | null, endSlot: TimeSlot | null) => {
       if (startSlot) {
         const hh = String(startSlot.hour).padStart(2, '0');
         const mm = String(startSlot.minute).padStart(2, '0');

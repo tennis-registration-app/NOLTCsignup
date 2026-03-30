@@ -23,7 +23,7 @@ interface CourtOption {
   courtNumber: number;
 }
 
-interface AdminBackend {
+export interface AdminBackend {
   admin: {
     updateBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     createBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;

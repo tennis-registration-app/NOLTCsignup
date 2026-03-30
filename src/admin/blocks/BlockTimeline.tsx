@@ -18,7 +18,7 @@ import {
 import BlockTimelineToolbar from './BlockTimelineToolbar';
 import BlockTimelineCard, { TimelineBlock } from './BlockTimelineCard';
 
-interface BlockTimelineBackend {
+export interface BlockTimelineBackend {
   admin: {
     getBlocks: (params: {fromDate: string; toDate: string}) => Promise<{
       ok: boolean;
