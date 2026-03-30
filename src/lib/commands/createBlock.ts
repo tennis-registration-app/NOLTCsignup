@@ -27,7 +27,7 @@ export const CreateBlockCommandSchema = z.object({
  * @returns {CreateBlockCommand}
  * @throws {Error} If validation fails
  */
-export function buildCreateBlockCommand(input) {
+export function buildCreateBlockCommand(input: unknown) {
   const result = CreateBlockCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -42,10 +42,10 @@ export function buildCreateBlockCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightCreateBlock(command, board) {
+export function preflightCreateBlock(command: z.infer<typeof CreateBlockCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
-  const court = board?.courts?.find((c) => c.id === command.courtId);
+  const court = board?.courts?.find((c: import("../types/domain.js").Court) => c.id === command.courtId);
   if (!court) {
     errors.push('Court not found');
   }
@@ -71,7 +71,7 @@ export function preflightCreateBlock(command, board) {
  * @param {CreateBlockCommand} command
  * @returns {Object}
  */
-export function toCreateBlockPayload(command) {
+export function toCreateBlockPayload(command: z.infer<typeof CreateBlockCommandSchema>): Record<string, unknown> {
   return {
     court_id: command.courtId,
     starts_at: command.startsAt,

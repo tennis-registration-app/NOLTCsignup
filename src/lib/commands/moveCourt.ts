@@ -29,7 +29,7 @@ export const MoveCourtCommandSchema = z
  * @returns {MoveCourtCommand}
  * @throws {Error} If validation fails
  */
-export function buildMoveCourtCommand(input) {
+export function buildMoveCourtCommand(input: unknown) {
   const result = MoveCourtCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -44,11 +44,11 @@ export function buildMoveCourtCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightMoveCourt(command, board) {
+export function preflightMoveCourt(command: z.infer<typeof MoveCourtCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
-  const fromCourt = board?.courts?.find((c) => c.id === command.fromCourtId);
-  const toCourt = board?.courts?.find((c) => c.id === command.toCourtId);
+  const fromCourt = board?.courts?.find((c: import("../types/domain.js").Court) => c.id === command.fromCourtId);
+  const toCourt = board?.courts?.find((c: import("../types/domain.js").Court) => c.id === command.toCourtId);
 
   if (!fromCourt) {
     errors.push('Source court not found');
@@ -74,7 +74,7 @@ export function preflightMoveCourt(command, board) {
  * @param {MoveCourtCommand} command
  * @returns {Object} - Payload for /move-court API
  */
-export function toMoveCourtPayload(command) {
+export function toMoveCourtPayload(command: z.infer<typeof MoveCourtCommandSchema>): Record<string, unknown> {
   return {
     from_court_id: command.fromCourtId,
     to_court_id: command.toCourtId,

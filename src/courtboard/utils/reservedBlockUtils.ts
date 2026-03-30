@@ -7,6 +7,18 @@
  * the IIFE copy should be removed and this module imported instead.
  */
 
+
+interface RawBlock {
+  startTime?: string;
+  start?: string;
+  endTime?: string;
+  end?: string;
+  courts?: unknown[];
+  courtNumber?: unknown;
+  reason?: string;
+  templateName?: string;
+}
+
 /**
  * Normalize a raw block object into a standard shape.
  * Accepts both `startTime/endTime` and `start/end` field names.
@@ -14,12 +26,12 @@
  * @param {Object|null|undefined} block
  * @returns {{ courts: any[], start: Date, end: Date, reason: string } | null}
  */
-export function normalizeBlock(block) {
+export function normalizeBlock(block: RawBlock | null | undefined): { courts: unknown[]; start: Date; end: Date; reason: string } | null {
   if (!block) return null;
-  const start = new Date(block.startTime || block.start);
-  const end = new Date(block.endTime || block.end);
+  const start = new Date((block.startTime || block.start) as string);
+  const end = new Date((block.endTime || block.end) as string);
   const courts = Array.isArray(block.courts) ? block.courts : [block.courtNumber].filter(Boolean);
-  const reason = block.reason || block.templateName || 'Reserved';
+  const reason = (block.reason || block.templateName || 'Reserved') as string;
   if (!start || !end || courts.length === 0) return null;
   return { courts, start, end, reason };
 }
@@ -32,27 +44,27 @@ export function normalizeBlock(block) {
  * @param {Date} now - Current time
  * @returns {Array<{ key: string, courts: number[], start: Date, end: Date, reason: string }>}
  */
-export function selectReservedSafe(blocks, now) {
+export function selectReservedSafe(blocks: RawBlock[] | null | undefined, now: Date): Array<{ key: string; courts: number[]; start: Date; end: Date; reason: string }> {
   try {
     const startOfToday = new Date(now);
     startOfToday.setHours(0, 0, 0, 0);
     const endOfToday = new Date(now);
     endOfToday.setHours(23, 59, 59, 999);
 
+    type NormalizedBlock = { courts: unknown[]; start: Date; end: Date; reason: string };
     const normalized = (blocks || []).map(normalizeBlock).filter(
-      /** @returns {b is { courts: any[], start: Date, end: Date, reason: string }} */
-      (b) => b != null
+      (b): b is NormalizedBlock => b != null
     );
     const todayFuture = normalized
       .filter((b) => b.end > now && b.start <= endOfToday)
       .map((b) => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
-      .sort((a, b) => a.start.getTime() - b.start.getTime());
+      .sort((a: NormalizedBlock, b: NormalizedBlock) => a.start.getTime() - b.start.getTime());
 
     const byKey = new Map();
     for (const b of todayFuture) {
       const k = `${b.reason}|${b.start.toISOString()}|${b.end.toISOString()}`;
       if (!byKey.has(k)) byKey.set(k, { ...b, courts: new Set(b.courts) });
-      else b.courts.forEach((c) => byKey.get(k).courts.add(c));
+      else b.courts.forEach((c: unknown) => (byKey.get(k) as { courts: Set<unknown> }).courts.add(c));
     }
 
     return Array.from(byKey.values()).map((v) => ({

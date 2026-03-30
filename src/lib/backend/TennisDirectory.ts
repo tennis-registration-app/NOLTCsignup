@@ -20,7 +20,7 @@ export class TennisDirectory {
    * @param {string} query
    * @returns {Promise<import('./types').Member[]>}
    */
-  async searchMembers(query) {
+  async searchMembers(query: string) {
     if (!query || query.length < 2) {
       return [];
     }
@@ -40,7 +40,7 @@ export class TennisDirectory {
    * @param {string} memberNumber - 4-digit family number
    * @returns {Promise<import('./types').Member[]>}
    */
-  async getMembersByAccount(memberNumber) {
+  async getMembersByAccount(memberNumber: string) {
     // Check cache
     const cached = this._cache.get(memberNumber);
     if (cached && Date.now() - cached.timestamp < this._cacheTimeout) {
@@ -100,7 +100,7 @@ export class TennisDirectory {
    * @param {string} name - Name to match
    * @returns {Promise<import('./types').Member | null>}
    */
-  async findMemberByName(memberNumber, name) {
+  async findMemberByName(memberNumber: string, name: string) {
     const members = await this.getMembersByAccount(memberNumber);
     if (members.length === 0) return null;
 
@@ -152,7 +152,7 @@ export class TennisDirectory {
    * Call this when a member is added/modified
    * @param {string} memberNumber
    */
-  invalidateAccount(memberNumber) {
+  invalidateAccount(memberNumber: string) {
     this._cache.delete(memberNumber);
   }
 
@@ -176,16 +176,16 @@ export class TennisDirectory {
    * @param {Object} m - Raw member from API
    * @returns {import('./types').Member}
    */
-  _normalizeMember(m) {
+  _normalizeMember(m: Record<string, unknown>): import('./types').BackendMember {
     // Output camelCase only - no dual-format aliases
     return {
-      id: m.id,
-      accountId: m.account_id,
-      memberNumber: m.member_number,
-      displayName: m.display_name,
-      isPrimary: m.is_primary,
-      unclearedStreak: m.uncleared_streak || 0,
-      playCount: m.plays_180d || 0,
+      id: m.id as string,
+      accountId: m.account_id as string,
+      memberNumber: m.member_number as string,
+      displayName: m.display_name as string,
+      isPrimary: m.is_primary as boolean,
+      unclearedStreak: (m.uncleared_streak as number | undefined) || 0,
+      playCount: (m.plays_180d as number | undefined) || 0,
     };
   }
 }

@@ -7,6 +7,14 @@
  * the IIFE copies should be removed and this module imported instead.
  */
 
+interface CourtShape {
+  isOccupied?: unknown;
+  session?: {
+    group?: { players?: unknown[] };
+    participants?: unknown[];
+  } | null;
+}
+
 /**
  * Check whether a court is currently occupied.
  * Checks three signals:
@@ -17,11 +25,11 @@
  * @param {Object|null|undefined} court
  * @returns {boolean}
  */
-export function isCourtOccupied(court) {
+export function isCourtOccupied(court: CourtShape | null | undefined): boolean {
   return !!(
     court &&
     (court.isOccupied ||
-      court.session?.group?.players?.length > 0 ||
-      court.session?.participants?.length > 0)
+      (court.session?.group?.players?.length ?? 0) > 0 ||
+      (court.session?.participants?.length ?? 0) > 0)
   );
 }

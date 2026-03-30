@@ -24,7 +24,7 @@ export const DeleteBlockCommandSchema = z.object({
  * @returns {DeleteBlockCommand}
  * @throws {Error} If validation fails
  */
-export function buildDeleteBlockCommand(input) {
+export function buildDeleteBlockCommand(input: unknown) {
   const result = DeleteBlockCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -39,7 +39,7 @@ export function buildDeleteBlockCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightDeleteBlock(command, board) {
+export function preflightDeleteBlock(command: z.infer<typeof DeleteBlockCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   // Find the block across all courts
@@ -63,7 +63,7 @@ export function preflightDeleteBlock(command, board) {
  * @param {DeleteBlockCommand} command
  * @returns {Object}
  */
-export function toDeleteBlockPayload(command) {
+export function toDeleteBlockPayload(command: z.infer<typeof DeleteBlockCommandSchema>): Record<string, unknown> {
   return {
     block_id: command.blockId,
   };

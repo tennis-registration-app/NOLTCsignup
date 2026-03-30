@@ -38,7 +38,7 @@ export const AssignCourtCommandSchema = z.object({
  * @returns {AssignCourtCommand}
  * @throws {Error} If validation fails
  */
-export function buildAssignCourtCommand(input) {
+export function buildAssignCourtCommand(input: unknown) {
   const result = AssignCourtCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -53,7 +53,7 @@ export function buildAssignCourtCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightAssignCourt(command, board) {
+export function preflightAssignCourt(command: z.infer<typeof AssignCourtCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   // Check court exists and is available
@@ -86,7 +86,7 @@ export function preflightAssignCourt(command, board) {
  * @param {AssignCourtCommand} command
  * @returns {Object} - Payload for /assign-court API
  */
-export function toAssignCourtPayload(command) {
+export function toAssignCourtPayload(command: z.infer<typeof AssignCourtCommandSchema>): Record<string, unknown> {
   return {
     court_id: command.courtId,
     players: command.players.map((p) => ({

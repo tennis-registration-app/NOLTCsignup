@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import type { Board, DomainWaitlistEntry } from '../types/domain';
 
 const COMMAND_VERSION = '1.0';
 
@@ -25,7 +26,7 @@ export const RemoveFromWaitlistCommandSchema = z.object({
  * @returns {RemoveFromWaitlistCommand}
  * @throws {Error} If validation fails
  */
-export function buildRemoveFromWaitlistCommand(input) {
+export function buildRemoveFromWaitlistCommand(input: unknown) {
   const result = RemoveFromWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -40,10 +41,10 @@ export function buildRemoveFromWaitlistCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightRemoveFromWaitlist(command, board) {
+export function preflightRemoveFromWaitlist(command: z.infer<typeof RemoveFromWaitlistCommandSchema>, board: Board | null | undefined) {
   const errors: string[] = [];
 
-  const entry = board?.waitlist?.find((e) => e.id === command.waitlistEntryId);
+  const entry = board?.waitlist?.find((e: DomainWaitlistEntry) => e.id === command.waitlistEntryId);
   if (!entry) {
     errors.push('Waitlist entry not found');
   }
@@ -56,7 +57,7 @@ export function preflightRemoveFromWaitlist(command, board) {
  * @param {RemoveFromWaitlistCommand} command
  * @returns {Object}
  */
-export function toRemoveFromWaitlistPayload(command) {
+export function toRemoveFromWaitlistPayload(command: z.infer<typeof RemoveFromWaitlistCommandSchema>): Record<string, unknown> {
   return {
     waitlist_entry_id: command.waitlistEntryId,
     reason: command.reason,

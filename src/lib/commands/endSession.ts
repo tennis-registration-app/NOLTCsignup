@@ -26,7 +26,7 @@ export const EndSessionCommandSchema = z.object({
  * @returns {EndSessionCommand}
  * @throws {Error} If validation fails
  */
-export function buildEndSessionCommand(input) {
+export function buildEndSessionCommand(input: unknown) {
   const result = EndSessionCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -41,11 +41,11 @@ export function buildEndSessionCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightEndSession(command, board) {
+export function preflightEndSession(command: z.infer<typeof EndSessionCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   // Find the session
-  const court = board?.courts?.find((c) => c.session?.id === command.sessionId);
+  const court = board?.courts?.find((c: import("../types/domain.js").Court) => c.session?.id === command.sessionId);
   if (!court) {
     errors.push('Session not found');
   } else if (court.session?.actualEndAt) {
@@ -60,7 +60,7 @@ export function preflightEndSession(command, board) {
  * @param {EndSessionCommand} command
  * @returns {Object} - Payload for /end-session API
  */
-export function toEndSessionPayload(command) {
+export function toEndSessionPayload(command: z.infer<typeof EndSessionCommandSchema>): Record<string, unknown> {
   return {
     session_id: command.sessionId,
     end_reason: command.endReason,
