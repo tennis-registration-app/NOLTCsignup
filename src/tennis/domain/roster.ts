@@ -18,7 +18,7 @@ import { logger } from '../../lib/logger';
  * @param {string} n - Name to normalize
  * @returns {string} Normalized name
  */
-function normName(n) {
+function normName(n: string) {
   return (n || '').toString().trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
@@ -27,22 +27,24 @@ function normName(n) {
  * @param {Object} entry - Entry with players
  * @returns {string[]} Array of normalized names
  */
-function extractNamesAnyShape(entry) {
+function extractNamesAnyShape(entry: unknown) {
   if (!entry) return [];
-  const players = Array.isArray(entry.players)
-    ? entry.players
-    : Array.isArray(entry.current?.players)
-      ? entry.current.players
+  const e = entry as Record<string, unknown>;
+  const cur = e.current as Record<string, unknown> | null | undefined;
+  const players = Array.isArray(e.players)
+    ? (e.players as unknown[])
+    : Array.isArray(cur?.players)
+      ? (cur!.players as unknown[])
       : null;
 
   if (players) {
     return players
-      .map((p) => p && (p.name || p.playerName || p.fullName || p.id || p))
+      .map((p) => { const pr = p as Record<string, unknown> | null; return pr && (pr.name || pr.playerName || pr.fullName || pr.id || p); })
       .filter(Boolean)
-      .map(normName);
+      .map((n) => normName(String(n)));
   }
-  const single = entry.name || entry.playerName || entry.current?.name || entry.current?.playerName;
-  return single ? [normName(single)] : [];
+  const single = e.name || e.playerName || cur?.name || cur?.playerName;
+  return single ? [normName(String(single))] : [];
 }
 
 /**
@@ -50,10 +52,12 @@ function extractNamesAnyShape(entry) {
  * @param {Object} data - Tennis data with courts array
  * @returns {Map} Map of normalized name -> { court: number }
  */
-function buildActiveIndex(data) {
+function buildActiveIndex(data: unknown) {
+  const d = data as Record<string, unknown> | null | undefined;
   const map = new Map();
-  (data?.courts || []).forEach((c, idx) => {
-    extractNamesAnyShape(c?.current).forEach((k) => {
+  (Array.isArray(d?.courts) ? (d!.courts as unknown[]) : []).forEach((c: unknown, idx: number) => {
+    const court = c as Record<string, unknown> | null | undefined;
+    extractNamesAnyShape(court?.current).forEach((k: string) => {
       if (!map.has(k)) map.set(k, { court: idx + 1 });
     });
   });
@@ -65,10 +69,11 @@ function buildActiveIndex(data) {
  * @param {Object} data - Tennis data with waitingGroups array
  * @returns {Map} Map of normalized name -> { position: number }
  */
-function buildWaitlistIndex(data) {
+function buildWaitlistIndex(data: unknown) {
+  const d = data as Record<string, unknown> | null | undefined;
   const map = new Map();
-  (data?.waitingGroups || []).forEach((g, i) => {
-    extractNamesAnyShape(g).forEach((k) => {
+  (Array.isArray(d?.waitingGroups) ? (d!.waitingGroups as unknown[]) : []).forEach((g: unknown, i: number) => {
+    extractNamesAnyShape(g).forEach((k: string) => {
       if (!map.has(k)) map.set(k, { position: i + 1 });
     });
   });
@@ -82,13 +87,13 @@ function buildWaitlistIndex(data) {
  * @param {Array} params.groupPlayers - Players to check
  * @returns {Object} { playing: [], waiting: [] }
  */
-function checkGroupConflicts({ data, groupPlayers }) {
+function checkGroupConflicts({ data, groupPlayers }: { data: unknown; groupPlayers: unknown[] }) {
   const active = buildActiveIndex(data);
   const queued = buildWaitlistIndex(data);
   const names = (Array.isArray(groupPlayers) ? groupPlayers : [])
-    .map((p) => p && (p.name || p.playerName || p.fullName || p.id || p))
+    .map((p) => { const pr = p as Record<string, unknown> | null; return pr && (pr.name || pr.playerName || pr.fullName || pr.id || p); })
     .filter(Boolean)
-    .map(normName);
+    .map((n) => normName(String(n)));
   const uniq = Array.from(new Set(names));
 
   const playing: Array<{ key: string; name: string; court: number }> = [];
@@ -110,7 +115,7 @@ function checkGroupConflicts({ data, groupPlayers }) {
  * @param {string} name - Name to normalize
  * @returns {string} Normalized name
  */
-function normalizeName(name) {
+function normalizeName(name: string) {
   return String(name || '')
     .normalize('NFKC')
     .trim()
@@ -124,7 +129,7 @@ function normalizeName(name) {
  * @param {string} str - String to hash
  * @returns {string} Base36 hash
  */
-function hash53(str) {
+function hash53(str: string) {
   let h1 = 0xdeadbeef ^ str.length,
     h2 = 0x41c6ce57 ^ str.length;
   for (let i = 0, ch; i < str.length; i++) {
@@ -143,9 +148,9 @@ function hash53(str) {
  * @param {Object} rec - Record with name and optional clubNumber
  * @returns {string} Map key
  */
-function mapKeyFor(rec) {
-  const nm = normalizeName(rec?.name || rec?.fullName || '');
-  const club = (rec?.clubNumber ?? rec?.memberNumber ?? '').toString().trim();
+function mapKeyFor(rec: Record<string, unknown>) {
+  const nm = normalizeName(String(rec?.name || rec?.fullName || ''));
+  const club = String(rec?.clubNumber ?? rec?.memberNumber ?? '').trim();
   return club ? `${nm}#${club}` : nm;
 }
 
@@ -162,7 +167,7 @@ function readIdMap() {
  * Write the member ID map to storage
  * @param {Object} map - Member ID map
  */
-function writeIdMap(map) {
+function writeIdMap(map: Record<string, string>) {
   writeJSON(STORAGE.MEMBER_ID_MAP, map);
 }
 
@@ -171,12 +176,13 @@ function writeIdMap(map) {
  * @param {Array} roster - Array of roster entries
  * @returns {Object} { roster, assigned, total }
  */
-function ensureMemberIds(roster) {
+function ensureMemberIds(roster: unknown) {
   const list = Array.isArray(roster) ? roster : [];
   const map = readIdMap();
   let assigned = 0;
 
-  for (const rec of list) {
+  for (const recRaw of list) {
+    const rec = recRaw as Record<string, unknown>;
     if (rec && !rec.memberId) {
       const key = mapKeyFor(rec);
       let id = map[key];
@@ -199,12 +205,13 @@ function ensureMemberIds(roster) {
  * @param {Array} roster - Roster array
  * @returns {string|null} Member ID or null
  */
-function resolveMemberId(player, roster) {
+function resolveMemberId(player: unknown, roster: unknown) {
   if (!player) return null;
-  if (player.memberId) return player.memberId;
+  const p = player as Record<string, unknown>;
+  if (p.memberId) return p.memberId as string;
 
-  const nm = normalizeName(player.name || player.fullName || '');
-  const club = (player.clubNumber ?? player.memberNumber ?? '').toString().trim();
+  const nm = normalizeName(String(p.name || p.fullName || ''));
+  const club = String(p.clubNumber ?? p.memberNumber ?? '').trim();
   const map = readIdMap();
   const key = club ? `${nm}#${club}` : nm;
   if (map[key]) return map[key];
@@ -212,9 +219,7 @@ function resolveMemberId(player, roster) {
   // try unique match by normalized name (+ clubNumber) in roster
   const list = Array.isArray(roster) ? roster : [];
   const matches = list.filter(
-    (r) =>
-      normalizeName(r?.name || r?.fullName) === nm &&
-      (club ? String(r?.clubNumber ?? r?.memberNumber ?? '') === club : true)
+    (rRaw: unknown) => { const r = rRaw as Record<string, unknown>; return normalizeName(String(r?.name || r?.fullName || '')) === nm && (club ? String(r?.clubNumber ?? r?.memberNumber ?? '') === club : true); }
   );
   if (matches.length === 1) {
     const rec = matches[0];
@@ -238,7 +243,7 @@ function resolveMemberId(player, roster) {
  * @param {Array} roster - Roster array
  * @returns {Array} Enriched players array
  */
-function enrichPlayersWithIds(players, roster) {
+function enrichPlayersWithIds(players: unknown, roster: unknown) {
   return (Array.isArray(players) ? players : []).map((p) => {
     if (p?.memberId) return p;
     const id = resolveMemberId(p, roster);
@@ -252,33 +257,37 @@ function enrichPlayersWithIds(players, roster) {
  * @param {Object} state - Tennis state with courts and waitingGroups
  * @returns {Object|null} { type: 'playing', court } or { type: 'waitlist', position } or null
  */
-function findEngagementFor(player, state) {
-  const nm = normalizeName(player?.name || '');
-  const pid = player?.memberId || null;
+function findEngagementFor(player: unknown, state: unknown) {
+  const pl_ = player as Record<string, unknown>;
+  const st_ = state as Record<string, unknown>;
+  const nm = normalizeName(String(pl_?.name || ''));
+  const pid = pl_?.memberId || null;
 
   if (typeof window !== 'undefined' && window.DEBUG) {
     logger.debug('findEngagementFor', 'Looking for player', {
-      name: player?.name,
+      name: pl_?.name,
       memberId: pid,
       normalized: nm,
     });
   }
 
   // look on courts
-  const courts = Array.isArray(state?.courts) ? state.courts : [];
+  const courts = Array.isArray(st_?.courts) ? (st_.courts as unknown[]) : [];
   for (let i = 0; i < courts.length; i++) {
-    const cur = courts[i]?.current;
-    const arr = Array.isArray(cur?.players) ? cur.players : [];
-    for (const pl of arr) {
+    const court_ = courts[i] as Record<string, unknown>;
+    const cur = court_?.current as Record<string, unknown>;
+    const arr = Array.isArray(cur?.players) ? (cur.players as unknown[]) : [];
+    for (const plRaw of arr) {
+      const pl = plRaw as Record<string, unknown>;
       const matchById = pid && pl?.memberId && pl.memberId === pid;
-      const matchByName = normalizeName(pl?.name || '') === nm;
+      const matchByName = normalizeName(String(pl?.name || '')) === nm;
 
       if (typeof window !== 'undefined' && window.DEBUG && (matchById || matchByName)) {
         logger.debug('findEngagementFor', `Found match on court ${i + 1}`, {
           player: pl,
           matchById,
           matchByName,
-          playerNorm: normalizeName(pl?.name || ''),
+          playerNorm: normalizeName(String(pl?.name || '')),
           searchNorm: nm,
         });
       }
@@ -290,12 +299,14 @@ function findEngagementFor(player, state) {
   }
 
   // look on waitlist
-  const wl = Array.isArray(state?.waitingGroups) ? state.waitingGroups : [];
+  const wl = Array.isArray(st_?.waitingGroups) ? (st_.waitingGroups as unknown[]) : [];
   for (let w = 0; w < wl.length; w++) {
-    const arr = Array.isArray(wl[w]?.players) ? wl[w].players : [];
-    for (const pl of arr) {
+    const wlItem = wl[w] as Record<string, unknown>;
+    const arr = Array.isArray(wlItem?.players) ? (wlItem.players as unknown[]) : [];
+    for (const plRaw2 of arr) {
+      const pl = plRaw2 as Record<string, unknown>;
       const matchById = pid && pl?.memberId && pl.memberId === pid;
-      const matchByName = normalizeName(pl?.name || '') === nm;
+      const matchByName = normalizeName(String(pl?.name || '')) === nm;
       if (matchById || matchByName) {
         return { type: 'waitlist', position: w + 1 };
       }

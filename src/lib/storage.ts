@@ -16,7 +16,7 @@ import { STORAGE, COURT_COUNT, SCHEMA_VERSION } from './constants';
  * @param {string} key - LocalStorage key
  * @returns {any|null} Parsed value or null if not found/invalid
  */
-export function readJSON(key) {
+export function readJSON(key: string) {
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) : null;
@@ -31,7 +31,7 @@ export function readJSON(key) {
  * @param {any} value - Value to serialize and store
  * @returns {boolean} True if successful, false otherwise
  */
-export function writeJSON(key, value) {
+export function writeJSON(key: string, value: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
@@ -63,7 +63,7 @@ export function getEmptyData() {
  * @param {Object|null} data - Raw data from storage
  * @returns {Object} Normalized data object
  */
-export function normalizeData(data) {
+export function normalizeData(data: unknown) {
   if (!data || typeof data !== 'object') return getEmptyData();
   const out = Object.assign(getEmptyData(), data);
 
@@ -93,7 +93,7 @@ export function normalizeData(data) {
  * @param {Object|null} raw - Raw data
  * @returns {Object} Normalized copy
  */
-export function normalizeDataShapePure(raw) {
+export function normalizeDataShapePure(raw: unknown) {
   const data =
     raw && typeof raw === 'object'
       ? typeof structuredClone === 'function'
@@ -120,14 +120,14 @@ export function normalizeDataShapePure(raw) {
  * @param {number} courtsCount - Expected court count
  * @returns {Object} Normalized copy (no persistence)
  */
-export function normalizeDataShape(data, courtsCount = COURT_COUNT) {
-  const d = data && typeof data === 'object' ? data : {};
-  const out = { ...d };
+export function normalizeDataShape(data: unknown, courtsCount = COURT_COUNT) {
+  const d = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  const out: Record<string, unknown> = { ...d };
   out.courts = Array.isArray(d.courts)
-    ? d.courts.slice()
+    ? (d.courts as unknown[]).slice()
     : Array.from({ length: courtsCount }, () => ({}));
-  out.waitingGroups = Array.isArray(d.waitingGroups) ? d.waitingGroups.slice() : [];
-  out.recentlyCleared = Array.isArray(d.recentlyCleared) ? d.recentlyCleared.slice() : [];
+  out.waitingGroups = Array.isArray(d.waitingGroups) ? (d.waitingGroups as unknown[]).slice() : [];
+  out.recentlyCleared = Array.isArray(d.recentlyCleared) ? (d.recentlyCleared as unknown[]).slice() : [];
   return out; // No persistence here
 }
 
@@ -204,13 +204,13 @@ export function getHistoricalGames() {
  * @param {Object} game - Game data to record
  * @returns {Object} The saved game record with ID
  */
-export function addHistoricalGame(game) {
+export function addHistoricalGame(game: Record<string, unknown>) {
   const games = getHistoricalGames();
   const gameRecord = {
     ...game,
     id: `${game.courtNumber}-${Date.now()}`,
     dateAdded: new Date().toISOString(),
-    date: new Date(game.startTime).toISOString().split('T')[0], // YYYY-MM-DD format
+    date: new Date(game.startTime as string | number).toISOString().split('T')[0], // YYYY-MM-DD format
   };
   games.push(gameRecord);
   writeJSON(STORAGE.HISTORICAL_GAMES, games);
@@ -228,7 +228,7 @@ export function addHistoricalGame(game) {
  * @returns {Array} Filtered and sorted game records (most recent first)
  */
 export function searchHistoricalGames(filters: { courtNumber?: number; startDate?: string; endDate?: string; playerName?: string; clearReason?: string } = {}) {
-  const games = getHistoricalGames();
+  const games = getHistoricalGames() as Array<Record<string, unknown>>;
   return games
     .filter((game) => {
       // Court number filter
@@ -236,12 +236,12 @@ export function searchHistoricalGames(filters: { courtNumber?: number; startDate
 
       // Date range filter
       if (filters.startDate) {
-        const gameDate = new Date(game.date);
+        const gameDate = new Date(game.date as string | number);
         const startDate = new Date(filters.startDate);
         if (gameDate < startDate) return false;
       }
       if (filters.endDate) {
-        const gameDate = new Date(game.date);
+        const gameDate = new Date(game.date as string | number);
         const endDate = new Date(filters.endDate);
         if (gameDate > endDate) return false;
       }
@@ -249,8 +249,8 @@ export function searchHistoricalGames(filters: { courtNumber?: number; startDate
       // Player name filter (partial match, case insensitive)
       if (filters.playerName) {
         const searchName = filters.playerName.toLowerCase();
-        const hasPlayer = game.players?.some((player) =>
-          player.name?.toLowerCase().includes(searchName)
+        const hasPlayer = (game.players as Array<Record<string, unknown>> | undefined)?.some((player: Record<string, unknown>) =>
+          (player.name as string | undefined)?.toLowerCase().includes(searchName)
         );
         if (!hasPlayer) return false;
       }
@@ -262,7 +262,7 @@ export function searchHistoricalGames(filters: { courtNumber?: number; startDate
 
       return true;
     })
-    .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()); // Most recent first
+    .sort((a: Record<string, unknown>, b: Record<string, unknown>) => new Date(b.startTime as string | number).getTime() - new Date(a.startTime as string | number).getTime()); // Most recent first
 }
 
 // ============================================================
@@ -274,14 +274,15 @@ export function searchHistoricalGames(filters: { courtNumber?: number; startDate
  * @param {Object} group - Waitlist group
  * @returns {string} Unique signature string
  */
-export function waitlistSignature(group) {
-  const names = Array.isArray(group?.players)
-    ? group.players
-        .map((p) => (p?.name ?? String(p ?? '')).trim().toLowerCase())
+export function waitlistSignature(group: unknown) {
+  const g = group as Record<string, unknown> | null | undefined;
+  const names = Array.isArray(g?.players)
+    ? (g!.players as unknown[])
+        .map((p) => { const pr = p as Record<string, unknown> | null; return (pr?.name != null ? String(pr.name) : String(p ?? '')).trim().toLowerCase(); })
         .filter(Boolean)
         .sort()
     : [];
-  const guests = Number(group?.guests || 0);
+  const guests = Number((g as Record<string, unknown> | null | undefined)?.guests || 0);
   return `v1|${names.join(',')}|guests:${guests}|size:${names.length + guests}`;
 }
 
@@ -291,17 +292,19 @@ export function waitlistSignature(group) {
  * @param {Date} now - Current time (default: now)
  * @returns {Object} New data object with purged promotions
  */
-export function purgeExpiredPromotions(data, now = new Date()) {
-  const promos = Array.isArray(data?.waitlistPromotions) ? data.waitlistPromotions : [];
-  const kept = promos.filter((p) => {
+export function purgeExpiredPromotions(data: unknown, now = new Date()) {
+  const d = data as Record<string, unknown> | null | undefined;
+  const promos = Array.isArray(d?.waitlistPromotions) ? (d!.waitlistPromotions as unknown[]) : [];
+  const kept = promos.filter((p: unknown) => {
+    const pr = p as Record<string, unknown>;
     try {
-      return new Date(p.expiresAt) > now;
+      return new Date(pr.expiresAt as string | number) > now;
     } catch {
       return false;
     }
   });
   // Return a new data object with purged promos (non-mutating)
-  return { ...(data || {}), waitlistPromotions: kept };
+  return { ...(d || {}), waitlistPromotions: kept };
 }
 
 /**
@@ -310,13 +313,15 @@ export function purgeExpiredPromotions(data, now = new Date()) {
  * @param {Object} next - New data
  * @returns {Object} Merged data with preserved promotions
  */
-export function preservePromotions(prev, next) {
-  const prevPromos = Array.isArray(prev?.waitlistPromotions) ? prev.waitlistPromotions : [];
-  const nextHas = Object.prototype.hasOwnProperty.call(next || {}, 'waitlistPromotions');
+export function preservePromotions(prev: unknown, next: unknown) {
+  const p = prev as Record<string, unknown> | null | undefined;
+  const n = next as Record<string, unknown> | null | undefined;
+  const prevPromos = Array.isArray(p?.waitlistPromotions) ? (p!.waitlistPromotions as unknown[]) : [];
+  const nextHas = Object.prototype.hasOwnProperty.call(n || {}, 'waitlistPromotions');
   if (!nextHas) {
-    return { ...(next || {}), waitlistPromotions: prevPromos };
+    return { ...(n || {}), waitlistPromotions: prevPromos };
   }
-  return next || {};
+  return n || {};
 }
 
 // ============================================================
@@ -328,7 +333,7 @@ export function preservePromotions(prev, next) {
  * @param {any} obj - Object to freeze
  * @returns {any} The frozen object
  */
-export function deepFreeze(obj) {
+export function deepFreeze(obj: unknown) {
   if (obj === null || typeof obj !== 'object') return obj;
   if (obj instanceof Date || typeof obj === 'function') return obj;
 
@@ -391,7 +396,7 @@ export function readDataClone() {
   }
 
   // Ensure each court has proper structure
-  cloned.courts = cloned.courts.map((court) =>
+  cloned.courts = cloned.courts.map((court: {history?: unknown[]; current?: unknown; [key: string]: unknown} | null | undefined) =>
     court
       ? {
           history: Array.isArray(court.history) ? court.history : [],

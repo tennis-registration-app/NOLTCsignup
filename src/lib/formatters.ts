@@ -14,7 +14,7 @@
  * @param {Date|string|number} dateInput - Date, ISO string, or timestamp
  * @returns {string|null} Formatted time string or null if invalid
  */
-export function formatTime(dateInput) {
+export function formatTime(dateInput: Date | string | number | null | undefined) {
   if (!dateInput) return null;
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (isNaN(date.getTime())) return null;
@@ -31,7 +31,7 @@ export function formatTime(dateInput) {
  * @param {Date|string|number} dateInput - Date, ISO string, or timestamp
  * @returns {string|null} Formatted date string or null if invalid
  */
-export function formatDate(dateInput) {
+export function formatDate(dateInput: Date | string | number | null | undefined) {
   if (!dateInput) return null;
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (isNaN(date.getTime())) return null;
@@ -48,7 +48,7 @@ export function formatDate(dateInput) {
  * @param {Date|string|number} dateInput - Date, ISO string, or timestamp
  * @returns {string|null} Formatted date string or null if invalid
  */
-export function formatDateShort(dateInput) {
+export function formatDateShort(dateInput: Date | string | number | null | undefined) {
   if (!dateInput) return null;
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (isNaN(date.getTime())) return null;
@@ -65,7 +65,7 @@ export function formatDateShort(dateInput) {
  * @param {Date|string|number} dateInput - Date, ISO string, or timestamp
  * @returns {string|null} Formatted datetime string or null if invalid
  */
-export function formatDateTime(dateInput) {
+export function formatDateTime(dateInput: Date | string | number | null | undefined) {
   if (!dateInput) return null;
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (isNaN(date.getTime())) return null;
@@ -86,7 +86,7 @@ export function formatDateTime(dateInput) {
  * @param {Date|string|number} endInput - End date/time
  * @returns {string} Formatted time range or empty string if invalid
  */
-export function formatTimeRange(startInput, endInput) {
+export function formatTimeRange(startInput: Date | string | number | null | undefined, endInput: Date | string | number | null | undefined) {
   const startTime = formatTime(startInput);
   const endTime = formatTime(endInput);
   if (!startTime || !endTime) return '';
@@ -147,7 +147,7 @@ export function formatTimeRemaining(endTimeInput: Date | string | number | null 
  * @param {number} minutes - Duration in minutes
  * @returns {string} Formatted duration
  */
-export function formatDuration(minutes) {
+export function formatDuration(minutes: number) {
   if (typeof minutes !== 'number' || isNaN(minutes)) return '';
   if (minutes < 0) return '';
   if (minutes === 0) return '0m';
@@ -166,7 +166,7 @@ export function formatDuration(minutes) {
  * @param {string|number} phone - Phone number (digits only or with formatting)
  * @returns {string} Formatted phone number or original input if invalid
  */
-export function formatPhone(phone) {
+export function formatPhone(phone: string | number | null | undefined) {
   if (!phone) return '';
   // Remove all non-digit characters
   const digits = String(phone).replace(/\D/g, '');
@@ -190,7 +190,7 @@ export function formatPhone(phone) {
  * @param {string} name - Name to format
  * @returns {string} Formatted name
  */
-export function formatName(name) {
+export function formatName(name: string | null | undefined) {
   if (!name || typeof name !== 'string') return '';
   return name
     .trim()
@@ -204,7 +204,7 @@ export function formatName(name) {
  * @param {number} maxLength - Maximum length (default: 50)
  * @returns {string} Truncated text
  */
-export function truncate(text, maxLength = 50) {
+export function truncate(text: string | null | undefined, maxLength = 50) {
   if (!text || typeof text !== 'string') return '';
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + '...';
@@ -220,7 +220,7 @@ export function truncate(text, maxLength = 50) {
  * @param {string} currency - Currency code (default: USD)
  * @returns {string} Formatted currency string
  */
-export function formatCurrency(amount, currency = 'USD') {
+export function formatCurrency(amount: number, currency = 'USD') {
   if (typeof amount !== 'number' || isNaN(amount)) return '';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -233,7 +233,7 @@ export function formatCurrency(amount, currency = 'USD') {
  * @param {number} num - Number to format
  * @returns {string} Formatted number
  */
-export function formatNumber(num) {
+export function formatNumber(num: number) {
   if (typeof num !== 'number' || isNaN(num)) return '';
   return new Intl.NumberFormat('en-US').format(num);
 }
@@ -247,7 +247,7 @@ export function formatNumber(num) {
  * @param {number} courtNumber - Court number
  * @returns {string} Formatted court string
  */
-export function formatCourt(courtNumber) {
+export function formatCourt(courtNumber: number) {
   if (typeof courtNumber !== 'number' || courtNumber < 1) return '';
   return `Court ${courtNumber}`;
 }
@@ -257,7 +257,7 @@ export function formatCourt(courtNumber) {
  * @param {number[]} courts - Array of court numbers
  * @returns {string} Formatted courts string
  */
-export function formatCourts(courts) {
+export function formatCourts(courts: number[]) {
   if (!Array.isArray(courts) || courts.length === 0) return '';
   if (courts.length === 1) return formatCourt(courts[0]);
   return `Courts ${courts.join(', ')}`;
@@ -269,10 +269,10 @@ export function formatCourts(courts) {
  * @param {number} maxDisplay - Maximum names to display (default: 4)
  * @returns {string} Formatted names string
  */
-export function formatPlayerNames(players, maxDisplay = 4) {
+export function formatPlayerNames(players: Array<{ name?: string } | string>, maxDisplay = 4) {
   if (!Array.isArray(players) || players.length === 0) return '';
   const names = players
-    .map((p) => p?.name || p)
+    .map((p) => (typeof p === "string" ? p : p?.name) || "")
     .filter(Boolean)
     .slice(0, maxDisplay);
   if (players.length > maxDisplay) {

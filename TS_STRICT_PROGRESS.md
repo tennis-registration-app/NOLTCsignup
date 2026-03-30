@@ -15,3 +15,4 @@
 |-----------|--------------|-------------|---------------|-------|
 | 1         | 5679         | 2014        | tsconfig.json, package.json, src/admin/ai/AIAssistant.tsx, src/admin/ai/AIAssistantAdmin.tsx, src/admin/ai/AIAssistantInput.tsx, src/admin/ai/AIAssistantMessages.tsx, src/admin/ai/AIAssistantActionCard.tsx | Enabled strict:true, installed @types/react+@types/react-dom (eliminated 3627 errors), typed AI assistant component props |
 | 2         | 2014         | 1940        | src/lib/ApiAdapter.ts, src/lib/backend/TennisCommands.ts, src/lib/backend/admin/AdminCommands.ts | Fix unknown error types, add param types to lib layer |
+| 3         | 1940         | 1810        | src/lib/formatters.ts, src/lib/storage.ts, src/tennis/domain/roster.ts, src/mobile-shell/mobileBridge.ts, src/admin/screens/system/useSystemSettingsState.ts | Fix implicit any params, unknown property access, null-check patterns in core lib and domain layer |
