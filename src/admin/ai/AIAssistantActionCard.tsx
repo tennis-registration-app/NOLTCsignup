@@ -1,12 +1,16 @@
 import React from 'react';
 import { Check } from '../components';
 
-/** @type {React.FC<{pendingAction: any, onConfirm: any, onCancel: any}>} */
+interface AIAssistantActionCardProps {
+  pendingAction: unknown;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 const AIAssistantActionCard = function AIAssistantActionCard({
   pendingAction,
   onConfirm,
   onCancel,
-}) {
+}: AIAssistantActionCardProps) {
   if (!pendingAction) return null;
 
   return (

@@ -6,24 +6,45 @@ import {
   normalizeAiHeatmapRow,
 } from '../../lib/normalize/index';
 
+interface AiMessage {
+  role: string;
+  content: string;
+  timestamp?: Date;
+  isError?: boolean;
+  isCancelled?: boolean;
+  isResult?: boolean;
+}
+
+interface AiBackend {
+  admin: {
+    aiAssistant: (params: Record<string, unknown>) => Promise<unknown>;
+  };
+}
+
+interface AIAssistantProps {
+  backend: AiBackend;
+  onClose: () => void;
+  onSettingsChanged?: () => Promise<void>;
+}
+
 /**
  * Production AI Assistant - replaces AIAssistantAdmin
  * Uses propose → confirm → execute pattern with real Claude API
  */
-export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
-  const [messages, setMessages] = useState([]);
+export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIAssistantProps) {
+  const [messages, setMessages] = useState<AiMessage[]>([]);
   const [input, setInput] = useState('');
   const [mode, setMode] = useState('draft'); // 'read' | 'draft'
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Pending actions from draft response
-  const [pendingActions, setPendingActions] = useState(null);
-  const [actionsToken, setActionsToken] = useState(null);
+  const [pendingActions, setPendingActions] = useState<unknown[] | null>(null);
+  const [actionsToken, setActionsToken] = useState<unknown>(null);
   const [requiresConfirmation, setRequiresConfirmation] = useState(false);
 
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,11 +54,11 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
     inputRef.current?.focus();
   }, []);
 
-  const addMessage = (role, content, metadata = {}) => {
+  const addMessage = (role: string, content: string, metadata: Partial<AiMessage> = {}) => {
     setMessages((prev) => [...prev, { role, content, timestamp: new Date(), ...metadata }]);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
 
@@ -72,15 +93,16 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
         setRequiresConfirmation(response.requiresConfirmation || false);
       }
     } catch (err) {
-      console.error('AI Assistant error:', err);
-      setError(err.message || 'An error occurred');
-      addMessage('assistant', `Error: ${err.message}`, { isError: true });
+      const e = err as Error;
+      console.error('AI Assistant error:', e);
+      setError(e.message || 'An error occurred');
+      addMessage('assistant', `Error: ${e.message}`, { isError: true });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExecute = async (confirmed) => {
+  const handleExecute = async (confirmed: boolean) => {
     if (!actionsToken) return;
 
     setLoading(true);
@@ -104,7 +126,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
       // Show execution results - include data for read tools
       const resultSummary =
         response.executedActions
-          ?.map((a) => {
+          ?.map((a: Record<string, unknown>) => {
             if (!a.success) {
               return `${a.tool}: ✗ ${a.error}`;
             }
@@ -119,8 +141,8 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
               }
               if (data.heatmap && data.heatmap.length > 0) {
                 // Find busiest day - normalize heatmap rows
-                const dayTotals = {};
-                data.heatmap.forEach((h) => {
+                const dayTotals: Record<string, number> = {};
+                data.heatmap.forEach((h: Record<string, unknown>) => {
                   const normalized = normalizeAiHeatmapRow(h);
                   dayTotals[normalized.dayOfWeek] =
                     (dayTotals[normalized.dayOfWeek] || 0) + normalized.sessionCount;
@@ -148,7 +170,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
       // Tool names are API constants (snake_case is intentional for matching)
       const settingsTools = ['update_settings', 'add_holiday_hours'];
       const executedActions = response.executedActions || [];
-      if (executedActions.some((a) => a.success && settingsTools.includes(a.tool))) {
+      if (executedActions.some((a: Record<string, unknown>) => a.success && settingsTools.includes(a.tool as string))) {
         if (onSettingsChanged) {
           await onSettingsChanged();
         }
@@ -159,9 +181,10 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
       setActionsToken(null);
       setRequiresConfirmation(false);
     } catch (err) {
-      console.error('Execute error:', err);
-      setError(err.message);
-      addMessage('assistant', `Execution failed: ${err.message}`, { isError: true });
+      const e = err as Error;
+      console.error('Execute error:', e);
+      setError(e.message);
+      addMessage('assistant', `Execution failed: ${e.message}`, { isError: true });
     } finally {
       setLoading(false);
     }
@@ -268,11 +291,11 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }) {
               onChange={(e) => setInput(e.target.value)}
               placeholder={mode === 'read' ? 'Ask a question...' : 'Ask or request an action...'}
               className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={loading || pendingActions}
+              disabled={loading || !!pendingActions}
             />
             <button
               type="submit"
-              disabled={loading || !input.trim() || pendingActions}
+              disabled={loading || !input.trim() || !!pendingActions}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               Send
