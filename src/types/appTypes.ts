@@ -530,9 +530,9 @@ export interface HelperFunctions {
   // Evidence: useRegistrationHelpers — returns sorted court numbers with active sessions
   getCourtsOccupiedForClearing: () => number[];
   // Evidence: useRegistrationHelpers — checks engagement, shows toast if blocked
-  guardAddPlayerEarly: (getBoardData: () => RegistrationUiState['data'], player: GroupPlayer) => boolean;
+  guardAddPlayerEarly: (getBoardData: () => RegistrationUiState['data'], player: GroupPlayer | string) => boolean;
   // Evidence: useRegistrationHelpers — returns true if player is NOT a duplicate
-  guardAgainstGroupDuplicate: (player: GroupPlayer, playersArray: GroupPlayer[]) => boolean;
+  guardAgainstGroupDuplicate: (player: GroupPlayer | string, playersArray: (GroupPlayer | string)[]) => boolean;
 }
 
 export interface Services {

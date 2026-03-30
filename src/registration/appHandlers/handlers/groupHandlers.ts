@@ -45,6 +45,54 @@ interface UseGroupHandlersDeps {
   handleAddPlayerSuggestionClickOrchestrated: AnyFn;
   CONSTANTS: { MAX_PLAYERS: number; MAX_AUTOCOMPLETE_RESULTS: number; AUTO_RESET_SUCCESS_MS: number; ADMIN_CODE: string };
 }
+interface Player {
+  id: unknown;
+  name: string;
+  memberNumber?: string;
+  memberId?: unknown;
+  phone?: string;
+  ranking?: number | null;
+  winRate?: number;
+  accountId?: unknown;
+}
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface UseGroupHandlersDeps {
+  [key: string]: unknown;
+}
+interface Player {
+  id: unknown;
+  name: string;
+  memberNumber?: string;
+  memberId?: unknown;
+  phone?: string;
+  ranking?: number | null;
+  winRate?: number;
+  accountId?: unknown;
+}
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface UseGroupHandlersDeps {
+  [key: string]: unknown;
+}
+interface Player {
+  id: unknown;
+  name: string;
+  memberNumber?: string;
+  memberId?: unknown;
+  phone?: string;
+  ranking?: number | null;
+  winRate?: number;
+  accountId?: unknown;
+}
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface UseGroupHandlersDeps {
+  [key: string]: unknown;
+}
 export function useGroupHandlers({
   groupGuest,
   derived,

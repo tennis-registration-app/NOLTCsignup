@@ -3,6 +3,27 @@ import { logger } from '../../../lib/logger';
 import { getCache, setCache } from '../../../platform/prefsStorage.js';
 import { toast } from '../../../shared/utils/toast.js';
 import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
+import type {
+  GroupGuestState,
+  GuestCounterHook,
+  MemberIdentityState,
+  DerivedState,
+  SearchState,
+  HelperFunctions,
+  GroupPlayer,
+} from '../../../types/appTypes';
+
+type GuestChangeEvent = { target: { value: string } };
+
+interface UseGuestHandlersDeps {
+  groupGuest: GroupGuestState;
+  guestCounterHook: GuestCounterHook;
+  memberIdentity: Pick<MemberIdentityState, 'memberNumber'>;
+  derived: Pick<DerivedState, 'memberDatabase'>;
+  setters: { setShowAddPlayer: (val: boolean) => void };
+  search: Pick<SearchState, 'setShowAddPlayerSuggestions' | 'setAddPlayerSearch'>;
+  helpers: Pick<HelperFunctions, 'markUserTyping' | 'getCourtData' | 'guardAddPlayerEarly' | 'guardAgainstGroupDuplicate'>;
+}
 
 /**
  * Guest Handlers
@@ -17,7 +38,7 @@ export function useGuestHandlers({
   setters,
   search,
   helpers,
-}) {
+}: UseGuestHandlersDeps) {
   const {
     guestName,
     setGuestName,
@@ -38,15 +59,15 @@ export function useGuestHandlers({
   const { markUserTyping, getCourtData, guardAddPlayerEarly, guardAgainstGroupDuplicate } = helpers;
 
   // VERBATIM COPY: validateGuestName from line ~366
-  const validateGuestName = useCallback((name) => {
+  const validateGuestName = useCallback((name: string) => {
     const words = name.trim().split(/\s+/);
     if (words.length < 2) return false;
-    return words.every((word) => word.length >= 2 && /^[a-zA-Z]+$/.test(word));
+    return words.every((word: string) => word.length >= 2 && /^[a-zA-Z]+$/.test(word));
   }, []);
 
   // VERBATIM COPY: handleToggleGuestForm from line ~829
   const handleToggleGuestForm = useCallback(
-    (prefillName) => {
+    (prefillName: unknown) => {
       if (showGuestForm) {
         // If guest form is already showing, close it
         setShowGuestForm(false);
@@ -69,7 +90,7 @@ export function useGuestHandlers({
         // This works for both single member and multiple members in group
         if (memberNumber) {
           setGuestSponsor(memberNumber);
-        } else if (currentGroup.length >= 1 && !currentGroup[0].isGuest) {
+        } else if (currentGroup && currentGroup.length >= 1 && !currentGroup[0].isGuest) {
           setGuestSponsor(currentGroup[0].memberNumber);
         }
       }
@@ -91,7 +112,7 @@ export function useGuestHandlers({
 
   // VERBATIM COPY: handleGuestNameChange from line ~873
   const handleGuestNameChange = useCallback(
-    (e) => {
+    (e: GuestChangeEvent) => {
       markUserTyping();
       setGuestName(e.target.value);
       setShowGuestNameError(false);
@@ -106,8 +127,9 @@ export function useGuestHandlers({
       return;
     }
 
+    const safeGroup = currentGroup || [];
     // Check if sponsor is selected when multiple members exist
-    if (currentGroup.filter((p) => !p.isGuest).length > 1 && !guestSponsor) {
+    if (safeGroup.filter((p: GroupPlayer) => !p.isGuest).length > 1 && !guestSponsor) {
       setShowSponsorError(true);
       return;
     }
@@ -122,7 +144,7 @@ export function useGuestHandlers({
     }
 
     // Check for duplicate in current group
-    if (!guardAgainstGroupDuplicate(guestName.trim(), currentGroup)) {
+    if (!guardAgainstGroupDuplicate(guestName.trim(), safeGroup)) {
       toast(ALREADY_IN_GROUP(guestName.trim()), { type: 'warning' });
       setShowGuestForm(false);
       setShowAddPlayer(false);
@@ -136,22 +158,19 @@ export function useGuestHandlers({
     incrementGuestCounter();
 
     const sponsorMember =
-      guestSponsor || currentGroup.filter((p) => !p.isGuest)[0]?.memberNumber || memberNumber;
+      guestSponsor || safeGroup.filter((p: GroupPlayer) => !p.isGuest)[0]?.memberNumber || memberNumber;
 
     // Find the sponsor's details
     const sponsorPlayer =
-      currentGroup.find((p) => p.memberNumber === sponsorMember) ||
+      safeGroup.find((p: GroupPlayer) => p.memberNumber === sponsorMember) ||
       memberDatabase[sponsorMember]?.familyMembers[0];
 
     setCurrentGroup([
-      ...currentGroup,
+      ...safeGroup,
       {
         name: guestName.trim(),
         memberNumber: 'GUEST',
-        id: guestId,
-        phone: '',
-        ranking: null,
-        winRate: 0.5,
+        id: String(guestId),
         isGuest: true,
         sponsor: sponsorMember,
       },

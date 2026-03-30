@@ -1,5 +1,27 @@
-import { useEffect, useCallback } from 'react';
-import { logger } from '../../../lib/logger';
+import { useEffect, useCallback } from "react";
+import { logger } from "../../../lib/logger";
+import type {
+  TennisBackendShape,
+  RegistrationUiState,
+  DomainCourt,
+  DomainBoard,
+  UpcomingBlock,
+  OperatingHoursEntry,
+  ApiMember,
+  CourtSelectionResult,
+} from "../../../types/appTypes";
+
+type Updater<T> = (value: T | ((prev: T) => T)) => void;
+
+interface UseRegistrationDataLayerDeps {
+  backend: TennisBackendShape;
+  setData: Updater<RegistrationUiState["data"]>;
+  setAvailableCourts: (courts: number[]) => void;
+  setOperatingHours: (hours: OperatingHoursEntry[] | null) => void;
+  setApiMembers: (members: ApiMember[]) => void;
+  data: RegistrationUiState["data"];
+  computeRegistrationCourtSelection: (courts: DomainCourt[], upcomingBlocks?: UpcomingBlock[]) => CourtSelectionResult;
+}
 
 /**
  * useRegistrationDataLayer
@@ -16,15 +38,14 @@ export function useRegistrationDataLayer({
   setApiMembers,
   data,
   computeRegistrationCourtSelection,
-}) {
-  // Load initial board + members via TennisBackend (replaces legacy ApiTennisService.loadInitialData)
+}: UseRegistrationDataLayerDeps) {
   const loadData = useCallback(async () => {
     try {
       const [boardData, members] = await Promise.all([
         backend.queries.getBoard(),
         backend.directory.getAllMembers(),
       ]);
-      const courts = boardData.courts || [];
+      const courts = (boardData.courts || []) as DomainCourt[];
       const waitlist = boardData.waitlist || [];
       const updatedData = {
         courts: courts,
@@ -33,38 +54,36 @@ export function useRegistrationDataLayer({
       };
       setData((prev) => ({ ...prev, ...updatedData }));
       if (boardData.operatingHours) {
-        setOperatingHours(boardData.operatingHours);
+        setOperatingHours(boardData.operatingHours as OperatingHoursEntry[]);
       }
       if (members && Array.isArray(members)) {
-        setApiMembers(members);
+        setApiMembers(members as ApiMember[]);
       }
-      // Initial load doesn't have upcomingBlocks, pass empty array
       const selection = computeRegistrationCourtSelection(courts, []);
       const selectableNumbers = selection.selectableCourts.map((sc) => sc.number);
       setAvailableCourts(selectableNumbers);
       setData((prev) => ({ ...prev, courtSelection: selection }));
-      logger.debug('DataLayer', 'Initial load complete', {
+      logger.debug("DataLayer", "Initial load complete", {
         courts: courts.length,
         waitlist: waitlist.length,
-        members: members.length,
+        members: (members as unknown[]).length,
       });
       return updatedData;
     } catch (error) {
-      logger.error('DataLayer', 'Failed to load data', error);
+      logger.error("DataLayer", "Failed to load data", error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: backend is stable singleton
   }, [backend]);
 
-  // VERBATIM COPY: subscription effect (lines 700-747) — KEEP [] DEPS EXACTLY
   useEffect(() => {
-    logger.debug('DataLayer', '[TennisBackend] Setting up board subscription...');
+    logger.debug("DataLayer", "[TennisBackend] Setting up board subscription...");
     const unsubscribe = backend.queries.subscribeToBoardChanges(
-      (domainBoard) => {
+      (domainBoard: DomainBoard) => {
         const board = domainBoard;
-        logger.debug('DataLayer', '[TennisBackend] Board update received', {
+        logger.debug("DataLayer", "[TennisBackend] Board update received", {
           serverNow: board.serverNow,
-          courts: board.courts?.length,
-          waitlist: board.waitlist?.length,
+          courts: (board.courts as unknown[] | undefined)?.length,
+          waitlist: (board.waitlist as unknown[] | undefined)?.length,
         });
         setData((prev) => ({
           ...prev,
@@ -74,9 +93,8 @@ export function useRegistrationDataLayer({
           upcomingBlocks: board.upcomingBlocks || [],
         }));
         if (board.operatingHours) {
-          setOperatingHours(board.operatingHours);
+          setOperatingHours(board.operatingHours as OperatingHoursEntry[]);
         }
-        // Use centralized court selection with upcomingBlocks for 20-min threshold
         const selection = computeRegistrationCourtSelection(
           board.courts || [],
           board.upcomingBlocks || []
@@ -85,8 +103,8 @@ export function useRegistrationDataLayer({
         setAvailableCourts(selectable);
         setData((prev) => ({ ...prev, courtSelection: selection }));
         logger.debug(
-          'DataLayer',
-          '[Registration CTA Debug] Courts from API',
+          "DataLayer",
+          "[Registration CTA Debug] Courts from API",
           board.courts?.map((c) => ({
             num: c.number,
             isBlocked: c.isBlocked,
@@ -98,9 +116,9 @@ export function useRegistrationDataLayer({
       },
       { pollIntervalMs: 5000 }
     );
-    logger.debug('DataLayer', '[TennisBackend] Board subscription active');
+    logger.debug("DataLayer", "[TennisBackend] Board subscription active");
     return () => {
-      logger.debug('DataLayer', '[TennisBackend] Unsubscribing from board updates');
+      logger.debug("DataLayer", "[TennisBackend] Unsubscribing from board updates");
       unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: board subscription setup, backend is stable singleton
