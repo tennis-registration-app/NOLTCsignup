@@ -1,5 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+type RecurrenceValue = {
+  pattern: string;
+  frequency?: number;
+  endType?: string;
+  occurrences?: number;
+  endDate?: string;
+  daysOfWeek?: number[];
+};
+
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_LABELS = [
   { day: 0, label: 'S' },
@@ -11,7 +20,7 @@ const DAY_LABELS = [
   { day: 6, label: 'S' },
 ];
 
-const getPresets = (selectedDate) => {
+const getPresets = (selectedDate: Date | string) => {
   const date = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
   const dayName = DAY_NAMES[date.getDay()];
 
@@ -64,7 +73,7 @@ const getPresets = (selectedDate) => {
   ];
 };
 
-const getTriggerLabel = (recurrence, selectedDate) => {
+const getTriggerLabel = (recurrence: RecurrenceValue | null, selectedDate: Date | string) => {
   if (!recurrence) return 'Does not repeat';
 
   const presets = getPresets(selectedDate);
@@ -88,7 +97,14 @@ const PATTERN_OPTIONS = [
   { value: 'monthly', label: 'month' },
 ];
 
-const CustomRecurrencePanel = ({ recurrence, onRecurrenceChange, onCancel, onDone }) => {
+interface CustomRecurrencePanelProps {
+  recurrence: RecurrenceValue | null;
+  onRecurrenceChange: (r: RecurrenceValue | null) => void;
+  onCancel: () => void;
+  onDone: () => void;
+}
+
+const CustomRecurrencePanel = ({ recurrence, onRecurrenceChange, onCancel, onDone }: CustomRecurrencePanelProps) => {
   const pattern = recurrence?.pattern || 'daily';
   const frequency = recurrence?.frequency ?? 1;
   const endType = recurrence?.endType || 'never';
@@ -96,11 +112,11 @@ const CustomRecurrencePanel = ({ recurrence, onRecurrenceChange, onCancel, onDon
   const endDate = recurrence?.endDate || '';
   const selectedDays = recurrence?.daysOfWeek || [];
 
-  const update = (fields) => {
+  const update = (fields: Record<string, unknown>) => {
     onRecurrenceChange({ ...recurrence, ...fields });
   };
 
-  const handlePatternChange = (newPattern) => {
+  const handlePatternChange = (newPattern: string) => {
     if (newPattern === 'weekly') {
       update({
         pattern: newPattern,
@@ -111,9 +127,9 @@ const CustomRecurrencePanel = ({ recurrence, onRecurrenceChange, onCancel, onDon
     }
   };
 
-  const toggleDay = (day) => {
+  const toggleDay = (day: number) => {
     const newDays = selectedDays.includes(day)
-      ? selectedDays.filter((d) => d !== day)
+      ? selectedDays.filter((d: number) => d !== day)
       : [...selectedDays, day].sort((a, b) => a - b);
     update({ daysOfWeek: newDays });
   };
@@ -253,21 +269,29 @@ const CustomRecurrencePanel = ({ recurrence, onRecurrenceChange, onCancel, onDon
   );
 };
 
+interface RecurrenceDropdownProps {
+  recurrence: RecurrenceValue | null;
+  onRecurrenceChange: (r: RecurrenceValue | null) => void;
+  selectedDate: Date | string;
+  triggerRowExtra?: React.ReactNode;
+  children?: React.ReactNode;
+}
+
 const RecurrenceDropdown = ({
   recurrence,
   onRecurrenceChange,
   selectedDate,
   triggerRowExtra,
   children,
-}) => {
+}: RecurrenceDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [customPanelOpen, setCustomPanelOpen] = useState(false);
-  const [savedRecurrence, setSavedRecurrence] = useState(null);
-  const containerRef = useRef(null);
+  const [savedRecurrence, setSavedRecurrence] = useState(null as RecurrenceValue | null);
+  const containerRef = useRef(null as HTMLDivElement | null);
 
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -278,7 +302,7 @@ const RecurrenceDropdown = ({
   const presets = getPresets(selectedDate);
   const triggerLabel = getTriggerLabel(recurrence, selectedDate);
 
-  const handlePresetSelect = (preset) => {
+  const handlePresetSelect = (preset: {label: string; value: RecurrenceValue | null}) => {
     onRecurrenceChange(preset.value);
     setIsOpen(false);
     setCustomPanelOpen(false);

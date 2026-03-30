@@ -66,7 +66,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     resetForm,
   } = form;
 
-  const handleTemplateSelect = (template) => {
+  const handleTemplateSelect = (template: {reason: string; duration?: number; startTime?: string; endTime?: string}) => {
     setBlockReason(template.reason);
     if (template.duration) {
       const now = new Date();
@@ -75,13 +75,13 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
       end.setMinutes(end.getMinutes() + template.duration);
       setEndTime(end.toTimeString().slice(0, 5));
     } else {
-      setStartTime(template.startTime);
-      setEndTime(template.endTime);
+      setStartTime(template.startTime ?? '');
+      setEndTime(template.endTime ?? '');
     }
     setShowTemplates(false);
   };
 
-  const handleRemoveBlock = async (blockId) => {
+  const handleRemoveBlock = async (blockId: string) => {
     if (!backend) {
       logger.error('BlockManager', 'No backend available for delete');
       onNotification('Backend not available', 'error');
@@ -104,12 +104,12 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
       }
     } catch (error) {
       logger.error('BlockManager', 'Error deleting block', error);
-      onNotification('Error deleting block: ' + error.message, 'error');
+      onNotification('Error deleting block: ' + (error instanceof Error ? error.message : String(error)), 'error');
       return false;
     }
   };
 
-  const handleRemoveBlockGroup = async (recurrenceGroupId, futureOnly) => {
+  const handleRemoveBlockGroup = async (recurrenceGroupId: string, futureOnly: boolean) => {
     if (!backend) {
       logger.error('BlockManager', 'No backend available for group delete');
       onNotification('Backend not available', 'error');
@@ -136,7 +136,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
       }
     } catch (error) {
       logger.error('BlockManager', 'Error deleting block group', error);
-      onNotification('Error deleting blocks: ' + error.message, 'error');
+      onNotification('Error deleting blocks: ' + (error instanceof Error ? error.message : String(error)), 'error');
       return false;
     }
   };
@@ -193,22 +193,22 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     resetForm();
   };
 
-  const toggleCourtSelection = (courtNum) => {
+  const toggleCourtSelection = (courtNum: number) => {
     setSelectedCourts((prev) =>
       prev.includes(courtNum) ? prev.filter((c) => c !== courtNum) : [...prev, courtNum]
     );
   };
 
-  const handleEditBlock = (block) => {
+  const handleEditBlock = (block: Record<string, unknown>) => {
     setSelectedBlock(block);
   };
 
-  const handleDuplicateBlock = (block) => {
+  const handleDuplicateBlock = (block: {reason?: string; startTime?: string; endTime?: string}) => {
     setSelectedCourts([]);
-    setBlockReason(block.reason);
+    setBlockReason(block.reason ?? '');
 
-    const start = new Date(block.startTime);
-    const end = new Date(block.endTime);
+    const start = new Date(block.startTime ?? '');
+    const end = new Date(block.endTime ?? '');
     const durationMs = end.getTime() - start.getTime();
 
     const nowTime = new Date();
@@ -219,7 +219,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
     setActiveView('create');
   };
 
-  const handleQuickReason = (reason) => {
+  const handleQuickReason = (reason: string) => {
     setBlockReason(reason);
 
     // Auto-set event type based on reason
@@ -229,7 +229,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
       setIsEvent(true); // Default to showing on calendar
       // Auto-generate event title
       if (!eventTitle || eventTitle.includes('(Copy)')) {
-        setEventTitle(reason.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase()));
+        setEventTitle(reason.toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase()));
       }
     } else {
       // Only WET COURT and similar should be hidden by default
@@ -239,7 +239,7 @@ export function useBlockActions({ form, backend, onApplyBlocks, onNotification }
   };
 
   // Wrapper for quick reason selection (calls handleQuickReason + clears custom mode)
-  const handleQuickReasonSelect = (reason) => {
+  const handleQuickReasonSelect = (reason: string) => {
     handleQuickReason(reason);
     setShowCustomReason(false);
   };

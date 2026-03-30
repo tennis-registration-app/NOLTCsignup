@@ -5,25 +5,26 @@ import { getNextFullHour, addHour } from '../../../components/admin/SmartTimeRan
  * Manages all block form state: field values, validation,
  * pre-fill from editing, and form reset/populate actions.
  */
-export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockConsumed }) {
+interface UseBlockFormParams { defaultView: string; initialEditingBlock: Record<string, unknown> | null; onEditingBlockConsumed: (() => void) | null; }
+export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockConsumed }: UseBlockFormParams) {
   const [activeView, setActiveView] = useState(defaultView);
-  const [selectedCourts, setSelectedCourts] = useState([]);
+  const [selectedCourts, setSelectedCourts] = useState([] as number[]);
   const [blockReason, setBlockReason] = useState('');
   const [startTime, setStartTime] = useState(() => getNextFullHour());
   const [endTime, setEndTime] = useState(() => addHour(getNextFullHour()));
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [timePickerMode, setTimePickerMode] = useState('visual');
-  const [recurrence, setRecurrence] = useState(null);
+  const [recurrence, setRecurrence] = useState(null as ({pattern:string;frequency:number;endType:string;occurrences?:number;endDate?:string;daysOfWeek?:number[]}|null));
   const [showTemplates, setShowTemplates] = useState(false);
-  const [editingBlock, setEditingBlock] = useState(null);
-  const [selectedBlock, setSelectedBlock] = useState(null);
+  const [editingBlock, setEditingBlock] = useState(null as (Record<string,unknown>|null));
+  const [selectedBlock, setSelectedBlock] = useState(null as (Record<string,unknown>|null));
   const [isEvent, setIsEvent] = useState(true);
   const [eventType, setEventType] = useState('event');
   const [eventTitle, setEventTitle] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showCustomReason, setShowCustomReason] = useState(false);
   const [endManuallySet, setEndManuallySet] = useState(false);
-  const [originalValues, setOriginalValues] = useState(null);
+  const [originalValues, setOriginalValues] = useState(null as ({courts:(number|undefined)[];reason:string|undefined;title:string|undefined;eventType:string;startTime:string;endTime:string;selectedDate:string|null;}|null));
 
   useEffect(() => {
     setActiveView(defaultView);
@@ -33,33 +34,33 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
   useEffect(() => {
     if (initialEditingBlock) {
       setEditingBlock(initialEditingBlock);
-      setSelectedCourts(initialEditingBlock.courtNumber ? [initialEditingBlock.courtNumber] : []);
-      setBlockReason(initialEditingBlock.reason || '');
-      setEventTitle(initialEditingBlock.title || initialEditingBlock.reason || '');
-      setEventType(initialEditingBlock.blockType || 'maintenance');
+      setSelectedCourts(initialEditingBlock.courtNumber ? [initialEditingBlock.courtNumber as number] : []);
+      setBlockReason((initialEditingBlock.reason as string) || '');
+      setEventTitle(((initialEditingBlock.title || initialEditingBlock.reason) as string) || '');
+      setEventType((initialEditingBlock.blockType as string) || 'maintenance');
 
       const startDateTime = initialEditingBlock.startTime || initialEditingBlock.startsAt;
       const endDateTime = initialEditingBlock.endTime || initialEditingBlock.endsAt;
 
       if (startDateTime) {
-        const startDate = new Date(startDateTime);
+        const startDate = new Date(startDateTime as string);
         setSelectedDate(startDate);
         setStartTime(startDate.toTimeString().slice(0, 5));
       }
       if (endDateTime) {
-        const endDate = new Date(endDateTime);
+        const endDate = new Date(endDateTime as string);
         setEndTime(endDate.toTimeString().slice(0, 5));
       }
 
       // Store original values for change detection
       setOriginalValues({
-        courts: initialEditingBlock.courtNumber ? [initialEditingBlock.courtNumber] : [],
-        reason: initialEditingBlock.reason || '',
-        title: initialEditingBlock.title || initialEditingBlock.reason || '',
-        eventType: initialEditingBlock.blockType || 'maintenance',
-        startTime: startDateTime ? new Date(startDateTime).toTimeString().slice(0, 5) : '',
-        endTime: endDateTime ? new Date(endDateTime).toTimeString().slice(0, 5) : '',
-        selectedDate: startDateTime ? new Date(startDateTime).toDateString() : null,
+        courts: initialEditingBlock.courtNumber ? [initialEditingBlock.courtNumber as number] : [],
+        reason: (initialEditingBlock.reason as string) || '',
+        title: ((initialEditingBlock.title || initialEditingBlock.reason) as string) || '',
+        eventType: (initialEditingBlock.blockType as string) || 'maintenance',
+        startTime: startDateTime ? new Date(startDateTime as string).toTimeString().slice(0, 5) : '',
+        endTime: endDateTime ? new Date(endDateTime as string).toTimeString().slice(0, 5) : '',
+        selectedDate: startDateTime ? new Date(startDateTime as string).toDateString() : null,
       });
 
       // Clear after consuming so effect doesn't re-run
@@ -155,7 +156,7 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
       setEditingBlock(null);
       setOriginalValues(null);
       setSelectedCourts(block.courtNumbers || []);
-      setBlockReason(block.reason);
+      setBlockReason(block.reason ?? '');
 
       const nowTime = new Date();
       setStartTime(nowTime.toTimeString().slice(0, 5));
@@ -169,8 +170,8 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
 
       if (block.isEvent && block.eventDetails) {
         setIsEvent(true);
-        setEventTitle(block.eventDetails.title + ' (Copy)');
-        setEventType(block.eventDetails.type);
+        setEventTitle((block.eventDetails.title ?? '') + ' (Copy)');
+        setEventType(block.eventDetails.type ?? 'event');
       } else {
         setIsEvent(false);
         setEventTitle('');
@@ -179,7 +180,7 @@ export function useBlockForm({ defaultView, initialEditingBlock, onEditingBlockC
     } else {
       setEditingBlock(block as Record<string, unknown>);
       setSelectedCourts(block.courtNumber !== undefined ? [block.courtNumber] : []);
-      setBlockReason(block.reason);
+      setBlockReason(block.reason ?? '');
 
       const startDate = new Date(block.startTime || "");
       const endDate = new Date(block.endTime || "");

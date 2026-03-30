@@ -23,6 +23,17 @@ import BlockSummaryCard from './BlockSummaryCard';
 import BlockActionButtons from './BlockActionButtons';
 import ManageRecurringPanel from './ManageRecurringPanel';
 import SmartTimeRangePicker from '../../components/admin/SmartTimeRangePicker';
+import type { ComponentType } from 'react';
+
+interface CompleteBlockManagerProps {
+  wetCourtsModel: {active?: boolean; courts?: Set<number>};
+  wetCourtsActions: {activateEmergency?: () => void; deactivateAll?: () => void; clearCourt?: (n: number) => void};
+  blockModel: {courts?: object[]; blocks?: object[]; hoursOverrides?: object[]; editingBlock?: Record<string,unknown>|null};
+  blockActions: {applyBlocks?: (b: unknown[]) => void; onEditingConsumed?: (() => void)|null; notify?: (msg: string, type: string) => void};
+  components: {MiniCalendar?: ComponentType<unknown>; EventCalendar?: ComponentType<unknown>; MonthView?: ComponentType<unknown>; EventSummary?: ComponentType<unknown>; HoverCard?: ComponentType<unknown>; QuickActionsMenu?: ComponentType<unknown>};
+  services: {backend?: unknown};
+  defaultView?: string;
+}
 
 const DURATION_2H = 120; // minutes
 const DURATION_4H = 240; // minutes
@@ -53,7 +64,7 @@ const CompleteBlockManagerEnhanced = ({
   components,
   services,
   defaultView = 'timeline',
-}) => {
+}: CompleteBlockManagerProps) => {
   // Destructure domain objects to preserve original variable names
   const { active: wetCourtsActive, courts: wetCourts } = wetCourtsModel;
   const {
@@ -135,7 +146,7 @@ const CompleteBlockManagerEnhanced = ({
     handleDuplicateBlock,
     handleQuickReasonSelect,
     handleRemoveBlockGroup,
-  } = useBlockActions({ form, backend, onApplyBlocks, onNotification });
+  } = useBlockActions({ form, backend: backend as Parameters<typeof useBlockActions>[0]["backend"], onApplyBlocks: onApplyBlocks ?? (() => {}), onNotification: onNotification ?? (() => {}) });
 
   return (
     <div className="space-y-6" data-testid="admin-block-list">
@@ -175,8 +186,8 @@ const CompleteBlockManagerEnhanced = ({
           EventSummary={EventSummary}
           HoverCard={HoverCard}
           QuickActionsMenu={QuickActionsMenu}
-          onEditEvent={(blockToEdit) => populateFromBlock(blockToEdit)}
-          onDuplicateEvent={(event) => populateFromBlock(event, { duplicate: true })}
+          onEditEvent={(blockToEdit: Parameters<typeof populateFromBlock>[0]) => populateFromBlock(blockToEdit)}
+          onDuplicateEvent={(event: Parameters<typeof populateFromBlock>[0]) => populateFromBlock(event, { duplicate: true })}
         />
       )}
 
@@ -195,10 +206,10 @@ const CompleteBlockManagerEnhanced = ({
               blockReason={blockReason}
               onQuickReasonSelect={handleQuickReasonSelect}
               onCustomReasonChange={setBlockReason}
-              wetCourtsActive={wetCourtsActive}
-              wetCourts={displayWetCourts}
-              deactivateWetCourts={deactivateWetCourts}
-              handleEmergencyWetCourt={handleEmergencyWetCourt}
+              wetCourtsActive={!!wetCourtsActive}
+              wetCourts={displayWetCourts ?? new Set()}
+              deactivateWetCourts={deactivateWetCourts ?? (() => {})}
+              handleEmergencyWetCourt={handleEmergencyWetCourt ?? (() => {})}
             />
 
             <div className="order-3">
@@ -269,7 +280,7 @@ const CompleteBlockManagerEnhanced = ({
                       <BlockActionButtons
                         handleBlockCourts={handleBlockCourts}
                         onClear={resetForm}
-                        isValid={isValid}
+                        isValid={!!isValid}
                         editingBlock={editingBlock}
                         selectedCourts={selectedCourts}
                         recurrence={recurrence}
@@ -322,7 +333,7 @@ const CompleteBlockManagerEnhanced = ({
       {selectedBlock && (
         <EventDetailsModal
           event={selectedBlock}
-          courts={courts.map((court, idx) => ({
+          courts={(courts as Array<Record<string, unknown>>).map((court, idx) => ({
             id: court?.id || `court-${idx + 1}`,
             courtNumber: idx + 1,
           }))}

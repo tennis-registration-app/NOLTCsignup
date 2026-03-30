@@ -10,15 +10,17 @@
 
 export interface CalendarEvent {
   id?: string;
-  eventType?: string;
+  eventType?: string | null;
   type?: string;
   reason?: string;
   startTime: string;
   endTime: string;
+  startsAt?: string;
+  endsAt?: string;
   courtNumbers?: number[];
   courtNumber?: number;
   title?: string;
-  eventDetails?: { title?: string };
+  eventDetails?: { title?: string; type?: string; participants?: number | string; organizer?: string };
   blockType?: string;
   isRecurring?: boolean;
   recurrenceRule?: string | null;

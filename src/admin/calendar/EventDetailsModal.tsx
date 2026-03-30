@@ -5,6 +5,7 @@
  * All fields are always editable - no view/edit toggle.
  */
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import type { CalendarEvent } from './utils';
 import { getEventColor } from './utils';
 import { getDeviceId } from '../utils/getDeviceId';
 import { useAdminConfirm } from '../context/ConfirmContext';
@@ -24,15 +25,15 @@ interface CourtOption {
 
 interface AdminBackend {
   admin: {
-    updateBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
-    createBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    updateBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    createBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     cancelBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     cancelBlockGroup: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
   };
 }
 
 interface EventDetailsModalProps {
-  event: Record<string, unknown> | null;
+  event: CalendarEvent | null;
   courts?: CourtOption[];
   backend?: AdminBackend | null;
   onClose: () => void;
@@ -75,8 +76,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   // Initialize form when event changes
   useEffect(() => {
     if (event) {
-      const start = new Date(event.startTime || event.startsAt);
-      const end = new Date(event.endTime || event.endsAt);
+      const start = new Date(event.startTime || event.startsAt || "");
+      const end = new Date(event.endTime || event.endsAt || "");
 
       // event is pre-normalized, use camelCase only
       const initialCourtId = event.courtId || '';
@@ -164,8 +165,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       const { startsAt, endsAt } = buildTimestamps();
 
       const blockTypeChanged = blockType !== initialBlockTypeRef.current;
-      const result = await backend.admin.updateBlock({
-        blockId: (event as Record<string, unknown>).id as string,
+      const result = await backend.admin.updateBlock?.({
+        blockId: event.id,
         courtId,
         ...(blockTypeChanged ? { blockType } : {}),
         title: title.trim(),
@@ -174,11 +175,11 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         deviceId,
       });
 
-      if (result.ok) {
+      if (result?.ok) {
         onSaved?.();
         onClose();
       } else {
-        setError(result.message || 'Failed to update block');
+        setError(result?.message || 'Failed to update block');
       }
     } catch (err) {
       console.error('Error updating block:', err);
@@ -198,7 +199,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     try {
       const { startsAt, endsAt } = buildTimestamps();
 
-      const result = await backend.admin.createBlock({
+      const result = await backend.admin.createBlock?.({
         courtId,
         blockType,
         title: title.trim(),
@@ -208,11 +209,11 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         deviceType: 'admin',
       });
 
-      if (result.ok) {
+      if (result?.ok) {
         onSaved?.();
         onClose();
       } else {
-        setError(result.message || 'Failed to create block');
+        setError(result?.message || 'Failed to create block');
       }
     } catch (err) {
       console.error('Error creating block:', err);
@@ -226,9 +227,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   const handleDelete = async () => {
     if (!backend || !event) return;
 
-    const ev = event as Record<string, unknown>;
-  const courtNum = ev.courtNumber || (ev.courtNumbers as number[]|undefined)?.[0] || 'Unknown';
-    const groupId = (event as Record<string, unknown>).recurrenceGroupId as string | undefined;
+    const courtNum = event.courtNumber || event.courtNumbers?.[0] || 'Unknown';
+    const groupId = event.recurrenceGroupId;
 
     if (groupId) {
       // Series block: offer choices via sequential confirms
@@ -292,7 +292,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
     try {
       const result = await backend.admin.cancelBlock({
-        blockId: (event as Record<string, unknown>).id as string,
+        blockId: event.id,
         deviceId,
       });
 

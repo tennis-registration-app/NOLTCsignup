@@ -17,14 +17,15 @@
  * @param {number} deps.timeoutMs - Auto-dismiss timeout in ms (default 3000)
  * @returns {Function} showNotification(message, type) function
  */
-export function createShowNotification({ setNotification, addTimer, timeoutMs = 3000 }) {
+interface NotificationState { message: string; type: string; }
+export function createShowNotification({ setNotification, addTimer, timeoutMs = 3000 }: { setNotification: (n: NotificationState | null) => void; addTimer: (id: ReturnType<typeof setTimeout>, type: string) => void; timeoutMs?: number }) {
   /**
    * Show a notification with auto-dismiss.
    *
    * @param {string} message - Notification message
    * @param {string} type - Notification type ('info', 'success', 'error', 'warning')
    */
-  return function showNotification(message, type = 'info') {
+  return function showNotification(message: string, type = 'info') {
     // Set notification with exact shape: { message, type } - no extra keys
     setNotification({ message, type });
 

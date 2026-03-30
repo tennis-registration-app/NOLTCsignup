@@ -5,8 +5,15 @@
  * Used in calendar views to show event information.
  */
 import React, { memo } from 'react';
+import type { CalendarEvent } from '../calendar/utils';
 
-const HoverCard = memo(({ event, position, onClose }) => {
+interface HoverCardProps {
+  event: CalendarEvent;
+  position: { top: number; left: number };
+  onClose: () => void;
+}
+
+const HoverCard = memo(({ event, position, onClose }: HoverCardProps) => {
   const startTime = new Date(event.startTime);
   const endTime = new Date(event.endTime);
   const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)); // minutes, rounded
@@ -44,7 +51,7 @@ const HoverCard = memo(({ event, position, onClose }) => {
 
         <div className="flex items-center gap-2 text-gray-600">
           <span>🎾</span>
-          <span>Courts {event.courtNumbers.join(', ')}</span>
+          <span>Courts {event.courtNumbers?.join(', ')}</span>
         </div>
 
         {event.eventDetails?.participants && (

@@ -19,7 +19,56 @@ const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
  * @param {Object} props.handlers - Callbacks (onSubmit, onCancel, etc.)
  * @param {Object} props.data - External data (courts, backend, components, etc.)
  */
-function BlockForm({ form, ui, handlers, data }) {
+type RecurrenceConfig = {pattern: string; daysOfWeek?: number[]; endType?: string; occurrences?: number; endDate?: string};
+
+interface BlockFormProps {
+  form: {
+    selectedCourts: number[];
+    setSelectedCourts: (v: number[]) => void;
+    blockReason: string;
+    setBlockReason: (v: string) => void;
+    startTime: string;
+    setStartTime: (v: string) => void;
+    endTime: string;
+    setEndTime: (v: string) => void;
+    selectedDate: Date;
+    setSelectedDate: (v: Date) => void;
+    recurrence: RecurrenceConfig | null;
+    setRecurrence: (v: RecurrenceConfig | null) => void;
+    isEvent: boolean;
+    setIsEvent: (v: boolean) => void;
+    eventType: string;
+    editingBlock: Record<string, unknown> | null;
+  };
+  ui: {
+    showTemplates: boolean;
+    setShowTemplates: (v: boolean) => void;
+    showRecurrence: boolean;
+    setShowRecurrence: (v: boolean) => void;
+    isValid: boolean;
+    timePickerMode: string;
+    setTimePickerMode: (v: string) => void;
+  };
+  handlers: {
+    handleTemplateSelect: (t: {name: string; reason: string; duration?: number; startTime?: string; endTime?: string}) => void;
+    toggleCourtSelection: (n: number) => void;
+    handleQuickReasonSelect: (r: string) => void;
+    handleBlockCourts: () => void;
+    handleEmergencyWetCourt: () => void;
+    deactivateWetCourts: () => void;
+    clearWetCourt: (n: number) => void;
+  };
+  data: {
+    courts: object[];
+    wetCourtsActive: boolean;
+    wetCourts: Set<number>;
+    blockTemplates: Array<{name: string; reason: string}>;
+    VisualTimeEntry: React.ComponentType<unknown> | undefined;
+    MiniCalendar: React.ComponentType<unknown> | undefined;
+  };
+}
+
+function BlockForm({ form, ui, handlers, data }: BlockFormProps) {
   // Destructure form (the hook return object)
   const {
     selectedCourts,
@@ -68,9 +117,11 @@ function BlockForm({ form, ui, handlers, data }) {
     wetCourtsActive,
     wetCourts,
     blockTemplates,
-    VisualTimeEntry,
-    MiniCalendar,
+    VisualTimeEntry: VisualTimeEntryRaw,
+    MiniCalendar: MiniCalendarRaw,
   } = data;
+  const VisualTimeEntry = VisualTimeEntryRaw as React.ComponentType<{key?: string; startTime: string; endTime: string; onStartTimeChange: (v: string) => void; onEndTimeChange: (v: string) => void; selectedDate: Date; selectedCourts: number[]; blockReason: string; timePickerMode: string; setTimePickerMode: (v: string) => void; hideToggleButton?: boolean}> | undefined;
+  const MiniCalendar = MiniCalendarRaw as React.ComponentType<{selectedDate: Date; onDateSelect: (v: Date) => void}> | undefined;
 
   return (
     <div className="grid grid-cols-3 gap-6">
@@ -147,12 +198,12 @@ function BlockForm({ form, ui, handlers, data }) {
         </div>
 
         <ConflictDetector
-          courts={courts}
+          courts={courts as Parameters<typeof ConflictDetector>[0]["courts"]}
           selectedCourts={selectedCourts}
           startTime={startTime}
           endTime={endTime}
           selectedDate={selectedDate}
-          editingBlock={editingBlock}
+          editingBlock={editingBlock as {id: string} | null | undefined}
         />
       </div>
 
@@ -255,7 +306,7 @@ function BlockForm({ form, ui, handlers, data }) {
               {recurrence && (
                 <div>
                   <span className="font-medium">Repeats:</span> {recurrence.pattern.endsWith('ly') ? recurrence.pattern : recurrence.pattern + 'ly'}
-                  {recurrence.daysOfWeek?.length > 0 && ` on ${recurrence.daysOfWeek.map((d) => DAY_ABBREVS[d]).join(', ')}`} for{' '}
+                  {(recurrence.daysOfWeek?.length ?? 0) > 0 && ` on ${(recurrence.daysOfWeek ?? []).map((d: number) => DAY_ABBREVS[d]).join(', ')}`} for{' '}
                   {recurrence.endType === 'after'
                     ? `${recurrence.occurrences} times`
                     : `until ${recurrence.endDate}`}

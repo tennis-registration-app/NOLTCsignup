@@ -6,13 +6,20 @@
  */
 import React from 'react';
 
+interface CourtSelectionGridProps {
+  selectedCourts: number[];
+  onToggleCourt: (courtNum: number) => void;
+  editingBlock: Record<string, unknown> | null | undefined;
+  onSelectAll: () => void;
+  onClearSelection: () => void;
+}
 const CourtSelectionGrid = ({
   selectedCourts,
   onToggleCourt,
   editingBlock,
   onSelectAll,
   onClearSelection,
-}) => {
+}: CourtSelectionGridProps) => {
   return (
     <div className="order-1">
       <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
@@ -28,7 +35,7 @@ const CourtSelectionGrid = ({
               <button
                 key={courtNum}
                 onClick={() => onToggleCourt(courtNum)}
-                disabled={editingBlock && editingBlock.courtNumber !== courtNum}
+                disabled={!!(editingBlock && (editingBlock as Record<string,unknown>).courtNumber !== courtNum)}
                 className={`py-2 px-3 rounded-lg font-medium transition-all shadow-sm border ${
                   isSelected
                     ? 'bg-blue-600 text-white border-blue-700 shadow-md'

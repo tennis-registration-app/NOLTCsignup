@@ -55,7 +55,7 @@ const BlockSummaryCard = ({ selectedCourts, blockReason, startTime, endTime, rec
           <>
             {recurrence.pattern.endsWith('ly') ? recurrence.pattern : recurrence.pattern + 'ly'}
             {(recurrence.daysOfWeek?.length ?? 0) > 0 && (
-              <> on {recurrence.daysOfWeek.map((d) => DAY_ABBREVS[d]).join(', ')}</>
+              <> on {(recurrence.daysOfWeek ?? []).map((d: number) => DAY_ABBREVS[d]).join(', ')}</>
             )}{' '}
             for{' '}
             {recurrence.endType === 'after'

@@ -5,7 +5,21 @@
  */
 import React, { useState, useEffect } from 'react';
 
-const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
+interface RecurrenceValue {
+  pattern: string;
+  frequency?: number;
+  endType?: string;
+  occurrences?: number;
+  endDate?: string;
+  daysOfWeek?: number[];
+}
+
+interface RecurrenceConfigProps {
+  recurrence: RecurrenceValue | null;
+  onRecurrenceChange: (r: RecurrenceValue) => void;
+}
+
+const RecurrenceConfig = ({ recurrence, onRecurrenceChange }: RecurrenceConfigProps) => {
   const [pattern, setPattern] = useState(recurrence?.pattern || 'daily');
   const [frequency, setFrequency] = useState(recurrence?.frequency || 1);
   const [endType, setEndType] = useState(recurrence?.endType || 'after');
@@ -15,7 +29,7 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
     recurrence?.daysOfWeek?.length ? recurrence.daysOfWeek : []
   );
 
-  const handlePatternChange = (newPattern) => {
+  const handlePatternChange = (newPattern: string) => {
     setPattern(newPattern);
     if (newPattern === 'weekly') {
       setSelectedDays([new Date().getDay()]);
@@ -24,9 +38,9 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
     }
   };
 
-  const toggleDay = (day) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
+  const toggleDay = (day: number) => {
+    setSelectedDays((prev: number[]) =>
+      prev.includes(day) ? prev.filter((d: number) => d !== day) : [...prev, day].sort((a, b) => a - b)
     );
   };
 
@@ -67,7 +81,7 @@ const RecurrenceConfig = ({ recurrence, onRecurrenceChange }) => {
               value={frequency}
               onChange={(e) => {
                 const raw = e.target.value;
-                setFrequency(raw === '' ? '' : parseInt(raw) || 1);
+                setFrequency(raw === '' ? 1 : parseInt(raw) || 1);
               }}
               onFocus={(e) => e.target.select()}
               onBlur={(e) => {

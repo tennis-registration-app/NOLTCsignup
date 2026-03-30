@@ -25,9 +25,11 @@ import {
 
 interface CalendarAdminBackend {
   admin: {
-    getBlocks: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }> & { blocks?: Record<string, unknown>[] };
+    getBlocks: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string; blocks?: Record<string, unknown>[] }>;
     cancelBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     cancelBlockGroup: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    updateBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    createBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
   };
 }
 
@@ -137,7 +139,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
         if (result.ok) {
           // Transform API response to calendar event format
           // Normalize at ingestion, then use camelCase
-          const transformedBlocks = result.blocks.map((b) => {
+          const transformedBlocks = (result.blocks ?? []).map((b) => {
             const normalized = normalizeCalendarBlock(b);
 
             return {
@@ -146,8 +148,8 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
               courtNumber: normalized.courtNumber,
               courtNumbers: [normalized.courtNumber], // Calendar expects array
               title: normalized.title,
-              startTime: normalized.startsAt,
-              endTime: normalized.endsAt,
+              startTime: (normalized.startsAt as string) || "",
+              endTime: (normalized.endsAt as string) || "",
               reason: normalized.blockType,
               blockType: normalized.blockType,
               eventType: getEventTypeFromReason(normalized.blockType),
@@ -194,7 +196,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
 
   // Event handlers
   const handleEventClick = useCallback(
-    (event) => {
+    (event: CalendarEvent) => {
       if (!disableEventClick) {
         setSelectedEvent(event);
       }
@@ -204,7 +206,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
   );
 
   const handleEventHover = useCallback(
-    (event, element) => {
+    (event: CalendarEvent, element: Element | null) => {
       if (!quickActionEvent && element) {
         const rect = element.getBoundingClientRect();
         const viewportWidth = window.innerWidth;
@@ -243,14 +245,14 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
     setHoveredEvent(null);
   }, []);
 
-  const handleQuickAction = useCallback((event, position) => {
+  const handleQuickAction = useCallback((event: CalendarEvent, position: { top: number; left: number }) => {
     setQuickActionEvent(event);
     setQuickActionPosition(position);
     setHoveredEvent(null);
   }, []);
 
   const handleEdit = useCallback(
-    (event) => {
+    (event: CalendarEvent) => {
       // Find the block in our API-sourced data to get full details
       const blockToEdit = blocks.find((block) => {
         if (event.id && block.id) {
@@ -267,7 +269,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
   );
 
   const handleDelete = useCallback(
-    async (event) => {
+    async (event: CalendarEvent) => {
       if (!backend) {
         logger.error('AdminCalendar', 'No backend available for delete');
         return;
@@ -335,7 +337,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
   );
 
   const handleDuplicate = useCallback(
-    (event) => {
+    (event: CalendarEvent) => {
       logger.debug('AdminCalendar', 'Duplicate event', event);
       setSelectedEvent(null); // Close modal
       onDuplicateEvent(event); // Let parent handle the duplication
@@ -345,7 +347,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
 
   // Memoized callbacks
   const navigateDate = useCallback(
-    (direction) => {
+    (direction: number) => {
       setSelectedDate((prevDate) => {
         const newDate = new Date(prevDate);
 
@@ -367,7 +369,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
     setSelectedDate(new Date());
   }, []);
 
-  const handleViewModeChange = useCallback((mode) => {
+  const handleViewModeChange = useCallback((mode: string) => {
     setViewMode(mode);
   }, []);
 

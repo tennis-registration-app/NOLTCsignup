@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from './Icons';
 
-export function MiniCalendar({ selectedDate, onDateSelect, minDate: _minDate = new Date() }) {
+export function MiniCalendar({ selectedDate, onDateSelect, minDate: _minDate = new Date() }: { selectedDate: Date; onDateSelect: (d: Date) => void; minDate?: Date }) {
   const [viewMonth, setViewMonth] = useState(new Date(selectedDate));
 
-  const getDaysInMonth = (date) => {
+  const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
@@ -25,25 +25,25 @@ export function MiniCalendar({ selectedDate, onDateSelect, minDate: _minDate = n
     return days;
   };
 
-  const isToday = (date) => {
+  const isToday = (date: Date | null) => {
     if (!date) return false;
     const today = new Date();
     return date.toDateString() === today.toDateString();
   };
 
-  const isSelected = (date) => {
+  const isSelected = (date: Date | null) => {
     if (!date) return false;
     return date.toDateString() === selectedDate.toDateString();
   };
 
-  const isPastDate = (date) => {
+  const isPastDate = (date: Date | null) => {
     if (!date) return false;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return date < today;
   };
 
-  const changeMonth = (increment) => {
+  const changeMonth = (increment: number) => {
     const newMonth = new Date(viewMonth);
     newMonth.setMonth(newMonth.getMonth() + increment);
     setViewMonth(newMonth);

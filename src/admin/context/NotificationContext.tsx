@@ -1,13 +1,14 @@
 import React, { createContext, useContext } from 'react';
 import { useNotification } from '../hooks/useNotification';
 
-const NotificationContext = createContext(null);
+type ShowNotification = (message: string, type: string) => void;
+const NotificationContext = createContext<ShowNotification | null>(null);
 
 /**
  * Provider that makes showNotification available to any admin component.
  * Renders the notification banner as a fixed overlay.
  */
-export function NotificationProvider({ children }) {
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { notification, showNotification } = useNotification();
 
   return (
@@ -34,7 +35,7 @@ export function NotificationProvider({ children }) {
  * Hook to access showNotification from any admin component.
  * @returns {Function} showNotification(message, type)
  */
-export function useAdminNotification() {
+export function useAdminNotification(): ShowNotification {
   const showNotification = useContext(NotificationContext);
   if (!showNotification) {
     throw new Error('useAdminNotification must be used within NotificationProvider');
