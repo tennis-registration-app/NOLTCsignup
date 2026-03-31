@@ -68,8 +68,15 @@ export interface AssignCourtActions {
 export interface AssignCourtServices {
   backend: Pick<TennisBackendShape, 'commands' | 'queries'>;
   getCourtBlockStatus: (courtNumber: number) => CourtBlockStatusResult | null;
-  getMobileGeolocation: () => Promise<{ latitude?: number; longitude?: number; location_token?: string } | null>;
-  validateGroupCompat: (players: Pick<GroupPlayer, 'id' | 'name'>[], guests: number) => { ok: boolean; errors: string[] };
+  getMobileGeolocation: () => Promise<{
+    latitude?: number;
+    longitude?: number;
+    location_token?: string;
+  } | null>;
+  validateGroupCompat: (
+    players: Pick<GroupPlayer, 'id' | 'name'>[],
+    guests: number
+  ) => { ok: boolean; errors: string[] };
   clearSuccessResetTimer: () => void;
   resetForm: () => void;
 }
@@ -89,9 +96,26 @@ export interface AssignCourtDeps {
 // ---- File-local helpers (not exported) ----
 
 /** Normalize a command-response session so downstream code uses only camelCase scheduledEndAt. */
-function normalizeCommandSession(
-  raw?: { id?: string; scheduled_end_at?: string; scheduledEndAt?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }> }
-): { id: string | null; scheduledEndAt: string | null; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }> } {
+function normalizeCommandSession(raw?: {
+  id?: string;
+  scheduled_end_at?: string;
+  scheduledEndAt?: string;
+  participantDetails?: Array<{
+    memberId: string;
+    name: string;
+    accountId: string;
+    isGuest: boolean;
+  }>;
+}): {
+  id: string | null;
+  scheduledEndAt: string | null;
+  participantDetails?: Array<{
+    memberId: string;
+    name: string;
+    accountId: string;
+    isGuest: boolean;
+  }>;
+} {
   if (!raw) return { id: null, scheduledEndAt: null };
   return {
     id: raw.id || null,
@@ -211,7 +235,12 @@ export async function assignCourtToGroupOrchestrated(
   });
   if (!hoursCheck.ok) {
     if (hoursCheck.ui?.action === 'toast') {
-      toast(hoursCheck.ui.args[0] as string, hoursCheck.ui.args[1] as { type?: 'info' | 'error' | 'success' | 'warning'; duration?: number } | undefined);
+      toast(
+        hoursCheck.ui.args[0] as string,
+        hoursCheck.ui.args[1] as
+          | { type?: 'info' | 'error' | 'success' | 'warning'; duration?: number }
+          | undefined
+      );
     }
     // FEEDBACK: toast provides user feedback above
     return;
@@ -296,8 +325,8 @@ export async function assignCourtToGroupOrchestrated(
       const minutesUntilBlock = Math.ceil((blockStart.getTime() - nowBlock.getTime()) / 60000);
       const confirmMsg = `⚠️ This court has a block starting in ${minutesUntilBlock} minutes (${blockStatus.reason}). You may not get your full ${duration} minutes.\n\nDo you want to take this court anyway?`;
 
-      const confirmFn = ui.confirm || globalThis.confirm;
-      const proceed = confirmFn(confirmMsg);
+      if (!ui.confirm) throw new Error('AssignCourtUI.confirm not injected — wiring bug');
+      const proceed = ui.confirm(confirmMsg);
       if (!proceed) {
         ui.showAlertMessage('Please select a different court or join the waitlist.');
         // FEEDBACK: alert provides user feedback above
@@ -314,6 +343,7 @@ export async function assignCourtToGroupOrchestrated(
 
   // If this is a waitlist group (CTA flow), use assignFromWaitlist instead
   if (state.currentWaitlistEntryId) {
+    actions.setIsAssigning(true); // Guard against double-submit in waitlist path
     // Get court UUID for the waitlist assignment
     const waitlistCourt = state.courts.find((c) => c.number === courtNumber);
     if (!waitlistCourt) {
@@ -324,6 +354,7 @@ export async function assignCourtToGroupOrchestrated(
       );
       toast('Court not found. Please refresh and try again.', { type: 'error' });
       // FEEDBACK: toast provides user feedback above
+      actions.setIsAssigning(false);
       return;
     }
 
@@ -345,12 +376,14 @@ export async function assignCourtToGroupOrchestrated(
           actions.setCurrentWaitlistEntryId(null);
           await services.backend.queries.refresh();
           // FEEDBACK: toast provides user feedback above
+          actions.setIsAssigning(false);
           return;
         }
         // Handle mobile location errors - offer QR fallback
         if (state.API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
           actions.setGpsFailedPrompt(true);
           // FEEDBACK: GPS prompt modal provides user feedback
+          actions.setIsAssigning(false);
           return;
         }
         toast(result.message || 'Failed to assign court from waitlist', {
@@ -358,6 +391,7 @@ export async function assignCourtToGroupOrchestrated(
         });
         actions.setCurrentWaitlistEntryId(null);
         // FEEDBACK: toast provides user feedback above
+        actions.setIsAssigning(false);
         return;
       }
 
@@ -404,6 +438,7 @@ export async function assignCourtToGroupOrchestrated(
       await services.backend.queries.refresh();
 
       // EARLY-EXIT: waitlist flow complete — success screen shown
+      actions.setIsAssigning(false);
       return;
     } catch (error: unknown) {
       const meta = normalizeError(error);
@@ -417,6 +452,7 @@ export async function assignCourtToGroupOrchestrated(
         type: 'error',
       });
       // FEEDBACK: toast provides user feedback above
+      actions.setIsAssigning(false);
       return;
     }
   }
@@ -433,6 +469,7 @@ export async function assignCourtToGroupOrchestrated(
   // Determine group type from player count
   const groupType = allPlayers.length <= 3 ? 'singles' : 'doubles';
 
+  actions.setIsAssigning(true); // Set before async work to close the double-submit window
   // Get geolocation for mobile (required by backend for geofence validation)
   const mobileLocation = await services.getMobileGeolocation();
 
@@ -448,8 +485,6 @@ export async function assignCourtToGroupOrchestrated(
       mobileLocation: mobileLocation ? 'provided' : 'not-mobile',
     }
   );
-
-  actions.setIsAssigning(true);
   let result: AssignCourtResponse;
   try {
     result = await services.backend.commands.assignCourtWithPlayers({
@@ -576,5 +611,4 @@ export async function assignCourtToGroupOrchestrated(
   } catch {
     // Refresh is best-effort; board subscription will catch up
   }
-  // ===== END ORIGINAL FUNCTION BODY =====
 }

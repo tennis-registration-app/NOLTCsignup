@@ -61,9 +61,10 @@ interface BlockCreateCtx extends AdminOpCtxBase {
 }
 
 export async function handleClearWaitlistOp(ctx: ClearWaitlistCtx) {
-  const { backend, showAlertMessage, getCourtData, confirm: confirmFn = globalThis.confirm } = ctx;
+  const { backend, showAlertMessage, getCourtData, confirm: confirmFn } = ctx;
+  if (!confirmFn) throw new Error('ClearWaitlistCtx.confirm not injected — wiring bug');
   const data = getCourtData();
-  const confirmClear = confirmFn("Clear the waitlist? This will remove all waiting groups.");
+  const confirmClear = confirmFn('Clear the waitlist? This will remove all waiting groups.');
   if (confirmClear) {
     let successCount = 0;
     let failCount = 0;
@@ -76,7 +77,7 @@ export async function handleClearWaitlistOp(ctx: ClearWaitlistCtx) {
 
       const result = await backend.admin.removeFromWaitlist({
         waitlistEntryId: group.id,
-        reason: "admin_clear_all",
+        reason: 'admin_clear_all',
         deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
       });
 
@@ -88,11 +89,11 @@ export async function handleClearWaitlistOp(ctx: ClearWaitlistCtx) {
     }
 
     if (failCount === 0) {
-      showAlertMessage("Waitlist cleared (" + successCount + " groups removed)");
+      showAlertMessage('Waitlist cleared (' + successCount + ' groups removed)');
     } else if (successCount > 0) {
-      showAlertMessage("Removed " + successCount + " groups, " + failCount + " failed");
+      showAlertMessage('Removed ' + successCount + ' groups, ' + failCount + ' failed');
     } else {
-      showAlertMessage("Failed to clear waitlist");
+      showAlertMessage('Failed to clear waitlist');
     }
   }
 }
@@ -100,20 +101,20 @@ export async function handleClearWaitlistOp(ctx: ClearWaitlistCtx) {
 export async function handleRemoveFromWaitlistOp(ctx: RemoveFromWaitlistCtx, group: WaitlistGroup) {
   const { backend, showAlertMessage } = ctx;
   if (!group.id) {
-    showAlertMessage("Cannot remove: group ID not found");
+    showAlertMessage('Cannot remove: group ID not found');
     return;
   }
 
   const result = await backend.admin.removeFromWaitlist({
     waitlistEntryId: group.id,
-    reason: "admin_removed",
+    reason: 'admin_removed',
     deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
   });
 
   if (result.ok) {
-    showAlertMessage("Group removed from waitlist");
+    showAlertMessage('Group removed from waitlist');
   } else {
-    showAlertMessage(result.message || "Failed to remove group");
+    showAlertMessage(result.message || 'Failed to remove group');
   }
 }
 
@@ -124,39 +125,46 @@ export async function handleCancelBlockOp(ctx: CancelBlockCtx, blockId: string, 
     deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
   });
   if (result.ok) {
-    showAlertMessage("Court " + courtNum + " unblocked");
+    showAlertMessage('Court ' + courtNum + ' unblocked');
   } else {
-    showAlertMessage(result.message || "Failed to unblock court");
+    showAlertMessage(result.message || 'Failed to unblock court');
   }
 }
 
 export async function handleAdminClearCourtOp(ctx: AdminClearCourtCtx, courtNum: number) {
   const { clearCourt, showAlertMessage } = ctx;
   await clearCourt(courtNum);
-  showAlertMessage("Court " + courtNum + " cleared");
+  showAlertMessage('Court ' + courtNum + ' cleared');
 }
 
 export async function handleClearAllCourtsOp(ctx: ClearAllCourtsCtx) {
-  const { backend, showAlertMessage, confirm: confirmFn = globalThis.confirm } = ctx;
+  const { backend, showAlertMessage, confirm: confirmFn } = ctx;
+  if (!confirmFn) throw new Error('ClearAllCourtsCtx.confirm not injected — wiring bug');
   const confirmClear = confirmFn(
-    "Clear all courts? This will make all courts immediately available."
+    'Clear all courts? This will make all courts immediately available.'
   );
   if (confirmClear) {
     const result = await backend.admin.clearAllCourts({
       deviceId: TENNIS_CONFIG.DEVICES.ADMIN_ID,
-      reason: "admin_clear_all",
+      reason: 'admin_clear_all',
     });
     if (result.ok) {
       showAlertMessage(
-        "All courts cleared successfully (" + ((result as { sessionsEnded?: number }).sessionsEnded || 0) + " sessions ended)"
+        'All courts cleared successfully (' +
+          ((result as { sessionsEnded?: number }).sessionsEnded || 0) +
+          ' sessions ended)'
       );
     } else {
-      showAlertMessage(result.message || "Failed to clear courts");
+      showAlertMessage(result.message || 'Failed to clear courts');
     }
   }
 }
 
-export async function handleReorderWaitlistOp(ctx: ReorderWaitlistCtx, fromIndex: number, toIndex: number) {
+export async function handleReorderWaitlistOp(
+  ctx: ReorderWaitlistCtx,
+  fromIndex: number,
+  toIndex: number
+) {
   const { getCourtData, showAlertMessage, setWaitlistMoveFrom, backend } = ctx;
   const data = getCourtData();
   const movedGroup = data.waitlist[fromIndex];
@@ -168,19 +176,23 @@ export async function handleReorderWaitlistOp(ctx: ReorderWaitlistCtx, fromIndex
         entryId,
         newPosition: toIndex,
       });
-      showAlertMessage("Group moved to position " + (toIndex + 1));
+      showAlertMessage('Group moved to position ' + (toIndex + 1));
     } catch (err) {
-      showAlertMessage((err as Error).message || "Failed to move group");
+      showAlertMessage((err as Error).message || 'Failed to move group');
     }
   } else {
-    console.warn("[Waitlist Reorder] API not available, action skipped");
-    showAlertMessage("Waitlist reorder requires API — feature temporarily unavailable");
+    console.warn('[Waitlist Reorder] API not available, action skipped');
+    showAlertMessage('Waitlist reorder requires API — feature temporarily unavailable');
   }
 
   setWaitlistMoveFrom(null);
 }
 
-export async function handleMoveCourtOp(ctx: MoveCourtCtx, fromCourtNum: number, toCourtNum: number) {
+export async function handleMoveCourtOp(
+  ctx: MoveCourtCtx,
+  fromCourtNum: number,
+  toCourtNum: number
+) {
   const { backend, getCourtData, showAlertMessage, setCourtToMove } = ctx;
   try {
     const data = getCourtData();
@@ -188,7 +200,7 @@ export async function handleMoveCourtOp(ctx: MoveCourtCtx, fromCourtNum: number,
     const toCourt = data.courts[toCourtNum - 1];
 
     if (!fromCourt?.id) {
-      showAlertMessage("Source court not found");
+      showAlertMessage('Source court not found');
       setCourtToMove(null);
       return;
     }
@@ -197,12 +209,14 @@ export async function handleMoveCourtOp(ctx: MoveCourtCtx, fromCourtNum: number,
     let toCourtId = toCourt?.id;
     if (!toCourtId) {
       const board = await backend.queries.getBoard();
-      const targetCourt = (board?.courts as CourtEntry[] | undefined)?.find((c) => c.number === toCourtNum);
+      const targetCourt = (board?.courts as CourtEntry[] | undefined)?.find(
+        (c) => c.number === toCourtNum
+      );
       toCourtId = targetCourt?.id;
     }
 
     if (!toCourtId) {
-      showAlertMessage("Destination court not found");
+      showAlertMessage('Destination court not found');
       setCourtToMove(null);
       return;
     }
@@ -213,13 +227,13 @@ export async function handleMoveCourtOp(ctx: MoveCourtCtx, fromCourtNum: number,
     });
 
     if (result.ok) {
-      showAlertMessage("Court " + fromCourtNum + " moved to Court " + toCourtNum);
+      showAlertMessage('Court ' + fromCourtNum + ' moved to Court ' + toCourtNum);
     } else {
-      showAlertMessage(result.message || "Failed to move court");
+      showAlertMessage(result.message || 'Failed to move court');
     }
   } catch (err) {
-    console.error("[moveCourt] Error:", err);
-    showAlertMessage((err as Error).message || "Failed to move court");
+    console.error('[moveCourt] Error:', err);
+    showAlertMessage((err as Error).message || 'Failed to move court');
   }
 
   setCourtToMove(null);
@@ -238,15 +252,15 @@ export async function handleBlockCreateOp(ctx: BlockCreateCtx) {
   } = ctx;
 
   if (selectedCourtsToBlock.length === 0) {
-    showAlertMessage("Please select at least one court to block");
+    showAlertMessage('Please select at least one court to block');
     return;
   }
   if (!blockMessage) {
-    showAlertMessage("Please enter a block reason");
+    showAlertMessage('Please enter a block reason');
     return;
   }
   if (!blockEndTime) {
-    showAlertMessage("Please select an end time");
+    showAlertMessage('Please select an end time');
     return;
   }
 
@@ -257,16 +271,16 @@ export async function handleBlockCreateOp(ctx: BlockCreateCtx) {
 
   // Calculate start time
   let startTime;
-  if (blockStartTime === "now") {
+  if (blockStartTime === 'now') {
     startTime = new Date();
   } else {
     startTime = new Date();
-    const [hours, minutes] = blockStartTime.split(":");
+    const [hours, minutes] = blockStartTime.split(':');
     startTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
   }
 
   // Calculate end time based on the selected time
-  const [endHours, endMinutes] = blockEndTime.split(":");
+  const [endHours, endMinutes] = blockEndTime.split(':');
   let endTime = new Date(startTime);
   endTime.setHours(parseInt(endHours), parseInt(endMinutes), 0, 0);
 
@@ -275,7 +289,7 @@ export async function handleBlockCreateOp(ctx: BlockCreateCtx) {
     endTime.setDate(endTime.getDate() + 1);
   }
 
-  logger.debug("Admin", "Block times calculated", {
+  logger.debug('Admin', 'Block times calculated', {
     blockStartTimeInput: blockStartTime,
     currentTime: currentTimeNow.toLocaleString(),
     startTime: startTime.toLocaleString(),
@@ -284,11 +298,11 @@ export async function handleBlockCreateOp(ctx: BlockCreateCtx) {
 
   // Map block message to block type
   const blockTypeMap: Record<string, string> = {
-    "WET COURT": "wet",
-    "COURT WORK": "maintenance",
-    LESSON: "lesson",
+    'WET COURT': 'wet',
+    'COURT WORK': 'maintenance',
+    LESSON: 'lesson',
   };
-  const blockType = blockTypeMap[blockMessage.toUpperCase()] || "other";
+  const blockType = blockTypeMap[blockMessage.toUpperCase()] || 'other';
 
   // Block selected courts via backend API
   let successCount = 0;
@@ -314,15 +328,15 @@ export async function handleBlockCreateOp(ctx: BlockCreateCtx) {
       successCount++;
     } else {
       failedCourts.push(courtNum);
-      console.error("Failed to block court " + courtNum + ":", result.message);
+      console.error('Failed to block court ' + courtNum + ':', result.message);
     }
   }
 
   if (failedCourts.length === 0) {
-    showAlertMessage(successCount + " court(s) blocked successfully");
+    showAlertMessage(successCount + ' court(s) blocked successfully');
   } else if (successCount > 0) {
-    showAlertMessage(successCount + " court(s) blocked. Failed: courts " + failedCourts.join(", "));
+    showAlertMessage(successCount + ' court(s) blocked. Failed: courts ' + failedCourts.join(', '));
   } else {
-    showAlertMessage("Failed to block courts: " + failedCourts.join(", "));
+    showAlertMessage('Failed to block courts: ' + failedCourts.join(', '));
   }
 }

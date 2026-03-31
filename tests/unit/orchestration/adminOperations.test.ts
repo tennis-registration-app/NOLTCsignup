@@ -75,6 +75,7 @@ describe('adminOperations', () => {
           },
         },
         showAlertMessage: vi.fn(),
+        confirm: mockConfirm,
       };
 
       await handleClearAllCourtsOp(ctx);
@@ -93,6 +94,7 @@ describe('adminOperations', () => {
           },
         },
         showAlertMessage: vi.fn(),
+        confirm: mockConfirm,
       };
 
       await handleClearAllCourtsOp(ctx);
@@ -108,6 +110,7 @@ describe('adminOperations', () => {
           },
         },
         showAlertMessage: vi.fn(),
+        confirm: mockConfirm,
       };
 
       await handleClearAllCourtsOp(ctx);
@@ -125,6 +128,7 @@ describe('adminOperations', () => {
           },
         },
         showAlertMessage: vi.fn(),
+        confirm: mockConfirm,
       };
 
       await handleClearAllCourtsOp(ctx);
@@ -202,6 +206,7 @@ describe('adminOperations', () => {
         backend: { admin: { removeFromWaitlist: vi.fn() } },
         showAlertMessage: vi.fn(),
         getCourtData: () => ({ waitlist: [] }),
+        confirm: mockConfirm,
       };
 
       await handleClearWaitlistOp(ctx);
@@ -222,6 +227,7 @@ describe('adminOperations', () => {
         getCourtData: () => ({
           waitlist: [{ id: 'entry-1' }, { id: 'entry-2' }, { id: 'entry-3' }],
         }),
+        confirm: mockConfirm,
       };
 
       await handleClearWaitlistOp(ctx);
@@ -245,6 +251,7 @@ describe('adminOperations', () => {
         getCourtData: () => ({
           waitlist: [{ id: 'entry-1' }, { id: 'entry-2' }, { id: 'entry-3' }],
         }),
+        confirm: mockConfirm,
       };
 
       await handleClearWaitlistOp(ctx);
@@ -263,6 +270,7 @@ describe('adminOperations', () => {
         getCourtData: () => ({
           waitlist: [{ id: 'entry-1' }, { name: 'No ID Group' }, { id: 'entry-3' }],
         }),
+        confirm: mockConfirm,
       };
 
       await handleClearWaitlistOp(ctx);

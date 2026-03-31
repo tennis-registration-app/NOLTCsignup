@@ -104,6 +104,7 @@ function createMockDeps(overrides = {}) {
 
   const ui = {
     showAlertMessage: vi.fn(),
+    confirm: vi.fn().mockReturnValue(true),
     ...overrides.ui,
   };
 
@@ -214,7 +215,6 @@ describe('assignCourtToGroupOrchestrated', () => {
   describe('guard: upcoming block', () => {
     it('shows alert when user declines upcoming block warning', async () => {
       const confirmMock = vi.fn().mockReturnValue(false);
-      vi.stubGlobal('confirm', confirmMock);
 
       const deps = createMockDeps({
         services: {
@@ -224,6 +224,7 @@ describe('assignCourtToGroupOrchestrated', () => {
             reason: 'maintenance',
           }),
         },
+        ui: { confirm: confirmMock },
       });
 
       await assignCourtToGroupOrchestrated(1, 2, deps);
@@ -236,8 +237,6 @@ describe('assignCourtToGroupOrchestrated', () => {
     });
 
     it('proceeds with assignment when user accepts block warning', async () => {
-      vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
-
       const deps = createMockDeps({
         services: {
           getCourtBlockStatus: vi.fn().mockResolvedValue({
@@ -246,6 +245,7 @@ describe('assignCourtToGroupOrchestrated', () => {
             reason: 'maintenance',
           }),
         },
+        ui: { confirm: vi.fn().mockReturnValue(true) },
       });
 
       await assignCourtToGroupOrchestrated(1, 2, deps);

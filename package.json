@@ -27,7 +27,7 @@
     "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
-    "src/**/*.{js,jsx}": [
+    "src/**/*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ]

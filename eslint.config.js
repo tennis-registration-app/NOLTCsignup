@@ -231,6 +231,12 @@ export default [
           message:
             'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of window.confirm().',
         },
+        {
+          object: 'globalThis',
+          property: 'confirm',
+          message:
+            'Use useAdminConfirm() (admin) or pass confirm via ctx (registration) instead of globalThis.confirm().',
+        },
         // Legacy global removed in shared-utils elimination.
         // Use src/lib/ instead.
         {
@@ -251,7 +257,7 @@ export default [
   },
   // Architecture boundary: screens must not import backend or orchestration directly
   {
-    files: ['src/registration/screens/**/*.{js,jsx}', 'src/admin/screens/**/*.{js,jsx}'],
+    files: ['src/registration/screens/**/*.{js,jsx,ts,tsx}', 'src/admin/screens/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -297,7 +303,7 @@ export default [
   },
   // Architecture boundary: admin and courtboard must not import from registration
   {
-    files: ['src/admin/**/*.{js,jsx}', 'src/courtboard/**/*.{js,jsx}'],
+    files: ['src/admin/**/*.{js,jsx,ts,tsx}', 'src/courtboard/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -333,7 +339,7 @@ export default [
   },
   // Architecture boundary: handlers must not import UI components
   {
-    files: ['src/registration/appHandlers/**/*.{js,ts}', 'src/registration/handlers/**/*.{js,ts}'],
+    files: ['src/registration/appHandlers/**/*.{js,jsx,ts,tsx}', 'src/registration/handlers/**/*.{js,jsx,ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
