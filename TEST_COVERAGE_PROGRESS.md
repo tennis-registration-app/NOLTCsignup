@@ -16,8 +16,8 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 | src/registration/ui/mobile/useMobileFlowController.ts | 24 | 18 | DONE | 28 tests (useMobileFlowController.test.ts) |
 | src/registration/screens/success/useBallPurchase.ts | 50 | 55 | DONE | 19 tests (useBallPurchase.test.ts) |
 | src/registration/search/useMemberSearch.ts | 66 | 48 | DONE | 32 tests (useMemberSearch.test.ts) |
-| src/admin/hooks/useAdminHandlers.ts | 45 | 11 | TODO | — |
-| src/registration/group/useGroupGuest.ts | 45 | 8 | TODO | — |
+| src/admin/hooks/useAdminHandlers.ts | 45 | 11 | SKIP | contract test exists (useAdminHandlers.contract.test.ts); logic is in operation modules already tested |
+| src/registration/group/useGroupGuest.ts | 45 | 8 | DONE | 27 tests (useGroupGuest.test.ts) |
 | src/registration/blocks/useBlockAdmin.ts | 55 | 10 | TODO | — |
 
 ## Priority 2: Utility/Helper Functions
@@ -64,6 +64,13 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 ## Iteration Log
 
 
+
+### Iteration 7 — 2026-03-30
+Files tested: 1, Tests added: 27
+- src/registration/group/useGroupGuest.ts (27 tests): initial state (6 defaults), setters (setCurrentGroup, setGuestName, setGuestSponsor, setShowGuestForm, setShowGuestNameError, setShowSponsorError), handleRemovePlayer (middle/first/last index), handleSelectSponsor (sets sponsor, clears sponsorError, leaves guestNameError), handleCancelGuest (hides form, clears all 4 fields, preserves currentGroup), resetGuestForm (clears guest fields, preserves currentGroup), resetGroup (clears group + all guest fields), resetGroup vs resetGuestForm distinction
+- Note: src/admin/hooks/useAdminHandlers.ts skipped — already has contract test; operation modules (waitlistOperations, courtOperations) already have their own tests
+- npm run verify: all green
+- Next: src/registration/blocks/useBlockAdmin.ts
 
 ### Iteration 6 — 2026-03-30
 Files tested: 1, Tests added: 32
