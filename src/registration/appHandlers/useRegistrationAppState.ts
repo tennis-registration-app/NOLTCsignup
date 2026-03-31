@@ -17,6 +17,7 @@ import { getDataStore as _getDataStore, TennisCourtDataStore } from '../../lib/T
 
 // TennisBackend interface layer
 import { createBackend } from '../../lib/backend/index';
+import type { TennisBackendShape, TennisBusinessLogicShape } from '../../types/appTypes';
 
 // Overtime eligibility policy
 import { computeRegistrationCourtSelection } from '../../shared/courts/overtimeEligibility.js';
@@ -79,7 +80,7 @@ if (typeof window !== 'undefined') {
 }
 
 // TennisBackend singleton instance
-const backend = createBackend();
+const backend: TennisBackendShape = createBackend() as TennisBackendShape;
 
 /**
  * useRegistrationAppState
@@ -155,8 +156,8 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
     setCurrentTime,
     setBallPriceCents,
     setBlockWarningMinutes: (v) => setBlockWarningMinutesRef.current(v),
-    availableCourts: availableCourts as unknown as Parameters<typeof useRegistrationRuntime>[0]['availableCourts'],
-    backend: backend as unknown as Parameters<typeof useRegistrationRuntime>[0]['backend'],
+    availableCourts,
+    backend,
   });
   const { successResetTimerRef, typingTimeoutRef } = runtime;
 
@@ -274,19 +275,19 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
 
   // ===== RETURN ALL STATE AND HELPERS =====
   return buildRegistrationReturn({
-    ui: ui as unknown as Parameters<typeof buildRegistrationReturn>[0]['ui'],
-    domain: domain as unknown as Parameters<typeof buildRegistrationReturn>[0]['domain'],
+    ui: ui,
+    domain: domain,
     runtime,
-    _dataLayer: dataLayer as unknown as Parameters<typeof buildRegistrationReturn>[0]['_dataLayer'],
-    helpers: helpers as unknown as Parameters<typeof buildRegistrationReturn>[0]['helpers'],
-    derived: derived as unknown as Parameters<typeof buildRegistrationReturn>[0]['derived'],
+    _dataLayer: dataLayer,
+    helpers: helpers,
+    derived: derived,
     timeout: { showTimeoutWarning },
-    backend: backend as unknown as Parameters<typeof buildRegistrationReturn>[0]['backend'],
+    backend,
     dataStore,
     CONSTANTS,
     TENNIS_CONFIG,
     API_CONFIG,
-    TennisBusinessLogic: TennisBusinessLogic as unknown as Parameters<typeof buildRegistrationReturn>[0]['TennisBusinessLogic'],
+    TennisBusinessLogic: TennisBusinessLogic as TennisBusinessLogicShape,
     dbg,
     DEBUG,
     getCourtBlockStatus,

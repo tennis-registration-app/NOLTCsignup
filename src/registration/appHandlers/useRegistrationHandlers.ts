@@ -75,7 +75,7 @@ export function useRegistrationHandlers({ app }: { app: AppState }) {
   // then runs shell-level cleanup via orchestrator.
   const resetForm = useCallback(() => {
     resetWorkflow();
-    resetFormOrchestrated(createResetDeps() as unknown as Parameters<typeof resetFormOrchestrated>[0]);
+    resetFormOrchestrated(createResetDeps());
   }, [resetWorkflow, resetFormOrchestrated, createResetDeps]);
 
   // Check if player is already playing with detailed info

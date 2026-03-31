@@ -18,8 +18,8 @@ interface ApiMember {
   displayName?: string;
   name?: string;
   memberNumber?: string;
-  id: unknown;
-  accountId: unknown;
+  id: string;
+  accountId: string;
   isPrimary: boolean;
   unclearedStreak?: number;
   playCount?: number;
@@ -92,7 +92,7 @@ export function useMemberSearch({ backend, setCurrentScreen, CONSTANTS, markUser
     (input: string) => {
       if (!input || input.length < 1) return [];
 
-      const suggestions: Array<{ memberNumber: string; member: { id: unknown; name: string; accountId: unknown; isPrimary: boolean; unclearedStreak: number; playCount: number }; displayText: string }> = [];
+      const suggestions: Array<{ memberNumber: string; member: { id: string; name: string; accountId: string; isPrimary: boolean; unclearedStreak: number; playCount: number }; displayText: string }> = [];
       const lowerInput = input.toLowerCase();
 
       // If API members haven't loaded yet, return empty

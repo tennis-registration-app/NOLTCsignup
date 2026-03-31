@@ -12,7 +12,7 @@ import type { AppState, Handlers, RegistrationConstants, RegistrationUiState } f
 export interface AdminModel {
   // Data
   data: RegistrationUiState['data'];
-  currentTime: number;
+  currentTime: Date;
   // Alert state (read only)
   showAlert: boolean;
   alertMessage: string;

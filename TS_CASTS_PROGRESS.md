@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 58** (after iteration 1)
+- **Current count: 48** (after iteration 2)
 
 ---
 
@@ -57,3 +57,30 @@ Casts fixed (10 total):
     enabling removal of refresh cast at useRegistrationAppState.ts L218
 
 Next iteration targets: useRegistrationAppState.ts lines 158-159, 277-289 (module params to buildRegistrationReturn)
+
+## Current State
+- **48 casts remaining** after iteration 2
+
+
+### Iteration 2 (2026-03-31) — useRegistrationAppState + useRegistrationHandlers
+Target: 10 casts in useRegistrationAppState.ts + 1 in useRegistrationHandlers.ts
+Status: COMPLETE
+
+Casts fixed (10 total):
+  useRegistrationAppState.ts L158: availableCourts cast — removed (both are number[])
+  useRegistrationAppState.ts L159: backend cast — removed (typed const backend: TennisBackendShape)
+  useRegistrationAppState.ts L284: backend in buildRegistrationReturn — removed (typed as TennisBackendShape)
+  useRegistrationAppState.ts L289: TennisBusinessLogic cast — reduced to single as (not as unknown as)
+  useRegistrationAppState.ts L277-282: ui/domain/_dataLayer/helpers/derived casts — removed all 5
+    - Fixed useRegistrationRuntime.ts backend type (import TennisBackendShape)
+    - Fixed appTypes.ts: currentTime: number->Date, calculateEstimatedWaitTime/checkGroupOverlap/getOriginalEndTimeForGroup use Record<string,unknown>[] not GroupPlayer[], BlockAdminState.setBlockWarningMinutes Setter<number>, HelperFunctions.loadData Promise<unknown>, WaitlistEntrySummary id/position types
+    - Fixed useMemberSearch.ts: local ApiMember.id/accountId unknown->string
+    - Fixed useRegistrationDerived.ts: use DomainWaitlistEntry[], remove map annotation, fix passThrough/db types
+    - Fixed useMobileFlowController.ts: add explicit Promise<...> return type
+    - Fixed adminPresenter.ts: currentTime number->Date
+  useRegistrationHandlers.ts L78: createResetDeps cast — removed
+
+Current count: **48** (was 58 at start of iteration 1, 58 now)
+Remaining: useRegistrationHandlers.ts L100-120 (5 buildHandlerDeps casts, Category B — WorkflowProvider unknown fields)
+
+Next iteration targets: Fix WorkflowContext types (GroupGuestState, StreakState, MemberIdentityState) + dataStore null in UseAdminHandlersDeps

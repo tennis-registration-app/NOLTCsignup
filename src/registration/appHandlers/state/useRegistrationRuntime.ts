@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { TennisBackendShape } from '../../../types/appTypes';
 import { normalizeSettings } from '../../../lib/normalize/index';
 import { logger } from '../../../lib/logger';
 
@@ -14,7 +15,7 @@ interface UseRegistrationRuntimeDeps {
   setBallPriceCents: (cents: number) => void;
   setBlockWarningMinutes: (minutes: number) => void;
   availableCourts: number[];
-  backend: { admin: { getSettings: () => Promise<{ ok: boolean; settings: Record<string, unknown> }> } };
+  backend: TennisBackendShape;
 }
 
 export function useRegistrationRuntime({

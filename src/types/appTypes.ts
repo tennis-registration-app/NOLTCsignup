@@ -286,7 +286,7 @@ export interface TennisBusinessLogicShape {
   // Evidence: TennisBusinessLogic.js:62 — courts accessed as court.session?.scheduledEndAt, court.number
   calculateEstimatedWaitTime: (
     position: number,
-    courts: DomainCourt[],
+    courts: Record<string, unknown>[],
     currentTime: Date,
     avgGameTime?: number,
   ) => number;
@@ -305,11 +305,11 @@ export interface TennisBusinessLogicShape {
   ) => number;
   // Evidence: TennisBusinessLogic.js:191 — both groups accessed via .id
   checkGroupOverlap: (
-    group1: GroupPlayer[],
-    group2: GroupPlayer[],
+    group1: Array<Record<string, unknown>>,
+    group2: Array<Record<string, unknown>>,
   ) => {
     hasOverlap: boolean;
-    overlappingPlayers: GroupPlayer[];
+    overlappingPlayers: Array<Record<string, unknown>>;
     overlappingCount: number;
     isExactMatch: boolean;
     isSubset: boolean;
@@ -319,8 +319,8 @@ export interface TennisBusinessLogicShape {
   };
   // Evidence: TennisBusinessLogic.js:223 — players compared via sameGroup, recentlyCleared has {originalEndTime, players}
   getOriginalEndTimeForGroup: (
-    players: GroupPlayer[],
-    recentlyCleared: Array<{ originalEndTime: string; players: GroupPlayer[] }>,
+    players: Array<Record<string, unknown>>,
+    recentlyCleared: Array<{ originalEndTime: string; players: Array<Record<string, unknown>> }>,
   ) => string | null;
   // Evidence: TennisBusinessLogic.js:29 — compares by .memberId, .id, .name
   sameGroup: (a?: Array<Record<string, unknown>>, b?: Array<Record<string, unknown>>) => boolean;
@@ -443,7 +443,7 @@ export interface RegistrationUiState {
   /** Available court numbers */
   availableCourts: number[];
   /** Current timestamp */
-  currentTime: number;
+  currentTime: Date;
   /** Court number being moved */
   courtToMove: number | null;
   /** Ball price input value */
@@ -524,8 +524,8 @@ export interface HelperFunctions {
   getCourtData: () => RegistrationUiState['data'];
   // Evidence: useRegistrationHelpers — clears successResetTimerRef
   clearSuccessResetTimer: () => void;
-  // Evidence: useRegistrationDataLayer — fetches board from backend
-  loadData: () => Promise<void>;
+  // Evidence: useRegistrationDataLayer — fetches board from backend, returns board data or undefined
+  loadData: () => Promise<unknown>;
   // Evidence: useRegistrationAppState — resets all state for inactivity timeout
   applyInactivityTimeoutExitSequence: () => void;
   // Evidence: useRegistrationHelpers — returns sorted court numbers with active sessions
@@ -714,7 +714,7 @@ export interface BlockAdminState {
   /** Minutes until block warning */
   blockWarningMinutes: number | null;
   // Evidence: useBlockAdmin — dispatch SET_BLOCK_WARNING_MINUTES
-  setBlockWarningMinutes: Setter<number | null>;
+  setBlockWarningMinutes: Setter<number>;
   // Evidence: useBlockAdmin — checks block status for a court number
   getCourtBlockStatus: (courtNumber: number) => CourtBlockStatusResult | null;
   // Evidence: useBlockAdmin — dispatch SET_SHOW_BLOCK_MODAL
@@ -1137,8 +1137,8 @@ export interface SelectableCourt {
 
 /** Waitlist entry summary used in derived state. Evidence: useRegistrationDerived.js:32-109 */
 export interface WaitlistEntrySummary {
-  id: string;
-  position: number;
+  id: string | null | undefined;
+  position: number | null | undefined;
   players: DomainMember[];
 }
 
