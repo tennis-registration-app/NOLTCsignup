@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 40** (after iteration 4)
+- **Current count: 36** (after iteration 5)
 
 ---
 
@@ -148,4 +148,35 @@ Remaining: admin files (~19), lib files (~4), registration/screens (~7), groupHa
 
 Next iteration targets: useRegistrationDomainHooks.ts (2 casts), useRegistrationHelpers.ts (1 cast),
   groupHandlers.ts (1 cast), courtHandlers.ts (1 cast) — all structural/fixable patterns
+
+
+### Iteration 5 (2026-03-31) — useRegistrationDomainHooks + useRegistrationHelpers + groupHandlers + courtHandlers
+Target: useRegistrationDomainHooks.ts (2 casts), useRegistrationHelpers.ts (1 cast), groupHandlers.ts (1 cast), courtHandlers.ts (1 cast)
+Status: COMPLETE
+
+Casts removed (4 total):
+  useRegistrationDomainHooks.ts L178: getCourtData cast to useBlockAdmin — removed
+    Fix: widened UseRegistrationDomainHooksDeps.getCourtData.courts from unknown[] to
+    Array<{ id?: string; number?: number }> (no index sig — compatible with DomainCourt[])
+  useRegistrationDomainHooks.ts L183: getCourtData cast to useWaitlistAdmin — removed
+    Fix: same type fix as L178; waitlist type already matched
+  useRegistrationHelpers.ts L99: findEngagementByMemberId cast — removed
+    Fix: added EngagementBoard interface to engagement.ts with optional courts/waitlist fields;
+    widened findEngagementByMemberId param to Board | EngagementBoard
+    (Board.serverNow required but RegistrationUiState.data.serverNow optional — structural incompatibility)
+  groupHandlers.ts L117: DataValidation.isValidPlayer cast — removed
+    Fix: widened isValidPlayer param from Record<string, unknown> to { id?: unknown; name?: unknown }
+    in both src/lib/DataValidation.ts and src/registration/services/DataValidation.ts
+
+Casts annotated (1 total, Category C — Necessary):
+  courtHandlers.ts L357: createAssignCourtDeps() cast — kept with Type assertion comment
+    Root cause: validateGroupCompat parameter contravariance — CourtHandlerDeps.validateGroupCompat
+    expects GroupPlayer[] (what callers provide) while AssignCourtServices expects
+    Pick<GroupPlayer, id|name>[] (what the orchestrator passes internally after mapping).
+    Fixing requires aligning the orchestrator player mapping across multiple files — deferred.
+
+Current count: **36** (was 40 at start of iteration 5)
+Remaining: admin files (~19), lib files (~4), registration/screens (3 annotated C), other (~10)
+
+Next iteration targets: admin/hooks/useAdminAppState.ts (2 casts), admin/tabs/StatusSection.tsx (7 casts)
 

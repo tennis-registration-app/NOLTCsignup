@@ -114,7 +114,7 @@ export function useGroupHandlers({
       );
 
       // Validate player object
-      if (!DataValidation.isValidPlayer(player as unknown as Record<string, unknown>)) {
+      if (!DataValidation.isValidPlayer(player)) {
         logger.debug('GroupHandlers', 'Invalid player data - validation failed', {
           player,
           hasId: !!player?.id,

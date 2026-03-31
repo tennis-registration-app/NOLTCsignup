@@ -25,7 +25,7 @@ export const DataValidation = {
     );
   },
 
-  isValidPlayer(player: Record<string, unknown>) {
+  isValidPlayer(player: { id?: unknown; name?: unknown }) {
     // ID can be:
     // - A number (legacy hardcoded data)
     // - A numeric string like "1021" (legacy)
