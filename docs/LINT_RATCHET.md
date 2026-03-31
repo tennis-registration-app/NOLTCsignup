@@ -26,13 +26,15 @@ Source of truth: `eslint-baseline.json` (see git history for changes).
 | Metric | Count |
 |--------|-------|
 | Errors | 0 |
-| Warnings | 1 |
+| Warnings | 3 |
 
 ### Warning Breakdown by Rule
 
 | Rule | Count |
 |------|-------|
+| `@typescript-eslint/no-unused-vars` | 1 |
 | `react-hooks/exhaustive-deps` | 1 |
+| `unknown` | 1 |
 
 ## Lint Configuration
 
@@ -79,9 +81,11 @@ npx eslint src/ --ext .js,.jsx --format json
 ```json
 {
   "errors": 0,
-  "warnings": 1,
+  "warnings": 3,
   "byRule": {
-    "react-hooks/exhaustive-deps": 1
+    "@typescript-eslint/no-unused-vars": 1,
+    "react-hooks/exhaustive-deps": 1,
+    "unknown": 1
   }
 }
 ```

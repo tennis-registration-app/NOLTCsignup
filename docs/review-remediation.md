@@ -80,8 +80,9 @@ Based on two independent architectural reviews (Claude Code Opus) evaluating the
 - **Mitigation:** ESLint boundary rules prevent new window.Tennis access outside platform/. Bridge is documented in registerGlobals.js and windowBridge.js.
 - **Deletion condition:** Convert courtboard to Vite-bundled app (all scripts become ESM modules).
 
-### Admin App.jsx Size (484 lines)
-- **Status:** Reduced from 510 but still large. 2 useEffects, 1 useMemo, 8 useState remain.
+### ~~Admin App.jsx Size~~ — RESOLVED
+- **Status:** ✅ Resolved. `admin/App.tsx` is now 179 lines (reduced from 510 → 484 → 179).
+- **Resolution:** buildAdminController, useAdminHandlers, and presenter extraction completed. Composition root is now thin.
 - **Why:** Composition root with tab routing, provider nesting, and state initialization. Further extraction has diminishing returns — the handlers and presenters are already extracted.
 - **Mitigation:** buildAdminController + useAdminHandlers + 4 presenters handle the complex logic.
 

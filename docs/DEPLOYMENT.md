@@ -91,34 +91,23 @@ Security headers are configured in `vercel.json` and applied to all routes.
 
 ### Content Security Policy
 
-CSP is currently in **Report-Only** mode. Violations are logged in the browser console but do not block resources.
+CSP is **fully enforced** on all routes via `Content-Security-Policy` header in `vercel.json`. All scripts are bundled by Vite (`script-src 'self'` — no inline scripts, no CDN). See [CSP_ROLLOUT.md](./CSP_ROLLOUT.md) for the full rollout history.
 
 | Directive | Value | Reason |
 |-----------|-------|--------|
 | `default-src` | `'self'` | Baseline deny |
-| `script-src` | `'self' 'unsafe-inline' https://cdn.tailwindcss.com` | Inline scripts in HTML + Tailwind CDN |
-| `style-src` | `'self' 'unsafe-inline'` | Inline styles + Tailwind runtime |
-| `connect-src` | `'self' https://dncjloqewjubodkoruou.supabase.co https://camera.noltc.com` | Supabase API + camera iframe |
+| `script-src` | `'self'` | All scripts bundled by Vite — no inline, no CDN |
+| `style-src` | `'self' 'unsafe-inline'` | React style injection requires inline styles |
+| `connect-src` | `'self' https://…supabase.co wss://…supabase.co https://camera.noltc.com` | Supabase REST + Realtime WebSocket + camera |
 | `frame-src` | `'self' https://camera.noltc.com` | Internal iframes + wet court camera |
 | `frame-ancestors` | `'self'` | Clickjacking defense |
 | `img-src` | `'self' data:` | Favicon data URI |
+| `font-src` | `'self'` | Local fonts only |
 | `object-src` | `'none'` | Block plugins |
+| `base-uri` | `'self'` | Prevent base tag hijacking |
+| `form-action` | `'self'` | Prevent form exfiltration |
 
-**If the production Supabase URL changes**, update `connect-src` in `vercel.json` to match the new host.
-
-### Switching to Enforced Mode
-
-1. Monitor browser console for CSP violations in Report-Only mode
-2. Fix any legitimate violations
-3. Change `Content-Security-Policy-Report-Only` to `Content-Security-Policy` in `vercel.json`
-
-### Removing `unsafe-inline` (Future)
-
-`unsafe-inline` is required because production HTML contains inline `<script>` blocks and `onclick` handlers. To remove it:
-1. Extract inline scripts to external `.js` files
-2. Replace `onclick` handlers with `addEventListener`
-3. Bundle Tailwind (remove CDN runtime) — eliminates the cdn.tailwindcss.com allowlist entry
-4. Replace `unsafe-inline` with specific `sha256-*` hashes or remove entirely
+**If the production Supabase URL changes**, update `connect-src` in `vercel.json` to match the new host (both `https://` and `wss://`).
 
 ### Other Security Headers
 

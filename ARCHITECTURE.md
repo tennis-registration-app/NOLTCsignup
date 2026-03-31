@@ -85,7 +85,7 @@ The registration app is the most complex frontend, handling member check-in, cou
 
 ```
 src/registration/
-├── App.tsx (36 lines) — Composition root
+├── App.tsx (72 lines) — Composition root
 │   ├── useRegistrationAppState() — All state/hooks
 │   ├── useRegistrationHandlers() — All handlers
 │   └── <RegistrationRouter app={app} handlers={handlers} />
@@ -125,7 +125,7 @@ appHandlers/handlers/
 
 ```
 router/
-├── RegistrationRouter.tsx — Thin switch (59 lines)
+├── RegistrationRouter.tsx — Thin switch (73 lines)
 └── routes/
     ├── HomeRoute.tsx — Home/search
     ├── AdminRoute.tsx — Admin interface
@@ -356,7 +356,7 @@ function GroupRoute({ app, handlers }) {
   orchestrators, presenters (including behavioral presenter tests)
 - Mock external dependencies (API, storage)
 
-Coverage ratchet enforced via CI (current baseline: 53.92% statements, 49.22% branches, 45.84% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
+Coverage ratchet enforced via CI (current baseline: 53.4% statements, 47.92% branches, 45.07% functions). Type-error ratchet enforced at 0 errors with `strictNullChecks` enabled.
 
 ### E2E Tests (Playwright)
 
