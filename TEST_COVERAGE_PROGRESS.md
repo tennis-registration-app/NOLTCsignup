@@ -11,7 +11,7 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 |------|-------|-----|--------|-------|
 | src/admin/blocks/utils/blockValidation.ts | 0 | 0 | DONE | 18 tests (blockValidation.test.ts) |
 | src/registration/appHandlers/state/useRegistrationDerived.ts | 64 | 60 | DONE | 15 tests (useRegistrationDerived.test.ts) |
-| src/registration/memberIdentity/useMemberIdentity.ts | 24 | 10 | TODO | — |
+| src/registration/memberIdentity/useMemberIdentity.ts | 24 | 10 | DONE | 19 tests (useMemberIdentity.test.ts) |
 | src/registration/ui/timeout/useSessionTimeout.ts | 24 | 29 | TODO | — |
 | src/registration/ui/mobile/useMobileFlowController.ts | 24 | 18 | TODO | — |
 | src/registration/screens/success/useBallPurchase.ts | 50 | 55 | TODO | — |
@@ -62,6 +62,13 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 ---
 
 ## Iteration Log
+
+
+### Iteration 2 — 2026-03-30
+Files tested: 1, Tests added: 19
+- src/registration/memberIdentity/useMemberIdentity.ts (19 tests): guards (empty memberId, null/undefined backend), API transform shape, ok:false, error/throw path, cache dedup (in-flight skip), cache hit within TTL, clearCache re-fetch, resetMemberIdentity (preserves cache), resetMemberIdentityWithCache (clears cache), all 4 setters
+- npm run verify: all green (lint, types, coverage improved)
+- Next: src/registration/ui/timeout/useSessionTimeout.ts
 
 ### Iteration 1 — 2026-03-30
 Files tested: 2, Tests added: 33
