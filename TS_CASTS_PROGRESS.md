@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 48** (after iteration 2)
+- **Current count: 43** (after iteration 3)
 
 ---
 
@@ -84,3 +84,37 @@ Current count: **48** (was 58 at start of iteration 1, 58 now)
 Remaining: useRegistrationHandlers.ts L100-120 (5 buildHandlerDeps casts, Category B — WorkflowProvider unknown fields)
 
 Next iteration targets: Fix WorkflowContext types (GroupGuestState, StreakState, MemberIdentityState) + dataStore null in UseAdminHandlersDeps
+
+### Iteration 3 (2026-03-31) — useRegistrationHandlers + handler dep types
+Target: 5 remaining casts in useRegistrationHandlers.ts L100-120 (buildXxxHandlerDeps casts)
+Status: COMPLETE
+
+Casts fixed (5 total):
+  useRegistrationHandlers.ts L100: buildCourtHandlerDeps cast — removed
+  useRegistrationHandlers.ts L105: buildAdminHandlerDeps cast — removed
+  useRegistrationHandlers.ts L110: buildGuestHandlerDeps cast — removed
+  useRegistrationHandlers.ts L115: buildGroupHandlerDeps cast — removed
+  useRegistrationHandlers.ts L120: buildNavigationHandlerDeps cast — removed
+
+Root cause: buildHandlerDeps.ts typed workflow/core as Record<string, unknown>, making return types
+all-unknown. Fix: added WorkflowContextValue and CoreHandlerFns interfaces with proper types.
+
+Cascading type fixes required (all type-only, no logic changes):
+  - groupHandlers.ts: UseGroupHandlersDeps — replaced AnyFn with proper types (StreakState, 
+    SearchState, MemberIdentityState, AlertState, RegistrationConstants, AutocompleteSuggestion, 
+    ReturnType<typeof useCourtHandlers> for court); removed unused AnyFn type
+  - groupHandlers.ts: Player interface — extends GroupPlayer (id: string, memberNumber: string)
+  - groupHandlers.ts: suggestion params typed as AutocompleteSuggestion
+  - navigationHandlers.ts: setCurrentGroup typed as (val: GroupPlayer[]) => void
+  - adminHandlers.ts: services.dataStore typed as DataStoreShape | null; parsed typed as Record<string,unknown>
+  - appTypes.ts: GroupGuestState.currentGroup: GroupPlayer[] (not | null — reducer never sets null)
+  - appTypes.ts: GroupGuestState.setCurrentGroup: Setter<GroupPlayer[]>
+  - groupGuestReducer.ts: currentGroup: GroupPlayer[], action value: GroupPlayer[]
+  - useGroupGuest.ts: setCurrentGroup parameter: GroupPlayer[]
+  - buildHandlerDeps.ts: WorkflowContextValue + CoreHandlerFns + CourtHandlersSubset (ReturnType) interfaces
+
+Current count: **43** (was 48 at start of iteration 3)
+Remaining: App.tsx (1), HomeScreen.tsx (3), AdminRoute.tsx (1), admin files (19), lib files (4), other (15)
+
+Next iteration targets: HomeScreen.tsx setCurrentGroup casts (3), App.tsx handlers cast (1),
+  AdminRoute.tsx cast (1) — all structural mismatch pattern

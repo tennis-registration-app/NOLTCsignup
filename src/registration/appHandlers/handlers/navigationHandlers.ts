@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { GroupPlayer } from '../../../types/appTypes';
 
 // Import services for handlers that need them
 import { GeolocationService } from '../../services';
@@ -22,7 +23,7 @@ interface UseNavigationHandlersDeps {
     setGuestSponsor: (val: string) => void;
     setShowGuestNameError: (val: boolean) => void;
     setShowSponsorError: (val: boolean) => void;
-    setCurrentGroup: (val: unknown[]) => void;
+    setCurrentGroup: (val: GroupPlayer[]) => void;
   };
   memberIdentity: {
     setMemberNumber: (val: string) => void;

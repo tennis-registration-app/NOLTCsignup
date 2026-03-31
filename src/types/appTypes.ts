@@ -773,7 +773,7 @@ export interface WaitlistAdminState {
 // New fields for group/guest management should be added here, not as AppState top-level keys.
 export interface GroupGuestState {
   /** Current group being registered */
-  currentGroup: GroupPlayer[] | null;
+  currentGroup: GroupPlayer[];
   /** Guest form visible */
   showGuestForm: boolean;
   /** Guest name input */
@@ -785,7 +785,7 @@ export interface GroupGuestState {
   /** Sponsor validation error */
   showSponsorError: boolean;
   // Evidence: useGroupGuest — dispatch SET_CURRENT_GROUP
-  setCurrentGroup: Setter<GroupPlayer[] | null>;
+  setCurrentGroup: Setter<GroupPlayer[]>;
   // Evidence: useGroupGuest — dispatch SET_GUEST_NAME
   setGuestName: Setter<string>;
   // Evidence: useGroupGuest — dispatch SET_GUEST_SPONSOR (member number string)

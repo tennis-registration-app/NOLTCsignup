@@ -1,3 +1,4 @@
+import type { GroupPlayer } from '../../types/appTypes';
 /**
  * Group/Guest Reducer
  * Manages group composition and guest form state.
@@ -7,7 +8,7 @@
  */
 
 export interface GroupGuestState {
-  currentGroup: unknown[];
+  currentGroup: GroupPlayer[];
   guestName: string;
   guestSponsor: string;
   showGuestForm: boolean;
@@ -16,7 +17,7 @@ export interface GroupGuestState {
 }
 
 type GroupGuestAction =
-  | { type: 'CURRENT_GROUP_SET'; value: unknown[] }
+  | { type: 'CURRENT_GROUP_SET'; value: GroupPlayer[] }
   | { type: 'CURRENT_GROUP_PLAYER_REMOVED'; index: number }
   | { type: 'GUEST_NAME_SET'; value: string }
   | { type: 'GUEST_SPONSOR_SET'; value: string }

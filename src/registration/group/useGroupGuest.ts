@@ -1,3 +1,4 @@
+import type { GroupPlayer } from '../../types/appTypes';
 /**
  * useGroupGuest Hook
  * Orchestrates group composition and guest form state.
@@ -14,7 +15,7 @@ export function useGroupGuest() {
   // ============================================
   // Setters (for external callers like selection handlers)
   // ============================================
-  const setCurrentGroup = useCallback((value: unknown[]) => {
+  const setCurrentGroup = useCallback((value: GroupPlayer[]) => {
     dispatch({ type: 'CURRENT_GROUP_SET', value });
   }, []);
 
