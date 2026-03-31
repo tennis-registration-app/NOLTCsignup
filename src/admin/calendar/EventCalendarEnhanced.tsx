@@ -183,14 +183,14 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
 
   // Memoized event extraction and processing
   const events = useMemo(
-    () => buildCalendarEvents({ blocks, courts }) as CalendarEvent[],
+    () => buildCalendarEvents({ blocks, courts }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshTrigger intentionally forces re-compute on external events (block creation/deletion)
     [blocks, courts, refreshTrigger]
   );
 
   // Memoized filtered events based on view and date range
   const filteredEvents = useMemo(
-    () => filterCalendarEvents({ events, viewMode, selectedDate }) as CalendarEvent[],
+    () => filterCalendarEvents({ events, viewMode, selectedDate }),
     [events, viewMode, selectedDate]
   );
 

@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 26** (after iteration 7)
+- **Current count: 18** (after iteration 8)
 
 ---
 
@@ -246,4 +246,39 @@ Remaining: admin/App.tsx (2 casts), EventCalendarEnhanced.tsx (5 casts), useSyst
 
 Next iteration targets: EventCalendarEnhanced.tsx (5 casts), admin/App.tsx (2 casts),
   useSystemSettingsState.ts (1 cast)
+
+### Iteration 8 (2026-03-31) — EventCalendarEnhanced.tsx + useSystemSettingsState.ts + admin/App.tsx
+Target: EventCalendarEnhanced.tsx (5 casts), useSystemSettingsState.ts (1 cast), admin/App.tsx components casts (2)
+Status: COMPLETE
+
+Casts removed (8 total):
+  EventCalendarEnhanced.tsx L168: setBlocks cast — removed
+    Fix: typed transformedBlocks as CalendarEvent[] with explicit map callback return type
+  EventCalendarEnhanced.tsx L186 (blocks): as unknown as Record<string,unknown>[] — removed
+    Fix: updated eventCalendarPresenter.buildCalendarEvents to accept CalendarEvent[] directly
+  EventCalendarEnhanced.tsx L186 (courts): as unknown as Record<string,unknown>[] — removed
+    Fix: updated presenter to accept CalendarCourtLike[] (already defined interface)
+  EventCalendarEnhanced.tsx L193: filterCalendarEvents cast — removed
+    Fix: updated presenter.filterCalendarEvents to accept/return CalendarEvent[]
+  EventCalendarEnhanced.tsx L439: filteredEvents as unknown as CalendarEvent[] — removed
+    Fix: filterCalendarEvents now returns CalendarEvent[]
+  EventCalendarEnhanced.tsx L454: filteredEvents as unknown as CalendarEvent[] — removed (same)
+  useSystemSettingsState.ts L224: (result as unknown as Record<string,unknown>).error — removed
+    Fix: added error?: string to CommandResponse interface in appTypes.ts; used result.message
+  admin/App.tsx L90+L100: blocks.components casts — removed
+    Fix: blocks.components is already ReturnType<typeof createBlockComponents> from buildAdminController
+
+Type fixes required (no logic changes):
+  appTypes.ts: CommandResponse.error?: string added (real API field from AdminCommands.ts:9)
+  adminAnalytics.ts: normalizeCalendarBlock recurrenceGroupId cast to string | null
+    (TypeScript infers {} | null from unknown ?? unknown ?? null)
+  eventCalendarPresenter.ts: buildCalendarEvents/filterCalendarEvents now fully typed with
+    CalendarEvent[] params and return types; Map<string,CalendarEvent>; removed all Record<string,unknown> params
+
+Current count: **18** (was 26 at start of iteration 8)
+Remaining: admin/App.tsx (1 annotated C — CompleteBlockManagerEnhanced injection), CompleteBlockManagerEnhanced.tsx (3 annotated C),
+  CourtStatusGrid.tsx (1 annotated C), useAdminSettings.ts (2 annotated C), StatusSection.tsx (3 annotated C),
+  useUsageComparisonQuery.ts (1), lib/ (4), registration (3 annotated C)
+
+Next iteration targets: useUsageComparisonQuery.ts (1 fixable cast), lib/ files (4 casts)
 

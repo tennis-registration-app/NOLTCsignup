@@ -122,7 +122,7 @@ export const API_CONFIG = new Proxy(
         return undefined;
       },
     }
-  ) as unknown as ApiConfigShape;
+  ) as unknown as ApiConfigShape; // Type assertion: new Proxy() returns {} which TypeScript cannot type structurally; Proxy type inference is a known TS limitation
 
 // =============================================================================
 // ENDPOINTS (preserve export name and keys exactly as previously defined)

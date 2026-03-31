@@ -221,7 +221,7 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }: {
         setTimeout(() => setAutoClearSaveStatus(null), 2000);
         if (onSettingsChanged) onSettingsChanged();
       } else {
-        setAutoClearError(((result as unknown as Record<string,unknown>).error as string) || 'Failed to save');
+        setAutoClearError(result.message || 'Failed to save');
         setAutoClearSaveStatus('error');
       }
     } catch (err) {

@@ -142,6 +142,7 @@ export interface CommandResponse {
   ok: boolean;
   code?: string;
   message?: string;
+  error?: string;
   serverNow?: string;
 }
 
@@ -435,7 +436,8 @@ export interface RegistrationUiState {
     /** Active blocks (derived) */
     blocks: BoardBlock[];
     /** Server timestamp */
-    serverNow?: string;
+    error?: string;
+  serverNow?: string;
     /** Operating hours from board */
     operatingHours?: OperatingHoursEntry[];
     [key: string]: unknown;
