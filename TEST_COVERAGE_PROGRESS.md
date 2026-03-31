@@ -66,6 +66,13 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 
 
+### Iteration 11 â 2026-03-30
+Files tested: 2, Tests added: 23
+- src/shared/utils/toast.ts (10 tests): dispatches UI_TOAST CustomEvent, sets msg in detail, includes type/duration options, includes both type and duration, no-options detail has only msg, multiple calls dispatch separate events, info type, warning type, empty string message
+- src/registration/court/useCourtAssignmentResult.ts (13 tests): initial state (4 defaults), setJustAssignedCourt (number/null), setAssignedSessionId (string/null), setAssignedEndTime (string/null), setHasAssignedCourt (true/false), resetCourtAssignmentResult (all fields reset, isolated from other instances), returned surface (9 expected keys, all callables)
+- npm run verify: 177 test files, 3395 tests, all green
+- Next: src/admin/utils/adminRefresh.ts (SKIP â IIFE side-effect module, not testable without extensive global mocking) or Priority 4 hooks
+
 ### Iteration 10 — 2026-03-30
 Files tested: 1, Tests added: 12
 - src/registration/waitlist/useWaitlistAdmin.ts (12 tests): initial state (waitlistMoveFrom=null), setWaitlistMoveFrom (to number, to zero, to null, multiple sequential calls), onReorderWaitlist (delegates to handleReorderWaitlistOp with correct ctx/fromIndex/toIndex, passes live setWaitlistMoveFrom to null, passes live setWaitlistMoveFrom to number, reversed indices), returned surface (key list, setWaitlistMoveFrom is function, onReorderWaitlist is function)
