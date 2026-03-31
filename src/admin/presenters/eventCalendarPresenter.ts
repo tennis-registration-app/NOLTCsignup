@@ -4,6 +4,14 @@
  * Returns identical shapes to what the component previously computed inline.
  */
 import { getEventTypeFromReason } from '../calendar/utils';
+import type { CalendarEvent } from '../calendar/utils';
+
+interface CalendarCourtLike {
+  id?: string;
+  court_number?: number;
+  courtNumber?: number;
+  blocked?: Record<string, unknown> | null;
+}
 
 /**
  * Build calendar events from blocks and courts data.
@@ -12,11 +20,11 @@ import { getEventTypeFromReason } from '../calendar/utils';
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 142-199).
  */
-export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,unknown>[]; courts: Record<string,unknown>[] }) {
+export function buildCalendarEvents({ blocks, courts }: { blocks: CalendarEvent[]; courts: CalendarCourtLike[] }) {
   const processedEvents = new Map();
 
   // Process API-sourced blocks
-  blocks.forEach((block: Record<string,unknown>) => {
+  blocks.forEach((block: CalendarEvent) => {
     if (block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -31,7 +39,7 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
   });
 
   // Process non-event blocks
-  blocks.forEach((block: Record<string,unknown>) => {
+  blocks.forEach((block: CalendarEvent) => {
     if (!block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -53,7 +61,7 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
   });
 
   // Also check courts data for backward compatibility with active blocks
-  courts.forEach((court: Record<string,unknown> | null, idx: number) => {
+  courts.forEach((court: CalendarCourtLike | null, idx: number) => {
     if (!court) return;
     const blocked = court.blocked as Record<string,unknown> | null | undefined;
     if (blocked && (blocked.isEvent as unknown)) {
@@ -77,7 +85,7 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 202-239).
  */
-export function filterCalendarEvents({ events, viewMode, selectedDate }: { events: Record<string,unknown>[]; viewMode: string; selectedDate: Date }) {
+export function filterCalendarEvents({ events, viewMode, selectedDate }: { events: CalendarEvent[]; viewMode: string; selectedDate: Date }) {
   let startDate, endDate;
 
   if (viewMode === 'month') {
@@ -97,9 +105,9 @@ export function filterCalendarEvents({ events, viewMode, selectedDate }: { event
     endDate.setHours(23, 59, 59, 999);
   }
 
-  return events.filter((event: Record<string,unknown>) => {
-    const eventStart = new Date(event.startTime as string);
-    const eventEnd = new Date(event.endTime as string);
+  return events.filter((event: CalendarEvent) => {
+    const eventStart = new Date(event.startTime);
+    const eventEnd = new Date(event.endTime);
     return (
       (eventStart >= startDate && eventStart <= endDate) ||
       (eventEnd >= startDate && eventEnd <= endDate) ||

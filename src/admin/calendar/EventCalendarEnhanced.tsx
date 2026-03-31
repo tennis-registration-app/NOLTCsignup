@@ -139,7 +139,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
         if (result.ok) {
           // Transform API response to calendar event format
           // Normalize at ingestion, then use camelCase
-          const transformedBlocks = (result.blocks ?? []).map((b) => {
+          const transformedBlocks: CalendarEvent[] = (result.blocks ?? []).map((b): CalendarEvent => {
             const normalized = normalizeCalendarBlock(b);
 
             return {
@@ -165,7 +165,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
                 normalized.blockType === 'wet' || normalized.title?.toLowerCase().includes('wet'),
             };
           });
-          setBlocks(transformedBlocks as unknown as Parameters<typeof setBlocks>[0]);
+          setBlocks(transformedBlocks);
         } else {
           logger.error('AdminCalendar', 'API error', result.message);
           setError(result.message || 'Failed to fetch blocks');
@@ -183,14 +183,14 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
 
   // Memoized event extraction and processing
   const events = useMemo(
-    () => buildCalendarEvents({ blocks: blocks as unknown as Record<string,unknown>[], courts: courts as unknown as Record<string,unknown>[] }) as CalendarEvent[],
+    () => buildCalendarEvents({ blocks, courts }) as CalendarEvent[],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refreshTrigger intentionally forces re-compute on external events (block creation/deletion)
     [blocks, courts, refreshTrigger]
   );
 
   // Memoized filtered events based on view and date range
   const filteredEvents = useMemo(
-    () => filterCalendarEvents({ events: events as unknown as Record<string,unknown>[], viewMode, selectedDate }) as unknown as CalendarEvent[],
+    () => filterCalendarEvents({ events, viewMode, selectedDate }) as CalendarEvent[],
     [events, viewMode, selectedDate]
   );
 
@@ -436,7 +436,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
               <div className="h-[600px] overflow-auto">
                 <WeekView
                   selectedDate={selectedDate}
-                  events={filteredEvents as unknown as CalendarEvent[]}
+                  events={filteredEvents}
                   currentTime={currentTime}
                   hoursOverrides={hoursOverrides}
                   onEventClick={handleEventClick}
@@ -451,7 +451,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
               <div className="h-[600px] overflow-auto">
                 <DayViewEnhanced
                   selectedDate={selectedDate}
-                  events={filteredEvents as unknown as CalendarEvent[]}
+                  events={filteredEvents}
                   currentTime={currentTime}
                   hoursOverrides={hoursOverrides}
                   onEventClick={handleEventClick}
