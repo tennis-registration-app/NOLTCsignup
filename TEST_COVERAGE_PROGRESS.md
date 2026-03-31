@@ -14,7 +14,7 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 | src/registration/memberIdentity/useMemberIdentity.ts | 24 | 10 | DONE | 19 tests (useMemberIdentity.test.ts) |
 | src/registration/ui/timeout/useSessionTimeout.ts | 24 | 29 | DONE | 17 tests (useSessionTimeout.test.ts) |
 | src/registration/ui/mobile/useMobileFlowController.ts | 24 | 18 | DONE | 28 tests (useMobileFlowController.test.ts) |
-| src/registration/screens/success/useBallPurchase.ts | 50 | 55 | TODO | — |
+| src/registration/screens/success/useBallPurchase.ts | 50 | 55 | DONE | 19 tests (useBallPurchase.test.ts) |
 | src/registration/search/useMemberSearch.ts | 66 | 48 | TODO | — |
 | src/admin/hooks/useAdminHandlers.ts | 45 | 11 | TODO | — |
 | src/registration/group/useGroupGuest.ts | 45 | 8 | TODO | — |
@@ -65,6 +65,11 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 
 
+### Iteration 5 — 2026-03-30
+Files tested: 1, Tests added: 19
+- src/registration/screens/success/useBallPurchase.ts (19 tests): initial state (5 defaults), double-submit guard (ignores in-flight duplicate), sessionId resolution (prefers prop, falls back to assignedCourt.session.id), accountId lookup (uses group directly, looks up by memberNumber, uses first non-primary result), purchaseDetails (charge type=single, split type=split with non-guest last4), successful purchase (ballsPurchased=true, modal closed, isProcessingPurchase reset), API ok:false fallback (falls through to localStorage, setCache called, isProcessingPurchase reset), split fallback (splitAccountIds=null when <2 IDs resolved)
+- npm run verify: all green
+- Next: src/registration/search/useMemberSearch.ts
 ### Iteration 4 — 2026-03-30
 Files tested: 1, Tests added: 28
 - src/registration/ui/mobile/useMobileFlowController.ts (28 tests): initial state (8 defaults), all setters exported, getMobileGeolocation (non-mobile returns null, location_token path, geolocation unavailable, success path, error path), onQRScanToken (sets token, closes scanner, clears gpsFailedPrompt, calls toast, null toast safe), QR controls (openQRScanner, onQRScannerClose, dismissGpsPrompt), requestMobileReset (no postMessage in non-iframe), message listener register (mobileFlow=true, preselectedCourt set/not-set, unknown type ignored), message listener assign-from-waitlist (sets state, calls backend, error toast on ok:false, error toast on throw), success signal effect (countdown stays at 5 in jsdom — window.top===window.self guard, both mobileFlow-false and showSuccess-false cases)
