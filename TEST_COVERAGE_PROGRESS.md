@@ -24,10 +24,10 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 | File | Stmt% | Fn% | Status | Tests |
 |------|-------|-----|--------|-------|
-| src/registration/ui/adminPriceFeedback/useAdminPriceFeedback.ts | 50 | 17 | TODO | — |
-| src/registration/ui/alert/useAlertDisplay.ts | 50 | 17 | TODO | — |
-| src/registration/ui/guestCounter/useGuestCounter.ts | 67 | 33 | TODO | — |
-| src/registration/streak/useStreak.ts | 60 | 20 | TODO | — |
+| src/registration/ui/adminPriceFeedback/useAdminPriceFeedback.ts | 50 | 17 | DONE | 9 tests (useAdminPriceFeedback.test.ts) |
+| src/registration/ui/alert/useAlertDisplay.ts | 50 | 17 | DONE | 10 tests (useAlertDisplay.test.ts) |
+| src/registration/ui/guestCounter/useGuestCounter.ts | 67 | 33 | DONE | 5 tests (useGuestCounter.test.ts) |
+| src/registration/streak/useStreak.ts | 60 | 20 | DONE | 7 tests (useStreak.test.ts) |
 | src/registration/waitlist/useWaitlistAdmin.ts | 67 | 33 | TODO | — |
 | src/shared/utils/toast.ts | 67 | 100 | TODO | — |
 
@@ -64,6 +64,15 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 ## Iteration Log
 
 
+
+### Iteration 9 — 2026-03-30
+Files tested: 4, Tests added: 31
+- src/registration/ui/adminPriceFeedback/useAdminPriceFeedback.ts (9 tests): initial state, setShowPriceSuccess (true/false), setPriceError (set/clear), showPriceSuccessWithClear (clears error + sets true + auto-hides at 3000ms + not before), resetAdminPriceFeedback (clears both fields)
+- src/registration/ui/alert/useAlertDisplay.ts (10 tests): initial state, setShowAlert (true/false), setAlertMessage (without affecting visibility), showAlertMessage (immediate show, auto-hide at 3000ms, not before 3000ms, custom alertDurationMs, message preserved after hide), resetAlertDisplay (clears both fields)
+- src/registration/ui/guestCounter/useGuestCounter.ts (5 tests): initial state (starts at 1), incrementGuestCounter (1→2, chains to 4), setGuestCounter (arbitrary value), no-reset contract (counter survives form reset)
+- src/registration/streak/useStreak.ts (7 tests): initial state (3 defaults), setRegistrantStreak, setShowStreakModal (open/close), setStreakAcknowledged, resetStreak (all fields back to defaults, scoped to streak only)
+- npm run verify: all green
+- Next: src/registration/waitlist/useWaitlistAdmin.ts
 
 ### Iteration 8 — 2026-03-30
 Files tested: 1, Tests added: 20
