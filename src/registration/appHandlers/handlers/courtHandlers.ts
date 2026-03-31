@@ -27,6 +27,7 @@ import type {
   AssignCourtDeps,
   WaitlistDeps,
   CourtChangeDeps,
+  OriginalCourtData,
 } from '../../../types/appTypes';
 
 interface CourtHandlerState extends RegistrationUiState {
@@ -43,7 +44,7 @@ interface CourtHandlerSetters extends RegistrationSetters {
   setHasWaitlistPriority: (v: boolean) => void;
   setReplacedGroup: (v: { players: Array<{ name: string }>; endTime: string } | null) => void;
   setDisplacement: (v: DisplacementInfo | null) => void;
-  setOriginalCourtData: (v: unknown) => void;
+  setOriginalCourtData: (v: OriginalCourtData | null) => void;
   setIsChangingCourt: (v: boolean) => void;
   setWasOvertimeCourt: (v: boolean) => void;
   setCanChangeCourt: (v: boolean) => void;
@@ -163,10 +164,10 @@ export function useCourtHandlers({
   // VERBATIM COPY: getAvailableCourts from line ~214
   const getAvailableCourts = useCallback(
     (
-      checkWaitlistPriority = true,
-      _includeOvertimeIfChanging = false,
-      excludeCourtNumber = null,
-      dataOverride = null
+      checkWaitlistPriority: boolean = true,
+      _includeOvertimeIfChanging: boolean = false,
+      excludeCourtNumber: number | null = null,
+      dataOverride: import('../../../types/appTypes').RegistrationUiState['data'] | null = null
     ) => {
       try {
         // Use API state by default, fall back to localStorage only if state not available
@@ -353,6 +354,9 @@ export function useCourtHandlers({
       return assignCourtToGroupOrchestrated(
         courtNumber,
         selectableCountAtSelection,
+        // Type assertion: validateGroupCompat parameter contravariance — CourtHandlerDeps uses GroupPlayer[] while
+        // AssignCourtServices uses Pick<GroupPlayer, id|name>[] (what the orchestrator actually passes internally).
+        // Aligning requires refactoring the orchestrator player mapping — deferred.
         createAssignCourtDeps() as unknown as Parameters<typeof assignCourtToGroupOrchestrated>[2]
       );
     },

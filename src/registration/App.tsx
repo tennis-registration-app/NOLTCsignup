@@ -42,7 +42,7 @@ function RegistrationApp({ isMobileView, resetWorkflow }: { isMobileView: boolea
   const app = useRegistrationAppState({ isMobileView, resetWorkflow });
 
   // Get all handlers, passing the app object
-  const handlers = useRegistrationHandlers({ app }) as unknown as import('../types/appTypes').Handlers;
+  const handlers = useRegistrationHandlers({ app });
 
   // Render the router with grouped props only
   return <RegistrationRouter app={app} handlers={handlers} />;

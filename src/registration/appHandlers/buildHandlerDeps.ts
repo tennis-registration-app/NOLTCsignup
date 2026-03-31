@@ -1,4 +1,11 @@
-import type { AppState } from '../../types/appTypes';
+import type {
+  AppState,
+  GroupGuestState,
+  StreakState,
+  MemberIdentityState,
+  CourtAssignmentState,
+  DisplacementInfo,
+} from '../../types/appTypes';
 /**
  * buildHandlerDeps
  * ================
@@ -11,15 +18,59 @@ import type { AppState } from '../../types/appTypes';
  * @module buildHandlerDeps
  */
 
-/**
- * @param {import('../../types/appTypes').AppState} app
- * @param {object} workflow - WorkflowContext value (subset for court)
- * @param {{ clearSuccessResetTimer: Function, resetForm: Function, isPlayerAlreadyPlaying: Function }} core
- */
-export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, unknown>, core: Record<string, unknown>) {
+/** Typed subset of WorkflowProvider context value consumed by handler dep builders */
+interface WorkflowContextValue {
+  groupGuest: GroupGuestState;
+  streak: StreakState;
+  memberIdentity: MemberIdentityState;
+  courtAssignment: CourtAssignmentState;
+  // Workflow-owned state fields
+  isAssigning: boolean;
+  setIsAssigning: (v: boolean) => void;
+  currentWaitlistEntryId: string | null;
+  setCurrentWaitlistEntryId: (v: string | null) => void;
+  hasWaitlistPriority: boolean;
+  setHasWaitlistPriority: (v: boolean) => void;
+  isJoiningWaitlist: boolean;
+  setIsJoiningWaitlist: (v: boolean) => void;
+  waitlistPosition: number;
+  setWaitlistPosition: (v: number | null) => void;
+  replacedGroup: { players: Array<{ name: string }>; endTime: string } | null;
+  setReplacedGroup: (v: { players: Array<{ name: string }>; endTime: string } | null) => void;
+  displacement: DisplacementInfo | null;
+  setDisplacement: (v: DisplacementInfo | null) => void;
+  originalCourtData: unknown;
+  setOriginalCourtData: (v: unknown) => void;
+  canChangeCourt: boolean;
+  setCanChangeCourt: (v: boolean) => void;
+  changeTimeRemaining: number;
+  setChangeTimeRemaining: (v: number | ((prev: number) => number)) => void;
+  isChangingCourt: boolean;
+  setIsChangingCourt: (v: boolean) => void;
+  setWasOvertimeCourt: (v: boolean) => void;
+  isTimeLimited: boolean;
+  setIsTimeLimited: (v: boolean) => void;
+  timeLimitReason: string | null;
+  setTimeLimitReason: (v: string | null) => void;
+  showAddPlayer: boolean;
+  setShowAddPlayer: (v: boolean) => void;
+}
+
+/** Core handler functions created in useRegistrationHandlers parent scope */
+interface CoreHandlerFns {
+  clearSuccessResetTimer: () => void;
+  resetForm: () => void;
+  isPlayerAlreadyPlaying: (playerId: string) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
+}
+
+// useCourtHandlers return type is inferred — use ReturnType to avoid redeclaration
+import type { useCourtHandlers } from './handlers';
+type CourtHandlersSubset = ReturnType<typeof useCourtHandlers>;
+
+export function buildCourtHandlerDeps(app: AppState, workflow: WorkflowContextValue, core: CoreHandlerFns) {
   return {
     state: {
-      ...(app.state as unknown as Record<string, unknown>),
+      ...app.state,
       isAssigning: workflow.isAssigning,
       currentWaitlistEntryId: workflow.currentWaitlistEntryId,
       canChangeCourt: workflow.canChangeCourt,
@@ -27,7 +78,7 @@ export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, un
       replacedGroup: workflow.replacedGroup,
     },
     setters: {
-      ...(app.setters as unknown as Record<string, unknown>),
+      ...app.setters,
       setIsAssigning: workflow.setIsAssigning,
       setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
       setHasWaitlistPriority: workflow.setHasWaitlistPriority,
@@ -48,7 +99,7 @@ export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, un
     courtAssignment: workflow.courtAssignment,
     services: app.services,
     helpers: app.helpers,
-    blockAdmin: (app.admin as unknown as Record<string, unknown>).blockAdmin,
+    blockAdmin: app.admin.blockAdmin,
     alert: app.alert,
     refs: app.refs,
     assignCourtToGroupOrchestrated: app.assignCourtToGroupOrchestrated,
@@ -62,13 +113,7 @@ export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, un
   };
 }
 
-/**
- * @param {import('../../types/appTypes').AppState} app
- * @param {object} workflow - WorkflowContext value (subset for group)
- * @param {{ clearSuccessResetTimer: Function, resetForm: Function, isPlayerAlreadyPlaying: Function }} core
- * @param {object} court - Return value of useCourtHandlers
- */
-export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, unknown>, core: Record<string, unknown>, court: Record<string, unknown>) {
+export function buildGroupHandlerDeps(app: AppState, workflow: WorkflowContextValue, core: CoreHandlerFns, court: CourtHandlersSubset) {
   return {
     groupGuest: workflow.groupGuest,
     derived: app.derived,
@@ -77,7 +122,7 @@ export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, un
     search: app.search,
     memberIdentity: workflow.memberIdentity,
     setters: {
-      ...(app.setters as unknown as Record<string, unknown>),
+      ...app.setters,
       setShowAddPlayer: workflow.setShowAddPlayer,
       setHasWaitlistPriority: workflow.setHasWaitlistPriority,
     },
@@ -93,27 +138,19 @@ export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, un
   };
 }
 
-/**
- * @param {import('../../types/appTypes').AppState} app
- * @param {object} workflow - WorkflowContext value (subset for guest)
- */
-export function buildGuestHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
+export function buildGuestHandlerDeps(app: AppState, workflow: WorkflowContextValue) {
   return {
     groupGuest: workflow.groupGuest,
-    guestCounterHook: (app.session as unknown as Record<string, unknown>).guestCounterHook,
+    guestCounterHook: app.session.guestCounterHook,
     memberIdentity: workflow.memberIdentity,
     derived: app.derived,
-    setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
+    setters: { ...app.setters, setShowAddPlayer: workflow.setShowAddPlayer },
     search: app.search,
     helpers: app.helpers,
   };
 }
 
-/**
- * @param {import('../../types/appTypes').AppState} app
- * @param {object} court - Return value of useCourtHandlers
- */
-export function buildAdminHandlerDeps(app: AppState, court: Record<string, unknown>) {
+export function buildAdminHandlerDeps(app: AppState, court: CourtHandlersSubset) {
   return {
     services: app.services,
     alert: app.alert,
@@ -121,20 +158,16 @@ export function buildAdminHandlerDeps(app: AppState, court: Record<string, unkno
     setters: app.setters,
     search: app.search,
     state: app.state,
-    adminPriceFeedback: (app.admin as unknown as Record<string, unknown>).adminPriceFeedback,
+    adminPriceFeedback: app.admin.adminPriceFeedback,
     TENNIS_CONFIG: app.TENNIS_CONFIG,
     court,
   };
 }
 
-/**
- * @param {import('../../types/appTypes').AppState} app
- * @param {object} workflow - WorkflowContext value (subset for navigation)
- */
-export function buildNavigationHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
+export function buildNavigationHandlerDeps(app: AppState, workflow: WorkflowContextValue) {
   return {
-    state: { ...(app.state as unknown as Record<string, unknown>), showAddPlayer: workflow.showAddPlayer },
-    setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
+    state: { ...app.state, showAddPlayer: workflow.showAddPlayer },
+    setters: { ...app.setters, setShowAddPlayer: workflow.setShowAddPlayer },
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
     mobile: app.mobile,

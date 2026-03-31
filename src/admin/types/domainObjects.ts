@@ -25,10 +25,10 @@ interface WetCourtsModelParams {
 }
 
 interface WetCourtsActionsParams {
-  handleEmergencyWetCourt?: (...args: unknown[]) => void;
-  deactivateWetCourts?: (...args: unknown[]) => void;
-  onClearWetCourt?: (...args: unknown[]) => void;
-  onClearAllWetCourts?: (...args: unknown[]) => void;
+  handleEmergencyWetCourt?: (...args: unknown[]) => unknown;
+  deactivateWetCourts?: (...args: unknown[]) => unknown;
+  onClearWetCourt?: (n: number) => void;
+  onClearAllWetCourts?: (...args: unknown[]) => unknown;
 }
 
 interface BlockModelParams {

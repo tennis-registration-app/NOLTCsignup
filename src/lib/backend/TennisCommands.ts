@@ -519,6 +519,7 @@ export class TennisCommands {
     });
 
     // 2. Resolve players to participants (member lookup)
+    // Type assertion: GroupPlayer[] lacks the index signature required by Array<Record<string,unknown>>; resolvePlayersToParticipants accesses legacy fields (type, clubNumber) not in GroupPlayer
     const participants = await this.resolvePlayersToParticipants(players as unknown as Array<Record<string, unknown>>);
     logger.debug('TennisCommands', 'Resolved participants', {
       durationMs: (performance.now() - tStart).toFixed(0),
@@ -572,6 +573,7 @@ export class TennisCommands {
     });
 
     // 2. Resolve players to participants (member lookup)
+    // Type assertion: GroupPlayer[] lacks the index signature required by Array<Record<string,unknown>>; resolvePlayersToParticipants accesses legacy fields (type, clubNumber) not in GroupPlayer
     const participants = await this.resolvePlayersToParticipants(players as unknown as Array<Record<string, unknown>>);
 
     // 3. Send to API

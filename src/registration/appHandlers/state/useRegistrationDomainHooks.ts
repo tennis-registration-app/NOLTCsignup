@@ -60,7 +60,7 @@ interface UseRegistrationDomainHooksDeps {
   isMobile: boolean;
   toast: (message: string, options?: { type?: string; duration?: number }) => void;
   markUserTyping: () => void;
-  getCourtData: () => { courts: unknown[]; waitlist: { id?: string; group?: { id?: string } }[]; [key: string]: unknown };
+  getCourtData: () => { courts: Array<{ id?: string; number?: number }>; waitlist: { id?: string; group?: { id?: string } }[]; [key: string]: unknown };
   showAlertMessage?: ((message: string) => void) | null;
 }
 
@@ -175,12 +175,12 @@ export function useRegistrationDomainHooks({
   } = useBlockAdmin({
     backend,
     showAlertMessage: externalShowAlertMessage || showAlertMessage,
-    getCourtData: getCourtData as unknown as Parameters<typeof useBlockAdmin>[0]['getCourtData'],
+    getCourtData,
   });
 
   // Waitlist admin hook
   const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
-    getCourtData: getCourtData as unknown as Parameters<typeof useWaitlistAdmin>[0]['getCourtData'],
+    getCourtData,
     showAlertMessage: externalShowAlertMessage || showAlertMessage,
     backend,
   });

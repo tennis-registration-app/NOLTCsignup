@@ -14,7 +14,7 @@ import {
  */
 
 interface UseAdminHandlersDeps {
-  services: { backend: import("../../../types/appTypes").TennisBackendShape; dataStore: { get: (k: string) => Promise<Record<string, unknown>>; set: (k: string, v: unknown, opts?: Record<string, unknown>) => Promise<void> } };
+  services: { backend: import("../../../types/appTypes").TennisBackendShape; dataStore: import("../../../types/appTypes").DataStoreShape | null };
   alert: { showAlertMessage: (msg: string) => void };
   helpers: { getCourtData: () => { courts: Array<{id?: string; number?: number}>; waitlist: Array<{id?: string; group?: {id?: string}}> } };
   setters: { setCourtToMove: (n: null) => void; setCurrentScreen: (s: string, src?: string) => void };
@@ -76,7 +76,7 @@ export function useAdminHandlers({
 
   // VERBATIM COPY: handleRemoveFromWaitlist from line ~756
   const handleRemoveFromWaitlist = useCallback(
-    (group: Record<string, unknown>) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group),
+    (group: unknown) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group as Parameters<typeof handleRemoveFromWaitlistOp>[1]),
     [backend, showAlertMessage]
   );
 
@@ -97,9 +97,9 @@ export function useAdminHandlers({
 
     // Save to localStorage
     try {
-      const parsed = (await dataStore.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY)) || {};
+      const parsed = ((await dataStore!.get(TENNIS_CONFIG.STORAGE.SETTINGS_KEY)) || {}) as Record<string, unknown>;
       parsed.tennisBallPrice = price;
-      await dataStore.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, parsed, { immediate: true });
+      await dataStore!.set(TENNIS_CONFIG.STORAGE.SETTINGS_KEY, parsed, { immediate: true });
 
       // Show success message
       showPriceSuccessWithClear();

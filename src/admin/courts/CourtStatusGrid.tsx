@@ -181,7 +181,7 @@ const CourtStatusGrid: React.FC<CourtStatusGridProps> = ({
 
       {editingBlock && (
         <EventDetailsModal
-          event={editingBlock as unknown as CalendarEvent}
+          event={editingBlock as unknown as CalendarEvent /* Type assertion: CourtBlock spread lacks CalendarEvent.startTime/endTime required fields; runtime shape is correct */}
           courts={(courts as Record<string, unknown>[]).map((court: Record<string, unknown>, idx: number) => ({
             id: (court?.id as string) || `court-${idx + 1}`,
             courtNumber: idx + 1,

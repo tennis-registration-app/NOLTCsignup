@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { AppState } from '../../types/appTypes';
+import type { AppState, Handlers } from '../../types/appTypes';
 
 // Extracted handler modules
 import {
@@ -36,7 +36,7 @@ import {
  * @param {{ app: import('../../types/appTypes').AppState }} params
  * @returns {import('../../types/appTypes').Handlers}
  */
-export function useRegistrationHandlers({ app }: { app: AppState }) {
+export function useRegistrationHandlers({ app }: { app: AppState }): Handlers {
   const { resetFormOrchestrated, resetWorkflow } = app;
 
   // Workflow context — sourced directly instead of via app compatibility layer
@@ -75,7 +75,7 @@ export function useRegistrationHandlers({ app }: { app: AppState }) {
   // then runs shell-level cleanup via orchestrator.
   const resetForm = useCallback(() => {
     resetWorkflow();
-    resetFormOrchestrated(createResetDeps() as unknown as Parameters<typeof resetFormOrchestrated>[0]);
+    resetFormOrchestrated(createResetDeps());
   }, [resetWorkflow, resetFormOrchestrated, createResetDeps]);
 
   // Check if player is already playing with detailed info
@@ -97,27 +97,27 @@ export function useRegistrationHandlers({ app }: { app: AppState }) {
   // Must be first: adminHandlers and groupHandlers depend on court outputs
   // ============================================
   const core = { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying };
-  const courtHandlers = useCourtHandlers(buildCourtHandlerDeps(app, workflow, core) as unknown as Parameters<typeof useCourtHandlers>[0]);
+  const courtHandlers = useCourtHandlers(buildCourtHandlerDeps(app, workflow, core));
 
   // ============================================
   // Admin Screen Handlers (extracted to adminHandlers.js)
   // ============================================
-  const adminHandlers = useAdminHandlers(buildAdminHandlerDeps(app, courtHandlers) as unknown as Parameters<typeof useAdminHandlers>[0]);
+  const adminHandlers = useAdminHandlers(buildAdminHandlerDeps(app, courtHandlers));
 
   // ============================================
   // Guest Handlers (extracted to guestHandlers.js)
   // ============================================
-  const guestHandlers = useGuestHandlers(buildGuestHandlerDeps(app, workflow) as unknown as Parameters<typeof useGuestHandlers>[0]);
+  const guestHandlers = useGuestHandlers(buildGuestHandlerDeps(app, workflow));
 
   // ============================================================
   // Group Handlers (extracted to groupHandlers.js)
   // ============================================================
-  const groupHandlers = useGroupHandlers(buildGroupHandlerDeps(app, workflow, core, courtHandlers) as unknown as Parameters<typeof useGroupHandlers>[0]);
+  const groupHandlers = useGroupHandlers(buildGroupHandlerDeps(app, workflow, core, courtHandlers));
 
   // ============================================================
   // Navigation Handlers (extracted to navigationHandlers.js)
   // ============================================================
-  const navigationHandlers = useNavigationHandlers(buildNavigationHandlerDeps(app, workflow) as unknown as Parameters<typeof useNavigationHandlers>[0]);
+  const navigationHandlers = useNavigationHandlers(buildNavigationHandlerDeps(app, workflow));
 
   // ===== RETURN ALL HANDLERS =====
   return {

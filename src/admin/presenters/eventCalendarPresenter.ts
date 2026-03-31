@@ -4,6 +4,14 @@
  * Returns identical shapes to what the component previously computed inline.
  */
 import { getEventTypeFromReason } from '../calendar/utils';
+import type { CalendarEvent } from '../calendar/utils';
+
+interface CalendarCourtLike {
+  id?: string;
+  court_number?: number;
+  courtNumber?: number;
+  blocked?: Record<string, unknown> | null;
+}
 
 /**
  * Build calendar events from blocks and courts data.
@@ -12,18 +20,18 @@ import { getEventTypeFromReason } from '../calendar/utils';
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 142-199).
  */
-export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,unknown>[]; courts: Record<string,unknown>[] }) {
-  const processedEvents = new Map();
+export function buildCalendarEvents({ blocks, courts }: { blocks: CalendarEvent[]; courts: CalendarCourtLike[] }): CalendarEvent[] {
+  const processedEvents = new Map<string, CalendarEvent>();
 
   // Process API-sourced blocks
-  blocks.forEach((block: Record<string,unknown>) => {
+  blocks.forEach((block) => {
     if (block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
       if (!processedEvents.has(eventKey)) {
         processedEvents.set(eventKey, {
           ...block,
-          courtNumbers: block.courtNumbers || [block.courtNumber],
+          courtNumbers: block.courtNumbers || (block.courtNumber != null ? [block.courtNumber] : []),
           id: block.id || eventKey,
         });
       }
@@ -31,7 +39,7 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
   });
 
   // Process non-event blocks
-  blocks.forEach((block: Record<string,unknown>) => {
+  blocks.forEach((block) => {
     if (!block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -44,7 +52,7 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
           startTime: block.startTime,
           endTime: block.endTime,
           eventType: block.eventType || getEventTypeFromReason(block.reason as string),
-          courtNumbers: [block.courtNumber],
+          courtNumbers: block.courtNumber != null ? [block.courtNumber] : [],
           isBlock: true,
           reason: block.reason,
         });
@@ -53,17 +61,19 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
   });
 
   // Also check courts data for backward compatibility with active blocks
-  courts.forEach((court: Record<string,unknown> | null, idx: number) => {
+  courts.forEach((court, idx) => {
     if (!court) return;
     const blocked = court.blocked as Record<string,unknown> | null | undefined;
-    if (blocked && (blocked.isEvent as unknown)) {
+    if (blocked && blocked.isEvent) {
       const details = blocked.eventDetails as Record<string,unknown> | undefined;
       const eventKey = `${(details?.title as unknown) || (blocked.title as unknown)}-${blocked.startTime as unknown}`;
       if (!processedEvents.has(eventKey)) {
         processedEvents.set(eventKey, {
-          ...blocked,
-          courtNumbers: ((details?.courts as unknown) || [idx + 1]),
+          ...(blocked as Partial<CalendarEvent>),
+          courtNumbers: (details?.courts as number[] | undefined) || [idx + 1],
           id: eventKey,
+          startTime: String(blocked.startTime ?? ''),
+          endTime: String(blocked.endTime ?? ''),
         });
       }
     }
@@ -77,7 +87,7 @@ export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 202-239).
  */
-export function filterCalendarEvents({ events, viewMode, selectedDate }: { events: Record<string,unknown>[]; viewMode: string; selectedDate: Date }) {
+export function filterCalendarEvents({ events, viewMode, selectedDate }: { events: CalendarEvent[]; viewMode: string; selectedDate: Date }): CalendarEvent[] {
   let startDate, endDate;
 
   if (viewMode === 'month') {
@@ -97,9 +107,9 @@ export function filterCalendarEvents({ events, viewMode, selectedDate }: { event
     endDate.setHours(23, 59, 59, 999);
   }
 
-  return events.filter((event: Record<string,unknown>) => {
-    const eventStart = new Date(event.startTime as string);
-    const eventEnd = new Date(event.endTime as string);
+  return events.filter((event) => {
+    const eventStart = new Date(event.startTime);
+    const eventEnd = new Date(event.endTime);
     return (
       (eventStart >= startDate && eventStart <= endDate) ||
       (eventEnd >= startDate && eventEnd <= endDate) ||

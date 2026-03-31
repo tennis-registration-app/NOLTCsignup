@@ -93,7 +93,7 @@ export function useMobileFlowController({
       return { location_token: locationToken };
     }
 
-    return new Promise((resolve) => {
+    return new Promise<{ latitude: number; longitude: number } | { location_token: string } | null>((resolve) => {
       if (!navigator.geolocation) {
         logger.warn('MobileFlow', 'Geolocation not available');
         resolve(null);

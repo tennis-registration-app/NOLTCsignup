@@ -7,6 +7,26 @@
 
 import type { Board } from '../types/domain';
 
+/** Minimal board shape needed for engagement queries — avoids requiring the full Board type */
+interface EngagementBoard {
+  courts?: Array<{
+    number: number;
+    session: {
+      group: {
+        id?: string;
+        players: Array<{ memberId: string; displayName?: string }>;
+      };
+    } | null;
+  }>;
+  waitlist?: Array<{
+    position: number;
+    group: {
+      id?: string;
+      players: Array<{ memberId: string; displayName?: string }>;
+    };
+  }>;
+}
+
 export interface Engagement {
   kind: 'court' | 'waitlist';
   courtNumber?: number;
@@ -15,7 +35,7 @@ export interface Engagement {
   displayName?: string;
 }
 
-export function findEngagementByMemberId(board: Board, memberId: string): Engagement | null {
+export function findEngagementByMemberId(board: Board | EngagementBoard, memberId: string): Engagement | null {
   if (!board || !memberId) return null;
 
   // Check courts

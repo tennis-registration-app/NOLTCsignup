@@ -76,6 +76,7 @@ export class TennisQueries {
     }
 
     // Store raw response for legacy adapter (temporary)
+    // Type assertion: Board has no index signature; dynamically mutating ._raw is intentional for the legacy adapter
     (board as unknown as Record<string, unknown>)._raw = response;
 
     this._lastBoard = board;

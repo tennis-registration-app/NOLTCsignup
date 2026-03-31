@@ -46,7 +46,7 @@ export function HomeRoute({ app, handlers }: HomeRouteProps) {
           </div>
         </div>
       )}
-      <HomeScreen {...({ ...model, ...actions } as unknown as import("../../screens/HomeScreen").HomeScreenProps)} />
+      <HomeScreen {...{ ...model, ...actions }} />
     </>
   );
 }

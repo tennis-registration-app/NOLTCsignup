@@ -31,6 +31,7 @@ interface UseAdminSettingsDeps {
 }
 
 // Singleton guard to prevent duplicate listener attachment on re-mount
+// Type assertion: window is dynamically extended with singleton guard flags; no typed index signature on Window
 const _one = (key: string) =>
   (window as unknown as Record<string, unknown>)[key] ? true : (((window as unknown as Record<string, unknown>)[key] = true), false);
 

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { DomainWaitlistEntry } from '../../../types/appTypes';
 
 /**
  * useRegistrationDerived
@@ -14,14 +15,7 @@ interface CourtSelectionData {
 }
 
 interface RegistrationData {
-  waitlist: Array<{
-    id: unknown;
-    position: unknown;
-    group?: { type?: string; players?: Array<{ displayName?: string; name?: string }> };
-    joinedAt?: unknown;
-    minutesWaiting?: unknown;
-    deferred?: boolean;
-  }>;
+  waitlist: DomainWaitlistEntry[];
   courtSelection?: CourtSelectionData | null | undefined;
 }
 
@@ -53,7 +47,7 @@ export function useRegistrationDerived({
     passThroughEntry,
     passThroughEntryData,
   } = useMemo(() => {
-    const normalizedWaitlist = (data.waitlist || []).map((entry: { id: unknown; position: unknown; group?: { type?: string; players?: Array<{ displayName?: string; name?: string }> }; joinedAt?: unknown; minutesWaiting?: unknown; deferred?: boolean }) => ({
+    const normalizedWaitlist = (data.waitlist || []).map((entry) => ({
       id: entry.id,
       position: entry.position,
       groupType: entry.group?.type,
@@ -100,7 +94,7 @@ export function useRegistrationDerived({
 
     // Pass-through: if neither position 0 nor 1 can play,
     // find the first group from position 2+ that CAN play
-    let passThrough: { id: unknown; position: unknown; players: unknown } | null = null;
+    let passThrough: { id: string; position: number; players: import("../../../types/appTypes").DomainMember[] } | null = null;
     if (!live1 && !live2 && courtSelection && courtSelection.selectableCourts.length > 0) {
       for (let i = 2; i < normalizedWaitlist.length; i++) {
         const entry = normalizedWaitlist[i];
@@ -135,7 +129,7 @@ export function useRegistrationDerived({
 
   // Member database (simplified for autocomplete)
   const memberDatabase = useMemo(() => {
-    const db: Record<string, unknown> = {};
+    const db: Record<string, import("../../../types/appTypes").MemberDatabaseEntry> = {};
     const names = [
       'Novak Djokovic',
       'Carlos Alcaraz',

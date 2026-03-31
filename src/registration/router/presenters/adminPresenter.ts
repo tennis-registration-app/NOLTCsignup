@@ -12,7 +12,7 @@ import type { AppState, Handlers, RegistrationConstants, RegistrationUiState } f
 export interface AdminModel {
   // Data
   data: RegistrationUiState['data'];
-  currentTime: number;
+  currentTime: Date;
   // Alert state (read only)
   showAlert: boolean;
   alertMessage: string;
@@ -31,37 +31,37 @@ export interface AdminModel {
   priceError: string | null;
   showPriceSuccess: boolean;
   // Utilities
-  getCourtBlockStatus: Function;
+  getCourtBlockStatus: (courtNumber: number) => import('../../../types/appTypes').CourtBlockStatusResult | null;
   CONSTANTS: RegistrationConstants;
 }
 
 export interface AdminActions {
   // Block modal setters
-  setShowBlockModal: Function;
-  setSelectedCourtsToBlock: Function;
-  setBlockMessage: Function;
-  setBlockStartTime: Function;
-  setBlockEndTime: Function;
-  setBlockingInProgress: Function;
+  setShowBlockModal: (v: boolean) => void;
+  setSelectedCourtsToBlock: (v: number[]) => void;
+  setBlockMessage: (v: string) => void;
+  setBlockStartTime: (v: string) => void;
+  setBlockEndTime: (v: string) => void;
+  setBlockingInProgress: (v: boolean) => void;
   // Move setters
-  setCourtToMove: Function;
-  setWaitlistMoveFrom: Function;
+  setCourtToMove: (v: number | null) => void;
+  setWaitlistMoveFrom: (v: number | null) => void;
   // Price setters
-  setBallPriceInput: Function;
-  setPriceError: Function;
-  setShowPriceSuccess: Function;
+  setBallPriceInput: (v: string) => void;
+  setPriceError: (v: string) => void;
+  setShowPriceSuccess: (v: boolean) => void;
   // Callbacks (renamed to on* convention)
-  onClearAllCourts: Function;
-  onClearCourt: Function;
-  onCancelBlock: Function;
-  onBlockCreate: Function;
-  onMoveCourt: Function;
-  onClearWaitlist: Function;
-  onRemoveFromWaitlist: Function;
-  onReorderWaitlist: Function;
-  onPriceUpdate: Function;
-  onExit: Function;
-  showAlertMessage: Function;
+  onClearAllCourts: () => void;
+  onClearCourt: (courtNum: number) => void;
+  onCancelBlock: (blockId: string, courtNumber: number) => Promise<void>;
+  onBlockCreate: () => Promise<void>;
+  onMoveCourt: (fromCourtNum: number, toCourtNum: number) => void;
+  onClearWaitlist: () => Promise<void>;
+  onRemoveFromWaitlist: (group: unknown) => void;
+  onReorderWaitlist: (fromIndex: number, toIndex: number) => Promise<void>;
+  onPriceUpdate: () => Promise<void>;
+  onExit: () => void;
+  showAlertMessage: (message: string) => void;
 }
 
 /**

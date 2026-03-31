@@ -68,7 +68,7 @@ export function normalizeCalendarBlock(raw: Record<string, unknown>) {
     endsAt: raw.endsAt != null ? String(raw.endsAt) : (raw.ends_at != null ? String(raw.ends_at) : undefined),
     isRecurring: raw.isRecurring != null ? Boolean(raw.isRecurring) : (raw.is_recurring != null ? Boolean(raw.is_recurring) : undefined),
     recurrenceRule: raw.recurrenceRule != null ? String(raw.recurrenceRule) : (raw.recurrence_rule != null ? String(raw.recurrence_rule) : undefined),
-    recurrenceGroupId: raw.recurrenceGroupId ?? raw.recurrence_group_id ?? null,
+    recurrenceGroupId: raw.recurrenceGroupId != null ? String(raw.recurrenceGroupId) : (raw.recurrence_group_id != null ? String(raw.recurrence_group_id) : null),
   };
 }
 

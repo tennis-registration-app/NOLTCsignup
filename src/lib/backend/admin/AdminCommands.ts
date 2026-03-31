@@ -260,7 +260,7 @@ export class AdminCommands {
    * @param {string} [input.reason] - Reason (default: 'WET COURT')
    * @param {string} [input.idempotencyKey] - Prevent duplicate operations
    */
-  async markWetCourts(input: { deviceId: string; durationMinutes?: number; courtIds?: string[]; reason?: string; idempotencyKey?: string }) {
+  async markWetCourts(input: { deviceId: string; durationMinutes?: number; courtIds?: string[]; reason?: string; idempotencyKey?: string }): Promise<{ ok: boolean; code?: string; message?: string; serverNow?: string; courtsMarked?: number; courtNumbers?: number[]; blocksCreated?: number; blocksCancelled?: number; endsAt?: string; idempotent?: boolean }> {
     const payload = {
       device_id: input.deviceId,
       duration_minutes: input.durationMinutes,
@@ -275,12 +275,12 @@ export class AdminCommands {
       code: response.code,
       message: response.message || response.error,
       serverNow: response.serverNow,
-      courtsMarked: response.courts_marked,
-      courtNumbers: response.court_numbers,
-      blocksCreated: response.blocks_created,
-      blocksCancelled: response.blocks_cancelled,
-      endsAt: response.ends_at,
-      idempotent: response.idempotent,
+      courtsMarked: response.courts_marked as number | undefined,
+      courtNumbers: response.court_numbers as number[] | undefined,
+      blocksCreated: response.blocks_created as number | undefined,
+      blocksCancelled: response.blocks_cancelled as number | undefined,
+      endsAt: response.ends_at as string | undefined,
+      idempotent: response.idempotent as boolean | undefined,
     };
   }
 
@@ -291,7 +291,7 @@ export class AdminCommands {
    * @param {string[]} [input.courtIds] - Specific court UUIDs (default: all courts)
    * @param {string} [input.idempotencyKey] - Prevent duplicate operations
    */
-  async clearWetCourts(input: { deviceId: string; courtIds?: string[]; idempotencyKey?: string }) {
+  async clearWetCourts(input: { deviceId: string; courtIds?: string[]; idempotencyKey?: string }): Promise<{ ok: boolean; code?: string; message?: string; serverNow?: string; blocksCleared?: number; courtNumbers?: number[] }> {
     const payload = {
       device_id: input.deviceId,
       court_ids: input.courtIds,
@@ -304,8 +304,8 @@ export class AdminCommands {
       code: response.code,
       message: response.message || response.error,
       serverNow: response.serverNow,
-      blocksCleared: response.blocks_cleared,
-      courtNumbers: response.court_numbers,
+      blocksCleared: response.blocks_cleared as number | undefined,
+      courtNumbers: response.court_numbers as number[] | undefined,
     };
   }
 

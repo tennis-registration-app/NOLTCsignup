@@ -87,7 +87,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               calendarModel={calendar.model}
               calendarActions={calendar.actions}
               services={adminServices}
-              components={blocks.components as unknown as ReturnType<typeof import("./types/domainObjects").createBlockComponents>}
+              components={blocks.components!}
             />
           )}
           {activeTab === 'blocking' && (
@@ -97,9 +97,9 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               wetCourtsActions={wetCourtsController.actions}
               blockModel={blocks.model}
               blockActions={blocks.actions}
-              components={blocks.components as unknown as ReturnType<typeof import("./types/domainObjects").createBlockComponents>}
+              components={blocks.components as Record<string, unknown>}
               services={adminServices}
-              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced as unknown as React.ComponentType<Record<string, unknown>>}
+              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced as unknown as React.ComponentType<Record<string, unknown>> /* Type assertion: ComponentType<SpecificProps> is not assignable to ComponentType<Record<string,unknown>> due to contravariance; injection pattern requires loose typing */}
             />
           )}
           {activeTab === 'waitlist' && (

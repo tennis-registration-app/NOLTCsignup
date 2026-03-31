@@ -24,7 +24,7 @@ import type { TennisBackendShape } from '../../types/appTypes';
  * @param {Object} deps.backend - Backend API client with queries.subscribeToBoardChanges
  * @returns {Object} Board state and operations
  */
-interface WaitlistEntry { id?: string; position?: number; groupType?: string; joinedAt?: string; minutesWaiting?: number; names?: string; players?: unknown[]; raw?: unknown; }
+interface WaitlistEntry { id?: unknown; position?: unknown; groupType?: unknown; joinedAt?: unknown; minutesWaiting?: unknown; names?: unknown[]; players?: unknown[]; raw?: unknown; }
 interface CourtBlock { id?: string; courtId?: string; courtNumber?: number; reason?: string; blockType?: string; startTime?: string; endTime?: string; }
 
 interface UseBoardSubscriptionDeps {
@@ -53,7 +53,7 @@ export function useBoardSubscription(deps: UseBoardSubscriptionDeps) {
     const result = transformBoardUpdate(board as RawBoard | null | undefined, lastBlocksFingerprintRef.current);
 
     setCourts(result.courts);
-    setWaitingGroups(result.waitingGroups as unknown as Parameters<typeof setWaitingGroups>[0]);
+    setWaitingGroups(result.waitingGroups);
     setCourtBlocks(result.courtBlocks);
 
     if (result.shouldBumpRefreshTrigger) {

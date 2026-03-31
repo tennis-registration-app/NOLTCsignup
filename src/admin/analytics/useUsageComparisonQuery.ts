@@ -67,7 +67,7 @@ export function useUsageComparisonQuery({
       // Ignore stale responses
       if (currentRequestId !== requestIdRef.current) return;
 
-      setData(result as unknown as UsageComparisonData);
+      setData(result as unknown as UsageComparisonData); // Type assertion: API returns ApiResponse with [key:string]:unknown; UsageComparisonData has nested typed fields — no shared properties for a single cast
     } catch (err) {
       if (currentRequestId !== requestIdRef.current) return;
       console.error('Usage comparison fetch error:', err);

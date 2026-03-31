@@ -1,0 +1,21 @@
+const fs=require("fs");
+function rep(src,a,b){return src.split(a).join(b);}
+const p="/Users/claudewilliams/Desktop/NOLTCsignup/src/admin/presenters/eventCalendarPresenter.ts";
+let s=fs.readFileSync(p,"utf8");
+const old1="        processedEvents.set(eventKey, {";
+const old2="          ...blocked,";
+const old3="          courtNumbers: (details?.courts as number[] | undefined) || [idx + 1],";
+const old4="          id: eventKey,";
+const old5="        });";
+const oldBlock=[old1,old2,old3,old4,old5].join("\n");
+const new1="        processedEvents.set(eventKey, {";
+const new2="          ...(blocked as Partial<CalendarEvent>),";
+const new3="          courtNumbers: (details?.courts as number[] | undefined) || [idx + 1],";
+const new4="          id: eventKey,";
+const new5="          startTime: String(blocked.startTime ?? ''),";
+const new6="          endTime: String(blocked.endTime ?? ''),";
+const new7="        });";
+const newBlock=[new1,new2,new3,new4,new5,new6,new7].join("\n");
+s=rep(s,oldBlock,newBlock);
+fs.writeFileSync(p,s);
+console.log("done");

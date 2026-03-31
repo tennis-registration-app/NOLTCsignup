@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+import type { GroupPlayer, StreakState, MemberIdentityState, SearchState, HelperFunctions, AlertState, TennisBackendShape, AutocompleteSuggestion, SuggestionClickDeps, AddPlayerSuggestionClickDeps, RegistrationConstants } from '../../../types/appTypes';
+import type { useCourtHandlers } from '../handlers';
 
 // Import validation services
 import { DataValidation } from '@lib';
@@ -15,36 +17,30 @@ import { ALREADY_IN_GROUP } from '../../../shared/constants/toastMessages.js';
  * streak acknowledgment, waitlist joining, court selection.
  */
 
-interface Player {
-  id: unknown;
-  name: string;
-  memberNumber?: string;
-  memberId?: unknown;
+interface Player extends GroupPlayer {
   phone?: string;
   ranking?: number | null;
   winRate?: number;
-  accountId?: unknown;
 }
 
-type AnyFn = (...args: unknown[]) => unknown;
 
 interface UseGroupHandlersDeps {
-  groupGuest: { currentGroup: unknown[]; setCurrentGroup: AnyFn };
+  groupGuest: { currentGroup: GroupPlayer[]; setCurrentGroup: (val: GroupPlayer[]) => void };
   derived: { memberDatabase: Record<string, unknown> };
-  mobile: { mobileFlow: unknown; preselectedCourt: unknown };
-  streak: { registrantStreak: number; streakAcknowledged: boolean; setRegistrantStreak: AnyFn; setStreakAcknowledged: AnyFn; setShowStreakModal: AnyFn };
-  search: { setSearchInput: AnyFn; setShowSuggestions: AnyFn; setAddPlayerSearch: AnyFn; setShowAddPlayerSuggestions: AnyFn };
-  memberIdentity: { setMemberNumber: AnyFn; setCurrentMemberId: AnyFn; fetchFrequentPartners: AnyFn };
-  setters: { setCurrentScreen: AnyFn; setShowAddPlayer: AnyFn; setHasWaitlistPriority: AnyFn; setShowSuccess: AnyFn };
-  alert: { setAlertMessage: AnyFn; setShowAlert: AnyFn; showAlertMessage: AnyFn };
+  mobile: { mobileFlow: boolean; preselectedCourt: number | null };
+  streak: Pick<StreakState, 'registrantStreak' | 'streakAcknowledged' | 'setRegistrantStreak' | 'setStreakAcknowledged' | 'setShowStreakModal'>;
+  search: Pick<SearchState, 'setSearchInput' | 'setShowSuggestions' | 'setAddPlayerSearch' | 'setShowAddPlayerSuggestions'>;
+  memberIdentity: Pick<MemberIdentityState, 'setMemberNumber' | 'setCurrentMemberId' | 'fetchFrequentPartners'>;
+  setters: { setCurrentScreen: (screen: string, source?: string) => void; setShowAddPlayer: (val: boolean) => void; setHasWaitlistPriority: (val: boolean) => void; setShowSuccess: (val: boolean) => void };
+  alert: Pick<AlertState, 'setAlertMessage' | 'setShowAlert' | 'showAlertMessage'>;
   refs: { successResetTimerRef: { current: ReturnType<typeof setTimeout> | null } };
-  services: { backend: unknown };
-  helpers: { guardAddPlayerEarly: AnyFn; guardAgainstGroupDuplicate: AnyFn; getCourtData: AnyFn };
-  court: { getAvailableCourts: AnyFn; saveCourtData: AnyFn; assignCourtToGroup: AnyFn; sendGroupToWaitlist: AnyFn };
-  core: { clearSuccessResetTimer: AnyFn; resetForm: AnyFn; isPlayerAlreadyPlaying: AnyFn };
-  handleSuggestionClickOrchestrated: AnyFn;
-  handleAddPlayerSuggestionClickOrchestrated: AnyFn;
-  CONSTANTS: { MAX_PLAYERS: number; MAX_AUTOCOMPLETE_RESULTS: number; AUTO_RESET_SUCCESS_MS: number; ADMIN_CODE: string };
+  services: { backend: TennisBackendShape };
+  helpers: Pick<HelperFunctions, 'guardAddPlayerEarly' | 'guardAgainstGroupDuplicate' | 'getCourtData'>;
+  court: ReturnType<typeof useCourtHandlers>;
+  core: { clearSuccessResetTimer: () => void; resetForm: () => void; isPlayerAlreadyPlaying: (playerId: string) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string } };
+  handleSuggestionClickOrchestrated: (suggestion: AutocompleteSuggestion, deps: SuggestionClickDeps) => Promise<void>;
+  handleAddPlayerSuggestionClickOrchestrated: (suggestion: AutocompleteSuggestion, deps: AddPlayerSuggestionClickDeps) => Promise<void>;
+  CONSTANTS: RegistrationConstants;
 }
 
 export function useGroupHandlers({
@@ -118,7 +114,7 @@ export function useGroupHandlers({
       );
 
       // Validate player object
-      if (!DataValidation.isValidPlayer(player as unknown as Record<string, unknown>)) {
+      if (!DataValidation.isValidPlayer(player)) {
         logger.debug('GroupHandlers', 'Invalid player data - validation failed', {
           player,
           hasId: !!player?.id,
@@ -202,7 +198,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleSuggestionClick from line ~671
   const handleSuggestionClick = useCallback(
-    async (suggestion: unknown) => {
+    async (suggestion: AutocompleteSuggestion) => {
       await handleSuggestionClickOrchestrated(suggestion, {
         // Read values
         currentGroup,
@@ -248,7 +244,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleGroupSuggestionClick from line ~767
   const handleGroupSuggestionClick = useCallback(
-    async (suggestion: unknown) => {
+    async (suggestion: AutocompleteSuggestion) => {
       await handleSuggestionClick(suggestion);
       // For mobile flow, clear search after adding first player
       if (mobileFlow) {
@@ -261,7 +257,7 @@ export function useGroupHandlers({
 
   // VERBATIM COPY: handleAddPlayerSuggestionClick from line ~780
   const handleAddPlayerSuggestionClick = useCallback(
-    async (suggestion: unknown) => {
+    async (suggestion: AutocompleteSuggestion) => {
       await handleAddPlayerSuggestionClickOrchestrated(suggestion, {
         // Read values
         currentGroup,
