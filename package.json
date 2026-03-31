@@ -21,10 +21,12 @@
     "test:coverage": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
     "type:ratchet": "node scripts/type-ratchet.mjs",
+    "type:ratchet:test": "node scripts/type-ratchet-test.mjs",
     "check:env": "node scripts/check-env.js",
     "coverage:ratchet": "node scripts/coverage-ratchet.mjs",
-    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
+    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s type:ratchet:test && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [
