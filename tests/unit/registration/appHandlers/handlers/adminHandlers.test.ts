@@ -36,7 +36,11 @@ vi.mock('../../../../../src/registration/handlers/adminOperations', () => ({
 }));
 
 // ---- shared test state ----
-let deps, mocks, result, unmount;
+let deps: ReturnType<typeof createRegistrationAdminHandlerDeps>["deps"];
+let mocks: ReturnType<typeof createRegistrationAdminHandlerDeps>["mocks"];
+// Type assertion: partial mock for testing
+let result: { current: any };
+let unmount: () => void;
 
 beforeEach(async () => {
   vi.clearAllMocks();

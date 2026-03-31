@@ -20,7 +20,7 @@ function createTestAdapter() {
 }
 
 describe('ApiAdapter', () => {
-  let adapter;
+  let adapter: ApiAdapter;
 
   beforeEach(() => {
     adapter = createTestAdapter();

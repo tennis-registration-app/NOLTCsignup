@@ -62,7 +62,11 @@ vi.mock('../../../../../src/shared/constants/toastMessages.js', () => ({
 }));
 
 // ---- shared test state ----
-let deps, mocks, result, unmount;
+let deps: ReturnType<typeof createCourtHandlerDeps>["deps"];
+let mocks: ReturnType<typeof createCourtHandlerDeps>["mocks"];
+// Type assertion: partial mock for testing
+let result: { current: any };
+let unmount: () => void;
 
 beforeEach(async () => {
   vi.clearAllMocks();

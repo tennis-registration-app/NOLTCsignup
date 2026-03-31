@@ -36,7 +36,7 @@ function getParam(url, name) {
 }
 
 describe('TennisDirectory', () => {
-  let directory;
+  let directory: TennisDirectory;
 
   beforeEach(() => {
     const stack = createTestStack();

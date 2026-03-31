@@ -41,7 +41,8 @@ function createHarness() {
 // Tests
 
 describe('useGroupGuest', () => {
-  let ref;
+  // Type assertion: partial mock for testing
+  let ref: { current: any };
 
   beforeEach(() => {
     ref = createHarness();
