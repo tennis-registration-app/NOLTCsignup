@@ -14,7 +14,7 @@ export function normalizeWaitlistEntry(raw: Record<string, unknown>, serverNow: 
     return {
       id: 'unknown',
       position: 0,
-      group: { id: 'unknown', players: [], type: 'singles' },
+      group: { id: 'unknown', players: [] as {memberId:string;displayName:string;isGuest:boolean}[], type: 'singles' as const },
       joinedAt: '',
       minutesWaiting: 0,
       estimatedCourtTime: null,
@@ -32,7 +32,7 @@ export function normalizeWaitlistEntry(raw: Record<string, unknown>, serverNow: 
   }
 
   return {
-    id: raw.id || raw.entryId || raw.entry_id || 'unknown',
+    id: String(raw.id || raw.entryId || raw.entry_id || 'unknown'),
     position: Number(raw.position ?? raw.queue_position ?? 0),
     group: normalizeGroup(raw),
     joinedAt,

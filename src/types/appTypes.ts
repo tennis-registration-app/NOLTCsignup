@@ -177,9 +177,9 @@ export interface TennisBackendShape {
     // Note: getBoard() JSDoc declares Board from domain.js; blocks field shape differs from BoardBlock
     // (JSDoc says Block[] with startsAt/endsAt; runtime returns {startTime, endTime, title}).
     // Using intersection to accept both until JSDoc is corrected.
-    getBoard: () => Promise<DomainBoard & Record<string, unknown>>;
+    getBoard: () => Promise<DomainBoard>;
     // Evidence: TennisQueries.js:201 — delegates to getBoard
-    refresh: () => Promise<DomainBoard & Record<string, unknown>>;
+    refresh: () => Promise<DomainBoard>;
     // Evidence: TennisQueries.js:218 — returns { ok, partners: [{member_id, display_name, ...}] }
     getFrequentPartners: (memberId: string) => Promise<CommandResponse & { partners?: Array<{ member_id: string; display_name: string; member_number: string; play_count: number }> }>;
     // Evidence: TennisQueries.js:76 — callback receives DomainBoard, returns unsubscribe
@@ -421,9 +421,9 @@ export interface RegistrationUiState {
   /** Court and registration data — board state plus courtSelection */
   data: {
     /** Current court selection result */
-    courtSelection: CourtSelectionResult;
+    courtSelection?: CourtSelectionResult;
     /** Upcoming court blocks for today */
-    upcomingBlocks: UpcomingBlock[];
+    upcomingBlocks?: UpcomingBlock[];
     /** Domain courts from board */
     courts: DomainCourt[];
     /** Domain waitlist from board */
@@ -431,9 +431,9 @@ export interface RegistrationUiState {
     /** Active blocks (derived) */
     blocks: BoardBlock[];
     /** Server timestamp */
-    serverNow: string;
+    serverNow?: string;
     /** Operating hours from board */
-    operatingHours: OperatingHoursEntry[];
+    operatingHours?: OperatingHoursEntry[];
     [key: string]: unknown;
   };
   /** Active screen name */

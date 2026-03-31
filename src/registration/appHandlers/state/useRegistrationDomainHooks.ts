@@ -175,12 +175,12 @@ export function useRegistrationDomainHooks({
   } = useBlockAdmin({
     backend,
     showAlertMessage: externalShowAlertMessage || showAlertMessage,
-    getCourtData,
+    getCourtData: getCourtData as unknown as Parameters<typeof useBlockAdmin>[0]['getCourtData'],
   });
 
   // Waitlist admin hook
   const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
-    getCourtData,
+    getCourtData: getCourtData as unknown as Parameters<typeof useWaitlistAdmin>[0]['getCourtData'],
     showAlertMessage: externalShowAlertMessage || showAlertMessage,
     backend,
   });

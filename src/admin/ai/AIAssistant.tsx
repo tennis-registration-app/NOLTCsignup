@@ -77,7 +77,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
         mode: mode,
       });
       // Normalize at ingestion
-      const response = normalizeAiResponse(rawResponse);
+      const response = normalizeAiResponse(rawResponse as Record<string, unknown>);
 
       if (!response.ok) {
         throw new Error(response.error || 'Request failed');
@@ -117,7 +117,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
         confirm_destructive: confirmed, // API parameter (snake_case intentional)
       });
       // Normalize response at ingestion
-      const response = normalizeAiResponse(rawResponse);
+      const response = normalizeAiResponse(rawResponse as Record<string, unknown>);
 
       if (!response.ok) {
         throw new Error(response.error || 'Execution failed');
@@ -133,7 +133,7 @@ export default function AIAssistant({ backend, onClose, onSettingsChanged }: AIA
             // For analytics/read tools, show the actual data
             if (a.tool === 'get_analytics' && (a.result as Record<string, unknown>)?.data) {
               const data = (a.result as Record<string, unknown>).data as Record<string, unknown>;
-              const normalizedSummary = normalizeAiAnalyticsSummary(data.summary);
+              const normalizedSummary = normalizeAiAnalyticsSummary(data.summary as Record<string, unknown> | null);
               let summary = `${a.tool}: ✓\n`;
               if (normalizedSummary) {
                 summary += `Sessions: ${normalizedSummary.totalSessions || 0}\n`;

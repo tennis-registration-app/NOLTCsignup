@@ -29,7 +29,7 @@ import type {
   DomainMember,
 } from '../../types/appTypes';
 
-interface HomeScreenProps {
+export interface HomeScreenProps {
   // Search functionality
   searchInput: SearchState['searchInput'];
   setSearchInput: SearchState['setSearchInput'];

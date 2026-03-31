@@ -69,7 +69,7 @@ export interface AssignCourtServices {
   backend: Pick<TennisBackendShape, 'commands' | 'queries'>;
   getCourtBlockStatus: (courtNumber: number) => CourtBlockStatusResult | null;
   getMobileGeolocation: () => Promise<{ latitude?: number; longitude?: number; location_token?: string } | null>;
-  validateGroupCompat: (players: GroupPlayer[], guests: number) => { ok: boolean; errors: string[] };
+  validateGroupCompat: (players: Pick<GroupPlayer, 'id' | 'name'>[], guests: number) => { ok: boolean; errors: string[] };
   clearSuccessResetTimer: () => void;
   resetForm: () => void;
 }

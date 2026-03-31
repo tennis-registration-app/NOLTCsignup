@@ -27,7 +27,7 @@ function computeFreeCourts({ data, now, blocks }: { data: { courts?: unknown[] }
   const courts = data?.courts || [];
   const n = courts.length || 12;
   for (let i = 1; i <= n; i++) {
-    const c = courts[i - 1];
+    const c = courts[i - 1] as Record<string, unknown> | undefined;
     // Check for occupation using Domain format: court.session indicates active session
     const occ = !!(c && (c.isOccupied || c.session));
     const blk = activeBlocks.some((b) => b.courtNumber === i);

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import type { OperatingHoursEntry, RegistrationUiState } from '../../../types/appTypes';
 import { TENNIS_CONFIG } from '@lib';
 import { logger } from '../../../lib/logger';
 
@@ -31,17 +32,17 @@ export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }: UseRegistratio
   );
 
   // ===== CORE DATA STATE =====
-  const [data, setData] = useState(() => ({
+  const [data, setData] = useState<RegistrationUiState["data"]>(() => ({
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
     waitlist: [],
     blocks: [],
-    upcomingBlocks: null,
+    upcomingBlocks: undefined,
     recentlyCleared: [],
   }));
 
   // ===== COURT/AVAILABILITY STATE =====
-  const [availableCourts, setAvailableCourts] = useState([]);
-  const [operatingHours, setOperatingHours] = useState(null);
+  const [availableCourts, setAvailableCourts] = useState([] as number[]);
+  const [operatingHours, setOperatingHours] = useState(null as (OperatingHoursEntry[] | null));
 
   // ===== SUCCESS STATE =====
   const [showSuccess, setShowSuccess] = useState(false);
@@ -52,7 +53,7 @@ export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }: UseRegistratio
   const [, setIsUserTyping] = useState(false);
 
   // ===== ADMIN STATE =====
-  const [courtToMove, setCourtToMove] = useState(null);
+  const [courtToMove, setCourtToMove] = useState(null as (number | null));
   const [ballPriceInput, setBallPriceInput] = useState('');
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
 

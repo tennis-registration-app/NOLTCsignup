@@ -69,7 +69,7 @@ export function setNoltcUseApiGlobal(value: boolean) {
  * @param {Function} fn - Data loader function
  */
 export function setLoadDataGlobal(fn: () => void | Promise<void>) {
-  window.loadData = /** @type {any} */ (fn);
+  window.loadData = fn as () => Promise<void>;
 }
 
 /**

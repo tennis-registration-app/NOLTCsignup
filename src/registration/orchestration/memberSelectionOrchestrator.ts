@@ -88,7 +88,7 @@ export async function handleSuggestionClickOrchestrated(
     const playerStatus = isPlayerAlreadyPlaying(memberId);
     if (playerStatus.isPlaying && playerStatus.location === 'court') {
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber), {
+      toast(ALREADY_ON_COURT(playerName, playerStatus.courtNumber ?? 0), {
         type: 'warning',
       });
       setSearchInput('');
@@ -142,7 +142,7 @@ export async function handleSuggestionClickOrchestrated(
     } else {
       // Player is on waitlist but no court available yet
       const playerName = suggestion.member?.displayName || suggestion.member?.name || 'Player';
-      toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position), {
+      toast(ALREADY_ON_WAITLIST(playerName, playerStatus.position ?? 0), {
         type: 'warning',
       });
     }

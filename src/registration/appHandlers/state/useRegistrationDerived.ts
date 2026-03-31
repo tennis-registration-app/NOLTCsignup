@@ -22,7 +22,7 @@ interface RegistrationData {
     minutesWaiting?: unknown;
     deferred?: boolean;
   }>;
-  courtSelection: CourtSelectionData | null | undefined;
+  courtSelection?: CourtSelectionData | null | undefined;
 }
 
 interface UseRegistrationDerivedDeps {

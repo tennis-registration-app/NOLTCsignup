@@ -76,7 +76,7 @@ export class TennisQueries {
     }
 
     // Store raw response for legacy adapter (temporary)
-    (board as Record<string, unknown>)._raw = response;
+    (board as unknown as Record<string, unknown>)._raw = response;
 
     this._lastBoard = board;
     return board;

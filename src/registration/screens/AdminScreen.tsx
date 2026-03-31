@@ -21,7 +21,7 @@ import type {
 
 type AdminCourt = RegistrationUiState['data']['courts'][number];
 
-interface AdminScreenProps {
+export interface AdminScreenProps {
   data: RegistrationUiState['data'];
   currentTime: Date;
   showAlert: boolean;
@@ -232,7 +232,7 @@ const AdminScreen = ({
         <SystemSettingsSection
           ballPriceInput={ballPriceInput}
           setBallPriceInput={setBallPriceInput}
-          priceError={priceError}
+          priceError={priceError ?? ""}
           setPriceError={setPriceError}
           showPriceSuccess={showPriceSuccess}
           setShowPriceSuccess={setShowPriceSuccess}

@@ -1,8 +1,9 @@
 {
   "errors": 0,
-  "warnings": 2,
+  "warnings": 3,
   "byRule": {
     "@typescript-eslint/no-unused-vars": 1,
-    "react-hooks/exhaustive-deps": 1
+    "react-hooks/exhaustive-deps": 1,
+    "unknown": 1
   }
 }

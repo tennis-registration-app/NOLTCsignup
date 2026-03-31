@@ -67,8 +67,9 @@ export const TennisBusinessLogic = {
         if (!court) return null;
 
         // Prefer end time of current session if available (Domain format)
-        if (court.session?.scheduledEndAt) {
-          return new Date(court.session.scheduledEndAt).getTime();
+        const session = court.session as Record<string, unknown> | undefined;
+        if (session?.scheduledEndAt) {
+          return new Date(String(session.scheduledEndAt)).getTime();
         }
 
         // Check for blocks using new system

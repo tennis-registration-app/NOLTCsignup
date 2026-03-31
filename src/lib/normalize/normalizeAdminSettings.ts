@@ -1,5 +1,13 @@
 // @ts-check
 
+export interface OperatingHoursEntry {
+  dayOfWeek: unknown;
+  dayName: unknown;
+  opensAt: unknown;
+  closesAt: unknown;
+  isClosed: unknown;
+}
+
 /**
  * Normalizes admin settings from API snake_case to internal camelCase.
  * This is the boundary translation point — snake_case enters, camelCase exits.
@@ -20,15 +28,25 @@ export function normalizeAdminSettingsResponse(raw: Record<string, unknown>) {
  * @param {Object|null|undefined} settings - Raw settings from API
  * @returns {Object|null}
  */
-export function normalizeSettings(settings: Record<string, unknown> | null | undefined) {
+export function normalizeSettings(settings: Record<string, unknown> | null | undefined): {
+  ballPriceCents: number | null;
+  ballBucketSize: number | null;
+  guestFeeWeekdayCents: number | null;
+  guestFeeWeekendCents: number | null;
+  courtCount: number | null;
+  checkStatusMinutes: unknown;
+  blockWarningMinutes: unknown;
+  autoClearEnabled: unknown;
+  autoClearMinutes: unknown;
+} | null {
   if (!settings) return null;
 
   return {
-    ballPriceCents: settings.ball_price_cents,
-    ballBucketSize: settings.ball_bucket_size,
-    guestFeeWeekdayCents: settings.guest_fee_weekday_cents,
-    guestFeeWeekendCents: settings.guest_fee_weekend_cents,
-    courtCount: settings.court_count,
+    ballPriceCents: settings.ball_price_cents != null ? Number(settings.ball_price_cents) : null,
+    ballBucketSize: settings.ball_bucket_size != null ? Number(settings.ball_bucket_size) : null,
+    guestFeeWeekdayCents: settings.guest_fee_weekday_cents != null ? Number(settings.guest_fee_weekday_cents) : null,
+    guestFeeWeekendCents: settings.guest_fee_weekend_cents != null ? Number(settings.guest_fee_weekend_cents) : null,
+    courtCount: settings.court_count != null ? Number(settings.court_count) : null,
     checkStatusMinutes: settings.check_status_minutes,
     blockWarningMinutes: settings.block_warning_minutes,
     autoClearEnabled: settings.auto_clear_enabled,
@@ -80,12 +98,12 @@ export function normalizeOverrides(overrides: unknown[] | null | undefined) {
  * @param {Array} hours - Internal camelCase hours
  * @returns {Array} API-ready snake_case hours
  */
-export function denormalizeOperatingHours(hours: Record<string, unknown>[]) {
+export function denormalizeOperatingHours(hours: Record<string, unknown>[]): { day_of_week: number; opens_at: string; closes_at: string; is_closed: boolean }[] {
   return hours.map((h) => ({
-    day_of_week: h.dayOfWeek,
-    opens_at: h.opensAt,
-    closes_at: h.closesAt,
-    is_closed: h.isClosed,
+    day_of_week: Number(h.dayOfWeek),
+    opens_at: String(h.opensAt || ''),
+    closes_at: String(h.closesAt || ''),
+    is_closed: Boolean(h.isClosed),
   }));
 }
 

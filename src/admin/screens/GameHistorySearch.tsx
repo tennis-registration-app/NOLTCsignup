@@ -70,7 +70,7 @@ const GameHistorySearch = ({ backend }: GameHistorySearchProps) => {
               name: p.name || 'Unknown',
               type: p.type,
             })),
-            clearReason: mapEndReason(normalized.endReason),
+            clearReason: mapEndReason(normalized.endReason || ""),
           };
         });
 

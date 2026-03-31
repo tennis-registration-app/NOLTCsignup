@@ -66,10 +66,10 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }: {
         const normalizedSettings = normalizeSettings(result.settings);
 
         const newSettings = {
-          tennisBallPrice: (normalizedSettings?.ballPriceCents || 500) / 100,
+          tennisBallPrice: ((normalizedSettings?.ballPriceCents ?? 500) as number) / 100,
           guestFees: {
-            weekday: (normalizedSettings?.guestFeeWeekdayCents || 1500) / 100,
-            weekend: (normalizedSettings?.guestFeeWeekendCents || 2000) / 100,
+            weekday: ((normalizedSettings?.guestFeeWeekdayCents ?? 1500) as number) / 100,
+            weekend: ((normalizedSettings?.guestFeeWeekendCents ?? 2000) as number) / 100,
           },
         };
         setSettings(newSettings);
@@ -78,9 +78,9 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }: {
         setWeekendFeeInput(newSettings.guestFees.weekend.toFixed(2));
 
         setAutoClearEnabled(normalizedSettings?.autoClearEnabled === 'true');
-        setAutoClearMinutes(normalizedSettings?.autoClearMinutes || '180');
-        setCheckStatusMinutes(normalizedSettings?.checkStatusMinutes || '150');
-        setBlockWarningMinutes(normalizedSettings?.blockWarningMinutes || '60');
+        setAutoClearMinutes(String(normalizedSettings?.autoClearMinutes || '180'));
+        setCheckStatusMinutes(String(normalizedSettings?.checkStatusMinutes || '150'));
+        setBlockWarningMinutes(String(normalizedSettings?.blockWarningMinutes || '60'));
 
         const normalizedHours = normalizeOperatingHours(result.operating_hours);
         if (normalizedHours) {

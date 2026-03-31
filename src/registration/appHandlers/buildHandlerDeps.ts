@@ -48,7 +48,7 @@ export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, un
     courtAssignment: workflow.courtAssignment,
     services: app.services,
     helpers: app.helpers,
-    blockAdmin: (app.admin as Record<string, unknown>).blockAdmin,
+    blockAdmin: (app.admin as unknown as Record<string, unknown>).blockAdmin,
     alert: app.alert,
     refs: app.refs,
     assignCourtToGroupOrchestrated: app.assignCourtToGroupOrchestrated,
@@ -100,7 +100,7 @@ export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, un
 export function buildGuestHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
   return {
     groupGuest: workflow.groupGuest,
-    guestCounterHook: (app.session as Record<string, unknown>).guestCounterHook,
+    guestCounterHook: (app.session as unknown as Record<string, unknown>).guestCounterHook,
     memberIdentity: workflow.memberIdentity,
     derived: app.derived,
     setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
@@ -121,7 +121,7 @@ export function buildAdminHandlerDeps(app: AppState, court: Record<string, unkno
     setters: app.setters,
     search: app.search,
     state: app.state,
-    adminPriceFeedback: (app.admin as Record<string, unknown>).adminPriceFeedback,
+    adminPriceFeedback: (app.admin as unknown as Record<string, unknown>).adminPriceFeedback,
     TENNIS_CONFIG: app.TENNIS_CONFIG,
     court,
   };

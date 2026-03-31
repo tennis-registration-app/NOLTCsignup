@@ -53,7 +53,7 @@ export function useBoardSubscription(deps: UseBoardSubscriptionDeps) {
     const result = transformBoardUpdate(board as RawBoard | null | undefined, lastBlocksFingerprintRef.current);
 
     setCourts(result.courts);
-    setWaitingGroups(result.waitingGroups);
+    setWaitingGroups(result.waitingGroups as unknown as Parameters<typeof setWaitingGroups>[0]);
     setCourtBlocks(result.courtBlocks);
 
     if (result.shouldBumpRefreshTrigger) {

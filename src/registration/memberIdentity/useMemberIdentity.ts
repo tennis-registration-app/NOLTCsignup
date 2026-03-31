@@ -23,6 +23,20 @@ interface MemberIdentityBackend {
 interface MemberIdentityDeps {
   backend: MemberIdentityBackend | null | undefined;
 }
+interface FrequentPartnerCacheEntry {
+  status: 'loading' | 'error' | 'ready';
+  ts: number;
+  data?: unknown[];
+}
+
+interface MemberIdentityBackend {
+  queries: {
+    getFrequentPartners: (memberId: string) => Promise<{ ok: boolean; partners?: Array<{ member_id: string; display_name: string; member_number: string; play_count: number }> }>;  };
+}
+
+interface MemberIdentityDeps {
+  backend: MemberIdentityBackend | null | undefined;
+}
 import { memberIdentityReducer, initialMemberIdentityState } from './memberIdentityReducer';
 import { logger } from '../../lib/logger';
 

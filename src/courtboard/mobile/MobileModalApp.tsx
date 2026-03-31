@@ -35,8 +35,8 @@ export function MobileModalApp() {
   return (
     <MobileModalSheet
       type={state.type}
-      payload={state.payload}
-      onClose={getMobileModal()?.close || (() => {})}
+      payload={state.payload as Record<string, unknown> | null}
+      onClose={getMobileModal()?.close as (() => void) || (() => {})}
     />
   );
 }

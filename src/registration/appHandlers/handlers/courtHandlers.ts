@@ -353,7 +353,7 @@ export function useCourtHandlers({
       return assignCourtToGroupOrchestrated(
         courtNumber,
         selectableCountAtSelection,
-        createAssignCourtDeps()
+        createAssignCourtDeps() as unknown as Parameters<typeof assignCourtToGroupOrchestrated>[2]
       );
     },
     [assignCourtToGroupOrchestrated, createAssignCourtDeps]

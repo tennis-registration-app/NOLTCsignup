@@ -31,14 +31,14 @@ export function transformSettings(apiSettings: Record<string, unknown>) {
   const normalized = normalizeSettings(apiSettings);
   return {
     tennisBallPrice: normalized?.ballPriceCents
-      ? normalized.ballPriceCents / 100
+      ? (normalized.ballPriceCents ?? 0) / 100
       : PRICING_DEFAULTS.TENNIS_BALLS,
     guestFees: {
       weekday: normalized?.guestFeeWeekdayCents
-        ? normalized.guestFeeWeekdayCents / 100
+        ? (normalized.guestFeeWeekdayCents ?? 0) / 100
         : PRICING_DEFAULTS.GUEST_FEE_WEEKDAY,
       weekend: normalized?.guestFeeWeekendCents
-        ? normalized.guestFeeWeekendCents / 100
+        ? (normalized.guestFeeWeekendCents ?? 0) / 100
         : PRICING_DEFAULTS.GUEST_FEE_WEEKEND,
     },
   };

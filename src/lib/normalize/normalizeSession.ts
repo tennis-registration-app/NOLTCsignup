@@ -22,10 +22,12 @@ export function normalizeSession(raw: Record<string, unknown>, serverNow: string
       : false;
 
   // Normalize end reason
-  let endReason = (raw.endReason || raw.end_reason || null) as string | null;
-  if (endReason && !END_REASONS.includes(endReason)) {
-    console.warn('[normalizeSession] Invalid endReason:', endReason);
-    endReason = null;
+  let endReason: "completed" | "cleared_early" | "admin_override" | null = null;
+  const rawEndReason = (raw.endReason || raw.end_reason || null) as string | null;
+  if (rawEndReason && END_REASONS.includes(rawEndReason)) {
+    endReason = rawEndReason as "completed" | "cleared_early" | "admin_override";
+  } else if (rawEndReason) {
+    console.warn('[normalizeSession] Invalid endReason:', rawEndReason);
   }
 
   return {

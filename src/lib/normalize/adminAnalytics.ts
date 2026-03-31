@@ -12,9 +12,9 @@
  */
 export function normalizeHeatmapRow(raw: Record<string, unknown>) {
   return {
-    dayOfWeek: raw.dow ?? raw.day_of_week,
-    hour: raw.hour,
-    sessionCount: raw.count ?? raw.session_count,
+    dayOfWeek: Number(raw.dow ?? raw.day_of_week ?? 0),
+    hour: Number(raw.hour ?? 0),
+    sessionCount: Number(raw.count ?? raw.session_count ?? 0),
   };
 }
 
@@ -25,14 +25,14 @@ export function normalizeHeatmapRow(raw: Record<string, unknown>) {
  */
 export function normalizeTransaction(raw: Record<string, unknown>) {
   return {
-    id: raw.id,
-    date: raw.date,
-    time: raw.time,
-    memberNumber: raw.member_number,
-    accountName: raw.account_name,
-    amountDollars: raw.amount_dollars,
-    amountCents: raw.amount_cents,
-    description: raw.description,
+    id: raw.id != null ? String(raw.id) : undefined,
+    date: raw.date != null ? String(raw.date) : "",
+    time: raw.time != null ? String(raw.time) : undefined,
+    memberNumber: raw.member_number != null ? String(raw.member_number) : undefined,
+    accountName: raw.account_name != null ? String(raw.account_name) : undefined,
+    amountDollars: raw.amount_dollars != null ? String(raw.amount_dollars) : "0",
+    amountCents: raw.amount_cents != null ? Number(raw.amount_cents) : 0,
+    description: raw.description != null ? String(raw.description) : undefined,
   };
 }
 
@@ -43,11 +43,11 @@ export function normalizeTransaction(raw: Record<string, unknown>) {
  */
 export function normalizeGameSession(raw: Record<string, unknown>) {
   return {
-    id: raw.id,
-    courtNumber: raw.court_number,
-    startedAt: raw.started_at,
-    endedAt: raw.ended_at,
-    endReason: raw.end_reason,
+    id: raw.id != null ? String(raw.id) : undefined,
+    courtNumber: raw.court_number != null ? Number(raw.court_number) : undefined,
+    startedAt: raw.started_at != null ? String(raw.started_at) : undefined,
+    endedAt: raw.ended_at != null ? String(raw.ended_at) : undefined,
+    endReason: raw.end_reason != null ? String(raw.end_reason) : undefined,
     participants: raw.participants,
   };
 }
@@ -59,15 +59,15 @@ export function normalizeGameSession(raw: Record<string, unknown>) {
  */
 export function normalizeCalendarBlock(raw: Record<string, unknown>) {
   return {
-    id: raw.id,
-    courtId: raw.courtId ?? raw.court_id,
-    courtNumber: raw.courtNumber ?? raw.court_number,
-    title: raw.title,
-    blockType: raw.blockType ?? raw.block_type,
-    startsAt: raw.startsAt ?? raw.starts_at,
-    endsAt: raw.endsAt ?? raw.ends_at,
-    isRecurring: raw.isRecurring ?? raw.is_recurring,
-    recurrenceRule: raw.recurrenceRule ?? raw.recurrence_rule,
+    id: raw.id != null ? String(raw.id) : undefined,
+    courtId: raw.courtId != null ? String(raw.courtId) : (raw.court_id != null ? String(raw.court_id) : undefined),
+    courtNumber: raw.courtNumber != null ? Number(raw.courtNumber) : (raw.court_number != null ? Number(raw.court_number) : undefined),
+    title: raw.title != null ? String(raw.title) : undefined,
+    blockType: raw.blockType != null ? String(raw.blockType) : (raw.block_type != null ? String(raw.block_type) : undefined),
+    startsAt: raw.startsAt != null ? String(raw.startsAt) : (raw.starts_at != null ? String(raw.starts_at) : undefined),
+    endsAt: raw.endsAt != null ? String(raw.endsAt) : (raw.ends_at != null ? String(raw.ends_at) : undefined),
+    isRecurring: raw.isRecurring != null ? Boolean(raw.isRecurring) : (raw.is_recurring != null ? Boolean(raw.is_recurring) : undefined),
+    recurrenceRule: raw.recurrenceRule != null ? String(raw.recurrenceRule) : (raw.recurrence_rule != null ? String(raw.recurrence_rule) : undefined),
     recurrenceGroupId: raw.recurrenceGroupId ?? raw.recurrence_group_id ?? null,
   };
 }
@@ -79,13 +79,13 @@ export function normalizeCalendarBlock(raw: Record<string, unknown>) {
  */
 export function normalizeAiResponse(raw: Record<string, unknown>) {
   return {
-    ok: raw.ok,
-    error: raw.error,
-    response: raw.response,
-    proposedToolCalls: raw.proposed_tool_calls,
-    actionsToken: raw.actions_token,
-    requiresConfirmation: raw.requires_confirmation,
-    executedActions: raw.executed_actions,
+    ok: Boolean(raw.ok),
+    error: raw.error != null ? String(raw.error) : undefined,
+    response: String(raw.response || ""),
+    proposedToolCalls: Array.isArray(raw.proposed_tool_calls) ? raw.proposed_tool_calls as Record<string, unknown>[] : undefined,
+    actionsToken: raw.actions_token != null ? String(raw.actions_token) : null,
+    requiresConfirmation: Boolean(raw.requires_confirmation),
+    executedActions: Array.isArray(raw.executed_actions) ? raw.executed_actions as Record<string, unknown>[] : [],
   };
 }
 
@@ -97,8 +97,8 @@ export function normalizeAiResponse(raw: Record<string, unknown>) {
 export function normalizeAiAnalyticsSummary(raw: Record<string, unknown> | null) {
   if (!raw) return null;
   return {
-    totalSessions: raw.total_sessions,
-    totalHours: raw.total_hours,
+    totalSessions: raw.total_sessions != null ? Number(raw.total_sessions) : 0,
+    totalHours: raw.total_hours != null ? Number(raw.total_hours) : 0,
   };
 }
 
@@ -109,7 +109,7 @@ export function normalizeAiAnalyticsSummary(raw: Record<string, unknown> | null)
  */
 export function normalizeAiHeatmapRow(raw: Record<string, unknown>) {
   return {
-    dayOfWeek: raw.day_of_week,
-    sessionCount: raw.session_count,
+    dayOfWeek: Number(raw.day_of_week ?? 0),
+    sessionCount: Number(raw.session_count ?? 0),
   };
 }

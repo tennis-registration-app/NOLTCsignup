@@ -12,7 +12,7 @@ import { GROUP_TYPES } from '../types/domain';
 export function normalizeGroup(raw: Record<string, unknown>) {
   if (!raw) {
     console.warn('[normalizeGroup] Received null/undefined group');
-    return { id: 'unknown', players: [], type: 'singles' };
+    return { id: 'unknown', players: [] as {memberId:string;displayName:string;isGuest:boolean}[], type: 'singles' as const };
   }
 
   // Handle players array - could be players, participants, or members
@@ -31,10 +31,12 @@ export function normalizeGroup(raw: Record<string, unknown>) {
   const players = Array.isArray(rawPlayers) ? (rawPlayers as Record<string, unknown>[]).map(normalizeMember) : [];
 
   // Determine group type from player count
-  let type: string = String(raw.type || raw.group_type || raw.groupType || '');
-  if (!type || !GROUP_TYPES.includes(type)) {
+  let type: "singles" | "doubles" = "singles"; const rawType = String(raw.type || raw.group_type || raw.groupType || '');
+  if (!rawType || !GROUP_TYPES.includes(rawType)) {
     if (players.length <= 3) type = 'singles';
     else type = 'doubles';
+  } else {
+    type = rawType as "singles" | "doubles";
   }
 
   return {

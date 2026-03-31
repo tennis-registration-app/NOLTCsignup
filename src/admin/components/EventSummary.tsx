@@ -21,7 +21,7 @@ export const EventSummary = memo(function EventSummary({ events, currentTime, on
       <h3 className="font-medium text-gray-700 mb-2">Upcoming Events</h3>
       <div className="space-y-2">
         {upcomingEvents.map((event) => {
-          const Icon = getEventIcon(event.eventDetails?.type);
+          const Icon = getEventIcon(event.eventDetails?.type ?? "");
           return (
             <div
               key={event.id}

@@ -146,13 +146,13 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
               id: normalized.id,
               courtId: normalized.courtId,
               courtNumber: normalized.courtNumber,
-              courtNumbers: [normalized.courtNumber], // Calendar expects array
+              courtNumbers: ([normalized.courtNumber]).filter((x: unknown): x is number => x != null).map(Number), // Calendar expects array
               title: normalized.title,
-              startTime: (normalized.startsAt as string) || "",
-              endTime: (normalized.endsAt as string) || "",
+              startTime: normalized.startsAt || "",
+              endTime: normalized.endsAt || "",
               reason: normalized.blockType,
               blockType: normalized.blockType,
-              eventType: getEventTypeFromReason(normalized.blockType),
+              eventType: normalized.blockType ? getEventTypeFromReason(normalized.blockType) : null,
               isRecurring: normalized.isRecurring,
               recurrenceRule: normalized.recurrenceRule,
               recurrenceGroupId: normalized.recurrenceGroupId,
@@ -165,7 +165,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
                 normalized.blockType === 'wet' || normalized.title?.toLowerCase().includes('wet'),
             };
           });
-          setBlocks(transformedBlocks);
+          setBlocks(transformedBlocks as unknown as Parameters<typeof setBlocks>[0]);
         } else {
           logger.error('AdminCalendar', 'API error', result.message);
           setError(result.message || 'Failed to fetch blocks');

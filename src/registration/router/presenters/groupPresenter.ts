@@ -42,7 +42,7 @@ export interface GroupModel {
   currentGroup: GroupPlayer[] | null;
   memberNumber: string;
   availableCourts: number[];
-  courtSelection: CourtSelectionResult;
+  courtSelection?: CourtSelectionResult;
   frequentPartners: FrequentPartner[];
   frequentPartnersLoading: boolean;
   // UI state

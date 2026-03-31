@@ -90,7 +90,7 @@ function guardedWriteJSON(key: string, value: unknown): unknown {
 
       // Monotonic update tick (helps future freshness checks)
       const currTick = readJSON(KEYS.UPDATE_TICK) || 0;
-      const incomingTick = (value && valObj.__tick) || 0;
+      const incomingTick = Number((value && valObj.__tick) || 0);
       const newTick = Math.max(currTick + 1, Date.now(), incomingTick);
 
       const res = writeJSON(key, value);

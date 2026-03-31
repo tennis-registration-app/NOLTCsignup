@@ -25,6 +25,20 @@ interface BlockWarningModalProps {
   onConfirm: () => void;
   onCancel: () => void;
 }
+interface BlockWarning {
+  type: string;
+  reason: string;
+  startTime: string;
+  minutesUntilBlock: number;
+  limitedDuration?: number;
+  originalDuration?: number;
+}
+
+interface BlockWarningModalProps {
+  warning: BlockWarning | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
 const BlockWarningModal = ({ warning, onConfirm, onCancel }: BlockWarningModalProps) => {
   if (!warning) return null;

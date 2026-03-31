@@ -119,7 +119,7 @@ export const MonthView = memo(function MonthView({
                   )}
                   <div className="space-y-1">
                     {dateEvents.slice(0, 2).map((event, idx) => {
-                      const Icon = getEventIcon(event.eventDetails?.type);
+                      const Icon = getEventIcon(event.eventDetails?.type ?? "");
                       return (
                         <div
                           key={idx}

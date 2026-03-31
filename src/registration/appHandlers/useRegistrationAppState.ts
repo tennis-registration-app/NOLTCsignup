@@ -147,8 +147,8 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
     setCurrentTime,
     setBallPriceCents,
     setBlockWarningMinutes: () => {}, // Will be set by domain hooks
-    availableCourts,
-    backend,
+    availableCourts: availableCourts as unknown as Parameters<typeof useRegistrationRuntime>[0]['availableCourts'],
+    backend: backend as unknown as Parameters<typeof useRegistrationRuntime>[0]['backend'],
   });
   const { successResetTimerRef, typingTimeoutRef } = runtime;
 
@@ -204,7 +204,7 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
       setAddPlayerSearch,
       setShowAddPlayerSuggestions,
       clearSuccessResetTimer,
-      refresh: () => backend.queries.refresh(),
+      refresh: (() => backend.queries.refresh()) as unknown as Parameters<typeof applyInactivityTimeoutOrchestrated>[0]["refresh"],
     });
   }
 
@@ -263,19 +263,19 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
 
   // ===== RETURN ALL STATE AND HELPERS =====
   return buildRegistrationReturn({
-    ui,
-    domain,
+    ui: ui as unknown as Parameters<typeof buildRegistrationReturn>[0]['ui'],
+    domain: domain as unknown as Parameters<typeof buildRegistrationReturn>[0]['domain'],
     runtime,
-    _dataLayer: dataLayer,
-    helpers,
-    derived,
+    _dataLayer: dataLayer as unknown as Parameters<typeof buildRegistrationReturn>[0]['_dataLayer'],
+    helpers: helpers as unknown as Parameters<typeof buildRegistrationReturn>[0]['helpers'],
+    derived: derived as unknown as Parameters<typeof buildRegistrationReturn>[0]['derived'],
     timeout: { showTimeoutWarning },
-    backend,
+    backend: backend as unknown as Parameters<typeof buildRegistrationReturn>[0]['backend'],
     dataStore,
     CONSTANTS,
     TENNIS_CONFIG,
     API_CONFIG,
-    TennisBusinessLogic,
+    TennisBusinessLogic: TennisBusinessLogic as unknown as Parameters<typeof buildRegistrationReturn>[0]['TennisBusinessLogic'],
     dbg,
     DEBUG,
     getCourtBlockStatus,

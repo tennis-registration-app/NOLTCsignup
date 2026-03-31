@@ -141,7 +141,7 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
         return;
       }
       try {
-        const normalized = normalizeBoard(apiResponse.board);
+        const normalized = normalizeBoard(apiResponse.board as Record<string, unknown>);
         applyBoardUpdate(normalized);
       } catch (error) {
         console.error('Failed to normalize board response:', error);
@@ -163,10 +163,10 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
   } = useWetCourts({
     backend,
     getDeviceId,
-    courts,
+    courts: courts as unknown as Parameters<typeof useWetCourts>[0]['courts'],
     Events,
     onRefresh: bumpRefreshTrigger,
-    applyBoardResponse,
+    applyBoardResponse: applyBoardResponse as unknown as Parameters<typeof useWetCourts>[0]['applyBoardResponse'],
   });
 
   // Convert array to Set for compatibility with existing code that expects Set

@@ -64,7 +64,7 @@ export function CourtRoute({ app, handlers }: CourtRouteProps) {
   const hasWaiters = courtData.waitlist?.some((e) => !e.deferred) ?? false;
 
   // Waitlist priority users and normal users (when no waitlist) get selectable courts
-  let computedAvailableCourts = [];
+  let computedAvailableCourts: number[] = [];
   if (hasWaitlistPriority || (!hasWaiters && courtSelection.selectableCourts.length > 0)) {
     computedAvailableCourts = courtSelection
       .getSelectableForGroup(playerCount)
@@ -80,7 +80,7 @@ export function CourtRoute({ app, handlers }: CourtRouteProps) {
     showingOvertimeCourts,
     hasWaitingGroups: hasWaitlistEntries,
     waitingGroupsCount: courtData.waitlist.length,
-    upcomingBlocks: courtData.upcomingBlocks,
+    upcomingBlocks: courtData.upcomingBlocks ?? [],
   };
   const model = buildCourtModel(app, workflow, computed);
   const actions = buildCourtActions(app, workflow, handlers, { computedAvailableCourts });

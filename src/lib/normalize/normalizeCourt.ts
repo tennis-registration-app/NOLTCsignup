@@ -91,10 +91,10 @@ export function normalizeCourt(raw: Record<string, unknown>, serverNow: string) 
   const id = raw.court_id || raw.id || `court-${number}`;
 
   return {
-    id,
-    number,
-    isOccupied,
-    isBlocked,
+    id: String(id),
+    number: Number(number),
+    isOccupied: Boolean(isOccupied),
+    isBlocked: Boolean(isBlocked),
     isOvertime,
     isAvailable,
     isTournament: session?.isTournament ?? false,

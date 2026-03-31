@@ -69,7 +69,7 @@ export interface DeferWaitlistInput {
 
 export interface AssignFromWaitlistInput {
   waitlistEntryId: string;
-  courtId: string;
+  courtId?: string;
   latitude?: number;
   longitude?: number;
   accuracy?: number;

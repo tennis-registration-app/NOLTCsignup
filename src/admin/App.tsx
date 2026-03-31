@@ -87,7 +87,7 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               calendarModel={calendar.model}
               calendarActions={calendar.actions}
               services={adminServices}
-              components={blocks.components}
+              components={blocks.components as unknown as ReturnType<typeof import("./types/domainObjects").createBlockComponents>}
             />
           )}
           {activeTab === 'blocking' && (
@@ -97,9 +97,9 @@ const AdminPanel = ({ onExit }: AdminPanelProps) => {
               wetCourtsActions={wetCourtsController.actions}
               blockModel={blocks.model}
               blockActions={blocks.actions}
-              components={blocks.components}
+              components={blocks.components as unknown as ReturnType<typeof import("./types/domainObjects").createBlockComponents>}
               services={adminServices}
-              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced}
+              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced as unknown as React.ComponentType<Record<string, unknown>>}
             />
           )}
           {activeTab === 'waitlist' && (

@@ -17,12 +17,12 @@ export function normalizeBlock(raw: Record<string, unknown>, serverNow: string) 
   const isActive = startsAt && endsAt ? now >= new Date(startsAt) && now < new Date(endsAt) : false;
 
   return {
-    id: raw.id || raw.blockId || raw.block_id || 'unknown',
-    courtNumber: raw.courtNumber || raw.court_number || raw.courtNum || 0,
+    id: String(raw.id || raw.blockId || raw.block_id || 'unknown'),
+    courtNumber: Number(raw.courtNumber || raw.court_number || raw.courtNum || 0),
     startsAt,
     endsAt,
-    reason: raw.reason || raw.description || '',
-    blockType: raw.blockType || raw.block_type || raw.type || undefined,
+    reason: String(raw.reason || raw.description || ''),
+    blockType: raw.blockType != null ? String(raw.blockType) : (raw.block_type != null ? String(raw.block_type) : (raw.type != null ? String(raw.type) : undefined)),
     isActive,
   };
 }

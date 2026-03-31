@@ -347,7 +347,7 @@ export class TennisCommands {
     }
 
     // Get unique member numbers for parallel fetch
-    const uniqueMemberNumbers = [...new Set(memberPlayers.map((p) => p.memberNumber))];
+    const uniqueMemberNumbers = [...new Set(memberPlayers.map((p) => String(p.memberNumber)))];
 
     // Capture for closure (TS can't narrow `this` across async callbacks)
     const directory = this.directory;

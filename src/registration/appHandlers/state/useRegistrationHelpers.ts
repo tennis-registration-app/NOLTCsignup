@@ -96,7 +96,7 @@ export function useRegistrationHelpers({
       logger.debug("guardAddPlayerEarly", "memberId", memberId);
     }
 
-    const engagement = findEngagementByMemberId(board, memberId);
+    const engagement = findEngagementByMemberId(board as unknown as Parameters<typeof findEngagementByMemberId>[0], memberId);
 
     if (!engagement) return true;
 

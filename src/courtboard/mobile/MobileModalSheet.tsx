@@ -336,7 +336,7 @@ export function MobileModalSheet({ type, payload, onClose }: { type: string | nu
                   // Get court ID from current board state
                   const board = await backend.queries.getBoard();
                   const court = board?.courts?.find(
-                    (c: Record<string,unknown> | null) => c && c.number === Number(clearCourtNumber)
+                    (c: { number?: unknown; id?: unknown } | null) => c && c.number === Number(clearCourtNumber)
                   );
 
                   if (court?.id) {
