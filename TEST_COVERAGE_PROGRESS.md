@@ -9,8 +9,8 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 | File | Stmt% | Fn% | Status | Tests |
 |------|-------|-----|--------|-------|
-| src/admin/blocks/utils/blockValidation.ts | 0 | 0 | TODO | — |
-| src/registration/appHandlers/state/useRegistrationDerived.ts | 64 | 60 | TODO | — |
+| src/admin/blocks/utils/blockValidation.ts | 0 | 0 | DONE | 18 tests (blockValidation.test.ts) |
+| src/registration/appHandlers/state/useRegistrationDerived.ts | 64 | 60 | DONE | 15 tests (useRegistrationDerived.test.ts) |
 | src/registration/memberIdentity/useMemberIdentity.ts | 24 | 10 | TODO | — |
 | src/registration/ui/timeout/useSessionTimeout.ts | 24 | 29 | TODO | — |
 | src/registration/ui/mobile/useMobileFlowController.ts | 24 | 18 | TODO | — |
@@ -63,8 +63,14 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 ## Iteration Log
 
+### Iteration 1 — 2026-03-30
+Files tested: 2, Tests added: 33
+- src/admin/blocks/utils/blockValidation.ts (18 tests): hasValidTimes, hasReason, hasCourts — all branches
+- src/registration/appHandlers/state/useRegistrationDerived.ts (15 tests): empty waitlist, canFirstGroupPlay, canSecondGroupPlay, deferred groups, passThroughEntry, isMobileView pass-through, data aliases
+- npm run verify: 163 test files, 3167 tests — all green
+- Next: src/registration/memberIdentity/useMemberIdentity.ts — fetchFrequentPartners cache logic
+
 ### Phase 0 — 2026-03-30
 - Ran npx vitest run --coverage
 - Identified 157 test files already in place
 - Highest-value uncovered: blockValidation, useRegistrationDerived, useMemberIdentity, useSessionTimeout
-- Next: Priority 1 — blockValidation.ts (pure functions), then useRegistrationDerived logic
