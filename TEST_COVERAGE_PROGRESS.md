@@ -28,7 +28,7 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 | src/registration/ui/alert/useAlertDisplay.ts | 50 | 17 | DONE | 10 tests (useAlertDisplay.test.ts) |
 | src/registration/ui/guestCounter/useGuestCounter.ts | 67 | 33 | DONE | 5 tests (useGuestCounter.test.ts) |
 | src/registration/streak/useStreak.ts | 60 | 20 | DONE | 7 tests (useStreak.test.ts) |
-| src/registration/waitlist/useWaitlistAdmin.ts | 67 | 33 | TODO | — |
+| src/registration/waitlist/useWaitlistAdmin.ts | 67 | 33 | DONE | 12 tests (useWaitlistAdmin.test.ts) |
 | src/shared/utils/toast.ts | 67 | 100 | TODO | — |
 
 ## Priority 3: Presenters and Formatters
@@ -64,6 +64,13 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 ## Iteration Log
 
 
+
+
+### Iteration 10 — 2026-03-30
+Files tested: 1, Tests added: 12
+- src/registration/waitlist/useWaitlistAdmin.ts (12 tests): initial state (waitlistMoveFrom=null), setWaitlistMoveFrom (to number, to zero, to null, multiple sequential calls), onReorderWaitlist (delegates to handleReorderWaitlistOp with correct ctx/fromIndex/toIndex, passes live setWaitlistMoveFrom to null, passes live setWaitlistMoveFrom to number, reversed indices), returned surface (key list, setWaitlistMoveFrom is function, onReorderWaitlist is function)
+- npm run verify: all green
+- Next: src/shared/utils/toast.ts
 
 ### Iteration 9 — 2026-03-30
 Files tested: 4, Tests added: 31
