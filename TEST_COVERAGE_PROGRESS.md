@@ -18,7 +18,7 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 | src/registration/search/useMemberSearch.ts | 66 | 48 | DONE | 32 tests (useMemberSearch.test.ts) |
 | src/admin/hooks/useAdminHandlers.ts | 45 | 11 | SKIP | contract test exists (useAdminHandlers.contract.test.ts); logic is in operation modules already tested |
 | src/registration/group/useGroupGuest.ts | 45 | 8 | DONE | 27 tests (useGroupGuest.test.ts) |
-| src/registration/blocks/useBlockAdmin.ts | 55 | 10 | TODO | — |
+| src/registration/blocks/useBlockAdmin.ts | 55 | 10 | DONE | 20 tests (useBlockAdmin.test.ts) |
 
 ## Priority 2: Utility/Helper Functions
 
@@ -64,6 +64,12 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 ## Iteration Log
 
 
+
+### Iteration 8 — 2026-03-30
+Files tested: 1, Tests added: 20
+- src/registration/blocks/useBlockAdmin.ts (20 tests): initial state (7 defaults), setShowBlockModal (open/close/preserves-blockingInProgress legacy), setSelectedCourtsToBlock, setBlockMessage, setBlockStartTime, setBlockEndTime, setBlockWarningMinutes, setBlockingInProgress (true/false), onBlockCreate (state wiring + setBlockingInProgress forwarding), onCancelBlock (blockId+courtNum delegation)
+- npm run verify: all green
+- Next: src/registration/ui/adminPriceFeedback/useAdminPriceFeedback.ts
 
 ### Iteration 7 — 2026-03-30
 Files tested: 1, Tests added: 27
