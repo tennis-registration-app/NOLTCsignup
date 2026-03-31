@@ -163,10 +163,10 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
   } = useWetCourts({
     backend,
     getDeviceId,
-    courts: courts as unknown as Parameters<typeof useWetCourts>[0]['courts'],
+    courts: courts as DomainCourt[] | undefined,
     Events,
     onRefresh: bumpRefreshTrigger,
-    applyBoardResponse: applyBoardResponse as unknown as Parameters<typeof useWetCourts>[0]['applyBoardResponse'],
+    applyBoardResponse,
   });
 
   // Convert array to Set for compatibility with existing code that expects Set

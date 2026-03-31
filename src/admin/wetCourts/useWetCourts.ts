@@ -16,7 +16,7 @@ import {
   clearAllWetCourtsOp,
   clearWetCourtOp,
 } from '../handlers/wetCourtOperations';
-import type { TennisBackendShape } from '../../types/appTypes';
+import type { TennisBackendShape, CommandResponse } from '../../types/appTypes';
 
 interface Court {
   id?: string;
@@ -33,7 +33,7 @@ interface WetCourtsDeps {
   courts?: Court[];
   Events: EventsModule;
   onRefresh: () => void;
-  applyBoardResponse?: (result: unknown) => void;
+  applyBoardResponse?: (result: CommandResponse & { board?: unknown }) => void;
 }
 
 /**

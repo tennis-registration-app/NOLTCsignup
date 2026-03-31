@@ -33,8 +33,8 @@ export function StatusSection({
   wetCourtsActions,
   services,
 }: StatusSectionProps) {
-  const model = buildStatusModel(statusModel as unknown as Parameters<typeof buildStatusModel>[0], wetCourtsModel as unknown as Parameters<typeof buildStatusModel>[1], services as unknown as Parameters<typeof buildStatusModel>[2]);
-  const actions = buildStatusActions(statusActions as unknown as Parameters<typeof buildStatusActions>[0], wetCourtsActions as unknown as Parameters<typeof buildStatusActions>[1]);
+  const model = buildStatusModel(statusModel, wetCourtsModel, services);
+  const actions = buildStatusActions(statusActions, wetCourtsActions);
 
   const waitingGroups = (model.waitingGroups ?? []) as WaitlistGroup[];
   const { moveInWaitlist, removeFromWaitlist } = actions;
@@ -42,10 +42,13 @@ export function StatusSection({
   return (
     <div className="p-6">
       <CourtStatusGrid
+        // Type assertion: domain StatusModel uses object[] but CourtStatusGrid expects Record<string,unknown>[]/CourtBlock[] — DomainCourt lacks index signature
         statusModel={model.statusModel as unknown as Parameters<typeof CourtStatusGrid>[0]['statusModel']}
-        statusActions={actions.statusActions as unknown as Parameters<typeof CourtStatusGrid>[0]['statusActions']}
-        wetCourtsModel={model.wetCourtsModel as unknown as Parameters<typeof CourtStatusGrid>[0]['wetCourtsModel']}
+        statusActions={actions.statusActions}
+        wetCourtsModel={model.wetCourtsModel}
+        // Type assertion: WetCourtsActions uses (...args: unknown[]) => unknown but CourtStatusGrid expects specific Promise return types
         wetCourtsActions={actions.wetCourtsActions as unknown as Parameters<typeof CourtStatusGrid>[0]['wetCourtsActions']}
+        // Type assertion: AdminServices.backend is object|undefined; CourtStatusGrid expects AdminBackend (non-optional)
         services={model.services as unknown as Parameters<typeof CourtStatusGrid>[0]['services']}
       />
 

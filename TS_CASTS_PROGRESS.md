@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 36** (after iteration 5)
+- **Current count: 30** (after iteration 6)
 
 ---
 
@@ -179,4 +179,37 @@ Current count: **36** (was 40 at start of iteration 5)
 Remaining: admin files (~19), lib files (~4), registration/screens (3 annotated C), other (~10)
 
 Next iteration targets: admin/hooks/useAdminAppState.ts (2 casts), admin/tabs/StatusSection.tsx (7 casts)
+
+### Iteration 6 (2026-03-31) — StatusSection.tsx + useAdminAppState.ts
+Target: StatusSection.tsx (7 casts), useAdminAppState.ts (2 casts)
+Status: COMPLETE
+
+Casts removed (6 total):
+  StatusSection.tsx L36: buildStatusModel call cast — removed
+    (StatusSectionProps and buildStatusModel params use identical ReturnType<typeof createXxx> aliases)
+  StatusSection.tsx L37: buildStatusActions call cast — removed
+    (same reason as L36)
+  StatusSection.tsx L47: statusActions cast to CourtStatusGrid — removed
+    (StatusActions is structurally assignable to Record<string,unknown>)
+  StatusSection.tsx L48: wetCourtsModel cast to CourtStatusGrid — removed
+    (WetCourtsModel structurally matches CourtStatusGrid wetCourtsModel inline interface)
+  useAdminAppState.ts L166: courts cast to useWetCourts — removed
+    (DomainCourt[] satisfies Court[] — {id?: string, number?: number|string})
+  useAdminAppState.ts L169: applyBoardResponse cast to useWetCourts — removed
+    Fix: widened useWetCourts.WetCourtsDeps.applyBoardResponse from (result: unknown) => void
+    to (result: CommandResponse & { board?: unknown }) => void — matching caller's actual signature
+
+Casts annotated (3, Category C — Necessary):
+  StatusSection.tsx L46: statusModel cast — DomainCourt/DomainWaitlistEntry lack [key:string]:unknown
+    index signatures so object[] \!= Record<string,unknown>[] (TypeScript structural limitation)
+  StatusSection.tsx L50: wetCourtsActions cast — WetCourtsActions uses (...args:unknown[])=>unknown
+    but CourtStatusGrid expects specific Promise<{success?,error?}> return types
+  StatusSection.tsx L52: services cast — AdminServices.backend is object|undefined but
+    CourtStatusGrid requires non-optional AdminBackend
+
+Current count: **30** (was 36 at start of iteration 6)
+Remaining: admin/ (16 casts), lib/ (4 casts), registration/screens (3 annotated C), other (7)
+
+Next iteration targets: CompleteBlockManagerEnhanced.tsx (3 casts), useBoardSubscription.ts (1 cast),
+  useAdminSettings.ts (1 cast), CourtStatusGrid.tsx (1 cast)
 
