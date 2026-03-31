@@ -90,6 +90,20 @@ Pure-function unit tests for commands, orchestrators, and presenters. Hook-level
 - All work on main (no long-lived branches for this project)
 - Commits should be atomic and pass verify independently
 
+## Sharp Edges
+
+### Shell state vs. workflow state
+
+`useRegistrationAppState` owns 26 shell-state keys that persist for the lifetime of the app session (screen routing, operating hours, ball price, admin flags). `WorkflowProvider` owns ~15 per-flow keys (current group, court assignment, member identity) that reset between registrations via a `workflowKey` counter increment in `TennisRegistration` — no explicit setter calls, just a key bump that remounts the subtree. When adding new state, decide which bucket it belongs in: if the value should survive a successful registration and reset-to-home, it is shell state; if it is scoped to one registration flow, it belongs in `WorkflowProvider`. Adding it to the wrong bucket will produce hard-to-diagnose stale-state bugs.
+
+### Modifying `assignCourtOrchestrator.ts`
+
+This is the single most consequential file in the application — every court assignment flows through it. The file has a roadmap comment near the top identifying known extraction candidates; read it before making structural changes. The main test suite is `tests/unit/orchestration/assignCourtOrchestrator.test.ts` (386 lines); a second file covers the guard helpers (`tests/unit/orchestration/helpers/assignCourtValidation.test.ts`, 211 lines). Safe modification protocol: write a failing test first, run the full orchestrator test file to confirm nothing else breaks, then implement. Do not reorder the guard stages — they are sequenced intentionally (optimistic checks before expensive ones), and reordering will break the guard tests in non-obvious ways.
+
+### Realtime subscription testing gap
+
+E2E tests run with `?e2e=1`, which disables Supabase Realtime and mocks all API calls. This means the WebSocket path — board updates arriving via subscription, subscription reconnection after a network drop, duplicate-event deduplication — is covered only by unit tests and manual QA, not by the automated E2E suite. Any change to `useRegistrationDataLayer.ts` (subscription setup), the board normalization pipeline, or the polling fallback in `useBoardSubscription.ts` should be manually tested against the live Supabase project before merging, not just against the verify pipeline.
+
 ## Known Issues
 
 All tracked bugs resolved. See [LATENT_BUGS.md](LATENT_BUGS.md) for details. One won't-fix (runtimeConfig dead check — harmless defense-in-depth) and one intent-dependent (title-casing cosmetic — needs operator preference).
