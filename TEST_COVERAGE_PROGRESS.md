@@ -29,21 +29,21 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 | src/registration/ui/guestCounter/useGuestCounter.ts | 67 | 33 | DONE | 5 tests (useGuestCounter.test.ts) |
 | src/registration/streak/useStreak.ts | 60 | 20 | DONE | 7 tests (useStreak.test.ts) |
 | src/registration/waitlist/useWaitlistAdmin.ts | 67 | 33 | DONE | 12 tests (useWaitlistAdmin.test.ts) |
-| src/shared/utils/toast.ts | 67 | 100 | TODO | — |
+| src/shared/utils/toast.ts | 67 | 100 | DONE | 10 tests (toast.test.ts) |
 
 ## Priority 3: Presenters and Formatters
 
 | File | Stmt% | Fn% | Status | Tests |
 |------|-------|-----|--------|-------|
-| src/registration/court/useCourtAssignmentResult.ts | 58 | 17 | TODO | — |
-| src/admin/utils/adminRefresh.ts | 0 | 0 | TODO | — |
+| src/registration/court/useCourtAssignmentResult.ts | 58 | 17 | DONE | 13 tests (useCourtAssignmentResult.test.ts) |
+| src/admin/utils/adminRefresh.ts | 0 | 0 | SKIP | IIFE side-effect module — not testable without extensive global mocking |
 
 ## Priority 4: Hooks with Testable Logic (already partially tested)
 
 | File | Stmt% | Fn% | Status | Tests |
 |------|-------|-----|--------|-------|
-| src/registration/appHandlers/state/useRegistrationDomainHooks.ts | 83 | 50 | TODO | — |
-| src/registration/appHandlers/state/useRegistrationUiState.ts | 84 | 80 | TODO | — |
+| src/registration/appHandlers/state/useRegistrationDomainHooks.ts | 83 | 50 | DONE | 19 tests (useRegistrationDomainHooks.test.ts) |
+| src/registration/appHandlers/state/useRegistrationUiState.ts | 84 | 80 | DONE | 24 tests (useRegistrationUiState.test.ts) |
 
 ---
 
@@ -66,6 +66,13 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 
 
+
+### Iteration 12 — 2026-03-30
+Files tested: 2, Tests added: 43
+- src/registration/appHandlers/state/useRegistrationUiState.ts (24 tests): initial state (currentScreen=home, data.courts=12 nulls, waitlist=[], blocks=[], availableCourts=[], operatingHours=null, showSuccess=false, courtToMove=null, ballPriceInput='', ballPriceCents=500, currentTime=Date), setCurrentScreen (updates state, logs to logger.info, defaults source to 'unknown', multi-navigate), setShowSuccess (true/false), setCourtToMove (number/null), setBallPriceCents, setBallPriceInput, setAvailableCourts, setData (replaces object), returned surface (20 keys)
+- src/registration/appHandlers/state/useRegistrationDomainHooks.ts (19 tests): alert section (showAlert initial, alertMessage initial, showAlertMessage wires correctly), admin price (showPriceSuccess, priceError=''), guest counter (starts at 1, incrementGuestCounter), member search (searchInput='', showSuggestions=false), mobile flow (mobileFlow=false, showQRScanner=false), block admin (showBlockModal=false, blockingInProgress=false), waitlist (waitlistMoveFrom=null, setWaitlistMoveFrom), showAlertMessage fallback (external override, internal fallback), returned surface (all 57 keys sorted, all setters are functions)
+- npm run verify: 179 test files, 3438 tests, all green
+- ALL Priority 1, 2, 3, 4 files now DONE or SKIP — coverage campaign complete
 ### Iteration 11 â 2026-03-30
 Files tested: 2, Tests added: 23
 - src/shared/utils/toast.ts (10 tests): dispatches UI_TOAST CustomEvent, sets msg in detail, includes type/duration options, includes both type and duration, no-options detail has only msg, multiple calls dispatch separate events, info type, warning type, empty string message
