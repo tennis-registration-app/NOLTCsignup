@@ -163,10 +163,10 @@ export function useCourtHandlers({
   // VERBATIM COPY: getAvailableCourts from line ~214
   const getAvailableCourts = useCallback(
     (
-      checkWaitlistPriority = true,
-      _includeOvertimeIfChanging = false,
-      excludeCourtNumber = null,
-      dataOverride = null
+      checkWaitlistPriority: boolean = true,
+      _includeOvertimeIfChanging: boolean = false,
+      excludeCourtNumber: number | null = null,
+      dataOverride: import('../../../types/appTypes').RegistrationUiState['data'] | null = null
     ) => {
       try {
         // Use API state by default, fall back to localStorage only if state not available

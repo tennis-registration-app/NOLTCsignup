@@ -24,6 +24,6 @@ export function AdminRoute({ app, handlers }: AdminRouteProps) {
   const model = buildAdminModel(app, handlers);
   const actions = buildAdminActions(app, handlers);
 
-  const _p = { ...model, ...actions };
-  return <AdminScreen {...(_p as unknown as import("../../screens/AdminScreen").AdminScreenProps)} />;
+  const props: import("../../screens/AdminScreen").AdminScreenProps = { ...model, ...actions };
+  return <AdminScreen {...props} />;
 }

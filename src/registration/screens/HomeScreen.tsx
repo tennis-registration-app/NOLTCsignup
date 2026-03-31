@@ -217,7 +217,9 @@ const HomeScreen = ({
                 ...player,
                 memberNumber: findMemberNumber(player.memberId),
               }));
-              setCurrentGroup(mappedPlayers as unknown as import("../../types/appTypes").GroupPlayer[]);
+              // Type assertion: DomainMember shape — downstream (assignCourtOrchestrator.ts)
+              // handles id||memberId and name||displayName fallbacks, so this is safe.
+              setCurrentGroup(mappedPlayers as unknown as GroupPlayer[]);
 
               // Set member number to first player
               const firstPlayerMemberNum = findMemberNumber(firstWaitlistEntry.players[0].memberId);
@@ -257,11 +259,12 @@ const HomeScreen = ({
               }
 
               // Load the second waiting group (use memberId, not id)
+              // Type assertion: DomainMember shape — see CTA #1 comment above
               setCurrentGroup(
                 secondWaitlistEntry.players.map((player: DomainMember) => ({
                   ...player,
                   memberNumber: findMemberNumber(player.memberId),
-                })) as unknown as import('../../types/appTypes').GroupPlayer[]
+                })) as unknown as GroupPlayer[]
               );
 
               // Set member number to first player in second group
@@ -303,11 +306,12 @@ const HomeScreen = ({
               }
 
               // Load the pass-through waiting group (use memberId, not id)
+              // Type assertion: DomainMember shape — see CTA #1 comment above
               setCurrentGroup(
                 passThroughEntry.players.map((player: DomainMember) => ({
                   ...player,
                   memberNumber: findMemberNumber(player.memberId),
-                })) as unknown as import('../../types/appTypes').GroupPlayer[]
+                })) as unknown as GroupPlayer[]
               );
 
               // Set member number to first player in pass-through group

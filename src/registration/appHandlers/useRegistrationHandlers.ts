@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { AppState } from '../../types/appTypes';
+import type { AppState, Handlers } from '../../types/appTypes';
 
 // Extracted handler modules
 import {
@@ -36,7 +36,7 @@ import {
  * @param {{ app: import('../../types/appTypes').AppState }} params
  * @returns {import('../../types/appTypes').Handlers}
  */
-export function useRegistrationHandlers({ app }: { app: AppState }) {
+export function useRegistrationHandlers({ app }: { app: AppState }): Handlers {
   const { resetFormOrchestrated, resetWorkflow } = app;
 
   // Workflow context — sourced directly instead of via app compatibility layer

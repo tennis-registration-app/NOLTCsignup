@@ -865,7 +865,7 @@ export interface Handlers {
   // Evidence: useCallback(() => handleClearWaitlistOp(...)) — no params, async op
   handleClearWaitlist: () => Promise<void>;
   // Evidence: useCallback((group) => handleRemoveFromWaitlistOp(..., group))
-  handleRemoveFromWaitlist: (group: GroupPlayer[]) => void;
+  handleRemoveFromWaitlist: (group: unknown) => void;
   // Evidence: useCallback(async () => { parseFloat(ballPriceInput)... }) — no params
   handlePriceUpdate: () => Promise<void>;
   // Evidence: useCallback(() => { setCurrentScreen('home'); setSearchInput('') })

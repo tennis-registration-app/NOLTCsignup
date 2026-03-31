@@ -76,7 +76,7 @@ export function useAdminHandlers({
 
   // VERBATIM COPY: handleRemoveFromWaitlist from line ~756
   const handleRemoveFromWaitlist = useCallback(
-    (group: Record<string, unknown>) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group),
+    (group: unknown) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group as Parameters<typeof handleRemoveFromWaitlistOp>[1]),
     [backend, showAlertMessage]
   );
 

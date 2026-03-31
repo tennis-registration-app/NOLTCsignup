@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 43** (after iteration 3)
+- **Current count: 40** (after iteration 4)
 
 ---
 
@@ -118,3 +118,34 @@ Remaining: App.tsx (1), HomeScreen.tsx (3), AdminRoute.tsx (1), admin files (19)
 
 Next iteration targets: HomeScreen.tsx setCurrentGroup casts (3), App.tsx handlers cast (1),
   AdminRoute.tsx cast (1) — all structural mismatch pattern
+
+### Iteration 4 (2026-03-31) — Registration App.tsx, AdminRoute.tsx, HomeRoute.tsx presenter casts
+Target: App.tsx (1), AdminRoute.tsx (1), HomeRoute.tsx (1), + type alignments
+Status: COMPLETE
+
+Casts removed (3 total):
+  registration/App.tsx L45: handlers cast — removed
+    Fix: added explicit `: Handlers` return type to useRegistrationHandlers()
+    Also typed getAvailableCourts params explicitly (boolean/number|null/RegistrationUiState['data']|null)
+    Also typed handleRemoveFromWaitlist as (group: unknown) => void (aligned Handlers, adminHandlers, AdminActions, AdminScreenProps)
+  AdminRoute.tsx L28: _p spread cast — removed
+    Fix: tightened AdminActions fields from Function to specific types matching AdminScreenProps
+    Also tightened AdminModel.getCourtBlockStatus from Function to proper BlockAdminState type
+    Renamed _p to props with explicit AdminScreenProps type annotation
+  HomeRoute.tsx L49: spread cast — removed
+    Fix: tightened HomeActions fields from Function to specific types matching HomeScreenProps
+    Also tightened HomeModel.getAutocompleteSuggestions from Function to SearchState type
+
+HomeScreen.tsx casts (3): Re-categorized as Category C (Necessary)
+  These pass DomainMember-shaped objects (no `id`, no `name`) to setCurrentGroup(GroupPlayer[]).
+  Runtime downstream code (assignCourtOrchestrator.ts:250-257) handles id||memberId and name||displayName
+  fallbacks explicitly. Changing the mapping would break existing contract tests.
+  Added // Type assertion: comments to all 3 call sites.
+
+Current count: **40** (was 43 at start of iteration 4)
+Remaining: admin files (~19), lib files (~4), registration/screens (~7), groupHandlers (1), 
+  useRegistrationDomainHooks (2), useRegistrationHelpers (1)
+
+Next iteration targets: useRegistrationDomainHooks.ts (2 casts), useRegistrationHelpers.ts (1 cast),
+  groupHandlers.ts (1 cast), courtHandlers.ts (1 cast) — all structural/fixable patterns
+

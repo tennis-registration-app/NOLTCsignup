@@ -27,7 +27,7 @@ export interface HomeModel {
   showSuggestions: boolean;
   isSearching: boolean;
   effectiveSearchInput: string;
-  getAutocompleteSuggestions: Function;
+  getAutocompleteSuggestions: import('../../../types/appTypes').SearchState['getAutocompleteSuggestions'];
   // CTA state
   canFirstGroupPlay: boolean;
   canSecondGroupPlay: boolean;
@@ -47,18 +47,18 @@ export interface HomeModel {
 
 export interface HomeActions {
   // Search setters
-  setSearchInput: Function;
-  setShowSuggestions: Function;
+  setSearchInput: (v: string) => void;
+  setShowSuggestions: (v: boolean) => void;
   // Navigation
-  setCurrentScreen: Function;
-  setCurrentGroup: Function;
-  setMemberNumber: Function;
-  setHasWaitlistPriority: Function;
-  setCurrentWaitlistEntryId: Function;
+  setCurrentScreen: import('../../../types/appTypes').RegistrationSetters['setCurrentScreen'];
+  setCurrentGroup: (group: GroupPlayer[]) => void;
+  setMemberNumber: (v: string) => void;
+  setHasWaitlistPriority: (v: boolean) => void;
+  setCurrentWaitlistEntryId: ((v: string | null) => void) | undefined;
   // Callbacks
-  handleSuggestionClick: Function;
-  markUserTyping: Function;
-  findMemberNumber: Function;
+  handleSuggestionClick: (suggestion: import('../../../types/appTypes').AutocompleteSuggestion) => Promise<void>;
+  markUserTyping: () => void;
+  findMemberNumber: (playerId: string) => string;
   // Clear court
   onClearCourtClick: () => void;
 }
