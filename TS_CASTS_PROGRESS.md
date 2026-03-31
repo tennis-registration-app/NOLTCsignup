@@ -4,7 +4,7 @@
 
 ## Total Count
 - **Starting count: 68**
-- **Current count: 30** (after iteration 6)
+- **Current count: 26** (after iteration 7)
 
 ---
 
@@ -212,4 +212,38 @@ Remaining: admin/ (16 casts), lib/ (4 casts), registration/screens (3 annotated 
 
 Next iteration targets: CompleteBlockManagerEnhanced.tsx (3 casts), useBoardSubscription.ts (1 cast),
   useAdminSettings.ts (1 cast), CourtStatusGrid.tsx (1 cast)
+
+### Iteration 7 (2026-03-31) — wetCourtOperations + useBoardSubscription + useAdminSettings + CourtStatusGrid + CompleteBlockManagerEnhanced
+Target: wetCourtOperations.ts (3 casts), useBoardSubscription.ts (1 cast), useAdminSettings.ts (2 casts),
+  CourtStatusGrid.tsx (1 cast), CompleteBlockManagerEnhanced.tsx (3 casts)
+Status: COMPLETE
+
+Casts removed (4 total):
+  wetCourtOperations.ts L30: backend.admin markWetCourts cast — removed
+    Fix: added markWetCourts and clearWetCourts to TennisBackendShape.admin in appTypes.ts
+    Also added explicit return type to AdminCommands.ts markWetCourts/clearWetCourts with per-field casts
+    at the boundary (api.post returns ApiResponse with unknown index signature)
+  wetCourtOperations.ts L54: backend.admin clearWetCourts cast (clearAllWetCourtsOp) — removed (same fix)
+  wetCourtOperations.ts L70: backend.admin clearWetCourts cast (clearWetCourtOp) — removed (same fix)
+  useBoardSubscription.ts L56: result.waitingGroups cast — removed
+    Fix: widened WaitlistEntry interface to use unknown for all computed fields, matching
+    normalizeWaitlist() inferred return type
+
+Casts annotated (5, Category C — Necessary):
+  useAdminSettings.ts L35 (x2): window[key] guard — window does not have an index signature;
+    Window & Record<string,unknown> intersection rejected by TypeScript (insufficient overlap).
+    Annotated with explanation comment.
+  CourtStatusGrid.tsx L184: editingBlock cast to CalendarEvent — CourtBlock spread lacks
+    CalendarEvent.startTime required field; runtime shape is correct but types diverge.
+  CompleteBlockManagerEnhanced.tsx L160: blockTimelineBackend cast — AdminBackendShape.admin is
+    Record<string,unknown>; BlockTimelineBackend.admin requires getBlocks method signature.
+  CompleteBlockManagerEnhanced.tsx L161: manageRecurringBackend cast — same root cause.
+  CompleteBlockManagerEnhanced.tsx L162: eventDetailsBackend cast — same root cause.
+
+Current count: **26** (was 30 at start of iteration 7)
+Remaining: admin/App.tsx (2 casts), EventCalendarEnhanced.tsx (5 casts), useSystemSettingsState.ts (1 cast),
+  useUsageComparisonQuery.ts (1 cast), lib/ (4 casts), registration (annotated C), other
+
+Next iteration targets: EventCalendarEnhanced.tsx (5 casts), admin/App.tsx (2 casts),
+  useSystemSettingsState.ts (1 cast)
 

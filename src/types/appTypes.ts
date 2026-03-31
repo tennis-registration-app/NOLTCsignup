@@ -257,6 +257,10 @@ export interface TennisBackendShape {
     aiAssistant: (input: { prompt: string; mode?: string; actions_token?: string | null; confirm_destructive?: boolean }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:433 — returns CommandResponse & { session? }
     updateSession: (input: { sessionId: string; participants: Array<{ name: string; type: 'member' | 'guest'; member_id?: string }>; scheduledEndAt: string | null; deviceId: string }) => Promise<CommandResponse>;
+    // Evidence: AdminCommands.ts:263 — mark all courts wet
+    markWetCourts: (input: { deviceId: string; durationMinutes?: number; courtIds?: string[]; reason?: string; idempotencyKey?: string }) => Promise<CommandResponse & { courtsMarked?: number; courtNumbers?: number[]; blocksCreated?: number; blocksCancelled?: number; endsAt?: string; idempotent?: boolean }>;
+    // Evidence: AdminCommands.ts:294 — clear wet court blocks
+    clearWetCourts: (input: { deviceId: string; courtIds?: string[]; idempotencyKey?: string }) => Promise<CommandResponse & { blocksCleared?: number; courtNumbers?: number[] }>;
   };
 }
 

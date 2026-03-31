@@ -157,9 +157,9 @@ const CompleteBlockManagerEnhanced = ({
     handleRemoveBlockGroup,
   } = useBlockActions({ form, backend: backend as Parameters<typeof useBlockActions>[0]["backend"], onApplyBlocks: onApplyBlocks ?? (() => {}), onNotification: onNotification ?? (() => {}) });
 
-  const blockTimelineBackend = backend as unknown as BlockTimelineBackend | null;
-  const manageRecurringBackend = backend as unknown as ManageRecurringBackend | null;
-  const eventDetailsBackend = backend as unknown as AdminBackend | null;
+  const blockTimelineBackend = backend as unknown as BlockTimelineBackend | null; // Type assertion: AdminBackendShape.admin is Record<string,unknown>; BlockTimelineBackend.admin requires specific getBlocks method
+  const manageRecurringBackend = backend as unknown as ManageRecurringBackend | null; // Type assertion: AdminBackendShape.admin is Record<string,unknown>; ManageRecurringBackend requires listBlockGroups/cancelBlockGroup
+  const eventDetailsBackend = backend as unknown as AdminBackend | null; // Type assertion: AdminBackendShape.admin is Record<string,unknown>; AdminBackend requires specific updateBlock/cancelBlock methods
   return (
     <div className="space-y-6" data-testid="admin-block-list">
       <div className="flex items-center justify-between">

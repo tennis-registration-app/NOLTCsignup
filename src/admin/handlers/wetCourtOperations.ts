@@ -27,14 +27,7 @@ type WetCourtResult = CommandResponse & {
 export async function activateWetCourtsOp(ctx: WetCourtOpCtx): Promise<WetCourtResult> {
   const { backend, getDeviceId } = ctx;
 
-  const result = await (backend.admin as unknown as {
-    markWetCourts: (input: {
-      deviceId: string;
-      durationMinutes: number;
-      reason: string;
-      idempotencyKey: string;
-    }) => Promise<WetCourtResult>;
-  }).markWetCourts({
+  const result = await backend.admin.markWetCourts({
     deviceId: getDeviceId(),
     durationMinutes: 720, // 12 hours
     reason: 'WET COURT',
@@ -51,9 +44,7 @@ export async function activateWetCourtsOp(ctx: WetCourtOpCtx): Promise<WetCourtR
 export async function clearAllWetCourtsOp(ctx: WetCourtOpCtx): Promise<WetCourtResult> {
   const { backend, getDeviceId } = ctx;
 
-  const result = await (backend.admin as unknown as {
-    clearWetCourts: (input: { deviceId: string; courtIds?: string[] }) => Promise<WetCourtResult>;
-  }).clearWetCourts({
+  const result = await backend.admin.clearWetCourts({
     deviceId: getDeviceId(),
   });
 
@@ -67,9 +58,7 @@ export async function clearAllWetCourtsOp(ctx: WetCourtOpCtx): Promise<WetCourtR
 export async function clearWetCourtOp(ctx: WetCourtOpCtx): Promise<WetCourtResult> {
   const { backend, getDeviceId, courtId } = ctx;
 
-  const result = await (backend.admin as unknown as {
-    clearWetCourts: (input: { deviceId: string; courtIds?: string[] }) => Promise<WetCourtResult>;
-  }).clearWetCourts({
+  const result = await backend.admin.clearWetCourts({
     deviceId: getDeviceId(),
     courtIds: courtId ? [courtId] : undefined,
   });
