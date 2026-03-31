@@ -27,7 +27,13 @@ export function decideTapToRegister({
   waitingGroups,
   registeredCourt,
   waitlistEntryId,
-}) {
+}: {
+  courtNumber: number;
+  courts: Array<Record<string, unknown>> | null | undefined;
+  waitingGroups: Array<{ id?: string }> | null | undefined;
+  registeredCourt: string | null;
+  waitlistEntryId: string | null;
+}): { action: string; [key: string]: unknown } {
   // --- Branch 1: User already registered on a court ---
   if (registeredCourt) {
     // Verify registration is still valid by checking if the court is occupied

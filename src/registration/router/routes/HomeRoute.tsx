@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface HomeRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { HomeScreen } from '../../screens';
 import { buildHomeModel, buildHomeActions } from '../presenters';
 
@@ -20,7 +25,7 @@ import { useWorkflowContext } from '../../context/WorkflowProvider';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function HomeRoute({ app, handlers }) {
+export function HomeRoute({ app, handlers }: HomeRouteProps) {
   // Workflow state — read directly from context
   const workflow = useWorkflowContext();
 
@@ -41,7 +46,7 @@ export function HomeRoute({ app, handlers }) {
           </div>
         </div>
       )}
-      <HomeScreen {...model} {...actions} />
+      <HomeScreen {...({ ...model, ...actions } as unknown as import("../../screens/HomeScreen").HomeScreenProps)} />
     </>
   );
 }

@@ -24,9 +24,9 @@ import { TENNIS_CONFIG } from '../../lib/config';
 import { EVENTS } from '../../lib/constants';
 
 // Debounce helper
-const debounce = (fn, ms = 150) => {
-  let t;
-  return (...a) => {
+const debounce = (fn: (...args: unknown[]) => void, ms = 150) => {
+  let t: ReturnType<typeof setTimeout>;
+  return (...a: unknown[]) => {
     clearTimeout(t);
     t = setTimeout(() => fn(...a), ms);
   };
@@ -34,14 +34,19 @@ const debounce = (fn, ms = 150) => {
 
 // Timer management
 const _timers: Array<{ id: number; type: string }> = [];
-const addTimer = (id) => {
+const addTimer = (id: ReturnType<typeof setInterval>) => {
   _timers.push({ id, type: 'interval' });
   return id;
 };
 
-const AnalyticsDashboard = ({ onClose, backend }) => {
+interface AnalyticsDashboardProps {
+  onClose?: (() => void) | null;
+  backend?: unknown;
+}
+
+const AnalyticsDashboard = ({ onClose, backend }: AnalyticsDashboardProps) => {
   // Helper to set time to end of day (23:59:59.999)
-  const endOfDay = (date) => {
+  const endOfDay = (date: Date | string) => {
     const d = new Date(date);
     d.setHours(23, 59, 59, 999);
     return d;
@@ -52,8 +57,8 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
     start: new Date(new Date().setDate(new Date().getDate() - 7)),
     end: endOfDay(new Date()),
   });
-  const [ballPurchases, setBallPurchases] = useState([]);
-  const [guestCharges, setGuestCharges] = useState([]);
+  const [ballPurchases, setBallPurchases] = useState<{id?: string; timestamp: string; memberNumber?: string; memberName?: string; amount?: number; [key: string]: unknown}[]>([]);
+  const [guestCharges, setGuestCharges] = useState<{id?: string; timestamp: string; sponsorNumber?: string; sponsorName?: string; amount?: number; guestName?: string; [key: string]: unknown}[]>([]);
 
   // Usage Comparison state
   const [usageMetric, setUsageMetric] = useState('usage');
@@ -76,7 +81,8 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
 
   // Unified analytics data via hook
   const getAnalyticsFn = useCallback(
-    (params) => backend?.admin?.getAnalytics(params) || Promise.resolve({ ok: false }),
+    (params: { start: string; end: string }) => ((backend as {admin?: {getAnalytics?: (p: unknown) => Promise<{ok: boolean; [key: string]: unknown}>}} | undefined)?.admin?.getAnalytics?.(params as unknown) as Promise<{ ok: boolean; [key: string]: unknown }>) || Promise.resolve({ ok: false }),
+
     [backend]
   );
   const {
@@ -123,14 +129,14 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
     const loadTransactionsData = async () => {
       // Load ball purchases from API
       logger.debug('AdminAnalytics', 'Loading ball purchases...');
-      let ballPurchasesData = [];
+      let ballPurchasesData: {id?: string; timestamp: string; memberNumber?: string; memberName?: string; amount?: number; [key: string]: unknown}[] = [];
       if (backend) {
         try {
-          const result = await backend.admin.getTransactions({ type: 'ball_purchase', limit: 500 });
+          const result = await (backend as {admin: {getTransactions: (p: unknown) => Promise<{ok: boolean; transactions?: unknown[]}>}}).admin.getTransactions({ type: 'ball_purchase', limit: 500 });
           logger.debug('AdminAnalytics', 'Ball purchases result', result);
           if (result.ok && result.transactions) {
             // Normalize at ingestion, use camelCase
-            ballPurchasesData = result.transactions.map((t) => {
+            ballPurchasesData = (result.transactions as Record<string, unknown>[]).map((t: Record<string, unknown>) => {
               const normalized = normalizeTransaction(t);
               return {
                 id: normalized.id,
@@ -150,13 +156,13 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
 
       // Load guest charges from API
       logger.debug('AdminAnalytics', 'Loading guest charges...');
-      let guestChargesData = [];
+      let guestChargesData: {id?: string; timestamp: string; sponsorNumber?: string; sponsorName?: string; amount?: number; guestName?: string; [key: string]: unknown}[] = [];
       if (backend) {
         try {
-          const result = await backend.admin.getTransactions({ type: 'guest_fee', limit: 500 });
+          const result = await (backend as {admin: {getTransactions: (p: unknown) => Promise<{ok: boolean; transactions?: unknown[]}>}}).admin.getTransactions({ type: 'guest_fee', limit: 500 });
           if (result.ok && result.transactions) {
             // Normalize at ingestion, use camelCase
-            guestChargesData = result.transactions.map((t) => {
+            guestChargesData = (result.transactions as Record<string, unknown>[]).map((t: Record<string, unknown>) => {
               const normalized = normalizeTransaction(t);
               return {
                 id: normalized.id,
@@ -202,7 +208,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
     };
   }, [backend]);
 
-  const handleDateRangeChange = (preset) => {
+  const handleDateRangeChange = (preset: string) => {
     const end = endOfDay(new Date());
     let start = new Date();
 
@@ -334,21 +340,21 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
             )}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <UtilizationChart
-                summary={analyticsResult?.summary}
+                summary={analyticsResult?.summary as { courtHoursUsed?: number; courtHoursScheduled?: number; utilizationPct?: number; avgCourtHoursPerDay?: number; sessions?: number } | null | undefined}
                 loading={analyticsLoading}
                 dateRange={dateRange}
               />
               <WaitTimeAnalysis
-                waitlistData={analyticsResult?.waitlist || []}
+                waitlistData={(analyticsResult?.waitlist as Array<{id: string; minutesWaited: number; playerNames?: string[]; joinedAt?: string}> | undefined) || []}
                 loading={analyticsLoading}
               />
             </div>
             {/* Heatmaps row - side by side */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <UsageHeatmap heatmapData={analyticsResult?.heatmap || []} />
+              <UsageHeatmap heatmapData={(analyticsResult?.heatmap || []) as {dow?: number; hour?: number; count?: number; [key: string]: unknown}[]} />
               <div className="bg-white rounded-lg shadow p-4">
                 <h3 className="text-lg font-semibold mb-4">Waitlist Congestion</h3>
-                <WaitlistHeatmap heatmapData={analyticsResult?.waitlistHeatmap || []} />
+                <WaitlistHeatmap heatmapData={(analyticsResult?.waitlistHeatmap as Array<{dow: number; hour: number; count: number; avgWait: number}> | undefined) || []} />
               </div>
             </div>
 
@@ -374,7 +380,7 @@ const AnalyticsDashboard = ({ onClose, backend }) => {
                 <UsageComparisonChart
                   data={usageComparisonData}
                   loading={usageComparisonLoading}
-                  error={usageComparisonError}
+                  error={usageComparisonError as string | null | undefined}
                 />
               </div>
             </div>

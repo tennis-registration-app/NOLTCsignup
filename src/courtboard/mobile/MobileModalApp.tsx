@@ -7,13 +7,14 @@ import { isMobileView, getMobileModal } from '../../platform/windowBridge.js';
  * Mounts in a separate React root for mobile modal system
  */
 export function MobileModalApp() {
-  const [state, setState] = useState({ open: false, type: null, payload: null });
+  const [state, setState] = useState<{ open: boolean; type: string | null; payload: unknown }>({ open: false, type: null, payload: null });
 
   useEffect(() => {
     if (!isMobileView()) return;
 
-    const onOpen = (e) => {
-      setState({ open: true, type: e.detail.type, payload: e.detail.payload || null });
+    const onOpen = (e: Event) => {
+      const ce = e as CustomEvent;
+      setState({ open: true, type: (ce.detail as Record<string,unknown>).type as string || null, payload: (ce.detail as Record<string,unknown>).payload as unknown || null });
       document.getElementById('mobile-modal-root')?.classList.add('modal-open');
     };
     const onClose = () => {
@@ -34,8 +35,8 @@ export function MobileModalApp() {
   return (
     <MobileModalSheet
       type={state.type}
-      payload={state.payload}
-      onClose={getMobileModal()?.close || (() => {})}
+      payload={state.payload as Record<string, unknown> | null}
+      onClose={getMobileModal()?.close as (() => void) || (() => {})}
     />
   );
 }

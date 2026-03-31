@@ -12,6 +12,16 @@ type MobileModalApi = { open: (type: string, data?: unknown) => void; close: () 
  * and THIS mobile user is first in the waitlist.
  * Mobile-only concern — no-ops when isMobileView is false.
  */
+interface WaitlistGroup { id?: string; deferred?: boolean; players?: unknown[]; [key: string]: unknown; }
+interface MobileStateShape { waitlistEntryId?: string; [key: string]: unknown; }
+interface UseWaitlistAvailableDeps {
+  courts: unknown[];
+  courtBlocks: unknown[];
+  upcomingBlocks: unknown[];
+  waitlist: WaitlistGroup[];
+  isMobileView: boolean;
+  mobileState: MobileStateShape;
+}
 export function useWaitlistAvailable({
   courts,
   courtBlocks,
@@ -19,7 +29,7 @@ export function useWaitlistAvailable({
   waitlist,
   isMobileView,
   mobileState,
-}) {
+}: UseWaitlistAvailableDeps) {
   useEffect(() => {
     if (!isMobileView) return;
 
@@ -49,15 +59,15 @@ export function useWaitlistAvailable({
         const groupPlayerCount = firstGroup?.players?.length || 0;
         const sessionDuration = groupPlayerCount >= 4 ? 90 : 60;
         const nowDate = new Date();
-        const freeForDeferred = listPlayableCourts(courts, courtBlocks, nowDate.toISOString());
-        const eligibleForDeferred = freeForDeferred.filter((courtNum) =>
-          isCourtEligibleForGroup(courtNum, groupPlayerCount)
+        const freeForDeferred = listPlayableCourts(courts as Parameters<typeof listPlayableCourts>[0], courtBlocks as Parameters<typeof listPlayableCourts>[1], nowDate.toISOString());
+        const eligibleForDeferred = freeForDeferred.filter((courtNum: number | undefined): courtNum is number =>
+          courtNum !== undefined && courtNum !== undefined && isCourtEligibleForGroup(courtNum, groupPlayerCount)
         );
         deferredBlocked = !eligibleForDeferred.some((courtNum) => {
           const warning = getUpcomingBlockWarningFromBlocks(
             courtNum,
             sessionDuration + 5,
-            allBlocks,
+            allBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2],
             nowDate
           );
           return warning == null;
@@ -70,12 +80,12 @@ export function useWaitlistAvailable({
 
     // Use shared helper for consistent free court calculation
     const now = new Date().toISOString();
-    const freeCourtList = listPlayableCourts(courts, courtBlocks, now);
+    const freeCourtList = listPlayableCourts(courts as Parameters<typeof listPlayableCourts>[0], courtBlocks as Parameters<typeof listPlayableCourts>[1], now);
 
     // Filter by singles-only eligibility for this group's player count
     const groupPlayerCount = firstGroup?.players?.length || 0;
-    const eligibleCourtList = freeCourtList.filter((courtNum) =>
-      isCourtEligibleForGroup(courtNum, groupPlayerCount)
+    const eligibleCourtList = freeCourtList.filter((courtNum: number | undefined): courtNum is number =>
+      courtNum !== undefined && isCourtEligibleForGroup(courtNum, groupPlayerCount)
     );
     const freeCourtCount = eligibleCourtList.length;
 
@@ -89,7 +99,7 @@ export function useWaitlistAvailable({
       isUserFirstInWaitlist: isUserFirstInWaitlist,
       shouldShow: freeCourtCount > 0 && isUserFirstInWaitlist,
       totalCourts: courts?.length,
-      courtsWithSession: courts?.filter((c) => c?.session).length,
+      courtsWithSession: courts?.filter((c: unknown) => (c as {session?: unknown})?. session).length,
     });
 
     const mobileModal = getMobileModal() as MobileModalApi;

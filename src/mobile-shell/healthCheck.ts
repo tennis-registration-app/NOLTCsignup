@@ -17,7 +17,7 @@ function getBoardFrame() {
   return document.getElementById('iframeBoard') as HTMLIFrameElement | null;
 }
 
-function checkFrame(frameEl) {
+function checkFrame(frameEl: HTMLIFrameElement | null) {
   const f = frameEl;
   if (!f || !f.contentWindow) return { ok: false, reason: 'iframe missing' };
   const w = f.contentWindow;
@@ -37,7 +37,7 @@ function checkFrame(frameEl) {
 }
 
 function logHealth() {
-  const reg = checkFrame(getRegFrame());
+  const reg = checkFrame(getRegFrame() as HTMLIFrameElement | null);
   const brd = checkFrame(getBoardFrame());
   logger.info('Mobile Health', 'Registration:', reg);
   logger.info('Mobile Health', 'Board:', brd);

@@ -7,18 +7,35 @@
  */
 
 // Import Domain engagement helpers
-import { findEngagementByMemberId, getEngagementMessage } from '../../../lib/domain/engagement';
-import { normalizeName } from '../../../tennis/domain/roster.js';
-import { validateGroup as domainValidateGroup } from '../../../tennis/domain/waitlist.js';
-import { toast } from '../../../shared/utils/toast.js';
-import { logger } from '../../../lib/logger';
+import { findEngagementByMemberId, getEngagementMessage } from "../../../lib/domain/engagement";
+import { normalizeName } from "../../../tennis/domain/roster.js";
+import { validateGroup as domainValidateGroup } from "../../../tennis/domain/waitlist.js";
+import { toast } from "../../../shared/utils/toast.js";
+import { logger } from "../../../lib/logger";
+import type { MutableRefObject } from "react";
+import type { RegistrationUiState, GroupPlayer } from "../../../types/appTypes";
 
 // Debug utilities
 const DEBUG = false;
 
+interface UseRegistrationHelpersDeps {
+  data: RegistrationUiState["data"];
+  setIsUserTyping: (val: boolean) => void;
+  successResetTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
+  typingTimeoutRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
+}
+
+interface CourtLike {
+  session?: unknown;
+  isOccupied?: boolean;
+  isBlocked?: boolean;
+  isAvailable?: boolean;
+  isOvertime?: boolean;
+  number: number;
+}
+
 /**
  * Creates helper functions for registration flow
- * @param {Object} deps - Dependencies
  */
 export function useRegistrationHelpers({
   // UI state
@@ -27,7 +44,7 @@ export function useRegistrationHelpers({
   // Runtime refs
   successResetTimerRef,
   typingTimeoutRef,
-}) {
+}: UseRegistrationHelpersDeps) {
   // Get court data (synchronous for React renders)
   const getCourtData = () => {
     return data;
@@ -44,7 +61,7 @@ export function useRegistrationHelpers({
   // Mark user as typing (for timeout handling)
   const markUserTyping = () => {
     setIsUserTyping(true);
-    clearTimeout(typingTimeoutRef.current);
+    clearTimeout(typingTimeoutRef.current ?? undefined);
     typingTimeoutRef.current = setTimeout(() => {
       setIsUserTyping(false);
     }, 3000);
@@ -53,7 +70,7 @@ export function useRegistrationHelpers({
   // Helper to get courts occupied for clearing
   function getCourtsOccupiedForClearing() {
     const reactData = getCourtData();
-    const courts = reactData.courts || [];
+    const courts = (reactData.courts || []) as CourtLike[];
 
     const clearableCourts = courts
       .filter((c) => {
@@ -65,26 +82,26 @@ export function useRegistrationHelpers({
         return false;
       })
       .map((c) => c.number)
-      .sort((a, b) => a - b);
+      .sort((a: number, b: number) => a - b);
 
     return clearableCourts;
   }
 
-  function guardAddPlayerEarly(getBoardData, player) {
-    const memberId = player?.memberId || player?.id;
-    const board = getBoardData() || {};
+  function guardAddPlayerEarly(getBoardData: () => RegistrationUiState["data"], player: GroupPlayer | string) {
+    const memberId = (player as GroupPlayer)?.memberId || (player as GroupPlayer)?.id;
+    const board = getBoardData() || ({} as RegistrationUiState["data"]);
 
     if (DEBUG) {
-      logger.debug('guardAddPlayerEarly', 'Checking player', player);
-      logger.debug('guardAddPlayerEarly', 'memberId', memberId);
+      logger.debug("guardAddPlayerEarly", "Checking player", player);
+      logger.debug("guardAddPlayerEarly", "memberId", memberId);
     }
 
-    const engagement = findEngagementByMemberId(board, memberId);
+    const engagement = findEngagementByMemberId(board as unknown as Parameters<typeof findEngagementByMemberId>[0], memberId);
 
     if (!engagement) return true;
 
-    if (engagement.kind === 'waitlist') {
-      const courts = Array.isArray(board?.courts) ? board.courts : [];
+    if (engagement.kind === "waitlist") {
+      const courts = Array.isArray((board as { courts?: CourtLike[] })?.courts) ? (board as { courts: CourtLike[] }).courts : [];
       const unoccupiedCount = courts.filter((c) => c.isAvailable).length;
       const overtimeCount = courts.filter((c) => c.isOvertime).length;
       const totalAvailable = unoccupiedCount > 0 ? unoccupiedCount : overtimeCount;
@@ -95,21 +112,22 @@ export function useRegistrationHelpers({
       }
     }
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       toast(getEngagementMessage(engagement));
     }
     return false;
   }
 
-  function guardAgainstGroupDuplicate(player, playersArray) {
-    const nm = normalizeName(player?.name || player || '');
-    const pid = player?.memberId || null;
+  function guardAgainstGroupDuplicate(player: GroupPlayer | string, playersArray: (GroupPlayer | string)[]) {
+    const nm = normalizeName((player as GroupPlayer)?.name || (player as string) || "");
+    const pid = (player as GroupPlayer)?.memberId || null;
 
     return !playersArray.some((p) => {
-      if (pid && p?.memberId) {
-        return p.memberId === pid;
+      const pPlayer = p as GroupPlayer;
+      if (pid && pPlayer?.memberId) {
+        return pPlayer.memberId === pid;
       }
-      const pName = normalizeName(p?.name || p || '');
+      const pName = normalizeName(pPlayer?.name || (p as string) || "");
       return pName === nm;
     });
   }
@@ -125,18 +143,18 @@ export function useRegistrationHelpers({
 }
 
 // --- Robust validation wrapper: always returns { ok, errors[] }
-export function validateGroupCompat(players, guests) {
-  const norm = (ok, errs) => ({
+export function validateGroupCompat(players: (GroupPlayer | string | null)[], guests: number | string) {
+  const norm = (ok: unknown, errs: unknown) => ({
     ok: !!ok,
     errors: Array.isArray(errs) ? errs : errs ? [errs] : [],
   });
 
   // 1) Prefer domain-level validator if available
   try {
-    if (typeof domainValidateGroup === 'function') {
+    if (typeof domainValidateGroup === "function") {
        
-      const out = domainValidateGroup({ players, guests } as never) as any;
-      if (out && (typeof out.ok === 'boolean' || Array.isArray(out.errors))) {
+      const out = domainValidateGroup({ players, guests } as never) as { ok?: boolean; errors?: string[] };
+      if (out && (typeof out.ok === "boolean" || Array.isArray(out.errors))) {
         return norm(out.ok, out.errors);
       }
     }
@@ -147,25 +165,25 @@ export function validateGroupCompat(players, guests) {
   // 2) Local minimal validator (matches club rules)
   // - At least 1 named player or guest
   // - Guests is a non-negative integer
-  // - Total size 1–4 (singles/doubles max 4)
+  // - Total size 1-4 (singles/doubles max 4)
 
   // Count guests by isGuest flag in players array
   const guestRowCount = Array.isArray(players)
-    ? players.filter((p) => p && p.isGuest === true).length
+    ? players.filter((p) => p && (p as GroupPlayer).isGuest === true).length
     : 0;
 
   // Parse the separate guests field
-  const gVal = Number.isFinite(guests) ? guests : parseInt(guests || 0, 10);
+  const gVal = Number.isFinite(guests) ? (guests as number) : parseInt((guests as string) || "0", 10);
 
   // Count non-guest players
   const namedPlayers = Array.isArray(players)
-    ? players.filter((p) => p && !p.isGuest && String(p?.name ?? p ?? '').trim())
+    ? players.filter((p) => p && !(p as GroupPlayer).isGuest && String((p as GroupPlayer)?.name ?? p ?? "").trim())
     : [];
   const namedCount = namedPlayers.length;
 
   const errs: string[] = [];
-  if (namedCount < 1 && Math.max(guestRowCount, gVal) < 1) errs.push('Enter at least one player.');
-  if (!Number.isFinite(gVal) || gVal < 0) errs.push('Guests must be 0 or more.');
+  if (namedCount < 1 && Math.max(guestRowCount, gVal) < 1) errs.push("Enter at least one player.");
+  if (!Number.isFinite(gVal) || gVal < 0) errs.push("Guests must be 0 or more.");
 
   // Effective guest count is the MAX of the two representations (not the sum),
   // so we never double-count a guest.
@@ -174,8 +192,8 @@ export function validateGroupCompat(players, guests) {
   // Final effective size
   const totalSize = namedCount + effectiveGuestCount;
 
-  if (totalSize < 1) errs.push('Group size must be at least 1.');
-  if (totalSize > 4) errs.push('Maximum group size is 4.');
+  if (totalSize < 1) errs.push("Group size must be at least 1.");
+  if (totalSize > 4) errs.push("Maximum group size is 4.");
 
   return norm(errs.length === 0, errs);
 }

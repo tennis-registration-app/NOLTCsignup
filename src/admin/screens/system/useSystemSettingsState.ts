@@ -3,6 +3,7 @@
  * Extracted verbatim from SystemSettings.jsx.
  */
 import { useState, useEffect, useCallback } from 'react';
+import type { TennisBackendShape } from '../../../types/appTypes';
 import { logger } from '../../../lib/logger';
 import {
   normalizeOperatingHours,
@@ -12,7 +13,7 @@ import {
   denormalizeOverride,
 } from '../../../lib/normalize/index';
 
-export default function useSystemSettingsState({ backend, onSettingsChanged }) {
+export default function useSystemSettingsState({ backend, onSettingsChanged }: { backend?: TennisBackendShape; onSettingsChanged?: () => void }) {
   // Settings state
   const [, setSettings] = useState({
     tennisBallPrice: 5.0,
@@ -29,14 +30,14 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
   const [checkStatusMinutes, setCheckStatusMinutes] = useState('150');
   const [blockWarningMinutes, setBlockWarningMinutes] = useState('60');
   const [autoClearChanged, setAutoClearChanged] = useState(false);
-  const [autoClearError, setAutoClearError] = useState(null);
+  const [autoClearError, setAutoClearError] = useState(null as string|null);
 
   // Operating hours state
-  const [operatingHours, setOperatingHours] = useState([]);
+  const [operatingHours, setOperatingHours] = useState([] as Record<string,unknown>[]);
   const [hoursChanged, setHoursChanged] = useState(false);
 
   // Hours overrides state
-  const [hoursOverrides, setHoursOverrides] = useState([]);
+  const [hoursOverrides, setHoursOverrides] = useState([] as Record<string,unknown>[]);
 
   // Override form state
   const [overrideDate, setOverrideDate] = useState('');
@@ -44,16 +45,16 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
   const [overrideCloses, setOverrideCloses] = useState('21:00');
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideClosed, setOverrideClosed] = useState(false);
-  const [overrideErrors, setOverrideErrors] = useState({});
+  const [overrideErrors, setOverrideErrors] = useState({} as Record<string,string|null>);
 
   // Loading state
   const [loading, setLoading] = useState(true);
 
   // Save status state for each card
-  const [pricingSaveStatus, setPricingSaveStatus] = useState(null);
-  const [hoursSaveStatus, setHoursSaveStatus] = useState(null);
-  const [, setOverrideSaveStatus] = useState(null); // Getter unused, setter used
-  const [autoClearSaveStatus, setAutoClearSaveStatus] = useState(null);
+  const [pricingSaveStatus, setPricingSaveStatus] = useState(null as string|null);
+  const [hoursSaveStatus, setHoursSaveStatus] = useState(null as string|null);
+  const [, setOverrideSaveStatus] = useState(null as string|null); // Getter unused, setter used
+  const [autoClearSaveStatus, setAutoClearSaveStatus] = useState(null as string|null);
 
   // Fetch settings on mount
   const loadSettings = useCallback(async () => {
@@ -65,10 +66,10 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
         const normalizedSettings = normalizeSettings(result.settings);
 
         const newSettings = {
-          tennisBallPrice: (normalizedSettings?.ballPriceCents || 500) / 100,
+          tennisBallPrice: ((normalizedSettings?.ballPriceCents ?? 500) as number) / 100,
           guestFees: {
-            weekday: (normalizedSettings?.guestFeeWeekdayCents || 1500) / 100,
-            weekend: (normalizedSettings?.guestFeeWeekendCents || 2000) / 100,
+            weekday: ((normalizedSettings?.guestFeeWeekdayCents ?? 1500) as number) / 100,
+            weekend: ((normalizedSettings?.guestFeeWeekendCents ?? 2000) as number) / 100,
           },
         };
         setSettings(newSettings);
@@ -77,9 +78,9 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
         setWeekendFeeInput(newSettings.guestFees.weekend.toFixed(2));
 
         setAutoClearEnabled(normalizedSettings?.autoClearEnabled === 'true');
-        setAutoClearMinutes(normalizedSettings?.autoClearMinutes || '180');
-        setCheckStatusMinutes(normalizedSettings?.checkStatusMinutes || '150');
-        setBlockWarningMinutes(normalizedSettings?.blockWarningMinutes || '60');
+        setAutoClearMinutes(String(normalizedSettings?.autoClearMinutes || '180'));
+        setCheckStatusMinutes(String(normalizedSettings?.checkStatusMinutes || '150'));
+        setBlockWarningMinutes(String(normalizedSettings?.blockWarningMinutes || '60'));
 
         const normalizedHours = normalizeOperatingHours(result.operating_hours);
         if (normalizedHours) {
@@ -102,7 +103,7 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
     loadSettings();
   }, [loadSettings]);
 
-  const clearOverrideError = (field) => {
+  const clearOverrideError = (field: string) => {
     if (overrideErrors[field]) {
       setOverrideErrors((prev) => ({ ...prev, [field]: null }));
     }
@@ -127,7 +128,7 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
     return Object.keys(errors).length === 0;
   };
 
-  const handlePricingChange = (field, value) => {
+  const handlePricingChange = (field: string, value: string) => {
     if (field === 'ballPrice') setBallPriceInput(value);
     if (field === 'weekdayFee') setWeekdayFeeInput(value);
     if (field === 'weekendFee') setWeekendFeeInput(value);
@@ -167,11 +168,11 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
     }
   };
 
-  const handleAutoClearChange = (field, value) => {
-    if (field === 'enabled') setAutoClearEnabled(value);
-    if (field === 'autoClearMinutes') setAutoClearMinutes(value);
-    if (field === 'checkStatusMinutes') setCheckStatusMinutes(value);
-    if (field === 'blockWarningMinutes') setBlockWarningMinutes(value);
+  const handleAutoClearChange = (field: string, value: string | boolean) => {
+    if (field === 'enabled') setAutoClearEnabled(value as boolean);
+    if (field === 'autoClearMinutes') setAutoClearMinutes(value as string);
+    if (field === 'checkStatusMinutes') setCheckStatusMinutes(value as string);
+    if (field === 'blockWarningMinutes') setBlockWarningMinutes(value as string);
     setAutoClearChanged(true);
     setAutoClearError(null);
   };
@@ -220,17 +221,17 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
         setTimeout(() => setAutoClearSaveStatus(null), 2000);
         if (onSettingsChanged) onSettingsChanged();
       } else {
-        setAutoClearError(result.error || 'Failed to save');
+        setAutoClearError(((result as unknown as Record<string,unknown>).error as string) || 'Failed to save');
         setAutoClearSaveStatus('error');
       }
     } catch (err) {
       logger.error('SystemSettings', 'Failed to save auto-clear settings', err);
-      setAutoClearError(err.message || 'Failed to save');
+      setAutoClearError((err instanceof Error ? err.message : '') || 'Failed to save');
       setAutoClearSaveStatus('error');
     }
   };
 
-  const handleHoursChange = (dayOfWeek, opensAt, closesAt, isClosed) => {
+  const handleHoursChange = (dayOfWeek: number, opensAt: string, closesAt: string, isClosed: boolean) => {
     setOperatingHours((prev) =>
       prev.map((h) => (h.dayOfWeek === dayOfWeek ? { ...h, opensAt, closesAt, isClosed } : h))
     );
@@ -258,7 +259,7 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
     }
   };
 
-  const addHoursOverride = async (date, opensAt, closesAt, isClosed, reason) => {
+  const addHoursOverride = async (date: string, opensAt: string, closesAt: string, isClosed: boolean, reason: string) => {
     if (!backend?.admin?.updateSettings) return;
 
     setOverrideSaveStatus('saving');
@@ -285,7 +286,7 @@ export default function useSystemSettingsState({ backend, onSettingsChanged }) {
     }
   };
 
-  const deleteHoursOverride = async (date) => {
+  const deleteHoursOverride = async (date: string) => {
     if (!backend?.admin?.updateSettings) return;
 
     setOverrideSaveStatus('saving');

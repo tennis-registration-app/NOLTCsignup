@@ -20,6 +20,16 @@ import {
   refreshAISettingsApi,
 } from './adminSettingsLogic';
 
+import type { TennisBackendShape, DataStoreShape, TennisConfig } from '../../types/appTypes';
+
+interface UseAdminSettingsDeps {
+  backend: TennisBackendShape;
+  showNotification: (message: string, type: string) => void;
+  dataStore?: DataStoreShape;
+  TENNIS_CONFIG: TennisConfig;
+  clearAllTimers: () => void;
+}
+
 // Singleton guard to prevent duplicate listener attachment on re-mount
 const _one = (key: string) =>
   (window as unknown as Record<string, unknown>)[key] ? true : (((window as unknown as Record<string, unknown>)[key] = true), false);
@@ -35,14 +45,14 @@ const _one = (key: string) =>
  * @param {Function} deps.clearAllTimers - Timer cleanup function
  * @returns {Object} Settings state and operations
  */
-export function useAdminSettings(deps) {
+export function useAdminSettings(deps: UseAdminSettingsDeps) {
   const { backend, showNotification, dataStore, TENNIS_CONFIG, clearAllTimers } = deps;
 
   // State owned by this hook
   const [settings, setSettings] = useState({});
-  const [operatingHours, setOperatingHours] = useState([]);
-  const [hoursOverrides, setHoursOverrides] = useState([]);
-  const [blockTemplates, setBlockTemplates] = useState([]);
+  const [operatingHours, setOperatingHours] = useState<Record<string,unknown>[]>([]);
+  const [hoursOverrides, setHoursOverrides] = useState<Record<string,unknown>[]>([]);
+  const [blockTemplates, setBlockTemplates] = useState<unknown[]>([]);
 
   // Load data function
   const loadData = useCallback(async () => {
@@ -54,7 +64,7 @@ export function useAdminSettings(deps) {
     });
 
     if (result.blockTemplates) {
-      setBlockTemplates(result.blockTemplates);
+      setBlockTemplates(result.blockTemplates as unknown[]);
     }
     if (result.settings) {
       setSettings(result.settings);
@@ -89,12 +99,13 @@ export function useAdminSettings(deps) {
     if (_one('__ADMIN_SETTINGS_LISTENERS_INSTALLED')) return;
 
     // Listen for storage events from other apps/tabs (fallback for non-API data)
-    const handleStorageEvent = (e) => {
+    const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === TENNIS_CONFIG.STORAGE.KEY || e.key === 'courtBlocks') {
         logger.debug('AdminApp', 'Cross-app storage update detected for', e.key);
         // Invalidate cache for this key
-        if (dataStore?.cache) {
-          dataStore.cache.delete(e.key);
+        const store = dataStore as (typeof dataStore & { cache?: Map<string, unknown> }) | undefined;
+        if (store?.cache) {
+          store.cache.delete(e.key);
         }
         loadData();
       }
@@ -131,7 +142,7 @@ export function useAdminSettings(deps) {
 
   // Update ball price handler
   const updateBallPrice = useCallback(
-    async (price) => {
+    async (price: number) => {
       const result = await updateBallPriceApi(backend, price);
       if (result.ok) {
         setSettings((prev) => ({ ...prev, tennisBallPrice: price }));

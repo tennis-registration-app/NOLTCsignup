@@ -1,10 +1,34 @@
 import React, { useMemo } from 'react';
 
+interface ChartBucket {
+  value: number;
+  bucketStart: string;
+  label: string;
+  labelFull: string;
+}
+
+interface ComparisonPeriod {
+  startDate: string;
+  buckets: ChartBucket[];
+}
+
+interface ComparisonChartData {
+  unit: string;
+  primary: ComparisonPeriod;
+  comparison?: ComparisonPeriod;
+}
+
+interface UsageComparisonChartProps {
+  data: ComparisonChartData | null | undefined;
+  loading: boolean;
+  error: string | null | undefined;
+}
+
 /**
  * Bar chart showing usage (hours) or wait time (minutes) by period
  * Supports optional comparison with side-by-side bars
  */
-export function UsageComparisonChart({ data, loading, error }) {
+export function UsageComparisonChart({ data, loading, error }: UsageComparisonChartProps) {
   // Calculate chart dimensions and scales
   const chartConfig = useMemo(() => {
     if (!data?.primary?.buckets?.length) return null;
@@ -14,7 +38,7 @@ export function UsageComparisonChart({ data, loading, error }) {
     const hasComparison = comparisonBuckets.length > 0;
 
     // Find max value for scale
-    const allValues = [...buckets.map((b) => b.value), ...comparisonBuckets.map((b) => b.value)];
+    const allValues = [...buckets.map((b: ChartBucket) => b.value), ...comparisonBuckets.map((b: ChartBucket) => b.value)];
     const maxValue = Math.max(...allValues, 1); // At least 1 to avoid division by zero
 
     // Round up to nice number for y-axis
@@ -52,7 +76,7 @@ export function UsageComparisonChart({ data, loading, error }) {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Usage Comparison</h3>
         <div className="text-red-600 text-center py-8">
-          Error loading data: {error.message || 'Unknown error'}
+          Error loading data: {error || 'Unknown error'}
         </div>
       </div>
     );
@@ -124,7 +148,7 @@ export function UsageComparisonChart({ data, loading, error }) {
 
           {/* Bars container */}
           <div className="absolute inset-0 bottom-8 flex items-end">
-            {buckets.map((bucket, idx) => {
+            {buckets.map((bucket: ChartBucket, idx: number) => {
               const primaryHeight = (bucket.value / maxValue) * 100;
               const comparisonValue = comparisonBuckets[idx]?.value || 0;
               const comparisonHeight = (comparisonValue / maxValue) * 100;
@@ -193,7 +217,7 @@ export function UsageComparisonChart({ data, loading, error }) {
 
           {/* X-axis labels */}
           <div className="absolute bottom-0 left-0 right-0 h-8 flex overflow-hidden">
-            {buckets.map((bucket) => (
+            {buckets.map((bucket: ChartBucket) => (
               <div
                 key={bucket.bucketStart}
                 className="flex-1 text-center text-xs text-gray-600 truncate px-0.5 pt-2"

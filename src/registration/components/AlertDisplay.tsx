@@ -6,7 +6,7 @@
  */
 import React from 'react';
 
-const AlertDisplay = ({ show, message }) => {
+const AlertDisplay = ({ show, message }: { show: boolean; message: string }) => {
   if (!show) return null;
 
   return (

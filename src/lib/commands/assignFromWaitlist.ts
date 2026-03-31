@@ -25,7 +25,7 @@ export const AssignFromWaitlistCommandSchema = z.object({
  * @returns {AssignFromWaitlistCommand}
  * @throws {Error} If validation fails
  */
-export function buildAssignFromWaitlistCommand(input) {
+export function buildAssignFromWaitlistCommand(input: unknown) {
   const result = AssignFromWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -40,7 +40,7 @@ export function buildAssignFromWaitlistCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightAssignFromWaitlist(command, board) {
+export function preflightAssignFromWaitlist(command: z.infer<typeof AssignFromWaitlistCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   // Check waitlist entry exists
@@ -67,7 +67,7 @@ export function preflightAssignFromWaitlist(command, board) {
  * @param {AssignFromWaitlistCommand} command
  * @returns {Object}
  */
-export function toAssignFromWaitlistPayload(command) {
+export function toAssignFromWaitlistPayload(command: z.infer<typeof AssignFromWaitlistCommandSchema>): Record<string, unknown> {
   return {
     waitlist_id: command.waitlistEntryId,
     court_id: command.courtId,

@@ -6,6 +6,7 @@ import SearchSuggestions from './SearchSuggestions.jsx';
 /**
  * MobileGroupSearchModal - Compact modal for mobile flow with no players yet
  */
+interface MobileGroupSearchModalProps { showAlert: boolean; alertMessage: string; preselectedCourt?: number | null; searchInput: string; onSearchChange: ((val: string) => void) | React.ChangeEventHandler<HTMLInputElement>; onSearchFocus: () => void; showSuggestions: boolean; effectiveSearchInput: string; getAutocompleteSuggestions: (input?: string) => unknown[]; onSuggestionClick: (s: unknown) => void; }
 const MobileGroupSearchModal = ({
   showAlert,
   alertMessage,
@@ -17,7 +18,7 @@ const MobileGroupSearchModal = ({
   effectiveSearchInput,
   getAutocompleteSuggestions,
   onSuggestionClick,
-}) => {
+}: MobileGroupSearchModalProps) => {
   return (
     <div className="w-full h-full min-h-screen flex items-start justify-center pt-[12vh] p-4">
       <ToastHost />
@@ -58,7 +59,7 @@ const MobileGroupSearchModal = ({
           <input
             type="text"
             value={searchInput}
-            onChange={onSearchChange}
+            onChange={onSearchChange as React.ChangeEventHandler<HTMLInputElement>}
             onFocus={onSearchFocus}
             placeholder="Enter Name or Member #"
             className="w-full p-3 text-base border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none"
@@ -73,7 +74,7 @@ const MobileGroupSearchModal = ({
           {/* Search suggestions dropdown */}
           {showSuggestions && (
             <SearchSuggestions
-              suggestions={getAutocompleteSuggestions(effectiveSearchInput)}
+              suggestions={getAutocompleteSuggestions(effectiveSearchInput) as Parameters<typeof SearchSuggestions>[0]["suggestions"]}
               onSelect={onSuggestionClick}
               searchInput={searchInput}
               hoverColor="hover:bg-blue-50"

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import type { OperatingHoursEntry, RegistrationUiState } from '../../../types/appTypes';
 import { TENNIS_CONFIG } from '@lib';
 import { logger } from '../../../lib/logger';
 
@@ -12,13 +13,17 @@ import { logger } from '../../../lib/logger';
  * @param {Object} deps - Dependencies
  * @param {Object} deps.CONSTANTS - App constants (defined in main hook)
  */
-export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }) {
+interface UseRegistrationUiStateDeps {
+  CONSTANTS: { MEMBER_COUNT: number; MEMBER_ID_START: number; [key: string]: unknown };
+}
+
+export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }: UseRegistrationUiStateDeps) {
   // ===== NAVIGATION STATE =====
   const [currentScreen, _setCurrentScreen] = useState('home');
 
   // VERBATIM COPY: setCurrentScreen wrapper from lines ~151-156
   const setCurrentScreen = useCallback(
-    (screen, source = 'unknown') => {
+    (screen: string, source = 'unknown') => {
       logger.info('NAV', `${currentScreen} → ${screen} (from: ${source})`);
       logger.debug('NAV', 'Stack trace');
       _setCurrentScreen(screen);
@@ -27,17 +32,17 @@ export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }) {
   );
 
   // ===== CORE DATA STATE =====
-  const [data, setData] = useState(() => ({
+  const [data, setData] = useState<RegistrationUiState["data"]>(() => ({
     courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
     waitlist: [],
     blocks: [],
-    upcomingBlocks: null,
+    upcomingBlocks: undefined,
     recentlyCleared: [],
   }));
 
   // ===== COURT/AVAILABILITY STATE =====
-  const [availableCourts, setAvailableCourts] = useState([]);
-  const [operatingHours, setOperatingHours] = useState(null);
+  const [availableCourts, setAvailableCourts] = useState([] as number[]);
+  const [operatingHours, setOperatingHours] = useState(null as (OperatingHoursEntry[] | null));
 
   // ===== SUCCESS STATE =====
   const [showSuccess, setShowSuccess] = useState(false);
@@ -48,7 +53,7 @@ export function useRegistrationUiState({ CONSTANTS: _CONSTANTS }) {
   const [, setIsUserTyping] = useState(false);
 
   // ===== ADMIN STATE =====
-  const [courtToMove, setCourtToMove] = useState(null);
+  const [courtToMove, setCourtToMove] = useState(null as (number | null));
   const [ballPriceInput, setBallPriceInput] = useState('');
   const [ballPriceCents, setBallPriceCents] = useState(TENNIS_CONFIG.PRICING.TENNIS_BALLS * 100);
 

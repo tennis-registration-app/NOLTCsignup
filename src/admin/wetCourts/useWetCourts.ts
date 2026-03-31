@@ -16,6 +16,25 @@ import {
   clearAllWetCourtsOp,
   clearWetCourtOp,
 } from '../handlers/wetCourtOperations';
+import type { TennisBackendShape } from '../../types/appTypes';
+
+interface Court {
+  id?: string;
+  number?: number | string;
+}
+
+interface EventsModule {
+  emitDom: (event: string, data: unknown) => void;
+}
+
+interface WetCourtsDeps {
+  backend: TennisBackendShape;
+  getDeviceId: () => string;
+  courts?: Court[];
+  Events: EventsModule;
+  onRefresh: () => void;
+  applyBoardResponse?: (result: unknown) => void;
+}
 
 /**
  * @param {Object} deps - External dependencies
@@ -33,7 +52,7 @@ export function useWetCourts({
   Events,
   onRefresh,
   applyBoardResponse,
-}) {
+}: WetCourtsDeps) {
   const [state, dispatch] = useReducer(wetCourtsReducer, initialWetCourtsState);
 
   // Auto-deactivate when all wet courts have been cleared by any method.
@@ -81,8 +100,9 @@ export function useWetCourts({
         return { success: false, error: result.message || 'Failed to activate wet courts' };
       }
     } catch (error) {
-      dispatch({ type: 'WET_OP_FAILED', error: error.message });
-      return { success: false, error: error.message };
+      const msg = error instanceof Error ? error.message : String(error);
+      dispatch({ type: 'WET_OP_FAILED', error: msg });
+      return { success: false, error: msg };
     }
   }, [backend, getDeviceId, Events, onRefresh, applyBoardResponse]);
 
@@ -121,8 +141,9 @@ export function useWetCourts({
         return { success: false, error: result.message || 'Failed to deactivate wet courts' };
       }
     } catch (error) {
-      dispatch({ type: 'WET_OP_FAILED', error: error.message });
-      return { success: false, error: error.message };
+      const msg = error instanceof Error ? error.message : String(error);
+      dispatch({ type: 'WET_OP_FAILED', error: msg });
+      return { success: false, error: msg };
     }
   }, [backend, getDeviceId, Events, onRefresh, applyBoardResponse]);
 
@@ -138,9 +159,9 @@ export function useWetCourts({
    * 4. Use Number() coercion for court lookup
    */
   const clearWetCourt = useCallback(
-    async (courtNumber) => {
+    async (courtNumber: number) => {
       // Validate court lookup with type coercion
-      const court = courts?.find((c) => Number(c.number) === Number(courtNumber));
+      const court = courts?.find((c: Court) => Number(c.number) === Number(courtNumber));
       if (!court?.id) {
         dispatch({
           type: 'WET_OP_FAILED',
@@ -188,8 +209,9 @@ export function useWetCourts({
           return { success: false, error: result.message };
         }
       } catch (error) {
-        dispatch({ type: 'WET_OP_FAILED', error: error.message });
-        return { success: false, error: error.message };
+        const msg = error instanceof Error ? error.message : String(error);
+        dispatch({ type: 'WET_OP_FAILED', error: msg });
+        return { success: false, error: msg };
       }
     },
     [backend, getDeviceId, courts, Events, onRefresh, applyBoardResponse, state.wetCourtNumbers]
@@ -229,8 +251,9 @@ export function useWetCourts({
         return { success: false, error: result.message };
       }
     } catch (error) {
-      dispatch({ type: 'WET_OP_FAILED', error: error.message });
-      return { success: false, error: error.message };
+      const msg = error instanceof Error ? error.message : String(error);
+      dispatch({ type: 'WET_OP_FAILED', error: msg });
+      return { success: false, error: msg };
     }
   }, [backend, getDeviceId, Events, onRefresh, applyBoardResponse]);
 

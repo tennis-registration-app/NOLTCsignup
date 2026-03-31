@@ -10,6 +10,7 @@
  * NO EXECUTABLE LOGIC IN THIS FILE — types only.
  */
 
+import type { ParticipantInput } from '../lib/backend/types';
 // Orchestrator deps types — no circular dependency (orchestrators do not import appTypes)
 import type { AssignCourtDeps } from '../registration/orchestration/assignCourtOrchestrator.js';
 import type { WaitlistDeps } from '../registration/orchestration/waitlistOrchestrator.js';
@@ -176,9 +177,9 @@ export interface TennisBackendShape {
     // Note: getBoard() JSDoc declares Board from domain.js; blocks field shape differs from BoardBlock
     // (JSDoc says Block[] with startsAt/endsAt; runtime returns {startTime, endTime, title}).
     // Using intersection to accept both until JSDoc is corrected.
-    getBoard: () => Promise<DomainBoard & Record<string, unknown>>;
+    getBoard: () => Promise<DomainBoard>;
     // Evidence: TennisQueries.js:201 — delegates to getBoard
-    refresh: () => Promise<DomainBoard & Record<string, unknown>>;
+    refresh: () => Promise<DomainBoard>;
     // Evidence: TennisQueries.js:218 — returns { ok, partners: [{member_id, display_name, ...}] }
     getFrequentPartners: (memberId: string) => Promise<CommandResponse & { partners?: Array<{ member_id: string; display_name: string; member_number: string; play_count: number }> }>;
     // Evidence: TennisQueries.js:76 — callback receives DomainBoard, returns unsubscribe
@@ -186,18 +187,18 @@ export interface TennisBackendShape {
   };
   commands: {
     // Evidence: TennisCommands.js:58 — returns CommandResponse & { session? }
-    assignCourt: (input: { courtId: string; participants: unknown[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
+    assignCourt: (input: { courtId: string; participants: ParticipantInput[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:69 — returns CommandResponse
     endSession: (input: { courtId: string; reason?: string; endReason?: string; sessionId?: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:90 — returns CommandResponse & { entry?, position? }
-    joinWaitlist: (input: { participants: unknown[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
+    joinWaitlist: (input: { participants: ParticipantInput[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
     // Evidence: TennisCommands.js:101 — returns CommandResponse
     cancelWaitlist: (input: { entryId: string; reason?: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:118 — returns CommandResponse
     deferWaitlistEntry: (input: { entryId: string; deferred: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:135 — returns CommandResponse & { session? }
     // Note: raw API may return scheduled_end_at; normalizeCommandSession() in assignCourtOrchestrator handles conversion
-    assignFromWaitlist: (input: { waitlistEntryId: string; courtId: string; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
+    assignFromWaitlist: (input: { waitlistEntryId: string; courtId?: string; courtNumber?: number; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
     // Evidence: TennisCommands.js:190 — returns CommandResponse & { endedSessionId?, restoredSessionId? }
     undoOvertimeTakeover: (input: { takeoverSessionId: string; displacedSessionId: string }) => Promise<CommandResponse & { endedSessionId?: string; restoredSessionId?: string }>;
     // Evidence: TennisCommands.js:173 — returns CommandResponse & { restoredSessionId? }
@@ -420,9 +421,9 @@ export interface RegistrationUiState {
   /** Court and registration data — board state plus courtSelection */
   data: {
     /** Current court selection result */
-    courtSelection: CourtSelectionResult;
+    courtSelection?: CourtSelectionResult;
     /** Upcoming court blocks for today */
-    upcomingBlocks: UpcomingBlock[];
+    upcomingBlocks?: UpcomingBlock[];
     /** Domain courts from board */
     courts: DomainCourt[];
     /** Domain waitlist from board */
@@ -430,9 +431,9 @@ export interface RegistrationUiState {
     /** Active blocks (derived) */
     blocks: BoardBlock[];
     /** Server timestamp */
-    serverNow: string;
+    serverNow?: string;
     /** Operating hours from board */
-    operatingHours: OperatingHoursEntry[];
+    operatingHours?: OperatingHoursEntry[];
     [key: string]: unknown;
   };
   /** Active screen name */
@@ -530,9 +531,9 @@ export interface HelperFunctions {
   // Evidence: useRegistrationHelpers — returns sorted court numbers with active sessions
   getCourtsOccupiedForClearing: () => number[];
   // Evidence: useRegistrationHelpers — checks engagement, shows toast if blocked
-  guardAddPlayerEarly: (getBoardData: () => RegistrationUiState['data'], player: GroupPlayer) => boolean;
+  guardAddPlayerEarly: (getBoardData: () => RegistrationUiState['data'], player: GroupPlayer | string) => boolean;
   // Evidence: useRegistrationHelpers — returns true if player is NOT a duplicate
-  guardAgainstGroupDuplicate: (player: GroupPlayer, playersArray: GroupPlayer[]) => boolean;
+  guardAgainstGroupDuplicate: (player: GroupPlayer | string, playersArray: (GroupPlayer | string)[]) => boolean;
 }
 
 export interface Services {

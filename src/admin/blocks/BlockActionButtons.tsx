@@ -4,6 +4,15 @@ import React from 'react';
 /**
  * BlockActionButtons - Apply block and wet courts buttons
  */
+interface BlockActionButtonsProps {
+  handleBlockCourts: () => void;
+  onClear: () => void;
+  isValid: boolean;
+  editingBlock: object | null;
+  selectedCourts: number[];
+  recurrence: { pattern: string } | null;
+}
+
 const BlockActionButtons = ({
   handleBlockCourts,
   onClear,
@@ -11,7 +20,7 @@ const BlockActionButtons = ({
   editingBlock,
   selectedCourts,
   recurrence,
-}) => (
+}: BlockActionButtonsProps) => (
   <div className="flex gap-3">
     <button
       onClick={handleBlockCourts}

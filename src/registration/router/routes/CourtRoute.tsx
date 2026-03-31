@@ -1,5 +1,10 @@
-// @ts-check
 import React from 'react';
+import type { AppState, Handlers } from '../../../types/appTypes';
+
+interface CourtRouteProps {
+  app: AppState;
+  handlers: Handlers;
+}
 import { CourtSelectionScreen } from '../../screens';
 import { AlertDisplay, ToastHost, QRScanner } from '../../components';
 import ErrorBoundary from '../../../shared/components/ErrorBoundary.jsx';
@@ -24,7 +29,7 @@ import { useWorkflowContext } from '../../context/WorkflowProvider';
  *   handlers: import('../../../types/appTypes').Handlers
  * }} props
  */
-export function CourtRoute({ app, handlers }) {
+export function CourtRoute({ app, handlers }: CourtRouteProps) {
   // Workflow state — read directly from context
   const workflow = useWorkflowContext();
 
@@ -59,7 +64,7 @@ export function CourtRoute({ app, handlers }) {
   const hasWaiters = courtData.waitlist?.some((e) => !e.deferred) ?? false;
 
   // Waitlist priority users and normal users (when no waitlist) get selectable courts
-  let computedAvailableCourts = [];
+  let computedAvailableCourts: number[] = [];
   if (hasWaitlistPriority || (!hasWaiters && courtSelection.selectableCourts.length > 0)) {
     computedAvailableCourts = courtSelection
       .getSelectableForGroup(playerCount)
@@ -75,7 +80,7 @@ export function CourtRoute({ app, handlers }) {
     showingOvertimeCourts,
     hasWaitingGroups: hasWaitlistEntries,
     waitingGroupsCount: courtData.waitlist.length,
-    upcomingBlocks: courtData.upcomingBlocks,
+    upcomingBlocks: courtData.upcomingBlocks ?? [],
   };
   const model = buildCourtModel(app, workflow, computed);
   const actions = buildCourtActions(app, workflow, handlers, { computedAvailableCourts });

@@ -60,7 +60,7 @@ export function useAdminHandlers({
   applyBoardResponse,
 }: UseAdminHandlersDeps) {
   const handleEditBlockFromStatus = useCallback(
-    (block) => {
+    (block: unknown) => {
       setBlockToEdit(block);
       setActiveTab('blocking');
       setBlockingView('create');
@@ -70,7 +70,7 @@ export function useAdminHandlers({
 
   // Court operations - delegated to handler module (useCallback for identity stability)
   const clearCourt = useCallback(
-    (courtNumber) =>
+    (courtNumber: number) =>
       clearCourtOp(
         { courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse },
         courtNumber
@@ -79,7 +79,7 @@ export function useAdminHandlers({
   );
 
   const moveCourt = useCallback(
-    (from, to) =>
+    (from: number, to: number) =>
       moveCourtOp({ backend, showNotification, refreshBoard, applyBoardResponse }, from, to),
     [backend, showNotification, refreshBoard, applyBoardResponse]
   );
@@ -110,7 +110,7 @@ export function useAdminHandlers({
 
   // Waitlist operations - delegated to handler module (useCallback for identity stability)
   const removeFromWaitlist = useCallback(
-    (index) =>
+    (index: number) =>
       removeFromWaitlistOp(
         {
           waitingGroups,
@@ -126,7 +126,7 @@ export function useAdminHandlers({
   );
 
   const moveInWaitlist = useCallback(
-    (from, to) =>
+    (from: number, to: number) =>
       moveInWaitlistOp(
         { waitingGroups, backend, showNotification, refreshBoard, applyBoardResponse },
         from,
@@ -137,10 +137,10 @@ export function useAdminHandlers({
 
   // Block apply closure (captures React state for handler module)
   const applyBlocks = useCallback(
-    (blocks) =>
+    (blocks: unknown) =>
       applyBlocksOp(
         { courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse },
-        blocks
+        blocks as Parameters<typeof applyBlocksOp>[1]
       ),
     [courts, backend, showNotification, TENNIS_CONFIG, refreshBoard, applyBoardResponse]
   );

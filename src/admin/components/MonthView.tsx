@@ -1,4 +1,16 @@
 import React, { memo, useMemo } from 'react';
+import type { CalendarEvent } from '../calendar/utils';
+
+type HoursOverride = {date: string; reason?: string; isClosed?: boolean; opensAt?: string; closesAt?: string};
+type CalendarEventItem = CalendarEvent;
+
+interface MonthViewProps {
+  selectedDate: Date;
+  events: CalendarEventItem[];
+  currentTime: Date;
+  hoursOverrides?: HoursOverride[];
+  onEventClick: (event: CalendarEventItem) => void;
+}
 import { getEventIcon } from '../utils/eventIcons';
 import { getEventColor } from '../calendar';
 
@@ -7,12 +19,12 @@ export const MonthView = memo(function MonthView({
   selectedDate,
   events,
   currentTime,
-  hoursOverrides = [] as Array<{date: string; reason?: string; isClosed?: boolean; opensAt?: string; closesAt?: string}>,
+  hoursOverrides = [],
   onEventClick,
-}) {
+}: MonthViewProps) {
   // Create a map for quick lookup of overrides by date
   const overridesByDate = useMemo(() => {
-    const map = {};
+    const map: Record<string, HoursOverride> = {};
     hoursOverrides.forEach((o) => {
       map[o.date] = o;
     });
@@ -39,7 +51,7 @@ export const MonthView = memo(function MonthView({
     }
 
     // Group events by date
-    const evtsByDate = {};
+    const evtsByDate: Record<string, CalendarEventItem[]> = {};
     events.forEach((event) => {
       const dateKey = new Date(event.startTime).toDateString();
       if (!evtsByDate[dateKey]) {
@@ -107,7 +119,7 @@ export const MonthView = memo(function MonthView({
                   )}
                   <div className="space-y-1">
                     {dateEvents.slice(0, 2).map((event, idx) => {
-                      const Icon = getEventIcon(event.eventDetails?.type);
+                      const Icon = getEventIcon(event.eventDetails?.type ?? "");
                       return (
                         <div
                           key={idx}

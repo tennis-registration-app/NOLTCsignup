@@ -13,6 +13,69 @@ import { useAdminNotification } from '../context/NotificationContext';
 import { logger } from '../../lib/logger';
 import { emitDom } from '../../platform/attachLegacyEvents';
 
+interface CourtPlayer {
+  name: string;
+  memberNumber?: string;
+}
+
+interface CourtSession {
+  group?: {
+    players?: CourtPlayer[];
+  };
+}
+
+interface AdminCourt {
+  players?: CourtPlayer[];
+  session?: CourtSession;
+}
+
+interface WaitingGroup {
+  players: CourtPlayer[];
+}
+
+interface AdminDataStore {
+  get: (key: string) => Promise<{ courts: AdminCourt[]; waitingGroups: WaitingGroup[] }>;
+}
+
+interface AdminSettings {
+  [key: string]: unknown;
+}
+
+interface AIAdminProps {
+  onClose: () => void;
+  dataStore: AdminDataStore;
+  courts: AdminCourt[];
+  loadData?: () => void;
+  clearCourt: (courtNumber: number) => Promise<{ success: boolean; error?: string }>;
+  clearAllCourts: () => Promise<void>;
+  moveCourt: (from: number, to: number) => Promise<{ success: boolean; error?: string }>;
+  settings?: AdminSettings;
+  updateBallPrice: (price: string) => Promise<void>;
+  waitingGroups: WaitingGroup[];
+  refreshData: () => void;
+  clearWaitlist?: () => Promise<{ ok: boolean; message?: string; cancelledCount?: number }>;
+}
+
+interface AdminChatMessage {
+  role: string;
+  content: string;
+  error?: boolean;
+  warning?: boolean;
+}
+
+interface ParsedActionBase { action: string; confirmMessage?: string }
+type ParsedAction = ParsedActionBase & {
+  courts?: number[];
+  reason?: string;
+  startTime?: string;
+  endTime?: string;
+  date?: string;
+  courtNumber?: number;
+  fromCourt?: number;
+  toCourt?: number;
+  price?: number;
+};
+
 // Access global dependencies
 const Storage = ((window as any).TENNIS_CONFIG || { STORAGE: { BLOCKS: 'courtBlocks' } }) as {STORAGE: Record<string, string>; readJSON?: (key: string) => unknown; writeJSON?: (key: string, val: unknown) => void};
 const BL = ((window as any).BL || {
@@ -33,9 +96,9 @@ const AIAssistantAdmin = ({
   waitingGroups,
   refreshData,
   clearWaitlist,
-}) => {
-  const showNotification = useAdminNotification();
-  const [messages, setMessages] = useState([
+}: AIAdminProps) => {
+  const showNotification = useAdminNotification() as (message: string, type: string) => void;
+  const [messages, setMessages] = useState<AdminChatMessage[]>([
     {
       role: 'assistant',
       content:
@@ -44,8 +107,8 @@ const AIAssistantAdmin = ({
   ]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
-  const messagesEndRef = useRef(null);
+  const [pendingAction, setPendingAction] = useState<ParsedAction | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -56,7 +119,7 @@ const AIAssistantAdmin = ({
   }, [messages]);
 
   // Mock command parser
-  const parseCommand = (command) => {
+  const parseCommand = (command: string): ParsedAction => {
     const lower = command.toLowerCase();
 
     // Block court commands
@@ -70,7 +133,7 @@ const AIAssistantAdmin = ({
       if (courtMatch) {
         // Parse court numbers (handles "1", "1,2", "1 and 2", "1, 3, and 5")
         const courtsText = courtMatch[1];
-        const courtNumbers = courtsText.match(/\d+/g).map((n) => parseInt(n));
+        const courtNumbers = (courtsText.match(/\d+/g) || []).map((n: string) => parseInt(n));
 
         // Determine reason
         let reason = 'BLOCKED';
@@ -181,7 +244,7 @@ const AIAssistantAdmin = ({
   };
 
   // Execute mock commands
-  const executeCommand = async (action) => {
+  const executeCommand = async (action: ParsedAction): Promise<string | undefined> => {
     // Get current data from dataStore
     const data = (await dataStore.get('tennisClubData')) || { courts: [], waitingGroups: [] };
 
@@ -197,8 +260,8 @@ const AIAssistantAdmin = ({
           endDateTime.setDate(endDateTime.getDate() + 1);
         }
 
-        const [startHour, startMin] = action.startTime.split(':');
-        const [endHour, endMin] = action.endTime.split(':');
+        const [startHour, startMin] = action.startTime!.split(":");
+        const [endHour, endMin] = action.endTime!.split(":");
 
         startDateTime.setHours(parseInt(startHour), parseInt(startMin), 0, 0);
         endDateTime.setHours(parseInt(endHour), parseInt(endMin), 0, 0);
@@ -276,13 +339,13 @@ const AIAssistantAdmin = ({
 
         refreshData();
 
-        return `✓ Blocked court${action.courts.length > 1 ? 's' : ''} ${action.courts.join(', ')}`;
+        return `✓ Blocked court${action.courts!.length > 1 ? 's' : ''} ${action.courts!.join(', ')}`;
       }
 
       case 'clearCourt': {
-        const result = await clearCourt(action.courtNumber);
+        const result = await clearCourt(action.courtNumber!);
         return result.success
-          ? `✓ Cleared court ${action.courtNumber}`
+          ? `✓ Cleared court ${action.courtNumber!}`
           : `✗ ${result.error || 'Failed to clear court'}`;
       }
 
@@ -304,30 +367,30 @@ const AIAssistantAdmin = ({
         }
 
       case 'movePlayers': {
-        const moveResult = await moveCourt(action.fromCourt, action.toCourt);
+        const moveResult = await moveCourt(action.fromCourt!, action.toCourt!);
         return moveResult.success
-          ? `✓ Moved players from court ${action.fromCourt} to court ${action.toCourt}`
+          ? `✓ Moved players from court ${action.fromCourt!} to court ${action.toCourt!}`
           : `✗ ${moveResult.error || 'Failed to move players'}`;
       }
 
       case 'setBallPrice':
         try {
-          await updateBallPrice(action.price.toString());
-          return `✓ Ball price set to $${action.price.toFixed(2)}`;
+          await updateBallPrice(action.price!.toString());
+          return `✓ Ball price set to $${action.price!.toFixed(2)}`;
         } catch {
           return '✗ Failed to update ball price';
         }
 
       case 'showStatus': {
         const occupied: Array<{court: number; players: string}> = [];
-        data.courts.forEach((court, idx) => {
+        data.courts.forEach((court: AdminCourt, idx: number) => {
           // Domain format: court.session.group.players
           const sessionPlayers = court?.session?.group?.players;
-          if (court && (court.players?.length > 0 || sessionPlayers?.length > 0)) {
+          if (court && ((court.players?.length ?? 0) > 0 || (sessionPlayers?.length ?? 0) > 0)) {
             const players = sessionPlayers || court.players || [];
             occupied.push({
               court: idx + 1,
-              players: players.map((p) => p.name.split(' ').pop()).join(', '),
+              players: players.map((p: CourtPlayer) => (p.name.split(' ').pop() ?? '')).join(', '),
             });
           }
         });
@@ -415,7 +478,7 @@ const AIAssistantAdmin = ({
           ...prev,
           {
             role: 'assistant',
-            content: result,
+            content: result ?? "",
           },
         ]);
       }
@@ -431,7 +494,7 @@ const AIAssistantAdmin = ({
         ...prev,
         {
           role: 'system',
-          content: result,
+            content: result ?? "",
         },
       ]);
       setPendingAction(null);

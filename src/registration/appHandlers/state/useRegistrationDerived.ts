@@ -7,6 +7,30 @@ import { useMemo } from 'react';
  * Owns computed/derived values (useMemo blocks).
  * Now uses courtSelection from data for canonical court availability.
  */
+interface CourtSelectionData {
+  countFullTimeForGroup: (count: number) => number;
+  countSelectableForGroup: (count: number) => number;
+  selectableCourts: unknown[];
+}
+
+interface RegistrationData {
+  waitlist: Array<{
+    id: unknown;
+    position: unknown;
+    group?: { type?: string; players?: Array<{ displayName?: string; name?: string }> };
+    joinedAt?: unknown;
+    minutesWaiting?: unknown;
+    deferred?: boolean;
+  }>;
+  courtSelection?: CourtSelectionData | null | undefined;
+}
+
+interface UseRegistrationDerivedDeps {
+  data: RegistrationData;
+  CONSTANTS: { MEMBER_COUNT: number; MEMBER_ID_START: number };
+  isMobileView: boolean;
+}
+
 export function useRegistrationDerived({
   // Dependencies for waitlist CTA computation
   data,
@@ -14,7 +38,7 @@ export function useRegistrationDerived({
   CONSTANTS,
   // Passed through from parent
   isMobileView,
-}) {
+}: UseRegistrationDerivedDeps) {
   // ===== DERIVED VALUES (useMemo) =====
 
   // CTA state derived from waitlist and courtSelection
@@ -29,13 +53,13 @@ export function useRegistrationDerived({
     passThroughEntry,
     passThroughEntryData,
   } = useMemo(() => {
-    const normalizedWaitlist = (data.waitlist || []).map((entry) => ({
+    const normalizedWaitlist = (data.waitlist || []).map((entry: { id: unknown; position: unknown; group?: { type?: string; players?: Array<{ displayName?: string; name?: string }> }; joinedAt?: unknown; minutesWaiting?: unknown; deferred?: boolean }) => ({
       id: entry.id,
       position: entry.position,
       groupType: entry.group?.type,
       joinedAt: entry.joinedAt,
       minutesWaiting: entry.minutesWaiting,
-      names: (entry.group?.players || []).map((p) => p.displayName || p.name || 'Unknown'),
+      names: (entry.group?.players || []).map((p: { displayName?: string; name?: string }) => p.displayName || p.name || 'Unknown'),
       players: entry.group?.players || [],
       deferred: entry.deferred ?? false,
     }));
@@ -111,7 +135,7 @@ export function useRegistrationDerived({
 
   // Member database (simplified for autocomplete)
   const memberDatabase = useMemo(() => {
-    const db = {};
+    const db: Record<string, unknown> = {};
     const names = [
       'Novak Djokovic',
       'Carlos Alcaraz',

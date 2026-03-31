@@ -10,6 +10,7 @@ import {
   normalizeOverrides,
   normalizeSettings,
 } from '../../lib/normalize/index';
+import type { TennisBackendShape, DataStoreShape, TennisConfig } from '../../types/appTypes';
 
 /**
  * Default pricing values (fallback when API returns null/undefined)
@@ -26,18 +27,18 @@ const PRICING_DEFAULTS = {
  * @param {Object} apiSettings - Raw settings from backend (snake_case)
  * @returns {Object} Transformed settings object (dollars, nested structure)
  */
-export function transformSettings(apiSettings) {
+export function transformSettings(apiSettings: Record<string, unknown>) {
   const normalized = normalizeSettings(apiSettings);
   return {
     tennisBallPrice: normalized?.ballPriceCents
-      ? normalized.ballPriceCents / 100
+      ? (normalized.ballPriceCents ?? 0) / 100
       : PRICING_DEFAULTS.TENNIS_BALLS,
     guestFees: {
       weekday: normalized?.guestFeeWeekdayCents
-        ? normalized.guestFeeWeekdayCents / 100
+        ? (normalized.guestFeeWeekdayCents ?? 0) / 100
         : PRICING_DEFAULTS.GUEST_FEE_WEEKDAY,
       weekend: normalized?.guestFeeWeekendCents
-        ? normalized.guestFeeWeekendCents / 100
+        ? (normalized.guestFeeWeekendCents ?? 0) / 100
         : PRICING_DEFAULTS.GUEST_FEE_WEEKEND,
     },
   };
@@ -53,14 +54,22 @@ export function transformSettings(apiSettings) {
  * @param {Function} deps.onError - Error handler (receives message string)
  * @returns {Promise<Object>} { blockTemplates, settings, operatingHours, hoursOverrides }
  */
-export async function loadSettingsData(deps) {
+interface LoadSettingsDeps {
+  backend: TennisBackendShape;
+  dataStore?: DataStoreShape;
+  TENNIS_CONFIG: TennisConfig;
+  onError: (msg: string) => void;
+}
+
+export async function loadSettingsData(deps: LoadSettingsDeps) {
   const { backend, dataStore, TENNIS_CONFIG, onError } = deps;
 
   try {
     // Invalidate cache for fresh data
-    if (dataStore?.cache) {
-      dataStore.cache.delete(TENNIS_CONFIG.STORAGE.KEY);
-      dataStore.cache.delete('courtBlocks');
+    const store = dataStore as (DataStoreShape & { cache?: Map<string, unknown> }) | undefined;
+    if (store?.cache) {
+      store.cache.delete(TENNIS_CONFIG.STORAGE.KEY);
+      store.cache.delete('courtBlocks');
     }
 
     // Load templates from localStorage
@@ -76,7 +85,7 @@ export async function loadSettingsData(deps) {
     const settingsResult = await backend.admin.getSettings();
 
     if (settingsResult.ok) {
-      const settings = transformSettings(settingsResult.settings);
+      const settings = transformSettings(settingsResult.settings ?? {});
       const operatingHours = normalizeOperatingHours(settingsResult.operating_hours);
       const hoursOverrides = normalizeOverrides(settingsResult.upcoming_overrides);
 
@@ -101,7 +110,7 @@ export async function loadSettingsData(deps) {
  * @param {number} newPrice - New price in dollars
  * @returns {Promise<Object>} API result { ok: boolean, ... }
  */
-export async function updateBallPriceApi(backend, newPrice) {
+export async function updateBallPriceApi(backend: TennisBackendShape, newPrice: number) {
   const result = await backend.admin.updateSettings({
     settings: { ball_price_cents: Math.round(newPrice * 100) },
   });
@@ -117,7 +126,11 @@ export async function updateBallPriceApi(backend, newPrice) {
  * @param {Object} deps.backend - Backend API client
  * @returns {Promise<Object|null>} { settings, operatingHours, hoursOverrides } or null on failure
  */
-export async function refreshSettingsApi(deps) {
+interface RefreshDeps {
+  backend: TennisBackendShape;
+}
+
+export async function refreshSettingsApi(deps: RefreshDeps) {
   const { backend } = deps;
 
   try {
@@ -145,7 +158,7 @@ export async function refreshSettingsApi(deps) {
  * @param {Object} deps.backend - Backend API client
  * @returns {Promise<Object|null>} { settings, hoursOverrides } or null on failure
  */
-export async function refreshAISettingsApi(deps) {
+export async function refreshAISettingsApi(deps: RefreshDeps) {
   const { backend } = deps;
 
   try {

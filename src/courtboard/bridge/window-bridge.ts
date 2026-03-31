@@ -14,8 +14,8 @@
  * - freeCourts: Count of playable courts
  * - timestamp: State update timestamp
  */
-export function writeCourtboardState(nextState) {
-  window.CourtboardState = nextState;
+export function writeCourtboardState(nextState: unknown) {
+  window.CourtboardState = nextState as Record<string, unknown>;
 }
 
 /**

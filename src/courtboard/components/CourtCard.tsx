@@ -58,7 +58,7 @@ export const CourtCard = function CourtCard({
   const courtClass = base + ' ' + classForStatus(statusObj);
 
   // Mobile name formatting
-  function formatMobileNames(input) {
+  function formatMobileNames(input: unknown) {
     if (!input) return '';
     const names = Array.isArray(input)
       ? input
@@ -69,7 +69,7 @@ export const CourtCard = function CourtCard({
     if (!names.length) return '';
 
     const SUFFIXES = new Set(['Jr.', 'Sr.', 'II', 'III', 'IV']);
-    const formatOne = (full) => {
+    const formatOne = (full: string) => {
       const tokens = full.replace(/\s+/g, ' ').trim().split(' ');
       if (tokens.length === 1) {
         const t = tokens[0];
@@ -106,8 +106,9 @@ export const CourtCard = function CourtCard({
     if (isOvertime) {
       try {
         // Check if empty playable courts exist - if so, block overtime tap
-        const playableCourts = listPlayableCourts(courts, courtBlocks, new Date().toISOString());
+        const playableCourts = listPlayableCourts(courts as Parameters<typeof listPlayableCourts>[0], courtBlocks as Parameters<typeof listPlayableCourts>[1], new Date().toISOString());
         const emptyPlayable = playableCourts.filter((cn) => {
+          if (cn === undefined) return false;
           const c = courts[cn - 1];
           return !c?.session;
         });

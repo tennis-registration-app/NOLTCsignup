@@ -36,7 +36,8 @@ import { clearWaitlistOp } from './handlers/waitlistOperations';
 import { useAdminAppState } from './hooks/useAdminAppState';
 
 // Main Admin Panel Component
-const AdminPanel = ({ onExit }) => {
+interface AdminPanelProps { onExit: () => void; }
+const AdminPanel = ({ onExit }: AdminPanelProps) => {
   const showNotification = useAdminNotification() as (message: string, type: string) => void;
   const confirm = useAdminConfirm() as (message: string) => Promise<boolean>;
 
@@ -86,7 +87,7 @@ const AdminPanel = ({ onExit }) => {
               calendarModel={calendar.model}
               calendarActions={calendar.actions}
               services={adminServices}
-              components={blocks.components}
+              components={blocks.components as unknown as ReturnType<typeof import("./types/domainObjects").createBlockComponents>}
             />
           )}
           {activeTab === 'blocking' && (
@@ -96,9 +97,9 @@ const AdminPanel = ({ onExit }) => {
               wetCourtsActions={wetCourtsController.actions}
               blockModel={blocks.model}
               blockActions={blocks.actions}
-              components={blocks.components}
+              components={blocks.components as unknown as ReturnType<typeof import("./types/domainObjects").createBlockComponents>}
               services={adminServices}
-              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced}
+              CompleteBlockManagerEnhanced={CompleteBlockManagerEnhanced as unknown as React.ComponentType<Record<string, unknown>>}
             />
           )}
           {activeTab === 'waitlist' && (
@@ -122,7 +123,7 @@ const AdminPanel = ({ onExit }) => {
         aiModel={ai.model}
         aiActions={ai.actions}
         services={ai.services}
-        components={ai.components}
+        components={(ai.components ?? {}) as Record<string, React.ElementType | undefined>}
         clearWaitlist={() => clearWaitlistOp(backend)}
       />
     </div>

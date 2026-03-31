@@ -123,7 +123,7 @@ const ConflictDetector = ({
                   </span>
                 ) : (
                   <span>
-                    : Booked by {conflict.players.join(', ')} at {conflict.time}
+                    : Booked by {(conflict.players ?? []).join(', ')} at {conflict.time}
                   </span>
                 )}
               </div>

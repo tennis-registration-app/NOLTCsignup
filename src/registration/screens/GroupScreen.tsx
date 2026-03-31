@@ -77,8 +77,8 @@ const GroupScreen = ({
     sameGroup,
     CONSTANTS,
   }: any) => {
-  const addPlayerInputRef = useRef(null);
-  const guestInputRef = useRef(null);
+  const addPlayerInputRef = useRef<HTMLInputElement>(null);
+  const guestInputRef = useRef<HTMLInputElement>(null);
 
   // Focus on mount and after player count changes (player added)
   useEffect(() => {
@@ -170,7 +170,7 @@ const GroupScreen = ({
                 <h3 className="text-xl sm:text-2xl font-medium mb-2 sm:mb-3">Current Group</h3>
               )}
               <div className={`grid grid-cols-2 gap-2 ${!mobileFlow ? 'mb-3 sm:mb-4' : ''}`}>
-                {currentGroup.map((player, idx) => (
+                {currentGroup.map((player: any, idx: number) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between bg-gray-50 p-2.5 sm:p-3 rounded-xl"
@@ -314,7 +314,7 @@ const GroupScreen = ({
               {memberNumber && (
                 <FrequentPartnersList
                   partners={(frequentPartners || []).filter(
-                    (partner) =>
+                    (partner: any) =>
                       !isPlayerAlreadyPlaying(partner.player?.id || partner.player?.memberId)
                         .isPlaying
                   )}

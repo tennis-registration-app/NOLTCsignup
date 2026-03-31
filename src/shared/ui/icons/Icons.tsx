@@ -61,7 +61,7 @@ import {
 const DEFAULT_SIZE = 20;
 const DEFAULT_STROKE = 1.75;
 
-function wrap(LucideIcon) {
+function wrap(LucideIcon: React.ElementType) {
   const Wrapped = ({ size = DEFAULT_SIZE, className = '', ...props }) => (
     <LucideIcon
       size={size}

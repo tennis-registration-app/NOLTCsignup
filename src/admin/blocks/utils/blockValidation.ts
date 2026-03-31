@@ -16,7 +16,7 @@
  * @param {string} endTime
  * @returns {boolean}
  */
-export function hasValidTimes(startTime, endTime) {
+export function hasValidTimes(startTime: string, endTime: string) {
   return !!(startTime && endTime);
 }
 
@@ -27,7 +27,7 @@ export function hasValidTimes(startTime, endTime) {
  * @param {string} blockReason
  * @returns {boolean}
  */
-export function hasReason(blockReason) {
+export function hasReason(blockReason: string) {
   return blockReason.trim().length > 0;
 }
 
@@ -38,6 +38,6 @@ export function hasReason(blockReason) {
  * @param {Array} selectedCourts
  * @returns {boolean}
  */
-export function hasCourts(selectedCourts) {
+export function hasCourts(selectedCourts: unknown[]) {
   return selectedCourts.length > 0;
 }

@@ -26,7 +26,7 @@ export function useGuestCounter() {
     dispatch({ type: GUEST_COUNTER_ACTIONS.INCREMENT });
   }, []);
 
-  const setGuestCounter = useCallback((value) => {
+  const setGuestCounter = useCallback((value: number) => {
     dispatch({ type: GUEST_COUNTER_ACTIONS.SET, payload: value });
   }, []);
 

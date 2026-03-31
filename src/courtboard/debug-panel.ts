@@ -43,8 +43,8 @@
     if (!content) return;
 
     content.innerHTML = events
-      .map((event) => {
-        const time = new Date(event.timestamp).toLocaleTimeString();
+      .map((event: Record<string, unknown>) => {
+        const time = new Date(event.timestamp as string).toLocaleTimeString();
         return `<div style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #333;">
         <div style="color: #ff0;">[${time}] ${event.type}</div>
         <div style="color: #0ff;">${event.eventName}</div>
@@ -72,18 +72,18 @@
       return {
         passed: 0,
         failed: 1,
-        results: [{ name: 'Run failed', ok: false, notes: String(e?.message || e) }],
+        results: [{ name: 'Run failed', ok: false, notes: String(e instanceof Error ? e.message : e) }],
       };
     }
   }
 
-  function renderSelfTestResults(result) {
+  function renderSelfTestResults(result: Record<string, unknown>) {
     const resultsDiv = document.getElementById('selfTestResults');
     if (!resultsDiv) return;
 
     const timestamp = new Date().toLocaleTimeString();
-    const passed = result.passed || 0;
-    const failed = result.failed || 0;
+    const passed = (result.passed as number) || 0;
+    const failed = (result.failed as number) || 0;
 
     // Summary with color coding
     const summaryColor = failed > 0 ? '#f00' : '#0f0';
@@ -91,19 +91,19 @@
     html += `<div style="color: #666; font-size: 9px;">Last run: ${timestamp}</div>`;
 
     // Compact table
-    if (result.results && result.results.length > 0) {
+    if (result.results && (result.results as unknown[]).length > 0) {
       html += '<div style="margin-top: 5px; max-height: 150px; overflow-y: auto;">';
       html += '<table style="width: 100%; font-size: 9px; border-collapse: collapse;">';
       html +=
         '<tr style="color: #ff0;"><th style="text-align: left; padding: 2px;">Test</th><th style="text-align: center; padding: 2px;">OK</th><th style="text-align: left; padding: 2px;">Notes</th></tr>';
 
-      result.results.forEach((test) => {
+      (result.results as Array<Record<string, unknown>>).forEach((test) => {
         const okColor = test.ok ? '#0f0' : '#f00';
         const okText = test.ok ? '✓' : '✗';
         html += `<tr style="border-top: 1px solid #333;">`;
         html += `<td style="padding: 2px; color: #fff;">${test.name || test.Test || ''}</td>`;
         html += `<td style="padding: 2px; text-align: center; color: ${okColor};">${okText}</td>`;
-        html += `<td style="padding: 2px; color: #aaa;">${(test.notes || test.Notes || '').slice(0, 30)}${(test.notes || test.Notes || '').length > 30 ? '...' : ''}</td>`;
+        html += `<td style="padding: 2px; color: #aaa;">${(() => { const n = String(test.notes || test.Notes || ''); return n.slice(0, 30) + (n.length > 30 ? '...' : ''); })()}</td>`;
         html += `</tr>`;
       });
       html += '</table></div>';

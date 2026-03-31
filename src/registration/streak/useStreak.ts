@@ -13,15 +13,15 @@ export function useStreak() {
   const [state, dispatch] = useReducer(streakReducer, initialStreakState);
 
   // Setters (same signatures as useState setters)
-  const setRegistrantStreak = useCallback((value) => {
+  const setRegistrantStreak = useCallback((value: number) => {
     dispatch({ type: 'REGISTRANT_STREAK_SET', value });
   }, []);
 
-  const setShowStreakModal = useCallback((value) => {
+  const setShowStreakModal = useCallback((value: boolean) => {
     dispatch({ type: 'SHOW_STREAK_MODAL_SET', value });
   }, []);
 
-  const setStreakAcknowledged = useCallback((value) => {
+  const setStreakAcknowledged = useCallback((value: boolean) => {
     dispatch({ type: 'STREAK_ACKNOWLEDGED_SET', value });
   }, []);
 

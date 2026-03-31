@@ -10,7 +10,7 @@ function getCourtboardState() {
   return window.CourtboardState ?? { courts: [], courtBlocks: [], waitingGroups: [] };
 }
 
-function computeFreeCourts({ data, now, blocks }) {
+function computeFreeCourts({ data, now, blocks }: { data: { courts?: unknown[] }, now: Date, blocks: Array<{ startTime: string; endTime: string; courtNumber: number }> }) {
   const Avail = getLegacyAvailabilityDomain();
   try {
     if (Avail?.getFreeCourtsInfo) {
@@ -27,7 +27,7 @@ function computeFreeCourts({ data, now, blocks }) {
   const courts = data?.courts || [];
   const n = courts.length || 12;
   for (let i = 1; i <= n; i++) {
-    const c = courts[i - 1];
+    const c = courts[i - 1] as Record<string, unknown> | undefined;
     // Check for occupation using Domain format: court.session indicates active session
     const occ = !!(c && (c.isOccupied || c.session));
     const blk = activeBlocks.some((b) => b.courtNumber === i);
@@ -55,7 +55,7 @@ function syncWaitlistPromotions() {
 
     const TTL_MIN = 4;
     const expiresAt = new Date(now.getTime() + TTL_MIN * 60 * 1000).toISOString();
-    const desired = up.map((g, idx) => {
+    const desired = up.map((g: Record<string, unknown>, idx: number) => {
       const sig = waitlistSignature(g);
       const cn = free[idx] ? [free[idx]] : [];
       return {
@@ -71,7 +71,7 @@ function syncWaitlistPromotions() {
     const prev: Array<{ groupSig: string; courtNumbers: number[]; expiresAt: string }> = [];
     const live = prev.filter((p) => new Date(p.expiresAt) > now);
     const bySig = new Map(live.map((p) => [p.groupSig, p]));
-    desired.forEach((d) => {
+    desired.forEach((d: { groupSig: string; courtNumbers: number[]; expiresAt: string }) => {
       const e = bySig.get(d.groupSig);
       if (e) {
         e.courtNumbers = d.courtNumbers;

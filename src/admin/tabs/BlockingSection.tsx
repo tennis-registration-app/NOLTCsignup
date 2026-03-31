@@ -17,6 +17,19 @@ import { buildBlockingModel, buildBlockingActions } from '../presenters/blocking
  * @param {import('../types/domainObjects.js').AdminServices} props.services
  * @param {import('react').ComponentType<unknown>} props.CompleteBlockManagerEnhanced - Injected component
  */
+import type { ComponentType } from 'react';
+
+interface BlockingSectionProps {
+  blockingView: string;
+  wetCourtsModel: Record<string, unknown>;
+  wetCourtsActions: Record<string, unknown>;
+  blockModel: Record<string, unknown>;
+  blockActions: Record<string, unknown>;
+  components: Record<string, unknown>;
+  services: Record<string, unknown>;
+  CompleteBlockManagerEnhanced: ComponentType<Record<string, unknown>>;
+}
+
 export function BlockingSection({
   blockingView,
   wetCourtsModel,
@@ -26,7 +39,7 @@ export function BlockingSection({
   components,
   services,
   CompleteBlockManagerEnhanced,
-}) {
+}: BlockingSectionProps) {
   const model = buildBlockingModel(blockingView, wetCourtsModel, blockModel, components, services);
   const actions = buildBlockingActions(wetCourtsActions, blockActions);
 

@@ -1,3 +1,5 @@
+import type { AssignCourtInput, EndSessionInput, JoinWaitlistInput, CancelWaitlistInput, AssignFromWaitlistInput, CreateBlockInput, CancelBlockInput, PurchaseBallsInput, DeferWaitlistInput, ParticipantInput } from './types';
+
 /**
  * @fileoverview Wire format mappers for Edge Function payloads
  *
@@ -17,11 +19,11 @@
  * @param {import('./types').AssignCourtInput} input
  * @returns {Object} Wire payload for /assign-court
  */
-export function toAssignCourtPayload(input) {
+export function toAssignCourtPayload(input: AssignCourtInput): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     court_id: input.courtId, // UUID of the court
     session_type: input.groupType, // 'singles' | 'doubles'
-    participants: input.participants.map((p) => {
+    participants: input.participants.map((p: ParticipantInput) => {
       if (p.kind === 'member') {
         return {
           type: 'member',
@@ -65,7 +67,7 @@ export function toAssignCourtPayload(input) {
  * @param {string} reason - UI reason string
  * @returns {string} Valid API end_reason
  */
-function mapEndReason(reason) {
+function mapEndReason(reason: string): string {
   if (!reason) return 'cleared';
 
   // If already a valid new value, pass through
@@ -108,7 +110,7 @@ function mapEndReason(reason) {
  * @param {import('./types').EndSessionInput} input
  * @returns {Object} Wire payload for /end-session
  */
-export function toEndSessionPayload(input) {
+export function toEndSessionPayload(input: EndSessionInput): Record<string, unknown> {
   return {
     court_id: input.courtId, // UUID of the court
     end_reason: mapEndReason(input.reason || input.endReason || 'cleared'),
@@ -120,10 +122,10 @@ export function toEndSessionPayload(input) {
  * @param {import('./types').JoinWaitlistInput} input
  * @returns {Object} Wire payload for /join-waitlist
  */
-export function toJoinWaitlistPayload(input) {
+export function toJoinWaitlistPayload(input: JoinWaitlistInput): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     group_type: input.groupType, // 'singles' | 'doubles'
-    participants: input.participants.map((p) => {
+    participants: input.participants.map((p: ParticipantInput) => {
       if (p.kind === 'member') {
         return {
           type: 'member',
@@ -168,7 +170,7 @@ export function toJoinWaitlistPayload(input) {
  * @param {import('./types').CancelWaitlistInput} input
  * @returns {Object} Wire payload for /cancel-waitlist
  */
-export function toCancelWaitlistPayload(input) {
+export function toCancelWaitlistPayload(input: CancelWaitlistInput): Record<string, unknown> {
   return {
     waitlist_id: input.entryId,
   };
@@ -179,7 +181,7 @@ export function toCancelWaitlistPayload(input) {
  * @param {import('./types').AssignFromWaitlistInput} input
  * @returns {Object} Wire payload for /assign-from-waitlist
  */
-export function toAssignFromWaitlistPayload(input) {
+export function toAssignFromWaitlistPayload(input: AssignFromWaitlistInput): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     waitlist_id: input.waitlistEntryId,
     court_id: input.courtId, // UUID of the court
@@ -208,7 +210,7 @@ export function toAssignFromWaitlistPayload(input) {
  * @param {import('./types').CreateBlockInput} input
  * @returns {Object} Wire payload for /create-block
  */
-export function toCreateBlockPayload(input) {
+export function toCreateBlockPayload(input: CreateBlockInput): Record<string, unknown> {
   return {
     court_id: input.courtId, // UUID of the court
     block_type: input.blockType || 'maintenance',
@@ -223,7 +225,7 @@ export function toCreateBlockPayload(input) {
  * @param {import('./types').CancelBlockInput} input
  * @returns {Object} Wire payload for /cancel-block
  */
-export function toCancelBlockPayload(input) {
+export function toCancelBlockPayload(input: CancelBlockInput): Record<string, unknown> {
   return {
     block_id: input.blockId,
   };
@@ -234,7 +236,7 @@ export function toCancelBlockPayload(input) {
  * @param {import('./types').PurchaseBallsInput} input
  * @returns {Object} Wire payload for /purchase-balls
  */
-export function toPurchaseBallsPayload(input) {
+export function toPurchaseBallsPayload(input: PurchaseBallsInput): Record<string, unknown> {
   return {
     session_id: input.sessionId,
     account_id: input.accountId,
@@ -248,7 +250,7 @@ export function toPurchaseBallsPayload(input) {
  * @param {import('./types').DeferWaitlistInput} input
  * @returns {Object} Wire payload for /defer-waitlist
  */
-export function toDeferWaitlistPayload(input) {
+export function toDeferWaitlistPayload(input: DeferWaitlistInput): Record<string, unknown> {
   return {
     waitlist_id: input.entryId,
     deferred: input.deferred,

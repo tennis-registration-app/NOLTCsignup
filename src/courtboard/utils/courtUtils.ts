@@ -3,14 +3,37 @@
  * Helper functions for court status, formatting, and display logic
  */
 
+
+interface StatusObj {
+  status?: string;
+  selectable?: boolean;
+}
+
+interface PlayerLike {
+  name?: string;
+}
+
+interface CourtSession {
+  group?: { players?: PlayerLike[] };
+  scheduledEndAt?: string;
+  startedAt?: string;
+}
+
+interface CourtObjLike {
+  session?: CourtSession | null;
+  history?: Array<{ players?: PlayerLike[] }> | null;
+  blockedLabel?: string;
+  reason?: string;
+  blockedEnd?: string;
+}
 /**
  * Map status to Tailwind CSS classes
  * @param {Object|string} statusObj - Status object or string
  * @returns {string} Tailwind class string
  */
-export function classForStatus(statusObj) {
-  const s = typeof statusObj === 'string' ? statusObj : statusObj?.status;
-  const selectable = statusObj?.selectable;
+export function classForStatus(statusObj: StatusObj | string | null | undefined): string {
+  const s = typeof statusObj === 'string' ? statusObj : (statusObj as StatusObj)?.status;
+  const selectable = typeof statusObj === 'object' && statusObj !== null ? (statusObj as StatusObj).selectable : undefined;
 
   switch (s) {
     case 'occupied':
@@ -38,20 +61,21 @@ export function classForStatus(statusObj) {
  * @param {Object} courtObj - Court object with session/history data
  * @returns {string} Comma-separated player names
  */
-export function namesFor(courtObj) {
+export function namesFor(courtObj: CourtObjLike | null | undefined): string {
   if (Array.isArray(courtObj?.session?.group?.players)) {
-    return courtObj.session.group.players
-      .map((p) => p?.name)
+    return courtObj!.session!.group!.players!
+      .map((p: PlayerLike) => p?.name)
       .filter(Boolean)
       .join(', ');
   }
+  const history = courtObj?.history;
   const last =
-    Array.isArray(courtObj?.history) && courtObj.history.length
-      ? courtObj.history[courtObj.history.length - 1]
+    Array.isArray(history) && history.length
+      ? history[history.length - 1]
       : null;
   if (Array.isArray(last?.players)) {
-    return last.players
-      .map((p) => p?.name)
+    return last!.players!
+      .map((p: PlayerLike) => p?.name)
       .filter(Boolean)
       .join(', ');
   }
@@ -63,7 +87,7 @@ export function namesFor(courtObj) {
  * @param {Date|string} dt - Date or ISO string
  * @returns {string|null} Formatted time string
  */
-export function formatTime(dt) {
+export function formatTime(dt: Date | string | null | undefined): string | null {
   if (!dt) return null;
   const d = dt instanceof Date ? dt : new Date(dt);
   if (isNaN(+d)) return null;
@@ -78,17 +102,23 @@ export function formatTime(dt) {
  * @param {number} checkStatusMinutes - Minutes threshold for "check status" warning
  * @returns {Object} { primary, secondary, secondaryColor }
  */
-export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
+export function computeClock(
+  status: string,
+  courtObj: CourtObjLike | null | undefined,
+  now: Date,
+  checkStatusMinutes = 150
+): { primary: string; secondary: string; secondaryColor?: string } {
   // Helper to compute "+X min over" label
-  const getOvertimeLabel = (endTime) => {
+  const getOvertimeLabel = (endTime: Date | null | undefined): string => {
     if (!endTime) return 'Overtime';
     const minutesOver = Math.round((now.getTime() - endTime.getTime()) / 60000);
     return minutesOver > 0 ? `+${minutesOver} min over` : 'Overtime';
   };
 
   if (status === 'occupied') {
-    const end = courtObj?.session?.scheduledEndAt
-      ? new Date(courtObj.session.scheduledEndAt)
+    const session = courtObj?.session;
+    const end = session?.scheduledEndAt
+      ? new Date(session.scheduledEndAt)
       : null;
     if (end && end > now) {
       const mins = Math.max(0, Math.ceil((end.getTime() - now.getTime()) / 60000));
@@ -100,10 +130,11 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
     return { primary: getOvertimeLabel(end), secondary: '' };
   }
   if (status === 'overtime') {
-    const end = courtObj?.session?.scheduledEndAt
-      ? new Date(courtObj.session.scheduledEndAt)
+    const session2 = courtObj?.session;
+    const end = session2?.scheduledEndAt
+      ? new Date(session2.scheduledEndAt)
       : null;
-    const start = courtObj?.session?.startedAt ? new Date(courtObj.session.startedAt) : null;
+    const start = session2?.startedAt ? new Date(session2.startedAt) : null;
     if (start) {
       const minutesPlaying = Math.floor((now.getTime() - start.getTime()) / 60000);
       if (checkStatusMinutes > 0 && minutesPlaying >= checkStatusMinutes) {
@@ -120,7 +151,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
   if (status === 'wet') return { primary: '🌧️\nWET COURT', secondary: '' };
   if (status === 'blocked') {
     const s = courtObj || {};
-    const rawLabel = s.blockedLabel || s.reason || 'Blocked';
+    const rawLabel = (s.blockedLabel || s.reason || 'Blocked') as string;
 
     let label = rawLabel.toUpperCase();
     if (label.includes('COURT WORK') || label.includes('MAINTENANCE')) {
@@ -133,7 +164,7 @@ export function computeClock(status, courtObj, now, checkStatusMinutes = 150) {
       label = 'LEAGUE';
     }
 
-    const until = s.blockedEnd ? s.blockedEnd : null;
+    const until = s.blockedEnd ? (s.blockedEnd as string) : null;
     let secondary = '';
     if (until) {
       try {

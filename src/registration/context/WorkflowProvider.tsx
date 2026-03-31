@@ -22,7 +22,8 @@ import { useStreak } from '../streak/useStreak';
 import { useCourtAssignmentResult } from '../court/useCourtAssignmentResult';
 import { useMemberIdentity } from '../memberIdentity/useMemberIdentity';
 
-const WorkflowContext = createContext(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const WorkflowContext = createContext<any>(null);
 
 export function WorkflowProvider({ backend, children }: { backend: TennisBackendShape; key?: React.Key; children: React.ReactNode }) {
   // ===== HOOKS (4) — remount resets all internal useReducer state =====

@@ -25,7 +25,7 @@ export const DeferWaitlistCommandSchema = z.object({
  * @returns {DeferWaitlistCommand}
  * @throws {Error} If validation fails
  */
-export function buildDeferWaitlistCommand(input) {
+export function buildDeferWaitlistCommand(input: unknown) {
   const result = DeferWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -40,7 +40,7 @@ export function buildDeferWaitlistCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightDeferWaitlist(command, board) {
+export function preflightDeferWaitlist(command: z.infer<typeof DeferWaitlistCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   const entry = board?.waitlist?.find((e) => e.id === command.waitlistEntryId);
@@ -56,7 +56,7 @@ export function preflightDeferWaitlist(command, board) {
  * @param {DeferWaitlistCommand} command
  * @returns {Object}
  */
-export function toDeferWaitlistPayload(command) {
+export function toDeferWaitlistPayload(command: z.infer<typeof DeferWaitlistCommandSchema>): Record<string, unknown> {
   return {
     waitlist_id: command.waitlistEntryId,
     deferred: command.deferred,

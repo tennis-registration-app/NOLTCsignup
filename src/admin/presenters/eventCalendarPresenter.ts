@@ -12,11 +12,11 @@ import { getEventTypeFromReason } from '../calendar/utils';
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 142-199).
  */
-export function buildCalendarEvents({ blocks, courts }) {
+export function buildCalendarEvents({ blocks, courts }: { blocks: Record<string,unknown>[]; courts: Record<string,unknown>[] }) {
   const processedEvents = new Map();
 
   // Process API-sourced blocks
-  blocks.forEach((block) => {
+  blocks.forEach((block: Record<string,unknown>) => {
     if (block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -31,7 +31,7 @@ export function buildCalendarEvents({ blocks, courts }) {
   });
 
   // Process non-event blocks
-  blocks.forEach((block) => {
+  blocks.forEach((block: Record<string,unknown>) => {
     if (!block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -43,7 +43,7 @@ export function buildCalendarEvents({ blocks, courts }) {
           title: block.title || block.reason,
           startTime: block.startTime,
           endTime: block.endTime,
-          eventType: block.eventType || getEventTypeFromReason(block.reason),
+          eventType: block.eventType || getEventTypeFromReason(block.reason as string),
           courtNumbers: [block.courtNumber],
           isBlock: true,
           reason: block.reason,
@@ -53,14 +53,16 @@ export function buildCalendarEvents({ blocks, courts }) {
   });
 
   // Also check courts data for backward compatibility with active blocks
-  courts.forEach((court, idx) => {
-    if (court && court.blocked && court.blocked.isEvent) {
-      const eventKey = `${court.blocked.eventDetails?.title || court.blocked.title}-${court.blocked.startTime}`;
-
+  courts.forEach((court: Record<string,unknown> | null, idx: number) => {
+    if (!court) return;
+    const blocked = court.blocked as Record<string,unknown> | null | undefined;
+    if (blocked && (blocked.isEvent as unknown)) {
+      const details = blocked.eventDetails as Record<string,unknown> | undefined;
+      const eventKey = `${(details?.title as unknown) || (blocked.title as unknown)}-${blocked.startTime as unknown}`;
       if (!processedEvents.has(eventKey)) {
         processedEvents.set(eventKey, {
-          ...court.blocked,
-          courtNumbers: court.blocked.eventDetails?.courts || [idx + 1],
+          ...blocked,
+          courtNumbers: ((details?.courts as unknown) || [idx + 1]),
           id: eventKey,
         });
       }
@@ -75,7 +77,7 @@ export function buildCalendarEvents({ blocks, courts }) {
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 202-239).
  */
-export function filterCalendarEvents({ events, viewMode, selectedDate }) {
+export function filterCalendarEvents({ events, viewMode, selectedDate }: { events: Record<string,unknown>[]; viewMode: string; selectedDate: Date }) {
   let startDate, endDate;
 
   if (viewMode === 'month') {
@@ -95,9 +97,9 @@ export function filterCalendarEvents({ events, viewMode, selectedDate }) {
     endDate.setHours(23, 59, 59, 999);
   }
 
-  return events.filter((event) => {
-    const eventStart = new Date(event.startTime);
-    const eventEnd = new Date(event.endTime);
+  return events.filter((event: Record<string,unknown>) => {
+    const eventStart = new Date(event.startTime as string);
+    const eventEnd = new Date(event.endTime as string);
     return (
       (eventStart >= startDate && eventStart <= endDate) ||
       (eventEnd >= startDate && eventEnd <= endDate) ||
@@ -111,7 +113,7 @@ export function filterCalendarEvents({ events, viewMode, selectedDate }) {
  *
  * Extracted from EventCalendarEnhanced useMemo (lines 382-399).
  */
-export function formatCalendarHeader({ viewMode, selectedDate }) {
+export function formatCalendarHeader({ viewMode, selectedDate }: { viewMode: string; selectedDate: Date }) {
   if (viewMode === 'month') {
     return selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   } else if (viewMode === 'week') {

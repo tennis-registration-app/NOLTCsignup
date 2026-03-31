@@ -1,15 +1,26 @@
-// @ts-check
 import React from 'react';
 
-/**
- * QuickTemplatesCard - Collapsible template selection panel
- */
+interface BlockTemplate {
+  name: string;
+  reason: string;
+  duration?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+interface QuickTemplatesCardProps {
+  showTemplates: boolean;
+  setShowTemplates: (v: boolean) => void;
+  blockTemplates: BlockTemplate[];
+  handleTemplateSelect: (t: BlockTemplate) => void;
+}
+
 const QuickTemplatesCard = ({
   showTemplates,
   setShowTemplates,
   blockTemplates,
   handleTemplateSelect,
-}) => (
+}: QuickTemplatesCardProps) => (
   <div className="order-4">
     <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
       <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">

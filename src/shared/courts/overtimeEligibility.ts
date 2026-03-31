@@ -62,7 +62,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
     usablePrimaryCourts.length === 0 && fallbackOvertimeCourts.length > 0;
 
   // Build eligibility map
-  const eligibilityByCourtNumber = {};
+  const eligibilityByCourtNumber: Record<number, { eligible: boolean; reason: string | undefined }> = {};
   for (const court of courts) {
     if (!court) continue; // Skip null/undefined court entries
     const isPrimary = primaryCourts.some((c) => c.number === court.number);
@@ -122,7 +122,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
     }
   }
 
-  function getSelectableForGroup(playerCount) {
+  function getSelectableForGroup(playerCount: number) {
     // First check: any selectable courts eligible for this group?
     const eligible = selectableCourts.filter((sc) =>
       isCourtEligibleForGroup(sc.number!, playerCount)
@@ -161,7 +161,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
     return eligible;
   }
 
-  function getFullTimeForGroup(playerCount) {
+  function getFullTimeForGroup(playerCount: number) {
     const sessionDuration = playerCount >= 4 ? 90 : 60;
     const minMinutes = sessionDuration + 5;
     return getSelectableForGroup(playerCount).filter(
@@ -169,11 +169,11 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
     );
   }
 
-  function countSelectableForGroup(playerCount) {
+  function countSelectableForGroup(playerCount: number) {
     return getSelectableForGroup(playerCount).length;
   }
 
-  function countFullTimeForGroup(playerCount) {
+  function countFullTimeForGroup(playerCount: number) {
     return getFullTimeForGroup(playerCount).length;
   }
 
@@ -198,7 +198,7 @@ export function computeRegistrationCourtSelection(courts: Array<{ number?: numbe
  * @param {string|Date} serverNow - Server timestamp
  * @returns {Object} Playable courts result
  */
-export function computePlayableCourts(courts, blocks, serverNow) {
+export function computePlayableCourts(courts: Array<{ number?: number; courtNumber?: number; session?: unknown; isOvertime?: boolean; isBlocked?: boolean } | null | undefined>, blocks: Array<{ courtNumber?: number; [key: string]: unknown }>, serverNow: string | Date) {
   if (!courts?.length) {
     return {
       playableCourts: [],
@@ -211,22 +211,23 @@ export function computePlayableCourts(courts, blocks, serverNow) {
 
   // EXACT LOGIC FROM courtAvailability.js isPlayableNow
   // isPlayableNow: !isOccupiedNow(court, now) && !isBlockedNow(courtNumber, blocks, now)
-  const playableCourts = courts.filter((court, index) => {
+  const playableCourts = courts.filter((court: { number?: number; courtNumber?: number; session?: unknown; isOvertime?: boolean; isBlocked?: boolean } | null | undefined, index: number) => {
     if (!court) return false; // Skip null court entries
     const courtNumber = court.number || court.courtNumber || index + 1;
-    if (isOccupiedNow(court, now)) return false;
-    if (isBlockedNow(courtNumber, blocks, now)) return false;
+    if (isOccupiedNow(court as { session?: { scheduledEndAt?: string; endTime?: string; endsAt?: string; ends_at?: string }; isOvertime?: boolean; number?: number; courtNumber?: number }, now)) return false;
+    if (isBlockedNow(courtNumber, blocks as Array<{ courtNumber?: number; isWetCourt?: boolean; startsAt?: string; startTime?: string; start?: string; endsAt?: string; endTime?: string; end?: string }>, now)) return false;
     return true;
   });
 
-  const playableCourtNumbers = playableCourts.map((c) => c.number || c.courtNumber);
+  const playableCourtNumbers = playableCourts.map((c) => (c as { number?: number; courtNumber?: number }).number || (c as { number?: number; courtNumber?: number }).courtNumber);
 
   // Build eligibility map
-  const eligibilityByCourtNumber = {};
+  const eligibilityByCourtNumber: Record<number | string, { eligible: boolean; reason: string | undefined }> = {};
   for (const court of courts) {
     if (!court) continue; // Skip null/undefined court entries
     const courtNumber = court.number || court.courtNumber;
-    const isPlayable = playableCourts.some((c) => (c.number || c.courtNumber) === courtNumber);
+    const isPlayable = playableCourts.some((c) => ((c as { number?: number; courtNumber?: number }).number || (c as { number?: number; courtNumber?: number }).courtNumber) === courtNumber);
+    if (courtNumber === undefined) continue;
     eligibilityByCourtNumber[courtNumber] = {
       eligible: isPlayable,
       reason: !isPlayable ? (court.isBlocked ? 'blocked' : 'occupied') : undefined,

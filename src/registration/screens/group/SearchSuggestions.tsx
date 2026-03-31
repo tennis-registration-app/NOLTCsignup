@@ -14,6 +14,8 @@ import React from 'react';
  * @param {function} [props.onAddAsGuest] - If provided, shows "Add as guest" option when no matches
  * @param {string} [props.addAsGuestName] - Name to show in "Add as guest" option
  */
+interface Suggestion { member: { name: string; isGuest?: boolean; id?: string }; memberNumber?: string; }
+interface SearchSuggestionsProps { suggestions: Suggestion[]; onSelect: (s: Suggestion) => void; searchInput?: string; hoverColor?: string; containerClass?: string; style?: React.CSSProperties; showMemberId?: boolean; onAddAsGuest?: (name: string) => void; addAsGuestName?: string; }
 const SearchSuggestions = ({
   suggestions,
   onSelect,
@@ -22,16 +24,16 @@ const SearchSuggestions = ({
   containerClass = '',
   style = {},
   showMemberId = true,
-  onAddAsGuest = undefined as ((name: string) => void) | undefined,
+  onAddAsGuest = undefined,
   addAsGuestName = '',
-}) => {
+}: SearchSuggestionsProps) => {
   if (suggestions.length > 0) {
     return (
       <div
         className={`bg-white border-2 border-gray-200 rounded-xl shadow-lg ${containerClass}`}
         style={{ maxHeight: '300px', overflowY: 'auto', ...style }}
       >
-        {suggestions.map((suggestion, idx) => (
+        {suggestions.map((suggestion: Suggestion, idx: number) => (
           <button
             key={idx}
             onClick={() => onSelect(suggestion)}

@@ -8,7 +8,8 @@
 import React, { useMemo } from 'react';
 import { normalizeHeatmapRow } from '../../lib/normalize/index';
 
-const UsageHeatmap = ({ heatmapData = [] }) => {
+interface HeatmapRow { dow?: number; hour?: number; count?: number; [key: string]: unknown }
+const UsageHeatmap = ({ heatmapData = [] }: { heatmapData?: HeatmapRow[] }) => {
   const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7 AM to 9 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -19,7 +20,7 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
 
   // Build lookup from normalized data
   const heatmapLookup = useMemo(() => {
-    const lookup = {};
+    const lookup: Record<string, number> = {};
     normalizedData.forEach((d) => {
       lookup[`${d.dayOfWeek}-${d.hour}`] = d.sessionCount;
     });
@@ -32,7 +33,7 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
     return Math.max(1, ...normalizedData.map((d) => d.sessionCount));
   }, [normalizedData]);
 
-  const getColor = (dayIndex, hour) => {
+  const getColor = (dayIndex: number, hour: number): string => {
     const count = heatmapLookup[`${dayIndex}-${hour}`] || 0;
     if (count === 0) return 'bg-gray-100';
     const intensity = count / maxCount;
@@ -42,11 +43,11 @@ const UsageHeatmap = ({ heatmapData = [] }) => {
     return 'bg-green-200';
   };
 
-  const getCount = (dayIndex, hour) => {
+  const getCount = (dayIndex: number, hour: number): number => {
     return heatmapLookup[`${dayIndex}-${hour}`] || 0;
   };
 
-  const formatHour = (hour) => {
+  const formatHour = (hour: number): string => {
     if (hour === 12) return '12p';
     if (hour > 12) return `${hour - 12}p`;
     return `${hour}a`;

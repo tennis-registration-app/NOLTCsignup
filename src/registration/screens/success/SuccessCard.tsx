@@ -9,7 +9,8 @@ import React from 'react';
  * @param {React.ReactNode} props.mainContent - Main content (scrollable)
  * @param {React.ReactNode} props.footerContent - Footer content (scrollable with main)
  */
-const SuccessCard = ({ headerContent, mainContent, footerContent }) => (
+interface SuccessCardProps { headerContent?: React.ReactNode; mainContent?: React.ReactNode; footerContent?: React.ReactNode; }
+const SuccessCard = ({ headerContent, mainContent, footerContent }: SuccessCardProps) => (
   <div className="bg-white rounded-3xl shadow-2xl w-full max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col h-auto md:h-auto">
     {/* Fixed header area - outside scroll container, won't shrink */}
     {headerContent && (

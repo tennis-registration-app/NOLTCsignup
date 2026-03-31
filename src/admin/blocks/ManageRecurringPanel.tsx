@@ -19,21 +19,47 @@ const BLOCK_TYPE_COLORS = {
   other: 'bg-gray-100 text-gray-700',
 };
 
-function formatDateShort(isoString) {
+function formatDateShort(isoString: string) {
   const d = new Date(isoString);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function formatTimeFromISO(isoString) {
+function formatTimeFromISO(isoString: string) {
   const d = new Date(isoString);
   return formatTo12h(
     `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
   );
 }
 
-const ManageRecurringPanel = ({ backend, onNotification, onRefresh }) => {
+interface RecurringGroup {
+  blockType: string;
+  recurrenceGroupId: string;
+  title: string;
+  courtNumbers: number[];
+  timeStart: string;
+  timeEnd: string;
+  blockCount: number;
+  futureCount: number;
+  firstStart: string;
+  lastStart: string;
+}
+
+export interface ManageRecurringBackend {
+  admin: {
+    listBlockGroups: () => Promise<{ok: boolean; groups: RecurringGroup[]; message?: string}>;
+    cancelBlockGroup: (opts: {recurrenceGroupId: string; futureOnly: boolean}) => Promise<{ok: boolean; cancelledCount?: number; message?: string}>;
+  };
+}
+
+interface ManageRecurringPanelProps {
+  backend: ManageRecurringBackend | null | undefined;
+  onNotification: (msg: string, type: string) => void;
+  onRefresh: () => void;
+}
+
+const ManageRecurringPanel = ({ backend, onNotification, onRefresh }: ManageRecurringPanelProps) => {
   const confirm = useAdminConfirm();
-  const [groups, setGroups] = useState([]);
+  const [groups, setGroups] = useState([] as RecurringGroup[]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchGroups = useCallback(async () => {
@@ -57,7 +83,8 @@ const ManageRecurringPanel = ({ backend, onNotification, onRefresh }) => {
     fetchGroups();
   }, [fetchGroups]);
 
-  const handleDeleteAll = async (group) => {
+  const handleDeleteAll = async (group: RecurringGroup) => {
+    if (!backend) return;
     const confirmed = await confirm(`Delete all ${group.blockCount} blocks in this series?`);
     if (!confirmed) return;
 
@@ -74,11 +101,12 @@ const ManageRecurringPanel = ({ backend, onNotification, onRefresh }) => {
         onNotification('Failed to delete blocks: ' + (result.message || 'Unknown error'), 'error');
       }
     } catch (err) {
-      onNotification('Error deleting blocks: ' + err.message, 'error');
+      onNotification('Error deleting blocks: ' + (err instanceof Error ? err.message : String(err)), 'error');
     }
   };
 
-  const handleDeleteFuture = async (group) => {
+  const handleDeleteFuture = async (group: RecurringGroup) => {
+    if (!backend) return;
     const confirmed = await confirm(`Delete ${group.futureCount} future blocks in this series?`);
     if (!confirmed) return;
 
@@ -95,7 +123,7 @@ const ManageRecurringPanel = ({ backend, onNotification, onRefresh }) => {
         onNotification('Failed to delete blocks: ' + (result.message || 'Unknown error'), 'error');
       }
     } catch (err) {
-      onNotification('Error deleting blocks: ' + err.message, 'error');
+      onNotification('Error deleting blocks: ' + (err instanceof Error ? err.message : String(err)), 'error');
     }
   };
 
@@ -114,8 +142,8 @@ const ManageRecurringPanel = ({ backend, onNotification, onRefresh }) => {
   return (
     <div className="space-y-3">
       {groups.map((group) => {
-        const typeLabel = BLOCK_TYPE_LABELS[group.blockType] || group.blockType;
-        const typeColor = BLOCK_TYPE_COLORS[group.blockType] || BLOCK_TYPE_COLORS.other;
+        const typeLabel = BLOCK_TYPE_LABELS[group.blockType as keyof typeof BLOCK_TYPE_LABELS] || group.blockType;
+        const typeColor = BLOCK_TYPE_COLORS[group.blockType as keyof typeof BLOCK_TYPE_COLORS] || BLOCK_TYPE_COLORS.other;
 
         return (
           <div

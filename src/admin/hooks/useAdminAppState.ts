@@ -1,4 +1,5 @@
-import type { CommandResponse } from '../../types/appTypes';
+import type { CommandResponse, DomainCourt, DomainWaitlistEntry } from '../../types/appTypes';
+type AnyFn = (...args: unknown[]) => unknown;
 /**
  * useAdminAppState
  *
@@ -9,7 +10,7 @@ import type { CommandResponse } from '../../types/appTypes';
  * Receives context hooks (showNotification, confirm) as params because
  * they come from React context providers above AdminPanel.
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createBackend } from '../../lib/backend/index';
 import { logger } from '../../lib/logger';
 import { legacyEvents as Events } from '../../platform/attachLegacyEvents';
@@ -96,7 +97,7 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
   const [activeTab, setActiveTab] = useState('status');
   const [currentTime, setCurrentTime] = useState(new Date());
   const [blockingView, setBlockingView] = useState('create');
-  const [blockToEdit, setBlockToEdit] = useState(null);
+  const [blockToEdit, setBlockToEdit] = useState<unknown>(null);
   const [calendarView] = useState('day');
   const [showAIAssistant, setShowAIAssistant] = useState(false);
   const [selectedDate] = useState(new Date());
@@ -140,7 +141,7 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
         return;
       }
       try {
-        const normalized = normalizeBoard(apiResponse.board);
+        const normalized = normalizeBoard(apiResponse.board as Record<string, unknown>);
         applyBoardUpdate(normalized);
       } catch (error) {
         console.error('Failed to normalize board response:', error);
@@ -162,10 +163,10 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
   } = useWetCourts({
     backend,
     getDeviceId,
-    courts,
+    courts: courts as unknown as Parameters<typeof useWetCourts>[0]['courts'],
     Events,
     onRefresh: bumpRefreshTrigger,
-    applyBoardResponse,
+    applyBoardResponse: applyBoardResponse as unknown as Parameters<typeof useWetCourts>[0]['applyBoardResponse'],
   });
 
   // Convert array to Set for compatibility with existing code that expects Set
@@ -189,8 +190,8 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
     backend,
     dataStore,
     TENNIS_CONFIG,
-    courts,
-    waitingGroups,
+    courts: courts as DomainCourt[],
+    waitingGroups: waitingGroups as DomainWaitlistEntry[],
     showNotification,
     confirm,
     setBlockToEdit,
@@ -238,12 +239,12 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
       buildAdminController({
         backend,
         dataStore,
-        courts,
-        courtBlocks,
-        waitingGroups,
+        courts: courts as DomainCourt[],
+        courtBlocks: courtBlocks as object[],
+        waitingGroups: waitingGroups as DomainWaitlistEntry[],
         hoursOverrides,
-        blockToEdit,
-        suspendedBlocks,
+        blockToEdit: blockToEdit as object | null,
+        suspendedBlocks: suspendedBlocks as object[],
         wetCourtsActive,
         wetCourts,
         ENABLE_WET_COURTS,
@@ -257,36 +258,36 @@ export function useAdminAppState({ showNotification, confirm }: { showNotificati
         settings,
         actions: {
           // State-capturing callbacks
-          clearCourt,
-          moveCourt,
-          clearAllCourts,
-          clearWetCourt,
-          clearAllWetCourts,
-          removeFromWaitlist,
-          moveInWaitlist,
-          handleEditBlockFromStatus,
-          handleEmergencyWetCourt,
-          deactivateWetCourts,
-          applyBlocks,
-          onEditingBlockConsumed: () => setBlockToEdit(null),
-          showNotification,
+          clearCourt: clearCourt as AnyFn,
+          moveCourt: moveCourt as AnyFn,
+          clearAllCourts: clearAllCourts as AnyFn,
+          clearWetCourt: clearWetCourt as AnyFn,
+          clearAllWetCourts: clearAllWetCourts as AnyFn,
+          removeFromWaitlist: removeFromWaitlist as AnyFn,
+          moveInWaitlist: moveInWaitlist as AnyFn,
+          handleEditBlockFromStatus: handleEditBlockFromStatus as AnyFn,
+          handleEmergencyWetCourt: handleEmergencyWetCourt as AnyFn,
+          deactivateWetCourts: deactivateWetCourts as AnyFn,
+          applyBlocks: applyBlocks as AnyFn,
+          onEditingBlockConsumed: (() => setBlockToEdit(null)) as AnyFn,
+          showNotification: showNotification as AnyFn,
           setShowAIAssistant,
-          handleAISettingsChanged,
-          reloadSettings,
-          updateBallPrice,
-          refreshData,
-          bumpRefreshTrigger,
+          handleAISettingsChanged: handleAISettingsChanged as AnyFn,
+          reloadSettings: reloadSettings as AnyFn,
+          updateBallPrice: updateBallPrice as AnyFn,
+          refreshData: refreshData as AnyFn,
+          bumpRefreshTrigger: bumpRefreshTrigger as AnyFn,
         },
         components: {
-          VisualTimeEntry,
-          MiniCalendar,
-          EventCalendarEnhanced,
-          MonthView,
-          EventSummary,
-          HoverCard,
-          QuickActionsMenu,
-          AIAssistant,
-          AIAssistantAdmin,
+          VisualTimeEntry: VisualTimeEntry as React.ComponentType<unknown>,
+          MiniCalendar: MiniCalendar as React.ComponentType<unknown>,
+          EventCalendarEnhanced: EventCalendarEnhanced as React.ComponentType<unknown>,
+          MonthView: MonthView as React.ComponentType<unknown>,
+          EventSummary: EventSummary as React.ComponentType<unknown>,
+          HoverCard: HoverCard as React.ComponentType<unknown>,
+          QuickActionsMenu: QuickActionsMenu as React.ComponentType<unknown>,
+          AIAssistant: AIAssistant as React.ComponentType<unknown>,
+          AIAssistantAdmin: AIAssistantAdmin as React.ComponentType<unknown>,
         },
       }),
     [

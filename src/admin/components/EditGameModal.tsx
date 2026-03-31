@@ -7,12 +7,34 @@
 import React, { useState } from 'react';
 import { X } from './Icons';
 
-const EditGameModal = ({ game, onSave, onClose, saving = false }) => {
+interface GamePlayer {
+  displayName?: string;
+  name?: string;
+  playerName?: string;
+}
+
+interface GameData {
+  players?: GamePlayer[];
+  endTime: string;
+  startTime: string;
+  courtNumber: number;
+  sessionId?: string;
+  id?: string;
+}
+
+interface EditGameModalProps {
+  game: GameData;
+  onSave: (data: { sessionId: string | undefined; courtNumber: number; participants: { name: string; type: string }[]; scheduledEndAt: string | null }) => void;
+  onClose: () => void;
+  saving?: boolean;
+}
+
+const EditGameModal = ({ game, onSave, onClose, saving = false }: EditGameModalProps) => {
   // Initialize 4 player slots, pre-filled with existing players
   const existingPlayers = game.players || [];
   const [playerNames, setPlayerNames] = useState(() => {
     const names = ['', '', '', ''];
-    existingPlayers.forEach((p, i) => {
+    existingPlayers.forEach((p: GamePlayer, i: number) => {
       if (i < 4) {
         names[i] = p.displayName || p.name || p.playerName || '';
       }
@@ -27,7 +49,7 @@ const EditGameModal = ({ game, onSave, onClose, saving = false }) => {
 
   const [noEndTime, setNoEndTime] = useState(false);
 
-  const handlePlayerNameChange = (index, newName) => {
+  const handlePlayerNameChange = (index: number, newName: string) => {
     const newNames = [...playerNames];
     newNames[index] = newName;
     setPlayerNames(newNames);

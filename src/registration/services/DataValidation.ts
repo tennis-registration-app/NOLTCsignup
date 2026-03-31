@@ -17,7 +17,7 @@ const log = {
 };
 
 export const DataValidation = {
-  isValidCourtNumber(courtNumber) {
+  isValidCourtNumber(courtNumber: number) {
     return (
       Number.isInteger(courtNumber) &&
       courtNumber >= 1 &&
@@ -25,7 +25,7 @@ export const DataValidation = {
     );
   },
 
-  isValidPlayer(player) {
+  isValidPlayer(player: Record<string, unknown>) {
     // ID can be:
     // - A number (legacy hardcoded data)
     // - A numeric string like "1021" (legacy)
@@ -42,7 +42,7 @@ export const DataValidation = {
     );
   },
 
-  isValidGroup(group) {
+  isValidGroup(group: unknown) {
     return (
       Array.isArray(group) &&
       group.length >= 0 && // Changed from MIN_PER_GROUP to allow empty arrays for blocked courts
@@ -51,15 +51,15 @@ export const DataValidation = {
     );
   },
 
-  isValidDuration(duration) {
+  isValidDuration(duration: number) {
     return Number.isInteger(duration) && duration > 0 && duration <= 240; // Max 4 hours
   },
 
-  isValidDate(date) {
+  isValidDate(date: unknown) {
     return date instanceof Date && !isNaN(date.getTime());
   },
 
-  isValidCourtData(court) {
+  isValidCourtData(court: Record<string, unknown> | null | undefined) {
     if (!court) return true; // null/empty court is valid
 
     // Special case for cleared courts
@@ -68,8 +68,8 @@ export const DataValidation = {
         court &&
         typeof court === 'object' &&
         this.isValidGroup(court.players) &&
-        this.isValidDate(new Date(court.startTime)) &&
-        this.isValidDate(new Date(court.endTime))
+        this.isValidDate(new Date(String(court.startTime))) &&
+        this.isValidDate(new Date(String(court.endTime)))
       );
     }
 
@@ -81,9 +81,9 @@ export const DataValidation = {
         !court.session ||
         (court.session &&
           typeof court.session === 'object' &&
-          this.isValidGroup(court.session.group?.players) &&
-          this.isValidDate(new Date(court.session.startedAt)) &&
-          this.isValidDate(new Date(court.session.scheduledEndAt)));
+          this.isValidGroup(((court.session as Record<string, unknown>).group as Record<string, unknown>)?.players as unknown[]) &&
+          this.isValidDate(new Date(String((court.session as Record<string, unknown>).startedAt))) &&
+          this.isValidDate(new Date(String((court.session as Record<string, unknown>).scheduledEndAt))));
 
       return hasValidHistory && hasValidSession;
     }
@@ -96,18 +96,18 @@ export const DataValidation = {
       court &&
       typeof court === 'object' &&
       this.isValidGroup(court.players) &&
-      this.isValidDate(new Date(court.startTime)) &&
-      this.isValidDate(new Date(court.endTime)) &&
-      new Date(court.endTime) > new Date(court.startTime)
+      this.isValidDate(new Date(String(court.startTime))) &&
+      this.isValidDate(new Date(String(court.endTime))) &&
+      new Date(String(court.endTime)) > new Date(String(court.startTime))
     );
   },
 
-  sanitizeStorageData(data) {
+  sanitizeStorageData(data: Record<string, unknown>) {
     // Ensure data has the correct structure
-    const sanitized = {
+    const sanitized: { courts: unknown[]; waitingGroups: unknown[]; recentlyCleared: unknown[] } = {
       courts: Array(TENNIS_CONFIG.COURTS.TOTAL_COUNT).fill(null),
       waitingGroups: [],
-      recentlyCleared: [], // Include in sanitized structure
+      recentlyCleared: [],
     };
 
     // Validate and copy courts

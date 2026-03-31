@@ -9,17 +9,17 @@
 import { logger } from '../lib/logger';
 
 // DOM references (resolved lazily to handle module loading before DOM ready)
-let overlay, iframeReg, iframeBoard;
+let overlay: HTMLElement | null = null, iframeReg: HTMLIFrameElement | null = null, iframeBoard: HTMLIFrameElement | null = null;
 
 function ensureDOMRefs() {
   if (!overlay) overlay = document.getElementById('regOverlay');
-  if (!iframeReg) iframeReg = document.getElementById('iframeReg');
-  if (!iframeBoard) iframeBoard = document.getElementById('iframeBoard');
+  if (!iframeReg) iframeReg = document.getElementById('iframeReg') as HTMLIFrameElement | null;
+  if (!iframeBoard) iframeBoard = document.getElementById('iframeBoard') as HTMLIFrameElement | null;
 }
 
 // Mobile State Bridge - single place for state updates that broadcasts to iframes
 const MobileBridge = {
-  setRegisteredCourt(courtNumber) {
+  setRegisteredCourt(courtNumber: string | number | null | undefined) {
     if (courtNumber) {
       sessionStorage.setItem('mobile-registered-court', String(courtNumber));
     } else {
@@ -28,7 +28,7 @@ const MobileBridge = {
     this.broadcastState();
   },
 
-  setWaitlistEntryId(entryId) {
+  setWaitlistEntryId(entryId: string | null | undefined) {
     if (entryId) {
       sessionStorage.setItem('mobile-waitlist-entry-id', entryId);
     } else {
@@ -52,7 +52,7 @@ const MobileBridge = {
     // Broadcast to courtboard iframe
     try {
       if (iframeBoard?.contentWindow) {
-        iframeBoard.contentWindow.postMessage(
+        iframeBoard?.contentWindow?.postMessage(
           {
             type: 'mobile:state-updated',
             payload,
@@ -67,7 +67,7 @@ const MobileBridge = {
     // Broadcast to registration iframe
     try {
       if (iframeReg?.contentWindow) {
-        iframeReg.contentWindow.postMessage(
+        iframeReg?.contentWindow?.postMessage(
           {
             type: 'mobile:state-updated',
             payload,
@@ -84,13 +84,13 @@ const MobileBridge = {
 // Expose MobileBridge globally for debugging
 window.MobileBridge = MobileBridge;
 
-function showReg(courtNumber) {
+function showReg(courtNumber?: number) {
   ensureDOMRefs();
-  overlay.classList.add('show');
-  overlay.setAttribute('aria-hidden', 'false');
+  overlay?.classList.add('show');
+  overlay?.setAttribute('aria-hidden', 'false');
   // ask Registration to start (no reload)
   try {
-    iframeReg.contentWindow.postMessage(
+    iframeReg?.contentWindow?.postMessage(
       { type: 'register', courtNumber: Number(courtNumber) },
       '*'
     );
@@ -102,14 +102,14 @@ function showReg(courtNumber) {
 function showRegOverlayOnly() {
   ensureDOMRefs();
   // Show overlay without sending register message (for silent assign)
-  overlay.classList.add('show');
-  overlay.setAttribute('aria-hidden', 'false');
+  overlay?.classList.add('show');
+  overlay?.setAttribute('aria-hidden', 'false');
 }
 
 function hideReg() {
   ensureDOMRefs();
-  overlay.classList.remove('show');
-  overlay.setAttribute('aria-hidden', 'true');
+  overlay?.classList.remove('show');
+  overlay?.setAttribute('aria-hidden', 'true');
 }
 
 // Expose functions globally for cross-iframe messaging
@@ -152,25 +152,25 @@ window.addEventListener('message', (e) => {
     }, 8000);
     // visual confirmation on the board immediately
     try {
-      iframeBoard.contentWindow.postMessage(
+      iframeBoard?.contentWindow?.postMessage(
         { type: 'highlight', courtNumber: Number(d.courtNumber) },
         '*'
       );
       // Also notify the board about the mobile registration
-      iframeBoard.contentWindow.postMessage(
+      iframeBoard?.contentWindow?.postMessage(
         { type: 'mobile:registrationSuccess', courtNumber: Number(d.courtNumber) },
         '*'
       );
       // Force reload of the board to pick up the new session data
-      iframeBoard.contentWindow.location.reload();
+      iframeBoard?.contentWindow?.location.reload();
       // Wait for iframe to reload and React to render, then update button
-      iframeBoard.onload = function () {
+      if(iframeBoard){iframeBoard.onload = function () {
         logger.info('Mobile Shell', 'Board iframe reloaded, waiting for React to render...');
         // Give React time to render and populate CourtboardState
         setTimeout(function () {
           try {
-            if (iframeBoard.contentWindow.updateJoinButtonForMobile) {
-              iframeBoard.contentWindow.updateJoinButtonForMobile();
+            if (iframeBoard?.contentWindow?.updateJoinButtonForMobile) {
+              iframeBoard?.contentWindow?.updateJoinButtonForMobile();
               logger.info('Mobile Shell', 'Called updateJoinButtonForMobile after reload');
             }
           } catch (err) {
@@ -178,6 +178,7 @@ window.addEventListener('message', (e) => {
           }
         }, 1500);
       };
+      }
     } catch {
       // ignore
     }
@@ -192,7 +193,7 @@ window.addEventListener('message', (e) => {
     hideReg();
     // Reload the registration iframe to reset its state
     try {
-      iframeReg.contentWindow.location.reload();
+      iframeReg?.contentWindow?.location.reload();
     } catch {
       // ignore
     }
@@ -204,7 +205,7 @@ window.addEventListener('message', (e) => {
     );
     showRegOverlayOnly(); // Show overlay (registration will show loading state)
     try {
-      iframeReg.contentWindow.postMessage(
+      iframeReg?.contentWindow?.postMessage(
         {
           type: 'assign-from-waitlist',
           courtNumber: Number(d.courtNumber),
@@ -222,7 +223,7 @@ window.addEventListener('message', (e) => {
     // Trigger immediate board refresh to check for waitlist-available notice
     try {
       if (iframeBoard?.contentWindow) {
-        iframeBoard.contentWindow.postMessage({ type: 'refresh-board' }, '*');
+        iframeBoard?.contentWindow?.postMessage({ type: 'refresh-board' }, '*');
       }
     } catch (err) {
       logger.warn('Mobile Shell', 'Could not trigger board refresh:', err);

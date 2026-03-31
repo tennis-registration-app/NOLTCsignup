@@ -1,8 +1,14 @@
 import React, { memo, useMemo } from 'react';
 import { getEventIcon } from '../utils/eventIcons';
+import type { CalendarEvent } from '../calendar/utils';
 
+interface EventSummaryProps {
+  events: CalendarEvent[];
+  currentTime: Date;
+  onEventClick: (event: CalendarEvent) => void;
+}
 // Event Summary Component
-export const EventSummary = memo(function EventSummary({ events, currentTime, onEventClick }) {
+export const EventSummary = memo(function EventSummary({ events, currentTime, onEventClick }: EventSummaryProps) {
   const upcomingEvents = useMemo(() => {
     return events
       .filter((event) => new Date(event.startTime) > currentTime)
@@ -15,7 +21,7 @@ export const EventSummary = memo(function EventSummary({ events, currentTime, on
       <h3 className="font-medium text-gray-700 mb-2">Upcoming Events</h3>
       <div className="space-y-2">
         {upcomingEvents.map((event) => {
-          const Icon = getEventIcon(event.eventDetails?.type);
+          const Icon = getEventIcon(event.eventDetails?.type ?? "");
           return (
             <div
               key={event.id}
@@ -25,7 +31,7 @@ export const EventSummary = memo(function EventSummary({ events, currentTime, on
               <Icon size={16} className="text-gray-600" />
               <div className="flex-1">
                 <span className="font-medium">{event.eventDetails?.title || event.reason}</span>
-                <span className="text-gray-500 ml-2">Courts {event.courtNumbers.join(', ')}</span>
+                <span className="text-gray-500 ml-2">Courts {event.courtNumbers?.join(', ')}</span>
               </div>
               <span className="text-gray-500">
                 {new Date(event.startTime).toLocaleDateString([], {

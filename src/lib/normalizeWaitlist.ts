@@ -8,13 +8,13 @@
  * @param {Array} waitlist - Raw waitlist from API
  * @returns {Array} Normalized waitlist entries
  */
-export function normalizeWaitlist(waitlist) {
+export function normalizeWaitlist(waitlist: unknown[] | null | undefined) {
   if (!waitlist || !Array.isArray(waitlist)) return [];
 
-  return waitlist.map((entry, idx) => {
+  return (waitlist as Record<string, unknown>[]).map((entry, idx) => {
     // Handle participants - might be string (JSONB) or array
     let participants =
-      entry?.participants || entry?.players || entry?.members || entry?.group?.players || [];
+      entry?.participants || entry?.players || entry?.members || (entry?.group as Record<string, unknown> | undefined)?.players || [];
 
     if (typeof participants === 'string') {
       try {
@@ -31,12 +31,12 @@ export function normalizeWaitlist(waitlist) {
     }
 
     // Extract names with fallback chain
-    const names = participants.map(
-      (p) => p?.displayName || p?.display_name || p?.name || p?.member_name || 'Unknown'
+    const names = (participants as Record<string, unknown>[]).map(
+      (p: Record<string, unknown>) => p?.displayName || p?.display_name || p?.name || p?.member_name || 'Unknown'
     );
 
     // Extract player objects for CTA usage
-    const players = participants.map((p, i) => ({
+    const players = (participants as Record<string, unknown>[]).map((p, i: number) => ({
       id: `wl-${entry?.id || idx}-${i}`,
       name: p?.displayName || p?.display_name || p?.name || p?.member_name || 'Unknown',
       memberId: p?.memberId || p?.member_id || p?.id,

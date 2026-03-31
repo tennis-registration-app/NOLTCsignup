@@ -5,8 +5,18 @@
 import React from 'react';
 import { Edit2, X, RefreshCw } from '../components';
 import { getStatusColor, formatTimeRemaining, getPlayerNames } from './courtStatusUtils';
+import type { CourtStatusInfo, CourtPlayer } from './courtStatusUtils';
 
-const CourtCard: React.FC<{courtNum: number; status: string; info: object | null; currentTime: Date; movingFrom: number | null; showActionsMenu: boolean; handlers: object}> = ({
+interface CourtCardHandlers {
+  onToggleActions: (courtNum: number) => void;
+  onWetToggle: (courtNum: number) => void;
+  onMoveTarget: (from: number, to: number) => void;
+  onEditClick: (courtNum: number, info: CourtStatusInfo | null) => void;
+  onClearCourt: (courtNum: number) => void;
+  onInitiateMove: (courtNum: number) => void;
+}
+
+const CourtCard: React.FC<{courtNum: number; status: string; info: CourtStatusInfo | null; currentTime: Date; movingFrom: number | null; showActionsMenu: boolean; handlers: CourtCardHandlers}> = ({
   courtNum,
   status,
   info,
@@ -62,7 +72,7 @@ const CourtCard: React.FC<{courtNum: number; status: string; info: object | null
               status === 'overtime' ? 'text-red-600' : 'text-blue-600'
             }`}
           >
-            {formatTimeRemaining(info.endTime, currentTime)}
+            {formatTimeRemaining(info.endTime!, currentTime)}
           </div>
         )}
 
@@ -79,7 +89,7 @@ const CourtCard: React.FC<{courtNum: number; status: string; info: object | null
                 <p className="font-medium text-sm truncate">{info.reason}</p>
                 <p className="text-xs text-gray-600">
                   Until{' '}
-                  {new Date(info.endTime).toLocaleTimeString([], {
+                  {new Date(info.endTime!).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}
@@ -88,10 +98,10 @@ const CourtCard: React.FC<{courtNum: number; status: string; info: object | null
             )}
             {(status === 'occupied' || status === 'overtime') && (
               <>
-                <p className="font-medium text-sm truncate">{getPlayerNames(info.players)}</p>
+                <p className="font-medium text-sm truncate">{getPlayerNames((info.players as CourtPlayer[]) || [])}</p>
                 <p className="text-xs text-gray-600">
                   Since{' '}
-                  {new Date(info.startTime).toLocaleTimeString([], {
+                  {new Date(info.startTime!).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
                   })}
@@ -133,7 +143,7 @@ const CourtCard: React.FC<{courtNum: number; status: string; info: object | null
           >
             <div className="flex items-center gap-2">
               <Edit2 size={14} />
-              Edit {info.type === 'block' ? 'Block' : 'Game'}
+              Edit {info?.type === 'block' ? 'Block' : 'Game'}
             </div>
           </button>
           <button

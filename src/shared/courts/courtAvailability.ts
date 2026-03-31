@@ -8,10 +8,35 @@
 
 import { computePlayableCourts } from './overtimeEligibility.js';
 
+interface CourtSession {
+  scheduledEndAt?: string;
+  endTime?: string;
+  endsAt?: string;
+  ends_at?: string;
+}
+
+interface Court {
+  session?: CourtSession;
+  isOvertime?: boolean;
+  number?: number;
+  courtNumber?: number;
+}
+
+interface Block {
+  courtNumber?: number;
+  isWetCourt?: boolean;
+  startsAt?: string;
+  startTime?: string;
+  start?: string;
+  endsAt?: string;
+  endTime?: string;
+  end?: string;
+}
+
 /**
  * Check if a time is within an interval
  */
-export function isActiveInterval(now, startsAt, endsAt) {
+export function isActiveInterval(now: string | Date, startsAt: string | Date, endsAt: string | Date): boolean {
   const nowTime = new Date(now).getTime();
   const startTime = new Date(startsAt).getTime();
   const endTime = new Date(endsAt).getTime();
@@ -27,7 +52,7 @@ export function isActiveInterval(now, startsAt, endsAt) {
  * @param now - Current time (ISO string or Date)
  * @returns true if court is occupied by an active (non-overtime) session
  */
-export function isOccupiedNow(court, now = new Date().toISOString()) {
+export function isOccupiedNow(court: Court, now: string | Date = new Date().toISOString()): boolean {
   if (!court?.session) return false;
 
   const session = court.session;
@@ -58,10 +83,10 @@ export function isOccupiedNow(court, now = new Date().toISOString()) {
  * @param blocks - Array of active blocks from courtBlocks
  * @param now - Current time (ISO string or Date)
  */
-export function isBlockedNow(courtNumber, blocks, now) {
+export function isBlockedNow(courtNumber: number, blocks: Block[], now: string | Date): boolean {
   if (!blocks?.length) return false;
 
-  return blocks.some((block) => {
+  return blocks.some((block: Block) => {
     if (block.courtNumber !== courtNumber) return false;
     // If block has start/end times, check if now is within range
     const startsAt = block.startsAt || block.startTime || block.start;
@@ -77,9 +102,9 @@ export function isBlockedNow(courtNumber, blocks, now) {
 /**
  * Check if a court is wet
  */
-export function isWetNow(courtNumber, blocks, now) {
+export function isWetNow(courtNumber: number, blocks: Block[], now: string | Date): boolean {
   if (!blocks?.length) return false;
-  return blocks.some((block) => {
+  return blocks.some((block: Block) => {
     if (block.courtNumber !== courtNumber) return false;
     if (!block.isWetCourt) return false;
     // Check if block is currently active
@@ -98,7 +123,7 @@ export function isWetNow(courtNumber, blocks, now) {
  * - Not occupied by an active session (overtime sessions don't count as occupied)
  * - Not blocked by a current block
  */
-export function isPlayableNow(court, courtNumber, blocks, now = new Date().toISOString()) {
+export function isPlayableNow(court: Court, courtNumber: number, blocks: Block[], now: string | Date = new Date().toISOString()): boolean {
   if (isOccupiedNow(court, now)) return false;
   if (isBlockedNow(courtNumber, blocks, now)) return false;
   // Note: wet courts are already included in isBlockedNow since they're blocks
@@ -111,10 +136,10 @@ export function isPlayableNow(court, courtNumber, blocks, now = new Date().toISO
  * @param blocks - Array of active blocks
  * @param now - Current time (ISO string or Date), defaults to Date.now()
  */
-export function countPlayableCourts(courts, blocks, now = new Date().toISOString()) {
+export function countPlayableCourts(courts: Court[], blocks: Block[], now: string | Date = new Date().toISOString()): number {
   if (!courts?.length) return 0;
 
-  return courts.filter((court, index) => {
+  return courts.filter((court: Court, index: number) => {
     const courtNumber = court?.number || court?.courtNumber || index + 1;
     return isPlayableNow(court, courtNumber, blocks, now);
   }).length;
@@ -125,8 +150,8 @@ export function countPlayableCourts(courts, blocks, now = new Date().toISOString
  * Wrapper around computePlayableCourts for backward compatibility.
  * Returns array of court numbers (not court objects).
  */
-export function listPlayableCourts(courts, blocks, now = new Date().toISOString()) {
+export function listPlayableCourts(courts: Court[], blocks: Block[], now: string | Date = new Date().toISOString()): (number | undefined)[] {
   // Delegate to policy module
-  const { playableCourtNumbers } = computePlayableCourts(courts, blocks, now);
+  const { playableCourtNumbers } = computePlayableCourts(courts as Parameters<typeof computePlayableCourts>[0], blocks as Parameters<typeof computePlayableCourts>[1], now);
   return playableCourtNumbers;
 }

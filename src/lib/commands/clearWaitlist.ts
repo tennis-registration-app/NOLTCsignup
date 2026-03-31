@@ -39,7 +39,7 @@ export function buildClearWaitlistCommand(input = {}) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightClearWaitlist(command, board) {
+export function preflightClearWaitlist(command: z.infer<typeof ClearWaitlistCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   const waitingCount = board?.waitlist?.filter((e) => e.status === 'waiting')?.length || 0;
@@ -55,6 +55,6 @@ export function preflightClearWaitlist(command, board) {
  * @param {ClearWaitlistCommand} _command
  * @returns {Object}
  */
-export function toClearWaitlistPayload(_command) {
+export function toClearWaitlistPayload(_command: z.infer<typeof ClearWaitlistCommandSchema>): Record<string, unknown> {
   return {};
 }

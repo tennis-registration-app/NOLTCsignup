@@ -15,7 +15,7 @@
  * @param {import('../types/domainObjects.js').BlockComponents} components
  * @returns {Object} Data props for EventCalendarEnhanced
  */
-export function buildCalendarModel(calendarModel, services, components) {
+export function buildCalendarModel(calendarModel: Record<string,unknown>, services: Record<string,unknown>, components: Record<string,unknown>) {
   const { courts, currentTime, hoursOverrides, calendarView, refreshTrigger } = calendarModel;
   const { backend } = services;
   const { MonthView, EventSummary, HoverCard, QuickActionsMenu, EventCalendar } = components;
@@ -41,7 +41,7 @@ export function buildCalendarModel(calendarModel, services, components) {
  * @param {import('../types/domainObjects.js').CalendarActions} calendarActions
  * @returns {Object} Action props for EventCalendarEnhanced
  */
-export function buildCalendarActions(calendarActions) {
+export function buildCalendarActions(calendarActions: Record<string,unknown>) {
   const { onRefresh } = calendarActions;
 
   return {

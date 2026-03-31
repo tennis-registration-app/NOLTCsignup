@@ -12,17 +12,62 @@ import CourtGrid from './admin/CourtGrid.jsx';
 import WaitlistManagement from './admin/WaitlistManagement.jsx';
 import SystemSettingsSection from './admin/SystemSettingsSection.jsx';
 import { logger } from '../../lib/logger';
+import type {
+  RegistrationUiState,
+  BlockAdminState,
+  WaitlistAdminState,
+  RegistrationConstants,
+} from '../../types/appTypes';
+
+type AdminCourt = RegistrationUiState['data']['courts'][number];
+
+export interface AdminScreenProps {
+  data: RegistrationUiState['data'];
+  currentTime: Date;
+  showAlert: boolean;
+  alertMessage: string;
+  showBlockModal: boolean;
+  setShowBlockModal: (v: boolean) => void;
+  selectedCourtsToBlock: number[];
+  setSelectedCourtsToBlock: (v: number[]) => void;
+  blockMessage: string;
+  setBlockMessage: (v: string) => void;
+  blockStartTime: string;
+  setBlockStartTime: (v: string) => void;
+  blockEndTime: string;
+  setBlockEndTime: (v: string) => void;
+  blockingInProgress: boolean;
+  setBlockingInProgress: (v: boolean) => void;
+  courtToMove: number | null;
+  setCourtToMove: (v: number | null) => void;
+  waitlistMoveFrom: WaitlistAdminState['waitlistMoveFrom'];
+  setWaitlistMoveFrom: WaitlistAdminState['setWaitlistMoveFrom'];
+  ballPriceInput: string;
+  setBallPriceInput: (v: string) => void;
+  priceError: string | null;
+  setPriceError: (v: string) => void;
+  showPriceSuccess: boolean;
+  setShowPriceSuccess: (v: boolean) => void;
+  onClearAllCourts: () => void;
+  onClearCourt: (courtNum: number) => void;
+  onCancelBlock: BlockAdminState['onCancelBlock'];
+  onBlockCreate: BlockAdminState['onBlockCreate'];
+  onMoveCourt: (fromCourtNum: number, toCourtNum: number) => void;
+  onClearWaitlist: () => void;
+  onRemoveFromWaitlist: (group: unknown) => void;
+  onReorderWaitlist: WaitlistAdminState['onReorderWaitlist'];
+  onPriceUpdate: () => void;
+  onExit: () => void;
+  showAlertMessage: (message: string) => void;
+  getCourtBlockStatus: BlockAdminState['getCourtBlockStatus'];
+  CONSTANTS: RegistrationConstants;
+}
 
 const AdminScreen = ({
-  // Data
   data,
   currentTime,
-
-  // Alert state (read only)
   showAlert,
   alertMessage,
-
-  // Block modal state
   showBlockModal,
   setShowBlockModal,
   selectedCourtsToBlock,
@@ -35,22 +80,16 @@ const AdminScreen = ({
   setBlockEndTime,
   blockingInProgress,
   setBlockingInProgress,
-
-  // Move state
   courtToMove,
   setCourtToMove,
   waitlistMoveFrom,
   setWaitlistMoveFrom,
-
-  // Price state
   ballPriceInput,
   setBallPriceInput,
   priceError,
   setPriceError,
   showPriceSuccess,
   setShowPriceSuccess,
-
-  // Callbacks (handlers defined in App.jsx)
   onClearAllCourts,
   onClearCourt,
   onCancelBlock,
@@ -62,34 +101,30 @@ const AdminScreen = ({
   onPriceUpdate,
   onExit,
   showAlertMessage,
-
-  // Utilities
   getCourtBlockStatus,
   CONSTANTS,
-  // TENNIS_CONFIG available if needed
-}) => {
+}: AdminScreenProps) => {
   const now = new Date();
 
   // Compute derived values from data
   const occupiedCourts = data.courts.filter(
-    (court) => court !== null && court.session?.group?.players?.length > 0 && !court.wasCleared
+    (court: AdminCourt) => court !== null && (court.session?.group?.players?.length ?? 0) > 0
   );
 
   const overtimeCourts = data.courts.filter(
-    (court) =>
+    (court: AdminCourt) =>
       court &&
-      court.session?.group?.players?.length > 0 &&
-      !court.wasCleared &&
-      new Date(court.session?.scheduledEndAt) <= currentTime
+      (court.session?.group?.players?.length ?? 0) > 0 &&
+      new Date(court.session?.scheduledEndAt ?? '') <= currentTime
   );
 
   // Count only currently blocked courts
-  const blockedCourts = data.courts.filter((court) => {
-    if (!court || !court.blocked || !court.blocked.startTime || !court.blocked.endTime)
-      return false;
-    const blockStartTime = new Date(court.blocked.startTime);
-    const blockEndTime = new Date(court.blocked.endTime);
-    return now >= blockStartTime && now < blockEndTime;
+  const blockedCourts = data.courts.filter((court: AdminCourt) => {
+    const blk = court.block as (typeof court.block & { startTime?: string; endTime?: string }) | null;
+    if (!blk || !blk.startTime || !blk.endTime) return false;
+    const blockStart = new Date(blk.startTime);
+    const blockEnd = new Date(blk.endTime);
+    return now >= blockStart && now < blockEnd;
   });
 
   useEffect(() => {
@@ -197,7 +232,7 @@ const AdminScreen = ({
         <SystemSettingsSection
           ballPriceInput={ballPriceInput}
           setBallPriceInput={setBallPriceInput}
-          priceError={priceError}
+          priceError={priceError ?? ""}
           setPriceError={setPriceError}
           showPriceSuccess={showPriceSuccess}
           setShowPriceSuccess={setShowPriceSuccess}

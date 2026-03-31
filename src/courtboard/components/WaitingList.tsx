@@ -6,6 +6,17 @@ import { getTennisDomain, getTennisNamespaceConfig } from '../../platform/window
  * WaitingList - Display panel for groups waiting to play
  * Shows wait times calculated using domain availability functions
  */
+interface WaitingGroup { names?: string[]; players?: unknown[]; deferred?: boolean; [key: string]: unknown; }
+interface CourtSel { countFullTimeForGroup: (n: number) => number; countSelectableForGroup: (n: number) => number; }
+interface WaitingListProps {
+  waitlist: WaitingGroup[];
+  courts?: unknown[];
+  currentTime?: unknown;
+  courtBlocks?: unknown[];
+  upcomingBlocks?: unknown[];
+  maxWaitingDisplay?: number;
+  courtSelection?: CourtSel;
+}
 export function WaitingList({
   waitlist,
   courts,
@@ -14,7 +25,7 @@ export function WaitingList({
   upcomingBlocks = [],
   maxWaitingDisplay,
   courtSelection,
-}) {
+}: WaitingListProps) {
   const domain = getTennisDomain();
   const W = domain?.Waitlist || domain?.waitlist;
 
@@ -46,7 +57,7 @@ export function WaitingList({
   const estimatedWaitTimes = calculateAllEstimatedWaitTimes();
 
   // Check if a group can register now (courts are available)
-  const canGroupRegisterNow = (idx) => {
+  const canGroupRegisterNow = (idx: number): boolean => {
     try {
       if (!courtSelection) return false;
 

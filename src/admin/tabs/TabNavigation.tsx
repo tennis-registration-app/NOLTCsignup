@@ -9,7 +9,15 @@ import {
   greyFilter,
 } from '../components';
 
-export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlockingView, onExit }) {
+interface TabNavigationProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  blockingView: string;
+  setBlockingView: (view: string) => void;
+  onExit: () => void;
+}
+
+export function TabNavigation({ activeTab, setActiveTab, blockingView, setBlockingView, onExit }: TabNavigationProps) {
   return (
     <div className="bg-gray-50 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

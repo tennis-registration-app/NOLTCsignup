@@ -4,18 +4,28 @@
  * Detects scheduling conflicts when creating/editing blocks.
  * Shows warnings for overlapping blocks and active sessions.
  */
+interface ConflictDetectorProps {
+  courts: Array<{ session?: { group?: { players?: { name: string }[] }; startedAt: string; scheduledEndAt: string } }>;
+  courtBlocks?: Array<{courtNumber: number; id?: string; startTime: string; endTime: string; reason?: string}>;
+  selectedCourts: number[];
+  startTime: string;
+  endTime: string;
+  selectedDate: Date;
+  editingBlock?: Record<string, unknown> | null;
+}
+
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle } from '../../components';
 
 const ConflictDetector = ({
   courts,
-  courtBlocks = [] as Array<{courtNumber: number; id?: string; startTime: string; endTime: string; reason?: string}>,
+  courtBlocks = [],
   selectedCourts,
   startTime,
   endTime,
   selectedDate,
   editingBlock,
-}) => {
+}: ConflictDetectorProps) => {
   const [conflicts, setConflicts] = useState<Array<{courtNumber: number; type: string; reason?: string; players?: string[]; time: string}>>([]);
 
   useEffect(() => {
@@ -26,7 +36,7 @@ const ConflictDetector = ({
 
     const detectedConflicts: Array<{courtNumber: number; type: string; reason?: string; players?: string[]; time: string}> = [];
 
-    selectedCourts.forEach((courtNum) => {
+    selectedCourts.forEach((courtNum: number) => {
       const court = courts[courtNum - 1];
       if (!court) return;
 
@@ -72,8 +82,8 @@ const ConflictDetector = ({
       // Check session using Domain format: court.session.group.players
       const sessionPlayers = court?.session?.group?.players;
       if (sessionPlayers) {
-        const bookingStart = new Date(court.session.startedAt);
-        const bookingEnd = new Date(court.session.scheduledEndAt);
+        const bookingStart = new Date(court.session!.startedAt);
+        const bookingEnd = new Date(court.session!.scheduledEndAt);
 
         if (
           (blockStart >= bookingStart && blockStart < bookingEnd) ||
@@ -83,7 +93,7 @@ const ConflictDetector = ({
           detectedConflicts.push({
             courtNumber: courtNum,
             type: 'booking',
-            players: sessionPlayers.map((p) => p.name),
+            players: sessionPlayers.map((p: { name: string }) => p.name),
             time: `${bookingStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${bookingEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           });
         }
@@ -111,7 +121,7 @@ const ConflictDetector = ({
                   </span>
                 ) : (
                   <span>
-                    : Booked by {conflict.players.join(', ')} at {conflict.time}
+                    : Booked by {(conflict.players ?? []).join(', ')} at {conflict.time}
                   </span>
                 )}
               </div>

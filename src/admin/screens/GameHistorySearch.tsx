@@ -10,7 +10,7 @@ import { normalizeGameSession } from '../../lib/normalize/index';
 
 // Map database endReason to display-friendly values
 // Keys are database values (snake_case literals preserved for mapping)
-const END_REASON_MAP = {
+const END_REASON_MAP: Record<string, string> = {
   cleared: 'Cleared',
   observed_cleared: 'Observed-Cleared',
   admin_override: 'Admin-Cleared',
@@ -21,11 +21,13 @@ const END_REASON_MAP = {
   cleared_early: 'Cleared',
 };
 
-const mapEndReason = (dbReason) => {
+const mapEndReason = (dbReason: string) => {
   return END_REASON_MAP[dbReason] || dbReason || 'Cleared';
 };
 
-const GameHistorySearch = ({ backend }) => {
+interface GameHistorySearchProps { backend?: unknown }
+
+const GameHistorySearch = ({ backend }: GameHistorySearchProps) => {
   const [searchFilters, setSearchFilters] = useState({
     courtNumber: '',
     playerName: '',
@@ -33,10 +35,10 @@ const GameHistorySearch = ({ backend }) => {
     endDate: '',
     clearReason: '',
   });
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<{id?: unknown; courtNumber?: unknown; startTime?: string; endTime?: string; players?: {name?: string; type?: string}[]; clearReason?: string}[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string|null>(null);
 
   const handleSearch = async () => {
     setIsSearching(true);
@@ -45,7 +47,8 @@ const GameHistorySearch = ({ backend }) => {
 
     try {
       // Call the backend API via TennisBackend pattern
-      const response = await backend.admin.getSessionHistory({
+      const _backend = backend as {admin: {getSessionHistory: (p: unknown) => Promise<{ok: boolean; sessions?: Record<string,unknown>[]; error?: string}>}};
+      const response = await _backend.admin.getSessionHistory({
         courtNumber: searchFilters.courtNumber || undefined,
         memberName: searchFilters.playerName || undefined,
         dateStart: searchFilters.startDate || undefined,
@@ -53,36 +56,37 @@ const GameHistorySearch = ({ backend }) => {
         limit: 100,
       });
 
-      if (response.ok && response.sessions) {
+      const _sessions = (response as {ok: boolean; sessions?: Record<string,unknown>[]; error?: string}).sessions;
+      if (response.ok && _sessions) {
         // Normalize at ingestion, use camelCase
-        let results = response.sessions.map((session) => {
+        let results = _sessions.map((session: Record<string, unknown>) => {
           const normalized = normalizeGameSession(session);
           return {
             id: normalized.id,
             courtNumber: normalized.courtNumber,
             startTime: normalized.startedAt,
             endTime: normalized.endedAt,
-            players: (normalized.participants || []).map((p) => ({
+            players: ((normalized.participants || []) as {name?: string; type?: string}[]).map((p: {name?: string; type?: string}) => ({
               name: p.name || 'Unknown',
               type: p.type,
             })),
-            clearReason: mapEndReason(normalized.endReason),
+            clearReason: mapEndReason(normalized.endReason || ""),
           };
         });
 
         // Client-side filter by clearReason if specified
         if (searchFilters.clearReason) {
-          results = results.filter((r) => r.clearReason === searchFilters.clearReason);
+          results = results.filter((r: {clearReason?: string}) => r.clearReason === searchFilters.clearReason);
         }
 
         setSearchResults(results);
       } else {
-        setError(response.error || 'Failed to fetch history');
+        setError((response as {error?: string}).error || 'Failed to fetch history');
         setSearchResults([]);
       }
     } catch (err) {
       console.error('[GameHistory] Search error:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -101,7 +105,8 @@ const GameHistorySearch = ({ backend }) => {
     setHasSearched(false);
   };
 
-  const formatTime = (dateString) => {
+  const formatTime = (dateString: string | undefined) => {
+    if (!dateString) return "";
     return new Date(dateString).toLocaleTimeString([], {
       hour: 'numeric',
       minute: '2-digit',
@@ -109,7 +114,8 @@ const GameHistorySearch = ({ backend }) => {
     });
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "";
     return new Date(dateString).toLocaleDateString([], {
       month: 'short',
       day: 'numeric',
@@ -250,9 +256,9 @@ const GameHistorySearch = ({ backend }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {searchResults.map((game, idx) => (
-                    <tr key={game.id || idx} className="hover:bg-gray-50">
+                    <tr key={(game.id as string|number|null|undefined) || idx} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        Court {game.courtNumber}
+                        Court {game.courtNumber as string|number|null|undefined}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(game.startTime)}
@@ -262,9 +268,9 @@ const GameHistorySearch = ({ backend }) => {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         <div className="space-y-1">
-                          {game.players.map((player, pidx) => (
+                          {(game.players || []).map((player, pidx) => (
                             <div key={pidx} className="text-sm">
-                              {player.name || player}
+                              {player.name || ""}
                             </div>
                           ))}
                         </div>
@@ -272,8 +278,8 @@ const GameHistorySearch = ({ backend }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {(() => {
                           const duration = Math.round(
-                            (new Date(game.endTime).getTime() -
-                              new Date(game.startTime).getTime()) /
+                            (new Date(game.endTime || "").getTime() -
+                              new Date(game.startTime || "").getTime()) /
                               (1000 * 60)
                           );
                           return `${duration} min`;

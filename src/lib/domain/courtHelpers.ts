@@ -7,80 +7,44 @@
  * - Deterministic and easy to unit-test
  */
 
-/**
- * Get player display names from a court's active session
- * @param {import('../types/domain.js').Court} court
- * @returns {string[]}
- */
-export function getCourtPlayerNames(court) {
+import type { Court, DomainSession, DomainWaitlistEntry, DomainMember } from '../types/domain';
+
+export function getCourtPlayerNames(court: Court): string[] {
   if (!court?.session?.group?.players) return [];
-  return court.session.group.players.map((p) => p.displayName);
+  return court.session.group.players.map((p: DomainMember) => p.displayName);
 }
 
-/**
- * Calculate minutes remaining in session (rounds up for user-friendly display)
- * @param {import('../types/domain.js').Session|null} session
- * @param {string} serverNow - ISO string
- * @returns {number} Minutes remaining (0 if session ended or invalid)
- */
-export function getSessionMinutesRemaining(session, serverNow) {
+export function getSessionMinutesRemaining(session: DomainSession | null, serverNow: string): number {
   if (!session?.scheduledEndAt || !serverNow) return 0;
   const endTime = new Date(session.scheduledEndAt).getTime();
   const now = new Date(serverNow).getTime();
   const diffMs = endTime - now;
   if (diffMs <= 0) return 0;
-  return Math.ceil(diffMs / 60000); // Round up for user-friendly display
+  return Math.ceil(diffMs / 60000);
 }
 
-/**
- * Check if session is in overtime
- * @param {import('../types/domain.js').Session|null} session
- * @param {string} serverNow - ISO string
- * @returns {boolean}
- */
-export function isSessionOvertime(session, serverNow) {
+export function isSessionOvertime(session: DomainSession | null, serverNow: string): boolean {
   if (!session?.scheduledEndAt || !serverNow) return false;
-  if (session.actualEndAt) return false; // Session already ended
+  if (session.actualEndAt) return false;
   return new Date(serverNow) > new Date(session.scheduledEndAt);
 }
 
-/**
- * Get display names from a waitlist entry
- * @param {import('../types/domain.js').WaitlistEntry} entry
- * @returns {string[]}
- */
-export function getWaitlistEntryNames(entry) {
+export function getWaitlistEntryNames(entry: DomainWaitlistEntry): string[] {
   if (!entry?.group?.players) return [];
-  return entry.group.players.map((p) => p.displayName);
+  return entry.group.players.map((p: DomainMember) => p.displayName);
 }
 
-/**
- * Get available (unoccupied and unblocked) courts
- * @param {import('../types/domain.js').Court[]} courts
- * @returns {import('../types/domain.js').Court[]}
- */
-export function getAvailableCourts(courts) {
+export function getAvailableCourts(courts: Court[]): Court[] {
   if (!Array.isArray(courts)) return [];
   return courts.filter((c) => c.isAvailable);
 }
 
-/**
- * Get occupied courts
- * @param {import('../types/domain.js').Court[]} courts
- * @returns {import('../types/domain.js').Court[]}
- */
-export function getOccupiedCourts(courts) {
+export function getOccupiedCourts(courts: Court[]): Court[] {
   if (!Array.isArray(courts)) return [];
   return courts.filter((c) => c.isOccupied);
 }
 
-/**
- * Find court by number
- * @param {import('../types/domain.js').Court[]} courts
- * @param {number} courtNumber
- * @returns {import('../types/domain.js').Court|undefined}
- */
-export function findCourtByNumber(courts, courtNumber) {
+export function findCourtByNumber(courts: Court[], courtNumber: number): Court | undefined {
   if (!Array.isArray(courts)) return undefined;
   return courts.find((c) => c.number === courtNumber);
 }

@@ -76,7 +76,7 @@ export class TennisQueries {
     }
 
     // Store raw response for legacy adapter (temporary)
-    (board as Record<string, unknown>)._raw = response;
+    (board as unknown as Record<string, unknown>)._raw = response;
 
     this._lastBoard = board;
     return board;
@@ -163,7 +163,7 @@ export class TennisQueries {
    * Handle a signal by debouncing and refreshing
    * @private
    */
-  _handleSignal(callback, source = 'unknown') {
+  _handleSignal(callback: (board: import("../types/domain").Board) => void, source = 'unknown') {
     this._signalCount++;
     const signalId = this._signalCount;
 

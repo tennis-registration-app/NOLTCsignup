@@ -5,9 +5,11 @@ import { Calendar } from './Icons';
  * ReservedCourtsPanel - Display panel for scheduled court blocks
  * Shows today's upcoming reserved court times
  */
-export function ReservedCourtsPanel({ items, className, title = 'Reserved Courts' }) {
+interface ReservedItem { key?: string; courts: number[]; start: string | number | Date; end: string | number | Date; label?: string; warning?: boolean; [key: string]: unknown; }
+interface ReservedCourtsPanelProps { items?: ReservedItem[]; className?: string; title?: string; }
+export function ReservedCourtsPanel({ items, className, title = 'Reserved Courts' }: ReservedCourtsPanelProps) {
   // Format time range compactly: "8:00-9:00 AM" instead of "8:00 AM – 9:00 AM"
-  const fmtRange = (start, end) => {
+  const fmtRange = (start: string | number | Date, end: string | number | Date) => {
     const s = new Date(start);
     const e = new Date(end);
     const sTime = s.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -38,7 +40,7 @@ export function ReservedCourtsPanel({ items, className, title = 'Reserved Courts
         </div>
       ) : (
         <ul className="mt-2 space-y-1 reserved-courts-text text-gray-300 text-lg">
-          {items.slice(0, 8).map((it, i) => (
+          {items.slice(0, 8).map((it: ReservedItem, i: number) => (
             <li key={`${it.key || i}`} className="flex justify-between gap-2">
               <span className="font-medium text-gray-200 flex-shrink-0">
                 {it.courts.join(', ')}
@@ -60,26 +62,27 @@ export function ReservedCourtsPanel({ items, className, title = 'Reserved Courts
 /**
  * Helper function to normalize block data
  */
-function normalizeBlock(raw) {
+function normalizeBlock(raw: Record<string, unknown>) {
+  const eventDetails = raw.eventDetails as Record<string, unknown> | undefined;
   const reasonRaw =
     raw.reason ||
     raw.title ||
-    (raw.eventDetails && (raw.eventDetails.title || raw.eventDetails.type)) ||
+    (eventDetails && (eventDetails.title || eventDetails.type)) ||
     '';
   const reason = String(reasonRaw).trim().toUpperCase();
 
-  const start = raw.startTime ? new Date(raw.startTime) : null;
-  let end = raw.endTime ? new Date(raw.endTime) : null;
+  const start = raw.startTime ? new Date(raw.startTime as string) : null;
+  let end = raw.endTime ? new Date(raw.endTime as string) : null;
   if (!end && start && (raw.duration || raw.duration === 0)) {
     end = new Date(start);
     end.setMinutes(end.getMinutes() + Number(raw.duration || 60));
   }
 
   let courts: number[] = [];
-  if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts);
-  if (raw.eventDetails && Array.isArray(raw.eventDetails.courts))
-    courts = courts.concat(raw.eventDetails.courts);
-  if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber);
+  if (Array.isArray(raw.courts)) courts = courts.concat(raw.courts as number[]);
+  if (eventDetails && Array.isArray(eventDetails.courts))
+    courts = courts.concat(eventDetails.courts as number[]);
+  if (Number.isFinite(raw.courtNumber)) courts.push(raw.courtNumber as number);
 
   courts = Array.from(new Set(courts.filter(Number.isFinite))).sort((a: number, b: number) => a - b);
   if (!start || !end || courts.length === 0) {
@@ -91,17 +94,17 @@ function normalizeBlock(raw) {
 /**
  * Select and format reserved items from blocks for display
  */
-export function selectReservedItemsFromBlocks(blocks, now = new Date()) {
+export function selectReservedItemsFromBlocks(blocks: Record<string, unknown>[], now = new Date()) {
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
 
-  const normalized = (blocks || []).map(normalizeBlock).filter(Boolean);
+  const normalized = (blocks || []).map((b: unknown) => normalizeBlock(b as Record<string, unknown>)).filter(Boolean);
   const todayFuture = normalized
-    .filter((b) => b.end > now && b.start <= endOfToday)
+    .filter((b: { start: Date; end: Date; courts: number[]; reason: string } | null): b is { start: Date; end: Date; courts: number[]; reason: string } => !!b && b.end > now && b.start <= endOfToday)
     .map((b) => ({ ...b, end: b.end > endOfToday ? endOfToday : b.end }))
-    .sort((a, b) => a.start - b.start);
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
 
   const byKey = new Map();
   for (const b of todayFuture) {

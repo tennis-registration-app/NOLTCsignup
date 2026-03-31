@@ -27,11 +27,11 @@ import {
 export function useAlertDisplay({ alertDurationMs = 3000 } = {}) {
   const [state, dispatch] = useReducer(alertDisplayReducer, initialAlertDisplayState);
 
-  const setShowAlert = useCallback((visible) => {
+  const setShowAlert = useCallback((visible: boolean) => {
     dispatch({ type: ALERT_DISPLAY_ACTIONS.SET_VISIBILITY, payload: visible });
   }, []);
 
-  const setAlertMessage = useCallback((message) => {
+  const setAlertMessage = useCallback((message: string) => {
     dispatch({ type: ALERT_DISPLAY_ACTIONS.SET_MESSAGE, payload: message });
   }, []);
 
@@ -42,7 +42,7 @@ export function useAlertDisplay({ alertDurationMs = 3000 } = {}) {
    * Rapid calls will stack timeouts (last one to fire wins visually).
    */
   const showAlertMessage = useCallback(
-    (message) => {
+    (message: string) => {
       dispatch({ type: ALERT_DISPLAY_ACTIONS.SHOW_WITH_MESSAGE, payload: message });
       setTimeout(() => {
         dispatch({ type: ALERT_DISPLAY_ACTIONS.SET_VISIBILITY, payload: false });

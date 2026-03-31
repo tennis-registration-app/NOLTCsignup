@@ -16,19 +16,19 @@ export function useCourtAssignmentResult() {
   );
 
   // Setters
-  const setJustAssignedCourt = useCallback((value) => {
+  const setJustAssignedCourt = useCallback((value: number | null) => {
     dispatch({ type: 'JUST_ASSIGNED_COURT_SET', value });
   }, []);
 
-  const setAssignedSessionId = useCallback((value) => {
+  const setAssignedSessionId = useCallback((value: string | null) => {
     dispatch({ type: 'ASSIGNED_SESSION_ID_SET', value });
   }, []);
 
-  const setAssignedEndTime = useCallback((value) => {
+  const setAssignedEndTime = useCallback((value: string | null) => {
     dispatch({ type: 'ASSIGNED_END_TIME_SET', value });
   }, []);
 
-  const setHasAssignedCourt = useCallback((value) => {
+  const setHasAssignedCourt = useCallback((value: boolean) => {
     dispatch({ type: 'HAS_ASSIGNED_COURT_SET', value });
   }, []);
 

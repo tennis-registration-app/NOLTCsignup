@@ -10,7 +10,7 @@ export const CLUB_TIMEZONE = 'America/Chicago';
  * @param {string|Date} utcDate - UTC date string (ISO format) or Date object
  * @returns {Date | null} Date object in local time
  */
-export function toLocalDate(utcDate) {
+export function toLocalDate(utcDate: string | Date | null | undefined) {
   if (!utcDate) return null;
   const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
   return date;
@@ -22,18 +22,18 @@ export function toLocalDate(utcDate) {
  * @param {object} options - Formatting options
  * @returns {string} Formatted date string in Central Time
  */
-export function formatDateTime(utcDate, options = {}) {
+export function formatDateTime(utcDate: string | Date | null | undefined, options: Intl.DateTimeFormatOptions = {}) {
   if (!utcDate) return '';
 
   const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
 
   const defaultOptions = {
     timeZone: CLUB_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+    year: 'numeric' as const,
+    month: '2-digit' as const,
+    day: '2-digit' as const,
+    hour: '2-digit' as const,
+    minute: '2-digit' as const,
     hour12: true,
   };
 
@@ -45,7 +45,7 @@ export function formatDateTime(utcDate, options = {}) {
  * @param {string|Date} utcDate
  * @returns {string} MM/DD/YYYY format
  */
-export function formatDate(utcDate) {
+export function formatDate(utcDate: string | Date | null | undefined) {
   if (!utcDate) return '';
 
   const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
@@ -63,7 +63,7 @@ export function formatDate(utcDate) {
  * @param {string|Date} utcDate
  * @returns {string} HH:MM AM/PM format
  */
-export function formatTime(utcDate) {
+export function formatTime(utcDate: string | Date | null | undefined) {
   if (!utcDate) return '';
 
   const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
@@ -81,7 +81,7 @@ export function formatTime(utcDate) {
  * @param {string|Date} utcDate
  * @returns {string}
  */
-export function formatCourtTime(utcDate) {
+export function formatCourtTime(utcDate: string | Date | null | undefined) {
   if (!utcDate) return '';
 
   const date = typeof utcDate === 'string' ? new Date(utcDate) : utcDate;
@@ -107,7 +107,7 @@ export function nowCentral() {
  * @param {number} minutes
  * @returns {string} e.g., "1h 30m" or "45m"
  */
-export function formatDuration(minutes) {
+export function formatDuration(minutes: number) {
   if (!minutes || minutes <= 0) return '0m';
 
   const hours = Math.floor(minutes / 60);
@@ -127,7 +127,7 @@ export function formatDuration(minutes) {
  * @param {string|Date} endTime - UTC end time
  * @returns {number} Minutes remaining (can be negative if overtime)
  */
-export function minutesRemaining(endTime) {
+export function minutesRemaining(endTime: string | Date | null | undefined) {
   if (!endTime) return 0;
 
   const end = typeof endTime === 'string' ? new Date(endTime) : endTime;
@@ -142,7 +142,7 @@ export function minutesRemaining(endTime) {
  * @param {number} minutes
  * @returns {Date}
  */
-export function addMinutes(date, minutes) {
+export function addMinutes(date: Date, minutes: number) {
   return new Date(date.getTime() + minutes * 60000);
 }
 
@@ -152,7 +152,7 @@ export function addMinutes(date, minutes) {
  * @param {Date|string} endTime
  * @returns {boolean}
  */
-export function isOverTime(now, endTime) {
+export function isOverTime(now: Date, endTime: string | Date) {
   return now > new Date(endTime);
 }
 
@@ -163,7 +163,7 @@ export function isOverTime(now, endTime) {
  * @param {number} [doublesMinutes=90]
  * @returns {number}
  */
-export function durationForGroupSize(groupSize, singlesMinutes = 60, doublesMinutes = 90) {
+export function durationForGroupSize(groupSize: number, singlesMinutes = 60, doublesMinutes = 90) {
   return groupSize >= 4 ? doublesMinutes : singlesMinutes;
 }
 

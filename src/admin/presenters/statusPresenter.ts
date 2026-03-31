@@ -2,45 +2,46 @@
  * Status Presenter
  *
  * Pure functions that transform controller domain objects into the props
- * needed by StatusSection's two children:
- * 1. CourtStatusGrid — receives domain objects directly (pass-through)
- * 2. Inline waitlist UI — receives extracted data/actions
+ * needed by StatusSection two children:
+ * 1. CourtStatusGrid receives domain objects directly (pass-through)
+ * 2. Inline waitlist UI receives extracted data/actions
  *
- * Extracted from StatusSection.jsx — maintains exact prop mapping.
+ * Extracted from StatusSection.jsx -- maintains exact prop mapping.
  */
 
+import type {
+  createStatusModel,
+  createWetCourtsModel,
+  createAdminServices,
+  createStatusActions,
+  createWetCourtsActions,
+} from '../types/domainObjects';
+
+type StatusModel = ReturnType<typeof createStatusModel>;
+type WetCourtsModel = ReturnType<typeof createWetCourtsModel>;
+type AdminServices = ReturnType<typeof createAdminServices>;
+type StatusActions = ReturnType<typeof createStatusActions>;
+type WetCourtsActions = ReturnType<typeof createWetCourtsActions>;
+
 /**
- * Build the data props for StatusSection's CourtStatusGrid and waitlist UI.
- *
- * @param {import('../types/domainObjects.js').StatusModel} statusModel
- * @param {import('../types/domainObjects.js').WetCourtsModel} wetCourtsModel
- * @param {import('../types/domainObjects.js').AdminServices} services
- * @returns {Object} Props for StatusSection rendering
+ * Build the data props for StatusSection CourtStatusGrid and waitlist UI.
  */
-export function buildStatusModel(statusModel, wetCourtsModel, services) {
+export function buildStatusModel(statusModel: StatusModel, wetCourtsModel: WetCourtsModel, services: AdminServices) {
   return {
-    // Pass-through domain objects for CourtStatusGrid
     statusModel,
     wetCourtsModel,
     services,
-    // Extracted for inline waitlist UI
     waitingGroups: statusModel.waitingGroups,
   };
 }
 
 /**
  * Build the action/callback props for StatusSection.
- *
- * @param {import('../types/domainObjects.js').StatusActions} statusActions
- * @param {import('../types/domainObjects.js').WetCourtsActions} wetCourtsActions
- * @returns {Object} Action props for StatusSection rendering
  */
-export function buildStatusActions(statusActions, wetCourtsActions) {
+export function buildStatusActions(statusActions: StatusActions, wetCourtsActions: WetCourtsActions) {
   return {
-    // Pass-through domain objects for CourtStatusGrid
     statusActions,
     wetCourtsActions,
-    // Extracted for inline waitlist UI
     moveInWaitlist: statusActions.moveInWaitlist,
     removeFromWaitlist: statusActions.removeFromWaitlist,
   };

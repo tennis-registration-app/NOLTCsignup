@@ -36,7 +36,7 @@ export const JoinWaitlistCommandSchema = z.object({
  * @returns {JoinWaitlistCommand}
  * @throws {Error} If validation fails
  */
-export function buildJoinWaitlistCommand(input) {
+export function buildJoinWaitlistCommand(input: unknown) {
   const result = JoinWaitlistCommandSchema.safeParse(input);
   if (!result.success) {
     const errors = result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join(', ');
@@ -51,12 +51,12 @@ export function buildJoinWaitlistCommand(input) {
  * @param {import('../types/domain.js').Board} board
  * @returns {{ ok: boolean, errors?: string[] }}
  */
-export function preflightJoinWaitlist(command, board) {
+export function preflightJoinWaitlist(command: z.infer<typeof JoinWaitlistCommandSchema>, board: import("../types/domain.js").Board | null | undefined) {
   const errors: string[] = [];
 
   // Check no players already engaged
   for (const player of command.players) {
-    const engagement = findEngagementByMemberId(board, player.memberId);
+    const engagement = board ? findEngagementByMemberId(board, player.memberId) : null;
     if (engagement) {
       errors.push(getEngagementMessage(engagement));
     }
@@ -70,9 +70,9 @@ export function preflightJoinWaitlist(command, board) {
  * @param {JoinWaitlistCommand} command
  * @returns {Object} - Payload for /join-waitlist API
  */
-export function toJoinWaitlistPayload(command) {
+export function toJoinWaitlistPayload(command: z.infer<typeof JoinWaitlistCommandSchema>): Record<string, unknown> {
   return {
-    players: command.players.map((p) => ({
+    players: command.players.map((p: z.infer<typeof JoinWaitlistCommandSchema>["players"][number]) => ({
       member_id: p.memberId,
       display_name: p.displayName,
       is_guest: p.isGuest,

@@ -1,3 +1,65 @@
+import type React from 'react';
+import type { TennisBackendShape, DataStoreShape, DomainCourt, DomainWaitlistEntry } from '../../types/appTypes';
+
+type AnyFn = (...args: unknown[]) => unknown;
+
+interface AdminControllerActions {
+  clearCourt?: AnyFn;
+  moveCourt?: AnyFn;
+  clearAllCourts?: AnyFn;
+  clearWetCourt?: AnyFn;
+  clearAllWetCourts?: AnyFn;
+  removeFromWaitlist?: AnyFn;
+  moveInWaitlist?: AnyFn;
+  handleEditBlockFromStatus?: AnyFn;
+  handleEmergencyWetCourt?: AnyFn;
+  deactivateWetCourts?: AnyFn;
+  applyBlocks?: AnyFn;
+  onEditingBlockConsumed?: AnyFn;
+  showNotification?: (...args: unknown[]) => unknown;
+  setShowAIAssistant?: (value: boolean) => void;
+  handleAISettingsChanged?: AnyFn;
+  reloadSettings?: AnyFn;
+  updateBallPrice?: AnyFn;
+  refreshData?: AnyFn;
+  bumpRefreshTrigger?: AnyFn;
+}
+
+interface AdminControllerComponents {
+  VisualTimeEntry?: React.ComponentType<unknown>;
+  MiniCalendar?: React.ComponentType<unknown>;
+  EventCalendarEnhanced?: React.ComponentType<unknown>;
+  MonthView?: React.ComponentType<unknown>;
+  EventSummary?: React.ComponentType<unknown>;
+  HoverCard?: React.ComponentType<unknown>;
+  QuickActionsMenu?: React.ComponentType<unknown>;
+  AIAssistant?: React.ComponentType<unknown>;
+  AIAssistantAdmin?: React.ComponentType<unknown>;
+}
+
+interface AdminControllerDeps {
+  backend: TennisBackendShape;
+  dataStore?: DataStoreShape;
+  courts: DomainCourt[];
+  courtBlocks: object[];
+  waitingGroups: DomainWaitlistEntry[];
+  hoursOverrides: object[];
+  blockToEdit?: object | null;
+  suspendedBlocks: object[];
+  wetCourtsActive: boolean;
+  wetCourts: Set<number>;
+  ENABLE_WET_COURTS: boolean;
+  selectedDate: Date;
+  currentTime: Date;
+  calendarView: string;
+  refreshTrigger: number;
+  activeTab: string;
+  showAIAssistant: boolean;
+  USE_REAL_AI: boolean;
+  settings: Record<string, unknown>;
+  actions: AdminControllerActions;
+  components?: AdminControllerComponents;
+}
 /**
  * Admin Controller Builder
  *
@@ -60,7 +122,7 @@ import {
  * @param {AdminControllerDeps} deps - Dependencies from React state/hooks
  * @returns {Object} Controller with all domain objects grouped by section
  */
-export function buildAdminController(deps) {
+export function buildAdminController(deps: AdminControllerDeps) {
   const {
     // Services
     backend,
@@ -119,15 +181,16 @@ export function buildAdminController(deps) {
     onEditingBlockConsumed: actions?.onEditingBlockConsumed,
     onNotification: actions?.showNotification,
   });
+  type CompType = React.ComponentType<unknown> | undefined;
   const blockComponents = components
     ? createBlockComponents({
-        VisualTimeEntry: components.VisualTimeEntry,
-        MiniCalendar: components.MiniCalendar,
-        EventCalendarEnhanced: components.EventCalendarEnhanced,
-        MonthView: components.MonthView,
-        EventSummary: components.EventSummary,
-        HoverCard: components.HoverCard,
-        QuickActionsMenu: components.QuickActionsMenu,
+        VisualTimeEntry: components.VisualTimeEntry as CompType,
+        MiniCalendar: components.MiniCalendar as CompType,
+        EventCalendarEnhanced: components.EventCalendarEnhanced as CompType,
+        MonthView: components.MonthView as CompType,
+        EventSummary: components.EventSummary as CompType,
+        HoverCard: components.HoverCard as CompType,
+        QuickActionsMenu: components.QuickActionsMenu as CompType,
       })
     : undefined;
 
@@ -179,7 +242,7 @@ export function buildAdminController(deps) {
     waitingGroups,
   });
   const aiActions = createAIAssistantActions({
-    setShowAIAssistant: actions?.setShowAIAssistant,
+    setShowAIAssistant: actions?.setShowAIAssistant as AnyFn | undefined,
     onAISettingsChanged: actions?.handleAISettingsChanged,
     loadData: actions?.reloadSettings,
     clearCourt: actions?.clearCourt,
@@ -190,8 +253,8 @@ export function buildAdminController(deps) {
   });
   const aiComponents = components
     ? createAIAssistantComponents({
-        AIAssistant: components.AIAssistant,
-        AIAssistantAdmin: components.AIAssistantAdmin,
+        AIAssistant: components.AIAssistant as CompType,
+        AIAssistantAdmin: components.AIAssistantAdmin as CompType,
       })
     : undefined;
 

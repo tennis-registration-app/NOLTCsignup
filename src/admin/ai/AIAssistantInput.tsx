@@ -1,8 +1,13 @@
 import React from 'react';
 import { ChevronRight } from '../components';
 
-/** @type {React.FC<{input: string, isProcessing: boolean, onInputChange: any, onSend: any}>} */
-const AIAssistantInput = function AIAssistantInput({ input, isProcessing, onInputChange, onSend }) {
+interface AIAssistantInputProps {
+  input: string;
+  isProcessing: boolean;
+  onInputChange: (value: string) => void;
+  onSend: () => void;
+}
+const AIAssistantInput = function AIAssistantInput({ input, isProcessing, onInputChange, onSend }: AIAssistantInputProps) {
   return (
     <div className="p-4 border-t border-gray-700">
       <div className="flex gap-2">

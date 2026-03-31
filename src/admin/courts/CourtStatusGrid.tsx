@@ -6,10 +6,38 @@
  */
 import React from 'react';
 import { EditGameModal } from '../components';
-import EventDetailsModal from '../calendar/EventDetailsModal';
+import type { CalendarEvent } from '../calendar/utils';
+import EventDetailsModal, { AdminBackend } from '../calendar/EventDetailsModal';
 import { getCourtStatus } from './courtStatusUtils';
 import { useCourtActions } from './useCourtActions';
 import CourtCard from './CourtCard';
+import type { CourtBlock } from './courtStatusUtils';
+
+interface CourtStatusGridProps {
+  statusModel: {
+    courts?: Record<string, unknown>[];
+    courtBlocks?: CourtBlock[];
+    selectedDate?: Date;
+    currentTime?: Date;
+    waitingGroups?: Record<string, unknown>[];
+  };
+  statusActions: Record<string, unknown>;
+  wetCourtsModel: {
+    active?: boolean;
+    courts?: Set<number>;
+    enabled?: boolean;
+  };
+  wetCourtsActions: {
+    activateEmergency?: () => Promise<{success?: boolean; error?: string}>;
+    deactivateAll?: () => Promise<{success?: boolean; error?: string}>;
+    clearCourt?: (n: number) => void;
+    clearAllCourts?: () => Promise<{success?: boolean; error?: string}>;
+  };
+  services: {
+    backend: AdminBackend;
+  };
+}
+
 import WetCourtsToolbar from './WetCourtsToolbar';
 
 /**
@@ -22,7 +50,7 @@ import WetCourtsToolbar from './WetCourtsToolbar';
  * @param {import('../types/domainObjects.js').WetCourtsActions} props.wetCourtsActions
  * @param {import('../types/domainObjects.js').AdminServices} props.services
  */
-const CourtStatusGrid = ({
+const CourtStatusGrid: React.FC<CourtStatusGridProps> = ({
   statusModel,
   statusActions,
   wetCourtsModel,
@@ -36,7 +64,7 @@ const CourtStatusGrid = ({
     selectedDate,
     currentTime = new Date(),
   } = statusModel;
-  const { clearAllCourts: onClearAllCourts } = statusActions;
+  const onClearAllCourts = statusActions.clearAllCourts as (() => void) | undefined;
   const { active: wetCourtsActive, courts: wetCourts = /** @type {Set<any>} */ (new Set()) } =
     wetCourtsModel;
   // activateEmergency/deactivateAll no longer used directly — routed through useCourtActions
@@ -77,9 +105,9 @@ const CourtStatusGrid = ({
   // otherwise fall back to real data from TennisBackend API
   const displayCourts = optimisticCourts || courts;
   const displayWetCourts = optimisticWetCourts || wetCourts;
-  const courtsByNumber = {};
-  (displayCourts || []).forEach((c) => {
-    courtsByNumber[c.number] = c;
+  const courtsByNumber: Record<number, Record<string, unknown>> = {};
+  (displayCourts || []).forEach((c: Record<string, unknown>) => {
+    courtsByNumber[c.number as number] = c;
   });
 
   return (
@@ -144,7 +172,7 @@ const CourtStatusGrid = ({
 
       {editingGame && (
         <EditGameModal
-          game={editingGame}
+          game={editingGame as never}
           onSave={handleSaveGame}
           onClose={closeEditingGame}
           saving={savingGame}
@@ -153,9 +181,9 @@ const CourtStatusGrid = ({
 
       {editingBlock && (
         <EventDetailsModal
-          event={editingBlock}
-          courts={courts.map((court, idx) => ({
-            id: court?.id || `court-${idx + 1}`,
+          event={editingBlock as unknown as CalendarEvent}
+          courts={(courts as Record<string, unknown>[]).map((court: Record<string, unknown>, idx: number) => ({
+            id: (court?.id as string) || `court-${idx + 1}`,
             courtNumber: idx + 1,
           }))}
           backend={backend}

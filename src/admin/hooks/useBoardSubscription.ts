@@ -14,6 +14,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '../../lib/logger';
 import { transformBoardUpdate } from './boardSubscriptionLogic';
+import type { RawBoard } from './boardSubscriptionLogic';
+import type { TennisBackendShape } from '../../types/appTypes';
 
 /**
  * Hook for managing board subscription state and realtime updates.
@@ -22,13 +24,20 @@ import { transformBoardUpdate } from './boardSubscriptionLogic';
  * @param {Object} deps.backend - Backend API client with queries.subscribeToBoardChanges
  * @returns {Object} Board state and operations
  */
-export function useBoardSubscription(deps) {
+interface WaitlistEntry { id?: string; position?: number; groupType?: string; joinedAt?: string; minutesWaiting?: number; names?: string; players?: unknown[]; raw?: unknown; }
+interface CourtBlock { id?: string; courtId?: string; courtNumber?: number; reason?: string; blockType?: string; startTime?: string; endTime?: string; }
+
+interface UseBoardSubscriptionDeps {
+  backend: TennisBackendShape;
+}
+
+export function useBoardSubscription(deps: UseBoardSubscriptionDeps) {
   const { backend } = deps;
 
   // State owned by this hook
-  const [courts, setCourts] = useState([]);
-  const [waitingGroups, setWaitingGroups] = useState([]);
-  const [courtBlocks, setCourtBlocks] = useState([]);
+  const [courts, setCourts] = useState<unknown[]>([]);
+  const [waitingGroups, setWaitingGroups] = useState<WaitlistEntry[]>([]);
+  const [courtBlocks, setCourtBlocks] = useState<CourtBlock[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Ref to track blocks fingerprint for detecting actual changes
@@ -40,11 +49,11 @@ export function useBoardSubscription(deps) {
   }, []);
 
   // Shared board update handler — used by both subscription and manual refresh
-  const applyBoardUpdate = useCallback((board) => {
-    const result = transformBoardUpdate(board, lastBlocksFingerprintRef.current);
+  const applyBoardUpdate = useCallback((board: unknown) => {
+    const result = transformBoardUpdate(board as RawBoard | null | undefined, lastBlocksFingerprintRef.current);
 
     setCourts(result.courts);
-    setWaitingGroups(result.waitingGroups);
+    setWaitingGroups(result.waitingGroups as unknown as Parameters<typeof setWaitingGroups>[0]);
     setCourtBlocks(result.courtBlocks);
 
     if (result.shouldBumpRefreshTrigger) {

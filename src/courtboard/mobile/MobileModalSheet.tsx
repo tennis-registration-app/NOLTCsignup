@@ -20,7 +20,7 @@ const backend = createBackend();
  * MobileModalSheet Component - handles rendering modal content
  * Displays various modal types for mobile view (court conditions, roster, etc.)
  */
-export function MobileModalSheet({ type, payload, onClose }) {
+export function MobileModalSheet({ type, payload, onClose }: { type: string | null; payload: Record<string, unknown> | null; onClose: () => void }) {
   // Focus trap & return focus
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -38,7 +38,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
   // Keyboard handlers (scoped to modal only)
   useEffect(() => {
-    const esc = (e) => {
+    const esc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
@@ -160,8 +160,8 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
       case 'reserved': {
         // Reserved courts list
-        const reservedItems = payload?.reservedData || [];
-        const fmt = (d) =>
+        const reservedItems = (payload?.reservedData || []) as Array<{ key?: unknown; courts?: (string|number)[]; start?: string; end?: string; reason?: string }> ;
+        const fmt = (d: string) =>
           new Date(d).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         return (
           <div className="modal-reserved-courts">
@@ -172,14 +172,14 @@ export function MobileModalSheet({ type, payload, onClose }) {
             ) : (
               <ul className="space-y-0.5 reserved-courts-text text-gray-300 px-6 pb-16 pt-2">
                 {reservedItems.map((item, idx) => (
-                  <li key={item.key || idx} className="flex justify-between py-1">
+                  <li key={(item.key as string | number | undefined) || idx} className="flex justify-between py-1">
                     <span className="font-medium text-gray-200">
-                      {item.courts?.length > 1
-                        ? `Courts ${item.courts.join(', ')}`
-                        : `Court ${item.courts?.[0] || 'N/A'}`}
+                      {(item.courts?.length ?? 0) > 1
+                        ? `Courts ${(item.courts ?? []).join(', ')}`
+                        : `Court ${(item.courts ?? [])[0] || 'N/A'}`}
                     </span>
                     <span className="ml-2 whitespace-nowrap text-gray-400">
-                      {fmt(item.start)} – {fmt(item.end)} ({item.reason || 'Reserved'})
+                      {fmt(item.start || '')} – {fmt(item.end || '')} ({item.reason || 'Reserved'})
                     </span>
                   </li>
                 ))}
@@ -191,16 +191,16 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
       case 'waitlist': {
         // Waitlist display - uses courts data from payload (passed from React state)
-        const waitlistData = payload?.waitlistData || [];
-        const modalCourts = payload?.courts || [];
-        const modalCourtBlocks = payload?.courtBlocks || [];
-        const modalUpcomingBlocks = payload?.upcomingBlocks || [];
+        const waitlistData = (payload?.waitlistData || []) as Array<Record<string,unknown>>;
+        const modalCourts = (payload?.courts || []) as unknown[];
+        const modalCourtBlocks = (payload?.courtBlocks || []) as unknown[];
+        const modalUpcomingBlocks = (payload?.upcomingBlocks || []) as unknown[];
 
         // Helper to convert courts array to data format for availability functions
-        const courtsToDataModal = (courtsArray) => ({ courts: courtsArray || [] });
+        const courtsToDataModal = (courtsArray: unknown[]) => ({ courts: courtsArray || [] });
 
         // Calculate estimated wait time for mobile modal (uses payload data, not localStorage)
-        const calculateMobileWaitTime = (position) => {
+        const calculateMobileWaitTime = (position: number) => {
           try {
             const domain = getTennisDomain();
             const W = domain?.waitlist || domain?.Waitlist;
@@ -244,9 +244,9 @@ export function MobileModalSheet({ type, payload, onClose }) {
             // Combine active blocks and future blocks for accurate availability calculation
             const blocks = [...modalCourtBlocks, ...modalUpcomingBlocks];
             const wetSet = new Set(
-              blocks
+              (blocks as Array<Record<string,unknown>>)
                 .filter(
-                  (b) => b?.isWetCourt && new Date(b.startTime) <= now && new Date(b.endTime) > now
+                  (b) => b?.isWetCourt && new Date(b.startTime as string) <= now && new Date(b.endTime as string) > now
                 )
                 .map((b) => b.courtNumber)
             );
@@ -276,17 +276,17 @@ export function MobileModalSheet({ type, payload, onClose }) {
                   <div className="font-semibold text-gray-300 text-sm">Estimated</div>
                 </div>
                 <div className="space-y-3">
-                  {waitlistData.map((group, idx) => {
+                  {(waitlistData as Array<Record<string,unknown>>).map((group, idx: number) => {
                     let names: string[] = [];
                     if (Array.isArray(group.players)) {
                       // Use displayName (domain format) first, then name (legacy), then id as fallback
                       names = group.players.map(
-                        (p) => p.displayName || p.name || p.id || 'Unknown'
+                        (p: Record<string,unknown>) => String(p.displayName || p.name || p.id || 'Unknown')
                       );
                     } else if (group.names) {
-                      names = Array.isArray(group.names) ? group.names : [group.names];
+                      names = Array.isArray(group.names) ? (group.names as string[]) : [String(group.names)];
                     } else if (group.name) {
-                      names = [group.name];
+                      names = [String(group.name)];
                     } else {
                       names = ['Group'];
                     }
@@ -319,8 +319,8 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
       case 'clear-court-confirm': {
         // Clear Court confirmation modal
-        const clearCourtNumber = payload?.courtNumber || '';
-        const clearCourtPlayers = payload?.players || '';
+        const clearCourtNumber = String(payload?.courtNumber || '');
+        const clearCourtPlayers = String(payload?.players || '');
         return (
           <div className="p-6 text-center">
             {clearCourtPlayers && (
@@ -336,7 +336,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
                   // Get court ID from current board state
                   const board = await backend.queries.getBoard();
                   const court = board?.courts?.find(
-                    (c) => c && c.number === Number(clearCourtNumber)
+                    (c: { number?: unknown; id?: unknown } | null) => c && c.number === Number(clearCourtNumber)
                   );
 
                   if (court?.id) {
@@ -381,8 +381,8 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
       case 'waitlist-available': {
         // Waitlist CTA - court is available for first waitlist group
-        const firstGroup = payload?.firstGroup || {};
-        const playerNames = (firstGroup.names || []).join(', ') || 'Next group';
+        const firstGroup = (payload?.firstGroup || {}) as Record<string, unknown>;
+        const playerNames = ((firstGroup.names as string[]) || []).join(', ') || 'Next group';
         return (
           <div className="p-6 text-center">
             <p className="text-yellow-400 text-xl font-semibold mb-3">{playerNames}</p>
@@ -404,7 +404,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
 
   return (
     <div
-      className={`mobile-modal-overlay${getModalClass(type)}`}
+      className={`mobile-modal-overlay${getModalClass(type || '')}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -412,7 +412,7 @@ export function MobileModalSheet({ type, payload, onClose }) {
       <div className="mobile-modal-content">
         <div className="mobile-modal-header">
           <h3 id={titleId} className="mobile-modal-title">
-            {getTitle(type, payload)}
+            {getTitle(type || '', (payload as Record<string, unknown>) || {})}
           </h3>
           <button
             type="button"

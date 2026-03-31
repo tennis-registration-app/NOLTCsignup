@@ -12,16 +12,24 @@
  */
 import React, { useState, useEffect } from 'react';
 
+interface Toast {
+  id: number;
+  duration: number;
+  type: string;
+  msg?: string;
+}
+
 function ToastHost() {
-  const [toasts, setToasts] = useState([]);
+  const [toasts, setToasts] = useState<Toast[]>([]);
 
   useEffect(() => {
-    const onToast = (e) => {
-      const t = {
+    const onToast = (e: Event) => {
+      const ce = e as CustomEvent;
+      const t: Toast = {
         id: Date.now() + Math.random(),
         duration: 3000,
         type: 'warning',
-        ...e.detail
+        ...(ce.detail as Partial<Toast>)
       };
       setToasts((xs) => [...xs, t]);
       setTimeout(() => setToasts((xs) => xs.filter(x => x.id !== t.id)), t.duration);

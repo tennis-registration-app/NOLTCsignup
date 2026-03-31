@@ -19,7 +19,7 @@ export const GeolocationService = {
    * @param {number} lon2 - Longitude of second point
    * @returns {number} Distance in meters
    */
-  calculateDistance(lat1, lon1, lat2, lon2) {
+  calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = (lat1 * Math.PI) / 180;
     const φ2 = (lat2 * Math.PI) / 180;

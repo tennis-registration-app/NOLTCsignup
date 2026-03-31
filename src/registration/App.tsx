@@ -37,12 +37,12 @@ const backend = createBackend();
  *
  * @param {{ isMobileView: boolean, resetWorkflow: () => void }} props
  */
-function RegistrationApp({ isMobileView, resetWorkflow }) {
+function RegistrationApp({ isMobileView, resetWorkflow }: { isMobileView: boolean; resetWorkflow: () => void }) {
   // Get all state, effects, hooks, and derived values
   const app = useRegistrationAppState({ isMobileView, resetWorkflow });
 
   // Get all handlers, passing the app object
-  const handlers = useRegistrationHandlers({ app });
+  const handlers = useRegistrationHandlers({ app }) as unknown as import('../types/appTypes').Handlers;
 
   // Render the router with grouped props only
   return <RegistrationRouter app={app} handlers={handlers} />;

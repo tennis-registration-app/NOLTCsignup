@@ -18,20 +18,20 @@ export function useCourtboardSettings() {
       try {
         logger.debug('CourtDisplay', 'Loading settings, backend.admin:', !!backend.admin);
         const result = await backend.admin?.getSettings?.();
-        const settings = normalizeSettings(result?.settings);
+        const settings = normalizeSettings(result?.settings as Record<string, unknown> | null | undefined);
         logger.debug('CourtDisplay', 'Settings result', {
           ok: result?.ok,
           checkStatusMinutes: settings?.checkStatusMinutes,
         });
         if (result?.ok && settings?.checkStatusMinutes) {
-          const minutes = parseInt(settings.checkStatusMinutes, 10);
+          const minutes = parseInt(String(settings.checkStatusMinutes), 10);
           if (minutes > 0) {
             setCheckStatusMinutes(minutes);
             logger.debug('CourtDisplay', 'Loaded checkStatusMinutes:', minutes);
           }
         }
         if (result?.ok && settings?.blockWarningMinutes) {
-          const blockWarnMin = parseInt(settings.blockWarningMinutes, 10);
+          const blockWarnMin = parseInt(String(settings.blockWarningMinutes), 10);
           if (blockWarnMin > 0) {
             setBlockWarningMinutes(blockWarnMin);
             logger.debug('CourtDisplay', 'Loaded blockWarningMinutes:', blockWarnMin);

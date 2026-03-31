@@ -1,10 +1,14 @@
-// @ts-check
 import React from 'react';
+import type { ComponentType } from 'react';
 
-/**
- * EditModeBanner - Shows editing indicator with cancel button
- */
-const EditModeBanner = ({ editingBlock, onCancel, Edit2Icon, XIcon }) => (
+interface EditModeBannerProps {
+  editingBlock: {courtNumber?: number; [key: string]: unknown};
+  onCancel: () => void;
+  Edit2Icon: ComponentType<{size?: number}>;
+  XIcon: ComponentType<{size?: number}>;
+}
+
+const EditModeBanner = ({ editingBlock, onCancel, Edit2Icon, XIcon }: EditModeBannerProps) => (
   <div className="flex items-center gap-2 text-sm text-blue-600">
     <Edit2Icon size={16} />
     <span>Editing block on Court {editingBlock.courtNumber}</span>

@@ -8,6 +8,8 @@ import { TypedIcon } from '../../../components/icons/TypedIcon';
  * CourtAssignmentSuccess - Court assignment success content
  * @param {Object} props
  */
+interface CourtBlockStatus { blocked?: boolean; isBlocked?: boolean; startTime?: string; reason?: string; }
+interface CourtAssignmentSuccessProps { justAssignedCourt: number | null; assignedCourt: { session?: { scheduledEndAt?: string }; endTime?: string } | null; assignedEndTime: string | null; replacedGroup: { players?: { name?: string; isGuest?: boolean }[] } | null; upcomingBlocks: Array<Record<string, unknown>>; blockWarningMinutes: number; registrantStreak: number; isTournament: boolean; isTimeLimited: boolean; timeLimitReason?: string; ballsPurchased: boolean; purchaseDetails: { type: string; accounts: string[]; } | null; ballPrice: number; splitPrice: number; canChangeCourt: boolean; changeTimeRemaining: number; isMobile: boolean; onChangeCourt: () => void; onOpenBallPurchase: () => void; onOpenTournamentConfirm: () => void; getCourtBlockStatus: (courtNum: number) => CourtBlockStatus; }
 const CourtAssignmentSuccess = ({
   // Data
   justAssignedCourt,
@@ -35,7 +37,7 @@ const CourtAssignmentSuccess = ({
   onOpenTournamentConfirm,
   // Utilities
   getCourtBlockStatus,
-}) => {
+}: CourtAssignmentSuccessProps) => {
   // Court assignment main content
   const courtMainContent = (
     <>
@@ -74,7 +76,7 @@ const CourtAssignmentSuccess = ({
                     {new Date(
                       assignedEndTime ||
                         assignedCourt.session?.scheduledEndAt ||
-                        assignedCourt.endTime
+                        assignedCourt.endTime as string
                     ).toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -92,11 +94,11 @@ const CourtAssignmentSuccess = ({
 
               {/* Upcoming block warning */}
               {(() => {
-                const upcomingWarning = getUpcomingBlockWarningFromBlocks(
+                const upcomingWarning = justAssignedCourt != null ? getUpcomingBlockWarningFromBlocks(
                   justAssignedCourt,
                   0,
-                  upcomingBlocks
-                );
+                  upcomingBlocks as never
+                ) : null;
                 if (!upcomingWarning || upcomingWarning.minutesUntilBlock >= blockWarningMinutes)
                   return null;
                 return (
@@ -111,14 +113,14 @@ const CourtAssignmentSuccess = ({
               })()}
 
               {(() => {
-                const courtBlockStatus = getCourtBlockStatus(justAssignedCourt);
+                const courtBlockStatus = justAssignedCourt != null ? getCourtBlockStatus(justAssignedCourt) : null;
                 const sessionEndTime = new Date(
-                  assignedEndTime || assignedCourt.session?.scheduledEndAt || assignedCourt.endTime
+                  (assignedEndTime || assignedCourt.session?.scheduledEndAt || assignedCourt.endTime || "") as string
                 );
 
                 return courtBlockStatus &&
                   courtBlockStatus.isBlocked &&
-                  new Date(courtBlockStatus.startTime) <= sessionEndTime ? (
+                  new Date(courtBlockStatus.startTime || "") <= sessionEndTime ? (
                   <span className="text-orange-600 ml-2 block sm:inline">
                     (Limited due to {courtBlockStatus.reason})
                   </span>
@@ -195,14 +197,14 @@ const CourtAssignmentSuccess = ({
           <TypedIcon icon={Check} size={16} className="text-green-600 sm:w-5 sm:h-5" />
           <p className="text-sm sm:text-base font-medium text-green-800">
             Balls Added: $
-            {purchaseDetails.type === 'single'
+            {purchaseDetails!.type === 'single'
               ? ballPrice.toFixed(2)
               : `${splitPrice.toFixed(2)} each`}
           </p>
         </div>
         <p className="text-xs sm:text-sm text-gray-600 text-center">
-          Charged to account{purchaseDetails.accounts.length > 1 ? 's' : ''}:{' '}
-          {purchaseDetails.accounts.join(', ')}
+          Charged to account{purchaseDetails!.accounts.length > 1 ? 's' : ''}:{' '}
+          {purchaseDetails!.accounts.join(', ')}
         </p>
       </div>
     </div>

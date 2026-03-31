@@ -81,7 +81,7 @@ export const BoardSchema = z.object({
  * @param {Object} board - Normalized board
  * @returns {{ success: boolean, data?: import('../types/domain.js').Board, error?: z.ZodError }}
  */
-export function validateBoard(board) {
+export function validateBoard(board: unknown) {
   const result = BoardSchema.safeParse(board);
   if (!result.success) {
     console.error('[validateBoard] Domain validation failed:', result.error.format());
@@ -96,7 +96,7 @@ export function validateBoard(board) {
  * @returns {import('../types/domain.js').Board}
  * @throws {Error} If validation fails
  */
-export function assertValidBoard(board) {
+export function assertValidBoard(board: unknown) {
   const result = BoardSchema.safeParse(board);
   if (!result.success) {
     console.error('[assertValidBoard] Validation errors:', result.error.format());

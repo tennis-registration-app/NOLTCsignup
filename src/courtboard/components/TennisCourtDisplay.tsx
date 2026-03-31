@@ -2,7 +2,8 @@ import React, { useEffect, useMemo } from 'react';
 import { CourtCard } from './CourtCard';
 import { WaitingList } from './WaitingList';
 import { NextAvailablePanel } from './NextAvailablePanel';
-import ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
+import _ErrorBoundary from '../../shared/components/ErrorBoundary.jsx';
+const ErrorBoundary = _ErrorBoundary as React.ComponentType<{ children?: React.ReactNode; context?: string }>;
 import { logger } from '../../lib/logger';
 import { getTennisDomain, isMobileView } from '../../platform/windowBridge.js';
 import { useClockTick } from '../hooks/useClockTick.js';
@@ -78,7 +79,7 @@ export function TennisCourtDisplay() {
     upcomingBlocks,
     waitlist,
     isMobileView: mobile,
-    mobileState,
+    mobileState: mobileState as { waitlistEntryId?: string; [key: string]: unknown },
   });
 
   // Build status map using courts state from API (no localStorage fallback)
@@ -87,7 +88,7 @@ export function TennisCourtDisplay() {
       courts: courts,
       waitlist: waitlist.map((g) => ({
         id: g.id,
-        players: g.names.map((n) => ({ name: n })),
+        players: (g.names as string[]).map((n: string) => ({ name: n })),
       })),
     };
     let sByC = {};
@@ -104,8 +105,8 @@ export function TennisCourtDisplay() {
             .filter(
               (b) =>
                 b?.isWetCourt &&
-                new Date(b.startTime ?? b.start) <= now &&
-                now < new Date(b.endTime ?? b.end)
+                new Date((b.startTime ?? b.start) as string) <= now &&
+                now < new Date((b.endTime ?? b.end) as string)
             )
             .map((b) => b.courtNumber)
         );
@@ -119,9 +120,9 @@ export function TennisCourtDisplay() {
             upcomingBlocks: allBlocks,
             showingOvertimeCourts: courtSelection?.showingOvertimeCourts ?? false,
           }) || [];
-        sByC = Object.fromEntries(statuses.map((s) => [s.courtNumber, s.status]));
-        selByC = Object.fromEntries(statuses.map((s) => [s.courtNumber, s.selectable]));
-        soByC = Object.fromEntries(statuses.map((s) => [s.courtNumber, s]));
+        sByC = Object.fromEntries(statuses.map((s: Record<string, unknown>) => [s.courtNumber, s.status]));
+        selByC = Object.fromEntries(statuses.map((s: Record<string, unknown>) => [s.courtNumber, s.selectable]));
+        soByC = Object.fromEntries(statuses.map((s: Record<string, unknown>) => [s.courtNumber, s]));
       }
     } catch (e) {
       logger.warn('CourtDisplay', 'Error building status map', e);
@@ -218,7 +219,7 @@ export function TennisCourtDisplay() {
                   courtBlocks={courtBlocks}
                   upcomingBlocks={upcomingBlocks}
                   maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
-                  courtSelection={courtSelection}
+                  courtSelection={courtSelection as { countFullTimeForGroup: (n: number) => number; countSelectableForGroup: (n: number) => number } | undefined}
                 />
               </ErrorBoundary>
               <div className="courts-grid-bottom">
@@ -276,7 +277,7 @@ export function TennisCourtDisplay() {
                       courtBlocks={courtBlocks}
                       upcomingBlocks={upcomingBlocks}
                       maxWaitingDisplay={TENNIS_CONFIG.DISPLAY?.MAX_WAITING_DISPLAY || 4}
-                      courtSelection={courtSelection}
+                      courtSelection={courtSelection as { countFullTimeForGroup: (n: number) => number; countSelectableForGroup: (n: number) => number } | undefined}
                     />
                   </ErrorBoundary>
                 </div>

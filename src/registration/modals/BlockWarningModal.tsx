@@ -11,11 +11,39 @@
  * - onCancel: () => void - Called when user cancels/selects different court
  */
 import React from 'react';
+interface BlockWarning {
+  type: string;
+  reason: string;
+  startTime: string;
+  minutesUntilBlock: number;
+  limitedDuration?: number;
+  originalDuration?: number;
+}
 
-const BlockWarningModal = ({ warning, onConfirm, onCancel }) => {
+interface BlockWarningModalProps {
+  warning: BlockWarning | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+interface BlockWarning {
+  type: string;
+  reason: string;
+  startTime: string;
+  minutesUntilBlock: number;
+  limitedDuration?: number;
+  originalDuration?: number;
+}
+
+interface BlockWarningModalProps {
+  warning: BlockWarning | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+const BlockWarningModal = ({ warning, onConfirm, onCancel }: BlockWarningModalProps) => {
   if (!warning) return null;
 
-  const formatTime = (isoString) => {
+  const formatTime = (isoString: string) => {
     return new Date(isoString).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',

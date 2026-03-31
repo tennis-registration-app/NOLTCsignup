@@ -11,8 +11,10 @@ import AutoClearSettingsCard from './system/AutoClearSettingsCard';
 import OperatingHoursCard from './system/OperatingHoursCard';
 import HoursOverridesCard from './system/HoursOverridesCard';
 
-const SystemSettings = ({ backend, onSettingsChanged }) => {
-  const state = useSystemSettingsState({ backend, onSettingsChanged });
+interface SystemSettingsProps { backend?: unknown; onSettingsChanged?: () => void }
+
+const SystemSettings = ({ backend, onSettingsChanged }: SystemSettingsProps) => {
+  const state = useSystemSettingsState({ backend: backend as import("../../types/appTypes").TennisBackendShape | undefined, onSettingsChanged });
 
   if (state.loading) {
     return (
@@ -42,7 +44,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
 
         {/* Regular Hours card */}
         <OperatingHoursCard
-          operatingHours={state.operatingHours}
+          operatingHours={state.operatingHours as {dayOfWeek: number; dayName?: string; opensAt?: string; closesAt?: string; isClosed: boolean}[]}
           hoursChanged={state.hoursChanged}
           hoursSaveStatus={state.hoursSaveStatus}
           handleHoursChange={state.handleHoursChange}
@@ -66,7 +68,7 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
       {/* Right column - Holiday card spans full height */}
       <div>
         <HoursOverridesCard
-          hoursOverrides={state.hoursOverrides}
+          hoursOverrides={state.hoursOverrides as {date: string; opensAt?: string; closesAt?: string; isClosed?: boolean; reason?: string}[]}
           overrideDate={state.overrideDate}
           setOverrideDate={state.setOverrideDate}
           overrideOpens={state.overrideOpens}
@@ -78,10 +80,10 @@ const SystemSettings = ({ backend, onSettingsChanged }) => {
           overrideClosed={state.overrideClosed}
           setOverrideClosed={state.setOverrideClosed}
           overrideErrors={state.overrideErrors}
-          setOverrideErrors={state.setOverrideErrors}
+          setOverrideErrors={state.setOverrideErrors as (v: Record<string, string | null | undefined>) => void}
           clearOverrideError={state.clearOverrideError}
           validateOverrideForm={state.validateOverrideForm}
-          addHoursOverride={state.addHoursOverride}
+          addHoursOverride={state.addHoursOverride as (date: string, opensAt: string | null, closesAt: string | null, isClosed: boolean, reason: string) => void}
           deleteHoursOverride={state.deleteHoursOverride}
         />
       </div>

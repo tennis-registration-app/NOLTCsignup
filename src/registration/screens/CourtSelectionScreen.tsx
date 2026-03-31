@@ -46,20 +46,20 @@ const CourtSelectionScreen = ({
   onDeferWaitlist,
   onJoinWaitlistDeferred,
 }: any) => {
-  const [blockWarning, setBlockWarning] = useState(null);
-  const [pendingCourtNumber, setPendingCourtNumber] = useState(null);
-  const [loadingCourt, setLoadingCourt] = useState(null);
+  const [blockWarning, setBlockWarning] = useState<{type:string;reason:string;startTime:string;minutesUntilBlock:number;limitedDuration?:number;originalDuration?:number}|null>(null);
+  const [pendingCourtNumber, setPendingCourtNumber] = useState<number|null>(null);
+  const [loadingCourt, setLoadingCourt] = useState<number|null>(null);
   const [showDeferConfirm, setShowDeferConfirm] = useState(false);
   const [showWaitForFullTimeConfirm, setShowWaitForFullTimeConfirm] = useState(false);
 
   // Determine session duration based on group size
-  const getSessionDuration = (group) => {
+  const getSessionDuration = (group: unknown[]) => {
     const playerCount = group?.length || 0;
     return playerCount >= 4 ? 90 : 60; // 90 minutes for doubles (4+ players), 60 for singles
   };
 
   // Handle court selection with block checking
-  const handleCourtClick = (courtNumber) => {
+  const handleCourtClick = (courtNumber: number) => {
     // Ignore clicks if already loading
     if (loadingCourt) return;
 
@@ -100,7 +100,7 @@ const CourtSelectionScreen = ({
   };
 
   // Get warning info for a court to show visual indicators
-  const getCourtWarningInfo = (courtNumber) => {
+  const getCourtWarningInfo = (courtNumber: number) => {
     const duration = getSessionDuration(currentGroup);
     return getUpcomingBlockWarningFromBlocks(courtNumber, duration, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
   };
@@ -110,7 +110,7 @@ const CourtSelectionScreen = ({
     hasWaitlistPriority &&
     currentWaitlistEntryId &&
     availableCourts.length > 0 &&
-    availableCourts.every((courtNum) => {
+    availableCourts.every((courtNum: number) => {
       const duration = getSessionDuration(currentGroup);
       const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
       return warning != null;
@@ -120,7 +120,7 @@ const CourtSelectionScreen = ({
   const freshAllCourtsRestricted =
     !hasWaitlistPriority &&
     availableCourts.length > 0 &&
-    availableCourts.every((courtNum) => {
+    availableCourts.every((courtNum: number) => {
       const duration = getSessionDuration(currentGroup);
       const warning = getUpcomingBlockWarningFromBlocks(courtNum, duration + 5, upcomingBlocks as Parameters<typeof getUpcomingBlockWarningFromBlocks>[2]);
       return warning != null;
@@ -143,12 +143,12 @@ const CourtSelectionScreen = ({
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-16 sm:mb-20">
-          {availableCourts.map((courtNum) => {
+          {availableCourts.map((courtNum: number) => {
             const warningInfo = getCourtWarningInfo(courtNum);
             const hasUpcomingBlock = warningInfo && warningInfo.minutesUntilBlock < 60;
 
             const isLoading = loadingCourt === courtNum;
-            const isDisabled = loadingCourt && loadingCourt !== courtNum;
+            const isDisabled = (loadingCourt !== null && loadingCourt !== courtNum) || false;
 
             return (
               <button

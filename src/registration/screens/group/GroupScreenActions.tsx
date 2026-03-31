@@ -3,6 +3,25 @@ import React from 'react';
 import { isCourtEligibleForGroup } from '../../../lib/types/domain';
 import LoadingBorderSpinner from './LoadingBorderSpinner.jsx';
 
+
+interface GroupScreenActionsProps {
+  data: { waitlist?: Array<{ deferred?: boolean; players?: unknown[] }> };
+  currentGroup: Array<{ id?: string; name?: string; memberNumber?: string }>;
+  availableCourts?: number[];
+  courtSelection?: { getSelectableForGroup: (size: number) => Array<{ number: number }> } | null;
+  isMobileView: boolean;
+  mobileFlow: boolean;
+  preselectedCourt?: number | null;
+  showGuestForm: boolean;
+  isAssigning: boolean;
+  joiningWaitlist: boolean;
+  onGoBack: () => void;
+  onSelectCourt: () => void;
+  onJoinWaitlist: () => void;
+  onStartOver: () => void;
+  sameGroup: (a: unknown[], b: unknown[]) => boolean;
+}
+
 /**
  * GroupScreenActions - Bottom navigation buttons with court/waitlist logic
  * @param {Object} props
@@ -27,7 +46,7 @@ const GroupScreenActions = ({
   onStartOver,
   // Utilities
   sameGroup,
-}) => {
+}: GroupScreenActionsProps) => {
   // Compute whether to show Select Court or Join Waitlist
   const computeShowSelectCourt = () => {
     // Check if there's a waitlist and if this group is not the first waiting group
@@ -49,7 +68,7 @@ const GroupScreenActions = ({
     const groupSize = currentGroup?.length || 0;
     const courtsToCheck = courtSelection
       ? courtSelection.getSelectableForGroup(groupSize).map((sc) => sc.number)
-      : availableCourts?.filter((courtNum) => isCourtEligibleForGroup(courtNum, groupSize));
+      : availableCourts?.filter((courtNum: number) => isCourtEligibleForGroup(courtNum, groupSize));
 
     // Check if there are actually any courts available to select
     const hasAvailableCourts = courtsToCheck && courtsToCheck.length > 0;

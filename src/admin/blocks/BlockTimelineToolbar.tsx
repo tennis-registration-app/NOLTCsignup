@@ -1,6 +1,17 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from '../components';
 
+interface BlockTimelineToolbarProps {
+  viewMode: string;
+  selectedDate: Date;
+  filterCourt: string | number;
+  onViewModeChange: (mode: string) => void;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+  onFilterCourtChange: (value: string) => void;
+}
+
 export default function BlockTimelineToolbar({
   viewMode,
   selectedDate,
@@ -10,7 +21,7 @@ export default function BlockTimelineToolbar({
   onNext,
   onToday,
   onFilterCourtChange,
-}) {
+}: BlockTimelineToolbarProps) {
   return (
     <div className="flex flex-wrap gap-4 items-center justify-between">
       <div className="flex items-center gap-3">

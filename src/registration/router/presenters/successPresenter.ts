@@ -70,7 +70,7 @@ export interface SuccessModel {
   // Utilities
   TENNIS_CONFIG: TennisConfig;
   getCourtBlockStatus: Function;
-  upcomingBlocks: UpcomingBlock[];
+  upcomingBlocks?: UpcomingBlock[];
   blockWarningMinutes: number | null;
 }
 

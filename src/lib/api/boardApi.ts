@@ -80,7 +80,7 @@ export async function getBoard() {
  * @param {Object} raw - Raw board data from subscription
  * @returns {import('../types/domain.js').Board}
  */
-export function transformBoardUpdate(raw) {
+export function transformBoardUpdate(raw: Record<string, unknown>) {
   // Validate envelope
   const envelopeResult = validateBoardResponse(raw);
   if (!envelopeResult.success) {

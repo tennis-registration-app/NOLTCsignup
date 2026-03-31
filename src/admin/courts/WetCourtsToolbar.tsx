@@ -5,7 +5,15 @@
 import React from 'react';
 import { Droplets } from '../components';
 
-const WetCourtsToolbar = ({
+interface WetCourtsToolbarProps {
+  wetCourtsActive?: boolean;
+  wetCourts?: Set<number>;
+  onActivateEmergency?: () => void;
+  onDeactivate?: () => void;
+  onAllCourtsDry?: () => void;
+}
+
+const WetCourtsToolbar: React.FC<WetCourtsToolbarProps> = ({
   wetCourtsActive,
   wetCourts,
   onActivateEmergency,

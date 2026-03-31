@@ -5,6 +5,8 @@
  */
 import React from 'react';
 
+interface Player { memberNumber?: string; isGuest?: boolean; name?: string; }
+interface BallPurchaseModalProps { ballPrice: number; splitPrice: number; currentGroup: Player[]; ballPurchaseOption: string; setBallPurchaseOption: (opt: string) => void; isProcessingPurchase: boolean; onConfirm: () => void; onClose: () => void; getLastFourDigits: (n?: string) => string; }
 const BallPurchaseModal = ({
   ballPrice,
   splitPrice,
@@ -15,7 +17,7 @@ const BallPurchaseModal = ({
   onConfirm,
   onClose,
   getLastFourDigits,
-}) => {
+}: BallPurchaseModalProps) => {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-[420px] mx-4">

@@ -13,11 +13,11 @@ const backend = createBackend();
  */
 export function useBoardSubscription() {
   const [courts, setCourts] = useState(Array(12).fill(null));
-  const [waitlist, setWaitlist] = useState(/** @type {any[]} */ ([]));
-  const [courtBlocks, setCourtBlocks] = useState(/** @type {any[]} */ ([]));
-  const [upcomingBlocks, setUpcomingBlocks] = useState(/** @type {any[]} */ ([]));
-  const [courtSelection, setCourtSelection] = useState(/** @type {any} */ (null));
-  const [operatingHours, setOperatingHours] = useState(/** @type {any[]} */ ([]));
+  const [waitlist, setWaitlist] = useState<Record<string,unknown>[]>([]);
+  const [courtBlocks, setCourtBlocks] = useState<Record<string,unknown>[]>([]);
+  const [upcomingBlocks, setUpcomingBlocks] = useState<Record<string,unknown>[]>([]);
+  const [courtSelection, setCourtSelection] = useState<Record<string,unknown> | null>(null);
+  const [operatingHours, setOperatingHours] = useState<Record<string,unknown>[]>([]);
 
   useEffect(() => {
     logger.debug('CourtDisplay', 'Setting up TennisBackend subscription...');
@@ -132,7 +132,7 @@ export function useBoardSubscription() {
 
         // Set operating hours from board data
         if (board.operatingHours) {
-          setOperatingHours(board.operatingHours);
+          setOperatingHours(board.operatingHours as Record<string,unknown>[]);
         }
       },
       { pollIntervalMs: 5000 }

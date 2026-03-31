@@ -13,7 +13,8 @@ import { createShowNotification } from './notificationLogic';
  * @returns {{ notification: Object|null, showNotification: Function }}
  */
 export function useNotification() {
-  const [notification, setNotification] = useState(null);
+  interface NotificationState { message: string; type: string; }
+  const [notification, setNotification] = useState<NotificationState | null>(null);
 
   // Create stable showNotification function
   // useMemo ensures same function identity across renders

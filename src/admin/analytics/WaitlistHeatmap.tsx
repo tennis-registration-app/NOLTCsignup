@@ -13,7 +13,7 @@ const WaitlistHeatmap = ({ heatmapData = [] as Array<{dow: number; hour: number;
 
   // Build lookup from pre-aggregated data
   const heatmapLookup = useMemo(() => {
-    const lookup = {};
+    const lookup: Record<string, { count: number; avgWait: number }> = {};
     heatmapData.forEach(({ dow, hour, count, avgWait }) => {
       lookup[`${dow}-${hour}`] = { count, avgWait };
     });
@@ -26,7 +26,7 @@ const WaitlistHeatmap = ({ heatmapData = [] as Array<{dow: number; hour: number;
     return Math.max(1, ...heatmapData.map((d) => d.count));
   }, [heatmapData]);
 
-  const getColor = (dayIndex, hour) => {
+  const getColor = (dayIndex: number, hour: number): string => {
     const data = heatmapLookup[`${dayIndex}-${hour}`];
     if (!data || data.count === 0) return 'bg-gray-100';
     const intensity = data.count / maxCount;
@@ -37,11 +37,11 @@ const WaitlistHeatmap = ({ heatmapData = [] as Array<{dow: number; hour: number;
     return 'bg-yellow-200';
   };
 
-  const getData = (dayIndex, hour) => {
+  const getData = (dayIndex: number, hour: number): { count: number; avgWait: number } => {
     return heatmapLookup[`${dayIndex}-${hour}`] || { count: 0, avgWait: 0 };
   };
 
-  const formatHour = (hour) => {
+  const formatHour = (hour: number): string => {
     if (hour === 12) return '12p';
     if (hour > 12) return `${hour - 12}p`;
     return `${hour}a`;

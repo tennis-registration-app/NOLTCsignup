@@ -17,9 +17,56 @@ import React from 'react';
 import { ToastHost, AlertDisplay } from '../components';
 import { NO_MEMBER_FOUND } from '../../shared/constants/toastMessages.js';
 import { toast } from '../../shared/utils/toast.js';
+import type {
+  SearchState,
+  RegistrationSetters,
+  DerivedState,
+  AlertState,
+  RegistrationConstants,
+  GroupPlayer,
+  AutocompleteSuggestion,
+  WaitlistEntrySummary,
+  DomainMember,
+} from '../../types/appTypes';
+
+export interface HomeScreenProps {
+  // Search functionality
+  searchInput: SearchState['searchInput'];
+  setSearchInput: SearchState['setSearchInput'];
+  showSuggestions: SearchState['showSuggestions'];
+  setShowSuggestions: SearchState['setShowSuggestions'];
+  isSearching: SearchState['isSearching'];
+  effectiveSearchInput: SearchState['effectiveSearchInput'];
+  getAutocompleteSuggestions: SearchState['getAutocompleteSuggestions'];
+  handleSuggestionClick: (suggestion: AutocompleteSuggestion) => Promise<void>;
+  markUserTyping: () => void;
+  // Navigation
+  setCurrentScreen: RegistrationSetters['setCurrentScreen'];
+  setCurrentGroup: (group: GroupPlayer[]) => void;
+  setMemberNumber: RegistrationSetters['setBallPriceInput'] extends ((v: string) => void) ? (v: string) => void : (v: string) => void;
+  setHasWaitlistPriority: (v: boolean) => void;
+  setCurrentWaitlistEntryId: ((v: string | null) => void) | undefined;
+  findMemberNumber: (playerId: string) => string;
+  // CTA state
+  canFirstGroupPlay: DerivedState['canFirstGroupPlay'];
+  canSecondGroupPlay: DerivedState['canSecondGroupPlay'];
+  firstWaitlistEntry: WaitlistEntrySummary | null;
+  secondWaitlistEntry: WaitlistEntrySummary | null;
+  firstWaitlistEntryData: WaitlistEntrySummary | null;
+  secondWaitlistEntryData: WaitlistEntrySummary | null;
+  canPassThroughGroupPlay: DerivedState['canPassThroughGroupPlay'];
+  passThroughEntry: WaitlistEntrySummary | null;
+  passThroughEntryData: WaitlistEntrySummary | null;
+  // UI state
+  showAlert: AlertState['showAlert'];
+  alertMessage: AlertState['alertMessage'];
+  isMobileView: boolean;
+  CONSTANTS: RegistrationConstants;
+  // Clear court
+  onClearCourtClick: () => void;
+}
 
 const HomeScreen = ({
-  // Search functionality
   searchInput,
   setSearchInput,
   showSuggestions,
@@ -29,14 +76,12 @@ const HomeScreen = ({
   getAutocompleteSuggestions,
   handleSuggestionClick,
   markUserTyping,
-  // Navigation
   setCurrentScreen,
   setCurrentGroup,
   setMemberNumber,
   setHasWaitlistPriority,
   setCurrentWaitlistEntryId,
   findMemberNumber,
-  // CTA state
   canFirstGroupPlay,
   canSecondGroupPlay,
   firstWaitlistEntry,
@@ -46,14 +91,12 @@ const HomeScreen = ({
   canPassThroughGroupPlay,
   passThroughEntry,
   passThroughEntryData,
-  // UI state
   showAlert,
   alertMessage,
   isMobileView,
   CONSTANTS,
-  // Clear court
   onClearCourtClick,
-}) => {
+}: HomeScreenProps) => {
   return (
     <div
       className="w-full h-full min-h-screen bg-cover bg-center bg-no-repeat p-4 sm:p-8 flex flex-col items-center"
@@ -138,7 +181,7 @@ const HomeScreen = ({
               className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg overflow-y-auto"
               style={{ maxHeight: '400px' }}
             >
-              {getAutocompleteSuggestions(effectiveSearchInput).map((suggestion, idx) => (
+              {getAutocompleteSuggestions(effectiveSearchInput).map((suggestion: AutocompleteSuggestion, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => handleSuggestionClick(suggestion)}
@@ -170,11 +213,11 @@ const HomeScreen = ({
               }
 
               // Load the waiting group (use memberId, not id)
-              const mappedPlayers = firstWaitlistEntry.players.map((player) => ({
+              const mappedPlayers = firstWaitlistEntry.players.map((player: DomainMember) => ({
                 ...player,
                 memberNumber: findMemberNumber(player.memberId),
               }));
-              setCurrentGroup(mappedPlayers);
+              setCurrentGroup(mappedPlayers as unknown as import("../../types/appTypes").GroupPlayer[]);
 
               // Set member number to first player
               const firstPlayerMemberNum = findMemberNumber(firstWaitlistEntry.players[0].memberId);
@@ -196,7 +239,7 @@ const HomeScreen = ({
             {(() => {
               const g = firstWaitlistEntryData;
               const names = Array.isArray(g?.players)
-                ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
+                ? g.players.map((p: DomainMember) => p?.displayName).filter(Boolean)
                 : [];
               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
             })()}
@@ -215,10 +258,10 @@ const HomeScreen = ({
 
               // Load the second waiting group (use memberId, not id)
               setCurrentGroup(
-                secondWaitlistEntry.players.map((player) => ({
+                secondWaitlistEntry.players.map((player: DomainMember) => ({
                   ...player,
                   memberNumber: findMemberNumber(player.memberId),
-                }))
+                })) as unknown as import('../../types/appTypes').GroupPlayer[]
               );
 
               // Set member number to first player in second group
@@ -242,7 +285,7 @@ const HomeScreen = ({
             {(() => {
               const g = secondWaitlistEntryData;
               const names = Array.isArray(g?.players)
-                ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
+                ? g.players.map((p: DomainMember) => p?.displayName).filter(Boolean)
                 : [];
               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
             })()}
@@ -261,10 +304,10 @@ const HomeScreen = ({
 
               // Load the pass-through waiting group (use memberId, not id)
               setCurrentGroup(
-                passThroughEntry.players.map((player) => ({
+                passThroughEntry.players.map((player: DomainMember) => ({
                   ...player,
                   memberNumber: findMemberNumber(player.memberId),
-                }))
+                })) as unknown as import('../../types/appTypes').GroupPlayer[]
               );
 
               // Set member number to first player in pass-through group
@@ -286,7 +329,7 @@ const HomeScreen = ({
             {(() => {
               const g = passThroughEntryData;
               const names = Array.isArray(g?.players)
-                ? g.players.map((p) => p?.displayName || p?.name).filter(Boolean)
+                ? g.players.map((p: DomainMember) => p?.displayName).filter(Boolean)
                 : [];
               return names.length ? `Court Available: ${names.join(', ')}` : 'Court Available';
             })()}

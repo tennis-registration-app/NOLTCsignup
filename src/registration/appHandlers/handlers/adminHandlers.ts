@@ -12,6 +12,19 @@ import {
  * Extracted from useRegistrationHandlers
  * Accepts named slices from the app state object.
  */
+
+interface UseAdminHandlersDeps {
+  services: { backend: import("../../../types/appTypes").TennisBackendShape; dataStore: { get: (k: string) => Promise<Record<string, unknown>>; set: (k: string, v: unknown, opts?: Record<string, unknown>) => Promise<void> } };
+  alert: { showAlertMessage: (msg: string) => void };
+  helpers: { getCourtData: () => { courts: Array<{id?: string; number?: number}>; waitlist: Array<{id?: string; group?: {id?: string}}> } };
+  setters: { setCourtToMove: (n: null) => void; setCurrentScreen: (s: string, src?: string) => void };
+  search: { setSearchInput: (v: string) => void };
+  state: { ballPriceInput: string };
+  adminPriceFeedback: { setPriceError: (msg: string) => void; showPriceSuccessWithClear: () => void };
+  TENNIS_CONFIG: { STORAGE: { SETTINGS_KEY: string } };
+  court: { clearCourt: (num: number) => Promise<void> };
+}
+
 export function useAdminHandlers({
   services,
   alert,
@@ -22,7 +35,7 @@ export function useAdminHandlers({
   adminPriceFeedback,
   TENNIS_CONFIG,
   court,
-}) {
+}: UseAdminHandlersDeps) {
   const { backend, dataStore } = services;
   const { showAlertMessage } = alert;
   const { getCourtData } = helpers;
@@ -40,13 +53,13 @@ export function useAdminHandlers({
 
   // VERBATIM COPY: handleAdminClearCourt from line ~736
   const handleAdminClearCourt = useCallback(
-    (courtNum) => handleAdminClearCourtOp({ clearCourt, showAlertMessage }, courtNum),
+    (courtNum: number) => handleAdminClearCourtOp({ clearCourt, showAlertMessage }, courtNum),
     [clearCourt, showAlertMessage]
   );
 
   // VERBATIM COPY: handleMoveCourt from line ~741
   const handleMoveCourt = useCallback(
-    (fromCourtNum, toCourtNum) =>
+    (fromCourtNum: number, toCourtNum: number) =>
       handleMoveCourtOp(
         { backend, getCourtData, showAlertMessage, setCourtToMove },
         fromCourtNum,
@@ -63,7 +76,7 @@ export function useAdminHandlers({
 
   // VERBATIM COPY: handleRemoveFromWaitlist from line ~756
   const handleRemoveFromWaitlist = useCallback(
-    (group) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group),
+    (group: Record<string, unknown>) => handleRemoveFromWaitlistOp({ backend, showAlertMessage }, group),
     [backend, showAlertMessage]
   );
 

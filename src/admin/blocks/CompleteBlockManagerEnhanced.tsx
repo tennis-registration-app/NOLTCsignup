@@ -23,6 +23,26 @@ import BlockSummaryCard from './BlockSummaryCard';
 import BlockActionButtons from './BlockActionButtons';
 import ManageRecurringPanel from './ManageRecurringPanel';
 import SmartTimeRangePicker from '../../components/admin/SmartTimeRangePicker';
+import type { ComponentType } from 'react';
+import type { BlockTimelineBackend } from './BlockTimeline';
+import type { ManageRecurringBackend } from './ManageRecurringPanel';
+import type { AdminBackend } from '../calendar/EventDetailsModal';
+
+type CourtBlock = {courtNumber: number; id?: string; startTime: string; endTime: string; reason?: string};
+type RecurrenceState = {pattern: string; frequency: number; endType: string; occurrences?: number; endDate?: string; daysOfWeek?: number[]} | null;
+type CourtStatusItem = {session?: {group?: {players?: {name: string}[]}; startedAt: string; scheduledEndAt: string}; id?: string; courtNumber?: number};
+type MiniCalendarProps = {selectedDate: Date; onDateSelect: (d: Date) => void};
+type AdminBackendShape = {admin: Record<string, unknown>};
+
+interface CompleteBlockManagerProps {
+  wetCourtsModel: {active?: boolean; courts?: Set<number>};
+  wetCourtsActions: {activateEmergency?: () => void; deactivateAll?: () => void; clearCourt?: (n: number) => void};
+  blockModel: {courts?: CourtStatusItem[]; blocks?: CourtBlock[]; hoursOverrides?: object[]; editingBlock?: Record<string,unknown>|null};
+  blockActions: {applyBlocks?: (b: unknown[]) => void; onEditingConsumed?: (() => void)|null; notify?: (msg: string, type: string) => void};
+  components: {MiniCalendar?: ComponentType<MiniCalendarProps>; EventCalendar?: ComponentType<Record<string, unknown>>; MonthView?: ComponentType<Record<string, unknown>>; EventSummary?: ComponentType<Record<string, unknown>>; HoverCard?: ComponentType<Record<string, unknown>>; QuickActionsMenu?: ComponentType<Record<string, unknown>>};
+  services: {backend?: AdminBackendShape | null};
+  defaultView?: string;
+}
 
 const DURATION_2H = 120; // minutes
 const DURATION_4H = 240; // minutes
@@ -53,7 +73,7 @@ const CompleteBlockManagerEnhanced = ({
   components,
   services,
   defaultView = 'timeline',
-}) => {
+}: CompleteBlockManagerProps) => {
   // Destructure domain objects to preserve original variable names
   const { active: wetCourtsActive, courts: wetCourts } = wetCourtsModel;
   const {
@@ -135,8 +155,11 @@ const CompleteBlockManagerEnhanced = ({
     handleDuplicateBlock,
     handleQuickReasonSelect,
     handleRemoveBlockGroup,
-  } = useBlockActions({ form, backend, onApplyBlocks, onNotification });
+  } = useBlockActions({ form, backend: backend as Parameters<typeof useBlockActions>[0]["backend"], onApplyBlocks: onApplyBlocks ?? (() => {}), onNotification: onNotification ?? (() => {}) });
 
+  const blockTimelineBackend = backend as unknown as BlockTimelineBackend | null;
+  const manageRecurringBackend = backend as unknown as ManageRecurringBackend | null;
+  const eventDetailsBackend = backend as unknown as AdminBackend | null;
   return (
     <div className="space-y-6" data-testid="admin-block-list">
       <div className="flex items-center justify-between">
@@ -159,7 +182,7 @@ const CompleteBlockManagerEnhanced = ({
           onRemoveBlockGroup={handleRemoveBlockGroup}
           onDuplicateBlock={handleDuplicateBlock}
           refreshTrigger={refreshTrigger}
-          backend={backend}
+          backend={blockTimelineBackend}
         />
       )}
 
@@ -175,8 +198,8 @@ const CompleteBlockManagerEnhanced = ({
           EventSummary={EventSummary}
           HoverCard={HoverCard}
           QuickActionsMenu={QuickActionsMenu}
-          onEditEvent={(blockToEdit) => populateFromBlock(blockToEdit)}
-          onDuplicateEvent={(event) => populateFromBlock(event, { duplicate: true })}
+          onEditEvent={(blockToEdit: Parameters<typeof populateFromBlock>[0]) => populateFromBlock(blockToEdit)}
+          onDuplicateEvent={(event: Parameters<typeof populateFromBlock>[0]) => populateFromBlock(event, { duplicate: true })}
         />
       )}
 
@@ -195,10 +218,10 @@ const CompleteBlockManagerEnhanced = ({
               blockReason={blockReason}
               onQuickReasonSelect={handleQuickReasonSelect}
               onCustomReasonChange={setBlockReason}
-              wetCourtsActive={wetCourtsActive}
-              wetCourts={displayWetCourts}
-              deactivateWetCourts={deactivateWetCourts}
-              handleEmergencyWetCourt={handleEmergencyWetCourt}
+              wetCourtsActive={!!wetCourtsActive}
+              wetCourts={displayWetCourts ?? new Set()}
+              deactivateWetCourts={deactivateWetCourts ?? (() => {})}
+              handleEmergencyWetCourt={handleEmergencyWetCourt ?? (() => {})}
             />
 
             <div className="order-3">
@@ -219,7 +242,7 @@ const CompleteBlockManagerEnhanced = ({
                     <div className="mt-3">
                       <RecurrenceDropdown
                         recurrence={recurrence}
-                        onRecurrenceChange={setRecurrence}
+                        onRecurrenceChange={(r) => setRecurrence(r as RecurrenceState)}
                         selectedDate={selectedDate}
                         triggerRowExtra={
                           <label className="ml-auto flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
@@ -247,8 +270,8 @@ const CompleteBlockManagerEnhanced = ({
                     {showManageRecurring && (
                       <div className="mt-3">
                         <ManageRecurringPanel
-                          backend={backend}
-                          onNotification={onNotification}
+                          backend={manageRecurringBackend}
+                          onNotification={onNotification ?? (() => {})}
                           onRefresh={() => setRefreshTrigger((prev) => prev + 1)}
                         />
                       </div>
@@ -269,7 +292,7 @@ const CompleteBlockManagerEnhanced = ({
                       <BlockActionButtons
                         handleBlockCourts={handleBlockCourts}
                         onClear={resetForm}
-                        isValid={isValid}
+                        isValid={!!isValid}
                         editingBlock={editingBlock}
                         selectedCourts={selectedCourts}
                         recurrence={recurrence}
@@ -302,9 +325,9 @@ const CompleteBlockManagerEnhanced = ({
             {/* Wet Court Management Panel */}
             {wetCourtsActive && (
               <WetCourtManagementPanel
-                wetCourts={displayWetCourts}
+                wetCourts={displayWetCourts ?? new Set()}
                 clearWetCourt={clearWetCourt}
-                deactivateWetCourts={deactivateWetCourts}
+                deactivateWetCourts={deactivateWetCourts ?? (() => {})}
               />
             )}
 
@@ -321,12 +344,12 @@ const CompleteBlockManagerEnhanced = ({
       {/* Block Details/Edit Modal */}
       {selectedBlock && (
         <EventDetailsModal
-          event={selectedBlock}
-          courts={courts.map((court, idx) => ({
-            id: court?.id || `court-${idx + 1}`,
+          event={(selectedBlock as unknown) as import("../calendar/utils").CalendarEvent}
+          courts={(courts as Array<Record<string, unknown>>).map((court, idx) => ({
+            id: (court?.id as string | undefined) || `court-${idx + 1}`,
             courtNumber: idx + 1,
           }))}
-          backend={backend}
+          backend={eventDetailsBackend}
           onClose={() => setSelectedBlock(null)}
           onSaved={() => {
             setSelectedBlock(null);

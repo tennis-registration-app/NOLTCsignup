@@ -9,13 +9,28 @@ import { Plus, CheckCircle, Trash2 } from '../components';
 // Config import (ESM canonical source)
 import { TENNIS_CONFIG } from '../../lib/config';
 
-const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }) => {
+interface BlockTemplate {
+  id: string;
+  name: string;
+  reason: string;
+  duration: number;
+  courts: number[];
+}
+
+interface BlockTemplateManagerProps {
+  templates: BlockTemplate[];
+  onSave: (template: BlockTemplate) => void;
+  onDelete: (id: string) => void;
+  onApply: (template: BlockTemplate) => void;
+}
+
+const BlockTemplateManager = ({ templates, onSave, onDelete, onApply }: BlockTemplateManagerProps) => {
   const [showCreate, setShowCreate] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     reason: '',
     duration: 60,
-    courts: [],
+    courts: [] as number[],
   });
 
   const handleSave = () => {

@@ -1,4 +1,22 @@
 import React from 'react';
+import {
+  createAIAssistantModel,
+  createAIAssistantActions,
+  createAIAssistantServices,
+} from '../types/domainObjects';
+
+type AIModel = ReturnType<typeof createAIAssistantModel>;
+type AIActions = ReturnType<typeof createAIAssistantActions>;
+type AIServices = ReturnType<typeof createAIAssistantServices>;
+type AIComponents = Record<string, React.ElementType | undefined>;
+
+interface AIAssistantSectionProps {
+  aiModel: AIModel;
+  aiActions: AIActions;
+  services: AIServices;
+  components: AIComponents;
+  clearWaitlist: () => void;
+}
 
 /**
  * AI Assistant admin section.
@@ -11,7 +29,7 @@ import React from 'react';
  * @param {import('../types/domainObjects.js').AIAssistantComponents} props.components
  * @param {Function} props.clearWaitlist - pass-through (preserve existing inline lambda behavior)
  */
-export function AIAssistantSection({ aiModel, aiActions, services, components, clearWaitlist }) {
+export function AIAssistantSection({ aiModel, aiActions, services, components, clearWaitlist }: AIAssistantSectionProps) {
   // Destructure domain objects to preserve original local names
   const { activeTab, showAIAssistant, USE_REAL_AI, courts, settings, waitingGroups } = aiModel;
 
@@ -27,7 +45,7 @@ export function AIAssistantSection({ aiModel, aiActions, services, components, c
   } = aiActions;
 
   const { backend, dataStore } = services;
-  const { AIAssistant, AIAssistantAdmin } = components;
+  const { AIAssistant, AIAssistantAdmin } = components as { AIAssistant: React.ElementType; AIAssistantAdmin: React.ElementType };
 
   // Only show on specific tabs
   const showOnTabs = ['calendar', 'blocking', 'analytics', 'system', 'history'];

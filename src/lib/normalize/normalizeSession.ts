@@ -9,34 +9,36 @@ import { END_REASONS } from '../types/domain';
  * @param {string} serverNow - Server time for overtime calculation
  * @returns {import('../types/domain.js').Session | null}
  */
-export function normalizeSession(raw, serverNow) {
+export function normalizeSession(raw: Record<string, unknown>, serverNow: string) {
   if (!raw) return null;
 
-  const scheduledEndAt = raw.scheduledEndAt || raw.scheduled_end_at || raw.endTime || raw.end_time;
-  const actualEndAt = raw.actualEndAt || raw.actual_end_at || null;
+  const scheduledEndAt = String(raw.scheduledEndAt || raw.scheduled_end_at || raw.endTime || raw.end_time || '');
+  const actualEndAt = (raw.actualEndAt || raw.actual_end_at || null) as string | null;
 
   // Calculate overtime
   const isOvertime =
     !actualEndAt && scheduledEndAt && serverNow
-      ? new Date(serverNow) > new Date(scheduledEndAt)
+      ? new Date(serverNow) > new Date(String(scheduledEndAt))
       : false;
 
   // Normalize end reason
-  let endReason = raw.endReason || raw.end_reason || null;
-  if (endReason && !END_REASONS.includes(endReason)) {
-    console.warn('[normalizeSession] Invalid endReason:', endReason);
-    endReason = null;
+  let endReason: "completed" | "cleared_early" | "admin_override" | null = null;
+  const rawEndReason = (raw.endReason || raw.end_reason || null) as string | null;
+  if (rawEndReason && END_REASONS.includes(rawEndReason)) {
+    endReason = rawEndReason as "completed" | "cleared_early" | "admin_override";
+  } else if (rawEndReason) {
+    console.warn('[normalizeSession] Invalid endReason:', rawEndReason);
   }
 
   return {
-    id: raw.id || raw.sessionId || raw.session_id || 'unknown',
-    courtNumber: raw.courtNumber || raw.court_number || raw.courtNum || 0,
-    group: normalizeGroup(raw.group || raw),
-    startedAt: raw.startedAt || raw.started_at || raw.startTime || raw.start_time || '',
+    id: String(raw.id || raw.sessionId || raw.session_id || 'unknown'),
+    courtNumber: Number(raw.courtNumber || raw.court_number || raw.courtNum || 0),
+    group: normalizeGroup((raw.group as Record<string, unknown>) || raw),
+    startedAt: String(raw.startedAt || raw.started_at || raw.startTime || raw.start_time || ''),
     scheduledEndAt: scheduledEndAt || '',
     actualEndAt,
     endReason,
     isOvertime,
-    isTournament: raw.is_tournament ?? raw.isTournament ?? false,
+    isTournament: Boolean(raw.is_tournament ?? raw.isTournament ?? false),
   };
 }

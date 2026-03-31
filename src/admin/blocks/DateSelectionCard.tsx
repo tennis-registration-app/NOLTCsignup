@@ -1,10 +1,17 @@
-// @ts-check
 import React from 'react';
+import type { ComponentType } from 'react';
+
+interface DateSelectionCardProps {
+  selectedDate: Date;
+  setSelectedDate: (d: Date) => void;
+  MiniCalendar: ComponentType<{selectedDate: Date; onDateSelect: (d: Date) => void}> | undefined;
+  CalendarDaysIcon: ComponentType<{size?: number; className?: string}>;
+}
 
 /**
  * DateSelectionCard - Calendar date picker with selected date display
  */
-const DateSelectionCard = ({ selectedDate, setSelectedDate, MiniCalendar, CalendarDaysIcon }) => (
+const DateSelectionCard = ({ selectedDate, setSelectedDate, MiniCalendar, CalendarDaysIcon }: DateSelectionCardProps) => (
   <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
     <h3 className="text-lg font-semibold mb-3 text-gray-800 border-b border-gray-100 pb-2 mt-0 leading-7">
       Select Date

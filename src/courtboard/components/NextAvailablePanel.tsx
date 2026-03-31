@@ -11,7 +11,7 @@ export function NextAvailablePanel({ courts, currentTime, waitlist = [], blocks 
   const A = getLegacyAvailabilityDomain();
 
   // Convert React courts state to the data format expected by availability functions
-  const courtsToData = (courtsArray) => ({ courts: courtsArray || [] });
+  const courtsToData = (courtsArray: unknown[]) => ({ courts: courtsArray || [] });
 
   // Calculate court availability timeline
   const getCourtAvailabilityTimeline = (waitlist: unknown[] = []) => {

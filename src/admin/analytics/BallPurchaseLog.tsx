@@ -7,8 +7,29 @@ import React, { useState, useMemo } from 'react';
 import { Download } from '../components';
 import { useAdminNotification } from '../context/NotificationContext';
 
+
+interface BallPurchasePlayer {
+  memberNumber?: string;
+  name?: string;
+}
+
+interface BallPurchase {
+  id?: string;
+  timestamp: string;
+  memberNumber?: string;
+  memberName?: string;
+  amount?: number;
+  players?: BallPurchasePlayer[];
+  [key: string]: unknown;
+}
+
+interface DateRange {
+  start: Date;
+  end: Date;
+}
+
 // Helper function for formatting date/time
-const formatDateTime = (timestamp) => {
+const formatDateTime = (timestamp: string): string => {
   const date = new Date(timestamp);
   return date.toLocaleString([], {
     month: 'short',
@@ -19,7 +40,7 @@ const formatDateTime = (timestamp) => {
 };
 
 // Helper function for CSV download
-const downloadCSV = (data, filename, notify) => {
+const downloadCSV = (data: Record<string, string>[], filename: string, notify: (msg: string, type: string) => void): void => {
   if (!data || data.length === 0) {
     notify('No data to export', 'error');
     return;
@@ -27,7 +48,7 @@ const downloadCSV = (data, filename, notify) => {
 
   const headers = Object.keys(data[0]);
   const csvHeaders = headers.join(',');
-  const csvRows = data.map((row) =>
+  const csvRows = data.map((row: Record<string, string>) =>
     headers
       .map((header) => {
         const value = row[header];
@@ -53,37 +74,37 @@ const downloadCSV = (data, filename, notify) => {
   document.body.removeChild(link);
 };
 
-const BallPurchaseLog = ({ purchases, dateRange }) => {
+const BallPurchaseLog = ({ purchases, dateRange }: { purchases: BallPurchase[]; dateRange: DateRange }) => {
   const showNotification = useAdminNotification();
   const [sortField, setSortField] = useState('timestamp');
   const [sortOrder, setSortOrder] = useState('desc');
 
   const filteredPurchases = useMemo(() => {
-    return purchases.filter((purchase) => {
+    return purchases.filter((purchase: BallPurchase) => {
       const purchaseDate = new Date(purchase.timestamp);
       return purchaseDate >= dateRange.start && purchaseDate <= dateRange.end;
     });
   }, [purchases, dateRange]);
 
   const sortedPurchases = useMemo(() => {
-    return [...filteredPurchases].sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
+    return [...filteredPurchases].sort((a: BallPurchase, b: BallPurchase) => {
+      let aVal: unknown = a[sortField];
+      let bVal: unknown = b[sortField];
 
       if (sortField === 'timestamp') {
-        aVal = new Date(aVal);
-        bVal = new Date(bVal);
+        aVal = new Date(aVal as string);
+        bVal = new Date(bVal as string);
       }
 
       if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
+        return (aVal as number | Date) > (bVal as number | Date) ? 1 : -1;
       } else {
-        return aVal < bVal ? 1 : -1;
+        return (aVal as number | Date) < (bVal as number | Date) ? 1 : -1;
       }
     });
   }, [filteredPurchases, sortField, sortOrder]);
 
-  const handleSort = (field) => {
+  const handleSort = (field: string) => {
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -93,7 +114,7 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
   };
 
   const handleExport = () => {
-    const exportData = sortedPurchases.flatMap((purchase) => {
+    const exportData = sortedPurchases.flatMap((purchase: BallPurchase) => {
       // Handle old format (single memberNumber/memberName fields)
       if (!purchase.players || purchase.players.length === 0) {
         return {
@@ -105,7 +126,7 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
       }
 
       // For new format with players array, create a row for each player
-      return purchase.players.map((player) => ({
+      return purchase.players.map((player: BallPurchasePlayer) => ({
         'Date/Time': formatDateTime(purchase.timestamp),
         'Member Number': player.memberNumber || '****',
         'Member Name': player.name || 'Unknown',
@@ -163,12 +184,12 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
           <tbody>
             {sortedPurchases.length === 0 ? (
               <tr>
-                <td colSpan="4" className="text-center p-4 text-gray-500">
+                <td colSpan={4} className="text-center p-4 text-gray-500">
                   No purchases in selected date range
                 </td>
               </tr>
             ) : (
-              sortedPurchases.flatMap((purchase, purchaseIndex) => {
+              sortedPurchases.flatMap((purchase: BallPurchase, purchaseIndex: number) => {
                 // Handle old format (single memberNumber/memberName fields)
                 if (!purchase.players || purchase.players.length === 0) {
                   return (
@@ -182,7 +203,7 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
                 }
 
                 // For new format with players array, create a row for each player
-                return purchase.players.map((player, playerIndex) => (
+                return purchase.players.map((player: BallPurchasePlayer, playerIndex: number) => (
                   <tr
                     key={`${purchase.id || purchaseIndex}-${playerIndex}`}
                     className="border-b hover:bg-gray-50"
@@ -201,7 +222,7 @@ const BallPurchaseLog = ({ purchases, dateRange }) => {
 
       <div className="mt-4 text-sm text-gray-600">
         Showing{' '}
-        {sortedPurchases.reduce((count, purchase) => {
+        {sortedPurchases.reduce((count: number, purchase: BallPurchase) => {
           if (purchase.players && purchase.players.length > 0) {
             return count + purchase.players.length;
           }

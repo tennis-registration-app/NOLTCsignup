@@ -99,7 +99,7 @@ export class ApiAdapter {
       throw new AppError({
         category: ErrorCategories.NETWORK,
         code: 'FETCH_FAILED',
-        message: error.message || 'Network request failed',
+        message: error instanceof Error ? error.message : 'Network request failed',
         details: { originalError: error },
       });
     }
@@ -135,7 +135,7 @@ export class ApiAdapter {
    * @param {string} endpoint - API endpoint path (e.g., '/get-board')
    * @returns {Promise<Object>} Response data with { ok, ... }
    */
-  async get(endpoint) {
+  async get(endpoint: string) {
     try {
       const url = `${this.baseUrl}${endpoint}`;
       logger.debug('ApiAdapter', 'GET', endpoint);
@@ -160,13 +160,14 @@ export class ApiAdapter {
       }
       return data;
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Network request failed';
       return {
         ok: false,
-        message: err.message || 'Network request failed',
+        message: errMsg,
         error: {
           category: ErrorCategories.NETWORK,
           code: 'FETCH_FAILED',
-          message: err.message || 'Network request failed',
+          message: errMsg,
         },
       };
     }
@@ -178,7 +179,7 @@ export class ApiAdapter {
    * @param {Object} body - Request body
    * @returns {Promise<Object>} Response data with { ok, ... }
    */
-  async post(endpoint, body = {}) {
+  async post(endpoint: string, body: Record<string, unknown> = {}) {
     try {
       const url = `${this.baseUrl}${endpoint}`;
       // Evaluate device context at request time (not module load time)
@@ -211,13 +212,14 @@ export class ApiAdapter {
       }
       return data;
     } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Network request failed';
       return {
         ok: false,
-        message: err.message || 'Network request failed',
+        message: errMsg,
         error: {
           category: ErrorCategories.NETWORK,
           code: 'FETCH_FAILED',
-          message: err.message || 'Network request failed',
+          message: errMsg,
         },
       };
     }
@@ -271,7 +273,7 @@ export class ApiAdapter {
     return this._get(ENDPOINTS.GET_MEMBERS, params);
   }
 
-  async getMembersByAccount(memberNumber) {
+  async getMembersByAccount(memberNumber: string | number) {
     return this._get(ENDPOINTS.GET_MEMBERS, { member_number: memberNumber });
   }
 
@@ -331,7 +333,7 @@ export class ApiAdapter {
     return result;
   }
 
-  async endSession(sessionId, endReason = 'completed') {
+  async endSession(sessionId: string, endReason = 'completed') {
     const result = await this._post(ENDPOINTS.END_SESSION, {
       session_id: sessionId,
       end_reason: endReason,
@@ -340,7 +342,7 @@ export class ApiAdapter {
     return result;
   }
 
-  async endSessionByCourt(courtId, endReason = 'completed') {
+  async endSessionByCourt(courtId: string, endReason = 'completed') {
     const result = await this._post(ENDPOINTS.END_SESSION, {
       court_id: courtId,
       end_reason: endReason,
@@ -377,7 +379,7 @@ export class ApiAdapter {
     return this._post(ENDPOINTS.JOIN_WAITLIST, body);
   }
 
-  async cancelWaitlist(waitlistId) {
+  async cancelWaitlist(waitlistId: string) {
     return this._post(ENDPOINTS.CANCEL_WAITLIST, {
       waitlist_id: waitlistId,
     });
@@ -412,7 +414,7 @@ export class ApiAdapter {
     return result;
   }
 
-  async cancelBlock(blockId) {
+  async cancelBlock(blockId: string) {
     const result = await this._post(ENDPOINTS.CANCEL_BLOCK, {
       block_id: blockId,
     });
@@ -424,7 +426,7 @@ export class ApiAdapter {
   // Admin Operations
   // ===========================================
 
-  async updateSettings(settings) {
+  async updateSettings(settings: Record<string, unknown>) {
     const result = await this._post(ENDPOINTS.UPDATE_SETTINGS, {
       settings: settings,
     });
@@ -433,7 +435,7 @@ export class ApiAdapter {
     return result;
   }
 
-  async updateOperatingHours(hours) {
+  async updateOperatingHours(hours: unknown) {
     const result = await this._post(ENDPOINTS.UPDATE_SETTINGS, {
       operating_hours: hours,
     });
@@ -442,7 +444,7 @@ export class ApiAdapter {
     return result;
   }
 
-  async setOperatingHoursOverride(override) {
+  async setOperatingHoursOverride(override: unknown) {
     const result = await this._post(ENDPOINTS.UPDATE_SETTINGS, {
       operating_hours_override: override,
     });
@@ -451,7 +453,7 @@ export class ApiAdapter {
     return result;
   }
 
-  async deleteOperatingHoursOverride(date) {
+  async deleteOperatingHoursOverride(date: string) {
     const result = await this._post(ENDPOINTS.UPDATE_SETTINGS, {
       delete_override: date,
     });
@@ -493,7 +495,7 @@ export class ApiAdapter {
   // These methods provide compatibility with existing code
   // that expects the LocalStorageAdapter interface
 
-  async read(key) {
+  async read(key: string) {
     // Map legacy keys to API calls
     if (key === 'tennisData' || key === 'TENNIS_DATA') {
       return this._getLegacyDataFormat();
@@ -502,7 +504,7 @@ export class ApiAdapter {
     return null;
   }
 
-  async write(key, data) {
+  async write(key: string, data: unknown) {
     // For now, log a warning - writes should use specific methods
     logger.warn('ApiAdapter', `write() called - use specific methods instead. Key: ${key}`);
     return data;
@@ -512,7 +514,7 @@ export class ApiAdapter {
     return this._getLegacyDataFormat();
   }
 
-  async saveData(data) {
+  async saveData(data: unknown) {
     logger.warn('ApiAdapter', 'saveData() called - use specific methods instead');
     return data;
   }
@@ -527,39 +529,39 @@ export class ApiAdapter {
 
     // Transform to match legacy tennisData structure
     const courts =
-      courtStatus.courts?.map((court) => ({
+      ((courtStatus as Record<string, unknown>).courts as Record<string, unknown>[] | undefined)?.map((court) => (({
         number: court.court_number,
         id: court.court_id,
         status: court.status,
         session: court.session
           ? {
-              id: court.session.id,
-              type: court.session.type,
-              players: court.session.participants,
-              startTime: court.session.started_at,
-              endTime: court.session.scheduled_end_at,
-              timeRemaining: court.session.minutes_remaining * 60 * 1000,
+              id: (court.session as Record<string, unknown>).id,
+              type: (court.session as Record<string, unknown>).type,
+              players: (court.session as Record<string, unknown>).participants,
+              startTime: (court.session as Record<string, unknown>).started_at,
+              endTime: (court.session as Record<string, unknown>).scheduled_end_at,
+              timeRemaining: ((court.session as Record<string, unknown>).minutes_remaining as number) * 60 * 1000,
             }
           : null,
         block: court.block,
-      })) || [];
+      }))) || [];
 
     const waitlistEntries =
-      waitlist.waitlist?.map((entry) => ({
+      ((waitlist as Record<string, unknown>).waitlist as Record<string, unknown>[] | undefined)?.map((entry) => (({
         id: entry.id,
         position: entry.position,
         type: entry.group_type,
         players: entry.participants,
         joinedAt: entry.joined_at,
-        waitTime: entry.minutes_waiting * 60 * 1000,
-      })) || [];
+        waitTime: (entry.minutes_waiting as number) * 60 * 1000,
+      }))) || [];
 
     return {
       courts,
       waitlist: waitlistEntries,
-      settings: settings.settings,
-      operatingHours: settings.operating_hours,
-      lastUpdated: courtStatus.timestamp,
+      settings: (settings as Record<string, unknown>).settings,
+      operatingHours: (settings as Record<string, unknown>).operating_hours,
+      lastUpdated: (courtStatus as Record<string, unknown>).timestamp,
     };
   }
 }

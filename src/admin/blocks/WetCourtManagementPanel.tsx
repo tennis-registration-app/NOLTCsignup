@@ -1,10 +1,15 @@
-// @ts-check
 import React from 'react';
 
 /**
  * WetCourtManagementPanel - Wet court status grid and controls
  */
-const WetCourtManagementPanel = ({ wetCourts, clearWetCourt, deactivateWetCourts }) => (
+interface WetCourtManagementPanelProps {
+  wetCourts: Set<number>;
+  clearWetCourt: (n: number) => void;
+  deactivateWetCourts: () => void;
+}
+
+const WetCourtManagementPanel = ({ wetCourts, clearWetCourt, deactivateWetCourts }: WetCourtManagementPanelProps) => (
   <div className="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
     <div className="flex items-center justify-between mb-3">
       <h4 className="font-medium text-red-900">🌧️ Wet Court Conditions</h4>

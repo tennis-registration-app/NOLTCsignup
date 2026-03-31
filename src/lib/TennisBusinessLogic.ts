@@ -14,7 +14,7 @@ import { TENNIS_CONFIG } from './config';
 import { getCourtBlockStatus as _getCourtBlockStatus } from './court-blocks';
 
 // Get court block status - direct import (window fallbacks removed as dead code)
-const getCourtBlockStatus = (courtNumber) => {
+const getCourtBlockStatus = (courtNumber: number) => {
   try {
     return _getCourtBlockStatus ? _getCourtBlockStatus(courtNumber) : null;
   } catch {
@@ -27,7 +27,7 @@ const getCourtBlockStatus = (courtNumber) => {
  * Compares by memberId, then id, then name (case-insensitive)
  */
 const sameGroup = (a: Array<Record<string, unknown>> = [], b: Array<Record<string, unknown>> = []) => {
-  const norm = (p) => {
+  const norm = (p: Record<string, unknown>) => {
     const memberId = String(p?.memberId || '');
     const id = String(p?.id || '');
     const name = String(p?.name || '');
@@ -43,7 +43,7 @@ export const TennisBusinessLogic = {
   /**
    * Format player name for display (e.g., "John Smith" -> "J. Smith")
    */
-  formatPlayerDisplayName(name) {
+  formatPlayerDisplayName(name: string) {
     if (!name) return '';
     const nameParts = name.trim().split(' ');
     const firstName = nameParts[0] || '';
@@ -59,7 +59,7 @@ export const TennisBusinessLogic = {
    * @param {number} avgGameTime - Average game duration in minutes (default: 75)
    * @returns {number} Estimated wait time in minutes
    */
-  calculateEstimatedWaitTime(position, courts, currentTime, avgGameTime = 75) {
+  calculateEstimatedWaitTime(position: number, courts: Record<string, unknown>[], currentTime: Date, avgGameTime = 75) {
     if (!courts || !Array.isArray(courts) || position < 1) return 0;
 
     const courtEndTimes = courts
@@ -67,8 +67,9 @@ export const TennisBusinessLogic = {
         if (!court) return null;
 
         // Prefer end time of current session if available (Domain format)
-        if (court.session?.scheduledEndAt) {
-          return new Date(court.session.scheduledEndAt).getTime();
+        const session = court.session as Record<string, unknown> | undefined;
+        if (session?.scheduledEndAt) {
+          return new Date(String(session.scheduledEndAt)).getTime();
         }
 
         // Check for blocks using new system
@@ -178,7 +179,7 @@ export const TennisBusinessLogic = {
    * @returns {number} Duration in minutes
    */
   calculateGameDuration(
-    groupSize,
+    groupSize: number,
     singlesMinutes = TENNIS_CONFIG.TIMING.SINGLES_DURATION_MIN,
     doublesMinutes = TENNIS_CONFIG.TIMING.DOUBLES_DURATION_MIN,
     maxPlayers = TENNIS_CONFIG.PLAYERS.MAX_PER_GROUP
@@ -192,7 +193,7 @@ export const TennisBusinessLogic = {
    * @param {Array} group2 - Second group of players
    * @returns {Object} Overlap details including hasOverlap, overlappingPlayers, isExactMatch, etc.
    */
-  checkGroupOverlap(group1, group2) {
+  checkGroupOverlap(group1: Array<Record<string, unknown>>, group2: Array<Record<string, unknown>>) {
     if (!group1 || !group2 || !Array.isArray(group1) || !Array.isArray(group2)) {
       return { hasOverlap: false, overlappingPlayers: [], overlappingCount: 0, isExactMatch: false, isSubset: false, isSuperset: false, group1Size: 0, group2Size: 0 };
     }
@@ -224,7 +225,7 @@ export const TennisBusinessLogic = {
    * @param {Array} recentlyCleared - Array of recently cleared sessions
    * @returns {string|null} Original end time ISO string if found, null otherwise
    */
-  getOriginalEndTimeForGroup(players, recentlyCleared) {
+  getOriginalEndTimeForGroup(players: Array<Record<string, unknown>>, recentlyCleared: Array<{ originalEndTime: string; players: Array<Record<string, unknown>> }>) {
     const ps = Array.isArray(players) ? players : [];
     const rc = Array.isArray(recentlyCleared) ? recentlyCleared : [];
 

@@ -28,7 +28,7 @@ export const PurchaseBallsCommandSchema = z.object({
  * @returns {PurchaseBallsCommand}
  * @throws {Error} If validation fails
  */
-export function buildPurchaseBallsCommand(input) {
+export function buildPurchaseBallsCommand(input: Record<string, unknown>) {
   // Generate idempotency key if not provided
   const inputWithKey = {
     ...input,
@@ -48,7 +48,7 @@ export function buildPurchaseBallsCommand(input) {
  * @param {PurchaseBallsCommand} command
  * @returns {Object}
  */
-export function toPurchaseBallsPayload(command) {
+export function toPurchaseBallsPayload(command: z.infer<typeof PurchaseBallsCommandSchema>): Record<string, unknown> {
   return {
     session_id: command.sessionId,
     account_id: command.accountId,

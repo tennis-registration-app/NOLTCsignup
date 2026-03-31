@@ -1,12 +1,23 @@
 import React from 'react';
 
-/** @type {React.FC<{messages: any[], isProcessing: boolean, messagesEndRef: any, children?: any}>} */
+interface ChatMessage {
+  role: string;
+  content: string;
+  warning?: boolean;
+  error?: boolean;
+}
+interface AIAssistantMessagesProps {
+  messages: ChatMessage[];
+  isProcessing: boolean;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
+  children?: React.ReactNode;
+}
 const AIAssistantMessages = function AIAssistantMessages({
   messages,
   isProcessing,
   messagesEndRef,
   children,
-}) {
+}: AIAssistantMessagesProps) {
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {messages.map((message, index) => (

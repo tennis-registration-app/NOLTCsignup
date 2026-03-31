@@ -31,7 +31,7 @@ function getNowSlot() {
   return slot || TIME_SLOTS[TIME_SLOTS.length - 1];
 }
 
-function formatDuration(startVal, endVal) {
+function formatDuration(startVal: number | null, endVal: number | null) {
   if (startVal == null || endVal == null || endVal <= startVal) return null;
   const diff = endVal - startVal;
   const hours = Math.floor(diff / 60);
@@ -43,6 +43,8 @@ function formatDuration(startVal, endVal) {
 
 // === ScrollPicker component (from prototype, verbatim) ===
 
+type TimeSlot = { hour: number; minute: number; label: string; value: number };
+
 /**
  * @param {Object} props
  * @param {Array<{value: number, label: string, hour: number, minute: number}>} props.slots
@@ -51,9 +53,9 @@ function formatDuration(startVal, endVal) {
  * @param {string} props.label
  * @param {((slot: {value: number, label: string, hour: number, minute: number}) => boolean)} [props.filterFn]
  */
-function ScrollPicker({ slots, selectedValue, onChange, label, filterFn = undefined }) {
-  const listRef = useRef(null);
-  const itemRefs = useRef({});
+function ScrollPicker({ slots, selectedValue, onChange, label, filterFn = undefined }: { slots: TimeSlot[]; selectedValue: number | null; onChange: (slot: TimeSlot) => void; label: string; filterFn?: (slot: TimeSlot) => boolean }) {
+  const listRef = useRef(null as HTMLDivElement | null);
+  const itemRefs = useRef({} as Record<number, HTMLDivElement | null>);
   const filtered = filterFn ? slots.filter(filterFn) : slots;
 
   useEffect(() => {
@@ -184,6 +186,11 @@ export function TimeScrollPicker({
   initialStartValue,
   initialEndValue,
   isToday = true,
+}: {
+  onTimeChange: (startSlot: TimeSlot | null, endSlot: TimeSlot | null) => void;
+  initialStartValue?: number | null;
+  initialEndValue?: number | null;
+  isToday?: boolean;
 }) {
   const [startSlot, setStartSlot] = useState(() => {
     if (initialStartValue != null) {
@@ -218,13 +225,13 @@ export function TimeScrollPicker({
     }
   }, [initialEndValue]);
 
-  const findSlotPlus1Hr = useCallback((slot) => {
+  const findSlotPlus1Hr = useCallback((slot: TimeSlot) => {
     const target = slot.value + 60;
     return TIME_SLOTS.find((s) => s.value >= target) || TIME_SLOTS[TIME_SLOTS.length - 1];
   }, []);
 
   const handleStartChange = useCallback(
-    (slot) => {
+    (slot: TimeSlot) => {
       setStartSlot(slot);
 
       if (!endManuallySet || !endSlot) {
@@ -246,7 +253,7 @@ export function TimeScrollPicker({
   );
 
   const handleEndChange = useCallback(
-    (slot) => {
+    (slot: TimeSlot) => {
       setEndSlot(slot);
       setEndManuallySet(true);
       onTimeChange(startSlot, slot);
@@ -278,7 +285,7 @@ export function TimeScrollPicker({
   );
 
   const endFilterFn = useCallback(
-    (slot) => (startSlot ? slot.value > startSlot.value : true),
+    (slot: TimeSlot) => (startSlot ? slot.value > startSlot.value : true),
     [startSlot]
   );
 
