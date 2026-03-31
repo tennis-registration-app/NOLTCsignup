@@ -15,7 +15,7 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 | src/registration/ui/timeout/useSessionTimeout.ts | 24 | 29 | DONE | 17 tests (useSessionTimeout.test.ts) |
 | src/registration/ui/mobile/useMobileFlowController.ts | 24 | 18 | DONE | 28 tests (useMobileFlowController.test.ts) |
 | src/registration/screens/success/useBallPurchase.ts | 50 | 55 | DONE | 19 tests (useBallPurchase.test.ts) |
-| src/registration/search/useMemberSearch.ts | 66 | 48 | TODO | — |
+| src/registration/search/useMemberSearch.ts | 66 | 48 | DONE | 32 tests (useMemberSearch.test.ts) |
 | src/admin/hooks/useAdminHandlers.ts | 45 | 11 | TODO | — |
 | src/registration/group/useGroupGuest.ts | 45 | 8 | TODO | — |
 | src/registration/blocks/useBlockAdmin.ts | 55 | 10 | TODO | — |
@@ -65,6 +65,11 @@ Overall baseline: Statements 53.4% | Branches 47.9% | Functions 45.1% | Lines 53
 
 
 
+### Iteration 6 — 2026-03-30
+Files tested: 1, Tests added: 32
+- src/registration/search/useMemberSearch.ts (32 tests): initial state (3 defaults), loadMembers on mount (members loaded, error keeps empty array), getAutocompleteSuggestions (empty input, no members loaded, member-number prefix, first-name prefix, last-name prefix, multi-word all-match, no match, result cap at 5, displayText shape, name fallback), handleGroupSearchChange (updates input, calls markUserTyping, shows/hides suggestions, admin code nav+clear), handleGroupSearchFocus (markUserTyping, shows/no-shows suggestions), handleAddPlayerSearchChange (updates, shows/hides suggestions), handleAddPlayerSearchFocus (shows/no-shows), effectiveSearchInput numeric bypass, resetLeaderSearch, resetAddPlayerSearch, resetAllSearch (preserves apiMembers)
+- npm run verify: all green
+- Next: src/admin/hooks/useAdminHandlers.ts
 ### Iteration 5 — 2026-03-30
 Files tested: 1, Tests added: 19
 - src/registration/screens/success/useBallPurchase.ts (19 tests): initial state (5 defaults), double-submit guard (ignores in-flight duplicate), sessionId resolution (prefers prop, falls back to assignedCourt.session.id), accountId lookup (uses group directly, looks up by memberNumber, uses first non-primary result), purchaseDetails (charge type=single, split type=split with non-guest last4), successful purchase (ballsPurchased=true, modal closed, isProcessingPurchase reset), API ok:false fallback (falls through to localStorage, setCache called, isProcessingPurchase reset), split fallback (splitAccountIds=null when <2 IDs resolved)
