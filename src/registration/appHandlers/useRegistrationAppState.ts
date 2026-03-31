@@ -215,7 +215,7 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
       setAddPlayerSearch,
       setShowAddPlayerSuggestions,
       clearSuccessResetTimer,
-      refresh: (() => backend.queries.refresh()) as unknown as Parameters<typeof applyInactivityTimeoutOrchestrated>[0]["refresh"],
+      refresh: () => backend.queries.refresh(),
     });
   }
 

@@ -25,7 +25,7 @@ export interface ResetFormActions {
 
 export interface ResetFormServices {
   clearSuccessResetTimer: () => void;
-  refresh?: () => Promise<DomainBoard & Record<string, unknown>>;
+  refresh?: () => Promise<DomainBoard>;
 }
 
 export interface ResetFormDeps {
@@ -83,7 +83,7 @@ export interface InactivityTimeoutDeps {
   setAddPlayerSearch: (v: string) => void;
   setShowAddPlayerSuggestions: (v: boolean) => void;
   clearSuccessResetTimer: () => void;
-  refresh?: () => Promise<DomainBoard & Record<string, unknown>>;
+  refresh?: () => Promise<DomainBoard>;
 }
 
 /**

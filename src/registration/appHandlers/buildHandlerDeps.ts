@@ -19,7 +19,7 @@ import type { AppState } from '../../types/appTypes';
 export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, unknown>, core: Record<string, unknown>) {
   return {
     state: {
-      ...(app.state as unknown as Record<string, unknown>),
+      ...app.state,
       isAssigning: workflow.isAssigning,
       currentWaitlistEntryId: workflow.currentWaitlistEntryId,
       canChangeCourt: workflow.canChangeCourt,
@@ -27,7 +27,7 @@ export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, un
       replacedGroup: workflow.replacedGroup,
     },
     setters: {
-      ...(app.setters as unknown as Record<string, unknown>),
+      ...app.setters,
       setIsAssigning: workflow.setIsAssigning,
       setCurrentWaitlistEntryId: workflow.setCurrentWaitlistEntryId,
       setHasWaitlistPriority: workflow.setHasWaitlistPriority,
@@ -48,7 +48,7 @@ export function buildCourtHandlerDeps(app: AppState, workflow: Record<string, un
     courtAssignment: workflow.courtAssignment,
     services: app.services,
     helpers: app.helpers,
-    blockAdmin: (app.admin as unknown as Record<string, unknown>).blockAdmin,
+    blockAdmin: app.admin.blockAdmin,
     alert: app.alert,
     refs: app.refs,
     assignCourtToGroupOrchestrated: app.assignCourtToGroupOrchestrated,
@@ -77,7 +77,7 @@ export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, un
     search: app.search,
     memberIdentity: workflow.memberIdentity,
     setters: {
-      ...(app.setters as unknown as Record<string, unknown>),
+      ...app.setters,
       setShowAddPlayer: workflow.setShowAddPlayer,
       setHasWaitlistPriority: workflow.setHasWaitlistPriority,
     },
@@ -100,10 +100,10 @@ export function buildGroupHandlerDeps(app: AppState, workflow: Record<string, un
 export function buildGuestHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
   return {
     groupGuest: workflow.groupGuest,
-    guestCounterHook: (app.session as unknown as Record<string, unknown>).guestCounterHook,
+    guestCounterHook: app.session.guestCounterHook,
     memberIdentity: workflow.memberIdentity,
     derived: app.derived,
-    setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
+    setters: { ...app.setters, setShowAddPlayer: workflow.setShowAddPlayer },
     search: app.search,
     helpers: app.helpers,
   };
@@ -121,7 +121,7 @@ export function buildAdminHandlerDeps(app: AppState, court: Record<string, unkno
     setters: app.setters,
     search: app.search,
     state: app.state,
-    adminPriceFeedback: (app.admin as unknown as Record<string, unknown>).adminPriceFeedback,
+    adminPriceFeedback: app.admin.adminPriceFeedback,
     TENNIS_CONFIG: app.TENNIS_CONFIG,
     court,
   };
@@ -133,8 +133,8 @@ export function buildAdminHandlerDeps(app: AppState, court: Record<string, unkno
  */
 export function buildNavigationHandlerDeps(app: AppState, workflow: Record<string, unknown>) {
   return {
-    state: { ...(app.state as unknown as Record<string, unknown>), showAddPlayer: workflow.showAddPlayer },
-    setters: { ...(app.setters as unknown as Record<string, unknown>), setShowAddPlayer: workflow.setShowAddPlayer },
+    state: { ...app.state, showAddPlayer: workflow.showAddPlayer },
+    setters: { ...app.setters, setShowAddPlayer: workflow.setShowAddPlayer },
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
     mobile: app.mobile,
