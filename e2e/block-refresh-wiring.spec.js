@@ -24,8 +24,8 @@ test.describe('Block Refresh Wiring', () => {
     // Navigate to admin app
     await page.goto('src/admin/index.html?e2e=1');
 
-    // Click Sign In to enter admin panel (same as existing test)
-    await page.click('button:has-text("Sign In")');
+    // Click Enter Admin Panel button
+    await page.click('button:has-text("Enter Admin Panel")');
 
     // Wait for admin panel to load
     await expect(page.locator('[data-testid="admin-nav-blocks"]')).toBeVisible({ timeout: 10000 });
@@ -47,8 +47,8 @@ test.describe('Block Refresh Wiring', () => {
     // Reload to trigger second get-blocks (returns block with "Court Maintenance")
     await page.reload();
 
-    // Click Sign In again after reload
-    await page.click('button:has-text("Sign In")');
+    // Click Enter Admin Panel again after reload
+    await page.click('button:has-text("Enter Admin Panel")');
 
     // Navigate back to blocks tab
     await expect(page.locator('[data-testid="admin-nav-blocks"]')).toBeVisible({ timeout: 10000 });

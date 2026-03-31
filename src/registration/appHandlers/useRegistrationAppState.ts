@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+
 // Import shared utilities from @lib
 import {
   getCourtBlockStatus as _sharedGetCourtBlockStatus,
@@ -143,10 +145,16 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
 
   // ===== RUNTIME MODULE =====
   // Provides refs and handles timer/CSS/interval effects
+  //
+  // setBlockWarningMinutes lives in useBlockAdmin (via useRegistrationDomainHooks),
+  // which is initialized after useRegistrationRuntime. A ref bridges the ordering
+  // gap: the runtime effect closure dereferences the ref at call time (after all
+  // hooks have run), so domain.setBlockWarningMinutes is already in place.
+  const setBlockWarningMinutesRef = useRef<(v: number) => void>(() => {});
   const runtime = useRegistrationRuntime({
     setCurrentTime,
     setBallPriceCents,
-    setBlockWarningMinutes: () => {}, // Will be set by domain hooks
+    setBlockWarningMinutes: (v) => setBlockWarningMinutesRef.current(v),
     availableCourts: availableCourts as unknown as Parameters<typeof useRegistrationRuntime>[0]['availableCourts'],
     backend: backend as unknown as Parameters<typeof useRegistrationRuntime>[0]['backend'],
   });
@@ -180,6 +188,9 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
     getCourtData,
     showAlertMessage: null, // Will use internal showAlertMessage
   });
+  // Sync the ref so the runtime settings-fetch effect (which runs after all hooks)
+  // calls the real dispatch instead of the placeholder.
+  setBlockWarningMinutesRef.current = domain.setBlockWarningMinutes;
   // Destructure for internal use
   const {
     showAlertMessage,

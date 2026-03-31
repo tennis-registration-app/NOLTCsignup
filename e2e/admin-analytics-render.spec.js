@@ -16,8 +16,8 @@ test.describe('Admin Analytics', () => {
     // Navigate to admin app
     await page.goto('src/admin/index.html?e2e=1');
 
-    // Click Sign In to enter admin panel
-    await page.click('button:has-text("Sign In")');
+    // Click Enter Admin Panel button
+    await page.click('button:has-text("Enter Admin Panel")');
 
     // Wait for admin panel to load
     await expect(page.locator('[data-testid="admin-nav-analytics"]')).toBeVisible({ timeout: 10000 });
