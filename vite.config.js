@@ -12,7 +12,7 @@ function copyPlainJsFiles() {
         // Courtboard plain JS files (ADR-006 Phase 2: consolidated bootstrap)
         'src/courtboard/bootstrap/courtboard-bootstrap.js',
         'src/courtboard/sync-promotions.ts',
-        'src/courtboard/debug-panel.ts',
+        'src/courtboard/debug-panel.js',
       ];
 
       filesToCopy.forEach((file) => {
