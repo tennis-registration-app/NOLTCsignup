@@ -9,11 +9,11 @@ describe('normalizeBlock', () => {
   const serverNow = '2024-06-15T12:00:00Z';
 
   it('returns null for null input', () => {
-    expect(normalizeBlock(null, serverNow)).toBeNull();
+    expect(normalizeBlock(null as any, serverNow)).toBeNull();
   });
 
   it('returns null for undefined input', () => {
-    expect(normalizeBlock(undefined, serverNow)).toBeNull();
+    expect(normalizeBlock(undefined as any, serverNow)).toBeNull();
   });
 
   it('normalizes camelCase fields', () => {

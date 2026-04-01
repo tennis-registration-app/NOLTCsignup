@@ -220,7 +220,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
   });
 
   it('returns 0 for non-array courts', () => {
-    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, 'bad', new Date())).toBe(0);
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, 'bad' as any, new Date())).toBe(0);
   });
 
   it('returns 0 for position < 1', () => {
@@ -237,7 +237,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
       { session: { scheduledEndAt: new Date('2025-01-15T10:30:00Z').toISOString() } },
       { session: { scheduledEndAt: new Date('2025-01-15T11:00:00Z').toISOString() } },
     ];
-    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts, now);
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts as any, now);
     expect(result).toBe(30); // First court ends in 30 min
   });
 
@@ -257,7 +257,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
       endTime: new Date('2025-01-15T10:45:00Z').toISOString(),
     });
     const courts = [{}]; // No session but has block
-    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts, now);
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts as any, now);
     expect(result).toBe(45);
   });
 
@@ -274,7 +274,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
   it('estimates without end times for positions > 1', () => {
     const now = new Date('2025-01-15T10:00:00Z');
     const courts = [null, null, null]; // 3 free courts
-    const result = TennisBusinessLogic.calculateEstimatedWaitTime(4, courts, now, 75);
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(4, courts as any, now, 75);
     // position=4, courtsAvailable=3, rounds=ceil(4/3)=2
     // courtEndTimes.length === 0, so formula: ceil(((4-1)/3)*75) = ceil(75) = 75
     expect(result).toBe(75);
@@ -286,7 +286,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
       null,
       { session: { scheduledEndAt: new Date('2025-01-15T10:20:00Z').toISOString() } },
     ];
-    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts, now);
+    const result = TennisBusinessLogic.calculateEstimatedWaitTime(1, courts as any, now);
     expect(result).toBe(20);
   });
 });

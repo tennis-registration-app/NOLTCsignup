@@ -55,7 +55,7 @@ function createHarness(depsOverrides = {}) {
   const hookRef: { current: any } = { current: null };
 
   const Wrapper = forwardRef(function Wrapper(_props, ref) {
-    const hook = useWetCourts(deps);
+    const hook = useWetCourts(deps as any);
     useImperativeHandle(ref, () => hook);
     // Also stash in outer ref for sync access
     hookRef.current = hook;
@@ -426,7 +426,7 @@ describe('clearWetCourt', () => {
       await h.hook.activateWet();
     });
     await act(async () => {
-      await h.hook.clearWetCourt('2');
+      await h.hook.clearWetCourt('2' as any);
     });
 
     expect(clearWetCourtOp).toHaveBeenCalledWith(

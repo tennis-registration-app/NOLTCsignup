@@ -12,12 +12,12 @@ describe('attachLegacyBlocks', () => {
     vi.resetModules();
   });
 
-  it('attaches window.Tennis.BlocksService namespace', async () => {
+  it('attaches (window.Tennis as any).BlocksService namespace', async () => {
     await import('../../../src/platform/attachLegacyBlocks.js');
 
     expect(window.Tennis).toBeDefined();
-    expect(window.Tennis.BlocksService).toBeDefined();
-    expect(typeof window.Tennis.BlocksService.saveBlocks).toBe('function');
+    expect((window.Tennis as any).BlocksService).toBeDefined();
+    expect(typeof (window.Tennis as any).BlocksService.saveBlocks).toBe('function');
   });
 
   it('saveBlocks persists blocks to localStorage', async () => {
@@ -109,6 +109,6 @@ describe('attachLegacyBlocks', () => {
     await import('../../../src/platform/attachLegacyBlocks.js');
 
     // The existing function should still be there
-    expect(window.Tennis.BlocksService.saveBlocks).toBe(existingSaveBlocks);
+    expect((window.Tennis as any).BlocksService.saveBlocks).toBe(existingSaveBlocks);
   });
 });

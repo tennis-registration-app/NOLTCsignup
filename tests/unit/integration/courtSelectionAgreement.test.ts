@@ -179,7 +179,7 @@ describe('kiosk and courtboard agreement', () => {
       // Overtime court should be in selectableCourts
       const overtimeCourt = selection.selectableCourts.find((sc) => sc.number === 2);
       expect(overtimeCourt).toBeDefined();
-      expect(overtimeCourt.reason).toBe('overtime_fallback');
+      expect(overtimeCourt!.reason).toBe('overtime_fallback');
     });
 
     it('overtime NOT in selectableCourts when usable free court exists', () => {

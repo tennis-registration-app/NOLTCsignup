@@ -19,7 +19,7 @@ describe('getSessionMinutesRemaining', () => {
 
   it('returns 0 when serverNow is null', () => {
     const session = { scheduledEndAt: '2024-01-15T11:00:00Z' };
-    expect(getSessionMinutesRemaining(session as any, null)).toBe(0);
+    expect(getSessionMinutesRemaining(session as any, null as any)).toBe(0);
   });
 
   it('returns 0 when session end time is in the past', () => {
@@ -52,7 +52,7 @@ describe('isSessionOvertime', () => {
 
   it('returns false when serverNow is null', () => {
     const session = { scheduledEndAt: '2024-01-15T09:00:00Z' };
-    expect(isSessionOvertime(session as any, null)).toBe(false);
+    expect(isSessionOvertime(session as any, null as any)).toBe(false);
   });
 
   it('returns false when current time is before end time', () => {

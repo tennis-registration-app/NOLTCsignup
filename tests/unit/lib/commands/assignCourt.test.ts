@@ -92,7 +92,7 @@ describe('preflightAssignCourt', () => {
     };
     const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('occupied');
+    expect(result.errors![0]).toContain('occupied');
   });
 
   it('errors when court is blocked', () => {
@@ -102,7 +102,7 @@ describe('preflightAssignCourt', () => {
     };
     const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('blocked');
+    expect(result.errors![0]).toContain('blocked');
   });
 
   it('errors when court is not available (generic)', () => {
@@ -112,7 +112,7 @@ describe('preflightAssignCourt', () => {
     };
     const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('not available');
+    expect(result.errors![0]).toContain('not available');
   });
 
   it('errors when player already engaged on court', () => {
@@ -129,7 +129,7 @@ describe('preflightAssignCourt', () => {
     };
     const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('already playing');
+    expect(result.errors![0]).toContain('already playing');
   });
 
   it('handles null board', () => {

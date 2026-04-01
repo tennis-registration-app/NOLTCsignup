@@ -186,8 +186,8 @@ describe('API Contract Sentinel', () => {
     });
 
     it('extracts active blocks into board.blocks array', () => {
-      expect(board.blocks).toHaveLength(1);
-      expect(board.blocks[0]).toMatchObject({
+      expect(board.blocks!).toHaveLength(1);
+      expect(board.blocks![0]).toMatchObject({
         courtNumber: 2,
         title: 'Court resurfacing',
         isActive: true,
@@ -219,8 +219,8 @@ describe('API Contract Sentinel', () => {
   // ---- G) Upcoming blocks normalization ----
   describe('upcoming blocks normalization', () => {
     it('maps startsAt → startTime, endsAt → endTime for upcoming blocks', () => {
-      expect(board.upcomingBlocks).toHaveLength(1);
-      expect(board.upcomingBlocks[0]).toMatchObject({
+      expect(board.upcomingBlocks!).toHaveLength(1);
+      expect(board.upcomingBlocks![0]).toMatchObject({
         id: 'uuid-upcoming-1',
         courtNumber: 5,
         startTime: '2025-06-15T16:00:00.000Z',
@@ -261,7 +261,7 @@ describe('Board API Envelope Validation', () => {
       courts: [],
     });
     expect(result.success).toBe(true);
-    expect(result.data.ok).toBe(true);
+    expect(result.data!.ok).toBe(true);
   });
 
   it('defaults waitlist to empty array when omitted', () => {
@@ -270,7 +270,7 @@ describe('Board API Envelope Validation', () => {
       courts: [],
     });
     expect(result.success).toBe(true);
-    expect(result.data.waitlist).toEqual([]);
+    expect(result.data!.waitlist).toEqual([]);
   });
 
   it('rejects envelope missing serverNow', () => {
@@ -307,7 +307,7 @@ describe('Board API Envelope Validation', () => {
       operatingHours: [],
     });
     expect(result.success).toBe(true);
-    expect(result.data.upcomingBlocks).toHaveLength(1);
+    expect(result.data!.upcomingBlocks).toHaveLength(1);
   });
 });
 

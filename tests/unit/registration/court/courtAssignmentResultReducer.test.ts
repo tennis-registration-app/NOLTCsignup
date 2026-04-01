@@ -27,7 +27,7 @@ describe('courtAssignmentResultReducer', () => {
 
   test('JUST_ASSIGNED_COURT_SET can set to null', () => {
     const state = { ...initialCourtAssignmentResultState, justAssignedCourt: 5 };
-    const result = courtAssignmentResultReducer(state, {
+    const result = courtAssignmentResultReducer(state as any, {
       type: 'JUST_ASSIGNED_COURT_SET',
       value: null,
     });
@@ -74,7 +74,7 @@ describe('courtAssignmentResultReducer', () => {
       assignedSessionId: 'session-456',
       hasAssignedCourt: true,
     };
-    const result = courtAssignmentResultReducer(state, {
+    const result = courtAssignmentResultReducer(state as any, {
       type: 'COURT_ASSIGNMENT_RESULT_RESET',
     });
 

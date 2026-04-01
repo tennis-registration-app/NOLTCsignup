@@ -40,11 +40,11 @@ describe('normalizeAdminSettingsResponse', () => {
 // ── normalizeSettings ────────────────────────────────────────
 describe('normalizeSettings', () => {
   it('returns null for null input', () => {
-    expect(normalizeSettings(null)).toBeNull();
+    expect(normalizeSettings(null as any)).toBeNull();
   });
 
   it('returns null for undefined input', () => {
-    expect(normalizeSettings(undefined)).toBeNull();
+    expect(normalizeSettings(undefined as any)).toBeNull();
   });
 
   it('maps all snake_case to camelCase', () => {
@@ -74,11 +74,11 @@ describe('normalizeSettings', () => {
 // ── normalizeOperatingHours ──────────────────────────────────
 describe('normalizeOperatingHours', () => {
   it('returns null for null input', () => {
-    expect(normalizeOperatingHours(null)).toBeNull();
+    expect(normalizeOperatingHours(null as any)).toBeNull();
   });
 
   it('returns null for non-array', () => {
-    expect(normalizeOperatingHours('string')).toBeNull();
+    expect(normalizeOperatingHours('string' as any)).toBeNull();
   });
 
   it('normalizes hours with day_name', () => {
@@ -105,11 +105,11 @@ describe('normalizeOperatingHours', () => {
 // ── normalizeOverrides ───────────────────────────────────────
 describe('normalizeOverrides', () => {
   it('returns null for null input', () => {
-    expect(normalizeOverrides(null)).toBeNull();
+    expect(normalizeOverrides(null as any)).toBeNull();
   });
 
   it('returns null for non-array', () => {
-    expect(normalizeOverrides({})).toBeNull();
+    expect(normalizeOverrides({} as any)).toBeNull();
   });
 
   it('normalizes overrides', () => {

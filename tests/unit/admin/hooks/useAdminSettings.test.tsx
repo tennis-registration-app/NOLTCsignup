@@ -63,7 +63,7 @@ function createHarness(depsOverrides = {}) {
   const deps = createDeps(depsOverrides);
 
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
-    const hook = useAdminSettings(deps);
+    const hook = useAdminSettings(deps as any);
     useImperativeHandle(ref, () => hook);
     return null;
   });

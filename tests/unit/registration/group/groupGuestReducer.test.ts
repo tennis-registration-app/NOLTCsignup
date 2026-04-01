@@ -37,7 +37,7 @@ describe('groupGuestReducer', () => {
         { id: 2, name: 'Jane' },
       ] as any[],
     };
-    const result = groupGuestReducer(state, {
+    const result = groupGuestReducer(state as any, {
       type: 'CURRENT_GROUP_PLAYER_REMOVED',
       index: 0, // Remove first player
     });
@@ -53,7 +53,7 @@ describe('groupGuestReducer', () => {
         { id: 3, name: 'Bob' },
       ],
     };
-    const result = groupGuestReducer(state, {
+    const result = groupGuestReducer(state as any, {
       type: 'CURRENT_GROUP_PLAYER_REMOVED',
       index: 1, // Remove middle player
     });
@@ -115,7 +115,7 @@ describe('groupGuestReducer', () => {
       showGuestNameError: true,
       showSponsorError: true,
     };
-    const result = groupGuestReducer(state, { type: 'GUEST_FORM_RESET' });
+    const result = groupGuestReducer(state as any, { type: 'GUEST_FORM_RESET' });
 
     // currentGroup preserved
     expect(result.currentGroup).toEqual([{ id: 1, name: 'John' }]);
@@ -136,7 +136,7 @@ describe('groupGuestReducer', () => {
       showGuestNameError: true,
       showSponsorError: true,
     };
-    const result = groupGuestReducer(state, { type: 'GROUP_RESET' });
+    const result = groupGuestReducer(state as any, { type: 'GROUP_RESET' });
 
     expect(result.currentGroup).toEqual([]);
     expect(result.guestName).toBe('');

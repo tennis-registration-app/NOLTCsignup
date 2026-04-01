@@ -33,7 +33,7 @@ function makeDeps(overrides = {}) {
 
 function createHarness(deps = makeDeps()) {
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
-    const hook = useWaitlistAdmin(deps);
+    const hook = useWaitlistAdmin(deps as any);
     useImperativeHandle(ref, () => hook);
     return null;
   });

@@ -287,7 +287,7 @@ describe('WaitlistSection', () => {
     );
     // The Trash2 icon button is the remove action
     const removeBtn = screen.getByTestId('icon-Trash2').closest('button');
-    fireEvent.click(removeBtn);
+    fireEvent.click(removeBtn!);
     expect(removeFromWaitlist).toHaveBeenCalledWith(0);
   });
 });

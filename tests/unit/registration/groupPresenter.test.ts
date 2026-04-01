@@ -165,13 +165,13 @@ describe('groupPresenter', () => {
 
   describe('buildGroupActions', () => {
     it('returns all 22 expected keys', () => {
-      const actions = buildGroupActions(makeMockApp(), makeMockWorkflow(), makeMockHandlers());
+      const actions = buildGroupActions(makeMockApp() as any, makeMockWorkflow() as any, makeMockHandlers() as any);
       expect(Object.keys(actions)).toHaveLength(22);
     });
 
     it('renames handler callbacks to on* convention', () => {
       const handlers = makeMockHandlers();
-      const actions = buildGroupActions(makeMockApp(), makeMockWorkflow(), handlers);
+      const actions = buildGroupActions(makeMockApp() as any, makeMockWorkflow() as any, handlers as any);
       expect(actions.onSuggestionClick).toBe(handlers.handleGroupSuggestionClick);
       expect(actions.onAddPlayerSuggestionClick).toBe(handlers.handleAddPlayerSuggestionClick);
       expect(actions.onToggleAddPlayer).toBe(handlers.handleToggleAddPlayer);
@@ -185,7 +185,7 @@ describe('groupPresenter', () => {
 
     it('maps onStartOver from resetForm and onAddFrequentPartner from addFrequentPartner', () => {
       const handlers = makeMockHandlers();
-      const actions = buildGroupActions(makeMockApp(), makeMockWorkflow(), handlers);
+      const actions = buildGroupActions(makeMockApp() as any, makeMockWorkflow() as any, handlers as any);
       expect(actions.onStartOver).toBe(handlers.resetForm);
       expect(actions.onAddFrequentPartner).toBe(handlers.addFrequentPartner);
     });
@@ -201,7 +201,7 @@ describe('groupPresenter', () => {
 
     it('passes workflow guest actions by reference', () => {
       const workflow = makeMockWorkflow();
-      const actions = buildGroupActions(makeMockApp(), workflow, makeMockHandlers());
+      const actions = buildGroupActions(makeMockApp() as any, workflow as any, makeMockHandlers() as any);
       expect(actions.onRemovePlayer).toBe(workflow.groupGuest.handleRemovePlayer);
       expect(actions.onSelectSponsor).toBe(workflow.groupGuest.handleSelectSponsor);
       expect(actions.onCancelGuest).toBe(workflow.groupGuest.handleCancelGuest);
@@ -210,20 +210,20 @@ describe('groupPresenter', () => {
     it('maps joiningWaitlist from workflow.isJoiningWaitlist', () => {
       const workflow = makeMockWorkflow();
       workflow.isJoiningWaitlist = true;
-      const actions = buildGroupActions(makeMockApp(), workflow, makeMockHandlers());
+      const actions = buildGroupActions(makeMockApp() as any, workflow as any, makeMockHandlers() as any);
       expect(actions.joiningWaitlist).toBe(true);
     });
 
     it('maps isAssigning from workflow.isAssigning', () => {
       const workflow = makeMockWorkflow();
       workflow.isAssigning = true;
-      const actions = buildGroupActions(makeMockApp(), workflow, makeMockHandlers());
+      const actions = buildGroupActions(makeMockApp() as any, workflow as any, makeMockHandlers() as any);
       expect(actions.isAssigning).toBe(true);
     });
 
     it('passes utility functions by reference', () => {
       const handlers = makeMockHandlers();
-      const actions = buildGroupActions(makeMockApp(), makeMockWorkflow(), handlers);
+      const actions = buildGroupActions(makeMockApp() as any, makeMockWorkflow() as any, handlers as any);
       expect(actions.isPlayerAlreadyPlaying).toBe(handlers.isPlayerAlreadyPlaying);
       expect(actions.sameGroup).toBe(handlers.sameGroup);
     });

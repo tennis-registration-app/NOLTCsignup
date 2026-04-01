@@ -201,8 +201,8 @@ describe('CSS style injection', () => {
       s.textContent.includes('.animate-pulse')
     );
     expect(injected).toBeTruthy();
-    expect(injected.textContent).toContain('will-change: opacity');
-    expect(injected.textContent).toContain('.court-transition');
+    expect(injected!.textContent).toContain('will-change: opacity');
+    expect(injected!.textContent).toContain('.court-transition');
   });
 
   it('removes the style element on unmount', () => {

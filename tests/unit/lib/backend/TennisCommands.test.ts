@@ -27,8 +27,8 @@ function createMockDirectory(overrides = {}) {
  * Returns { commands, api, directory } for assertions.
  */
 function setup(opts: Record<string, any> = {}) {
-  const api = createMockApi(opts.api);
-  const directory = createMockDirectory(opts.directory);
+  const api = createMockApi(opts.api) as any;
+  const directory = createMockDirectory(opts.directory) as any;
   const commands = new TennisCommands(api, directory);
   return { commands, api, directory };
 }
@@ -63,7 +63,7 @@ describe('TennisCommands', () => {
         addBalls: true,
       };
 
-      const result = await commands.assignCourt(input);
+      const result = await commands.assignCourt(input as any);
 
       expect(result.ok).toBe(true);
       expect(api.post).toHaveBeenCalledOnce();
@@ -82,7 +82,7 @@ describe('TennisCommands', () => {
         groupType: 'doubles',
       };
 
-      await commands.joinWaitlist(input);
+      await commands.joinWaitlist(input as any);
 
       expect(api.post).toHaveBeenCalledOnce();
       const [endpoint, payload] = api.post.mock.calls[0];
@@ -398,7 +398,7 @@ describe('TennisCommands', () => {
   describe('resolvePlayersToParticipants', () => {
     it('throws when directory is not set', async () => {
       const api = createMockApi();
-      const commands = new TennisCommands(api, null);
+      const commands = new TennisCommands(api as any, null as any);
 
       await expect(
         commands.resolvePlayersToParticipants([{ name: 'Alice', memberNumber: '1001' }])
@@ -796,7 +796,7 @@ describe('TennisCommands', () => {
   describe('AppError metadata', () => {
     it('DIRECTORY_NOT_SET — throws AppError with VALIDATION category', async () => {
       const api = createMockApi();
-      const commands = new TennisCommands(api, null);
+      const commands = new TennisCommands(api as any, null as any);
 
       try {
         await commands.resolvePlayersToParticipants([{ name: 'A', memberNumber: '1' }]);
@@ -874,7 +874,7 @@ describe('TennisCommands', () => {
   describe('setDirectory', () => {
     it('allows setting directory after construction', async () => {
       const api = createMockApi();
-      const commands = new TennisCommands(api, null);
+      const commands = new TennisCommands(api as any, null as any);
 
       // Should throw without directory
       await expect(
@@ -885,7 +885,7 @@ describe('TennisCommands', () => {
       const directory = createMockDirectory({
         getMembersByAccount: vi.fn().mockResolvedValue([ALICE]),
       });
-      commands.setDirectory(directory);
+      commands.setDirectory(directory as any);
 
       // Should now work
       const result = await commands.resolvePlayersToParticipants([

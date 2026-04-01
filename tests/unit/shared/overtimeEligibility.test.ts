@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('computeRegistrationCourtSelection', () => {
   it('returns empty selection for null/undefined courts', () => {
-    const result = computeRegistrationCourtSelection(null);
+    const result = computeRegistrationCourtSelection(null as any);
     expect(result.selectableCourts).toEqual([]);
     expect(result.showingOvertimeCourts).toBe(false);
   });
@@ -88,7 +88,7 @@ describe('computeRegistrationCourtSelection', () => {
 
   it('handles null entries in courts array', () => {
     const courts = [null, { number: 2, isAvailable: true, isBlocked: false }];
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
     expect(result.selectableCourts).toHaveLength(1);
   });
 
@@ -99,7 +99,7 @@ describe('computeRegistrationCourtSelection', () => {
       undefined,
       { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
     ];
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
     expect(result.selectableCourts.map((sc) => sc.number)).toEqual([1, 2]);
   });
 
@@ -355,9 +355,9 @@ describe('computeRegistrationCourtSelection', () => {
 
       const overtimeCourt = result.selectableCourts.find((sc) => sc.number === 2);
 
-      expect(overtimeCourt.reason).toBe('overtime_fallback');
-      expect(overtimeCourt.minutesAvailable).toBe(null);
-      expect(overtimeCourt.isUsable).toBe(true);
+      expect(overtimeCourt!.reason).toBe('overtime_fallback');
+      expect(overtimeCourt!.minutesAvailable).toBe(null);
+      expect(overtimeCourt!.isUsable).toBe(true);
     });
 
     it('overtime court NOT included when usable free court exists', () => {
@@ -708,7 +708,7 @@ describe('computePlayableCourts', () => {
   const now = '2024-01-15T10:00:00Z';
 
   it('returns empty for null/undefined courts', () => {
-    const result = computePlayableCourts(null, [], now);
+    const result = computePlayableCourts(null as any, [], now);
     expect(result.playableCourts).toEqual([]);
     expect(result.playableCourtNumbers).toEqual([]);
   });

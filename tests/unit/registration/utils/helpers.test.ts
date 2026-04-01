@@ -37,7 +37,7 @@ describe('normalizeName', () => {
   });
 
   it('handles numeric input via toString', () => {
-    expect(normalizeName(42)).toBe('42');
+    expect(normalizeName(42 as any)).toBe('42');
   });
 
   it('handles object with no recognized name keys', () => {

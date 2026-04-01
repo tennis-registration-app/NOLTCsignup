@@ -185,7 +185,7 @@ describe('ErrorBoundary', () => {
     expect(copyButton).toBeTruthy();
 
     await act(async () => {
-      copyButton.click();
+      copyButton!.click();
       // Allow async clipboard rejection to resolve
       await new Promise((r) => setTimeout(r, 10));
     });

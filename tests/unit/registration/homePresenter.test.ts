@@ -159,7 +159,7 @@ describe('homePresenter', () => {
     it('onClearCourtClick calls checkLocationAndProceed then navigates', () => {
       const app = makeMockApp();
       const handlers = makeMockHandlers();
-      const actions = buildHomeActions(app as any, makeMockWorkflow() as any, handlers);
+      const actions = buildHomeActions(app as any, makeMockWorkflow() as any, handlers as any);
 
       actions.onClearCourtClick();
 
@@ -177,7 +177,7 @@ describe('homePresenter', () => {
 
     it('passes workflow setters by reference', () => {
       const workflow = makeMockWorkflow();
-      const actions = buildHomeActions(makeMockApp() as any, workflow, makeMockHandlers());
+      const actions = buildHomeActions(makeMockApp() as any, workflow as any, makeMockHandlers() as any);
       expect(actions.setCurrentGroup).toBe(workflow.groupGuest.setCurrentGroup);
       expect(actions.setMemberNumber).toBe(workflow.memberIdentity.setMemberNumber);
       expect(actions.setHasWaitlistPriority).toBe(workflow.setHasWaitlistPriority);
@@ -186,7 +186,7 @@ describe('homePresenter', () => {
 
     it('passes handler callbacks by reference', () => {
       const handlers = makeMockHandlers();
-      const actions = buildHomeActions(makeMockApp() as any, makeMockWorkflow(), handlers);
+      const actions = buildHomeActions(makeMockApp() as any, makeMockWorkflow() as any, handlers as any);
       expect(actions.handleSuggestionClick).toBe(handlers.handleSuggestionClick);
       expect(actions.markUserTyping).toBe(handlers.markUserTyping);
       expect(actions.findMemberNumber).toBe(handlers.findMemberNumber);

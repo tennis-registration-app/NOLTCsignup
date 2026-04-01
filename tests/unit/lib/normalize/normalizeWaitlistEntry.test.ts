@@ -17,7 +17,7 @@ describe('normalizeWaitlistEntry', () => {
   const serverNow = '2024-06-15T12:00:00Z';
 
   it('returns defaults for null', () => {
-    const result = normalizeWaitlistEntry(null, serverNow);
+    const result = normalizeWaitlistEntry(null as any, serverNow);
     expect(result.id).toBe('unknown');
     expect(result.position).toBe(0);
     expect(result.minutesWaiting).toBe(0);

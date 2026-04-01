@@ -18,8 +18,8 @@ describe('formatDuration', () => {
   });
 
   it('formats null/undefined as "0m"', () => {
-    expect(formatDuration(null)).toBe('0m');
-    expect(formatDuration(undefined)).toBe('0m');
+    expect(formatDuration(null as any)).toBe('0m');
+    expect(formatDuration(undefined as any)).toBe('0m');
   });
 
   it('formats negative minutes as "0m"', () => {

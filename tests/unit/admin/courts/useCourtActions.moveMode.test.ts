@@ -223,13 +223,13 @@ describe('useCourtActions — optimistic move', () => {
 
     // Source court (3) should have no session data
     const fromCourt = opt!.find((c) => c.number === 3);
-    expect(fromCourt.session).toBeUndefined();
-    expect(fromCourt.players).toBeUndefined();
+    expect(fromCourt!.session).toBeUndefined();
+    expect(fromCourt!.players).toBeUndefined();
 
     // Target court (7) should have the session data
     const toCourt = opt!.find((c) => c.number === 7);
-    expect(toCourt.session).toEqual(COURTS[0].session);
-    expect(toCourt.players).toEqual(COURTS[0].players);
+    expect(toCourt!.session).toEqual(COURTS[0].session);
+    expect(toCourt!.players).toEqual(COURTS[0].players);
 
     await act(async () => {
       resolveMove({ success: true });
@@ -393,13 +393,13 @@ describe('useCourtActions — optimistic clear', () => {
 
     // Cleared court (3) should have no session/players/block data
     const clearedCourt = opt!.find((c) => c.number === 3);
-    expect(clearedCourt.session).toBeUndefined();
-    expect(clearedCourt.players).toBeUndefined();
-    expect(clearedCourt.block).toBeUndefined();
-    expect(clearedCourt.startTime).toBeUndefined();
+    expect(clearedCourt!.session).toBeUndefined();
+    expect(clearedCourt!.players).toBeUndefined();
+    expect(clearedCourt!.block).toBeUndefined();
+    expect(clearedCourt!.startTime).toBeUndefined();
     // Should still have number and id
-    expect(clearedCourt.number).toBe(3);
-    expect(clearedCourt.id).toBe('uuid-3');
+    expect(clearedCourt!.number).toBe(3);
+    expect(clearedCourt!.id).toBe('uuid-3');
 
     // Other court (7) should be unchanged
     const otherCourt = opt!.find((c) => c.number === 7);

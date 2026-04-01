@@ -298,7 +298,7 @@ describe('field updates', () => {
   it('setRecurrence updates recurrence', () => {
     const h = createHarness();
     const rec = { frequency: 'weekly', count: 4 };
-    act(() => h.hook.setRecurrence(rec));
+    act(() => h.hook.setRecurrence(rec as any));
     expect(h.hook.recurrence).toEqual(rec);
     h.cleanup();
   });
@@ -467,7 +467,7 @@ describe('resetForm', () => {
     makeValid(h);
     // Also set some optional fields
     act(() => {
-      h.hook.setRecurrence({ freq: 'weekly' });
+      h.hook.setRecurrence({ freq: 'weekly' } as any);
       h.hook.setEditingBlock({ id: 'block-1' });
       h.hook.setEventTitle('My Event');
       h.hook.setIsEvent(true);

@@ -30,9 +30,9 @@ describe('preflightAssignFromWaitlist', () => {
     const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
-    expect(result.errors.length).toBeGreaterThanOrEqual(1);
+    expect(result.errors!.length).toBeGreaterThanOrEqual(1);
     expect(
-      result.errors.some((e) => e.toLowerCase().includes('entry') && e.toLowerCase().includes('not found'))
+      result.errors!.some((e) => e.toLowerCase().includes('entry') && e.toLowerCase().includes('not found'))
     ).toBe(true);
   });
 
@@ -46,9 +46,9 @@ describe('preflightAssignFromWaitlist', () => {
     const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
-    expect(result.errors.length).toBeGreaterThanOrEqual(1);
+    expect(result.errors!.length).toBeGreaterThanOrEqual(1);
     expect(
-      result.errors.some((e) => e.toLowerCase().includes('waiting') || e.toLowerCase().includes('no longer'))
+      result.errors!.some((e) => e.toLowerCase().includes('waiting') || e.toLowerCase().includes('no longer'))
     ).toBe(true);
   });
 
@@ -62,9 +62,9 @@ describe('preflightAssignFromWaitlist', () => {
     const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
-    expect(result.errors.length).toBeGreaterThanOrEqual(1);
+    expect(result.errors!.length).toBeGreaterThanOrEqual(1);
     expect(
-      result.errors.some((e) => e.toLowerCase().includes('court') && e.toLowerCase().includes('not found'))
+      result.errors!.some((e) => e.toLowerCase().includes('court') && e.toLowerCase().includes('not found'))
     ).toBe(true);
   });
 
@@ -78,8 +78,8 @@ describe('preflightAssignFromWaitlist', () => {
     const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
-    expect(result.errors.length).toBeGreaterThanOrEqual(1);
-    expect(result.errors.some((e) => e.toLowerCase().includes('not available'))).toBe(true);
+    expect(result.errors!.length).toBeGreaterThanOrEqual(1);
+    expect(result.errors!.some((e) => e.toLowerCase().includes('not available'))).toBe(true);
   });
 
   // Contract: errors accumulate (not fail-fast) - confirmed from implementation
@@ -94,8 +94,8 @@ describe('preflightAssignFromWaitlist', () => {
 
     expect(result.ok).toBe(false);
     // Both entry not found AND court not found should be in errors
-    expect(result.errors.length).toBe(2);
-    expect(result.errors.some((e) => e.toLowerCase().includes('entry'))).toBe(true);
-    expect(result.errors.some((e) => e.toLowerCase().includes('court'))).toBe(true);
+    expect(result.errors!.length).toBe(2);
+    expect(result.errors!.some((e) => e.toLowerCase().includes('entry'))).toBe(true);
+    expect(result.errors!.some((e) => e.toLowerCase().includes('court'))).toBe(true);
   });
 });

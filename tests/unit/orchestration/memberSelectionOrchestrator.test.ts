@@ -104,7 +104,7 @@ describe('handleSuggestionClickOrchestrated', () => {
   describe('guard: invalid suggestion', () => {
     it('shows alert for null suggestion', async () => {
       const deps = createSuggestionClickDeps();
-      await handleSuggestionClickOrchestrated(null, deps);
+      await handleSuggestionClickOrchestrated(null as any, deps);
       expect(deps.showAlertMessage).toHaveBeenCalledWith(
         'Invalid member selection. Please try again.'
       );
@@ -272,7 +272,7 @@ describe('handleAddPlayerSuggestionClickOrchestrated', () => {
   describe('guard: invalid suggestion', () => {
     it('shows alert for null suggestion', async () => {
       const deps = createAddPlayerDeps();
-      await handleAddPlayerSuggestionClickOrchestrated(null, deps);
+      await handleAddPlayerSuggestionClickOrchestrated(null as any, deps);
       expect(deps.showAlertMessage).toHaveBeenCalledWith(
         'Invalid player selection. Please try again.'
       );

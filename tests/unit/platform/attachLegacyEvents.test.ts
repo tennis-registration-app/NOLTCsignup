@@ -30,8 +30,8 @@ describe('attachLegacyEvents', () => {
     expect(typeof legacyEvents.debug.isEnabled).toBe('function');
   });
 
-  test('window.Tennis.Events is set correctly', () => {
-    expect(window.Tennis.Events).toBe(legacyEvents);
+  test('(window.Tennis as any).Events is set correctly', () => {
+    expect((window.Tennis as any).Events).toBe(legacyEvents);
   });
 
   describe('emitDom/onDom round-trip', () => {

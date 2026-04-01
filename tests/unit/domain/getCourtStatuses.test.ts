@@ -51,9 +51,9 @@ function loadAvailabilityModule() {
     const et = new Date(b.endTime ?? b.end);
     return (
       st instanceof Date &&
-      !isNaN(st) &&
+      !isNaN(st as any) &&
       et instanceof Date &&
-      !isNaN(et) &&
+      !isNaN(et as any) &&
       st <= now &&
       now < et
     );

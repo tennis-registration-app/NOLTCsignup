@@ -22,9 +22,9 @@ describe('attachLegacyStorage', () => {
     });
   });
 
-  describe('window.Tennis.Storage', () => {
-    test('window.Tennis.Storage is set correctly', () => {
-      expect(window.Tennis.Storage).toBe(legacyStorage);
+  describe('(window.Tennis as any).Storage', () => {
+    test('(window.Tennis as any).Storage is set correctly', () => {
+      expect((window.Tennis as any).Storage).toBe(legacyStorage);
     });
   });
 

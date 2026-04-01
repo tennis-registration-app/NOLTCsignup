@@ -5,12 +5,12 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 
 // Set Tennis Config BEFORE import so the module picks it up
 window.Tennis = window.Tennis || {};
-window.Tennis.Config = {
+(window.Tennis as any).Config = {
   Courts: { TOTAL_COUNT: 12 },
   Timing: { AVG_GAME: 75 },
 };
 
-// Import the module - it will attach to window.Tennis.Domain
+// Import the module - it will attach to (window.Tennis as any).Domain
 import {
   validateGroup,
   estimateWaitMinutes,
@@ -24,13 +24,13 @@ describe('tennis/domain/waitlist', () => {
     W = window.Tennis?.Domain?.waitlist;
   });
 
-  it('attaches to window.Tennis.Domain.waitlist', () => {
+  it('attaches to (window.Tennis as any).Domain.waitlist', () => {
     expect(W).toBeDefined();
   });
 
-  it('attaches uppercase alias window.Tennis.Domain.Waitlist', () => {
-    expect(window.Tennis.Domain.Waitlist).toBeDefined();
-    expect(window.Tennis.Domain.Waitlist).toBe(window.Tennis.Domain.waitlist);
+  it('attaches uppercase alias (window.Tennis as any).Domain.Waitlist', () => {
+    expect((window.Tennis as any).Domain.Waitlist).toBeDefined();
+    expect((window.Tennis as any).Domain.Waitlist).toBe((window.Tennis as any).Domain.waitlist);
   });
 
   describe('estimateWaitForPositions', () => {

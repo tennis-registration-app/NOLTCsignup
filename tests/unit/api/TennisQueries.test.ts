@@ -93,7 +93,7 @@ describe('TennisQueries', () => {
       expect(board.courts.length).toBe(2);
       const court = board.courts.find((c) => c.number === 1);
       expect(court).toBeDefined();
-      expect(court.number).toBe(1);
+      expect(court!.number).toBe(1);
     });
 
     it('attaches _raw reference to original response', async () => {

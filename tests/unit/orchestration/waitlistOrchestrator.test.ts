@@ -88,7 +88,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       const deps = createMockDeps({ isJoiningWaitlist: true });
       const group = createGroup();
 
-      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group as any, deps);
 
       expect(ok).toBe(false);
       expect(deps.setIsJoiningWaitlist).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       });
       const group = createGroup();
 
-      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group as any, deps);
 
       expect(ok).toBe(false);
       expect(deps.showAlertMessage).toHaveBeenCalledWith('Maximum group size is 4.');
@@ -344,7 +344,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
         { id: 'guest-1', name: 'Guest Player', isGuest: true, sponsor: 'member-1' },
       ];
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      await sendGroupToWaitlistOrchestrated(group as any, deps);
 
       expect(deps.backend.commands.joinWaitlistWithPlayers).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -324,7 +324,7 @@ describe('validateGroupCompat', () => {
     const players = [
       { name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }, { name: 'E' },
     ];
-    const result = validateGroupCompat(players, 0);
+    const result = validateGroupCompat(players as any, 0);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Maximum group size is 4.');
   });
@@ -350,7 +350,7 @@ describe('validateGroupCompat', () => {
 
   it('handles null players array', () => {
     domainValidateGroup.mockReturnValue(undefined);
-    const result = validateGroupCompat(null, 0);
+    const result = validateGroupCompat(null as any, 0);
     expect(result.ok).toBe(false);
   });
 

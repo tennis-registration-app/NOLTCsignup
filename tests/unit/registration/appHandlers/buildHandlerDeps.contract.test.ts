@@ -75,7 +75,7 @@ describe('buildHandlerDeps contract', () => {
       groupGuest: { currentGroup: [], setCurrentGroup: () => {} },
       courtAssignment: { selectedCourt: null, setSelectedCourt: () => {} },
     };
-    const deps = buildCourtHandlerDeps(mockApp, mockCourtWorkflow, mockCore);
+    const deps = buildCourtHandlerDeps(mockApp as any, mockCourtWorkflow as any, mockCore as any);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -143,7 +143,7 @@ describe('buildHandlerDeps contract', () => {
       setShowAddPlayer: () => {},
       setHasWaitlistPriority: () => {},
     };
-    const deps = buildGroupHandlerDeps(mockApp, mockGroupWorkflow, mockCore, mockCourt);
+    const deps = buildGroupHandlerDeps(mockApp as any, mockGroupWorkflow as any, mockCore as any, mockCourt as any);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -188,7 +188,7 @@ describe('buildHandlerDeps contract', () => {
       memberIdentity: { memberNumber: '' },
       setShowAddPlayer: () => {},
     };
-    const deps = buildGuestHandlerDeps(mockApp, mockGuestWorkflow);
+    const deps = buildGuestHandlerDeps(mockApp as any, mockGuestWorkflow as any);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -217,7 +217,7 @@ describe('buildHandlerDeps contract', () => {
   });
 
   describe('buildAdminHandlerDeps', () => {
-    const deps = buildAdminHandlerDeps(mockApp, mockCourt);
+    const deps = buildAdminHandlerDeps(mockApp as any, mockCourt as any);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {
@@ -242,7 +242,7 @@ describe('buildHandlerDeps contract', () => {
       showAddPlayer: false,
       setShowAddPlayer: () => {},
     };
-    const deps = buildNavigationHandlerDeps(mockApp, mockWorkflow);
+    const deps = buildNavigationHandlerDeps(mockApp as any, mockWorkflow as any);
     const keys = Object.keys(deps).sort();
 
     it('has frozen key set', () => {

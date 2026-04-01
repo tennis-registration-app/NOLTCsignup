@@ -506,3 +506,73 @@ TS7006: 0
 
 Next target: TS2345 (137) -- argument type mismatches
 Approach: Cast partial mock objects as any at call sites
+
+## Iteration 10 — 2026-03-31
+Pattern fixed: TS2345 (137) + TS18048 (90) — partial mock objects and possibly-undefined access
+Errors before: 573
+Errors after: 343
+Reduction: 230 errors (-40%)
+
+### Files fixed — TS2345 (partial mocks as any)
+- tests/unit/admin/wetCourts/wetCourtsReducer.test.ts: state as any for WET_DEACTIVATED
+- tests/unit/api/TennisCommands.test.ts: null as any for TennisDirectory param
+- tests/unit/courtboard/mobile/mobileModalUtils.test.ts: null/undefined as any for getTitle/getModalClass
+- tests/unit/courtboard/utils/courtUtils.test.ts: court as any (null players), null as any for computeClock
+- tests/unit/domain/getCourtStatuses.test.ts: isNaN(st as any) for Date args
+- tests/unit/lib/backend/TennisCommands.test.ts: api as any, null as any at direct call sites
+- tests/unit/lib/normalize/{normalizeBlock,normalizeCourt,normalizeSession,normalizeWaitlistEntry}.test.ts: null/undefined as any
+- tests/unit/lib/TennisBusinessLogic.test.ts: courts as any (null-containing arrays)
+- tests/unit/lib/TennisCourtDataStore.test.ts: localStorage.getItem()! non-null assertions
+- tests/unit/lib/tournamentAvailability.test.ts: courts as any (null-containing arrays)
+- tests/unit/orchestration/waitlistOrchestrator.test.ts: group as any (union player types)
+- tests/unit/registration/appHandlers/buildHandlerDeps.contract.test.ts: all workflow/core/court args as any
+- tests/unit/registration/court/courtAssignmentResultReducer.test.ts: state as any
+- tests/unit/registration/courtPresenter.test.ts: all factory fn calls as any
+- tests/unit/registration/successPresenter.test.ts: all factory fn calls as any, makeMockApp({...}) as any
+- tests/unit/shared/utils/toast.test.ts: e as CustomEvent<any>
+- tests/unit/tennis/roster.test.ts: null as any, undefined as any
+
+### Files fixed — TS18048 (possibly undefined access)
+- tests/unit/admin/courts/useCourtActions.moveMode.test.ts: fromCourt!.x, toCourt!.x, clearedCourt!.x
+- tests/unit/api/TennisQueries.test.ts: court!.number
+- tests/unit/integration/courtSelectionAgreement.test.ts: overtimeCourt!.reason
+- tests/unit/lib/apiContractSentinel.test.ts: board.blocks!, board.upcomingBlocks!, result.data!
+- tests/unit/lib/commands/{assignCourt,assignFromWaitlist,moveCourt}.test.ts: result.errors![n], result.errors!.some()
+- tests/unit/lib/normalize/normalizeBoard.test.ts: result.blocks!, result.upcomingBlocks![n]
+- tests/unit/platform/{attachLegacyBlocks,attachLegacyDataStore,attachLegacyEvents,attachLegacyStorage}.test.ts: (window.Tennis as any).X
+- tests/unit/registration/appHandlers/state/useRegistrationRuntime.test.ts: injected!.textContent
+- tests/unit/shared/ErrorBoundary.test.tsx: copyButton!.click()
+- tests/unit/shared/overtimeEligibility.test.ts: overtimeCourt!.x
+- tests/unit/tennis/{availability,roster,waitlist,waitlistPolicyPaths}.test.ts: (window.Tennis as any).X
+
+### Type patterns used
+- as any — for partial mocks at function call sites (standard pattern)
+- ! non-null assertion — for Array.find() results after expect(x).toBeDefined()
+- (window.Tennis as any).X — for window.Tennis property access (jsdom namespace)
+- result.errors! — for optional arrays known to be defined in failing test context
+- !.textContent, !.click() — after expect(x).toBeTruthy() validation
+
+---
+
+## Current Baseline: 343 errors (after iteration 10)
+
+### Current Distribution
+TS18046: 71 (0)
+TS2353: 86 (-1)
+TS7053: 48 (0)
+TS7031: 36 (0)
+TS2531: 21 (0)
+TS2740: 15 (0)
+TS2769: 14 (0)
+TS7019: 13 (0)
+TS2554: 11 (0)
+TS2551: 8 (0)
+TS2739: 7 (0)
+TS2304: 5 (0)
+TS2307: 2 (0)
+TS2345: 0 (-137)
+TS18048: 0 (-90)
+
+Next target: TS2353 (86) — object literal extra/wrong properties
+Approach: Replace literal property names with as any or add required fields to test objects
+

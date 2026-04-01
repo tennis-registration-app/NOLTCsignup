@@ -361,7 +361,7 @@ describe('toMoveCourtPayload (commands)', () => {
     const payload = toMoveCourtPayload({
       fromCourtId: 'uuid-from',
       toCourtId: 'uuid-to',
-    });
+    } as any);
     expect(sorted(payload)).toEqual(['from_court_id', 'to_court_id']);
   });
 
@@ -369,7 +369,7 @@ describe('toMoveCourtPayload (commands)', () => {
     const payload = toMoveCourtPayload({
       fromCourtId: 'uuid-from',
       toCourtId: 'uuid-to',
-    });
+    } as any);
     expect(payload.from_court_id).toBe('uuid-from');
     expect(payload.to_court_id).toBe('uuid-to');
   });
@@ -380,7 +380,7 @@ describe('toMoveCourtPayload (commands)', () => {
 // ============================================================
 describe('toClearWaitlistPayload (commands)', () => {
   it('has frozen key set (empty payload)', () => {
-    const payload = toClearWaitlistPayload({});
+    const payload = toClearWaitlistPayload({} as any);
     expect(sorted(payload)).toEqual([]);
     expect(payload).toEqual({});
   });
@@ -397,7 +397,7 @@ describe('toPurchaseBallsPayload (commands)', () => {
       splitBalls: false,
       splitAccountIds: null,
       idempotencyKey: 'pb-sess-uuid-1-1234',
-    });
+    } as any);
     expect(sorted(payload)).toEqual([
       'account_id',
       'idempotency_key',
@@ -414,7 +414,7 @@ describe('toPurchaseBallsPayload (commands)', () => {
       splitBalls: true,
       splitAccountIds: ['acct-uuid-2', 'acct-uuid-3'],
       idempotencyKey: 'pb-key-1',
-    });
+    } as any);
     expect(payload.session_id).toBe('sess-uuid-1');
     expect(payload.account_id).toBe('acct-uuid-1');
     expect(payload.split_balls).toBe(true);

@@ -20,13 +20,13 @@ describe('availability ESM port', () => {
     delete window.Tennis;
     // Re-import to re-attach
     window.Tennis = window.Tennis || {};
-    window.Tennis.Domain = window.Tennis.Domain || {};
-    window.Tennis.Domain.availability = availability;
-    window.Tennis.Domain.Availability = availability;
+    (window.Tennis as any).Domain = (window.Tennis as any).Domain || {};
+    (window.Tennis as any).Domain.availability = availability;
+    (window.Tennis as any).Domain.Availability = availability;
   });
 
   it('both window casings exist and are same reference', () => {
-    expect(window.Tennis.Domain.availability).toBe(window.Tennis.Domain.Availability);
+    expect((window.Tennis as any).Domain.availability).toBe((window.Tennis as any).Domain.Availability);
   });
 
   it('API has exactly 10 expected keys', () => {
@@ -131,7 +131,7 @@ describe('availability ESM port', () => {
     it('classifies courts correctly', () => {
       // Mock Tennis.Config for this test
       window.Tennis = window.Tennis || {};
-      window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+      (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
 
       const now = new Date('2026-01-01T13:00:00');
       const result = availability.getFreeCourtsInfo({
@@ -192,7 +192,7 @@ describe('availability ESM port', () => {
   describe('getSelectableCourtsStrict', () => {
     it('returns free courts when available', () => {
       window.Tennis = window.Tennis || {};
-      window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+      (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
 
       const result = availability.getSelectableCourtsStrict({
         data: { courts: [null, null, null] } as any,
@@ -205,7 +205,7 @@ describe('availability ESM port', () => {
 
     it('returns overtime courts when no free', () => {
       window.Tennis = window.Tennis || {};
-      window.Tennis.Config = { Courts: { TOTAL_COUNT: 2 } };
+      (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 2 } };
 
       const now = new Date('2026-01-01T13:00:00');
       const result = availability.getSelectableCourtsStrict({
@@ -263,7 +263,7 @@ function overtimeCourt(endOffset = -60, extra = {}) {
 describe('hasSoonBlockConflict (extended)', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('block starts in 30 min, requiredMinutes=60 → conflict', () => {
@@ -411,7 +411,7 @@ describe('hasSoonBlockConflict (extended)', () => {
 describe('getSelectableCourts (extended)', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('returns free courts (not occupied, blocked, or wet)', () => {
@@ -497,7 +497,7 @@ describe('getSelectableCourts (extended)', () => {
 describe('getSelectableCourtsStrict vs getSelectableCourts', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('strict does not filter by active blocks (simpler path)', () => {
@@ -561,7 +561,7 @@ describe('getSelectableCourtsStrict vs getSelectableCourts', () => {
 describe('canAssignToCourt', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   const params = () => ({
@@ -613,7 +613,7 @@ describe('canAssignToCourt', () => {
 describe('shouldAllowWaitlistJoin (extended)', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('all courts occupied → allow join (true)', () => {
@@ -686,7 +686,7 @@ describe('shouldAllowWaitlistJoin (extended)', () => {
 describe('getSelectableCourtsForAssignment', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('returns only truly free courts (excludes overtime)', () => {
@@ -813,7 +813,7 @@ describe('getFreeCourts (branch gaps)', () => {
 describe('getFreeCourtsInfo (branch gaps)', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('tournament overtime is excluded from overtime list', () => {
@@ -894,7 +894,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
 describe('getNextFreeTimes (extended)', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('free court returns now', () => {
@@ -993,7 +993,7 @@ describe('getNextFreeTimes (extended)', () => {
 describe('getCourtStatuses (extended)', () => {
   beforeEach(() => {
     window.Tennis = window.Tennis || {};
-    window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
+    (window.Tennis as any).Config = { Courts: { TOTAL_COUNT: 3 } };
   });
 
   it('wet court has status=wet and selectable=false', () => {

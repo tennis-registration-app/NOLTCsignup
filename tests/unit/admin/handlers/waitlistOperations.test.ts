@@ -245,7 +245,7 @@ describe('clearWaitlistOp', () => {
       commands: { clearWaitlist: vi.fn().mockResolvedValue({ ok: true }) },
     };
 
-    const result = await clearWaitlistOp(backend);
+    const result = await clearWaitlistOp(backend as any);
 
     expect(backend.commands.clearWaitlist).toHaveBeenCalledOnce();
     expect(result).toEqual({ ok: true });
@@ -258,7 +258,7 @@ describe('clearWaitlistOp', () => {
       },
     };
 
-    const result = await clearWaitlistOp(backend);
+    const result = await clearWaitlistOp(backend as any);
 
     expect(result.ok).toBe(false);
   });
@@ -270,6 +270,6 @@ describe('clearWaitlistOp', () => {
       },
     };
 
-    await expect(clearWaitlistOp(backend)).rejects.toThrow('Network');
+    await expect(clearWaitlistOp(backend as any)).rejects.toThrow('Network');
   });
 });

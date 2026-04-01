@@ -16,7 +16,7 @@ vi.mock('../../../../src/lib/logger.js', () => ({
 // ── normalizeMember ────────────────────────────────────────────
 describe('normalizeMember', () => {
   it('returns defaults for null input', () => {
-    expect(normalizeMember(null)).toEqual({
+    expect(normalizeMember(null as any)).toEqual({
       memberId: 'unknown',
       displayName: 'Unknown',
       isGuest: false,
@@ -24,7 +24,7 @@ describe('normalizeMember', () => {
   });
 
   it('returns defaults for undefined input', () => {
-    expect(normalizeMember(undefined)).toEqual({
+    expect(normalizeMember(undefined as any)).toEqual({
       memberId: 'unknown',
       displayName: 'Unknown',
       isGuest: false,
@@ -73,7 +73,7 @@ describe('normalizeMember', () => {
 // ── normalizeAccountMember ─────────────────────────────────────
 describe('normalizeAccountMember', () => {
   it('returns null for null input', () => {
-    expect(normalizeAccountMember(null)).toBeNull();
+    expect(normalizeAccountMember(null as any)).toBeNull();
   });
 
   it('maps snake_case to camelCase', () => {
@@ -101,11 +101,11 @@ describe('normalizeAccountMember', () => {
 // ── normalizeAccountMembers ────────────────────────────────────
 describe('normalizeAccountMembers', () => {
   it('returns empty array for null input', () => {
-    expect(normalizeAccountMembers(null)).toEqual([]);
+    expect(normalizeAccountMembers(null as any)).toEqual([]);
   });
 
   it('returns empty array for non-array input', () => {
-    expect(normalizeAccountMembers('not array')).toEqual([]);
+    expect(normalizeAccountMembers('not array' as any)).toEqual([]);
   });
 
   it('normalizes each member in array', () => {

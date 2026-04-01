@@ -87,7 +87,7 @@ function makeMockHandlers() {
 describe('adminPresenter', () => {
   describe('buildAdminModel', () => {
     it('returns all 17 expected keys', () => {
-      const model = buildAdminModel(makeMockApp() as any, makeMockHandlers());
+      const model = buildAdminModel(makeMockApp() as any, makeMockHandlers() as any);
       expect(Object.keys(model)).toHaveLength(17);
     });
 
@@ -96,13 +96,13 @@ describe('adminPresenter', () => {
       const courtData = { courts: [{ number: 1, session: null }], waitlist: [] };
       handlers.getCourtData.mockReturnValue(courtData);
 
-      const model = buildAdminModel(makeMockApp() as any, handlers);
+      const model = buildAdminModel(makeMockApp() as any, handlers as any);
       expect(handlers.getCourtData).toHaveBeenCalledOnce();
       expect(model.data).toBe(courtData);
     });
 
     it('maps state fields correctly', () => {
-      const model = buildAdminModel(makeMockApp() as any, makeMockHandlers());
+      const model = buildAdminModel(makeMockApp() as any, makeMockHandlers() as any);
       expect(model.currentTime).toBe(1700000000);
       expect(model.courtToMove).toBe(3);
       expect(model.ballPriceInput).toBe('5.00');
@@ -133,13 +133,13 @@ describe('adminPresenter', () => {
 
   describe('buildAdminActions', () => {
     it('returns all 22 expected keys', () => {
-      const actions = buildAdminActions(makeMockApp() as any, makeMockHandlers());
+      const actions = buildAdminActions(makeMockApp() as any, makeMockHandlers() as any);
       expect(Object.keys(actions)).toHaveLength(22);
     });
 
     it('renames handler callbacks to on* convention', () => {
       const handlers = makeMockHandlers();
-      const actions = buildAdminActions(makeMockApp() as any, handlers);
+      const actions = buildAdminActions(makeMockApp() as any, handlers as any);
       expect(actions.onClearAllCourts).toBe(handlers.handleClearAllCourts);
       expect(actions.onClearCourt).toBe(handlers.handleAdminClearCourt);
       expect(actions.onMoveCourt).toBe(handlers.handleMoveCourt);

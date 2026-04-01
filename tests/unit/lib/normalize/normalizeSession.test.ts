@@ -17,11 +17,11 @@ describe('normalizeSession', () => {
   const serverNow = '2024-06-15T12:00:00Z';
 
   it('returns null for null input', () => {
-    expect(normalizeSession(null, serverNow)).toBeNull();
+    expect(normalizeSession(null as any, serverNow)).toBeNull();
   });
 
   it('returns null for undefined input', () => {
-    expect(normalizeSession(undefined, serverNow)).toBeNull();
+    expect(normalizeSession(undefined as any, serverNow)).toBeNull();
   });
 
   it('normalizes camelCase fields', () => {

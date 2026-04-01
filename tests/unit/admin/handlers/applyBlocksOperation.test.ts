@@ -176,7 +176,7 @@ describe('applyBlocksOp', () => {
   it('returns early on null/undefined blocks', async () => {
     const ctx = createCtx();
 
-    await applyBlocksOp(ctx, null);
+    await applyBlocksOp(ctx, null as any);
 
     expect(ctx.backend.admin.createBlock).not.toHaveBeenCalled();
     expect(ctx.showNotification).not.toHaveBeenCalled();
@@ -185,7 +185,7 @@ describe('applyBlocksOp', () => {
   it('returns early on non-array blocks', async () => {
     const ctx = createCtx();
 
-    await applyBlocksOp(ctx, 'not-an-array');
+    await applyBlocksOp(ctx, 'not-an-array' as any);
 
     expect(ctx.backend.admin.createBlock).not.toHaveBeenCalled();
   });

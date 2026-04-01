@@ -80,7 +80,7 @@ describe('classForStatus', () => {
   });
 
   it('returns emerald (free) for null/undefined', () => {
-    expect(classForStatus(null)).toBe(
+    expect(classForStatus(null as any)).toBe(
       'bg-gradient-to-b from-emerald-400 to-emerald-500 border-emerald-400'
     );
     expect(classForStatus(undefined)).toBe(
@@ -101,7 +101,7 @@ describe('classForStatus', () => {
 
 describe('namesFor', () => {
   it('returns empty string for null court', () => {
-    expect(namesFor(null)).toBe('');
+    expect(namesFor(null as any)).toBe('');
   });
 
   it('returns empty string for undefined court', () => {
@@ -138,11 +138,11 @@ describe('namesFor', () => {
     const court = {
       session: {
         group: {
-          players: [{ name: 'Alice' }, { name: null }, { name: 'Bob' }, {}],
+          players: [{ name: "Alice" }, { name: null }, { name: "Bob" }, {}],
         },
       },
     };
-    expect(namesFor(court)).toBe('Alice, Bob');
+    expect(namesFor(court as any)).toBe('Alice, Bob');
   });
 
   it('returns empty string when all players lack names', () => {
@@ -153,7 +153,7 @@ describe('namesFor', () => {
         },
       },
     };
-    expect(namesFor(court)).toBe('');
+    expect(namesFor(court as any)).toBe('');
   });
 
   it('falls back to last history entry when no session.group.players', () => {
@@ -200,7 +200,7 @@ describe('namesFor', () => {
 
 describe('formatTime', () => {
   it('returns null for null input', () => {
-    expect(formatTime(null)).toBeNull();
+    expect(formatTime(null as any)).toBeNull();
   });
 
   it('returns null for undefined input', () => {
@@ -233,7 +233,7 @@ describe('formatTime', () => {
   });
 
   it('returns null for 0 (falsy)', () => {
-    expect(formatTime(0)).toBeNull();
+    expect(formatTime(0 as any)).toBeNull();
   });
 });
 
@@ -463,7 +463,7 @@ describe('computeClock', () => {
   });
 
   it('returns empty primary and secondary for null status', () => {
-    const result = computeClock(null, {}, NOW);
+    const result = computeClock(null as any, {}, NOW);
     expect(result.primary).toBe('');
     expect(result.secondary).toBe('');
   });

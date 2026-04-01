@@ -89,7 +89,7 @@ describe('preflightMoveCourt', () => {
     };
     const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('occupied');
+    expect(result.errors![0]).toContain('occupied');
   });
 
   it('errors when destination is blocked', () => {
@@ -101,7 +101,7 @@ describe('preflightMoveCourt', () => {
     };
     const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('blocked');
+    expect(result.errors![0]).toContain('blocked');
   });
 
   it('handles null board', () => {

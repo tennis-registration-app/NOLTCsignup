@@ -34,14 +34,14 @@ vi.mock('../../../../src/lib/normalize/normalizeWaitlistEntry.js', () => ({
 
 describe('normalizeBoard', () => {
   it('returns empty board for null', () => {
-    const result = normalizeBoard(null);
+    const result = normalizeBoard(null as any);
     expect(result.courts).toEqual([]);
     expect(result.waitlist).toEqual([]);
     expect(result.serverNow).toBeTruthy();
   });
 
   it('returns empty board for undefined', () => {
-    const result = normalizeBoard(undefined);
+    const result = normalizeBoard(undefined as any);
     expect(result.courts).toEqual([]);
     expect(result.waitlist).toEqual([]);
   });
@@ -90,8 +90,8 @@ describe('normalizeBoard', () => {
         { court_id: 'c2', number: 4, status: 'available' },
       ],
     });
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0].courtNumber).toBe(3);
+    expect(result.blocks!).toHaveLength(1);
+    expect(result.blocks![0].courtNumber).toBe(3);
   });
 
   it('normalizes upcomingBlocks', () => {
@@ -102,9 +102,9 @@ describe('normalizeBoard', () => {
         { id: 'b1', courtNumber: 5, startsAt: 's', endsAt: 'e', title: 'Lesson', blockType: 'lesson' },
       ],
     });
-    expect(result.upcomingBlocks).toHaveLength(1);
-    expect(result.upcomingBlocks[0].courtNumber).toBe(5);
-    expect(result.upcomingBlocks[0].isActive).toBe(false);
+    expect(result.upcomingBlocks!).toHaveLength(1);
+    expect(result.upcomingBlocks![0].courtNumber).toBe(5);
+    expect(result.upcomingBlocks![0].isActive).toBe(false);
   });
 
   it('passes through operatingHours', () => {

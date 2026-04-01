@@ -298,30 +298,30 @@ describe('blockTimelinePresenter equivalence', () => {
 
     it('matches legacy: active', () => {
       const during = new Date('2025-06-18T11:00:00');
-      expect(getBlockStatus(block, during)).toBe(legacyGetBlockStatus(block, during));
-      expect(getBlockStatus(block, during)).toBe('active');
+      expect(getBlockStatus(block as any, during)).toBe(legacyGetBlockStatus(block, during));
+      expect(getBlockStatus(block as any, during)).toBe('active');
     });
 
     it('matches legacy: past', () => {
       const after = new Date('2025-06-18T13:00:00');
-      expect(getBlockStatus(block, after)).toBe(legacyGetBlockStatus(block, after));
-      expect(getBlockStatus(block, after)).toBe('past');
+      expect(getBlockStatus(block as any, after)).toBe(legacyGetBlockStatus(block, after));
+      expect(getBlockStatus(block as any, after)).toBe('past');
     });
 
     it('matches legacy: future', () => {
       const before = new Date('2025-06-18T09:00:00');
-      expect(getBlockStatus(block, before)).toBe(legacyGetBlockStatus(block, before));
-      expect(getBlockStatus(block, before)).toBe('future');
+      expect(getBlockStatus(block as any, before)).toBe(legacyGetBlockStatus(block, before));
+      expect(getBlockStatus(block as any, before)).toBe('future');
     });
 
     it('matches legacy: exactly at start time (active)', () => {
       const atStart = new Date('2025-06-18T10:00:00');
-      expect(getBlockStatus(block, atStart)).toBe(legacyGetBlockStatus(block, atStart));
+      expect(getBlockStatus(block as any, atStart)).toBe(legacyGetBlockStatus(block, atStart));
     });
 
     it('matches legacy: exactly at end time (past)', () => {
       const atEnd = new Date('2025-06-18T12:00:00');
-      expect(getBlockStatus(block, atEnd)).toBe(legacyGetBlockStatus(block, atEnd));
+      expect(getBlockStatus(block as any, atEnd)).toBe(legacyGetBlockStatus(block, atEnd));
     });
   });
 

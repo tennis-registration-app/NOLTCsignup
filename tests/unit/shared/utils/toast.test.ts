@@ -9,7 +9,7 @@ describe('toast', () => {
 
   beforeEach(() => {
     events = [];
-    handler = (e) => events.push(e);
+    handler = (e) => events.push(e as CustomEvent<any>);
     window.addEventListener('UI_TOAST', handler);
   });
 
