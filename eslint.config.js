@@ -401,6 +401,7 @@ export default [
       'no-restricted-globals': 'off',
       'no-restricted-properties': 'off',
       'no-restricted-syntax': 'off',
+      'no-console': 'off', // bootstrap/IIFE scripts use console intentionally
     },
   },
   // ADR-006 Phase 1: Fence courtboard ESM — prevent new window.Tennis / IS_MOBILE_VIEW reads.
