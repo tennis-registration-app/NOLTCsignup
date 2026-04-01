@@ -15,7 +15,7 @@ describe('preflightAssignFromWaitlist', () => {
       courts: [availableCourt],
     };
 
-    const result = preflightAssignFromWaitlist(command, board);
+    const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(true);
   });
@@ -27,7 +27,7 @@ describe('preflightAssignFromWaitlist', () => {
       courts: [availableCourt],
     };
 
-    const result = preflightAssignFromWaitlist(command, board);
+    const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(1);
@@ -43,7 +43,7 @@ describe('preflightAssignFromWaitlist', () => {
       courts: [availableCourt],
     };
 
-    const result = preflightAssignFromWaitlist(command, board);
+    const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(1);
@@ -59,7 +59,7 @@ describe('preflightAssignFromWaitlist', () => {
       courts: [availableCourt],
     };
 
-    const result = preflightAssignFromWaitlist(command, board);
+    const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(1);
@@ -75,7 +75,7 @@ describe('preflightAssignFromWaitlist', () => {
       courts: [unavailableCourt],
     };
 
-    const result = preflightAssignFromWaitlist(command, board);
+    const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(1);
@@ -90,7 +90,7 @@ describe('preflightAssignFromWaitlist', () => {
       courts: [availableCourt],
     };
 
-    const result = preflightAssignFromWaitlist(command, board);
+    const result = preflightAssignFromWaitlist(command as any, board as any);
 
     expect(result.ok).toBe(false);
     // Both entry not found AND court not found should be in errors

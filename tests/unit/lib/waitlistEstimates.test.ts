@@ -247,7 +247,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(15);
@@ -289,7 +289,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(20); // Court 2, not Court 1 (tournament)
@@ -330,7 +330,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(30); // Court 1, not Court 8
@@ -371,7 +371,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks,
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       // Court 1 session ends at +5, block starts at +15 (10 min gap < 20 min minimum)
@@ -407,7 +407,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks,
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(45); // Block ends in 45 min
@@ -456,7 +456,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks,
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(60); // Court 2, not Court 1 (insufficient time)
@@ -500,7 +500,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(2);
       expect(result[0]).toBe(10); // Group 1 gets Court 1
@@ -550,7 +550,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(3);
       expect(result[0]).toBe(0);  // Group 1 (singles) gets Court 8 now
@@ -597,7 +597,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks,
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(60); // After both blocks end
@@ -624,7 +624,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(2);
       // Fallback: (position * avgGame) / totalCourts
@@ -641,7 +641,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: [],
         now: baseTime,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toEqual([]);
     });
@@ -653,7 +653,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks: null,
         now: baseTime,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(0); // All courts "free" since none specified
@@ -686,7 +686,7 @@ describe('simulateWaitlistEstimates', () => {
         blocks,
         now,
         avgGameMinutes: 75
-      });
+      } as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toBe(30); // Court 2 (first non-wet), not Court 1

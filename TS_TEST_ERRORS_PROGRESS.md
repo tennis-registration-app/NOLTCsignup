@@ -336,3 +336,73 @@ TS2554: 11 (0)
 Next target: Continue TS2345 (334 remaining) -- partial mocks passed to strict types
 Top files: courtAvailability (21), courtHelpers (20), courtStatusUtils (19), groupPresenter (16), courtPresenter (16)
 Approach: Cast partial test objects with as any at call sites or add return type any to factory fns
+
+---
+
+## Iteration 7 -- 2026-03-31
+Pattern fixed: TS2345 -- type mismatch errors (partial mock objects and invalid test inputs)
+Errors before: 1609
+Errors after: 1419
+Reduction: 190 errors (-12%)
+
+### Files fixed
+- tests/unit/shared/courtAvailability.test.ts: partial Court/Block objects → as any at call sites (21 errors)
+- tests/unit/lib/courtHelpers.test.ts: partial Court/DomainSession objects → as any at call sites (20 errors)
+- tests/unit/admin/courts/courtStatusUtils.test.ts: new Set() → new Set<number>(), null/undefined → as any (19 errors)
+- tests/unit/registration/groupPresenter.test.ts: makeMockApp()/workflow → as any at call sites (16 errors)
+- tests/unit/registration/courtPresenter.test.ts: makeMockApp()/workflow → as any at call sites (16 errors)
+- tests/unit/registration/successPresenter.test.ts: makeMockApp()/workflow → as any at call sites (14 errors)
+- tests/unit/lib/waitlistEstimates.test.ts: missing closingHour → as any at call sites (13 errors)
+- tests/unit/config/runtimeConfig.test.ts: partial ImportMetaEnv objects → as any (12 errors)
+- tests/unit/platform/attachLegacyEvents.test.ts: vi.fn() → as any, {postMessage} → as any (11 errors)
+- tests/unit/lib/domain/engagement.test.ts: null/partial Board/Engagement → as any (11 errors)
+- tests/unit/registration/homePresenter.test.ts: makeMockApp() → as any at call sites (10 errors)
+- tests/unit/tennis/availability.test.ts: new Set() → new Set<number>(), params → as any (9 errors)
+- tests/unit/lib/TennisBusinessLogic.test.ts: null/invalid inputs → as any (9 errors)
+- tests/unit/lib/formatters.test.ts: wrong-type inputs → as any (8 errors)
+- tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts: partial objects → as any (8 errors)
+- tests/unit/registration/adminPresenter.test.ts: makeMockApp() → as any at call sites (7 errors)
+- tests/unit/platform/attachLegacyBlocks.test.ts: null/undefined/string → as any, string|null → as string (7 errors)
+- tests/unit/lib/commands/assignCourt.test.ts: partial Board → as any (6 errors)
+- tests/unit/lib/commands/assignFromWaitlist.test.ts: partial command/Board → as any (6 errors)
+- tests/unit/lib/commands/createBlock.test.ts: partial Board → as any (6 errors)
+- tests/unit/lib/commands/moveCourt.test.ts: partial Board → as any (6 errors)
+
+### Type patterns used
+- as any -- for partial mock objects at call sites (court, board, session, workflow, env objects)
+- as string -- for localStorage.getItem() return (string | null → string)
+- new Set<number>() -- for Set<unknown> where Set<number> expected
+
+### Notes
+- TS2345 reduced from 334 to 146 (-188)
+- TS2322 increased from 262 to 260 (-2, cascade from typed args)
+- Previously masked errors surfaced in some files (TS2304, TS2307, TS2722, TS2739, TS2551)
+
+---
+
+## Current Baseline: 1419 errors (after iteration 7)
+
+### Current Distribution
+TS2322: 260 (-2)
+TS7006: 207 (0)
+TS2339: 194 (0)
+TS2571: 161 (0)
+TS2345: 146 (-188)
+TS18048: 92 (0)
+TS2353: 87 (0)
+TS18046: 79 (0)
+TS7053: 47 (0)
+TS7031: 41 (0)
+TS2531: 19 (0)
+TS2769: 17 (0)
+TS2740: 15 (0)
+TS7019: 13 (0)
+TS2554: 11 (0)
+TS2551: 8 (new)
+TS2739: 7 (new)
+TS2304: 5 (new)
+TS2722: 2 (new)
+TS2307: 2 (new)
+
+Next target: TS2322 (260) -- type assignment mismatches
+Approach: Look for mis-typed property assignments and return types in test files

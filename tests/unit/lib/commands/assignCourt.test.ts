@@ -75,12 +75,12 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: true, number: 1 }],
       waitlist: [],
     };
-    expect(preflightAssignCourt(cmd, board)).toEqual({ ok: true });
+    expect(preflightAssignCourt(cmd, board as any)).toEqual({ ok: true });
   });
 
   it('errors when court not found', () => {
     const board = { courts: [{ id: 'other', isAvailable: true }], waitlist: [] };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Court not found');
   });
@@ -90,7 +90,7 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: false, isOccupied: true, number: 1 }],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('occupied');
   });
@@ -100,7 +100,7 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: false, isBlocked: true, number: 1 }],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('blocked');
   });
@@ -110,7 +110,7 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: false, number: 1 }],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('not available');
   });
@@ -127,7 +127,7 @@ describe('preflightAssignCourt', () => {
       ],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('already playing');
   });

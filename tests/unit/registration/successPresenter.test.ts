@@ -94,13 +94,13 @@ function makeMockHandlers() {
 describe('successPresenter', () => {
   describe('buildSuccessModel', () => {
     it('returns all 21 expected keys', () => {
-      const model = buildSuccessModel(makeMockApp(), makeMockWorkflow(), makeMockComputed());
+      const model = buildSuccessModel(makeMockApp() as any, makeMockWorkflow(), makeMockComputed());
       expect(Object.keys(model)).toHaveLength(21);
     });
 
     it('maps computed values correctly', () => {
       const computed = makeMockComputed();
-      const model = buildSuccessModel(makeMockApp(), makeMockWorkflow(), computed);
+      const model = buildSuccessModel(makeMockApp() as any, makeMockWorkflow(), computed);
       expect(model.isCourtAssignment).toBe(true);
       expect(model.assignedCourt).toBe(computed.assignedCourt);
       expect(model.position).toBe(2);
@@ -109,7 +109,7 @@ describe('successPresenter', () => {
 
     it('maps workflow-sourced fields correctly', () => {
       const workflow = makeMockWorkflow();
-      const model = buildSuccessModel(makeMockApp(), workflow, makeMockComputed());
+      const model = buildSuccessModel(makeMockApp() as any, workflow, makeMockComputed());
       expect(model.justAssignedCourt).toBe(5);
       expect(model.replacedGroup).toBe(workflow.replacedGroup);
       expect(model.canChangeCourt).toBe(true);
@@ -121,7 +121,7 @@ describe('successPresenter', () => {
     });
 
     it('renames assignedSessionId to sessionId', () => {
-      const model = buildSuccessModel(makeMockApp(), makeMockWorkflow(), makeMockComputed());
+      const model = buildSuccessModel(makeMockApp() as any, makeMockWorkflow(), makeMockComputed());
       expect(model.sessionId).toBe('sess-abc');
     });
 
@@ -150,7 +150,7 @@ describe('successPresenter', () => {
 
     it('maps shell-sourced utility fields correctly', () => {
       const app = makeMockApp();
-      const model = buildSuccessModel(app, makeMockWorkflow(), makeMockComputed());
+      const model = buildSuccessModel(app as any, makeMockWorkflow() as any, makeMockComputed() as any);
       expect(model.ballPriceCents).toBe(500);
       expect(model.TENNIS_CONFIG).toBe(app.TENNIS_CONFIG);
       expect(model.getCourtBlockStatus).toBe(app.admin.blockAdmin.getCourtBlockStatus);
@@ -165,7 +165,7 @@ describe('successPresenter', () => {
 
   describe('buildSuccessActions', () => {
     it('returns all 5 expected keys', () => {
-      const actions = buildSuccessActions(makeMockApp(), makeMockHandlers());
+      const actions = buildSuccessActions(makeMockApp() as any, makeMockHandlers());
       expect(Object.keys(actions).sort()).toEqual([
         'onChangeCourt',
         'onHome',
@@ -177,14 +177,14 @@ describe('successPresenter', () => {
 
     it('maps onChangeCourt from changeCourt and onHome from resetForm', () => {
       const handlers = makeMockHandlers();
-      const actions = buildSuccessActions(makeMockApp(), handlers);
+      const actions = buildSuccessActions(makeMockApp() as any, handlers);
       expect(actions.onChangeCourt).toBe(handlers.changeCourt);
       expect(actions.onHome).toBe(handlers.resetForm);
     });
 
     it('onPurchaseBalls calls backend.commands.purchaseBalls with correct params', async () => {
       const app = makeMockApp();
-      const actions = buildSuccessActions(app, makeMockHandlers());
+      const actions = buildSuccessActions(app as any, makeMockHandlers() as any);
 
       const result = await actions.onPurchaseBalls('sess-1', 'acct-2', {
         splitBalls: true,
@@ -202,7 +202,7 @@ describe('successPresenter', () => {
 
     it('onPurchaseBalls defaults splitBalls to false and splitAccountIds to null', async () => {
       const app = makeMockApp();
-      const actions = buildSuccessActions(app, makeMockHandlers());
+      const actions = buildSuccessActions(app as any, makeMockHandlers() as any);
 
       await actions.onPurchaseBalls('sess-1', 'acct-2');
 
@@ -216,7 +216,7 @@ describe('successPresenter', () => {
 
     it('onLookupMemberAccount calls backend.directory.getMembersByAccount', async () => {
       const app = makeMockApp();
-      const actions = buildSuccessActions(app, makeMockHandlers());
+      const actions = buildSuccessActions(app as any, makeMockHandlers() as any);
 
       const result = await actions.onLookupMemberAccount('M-999');
 
@@ -226,7 +226,7 @@ describe('successPresenter', () => {
 
     it('onUpdateSessionTournament calls backend.commands.updateSessionTournament', async () => {
       const app = makeMockApp();
-      const actions = buildSuccessActions(app, makeMockHandlers());
+      const actions = buildSuccessActions(app as any, makeMockHandlers() as any);
 
       const result = await actions.onUpdateSessionTournament('sess-1', true);
 

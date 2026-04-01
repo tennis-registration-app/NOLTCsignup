@@ -20,7 +20,7 @@ import {
 function makeDeps(overrides = {}) {
   const now = new Date('2025-06-15T14:00:00Z');
   return {
-    wetCourts: new Set(),
+    wetCourts: new Set<number>(),
     courtBlocks: [],
     selectedDate: now,
     currentTime: now,
@@ -43,7 +43,7 @@ describe('getCourtStatus', () => {
   });
 
   it('returns wet when wetCourts Set has courtNumber', () => {
-    const deps = makeDeps({ wetCourts: new Set([3]) });
+    const deps = makeDeps({ wetCourts: new Set<number>([3]) });
     const result = getCourtStatus(null, 3, deps);
     expect(result.status).toBe('wet');
   });
@@ -191,7 +191,7 @@ describe('getCourtStatus', () => {
       startTime: '2025-06-15T13:00:00Z',
       endTime: '2025-06-15T15:00:00Z',
     };
-    const deps = makeDeps({ wetCourts: new Set([1]) });
+    const deps = makeDeps({ wetCourts: new Set<number>([1]) });
     const result = getCourtStatus(court, 1, deps);
     expect(result.status).toBe('wet');
   });
@@ -308,7 +308,7 @@ describe('getStatusColor', () => {
   });
 
   it('returns default for undefined', () => {
-    expect(getStatusColor(undefined)).toBe('bg-gray-100 border-gray-300');
+    expect(getStatusColor(undefined as any)).toBe('bg-gray-100 border-gray-300');
   });
 });
 
@@ -370,11 +370,11 @@ describe('formatTimeRemaining', () => {
 
 describe('getPlayerNames', () => {
   it('returns "No players" for null', () => {
-    expect(getPlayerNames(null)).toBe('No players');
+    expect(getPlayerNames(null as any)).toBe('No players');
   });
 
   it('returns "No players" for undefined', () => {
-    expect(getPlayerNames(undefined)).toBe('No players');
+    expect(getPlayerNames(undefined as any)).toBe('No players');
   });
 
   it('returns "No players" for empty array', () => {

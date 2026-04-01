@@ -49,12 +49,12 @@ describe('preflightMoveCourt', () => {
         { id: 'court-2', number: 2, isAvailable: true },
       ],
     };
-    expect(preflightMoveCourt(cmd, board)).toEqual({ ok: true });
+    expect(preflightMoveCourt(cmd, board as any)).toEqual({ ok: true });
   });
 
   it('errors when source not found', () => {
     const board = { courts: [{ id: 'court-2', isAvailable: true, number: 2 }] };
-    const result = preflightMoveCourt(cmd, board);
+    const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Source court not found');
   });
@@ -66,7 +66,7 @@ describe('preflightMoveCourt', () => {
         { id: 'court-2', number: 2, isAvailable: true },
       ],
     };
-    const result = preflightMoveCourt(cmd, board);
+    const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Source court has no active session');
   });
@@ -75,7 +75,7 @@ describe('preflightMoveCourt', () => {
     const board = {
       courts: [{ id: 'court-1', number: 1, session: { group: {} } }],
     };
-    const result = preflightMoveCourt(cmd, board);
+    const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Destination court not found');
   });
@@ -87,7 +87,7 @@ describe('preflightMoveCourt', () => {
         { id: 'court-2', number: 2, isAvailable: false, isOccupied: true },
       ],
     };
-    const result = preflightMoveCourt(cmd, board);
+    const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('occupied');
   });
@@ -99,7 +99,7 @@ describe('preflightMoveCourt', () => {
         { id: 'court-2', number: 2, isAvailable: false, isBlocked: true },
       ],
     };
-    const result = preflightMoveCourt(cmd, board);
+    const result = preflightMoveCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors[0]).toContain('blocked');
   });

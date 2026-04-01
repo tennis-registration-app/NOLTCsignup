@@ -84,7 +84,7 @@ function makeMockActionsComputed() {
 describe('courtPresenter', () => {
   describe('buildCourtModel', () => {
     it('returns all 9 expected keys', () => {
-      const model = buildCourtModel(makeMockApp(), makeMockWorkflow(), makeMockComputed());
+      const model = buildCourtModel(makeMockApp() as any, makeMockWorkflow(), makeMockComputed());
       expect(Object.keys(model).sort()).toEqual([
         'availableCourts',
         'currentGroup',
@@ -100,7 +100,7 @@ describe('courtPresenter', () => {
 
     it('maps computed values by reference', () => {
       const computed = makeMockComputed();
-      const model = buildCourtModel(makeMockApp(), makeMockWorkflow(), computed);
+      const model = buildCourtModel(makeMockApp() as any, makeMockWorkflow(), computed);
       expect(model.availableCourts).toBe(computed.availableCourts);
       expect(model.showingOvertimeCourts).toBe(true);
       expect(model.hasWaitingGroups).toBe(true);
@@ -110,7 +110,7 @@ describe('courtPresenter', () => {
 
     it('maps workflow-sourced fields correctly', () => {
       const workflow = makeMockWorkflow();
-      const model = buildCourtModel(makeMockApp(), workflow, makeMockComputed());
+      const model = buildCourtModel(makeMockApp() as any, workflow, makeMockComputed());
       expect(model.currentGroup).toBe(workflow.groupGuest.currentGroup);
       expect(model.hasWaitlistPriority).toBe(true);
       expect(model.currentWaitlistEntryId).toBe('wl-42');
@@ -118,7 +118,7 @@ describe('courtPresenter', () => {
 
     it('maps shell-sourced isMobileView from app.derived', () => {
       const app = makeMockApp();
-      const model = buildCourtModel(app, makeMockWorkflow(), makeMockComputed());
+      const model = buildCourtModel(app as any, makeMockWorkflow() as any, makeMockComputed() as any);
       expect(model.isMobileView).toBe(true);
     });
   });
@@ -177,7 +177,7 @@ describe('courtPresenter', () => {
       workflow.isChangingCourt = false;
       const computed = { computedAvailableCourts: [1, 4, 7] };
 
-      const actions = buildCourtActions(makeMockApp(), workflow, handlers, computed);
+      const actions = buildCourtActions(makeMockApp() as any, workflow, handlers, computed);
       await actions.onCourtSelect(5);
 
       expect(handlers.undoOvertimeAndClearPrevious).not.toHaveBeenCalled();
@@ -203,7 +203,7 @@ describe('courtPresenter', () => {
         callOrder.push('assign');
       });
 
-      const actions = buildCourtActions(makeMockApp(), workflow, handlers, computed);
+      const actions = buildCourtActions(makeMockApp() as any, workflow, handlers, computed);
       await actions.onCourtSelect(6);
 
       expect(callOrder).toEqual(['undo', 'assign']);
@@ -227,7 +227,7 @@ describe('courtPresenter', () => {
       const app = makeMockApp();
       app.mobile.mobileFlow = false;
 
-      const actions = buildCourtActions(app, workflow, handlers, makeMockActionsComputed());
+      const actions = buildCourtActions(app as any, workflow as any, handlers as any, makeMockActionsComputed() as any);
       await actions.onJoinWaitlist();
 
       expect(handlers.sendGroupToWaitlist).toHaveBeenCalledWith([{ displayName: 'Bob' }]);
@@ -249,7 +249,7 @@ describe('courtPresenter', () => {
       const app = makeMockApp();
       app.mobile.mobileFlow = true;
 
-      const actions = buildCourtActions(app, workflow, handlers, makeMockActionsComputed());
+      const actions = buildCourtActions(app as any, workflow as any, handlers as any, makeMockActionsComputed() as any);
       await actions.onJoinWaitlist();
 
       expect(handlers.sendGroupToWaitlist).toHaveBeenCalledWith([{ displayName: 'Carol' }]);
@@ -266,7 +266,7 @@ describe('courtPresenter', () => {
       const app = makeMockApp();
       app.mobile.mobileFlow = true;
 
-      const actions = buildCourtActions(app, workflow, handlers, makeMockActionsComputed());
+      const actions = buildCourtActions(app as any, workflow as any, handlers as any, makeMockActionsComputed() as any);
       await actions.onJoinWaitlist();
 
       expect(handlers.sendGroupToWaitlist).toHaveBeenCalledWith([]);
@@ -280,7 +280,7 @@ describe('courtPresenter', () => {
       const app = makeMockApp();
       const handlers = makeMockHandlers();
 
-      const actions = buildCourtActions(app, workflow, handlers, makeMockActionsComputed());
+      const actions = buildCourtActions(app as any, workflow as any, handlers as any, makeMockActionsComputed() as any);
       actions.onGoBack();
 
       expect(app.setters.setCurrentScreen).toHaveBeenCalledWith('group', 'courtGoBack');
@@ -300,7 +300,7 @@ describe('courtPresenter', () => {
       handlers.getCourtData.mockReturnValue(courtDataObj);
       const app = makeMockApp();
 
-      const actions = buildCourtActions(app, workflow, handlers, makeMockActionsComputed());
+      const actions = buildCourtActions(app as any, workflow as any, handlers as any, makeMockActionsComputed() as any);
       actions.onGoBack();
 
       expect(handlers.getCourtData).toHaveBeenCalledOnce();
@@ -315,7 +315,7 @@ describe('courtPresenter', () => {
       const workflow = makeMockWorkflow();
       workflow.groupGuest.currentGroup = [{ displayName: 'Dan' }];
 
-      const actions = buildCourtActions(makeMockApp(), workflow, handlers, makeMockActionsComputed());
+      const actions = buildCourtActions(makeMockApp() as any, workflow, handlers, makeMockActionsComputed());
       actions.onJoinWaitlistDeferred();
 
       expect(handlers.joinWaitlistDeferred).toHaveBeenCalledWith([{ displayName: 'Dan' }]);

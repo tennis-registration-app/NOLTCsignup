@@ -9,8 +9,8 @@ import { TennisBusinessLogic } from '../../../src/lib/TennisBusinessLogic.js';
 
 describe('TennisBusinessLogic.formatPlayerDisplayName', () => {
   it('returns empty string for null/undefined', () => {
-    expect(TennisBusinessLogic.formatPlayerDisplayName(null)).toBe('');
-    expect(TennisBusinessLogic.formatPlayerDisplayName(undefined)).toBe('');
+    expect(TennisBusinessLogic.formatPlayerDisplayName(null as any)).toBe('');
+    expect(TennisBusinessLogic.formatPlayerDisplayName(undefined as any)).toBe('');
   });
 
   it('returns empty string for empty string', () => {
@@ -36,7 +36,7 @@ describe('TennisBusinessLogic.formatPlayerDisplayName', () => {
 
 describe('TennisBusinessLogic.checkGroupOverlap', () => {
   it('returns no overlap for null/undefined groups', () => {
-    const result = TennisBusinessLogic.checkGroupOverlap(null, null);
+    const result = TennisBusinessLogic.checkGroupOverlap(null as any, null as any);
     expect(result.hasOverlap).toBe(false);
     expect(result.overlappingPlayers).toEqual([]);
   });
@@ -111,7 +111,7 @@ describe('TennisBusinessLogic.calculateGameDuration', () => {
 
 describe('TennisBusinessLogic.isPlayerAlreadyPlaying', () => {
   it('returns not playing for null data', () => {
-    const result = TennisBusinessLogic.isPlayerAlreadyPlaying('123', null);
+    const result = TennisBusinessLogic.isPlayerAlreadyPlaying('123', null as any);
     expect(result.isPlaying).toBe(false);
   });
 
@@ -214,7 +214,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
   });
 
   it('returns 0 for null courts', () => {
-    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, null, new Date())).toBe(0);
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, null as any, new Date())).toBe(0);
   });
 
   it('returns 0 for non-array courts', () => {
@@ -301,12 +301,12 @@ describe('TennisBusinessLogic.getOriginalEndTimeForGroup', () => {
   });
 
   it('returns null for non-array players', () => {
-    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(null, [])).toBeNull();
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(null as any, [])).toBeNull();
   });
 
   it('returns null for non-array recentlyCleared', () => {
     const players = [{ memberId: '1', name: 'A' }];
-    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(players, null)).toBeNull();
+    expect(TennisBusinessLogic.getOriginalEndTimeForGroup(players, null as any)).toBeNull();
   });
 
   it('returns originalEndTime when exact group match found', () => {

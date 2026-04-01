@@ -31,7 +31,7 @@ describe('attachLegacyBlocks', () => {
     const result = await saveBlocks(blocks);
 
     expect(result).toEqual({ success: true });
-    const stored = JSON.parse(localStorage.getItem(STORAGE.BLOCKS));
+    const stored = JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string);
     expect(stored).toEqual(blocks);
   });
 
@@ -87,14 +87,14 @@ describe('attachLegacyBlocks', () => {
   it('saveBlocks normalizes non-array input to empty array', async () => {
     const { saveBlocks } = await import('../../../src/platform/attachLegacyBlocks.js');
 
-    await saveBlocks(null);
-    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS))).toEqual([]);
+    await saveBlocks(null as any);
+    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string)).toEqual([]);
 
-    await saveBlocks(undefined);
-    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS))).toEqual([]);
+    await saveBlocks(undefined as any);
+    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string)).toEqual([]);
 
-    await saveBlocks('invalid');
-    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS))).toEqual([]);
+    await saveBlocks('invalid' as any);
+    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string)).toEqual([]);
   });
 
   it('is idempotent - does not overwrite existing saveBlocks', async () => {

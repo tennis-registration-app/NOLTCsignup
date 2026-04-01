@@ -61,7 +61,7 @@ describe('availability ESM port', () => {
       },
       now,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0]?.status).toBe('overtime');
   });
@@ -71,7 +71,7 @@ describe('availability ESM port', () => {
       data: { courts: Array(12).fill(null) },
       now: new Date(),
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toBe(false);
   });
@@ -82,7 +82,7 @@ describe('availability ESM port', () => {
         data: { courts: [null, null, null] },
         now: new Date(),
         blocks: [],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       });
       expect(result).toEqual([1, 2, 3]);
     });
@@ -104,7 +104,7 @@ describe('availability ESM port', () => {
         },
         now: new Date(),
         blocks: [],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       });
       expect(result).toEqual([1, 3]);
     });
@@ -121,7 +121,7 @@ describe('availability ESM port', () => {
             endTime: '2026-01-01T11:00:00',
           },
         ],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       });
       expect(result).toEqual([1, 3]);
     });
@@ -144,7 +144,7 @@ describe('availability ESM port', () => {
         },
         now,
         blocks: [],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       });
 
       expect(result.free).toEqual([1]);
@@ -198,7 +198,7 @@ describe('availability ESM port', () => {
         data: { courts: [null, null, null] },
         now: new Date(),
         blocks: [],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       });
       expect(result).toEqual([1, 2, 3]);
     });
@@ -217,7 +217,7 @@ describe('availability ESM port', () => {
         },
         now,
         blocks: [],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       });
       expect(result).toEqual([1]);
     });
@@ -415,10 +415,10 @@ describe('getSelectableCourts (extended)', () => {
 
   it('returns free courts (not occupied, blocked, or wet)', () => {
     const result = getSelectableCourts({
-      data: makeData({ 2: occupiedCourt(120) }),
+      data: makeData({ 2: occupiedCourt(120) } as any),
       now: T,
       blocks: [block(3, -30, 30)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([1]);
   });
@@ -428,8 +428,8 @@ describe('getSelectableCourts (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30), block(2, -30, 30), block(3, -30, 30)],
-      wetSet: new Set(),
-    });
+      wetSet: new Set<number>(),
+    } as any);
     expect(result).toEqual([]);
   });
 
@@ -439,7 +439,7 @@ describe('getSelectableCourts (extended)', () => {
       now: T,
       blocks: [],
       wetSet: new Set([1, 3]),
-    });
+    } as any);
     expect(result).toEqual([2]);
   });
 
@@ -449,10 +449,10 @@ describe('getSelectableCourts (extended)', () => {
         1: occupiedCourt(120),
         2: overtimeCourt(-60),
         3: occupiedCourt(120),
-      }),
+      } as any),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([2]);
   });
@@ -463,10 +463,10 @@ describe('getSelectableCourts (extended)', () => {
         1: null,
         2: overtimeCourt(-60),
         3: occupiedCourt(120),
-      }),
+      } as any),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([1]);
   });
@@ -477,8 +477,8 @@ describe('getSelectableCourts (extended)', () => {
     const result = getSelectableCourts({
       data: makeData(),
       now: T,
-      blocks: [block(1, -30, 30, { isWetCourt: true })],
-      wetSet: new Set(),
+      blocks: [block(1, -30, 30, { isWetCourt: true } as any)],
+      wetSet: new Set<number>(),
     });
     // Court 1 is still free because isWetCourt blocks are skipped in activeBlocked filter
     // But getFreeCourtsInfo still marks it as blocked via its own block check
@@ -507,11 +507,11 @@ describe('getSelectableCourtsStrict vs getSelectableCourts', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     };
 
-    const strict = getSelectableCourtsStrict(params);
-    const nonStrict = getSelectableCourts(params);
+    const strict = getSelectableCourtsStrict(params as any);
+    const nonStrict = getSelectableCourts(params as any);
 
     // Both should exclude court 1 (blocked in getFreeCourtsInfo)
     // Strict: [2, 3]
@@ -529,11 +529,11 @@ describe('getSelectableCourtsStrict vs getSelectableCourts', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     };
 
-    const strict = getSelectableCourtsStrict(params);
-    const nonStrict = getSelectableCourts(params);
+    const strict = getSelectableCourtsStrict(params as any);
+    const nonStrict = getSelectableCourts(params as any);
 
     expect(strict).toEqual([2]);
     expect(nonStrict).toEqual([2]);
@@ -545,10 +545,10 @@ describe('getSelectableCourtsStrict vs getSelectableCourts', () => {
         1: occupiedCourt(120),
         2: occupiedCourt(120),
         3: occupiedCourt(120),
-      }),
+      } as any),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([]);
   });
@@ -567,27 +567,27 @@ describe('canAssignToCourt', () => {
     data: makeData({ 2: occupiedCourt(120) }),
     now: T,
     blocks: [block(3, -30, 30)],
-    wetSet: new Set(),
+    wetSet: new Set<number>(),
   });
 
   it('court is free and unblocked → true', () => {
-    expect(canAssignToCourt(1, params())).toBe(true);
+    expect(canAssignToCourt(1, params() as any)).toBe(true);
   });
 
   it('court is occupied → false', () => {
-    expect(canAssignToCourt(2, params())).toBe(false);
+    expect(canAssignToCourt(2, params() as any)).toBe(false);
   });
 
   it('court is blocked → false', () => {
-    expect(canAssignToCourt(3, params())).toBe(false);
+    expect(canAssignToCourt(3, params() as any)).toBe(false);
   });
 
   it('court is wet → false', () => {
-    expect(canAssignToCourt(1, { ...params(), wetSet: new Set([1]) })).toBe(false);
+    expect(canAssignToCourt(1, { ...params(), wetSet: new Set([1]) } as any)).toBe(false);
   });
 
   it('court number not in data range → false', () => {
-    expect(canAssignToCourt(99, params())).toBe(false);
+    expect(canAssignToCourt(99, params() as any)).toBe(false);
   });
 
   it('overtime court is not assignable (assignment requires truly free)', () => {
@@ -600,7 +600,7 @@ describe('canAssignToCourt', () => {
         }),
         now: T,
         blocks: [],
-        wetSet: new Set(),
+        wetSet: new Set<number>(),
       })
     ).toBe(false);
   });
@@ -624,7 +624,7 @@ describe('shouldAllowWaitlistJoin (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toBe(true);
   });
@@ -638,7 +638,7 @@ describe('shouldAllowWaitlistJoin (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toBe(false);
   });
@@ -648,7 +648,7 @@ describe('shouldAllowWaitlistJoin (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30), block(2, -30, 30), block(3, -30, 30)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toBe(true);
   });
@@ -662,7 +662,7 @@ describe('shouldAllowWaitlistJoin (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // getSelectableCourtsStrict returns [1] (overtime fallback) → not empty → false
     expect(result).toBe(false);
@@ -697,7 +697,7 @@ describe('getSelectableCourtsForAssignment', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // getSelectableCourts returns [1] (free preferred), filter by trulyFree [1] → [1]
     expect(result).toEqual([1]);
@@ -712,7 +712,7 @@ describe('getSelectableCourtsForAssignment', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // getSelectableCourts returns [1] (overtime fallback), trulyFree = [] → intersection = []
     expect(result).toEqual([]);
@@ -723,7 +723,7 @@ describe('getSelectableCourtsForAssignment', () => {
       data: makeData(),
       now: T,
       blocks: [block(2, -30, 30)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([1, 3]);
   });
@@ -744,13 +744,13 @@ describe('getSelectableCourtsForAssignment', () => {
 // ============================================================
 describe('getFreeCourts (branch gaps)', () => {
   it('throws for invalid data', () => {
-    expect(() => getFreeCourts({ data: null, now: T, blocks: [], wetSet: new Set() })).toThrow(
+    expect(() => getFreeCourts({ data: null, now: T, blocks: [], wetSet: new Set<number>() })).toThrow(
       'Invalid data'
     );
   });
 
   it('throws for missing courts array', () => {
-    expect(() => getFreeCourts({ data: {}, now: T, blocks: [], wetSet: new Set() })).toThrow(
+    expect(() => getFreeCourts({ data: {}, now: T, blocks: [], wetSet: new Set<number>() })).toThrow(
       'Invalid data'
     );
   });
@@ -760,7 +760,7 @@ describe('getFreeCourts (branch gaps)', () => {
       data: { courts: [null] },
       now: '2026-06-15T14:00:00Z',
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([1]);
   });
@@ -770,7 +770,7 @@ describe('getFreeCourts (branch gaps)', () => {
       data: { courts: [null] },
       now: T,
       blocks: null,
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([1]);
   });
@@ -790,7 +790,7 @@ describe('getFreeCourts (branch gaps)', () => {
       data: { courts: [null, null] },
       now: T,
       blocks: [{ court: 1, startTime: mins(-30), endTime: mins(30) }],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([2]);
   });
@@ -800,7 +800,7 @@ describe('getFreeCourts (branch gaps)', () => {
       data: { courts: [null, null] },
       now: T,
       blocks: [{ courtNumber: 1, start: mins(-30), end: mins(30) }],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result).toEqual([2]);
   });
@@ -822,7 +822,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // isTournament → excluded from overtime by `!session.isTournament` check
     expect(result.overtime).toEqual([]);
@@ -846,7 +846,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result.free).not.toContain(1);
     // blocked courts end up in occupied (catch-all)
@@ -858,7 +858,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
       data: { courts: null },
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // All 3 courts are in "occupied" because loop runs 0 times, nothing added to free/overtime
     expect(result.free).toEqual([]);
@@ -870,7 +870,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
       data: makeData({ 1: overtimeCourt(-60) }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result.meta.total).toBe(3);
     expect(result.meta.overtimeCount).toBe(1);
@@ -881,7 +881,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
       data: makeData(),
       now: T,
       blocks: [{ court: 2, startTime: mins(-30), endTime: mins(30) }],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result.free).not.toContain(2);
   });
@@ -901,7 +901,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result[0].getTime()).toBe(T.getTime());
   });
@@ -912,7 +912,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData({ 1: occupiedCourt(120) }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result[0].toISOString()).toBe(endTime);
   });
@@ -934,7 +934,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -15, 30), block(1, 30, 90)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // base starts at T, first block effective start = T-15-15min = T-30min ≤ T < T+30 → advance to T+30
     // second block effective start = T+30-15min = T+15 ≤ T+30 < T+90 → advance to T+90
@@ -947,7 +947,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, 10, 60)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // Should advance past block end (T+60)
     expect(result[0].toISOString()).toBe(mins(60));
@@ -959,7 +959,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, 30, 90)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result[0].getTime()).toBe(T.getTime());
   });
@@ -969,7 +969,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData(),
       now: T,
       blocks: null,
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(result[0].getTime()).toBe(T.getTime());
   });
@@ -1012,7 +1012,7 @@ describe('getCourtStatuses (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30, { title: 'Maintenance', label: 'Maint' })],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].status).toBe('blocked');
     expect(statuses[0].selectable).toBe(false);
@@ -1025,7 +1025,7 @@ describe('getCourtStatuses (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30, { title: 'Tournament' })],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].blockedLabel).toBe('Tournament');
   });
@@ -1035,7 +1035,7 @@ describe('getCourtStatuses (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30, { reason: 'Resurfacing' })],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].blockedLabel).toBe('Resurfacing');
   });
@@ -1045,7 +1045,7 @@ describe('getCourtStatuses (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [block(1, -30, 30)],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].blockedLabel).toBe('Blocked');
   });
@@ -1055,7 +1055,7 @@ describe('getCourtStatuses (extended)', () => {
       data: makeData({ 1: occupiedCourt(120) }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].status).toBe('occupied');
     expect(statuses[0].selectable).toBe(false);
@@ -1066,7 +1066,7 @@ describe('getCourtStatuses (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].selectable).toBe(true);
     expect(statuses[0].selectableReason).toBe('free');
@@ -1081,7 +1081,7 @@ describe('getCourtStatuses (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].status).toBe('overtime');
     expect(statuses[0].selectable).toBe(true);
@@ -1097,7 +1097,7 @@ describe('getCourtStatuses (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     // Court 2 is overtime but court 1 is free
     expect(statuses[1].status).toBe('overtime');
@@ -1113,7 +1113,7 @@ describe('getCourtStatuses (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].status).toBe('overtime');
     expect(statuses[0].selectable).toBe(false); // tournament overtime never selectable
@@ -1130,7 +1130,7 @@ describe('getCourtStatuses (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
       upcomingBlocks: [block(1, 10, 90)],
     });
     // Court 1 free but < 20 min usable → hasUsableFree = false
@@ -1150,7 +1150,7 @@ describe('getCourtStatuses (extended)', () => {
       }),
       now: T,
       blocks: [],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
       upcomingBlocks: [block(1, 30, 90)],
     });
     // Court 1 free, 30 min until block (>= 20) → hasUsableFree = true
@@ -1172,7 +1172,7 @@ describe('getCourtStatuses (extended)', () => {
           type: 'event',
         },
       ],
-      wetSet: new Set(),
+      wetSet: new Set<number>(),
     });
     expect(statuses[0].status).toBe('blocked');
     expect(statuses[0].blockedLabel).toBe('event');
