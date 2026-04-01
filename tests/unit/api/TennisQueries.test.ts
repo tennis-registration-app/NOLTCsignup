@@ -48,7 +48,7 @@ function minimalBoardResponse() {
 }
 
 describe('TennisQueries', () => {
-  let queries;
+  let queries: TennisQueries;
 
   beforeEach(() => {
     const stack = createTestStack();

@@ -199,7 +199,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = []; // No blocks
+      const upcomingBlocks: Record<string, unknown>[] = []; // No blocks
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -213,7 +213,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 1, isAvailable: false, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -280,7 +280,7 @@ describe('computeRegistrationCourtSelection', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -365,7 +365,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -435,7 +435,7 @@ describe('computeRegistrationCourtSelection', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -452,7 +452,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -470,7 +470,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -486,7 +486,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 3, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -499,7 +499,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -518,7 +518,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -535,7 +535,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 3, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -551,7 +551,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 1, isAvailable: false, isBlocked: false, isOvertime: true },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -616,7 +616,7 @@ describe('computeRegistrationCourtSelection', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -628,7 +628,7 @@ describe('computeRegistrationCourtSelection', () => {
       const courts = [
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -694,7 +694,7 @@ describe('computeRegistrationCourtSelection', () => {
         { number: 2, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const result = computeRegistrationCourtSelection(courts, upcomingBlocks);
 

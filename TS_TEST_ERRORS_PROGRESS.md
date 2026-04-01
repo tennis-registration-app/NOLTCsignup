@@ -35,21 +35,50 @@ Reduction: 370 errors (-10%)
 
 ---
 
-## Current Baseline: 3322 errors (after iteration 1)
+## Iteration 2 - 2026-03-31
+Pattern fixed: TS7005/TS7034 - Untyped outer let variables (class instances, typed arrays, mock functions)
+Errors before: 3322
+Errors after: 3159
+Reduction: 163 errors (-5%)
+
+### Files fixed
+- tests/unit/api/ApiAdapter.errorContract.test.ts: let adapter -> let adapter: ApiAdapter
+- tests/unit/api/TennisCommands.test.ts: let commands -> let commands: TennisCommands
+- tests/unit/api/TennisQueries.test.ts: let queries -> let queries: TennisQueries
+- tests/unit/integration/courtSelectionAgreement.test.ts: upcomingBlocks typed array
+- tests/unit/shared/overtimeEligibility.test.ts: upcomingBlocks typed array (15 occurrences)
+- tests/unit/platform/attachLegacyEvents.test.ts: handler/unsubscribe typed
+- tests/unit/registration/appHandlers/state/useRegistrationRuntime.test.ts: deps any, result { current: any }
+
+### Type patterns used
+- Class instance types (ApiAdapter, TennisCommands, TennisQueries)
+- Record<string, unknown>[] for typed empty array literals
+- ReturnType<typeof vi.fn> for mock function holders
+- any for complex deps mock objects (avoids TS2345 cascade)
+- { current: any } for hook result refs (consistent with iteration 1 pattern)
+
+### Lessons Learned
+- Record<string, unknown> for mockDeps cascades TS18046 (property access returns unknown)
+- Zsh sandbox: [] and <> in inline bash strings trigger glob/redirect errors
+- attachLegacyEvents: net positive even when some TS2345 introduced (removes 25, adds ~10)
+
+---
+
+## Current Baseline: 3159 errors (after iteration 2)
 
 ### Current Distribution
-TS7005: 821 -> 471 (-350)
+TS7005: 821 -> 334 (-487)
 TS18046: 576 -> 576 (0)
-TS2345: 559 -> 559 (0)
+TS2345: 559 -> 566 (+7)
 TS18047: 305 -> 298 (-7)
 TS2322: 279 -> 279 (0)
-TS7006: 222 -> 222 (0)
+TS7006: 222 -> 221 (-1)
 TS2571: 199 -> 199 (0)
 TS2339: 165 -> 165 (0)
-TS7034: 150 -> 127 (-23)
-TS18048: 124 -> 124 (0)
+TS7034: 150 -> 94 (-56)
+TS18048: 124 -> 125 (+1)
 TS2353: 85 -> 85 (0)
 
-Next target: Remaining TS7005/TS7034 (471+127 = 598 remaining)
-Top files: useRegistrationDataLayer.test.ts, adminSettingsLogic.test.ts, useRegistrationRuntime.test.ts
-Approach: Type outer let variables; use as unknown as Type cast for strict interface mocks.
+Next target: Remaining TS7005/TS7034 (334+94 = 428 remaining)
+Top files: useCourtActions.moveMode.test.ts (68), useSystemSettingsState (42), presenter equiv tests (~18 each)
+Approach: Node scripts for array/generic typed syntax. Use any for complex mock deps.

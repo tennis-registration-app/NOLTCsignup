@@ -35,8 +35,8 @@ describe('attachLegacyEvents', () => {
   });
 
   describe('emitDom/onDom round-trip', () => {
-    let handler;
-    let unsubscribe;
+    let handler: ReturnType<typeof vi.fn>;
+    let unsubscribe: (() => void) | null;
 
     beforeEach(() => {
       handler = vi.fn();
@@ -106,8 +106,8 @@ describe('attachLegacyEvents', () => {
 
   // ── onMessage / emitMessage ─────────────────────────────────
   describe('onMessage/emitMessage', () => {
-    let handler;
-    let unsubscribe;
+    let handler: ReturnType<typeof vi.fn>;
+    let unsubscribe: (() => void) | null;
 
     beforeEach(() => {
       handler = vi.fn();

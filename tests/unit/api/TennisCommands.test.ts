@@ -19,7 +19,7 @@ function createTestStack() {
 }
 
 describe('TennisCommands', () => {
-  let commands;
+  let commands: TennisCommands;
 
   beforeEach(() => {
     const stack = createTestStack();

@@ -54,7 +54,11 @@ function createDeps(overrides = {}) {
 }
 
 // ---- shared test state ----
-let deps, result, unmount;
+// Type assertion: partial mock objects for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let deps: any;
+let result: { current: any };
+let unmount: () => void;
 
 beforeEach(async () => {
   vi.useFakeTimers();
