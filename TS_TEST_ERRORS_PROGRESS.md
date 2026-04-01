@@ -206,3 +206,74 @@ TS7031: 41 (unchanged)
 
 Next target: TS18047 (298) — "possibly null" violations. Non-null assertions (`!`) at access sites.
 Top files: audit remaining 79 TS18046 first (smaller, may combine), then tackle TS18047 pattern.
+
+---
+
+## Iteration 5 -- 2026-03-31
+Pattern fixed: TS18047 -- possibly null violations (non-null assertions at access sites)
+Errors before: 2162
+Errors after: 1902
+Reduction: 260 errors (-12%)
+
+### Files fixed
+- tests/unit/admin/courts/useCourtActions.moveMode.test.ts: result typed as non-null ref (113 TS18047 to 0), plus opt!.find/opt!.has/opt!.size non-null assertions (13 more)
+- tests/unit/lib/normalize/normalizeBlock.test.ts: result!.xxx on 18 lines
+- tests/unit/lib/normalize/normalizeSession.test.ts: result!.xxx, valid!.xxx, invalid!.xxx on 14 lines
+- tests/unit/normalize/normalizeSession.contract.test.ts: normalized!.xxx on 7 lines
+- tests/unit/lib/court-blocks.test.ts: result!.xxx on 16 lines
+- tests/unit/courtboard/utils/reservedBlockUtils.test.ts: result!.xxx on 13 lines
+- tests/unit/lib/normalize/normalizeAdminSettings.test.ts: result!.xxx, result![n] on 21 lines
+- tests/unit/admin/courts/courtStatusUtils.test.ts: result.info!.xxx on 5 lines
+- tests/unit/lib/apiContractSentinel.test.ts: session!.xxx, block!.xxx, normalized.settings!.xxx, operatingHours![n], upcomingOverrides![n] on 18 lines
+- tests/unit/api/TennisDirectory.test.ts: result!.xxx on 5 lines
+- tests/unit/lib/tournament.test.ts: session!.xxx on 4 lines
+- tests/unit/lib/domain/engagement.test.ts: result!.xxx on 3 lines
+- tests/unit/errors/AppError.test.ts: caught!.xxx on 1 line
+- tests/unit/lib/dateUtils.test.ts: result!.xxx on 1 line
+- tests/unit/admin/blockingPresenter.equivalence.test.ts: legacy![key] on 1 line
+- tests/unit/lib/normalize/normalizeCourt.test.ts: result.session!.xxx on 1 line
+- tests/unit/api/ApiAdapter.test.ts: data!.xxx on 12 lines
+- tests/unit/admin/adminSettingsLogic.test.ts: result!.settings.xxx, result!.xxx on 6 lines
+- tests/unit/shared/ErrorBoundary.test.tsx: received!.xxx, textarea!.xxx on 5 lines
+- tests/unit/admin/ai/aiAssistantComponents.smoke.test.tsx: wrapper!.xxx on 3 lines
+- tests/unit/registration/appHandlers/state/useRegistrationDerived.test.ts: result.current!.xxx on 29 lines
+
+### Type patterns used
+- as unknown as { current: ReturnType<typeof useHook> } -- typed non-null ref cast for manual harness
+- Non-null assertions (!) -- at access sites after expect(x).not.toBeNull() validates existence
+- result![n] -- for array index access on possibly-null array results
+
+### Notes
+- TS18047 completely eliminated (0 remaining)
+- TS18048 slightly increased from 85 to 95 (+10, cascade from typed refs exposing new array access errors)
+- TS2339 slightly increased from 171 to 200 (+29, cascade from typed refs)
+
+---
+
+## Current Baseline: 1902 errors (after iteration 5)
+
+### Current Distribution
+TS2345: 569 (0)
+TS2322: 278 (-1)
+TS7006: 215 (-4)
+TS2339: 200 (+29)
+TS2571: 161 (0)
+TS18048: 95 (+10)
+TS2353: 86 (0)
+TS18046: 79 (0)
+TS7053: 47 (0)
+TS7031: 41 (0)
+TS2531: 19 (+4)
+TS2769: 17 (0)
+TS2740: 15 (0)
+TS7019: 13 (0)
+TS2741: 13 (0)
+TS2532: 12 (0)
+TS2554: 11 (0)
+TS2739: 9 (0)
+TS2551: 8 (0)
+TS2304: 5 (0)
+TS18047: 0 (-298)
+
+Next target: TS2345 (569) -- type mismatches. Find the most common sub-pattern.
+Approach: Scan files with most TS2345 errors; look for mock shape issues and use Partial<T> or as-casts.

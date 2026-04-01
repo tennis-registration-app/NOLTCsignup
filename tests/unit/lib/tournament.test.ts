@@ -12,7 +12,7 @@ describe('Tournament — normalizeSession', () => {
       },
       '2026-01-01T11:30:00Z'
     );
-    expect(session.isTournament).toBe(true);
+    expect(session!.isTournament).toBe(true);
   });
 
   it('sets isTournament false by default', () => {
@@ -23,7 +23,7 @@ describe('Tournament — normalizeSession', () => {
       },
       '2026-01-01T11:30:00Z'
     );
-    expect(session.isTournament).toBe(false);
+    expect(session!.isTournament).toBe(false);
   });
 
   it('accepts camelCase isTournament', () => {
@@ -35,7 +35,7 @@ describe('Tournament — normalizeSession', () => {
       },
       '2026-01-01T11:30:00Z'
     );
-    expect(session.isTournament).toBe(true);
+    expect(session!.isTournament).toBe(true);
   });
 
   it('prefers snake_case is_tournament over camelCase', () => {
@@ -49,7 +49,7 @@ describe('Tournament — normalizeSession', () => {
       },
       '2026-01-01T11:30:00Z'
     );
-    expect(session.isTournament).toBe(false);
+    expect(session!.isTournament).toBe(false);
   });
 });
 

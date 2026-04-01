@@ -88,7 +88,8 @@ const WET_BLOCK_COURTS = [
 // ============================================================
 
 function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts } = {}) {
-  let result = { current: null };
+  // Type assertion: partial mock for testing
+  let result = { current: null } as unknown as { current: ReturnType<typeof useCourtActions> };
   // Mutable props ref — allows re-rendering with updated values
   const propsRef = {
     courts: courts || COURTS,
@@ -221,12 +222,12 @@ describe('useCourtActions — optimistic move', () => {
     expect(opt).not.toBeNull();
 
     // Source court (3) should have no session data
-    const fromCourt = opt.find((c) => c.number === 3);
+    const fromCourt = opt!.find((c) => c.number === 3);
     expect(fromCourt.session).toBeUndefined();
     expect(fromCourt.players).toBeUndefined();
 
     // Target court (7) should have the session data
-    const toCourt = opt.find((c) => c.number === 7);
+    const toCourt = opt!.find((c) => c.number === 7);
     expect(toCourt.session).toEqual(COURTS[0].session);
     expect(toCourt.players).toEqual(COURTS[0].players);
 
@@ -391,7 +392,7 @@ describe('useCourtActions — optimistic clear', () => {
     expect(opt).not.toBeNull();
 
     // Cleared court (3) should have no session/players/block data
-    const clearedCourt = opt.find((c) => c.number === 3);
+    const clearedCourt = opt!.find((c) => c.number === 3);
     expect(clearedCourt.session).toBeUndefined();
     expect(clearedCourt.players).toBeUndefined();
     expect(clearedCourt.block).toBeUndefined();
@@ -401,7 +402,7 @@ describe('useCourtActions — optimistic clear', () => {
     expect(clearedCourt.id).toBe('uuid-3');
 
     // Other court (7) should be unchanged
-    const otherCourt = opt.find((c) => c.number === 7);
+    const otherCourt = opt!.find((c) => c.number === 7);
     expect(otherCourt).toEqual(COURTS[1]);
 
     await act(async () => {
@@ -537,8 +538,8 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     // Optimistic wet courts should exist with court 3 removed
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.has(3)).toBe(false);
-    expect(opt.has(7)).toBe(true);
+    expect(opt!.has(3)).toBe(false);
+    expect(opt!.has(7)).toBe(true);
 
     await act(async () => {
       resolveWet({ success: true });
@@ -621,7 +622,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     // Wet ops only set optimisticWetCourts, not optimisticCourts
     expect(result.current.optimisticCourts).toBeNull();
     expect(result.current.optimisticWetCourts).not.toBeNull();
-    expect(result.current.optimisticWetCourts.has(3)).toBe(false);
+    expect(result.current.optimisticWetCourts!.has(3)).toBe(false);
 
     await act(async () => {
       resolveWet({ success: true });
@@ -686,7 +687,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     // Should be empty set (all courts dry)
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.size).toBe(0);
+    expect(opt!.size).toBe(0);
 
     await act(async () => {
       resolveDry({ success: true });
@@ -712,7 +713,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     // Wet ops only set optimisticWetCourts, not optimisticCourts
     expect(result.current.optimisticCourts).toBeNull();
     expect(result.current.optimisticWetCourts).not.toBeNull();
-    expect(result.current.optimisticWetCourts.size).toBe(0);
+    expect(result.current.optimisticWetCourts!.size).toBe(0);
 
     await act(async () => {
       resolveDry({ success: true });
@@ -835,9 +836,9 @@ describe('useCourtActions — optimistic activate wet courts', () => {
     // Should be all 12 courts wet
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.size).toBe(12);
+    expect(opt!.size).toBe(12);
     for (let i = 1; i <= 12; i++) {
-      expect(opt.has(i)).toBe(true);
+      expect(opt!.has(i)).toBe(true);
     }
 
     await act(async () => {
@@ -972,7 +973,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     // Should be empty set (all courts dry)
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.size).toBe(0);
+    expect(opt!.size).toBe(0);
 
     await act(async () => {
       resolveDeactivate({ success: true });
@@ -998,7 +999,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     // Wet ops only use optimisticWetCourts (the Set), never optimisticCourts
     expect(result.current.optimisticCourts).toBeNull();
     expect(result.current.optimisticWetCourts).not.toBeNull();
-    expect(result.current.optimisticWetCourts.size).toBe(0);
+    expect(result.current.optimisticWetCourts!.size).toBe(0);
 
     await act(async () => {
       resolveDeactivate({ success: true });

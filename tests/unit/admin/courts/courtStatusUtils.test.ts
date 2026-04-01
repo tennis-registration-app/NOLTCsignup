@@ -68,8 +68,8 @@ describe('getCourtStatus', () => {
     const deps = makeDeps({ courtBlocks: [block], currentTime: now, selectedDate: now });
     const result = getCourtStatus(null, 2, deps);
     expect(result.status).toBe('blocked');
-    expect(result.info.reason).toBe('Tournament');
-    expect(result.info.type).toBe('block');
+    expect(result.info!.reason).toBe('Tournament');
+    expect(result.info!.type).toBe('block');
   });
 
   it('returns blocked for future date (any block on that date)', () => {
@@ -128,8 +128,8 @@ describe('getCourtStatus', () => {
     };
     const result = getCourtStatus(court, 1, makeDeps({ currentTime: now }));
     expect(result.status).toBe('occupied');
-    expect(result.info.type).toBe('game');
-    expect(result.info.players).toEqual([{ displayName: 'Alice' }]);
+    expect(result.info!.type).toBe('game');
+    expect(result.info!.players).toEqual([{ displayName: 'Alice' }]);
   });
 
   it('returns occupied for court with domain session.group.players format', () => {
@@ -145,7 +145,7 @@ describe('getCourtStatus', () => {
     };
     const result = getCourtStatus(court, 2, makeDeps({ currentTime: now }));
     expect(result.status).toBe('occupied');
-    expect(result.info.sessionId).toBe('sess-2');
+    expect(result.info!.sessionId).toBe('sess-2');
   });
 
   it('returns overtime when occupied AND currentTime > endTime', () => {

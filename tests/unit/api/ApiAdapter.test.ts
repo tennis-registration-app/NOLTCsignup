@@ -729,20 +729,20 @@ describe('ApiAdapter', () => {
       const data = await adapter.read('tennisData');
 
       // Verify court transformation
-      expect(data.courts).toHaveLength(1);
-      expect(data.courts[0].number).toBe(1);
-      expect(data.courts[0].id).toBe('C1');
-      expect(data.courts[0].session.id).toBe('S1');
-      expect(data.courts[0].session.timeRemaining).toBe(30 * 60 * 1000);
+      expect(data!.courts).toHaveLength(1);
+      expect(data!.courts[0].number).toBe(1);
+      expect(data!.courts[0].id).toBe('C1');
+      expect(data!.courts[0].session.id).toBe('S1');
+      expect(data!.courts[0].session.timeRemaining).toBe(30 * 60 * 1000);
 
       // Verify waitlist transformation
-      expect(data.waitlist).toHaveLength(1);
-      expect(data.waitlist[0].type).toBe('singles');
-      expect(data.waitlist[0].waitTime).toBe(15 * 60 * 1000);
+      expect(data!.waitlist).toHaveLength(1);
+      expect(data!.waitlist[0].type).toBe('singles');
+      expect(data!.waitlist[0].waitTime).toBe(15 * 60 * 1000);
 
       // Verify settings passthrough
-      expect(data.settings).toEqual({ courtCount: 12 });
-      expect(data.operatingHours).toEqual([{ day: 1, open: '07:00' }]);
+      expect(data!.settings).toEqual({ courtCount: 12 });
+      expect(data!.operatingHours).toEqual([{ day: 1, open: '07:00' }]);
     });
 
     it('read("TENNIS_DATA") — also delegates to legacy format', async () => {
@@ -754,8 +754,8 @@ describe('ApiAdapter', () => {
 
       const data = await adapter.read('TENNIS_DATA');
 
-      expect(data.courts).toEqual([]);
-      expect(data.waitlist).toEqual([]);
+      expect(data!.courts).toEqual([]);
+      expect(data!.waitlist).toEqual([]);
     });
 
     it('read(unknownKey) — returns null', async () => {

@@ -75,9 +75,9 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
 
     expect(result).not.toBeNull();
-    expect(result.type).toBe('blocked');
-    expect(result.minutesUntilBlock).toBe(3); // Exact assertion (deterministic)
-    expect(typeof result.startTime).toBe('string');
+    expect(result!.type).toBe('blocked');
+    expect(result!.minutesUntilBlock).toBe(3); // Exact assertion (deterministic)
+    expect(typeof result!.startTime).toBe('string');
   });
 
   it('returns type:limited when block starts before session ends but after 5 minutes', () => {
@@ -90,11 +90,11 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
 
     expect(result).not.toBeNull();
-    expect(result.type).toBe('limited');
-    expect(result.limitedDuration).toBeGreaterThan(0);
-    expect(result.limitedDuration).toBeLessThanOrEqual(60);
-    expect(result.minutesUntilBlock).toBeGreaterThan(5);
-    expect(typeof result.startTime).toBe('string');
+    expect(result!.type).toBe('limited');
+    expect(result!.limitedDuration).toBeGreaterThan(0);
+    expect(result!.limitedDuration).toBeLessThanOrEqual(60);
+    expect(result!.minutesUntilBlock).toBeGreaterThan(5);
+    expect(typeof result!.startTime).toBe('string');
   });
 
   it('returns null when block starts after session would end', () => {
@@ -125,9 +125,9 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
 
     expect(result).not.toBeNull();
-    expect(result.type).toBe('limited');
+    expect(result!.type).toBe('limited');
     // Should return the earlier block (20 min), not the later one (45 min)
-    expect(result.startTime).toBe(earlierBlock.startTime);
+    expect(result!.startTime).toBe(earlierBlock.startTime);
   });
 
   it('returns limited with duration=0 for any upcoming block', () => {
@@ -139,8 +139,8 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 0, blocks, now);
     expect(result).not.toBeNull();
-    expect(result.type).toBe('limited');
-    expect(result.originalDuration).toBe(0);
+    expect(result!.type).toBe('limited');
+    expect(result!.originalDuration).toBe(0);
   });
 
   it('uses title as reason when available', () => {
@@ -153,7 +153,7 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
       }),
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
-    expect(result.reason).toBe('Lesson Block');
+    expect(result!.reason).toBe('Lesson Block');
   });
 
   it('falls back to reason when no title', () => {
@@ -166,7 +166,7 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
       }),
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
-    expect(result.reason).toBe('Maintenance');
+    expect(result!.reason).toBe('Maintenance');
   });
 
   it('falls back to Reserved when no title or reason', () => {
@@ -179,7 +179,7 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
       }),
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
-    expect(result.reason).toBe('Reserved');
+    expect(result!.reason).toBe('Reserved');
   });
 
   it('returns null when block already ended', () => {
@@ -302,7 +302,7 @@ describe('getUpcomingBlockWarning', () => {
     ]);
     const result = getUpcomingBlockWarning(1, 60);
     expect(result).not.toBeNull();
-    expect(result.type).toBe('blocked');
+    expect(result!.type).toBe('blocked');
   });
 
   it('returns null when readJSON throws', () => {

@@ -22,7 +22,7 @@ describe('normalizeAdminSettingsResponse', () => {
     });
     expect(result.operatingHours).toHaveLength(1);
     expect(result.upcomingOverrides).toHaveLength(1);
-    expect(result.settings.ballPriceCents).toBe(500);
+    expect(result!.settings.ballPriceCents).toBe(500);
   });
 
   it('handles null sub-objects', () => {
@@ -59,15 +59,15 @@ describe('normalizeSettings', () => {
       auto_clear_enabled: true,
       auto_clear_minutes: 90,
     });
-    expect(result.ballPriceCents).toBe(500);
-    expect(result.ballBucketSize).toBe(3);
-    expect(result.guestFeeWeekdayCents).toBe(1000);
-    expect(result.guestFeeWeekendCents).toBe(1500);
-    expect(result.courtCount).toBe(12);
-    expect(result.checkStatusMinutes).toBe(5);
-    expect(result.blockWarningMinutes).toBe(15);
-    expect(result.autoClearEnabled).toBe(true);
-    expect(result.autoClearMinutes).toBe(90);
+    expect(result!.ballPriceCents).toBe(500);
+    expect(result!.ballBucketSize).toBe(3);
+    expect(result!.guestFeeWeekdayCents).toBe(1000);
+    expect(result!.guestFeeWeekendCents).toBe(1500);
+    expect(result!.courtCount).toBe(12);
+    expect(result!.checkStatusMinutes).toBe(5);
+    expect(result!.blockWarningMinutes).toBe(15);
+    expect(result!.autoClearEnabled).toBe(true);
+    expect(result!.autoClearMinutes).toBe(90);
   });
 });
 
@@ -85,11 +85,11 @@ describe('normalizeOperatingHours', () => {
     const result = normalizeOperatingHours([
       { day_of_week: 1, day_name: 'Monday', opens_at: '08:00', closes_at: '20:00', is_closed: false },
     ]);
-    expect(result[0].dayOfWeek).toBe(1);
-    expect(result[0].dayName).toBe('Monday');
-    expect(result[0].opensAt).toBe('08:00');
-    expect(result[0].closesAt).toBe('20:00');
-    expect(result[0].isClosed).toBe(false);
+    expect(result![0].dayOfWeek).toBe(1);
+    expect(result![0].dayName).toBe('Monday');
+    expect(result![0].opensAt).toBe('08:00');
+    expect(result![0].closesAt).toBe('20:00');
+    expect(result![0].isClosed).toBe(false);
   });
 
   it('generates dayName from day_of_week when missing', () => {
@@ -97,8 +97,8 @@ describe('normalizeOperatingHours', () => {
       { day_of_week: 0, opens_at: '09:00', closes_at: '17:00', is_closed: false },
       { day_of_week: 6, opens_at: '09:00', closes_at: '17:00', is_closed: false },
     ]);
-    expect(result[0].dayName).toBe('Sunday');
-    expect(result[1].dayName).toBe('Saturday');
+    expect(result![0].dayName).toBe('Sunday');
+    expect(result![1].dayName).toBe('Saturday');
   });
 });
 
@@ -116,10 +116,10 @@ describe('normalizeOverrides', () => {
     const result = normalizeOverrides([
       { date: '2024-12-25', opens_at: null, closes_at: null, is_closed: true, reason: 'Holiday' },
     ]);
-    expect(result[0].date).toBe('2024-12-25');
-    expect(result[0].opensAt).toBeNull();
-    expect(result[0].isClosed).toBe(true);
-    expect(result[0].reason).toBe('Holiday');
+    expect(result![0].date).toBe('2024-12-25');
+    expect(result![0].opensAt).toBeNull();
+    expect(result![0].isClosed).toBe(true);
+    expect(result![0].reason).toBe('Holiday');
   });
 });
 

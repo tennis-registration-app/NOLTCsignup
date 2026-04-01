@@ -88,19 +88,19 @@ describe('findEngagementByMemberId', () => {
       waitlist: [makeWaitlistEntry(1, [makePlayer('m1', 'WaitPlayer')])],
     });
     const result = findEngagementByMemberId(board, 'm1');
-    expect(result.kind).toBe('court');
+    expect(result!.kind).toBe('court');
   });
 
   it('handles missing courts array', () => {
     const board = { waitlist: [makeWaitlistEntry(1, [makePlayer('m1')])] };
     const result = findEngagementByMemberId(board, 'm1');
-    expect(result.kind).toBe('waitlist');
+    expect(result!.kind).toBe('waitlist');
   });
 
   it('handles missing waitlist array', () => {
     const board = { courts: [makeCourt(1, [makePlayer('m1')])] };
     const result = findEngagementByMemberId(board, 'm1');
-    expect(result.kind).toBe('court');
+    expect(result!.kind).toBe('court');
   });
 
   it('handles court with no session', () => {

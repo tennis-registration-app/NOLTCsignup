@@ -89,7 +89,7 @@ describe('normalizeCourt', () => {
       status: 'occupied',
     }, serverNow);
     expect(result.session).not.toBeNull();
-    expect(result.session.id).toBe('s2');
+    expect(result.session!.id).toBe('s2');
   });
 
   it('handles nested block format', () => {

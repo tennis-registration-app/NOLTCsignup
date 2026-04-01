@@ -25,12 +25,12 @@ describe('normalizeBlock', () => {
       reason: 'Lesson',
       blockType: 'lesson',
     }, serverNow);
-    expect(result.id).toBe('b1');
-    expect(result.courtNumber).toBe(3);
-    expect(result.startsAt).toBe('2024-06-15T10:00:00Z');
-    expect(result.endsAt).toBe('2024-06-15T14:00:00Z');
-    expect(result.reason).toBe('Lesson');
-    expect(result.blockType).toBe('lesson');
+    expect(result!.id).toBe('b1');
+    expect(result!.courtNumber).toBe(3);
+    expect(result!.startsAt).toBe('2024-06-15T10:00:00Z');
+    expect(result!.endsAt).toBe('2024-06-15T14:00:00Z');
+    expect(result!.reason).toBe('Lesson');
+    expect(result!.blockType).toBe('lesson');
   });
 
   it('normalizes snake_case fields', () => {
@@ -41,10 +41,10 @@ describe('normalizeBlock', () => {
       ends_at: '2024-06-15T14:00:00Z',
       block_type: 'maintenance',
     }, serverNow);
-    expect(result.id).toBe('b2');
-    expect(result.courtNumber).toBe(5);
-    expect(result.startsAt).toBe('2024-06-15T10:00:00Z');
-    expect(result.blockType).toBe('maintenance');
+    expect(result!.id).toBe('b2');
+    expect(result!.courtNumber).toBe(5);
+    expect(result!.startsAt).toBe('2024-06-15T10:00:00Z');
+    expect(result!.blockType).toBe('maintenance');
   });
 
   it('calculates isActive when within time range', () => {
@@ -53,7 +53,7 @@ describe('normalizeBlock', () => {
       startsAt: '2024-06-15T10:00:00Z',
       endsAt: '2024-06-15T14:00:00Z',
     }, '2024-06-15T12:00:00Z');
-    expect(result.isActive).toBe(true);
+    expect(result!.isActive).toBe(true);
   });
 
   it('calculates isActive as false when before start', () => {
@@ -62,7 +62,7 @@ describe('normalizeBlock', () => {
       startsAt: '2024-06-15T14:00:00Z',
       endsAt: '2024-06-15T16:00:00Z',
     }, '2024-06-15T12:00:00Z');
-    expect(result.isActive).toBe(false);
+    expect(result!.isActive).toBe(false);
   });
 
   it('calculates isActive as false when after end', () => {
@@ -71,12 +71,12 @@ describe('normalizeBlock', () => {
       startsAt: '2024-06-15T08:00:00Z',
       endsAt: '2024-06-15T10:00:00Z',
     }, '2024-06-15T12:00:00Z');
-    expect(result.isActive).toBe(false);
+    expect(result!.isActive).toBe(false);
   });
 
   it('isActive false when missing time fields', () => {
     const result = normalizeBlock({ id: 'b6' }, serverNow);
-    expect(result.isActive).toBe(false);
+    expect(result!.isActive).toBe(false);
   });
 
   it('uses blockId fallback for id', () => {
@@ -89,7 +89,7 @@ describe('normalizeBlock', () => {
 
   it('uses description as fallback for reason', () => {
     const result = normalizeBlock({ id: 'b7', description: 'Maintenance' }, serverNow);
-    expect(result.reason).toBe('Maintenance');
+    expect(result!.reason).toBe('Maintenance');
   });
 
   it('uses startTime/endTime fallbacks', () => {
@@ -98,12 +98,12 @@ describe('normalizeBlock', () => {
       startTime: '2024-06-15T10:00:00Z',
       endTime: '2024-06-15T14:00:00Z',
     }, serverNow);
-    expect(result.startsAt).toBe('2024-06-15T10:00:00Z');
-    expect(result.endsAt).toBe('2024-06-15T14:00:00Z');
+    expect(result!.startsAt).toBe('2024-06-15T10:00:00Z');
+    expect(result!.endsAt).toBe('2024-06-15T14:00:00Z');
   });
 
   it('uses type as fallback for blockType', () => {
     const result = normalizeBlock({ id: 'b9', type: 'wet' }, serverNow);
-    expect(result.blockType).toBe('wet');
+    expect(result!.blockType).toBe('wet');
   });
 });

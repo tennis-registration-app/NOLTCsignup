@@ -122,10 +122,10 @@ describe('ErrorBoundary', () => {
     );
 
     expect(received).not.toBeNull();
-    expect(received.message).toBe('Test error');
-    expect(received.timestamp).toBeTruthy();
-    expect(received.route).toBeDefined();
-    expect(received.context).toBe('TestContext');
+    expect(received!.message).toBe('Test error');
+    expect(received!.timestamp).toBeTruthy();
+    expect(received!.route).toBeDefined();
+    expect(received!.context).toBe('TestContext');
 
     cleanup(container, root);
   });
@@ -193,7 +193,7 @@ describe('ErrorBoundary', () => {
     // Check for textarea fallback
     const textarea = container.querySelector('textarea');
     expect(textarea).toBeTruthy();
-    expect(textarea.value).toContain('Test error');
+    expect(textarea!.value).toContain('Test error');
 
     cleanup(container, root);
 

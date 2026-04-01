@@ -142,7 +142,7 @@ describe('BlockingSection presenter equivalence', () => {
 
     it('all values are reference-equal', () => {
       for (const key of Object.keys(legacy)) {
-        expect(presenter[key], `${key} reference equality`).toBe(legacy[key]);
+        expect(presenter[key], `${key} reference equality`).toBe(legacy![key]);
       }
     });
   });

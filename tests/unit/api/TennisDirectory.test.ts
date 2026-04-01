@@ -234,7 +234,7 @@ describe('TennisDirectory', () => {
 
       // Returns single member, not array
       expect(result).not.toBeInstanceOf(Array);
-      expect(result.id).toBe('m1');
+      expect(result!.id).toBe('m1');
     });
 
     it('returns partial match when exact not found', async () => {
@@ -248,7 +248,7 @@ describe('TennisDirectory', () => {
 
       const result = await directory.findMemberByName('1234', 'John Doe');
 
-      expect(result.id).toBe('m1');
+      expect(result!.id).toBe('m1');
     });
 
     it('returns null when no match found and multiple members', async () => {
@@ -276,8 +276,8 @@ describe('TennisDirectory', () => {
 
       const result = await directory.findMemberByName('1234', 'Nobody');
 
-      expect(result.id).toBe('m2');
-      expect(result.isPrimary).toBe(true);
+      expect(result!.id).toBe('m2');
+      expect(result!.isPrimary).toBe(true);
     });
 
     it('returns only member when single member on account', async () => {
@@ -288,7 +288,7 @@ describe('TennisDirectory', () => {
 
       const result = await directory.findMemberByName('1234', 'Nobody');
 
-      expect(result.id).toBe('m1');
+      expect(result!.id).toBe('m1');
     });
 
     it('returns null when no members on account', async () => {

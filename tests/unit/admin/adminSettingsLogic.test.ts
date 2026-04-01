@@ -89,7 +89,7 @@ describe('adminSettingsLogic', () => {
       const result = await loadSettingsData(mockDeps);
 
       expect(result.blockTemplates).toEqual([{ id: 1, name: 'Template 1' }]);
-      expect(result.settings.tennisBallPrice).toBe(5.0);
+      expect(result!.settings.tennisBallPrice).toBe(5.0);
       // Normalized to camelCase
       expect(result.operatingHours).toEqual([{ dayOfWeek: 1, dayName: 'Monday', opensAt: '08:00', closesAt: '21:00', isClosed: false }]);
       expect(result.hoursOverrides).toEqual([{ date: '2025-01-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'Holiday' }]);
@@ -220,10 +220,10 @@ describe('adminSettingsLogic', () => {
 
       const result = await refreshSettingsApi(mockDeps);
 
-      expect(result.settings.tennisBallPrice).toBe(6.0);
+      expect(result!.settings.tennisBallPrice).toBe(6.0);
       // Normalized to camelCase
-      expect(result.operatingHours).toEqual([{ dayOfWeek: 1, dayName: 'Monday', opensAt: '08:00', closesAt: '21:00', isClosed: false }]);
-      expect(result.hoursOverrides).toEqual([{ date: '2025-01-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'Test' }]);
+      expect(result!.operatingHours).toEqual([{ dayOfWeek: 1, dayName: 'Monday', opensAt: '08:00', closesAt: '21:00', isClosed: false }]);
+      expect(result!.hoursOverrides).toEqual([{ date: '2025-01-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'Test' }]);
     });
 
     it('returns null on API failure (no throw)', async () => {
@@ -267,9 +267,9 @@ describe('adminSettingsLogic', () => {
 
       const result = await refreshAISettingsApi(mockDeps);
 
-      expect(result.settings.tennisBallPrice).toBe(8.0);
+      expect(result!.settings.tennisBallPrice).toBe(8.0);
       // Normalized to camelCase
-      expect(result.hoursOverrides).toEqual([{ date: '2025-02-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'AI Test' }]);
+      expect(result!.hoursOverrides).toEqual([{ date: '2025-02-01', opensAt: '09:00', closesAt: '17:00', isClosed: false, reason: 'AI Test' }]);
     });
 
     it('does NOT return operatingHours (unlike refreshSettingsApi)', async () => {
