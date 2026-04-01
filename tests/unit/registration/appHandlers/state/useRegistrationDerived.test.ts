@@ -61,7 +61,7 @@ async function render(data: any, opts: any = {}) {
     })
   );
   unmount = out.unmount;
-  return out.result;
+  return out.result as unknown as { current: ReturnType<typeof useRegistrationDerived> };
 }
 
 describe("empty waitlist", () => {

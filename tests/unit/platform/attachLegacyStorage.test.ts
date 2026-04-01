@@ -134,8 +134,8 @@ describe('attachLegacyStorage', () => {
       };
       localStorage.setItem(KEYS.DATA, JSON.stringify(stored));
       const data = legacyStorage.readDataSafe();
-      expect(data.courts[0].current.players[0]).toBe('Alice');
-      expect(data.waitingGroups[0].id).toBe(1);
+      expect((data as any).courts[0].current.players[0]).toBe('Alice');
+      expect((data as any).waitingGroups[0].id).toBe(1);
     });
   });
 

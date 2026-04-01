@@ -20,7 +20,7 @@ vi.mock('../../../src/lib/logger.js', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
-function createResetFormDeps(overrides = {}) {
+function createResetFormDeps(overrides: Record<string, any> = {}) {
   const actions = {
     setShowSuccess: vi.fn(),
     setCurrentScreen: vi.fn(),
@@ -38,7 +38,7 @@ function createResetFormDeps(overrides = {}) {
   return { actions, services };
 }
 
-function createTimeoutDeps(overrides = {}) {
+function createTimeoutDeps(overrides: Record<string, any> = {}) {
   return {
     setShowSuccess: vi.fn(),
     setCurrentScreen: vi.fn(),

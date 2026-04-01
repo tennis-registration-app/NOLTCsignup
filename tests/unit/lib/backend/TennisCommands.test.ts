@@ -26,7 +26,7 @@ function createMockDirectory(overrides = {}) {
  * Build a TennisCommands instance with mocked deps.
  * Returns { commands, api, directory } for assertions.
  */
-function setup(opts = {}) {
+function setup(opts: Record<string, any> = {}) {
   const api = createMockApi(opts.api);
   const directory = createMockDirectory(opts.directory);
   const commands = new TennisCommands(api, directory);
@@ -465,7 +465,7 @@ describe('TennisCommands', () => {
       ]);
 
       // "Alex" is contained in "Alexander Hamilton" → partial match
-      expect(result[0].memberId).toBe('M1');
+      expect((result[0] as any).memberId).toBe('M1');
     });
 
     it('matches by last name when exact and partial fail', async () => {
@@ -482,7 +482,7 @@ describe('TennisCommands', () => {
       ]);
 
       // Last name "Hamilton" matches → last-name fallback
-      expect(result[0].memberId).toBe('M1');
+      expect((result[0] as any).memberId).toBe('M1');
     });
 
     it('uses single member on account as fallback', async () => {
@@ -499,7 +499,7 @@ describe('TennisCommands', () => {
         { name: 'Totally Unrelated', memberNumber: '1001' },
       ]);
 
-      expect(result[0].memberId).toBe('M1');
+      expect((result[0] as any).memberId).toBe('M1');
     });
 
     it('throws when member not found and multiple on account', async () => {
@@ -560,7 +560,7 @@ describe('TennisCommands', () => {
         { guest_name: 'Wire Format Guest', isGuest: true },
       ]);
 
-      expect(result[1].guestName).toBe('Wire Format Guest');
+      expect((result[1] as any).guestName).toBe('Wire Format Guest');
     });
 
     it('guest defaults to "Guest" when no name provided', async () => {
@@ -575,7 +575,7 @@ describe('TennisCommands', () => {
         { isGuest: true },
       ]);
 
-      expect(result[1].guestName).toBe('Guest');
+      expect((result[1] as any).guestName).toBe('Guest');
     });
 
     it('throws when all guests and no members', async () => {
@@ -602,7 +602,7 @@ describe('TennisCommands', () => {
       ]);
 
       expect(result[1].kind).toBe('guest');
-      expect(result[1].guestName).toBe('Guest Via Type');
+      expect((result[1] as any).guestName).toBe('Guest Via Type');
     });
 
     it('uses clubNumber as fallback for memberNumber', async () => {

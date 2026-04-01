@@ -28,6 +28,11 @@ import {
   clearWetCourtOp,
 } from '../../../../src/admin/handlers/wetCourtOperations.js';
 
+// Type assertion: partial mock for testing — these are vi.fn() via vi.mock above
+const activateWetCourtsOpMock = activateWetCourtsOp as unknown as ReturnType<typeof vi.fn>;
+const clearAllWetCourtsOpMock = clearAllWetCourtsOp as unknown as ReturnType<typeof vi.fn>;
+const clearWetCourtOpMock = clearWetCourtOp as unknown as ReturnType<typeof vi.fn>;
+
 // ============================================================
 // Test harness — minimal wrapper that exposes hook return via ref
 // ============================================================
@@ -86,12 +91,12 @@ function createHarness(depsOverrides = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   // Default: all ops resolve successfully
-  activateWetCourtsOp.mockResolvedValue({
+  activateWetCourtsOpMock.mockResolvedValue({
     ok: true,
     courtNumbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
   });
-  clearAllWetCourtsOp.mockResolvedValue({ ok: true, blocksCleared: 3 });
-  clearWetCourtOp.mockResolvedValue({ ok: true, blocksCleared: 1 });
+  clearAllWetCourtsOpMock.mockResolvedValue({ ok: true, blocksCleared: 3 });
+  clearWetCourtOpMock.mockResolvedValue({ ok: true, blocksCleared: 1 });
 });
 
 // ============================================================
@@ -178,7 +183,7 @@ describe('activateWet', () => {
   });
 
   it('populates wetCourtNumbers from result', async () => {
-    activateWetCourtsOp.mockResolvedValue({
+    activateWetCourtsOpMock.mockResolvedValue({
       ok: true,
       courtNumbers: [3, 5, 7],
     });
@@ -195,7 +200,7 @@ describe('activateWet', () => {
   });
 
   it('defaults to courts 1-12 when result has no courtNumbers', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true });
     const h = createHarness();
 
     await act(async () => {
@@ -359,7 +364,7 @@ describe('clearWetCourt', () => {
   });
 
   it('removes court from wetCourtNumbers', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
     const h = createHarness();
 
     await act(async () => {
@@ -377,7 +382,7 @@ describe('clearWetCourt', () => {
   });
 
   it('calls onRefresh after success', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
     const h = createHarness();
 
     await act(async () => {
@@ -394,7 +399,7 @@ describe('clearWetCourt', () => {
   });
 
   it('emits updated wetCourts data after success', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
     const h = createHarness();
 
     await act(async () => {
@@ -414,7 +419,7 @@ describe('clearWetCourt', () => {
   });
 
   it('handles string court number via Number() coercion', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
     const h = createHarness();
 
     await act(async () => {
@@ -437,7 +442,7 @@ describe('clearWetCourt', () => {
     await act(async () => {
       await h.hook.activateWet();
     });
-    clearWetCourtOp.mockClear();
+    clearWetCourtOpMock.mockClear();
 
     await act(async () => {
       await h.hook.clearWetCourt(99);
@@ -450,7 +455,7 @@ describe('clearWetCourt', () => {
   });
 
   it('auto-deactivates when clearing the last wet court', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [2] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [2] });
     const h = createHarness();
 
     await act(async () => {
@@ -471,7 +476,7 @@ describe('clearWetCourt', () => {
   });
 
   it('does NOT auto-deactivate when other courts remain', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2] });
     const h = createHarness();
 
     await act(async () => {
@@ -487,8 +492,8 @@ describe('clearWetCourt', () => {
   });
 
   it('auto-deactivates isActive when last wet court is cleared individually', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1] });
-    clearWetCourtOp.mockResolvedValue({ ok: true });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1] });
+    clearWetCourtOpMock.mockResolvedValue({ ok: true });
     const h = createHarness();
 
     await act(async () => {
@@ -519,7 +524,7 @@ describe('clearAllWet', () => {
     await act(async () => {
       await h.hook.activateWet();
     });
-    clearAllWetCourtsOp.mockClear();
+    clearAllWetCourtsOpMock.mockClear();
 
     await act(async () => {
       await h.hook.clearAllWet();
@@ -576,7 +581,7 @@ describe('clearAllWet', () => {
 
 describe('failure paths', () => {
   it('activateWet: backend ok:false → error set, isActive unchanged', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: false, message: 'Rate limited' });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: false, message: 'Rate limited' });
     const h = createHarness();
 
     await act(async () => {
@@ -592,7 +597,7 @@ describe('failure paths', () => {
   });
 
   it('activateWet: backend throws → error set, isActive unchanged', async () => {
-    activateWetCourtsOp.mockRejectedValue(new Error('Network down'));
+    activateWetCourtsOpMock.mockRejectedValue(new Error('Network down'));
     const h = createHarness();
 
     await act(async () => {
@@ -607,7 +612,7 @@ describe('failure paths', () => {
   });
 
   it('activateWet: ok:false with no message → default error message', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: false });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: false });
     const h = createHarness();
 
     await act(async () => {
@@ -619,7 +624,7 @@ describe('failure paths', () => {
   });
 
   it('deactivateWet: backend ok:false → error set, isActive unchanged', async () => {
-    clearAllWetCourtsOp.mockResolvedValue({ ok: false, message: 'Permission denied' });
+    clearAllWetCourtsOpMock.mockResolvedValue({ ok: false, message: 'Permission denied' });
     const h = createHarness();
 
     await act(async () => {
@@ -628,7 +633,7 @@ describe('failure paths', () => {
     expect(h.hook.isActive).toBe(true);
 
     // Reset mock for deactivate call
-    clearAllWetCourtsOp.mockResolvedValue({ ok: false, message: 'Permission denied' });
+    clearAllWetCourtsOpMock.mockResolvedValue({ ok: false, message: 'Permission denied' });
     await act(async () => {
       await h.hook.deactivateWet();
     });
@@ -645,7 +650,7 @@ describe('failure paths', () => {
       await h.hook.activateWet();
     });
 
-    clearAllWetCourtsOp.mockRejectedValue(new Error('Timeout'));
+    clearAllWetCourtsOpMock.mockRejectedValue(new Error('Timeout'));
     await act(async () => {
       await h.hook.deactivateWet();
     });
@@ -656,8 +661,8 @@ describe('failure paths', () => {
   });
 
   it('clearWetCourt: backend ok:false → error set, court NOT removed', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
-    clearWetCourtOp.mockResolvedValue({ ok: false, message: 'Block locked' });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    clearWetCourtOpMock.mockResolvedValue({ ok: false, message: 'Block locked' });
     const h = createHarness();
 
     await act(async () => {
@@ -673,8 +678,8 @@ describe('failure paths', () => {
   });
 
   it('clearWetCourt: backend throws → error set, court NOT removed', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
-    clearWetCourtOp.mockRejectedValue(new Error('Server error'));
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    clearWetCourtOpMock.mockRejectedValue(new Error('Server error'));
     const h = createHarness();
 
     await act(async () => {
@@ -696,7 +701,7 @@ describe('failure paths', () => {
       await h.hook.activateWet();
     });
 
-    clearAllWetCourtsOp.mockResolvedValue({ ok: false, message: 'System busy' });
+    clearAllWetCourtsOpMock.mockResolvedValue({ ok: false, message: 'System busy' });
     await act(async () => {
       await h.hook.clearAllWet();
     });
@@ -713,7 +718,7 @@ describe('failure paths', () => {
       await h.hook.activateWet();
     });
 
-    clearAllWetCourtsOp.mockRejectedValue(new Error('Disconnected'));
+    clearAllWetCourtsOpMock.mockRejectedValue(new Error('Disconnected'));
     await act(async () => {
       await h.hook.clearAllWet();
     });
@@ -730,7 +735,7 @@ describe('failure paths', () => {
 
 describe('error clears on next operation', () => {
   it('error from failed activate clears when activate is retried', async () => {
-    activateWetCourtsOp.mockResolvedValue({ ok: false, message: 'First fail' });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: false, message: 'First fail' });
     const h = createHarness();
 
     await act(async () => {
@@ -739,7 +744,7 @@ describe('error clears on next operation', () => {
     expect(h.hook.error).toBe('First fail');
 
     // Retry succeeds
-    activateWetCourtsOp.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
+    activateWetCourtsOpMock.mockResolvedValue({ ok: true, courtNumbers: [1, 2, 3] });
     await act(async () => {
       await h.hook.activateWet();
     });

@@ -14,7 +14,7 @@ describe('guardNotAssigning (v0 mirror)', () => {
   it('returns ok:false when isAssigning is true (blocks double-submit)', () => {
     const result = guardNotAssigning(true);
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('ALREADY_ASSIGNING');
+    expect((result as any).kind).toBe('ALREADY_ASSIGNING');
     expect(result.ui).toBeNull(); // v0 has silent return, no UI
   });
 
@@ -53,7 +53,7 @@ describe('guardOperatingHours (v0 mirror)', () => {
       dayOfWeek: 1,
     });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('CLUB_CLOSED');
+    expect((result as any).kind).toBe('CLUB_CLOSED');
     expect(result.ui?.action).toBe('toast');
     expect(result.ui?.args[0]).toBe('The club is closed today.');
     expect(result.ui?.args[1]).toEqual({ type: 'warning' });
@@ -67,7 +67,7 @@ describe('guardOperatingHours (v0 mirror)', () => {
       dayOfWeek: 1,
     });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('CLUB_CLOSED');
+    expect((result as any).kind).toBe('CLUB_CLOSED');
   });
 
   it('returns ok:false with CLUB_NOT_OPEN when before opening time (camelCase)', () => {
@@ -78,7 +78,7 @@ describe('guardOperatingHours (v0 mirror)', () => {
       dayOfWeek: 1,
     });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('CLUB_NOT_OPEN');
+    expect((result as any).kind).toBe('CLUB_NOT_OPEN');
     expect(result.ui?.action).toBe('toast');
     expect(result.ui?.args[0]).toContain('8:00 AM');
     expect(result.ui?.args[1]).toEqual({ type: 'warning' });
@@ -92,7 +92,7 @@ describe('guardOperatingHours (v0 mirror)', () => {
       dayOfWeek: 1,
     });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('CLUB_NOT_OPEN');
+    expect((result as any).kind).toBe('CLUB_NOT_OPEN');
     expect(result.ui?.action).toBe('toast');
     expect(result.ui?.args[0]).toContain('9:30 AM');
   });
@@ -122,25 +122,25 @@ describe('guardCourtNumber (v0 mirror)', () => {
   it('returns ok:false when courtNumber is null', () => {
     const result = guardCourtNumber({ courtNumber: null, courtCount: 12 });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('INVALID_COURT');
+    expect((result as any).kind).toBe('INVALID_COURT');
   });
 
   it('returns ok:false when courtNumber is undefined', () => {
     const result = guardCourtNumber({ courtNumber: undefined, courtCount: 12 });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('INVALID_COURT');
+    expect((result as any).kind).toBe('INVALID_COURT');
   });
 
   it('returns ok:false when courtNumber is 0', () => {
     const result = guardCourtNumber({ courtNumber: 0, courtCount: 12 });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('INVALID_COURT');
+    expect((result as any).kind).toBe('INVALID_COURT');
   });
 
   it('returns ok:false when courtNumber exceeds court count', () => {
     const result = guardCourtNumber({ courtNumber: 15, courtCount: 12 });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('INVALID_COURT');
+    expect((result as any).kind).toBe('INVALID_COURT');
     expect(result.ui?.action).toBe('alert');
     expect(result.ui?.args[0]).toContain('between 1 and 12');
   });
@@ -160,7 +160,7 @@ describe('guardGroup (v0 mirror)', () => {
   it('returns ok:false when group is null', () => {
     const result = guardGroup({ currentGroup: null });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('NO_PLAYERS');
+    expect((result as any).kind).toBe('NO_PLAYERS');
     expect(result.ui?.action).toBe('alert');
     expect(result.ui?.args[0]).toBe('No players in group. Please add players first.');
   });
@@ -168,14 +168,14 @@ describe('guardGroup (v0 mirror)', () => {
   it('returns ok:false when group is undefined', () => {
     const result = guardGroup({ currentGroup: undefined });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('NO_PLAYERS');
+    expect((result as any).kind).toBe('NO_PLAYERS');
     expect(result.ui?.action).toBe('alert');
   });
 
   it('returns ok:false when group is empty array', () => {
     const result = guardGroup({ currentGroup: [] });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('NO_PLAYERS');
+    expect((result as any).kind).toBe('NO_PLAYERS');
     expect(result.ui?.action).toBe('alert');
   });
 
@@ -194,7 +194,7 @@ describe('guardGroupCompat (v0 mirror)', () => {
       validateGroupCompat: mockValidator,
     });
     expect(result.ok).toBe(false);
-    expect(result.kind).toBe('GROUP_INVALID');
+    expect((result as any).kind).toBe('GROUP_INVALID');
     expect(result.ui?.action).toBe('alert');
     expect(result.ui?.args[0]).toBe('Error 1\nError 2');
   });

@@ -15,7 +15,7 @@ import {
 const NOW = new Date(2025, 5, 15, 10, 0, 0);
 
 // Helper to create a block at fixed offsets from NOW
-function makeBlock(opts = {}) {
+function makeBlock(opts: Record<string, any> = {}) {
   const startOffset = opts.startMinutes ?? -30;
   const endOffset = opts.endMinutes ?? 60;
   return {

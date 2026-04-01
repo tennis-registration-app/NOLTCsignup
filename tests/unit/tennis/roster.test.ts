@@ -227,9 +227,9 @@ describe('roster', () => {
 
       expect(result.assigned).toBe(2);
       expect(result.total).toBe(2);
-      expect(roster[0].memberId).toBeDefined();
-      expect(roster[1].memberId).toBeDefined();
-      expect(roster[0].memberId).toMatch(/^m_/);
+      expect((roster[0] as any).memberId).toBeDefined();
+      expect((roster[1] as any).memberId).toBeDefined();
+      expect((roster[0] as any).memberId).toMatch(/^m_/);
     });
 
     it('is idempotent - does not reassign existing memberIds', () => {
@@ -238,7 +238,7 @@ describe('roster', () => {
       const result = ensureMemberIds(roster);
 
       expect(result.assigned).toBe(0);
-      expect(roster[0].memberId).toBe('existing_id');
+      expect((roster[0] as any).memberId).toBe('existing_id');
     });
 
     it('persists ID map to localStorage', () => {
@@ -260,7 +260,7 @@ describe('roster', () => {
       ensureMemberIds(roster2);
 
       // Same name should produce same deterministic hash
-      expect(roster1[0].memberId).toBe(roster2[0].memberId);
+      expect((roster1[0] as any).memberId).toBe((roster2[0] as any).memberId);
     });
   });
 

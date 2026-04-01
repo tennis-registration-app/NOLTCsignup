@@ -31,7 +31,7 @@ import { useBlockActions } from '../../../../src/admin/blocks/hooks/useBlockActi
  * Build a mock form object matching the shape destructured by useBlockActions.
  * State values are plain values; setters are vi.fn().
  */
-function createMockForm(overrides = {}) {
+function createMockForm(overrides: Record<string, any> = {}) {
   return {
     // State values
     selectedCourts: overrides.selectedCourts ?? [1, 2],
@@ -61,7 +61,7 @@ function createMockForm(overrides = {}) {
   };
 }
 
-function createMockBackend(overrides = {}) {
+function createMockBackend(overrides: Record<string, any> = {}) {
   return {
     admin: {
       cancelBlock: vi.fn().mockResolvedValue({ ok: true }),
@@ -70,7 +70,7 @@ function createMockBackend(overrides = {}) {
   };
 }
 
-function setup(opts = {}) {
+function setup(opts: Record<string, any> = {}) {
   const form = createMockForm(opts.form);
   const backend = opts.backend !== undefined ? opts.backend : createMockBackend(opts.backendOverrides);
   const onApplyBlocks = opts.onApplyBlocks ?? vi.fn();

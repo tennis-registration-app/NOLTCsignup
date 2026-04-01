@@ -6,6 +6,9 @@ vi.mock('../../../src/lib/storage.js', () => ({
 }));
 
 import { readJSON } from '../../../src/lib/storage.js';
+
+// Type assertion: partial mock for testing — readJSON is vi.fn() via vi.mock above
+const readJSONMock = readJSON as unknown as ReturnType<typeof vi.fn>;
 import {
   getCourtBlockStatus,
   getUpcomingBlockWarningFromBlocks,
@@ -206,7 +209,7 @@ describe('getCourtBlockStatus', () => {
     new Date(now.getTime() + minutes * 60 * 1000).toISOString();
 
   it('returns not blocked when no blocks exist', () => {
-    readJSON.mockReturnValue([]);
+    readJSONMock.mockReturnValue([]);
     // We can't control `new Date()` inside the function, but we test the shape
     const result = getCourtBlockStatus(1);
     expect(result.isBlocked).toBe(false);
@@ -215,7 +218,7 @@ describe('getCourtBlockStatus', () => {
   });
 
   it('returns not blocked when blocks are for other courts', () => {
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 5,
         startTime: new Date(Date.now() - 60000).toISOString(),
@@ -230,7 +233,7 @@ describe('getCourtBlockStatus', () => {
 
   it('detects active wet court block with priority', () => {
     const nowMs = Date.now();
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 1,
         isWetCourt: true,
@@ -248,7 +251,7 @@ describe('getCourtBlockStatus', () => {
 
   it('detects active non-wet block', () => {
     const nowMs = Date.now();
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 2,
         isWetCourt: false,
@@ -269,13 +272,13 @@ describe('getCourtBlockStatus', () => {
   });
 
   it('handles readJSON returning null', () => {
-    readJSON.mockReturnValue(null);
+    readJSONMock.mockReturnValue(null);
     const result = getCourtBlockStatus(1);
     expect(result.isBlocked).toBe(false);
   });
 
   it('handles readJSON throwing', () => {
-    readJSON.mockImplementation(() => {
+    readJSONMock.mockImplementation(() => {
       throw new Error('corrupted');
     });
     const result = getCourtBlockStatus(1);
@@ -291,7 +294,7 @@ describe('getUpcomingBlockWarning', () => {
 
   it('delegates to getUpcomingBlockWarningFromBlocks with readJSON data', () => {
     const nowMs = Date.now();
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 1,
         startTime: new Date(nowMs + 3 * 60000).toISOString(),
@@ -306,7 +309,7 @@ describe('getUpcomingBlockWarning', () => {
   });
 
   it('returns null when readJSON throws', () => {
-    readJSON.mockImplementation(() => {
+    readJSONMock.mockImplementation(() => {
       throw new Error('fail');
     });
     const result = getUpcomingBlockWarning(1, 60);
@@ -314,7 +317,7 @@ describe('getUpcomingBlockWarning', () => {
   });
 
   it('returns null when no blocks', () => {
-    readJSON.mockReturnValue([]);
+    readJSONMock.mockReturnValue([]);
     const result = getUpcomingBlockWarning(1, 60);
     expect(result).toBeNull();
   });

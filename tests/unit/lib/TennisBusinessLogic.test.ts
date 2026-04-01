@@ -5,6 +5,8 @@ vi.mock('../../../src/lib/court-blocks.js', () => ({
 }));
 
 import { getCourtBlockStatus } from '../../../src/lib/court-blocks.js';
+// Type assertion: partial mock for testing — getCourtBlockStatus is vi.fn() via vi.mock above
+const getCourtBlockStatusMock = getCourtBlockStatus as unknown as ReturnType<typeof vi.fn>;
 import { TennisBusinessLogic } from '../../../src/lib/TennisBusinessLogic.js';
 
 describe('TennisBusinessLogic.formatPlayerDisplayName', () => {
@@ -251,7 +253,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
 
   it('uses block status end time when no session', () => {
     const now = new Date('2025-01-15T10:00:00Z');
-    getCourtBlockStatus.mockReturnValue({
+    getCourtBlockStatusMock.mockReturnValue({
       endTime: new Date('2025-01-15T10:45:00Z').toISOString(),
     });
     const courts = [{}]; // No session but has block

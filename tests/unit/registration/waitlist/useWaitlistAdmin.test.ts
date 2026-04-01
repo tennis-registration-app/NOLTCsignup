@@ -18,6 +18,8 @@ vi.mock('@lib', () => ({
 }));
 
 import { handleReorderWaitlistOp } from '../../../../src/registration/handlers/adminOperations.js';
+// Type assertion: partial mock for testing — handleReorderWaitlistOp is vi.fn() via vi.mock above
+const handleReorderWaitlistOpMock = handleReorderWaitlistOp as unknown as ReturnType<typeof vi.fn>;
 import { useWaitlistAdmin } from '../../../../src/registration/waitlist/useWaitlistAdmin';
 
 function makeDeps(overrides = {}) {
@@ -88,7 +90,7 @@ describe('useWaitlistAdmin', () => {
       const { ref } = createHarness(deps);
       await act(async () => { await ref.current.onReorderWaitlist(0, 2); });
       expect(handleReorderWaitlistOp).toHaveBeenCalledTimes(1);
-      const [ctx, fromIndex, toIndex] = handleReorderWaitlistOp.mock.calls[0];
+      const [ctx, fromIndex, toIndex] = handleReorderWaitlistOpMock.mock.calls[0];
       expect(ctx.backend).toBe(deps.backend);
       expect(ctx.getCourtData).toBe(deps.getCourtData);
       expect(ctx.showAlertMessage).toBe(deps.showAlertMessage);
@@ -100,7 +102,7 @@ describe('useWaitlistAdmin', () => {
       const deps = makeDeps();
       const { ref } = createHarness(deps);
       await act(async () => { await ref.current.onReorderWaitlist(1, 3); });
-      const [ctx] = handleReorderWaitlistOp.mock.calls[0];
+      const [ctx] = handleReorderWaitlistOpMock.mock.calls[0];
       act(() => { ctx.setWaitlistMoveFrom(null); });
       expect(ref.current.waitlistMoveFrom).toBeNull();
     });
@@ -109,7 +111,7 @@ describe('useWaitlistAdmin', () => {
       const deps = makeDeps();
       const { ref } = createHarness(deps);
       await act(async () => { await ref.current.onReorderWaitlist(0, 1); });
-      const [ctx] = handleReorderWaitlistOp.mock.calls[0];
+      const [ctx] = handleReorderWaitlistOpMock.mock.calls[0];
       act(() => { ctx.setWaitlistMoveFrom(7); });
       expect(ref.current.waitlistMoveFrom).toBe(7);
     });
@@ -118,7 +120,7 @@ describe('useWaitlistAdmin', () => {
       const deps = makeDeps();
       const { ref } = createHarness(deps);
       await act(async () => { await ref.current.onReorderWaitlist(2, 0); });
-      const [, fromIndex, toIndex] = handleReorderWaitlistOp.mock.calls[0];
+      const [, fromIndex, toIndex] = handleReorderWaitlistOpMock.mock.calls[0];
       expect(fromIndex).toBe(2);
       expect(toIndex).toBe(0);
     });

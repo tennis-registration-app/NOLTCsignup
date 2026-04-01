@@ -20,7 +20,7 @@ import {
 const DEVICE_ID = 'admin-device-1';
 const TENNIS_CONFIG = { DEVICES: { ADMIN_ID: DEVICE_ID } };
 
-function createCtx(overrides = {}) {
+function createCtx(overrides: Record<string, any> = {}) {
   return {
     waitingGroups: overrides.waitingGroups || [],
     backend: {
