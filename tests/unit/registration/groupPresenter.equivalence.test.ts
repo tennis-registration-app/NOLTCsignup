@@ -319,10 +319,10 @@ function captureHookResults() {
 }
 
 describe('GroupScreen presenter equivalence', () => {
-  let app;
-  let handlers;
-  let legacy;
-  let presenter;
+  let app: any;
+  let handlers: any;
+  let legacy: any;
+  let presenter: any;
 
   beforeAll(async () => {
     const result = await captureHookResults();

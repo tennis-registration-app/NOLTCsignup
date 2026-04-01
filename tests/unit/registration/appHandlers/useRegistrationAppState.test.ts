@@ -163,7 +163,7 @@ function captureHookResult() {
 }
 
 describe('useRegistrationAppState contract', () => {
-  let result;
+  let result: any;
 
   beforeAll(async () => {
     // Capture the hook result once for all tests

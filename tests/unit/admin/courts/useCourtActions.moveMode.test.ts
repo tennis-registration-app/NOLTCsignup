@@ -173,7 +173,7 @@ describe('useCourtActions — optimistic move', () => {
 
   it('clears movingFrom immediately when move is triggered', async () => {
     // Use a deferred promise so the API call stays pending
-    let resolveMove;
+    let resolveMove: (value: unknown) => void;
     const moveCourt = vi.fn(() => new Promise((r) => { resolveMove = r; }));
     const { result, renderSync, unmount } = renderHook(moveCourt);
     await renderSync();
@@ -185,7 +185,7 @@ describe('useCourtActions — optimistic move', () => {
     expect(result.current.movingFrom).toBe(3);
 
     // Start the move (don't await — API is still pending)
-    let movePromise;
+    let movePromise: Promise<unknown>;
     await act(async () => {
       movePromise = result.current.handleMoveCourt(3, 7);
     });
@@ -202,7 +202,7 @@ describe('useCourtActions — optimistic move', () => {
   });
 
   it('sets optimisticCourts with session swapped from source to target', async () => {
-    let resolveMove;
+    let resolveMove: (value: unknown) => void;
     const moveCourt = vi.fn(() => new Promise((r) => { resolveMove = r; }));
     const { result, renderSync, unmount } = renderHook(moveCourt);
     await renderSync();
@@ -211,7 +211,7 @@ describe('useCourtActions — optimistic move', () => {
       result.current.initiateMove(3);
     });
 
-    let movePromise;
+    let movePromise: Promise<unknown>;
     await act(async () => {
       movePromise = result.current.handleMoveCourt(3, 7);
     });
@@ -294,7 +294,7 @@ describe('useCourtActions — optimistic move', () => {
   });
 
   it('prevents double-click during in-flight move', async () => {
-    let resolveMove;
+    let resolveMove: (value: unknown) => void;
     const moveCourt = vi.fn(() => new Promise((r) => { resolveMove = r; }));
     const { result, renderSync, unmount } = renderHook(moveCourt);
     await renderSync();
@@ -303,7 +303,7 @@ describe('useCourtActions — optimistic move', () => {
       result.current.initiateMove(3);
     });
 
-    let movePromise;
+    let movePromise: Promise<unknown>;
     await act(async () => {
       movePromise = result.current.handleMoveCourt(3, 7);
     });
@@ -376,12 +376,12 @@ describe('useCourtActions — optimistic clear', () => {
   });
 
   it('sets optimisticCourts with target court emptied during in-flight', async () => {
-    let resolveClear;
+    let resolveClear: (value: unknown) => void;
     const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
     await renderSync();
 
-    let clearPromise;
+    let clearPromise: Promise<unknown>;
     await act(async () => {
       clearPromise = result.current.handleClearCourt(3);
     });
@@ -456,12 +456,12 @@ describe('useCourtActions — optimistic clear', () => {
   });
 
   it('prevents double-click during in-flight clear', async () => {
-    let resolveClear;
+    let resolveClear: (value: unknown) => void;
     const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
     await renderSync();
 
-    let clearPromise;
+    let clearPromise: Promise<unknown>;
     await act(async () => {
       clearPromise = result.current.handleClearCourt(3);
     });
@@ -482,7 +482,7 @@ describe('useCourtActions — optimistic clear', () => {
   });
 
   it('clears showActions immediately', async () => {
-    let resolveClear;
+    let resolveClear: (value: unknown) => void;
     const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
     await renderSync();
@@ -493,7 +493,7 @@ describe('useCourtActions — optimistic clear', () => {
     });
     expect(result.current.showActions).toBe(3);
 
-    let clearPromise;
+    let clearPromise: Promise<unknown>;
     await act(async () => {
       clearPromise = result.current.handleClearCourt(3);
     });
@@ -521,7 +521,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
   });
 
   it('sets optimisticWetCourts with court removed during in-flight', async () => {
-    let resolveWet;
+    let resolveWet: (value: unknown) => void;
     const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearWetCourt,
@@ -529,7 +529,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     });
     await renderSync();
 
-    let togglePromise;
+    let togglePromise: Promise<unknown>;
     await act(async () => {
       togglePromise = result.current.handleWetCourtToggle(3);
     });
@@ -605,7 +605,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
   });
 
   it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
-    let resolveWet;
+    let resolveWet: (value: unknown) => void;
     const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
     const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
       clearWetCourt,
@@ -613,7 +613,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     });
     await renderSync();
 
-    let togglePromise;
+    let togglePromise: Promise<unknown>;
     await act(async () => {
       togglePromise = result.current.handleWetCourtToggle(3);
     });
@@ -631,7 +631,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
   });
 
   it('prevents double-click during in-flight wet toggle', async () => {
-    let resolveWet;
+    let resolveWet: (value: unknown) => void;
     const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearWetCourt,
@@ -639,7 +639,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     });
     await renderSync();
 
-    let togglePromise;
+    let togglePromise: Promise<unknown>;
     await act(async () => {
       togglePromise = result.current.handleWetCourtToggle(3);
     });
@@ -670,7 +670,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
   });
 
   it('sets optimisticWetCourts to empty set during in-flight', async () => {
-    let resolveDry;
+    let resolveDry: (value: unknown) => void;
     const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearAllWetCourts,
@@ -678,7 +678,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     });
     await renderSync();
 
-    let dryPromise;
+    let dryPromise: Promise<unknown>;
     await act(async () => {
       dryPromise = result.current.handleAllCourtsDry();
     });
@@ -696,7 +696,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
   });
 
   it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
-    let resolveDry;
+    let resolveDry: (value: unknown) => void;
     const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
     const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
       clearAllWetCourts,
@@ -704,7 +704,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     });
     await renderSync();
 
-    let dryPromise;
+    let dryPromise: Promise<unknown>;
     await act(async () => {
       dryPromise = result.current.handleAllCourtsDry();
     });
@@ -783,7 +783,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
   });
 
   it('prevents double-click during in-flight All Courts Dry', async () => {
-    let resolveDry;
+    let resolveDry: (value: unknown) => void;
     const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearAllWetCourts,
@@ -791,7 +791,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     });
     await renderSync();
 
-    let dryPromise;
+    let dryPromise: Promise<unknown>;
     await act(async () => {
       dryPromise = result.current.handleAllCourtsDry();
     });
@@ -820,14 +820,14 @@ describe('useCourtActions — optimistic activate wet courts', () => {
   });
 
   it('sets optimisticWetCourts to all 12 courts during in-flight', async () => {
-    let resolveActivate;
+    let resolveActivate: (value: unknown) => void;
     const activateEmergency = vi.fn(() => new Promise((r) => { resolveActivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       activateEmergency,
     });
     await renderSync();
 
-    let activatePromise;
+    let activatePromise: Promise<unknown>;
     await act(async () => {
       activatePromise = result.current.handleActivateWet();
     });
@@ -902,14 +902,14 @@ describe('useCourtActions — optimistic activate wet courts', () => {
   });
 
   it('prevents double-click during in-flight activate', async () => {
-    let resolveActivate;
+    let resolveActivate: (value: unknown) => void;
     const activateEmergency = vi.fn(() => new Promise((r) => { resolveActivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       activateEmergency,
     });
     await renderSync();
 
-    let activatePromise;
+    let activatePromise: Promise<unknown>;
     await act(async () => {
       activatePromise = result.current.handleActivateWet();
     });
@@ -956,7 +956,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
   });
 
   it('sets optimisticWetCourts to empty set during in-flight', async () => {
-    let resolveDeactivate;
+    let resolveDeactivate: (value: unknown) => void;
     const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       deactivateAll,
@@ -964,7 +964,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     });
     await renderSync();
 
-    let deactivatePromise;
+    let deactivatePromise: Promise<unknown>;
     await act(async () => {
       deactivatePromise = result.current.handleDeactivateWet();
     });
@@ -982,7 +982,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
   });
 
   it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
-    let resolveDeactivate;
+    let resolveDeactivate: (value: unknown) => void;
     const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
       deactivateAll,
@@ -990,7 +990,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     });
     await renderSync();
 
-    let deactivatePromise;
+    let deactivatePromise: Promise<unknown>;
     await act(async () => {
       deactivatePromise = result.current.handleDeactivateWet();
     });
@@ -1065,7 +1065,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
   });
 
   it('prevents double-click during in-flight deactivate', async () => {
-    let resolveDeactivate;
+    let resolveDeactivate: (value: unknown) => void;
     const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       deactivateAll,
@@ -1073,7 +1073,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     });
     await renderSync();
 
-    let deactivatePromise;
+    let deactivatePromise: Promise<unknown>;
     await act(async () => {
       deactivatePromise = result.current.handleDeactivateWet();
     });

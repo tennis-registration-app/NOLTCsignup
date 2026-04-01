@@ -89,7 +89,7 @@ const HANDLER_KEYS = [
 ];
 
 describe('useCourtActions contract', () => {
-  let hookResult = null;
+  let hookResult: any = null;
 
   beforeAll(async () => {
     // Render a minimal component that captures the hook return value

@@ -18,7 +18,7 @@ describe('window-bridge', () => {
   // ============================================================
 
   describe('writeCourtboardState', () => {
-    let savedCourtboardState;
+    let savedCourtboardState: any;
 
     beforeEach(() => {
       savedCourtboardState = window.CourtboardState;
@@ -59,7 +59,7 @@ describe('window-bridge', () => {
   // ============================================================
 
   describe('getLegacyAvailabilityDomain', () => {
-    let savedTennis;
+    let savedTennis: any;
 
     beforeEach(() => {
       savedTennis = window.Tennis;

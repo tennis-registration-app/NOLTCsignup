@@ -43,7 +43,7 @@ function makeEntry(id, players, opts = {}) {
   };
 }
 
-let unmount;
+let unmount: (() => void) | null;
 afterEach(() => {
   if (unmount) {
     unmount();

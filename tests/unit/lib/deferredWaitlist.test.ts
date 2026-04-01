@@ -33,7 +33,7 @@ describe('Deferred waitlist — queue filtering', () => {
   });
 
   it('empty waitlist has no waiters', () => {
-    const waitlist = [];
+    const waitlist: Record<string, unknown>[] = [];
     const hasWaiters = waitlist.some((e) => !e.deferred);
     expect(hasWaiters).toBe(false);
   });

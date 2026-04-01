@@ -184,7 +184,7 @@ describe('CTA Block Filter Logic', () => {
       { number: 12, isAvailable: true, isOvertime: false, isOccupied: false, isBlocked: false },
     ];
 
-    const upcomingBlocks = []; // No blocks
+    const upcomingBlocks: Record<string, unknown>[] = []; // No blocks
 
     const waitlist = [
       {

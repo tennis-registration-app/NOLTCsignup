@@ -153,7 +153,7 @@ describe('fetchFrequentPartners — error path', () => {
 
 describe('fetchFrequentPartners — cache', () => {
   it('skips API call if already loading (in-flight dedup)', async () => {
-    let resolveFirst;
+    let resolveFirst: (value: unknown) => void;
     const firstCall = new Promise((res) => { resolveFirst = res; });
     const backend = makeBackend({
       getFrequentPartners: vi.fn()

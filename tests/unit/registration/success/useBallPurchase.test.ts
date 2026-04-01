@@ -80,7 +80,7 @@ describe('initial state', () => {
 
 describe('double-submit guard', () => {
   it('ignores a second call while a purchase is in progress', async () => {
-    let resolveFirst;
+    let resolveFirst: (value: unknown) => void;
     const slowPurchase = vi.fn(
       () => new Promise((res) => { resolveFirst = res; })
     );

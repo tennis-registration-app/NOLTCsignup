@@ -9,7 +9,7 @@ import { featureFlags } from '../../../../src/config/runtimeConfig.js';
 import { checkAdminAccess, useAdminAccess } from '../../../../src/admin/guards/adminAccessGuard.js';
 
 describe('adminAccessGuard', () => {
-  let warnSpy;
+  let warnSpy: any;
 
   beforeEach(() => {
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});

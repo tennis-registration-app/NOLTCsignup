@@ -25,7 +25,7 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
 
 // ---- test helpers ----
 function createDeps(overrides = {}) {
-  let subscriptionCallback;
+  let subscriptionCallback: ((...args: unknown[]) => void) | undefined;
   const mockUnsubscribe = vi.fn();
 
   const deps = {
@@ -67,7 +67,7 @@ function createDeps(overrides = {}) {
 }
 
 // ---- shared test state ----
-let deps, result, unmount, mockUnsubscribe, getSubscriptionCallback;
+let deps: any, result: { current: any }, unmount: () => void, mockUnsubscribe: any, getSubscriptionCallback: any;
 
 beforeEach(async () => {
   vi.clearAllMocks();

@@ -266,10 +266,10 @@ function captureHookResults() {
 }
 
 describe('SuccessScreen presenter equivalence', () => {
-  let app;
-  let handlers;
-  let legacy;
-  let presenter;
+  let app: any;
+  let handlers: any;
+  let legacy: any;
+  let presenter: any;
 
   // Mock computed values that would be calculated in the route
   const mockComputed = {

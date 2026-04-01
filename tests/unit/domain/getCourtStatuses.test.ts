@@ -67,8 +67,8 @@ function loadAvailabilityModule() {
     blocks = normalizeBlocks(blocks);
     wetSet = wetSet instanceof Set ? wetSet : new Set();
 
-    const free = [];
-    const overtime = [];
+    const free: number[] = [];
+    const overtime: number[] = [];
     const wet = Array.from(wetSet).sort((a, b) => a - b);
 
     for (let i = 0; i < (data?.courts?.length || 0); i++) {
@@ -282,7 +282,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
       ],
     };
 
-    const upcomingBlocks = []; // No blocks
+    const upcomingBlocks: Record<string, unknown>[] = []; // No blocks
 
     const statuses = getCourtStatuses({
       data,
@@ -312,7 +312,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
       ],
     };
 
-    const upcomingBlocks = [];
+    const upcomingBlocks: Record<string, unknown>[] = [];
 
     const statuses = getCourtStatuses({
       data,

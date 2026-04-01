@@ -18,7 +18,7 @@ import {
 } from '../../../src/tennis/domain/waitlist.js';
 
 describe('tennis/domain/waitlist', () => {
-  let W;
+  let W: any;
 
   beforeAll(() => {
     W = window.Tennis?.Domain?.waitlist;

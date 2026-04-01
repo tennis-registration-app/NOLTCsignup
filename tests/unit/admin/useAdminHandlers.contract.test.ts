@@ -43,7 +43,7 @@ const EXPECTED_KEYS = [
 ];
 
 describe('useAdminHandlers contract', () => {
-  let hookResult = null;
+  let hookResult: any = null;
 
   beforeAll(async () => {
     const container = document.createElement('div');

@@ -218,10 +218,10 @@ function captureHookResult() {
 }
 
 describe('CourtSelectionScreen presenter equivalence (model only)', () => {
-  let app;
+  let app: any;
   let workflow;
-  let legacy;
-  let presenter;
+  let legacy: any;
+  let presenter: any;
 
   // Mock computed values that would be calculated in the route
   const mockComputed = {

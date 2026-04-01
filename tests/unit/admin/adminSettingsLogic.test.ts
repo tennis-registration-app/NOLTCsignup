@@ -54,7 +54,7 @@ describe('adminSettingsLogic', () => {
   // ─── loadSettingsData ──────────────────────────────────
 
   describe('loadSettingsData', () => {
-    let mockDeps;
+    let mockDeps: any;
 
     beforeEach(() => {
       mockDeps = {
@@ -145,7 +145,7 @@ describe('adminSettingsLogic', () => {
   // Pure function — does NOT call showNotification (hook wrapper does that)
 
   describe('updateBallPriceApi', () => {
-    let mockBackend;
+    let mockBackend: any;
 
     beforeEach(() => {
       mockBackend = {
@@ -198,7 +198,7 @@ describe('adminSettingsLogic', () => {
   // ─── refreshSettingsApi ────────────────────────────────
 
   describe('refreshSettingsApi', () => {
-    let mockDeps;
+    let mockDeps: any;
 
     beforeEach(() => {
       mockDeps = {
@@ -246,7 +246,7 @@ describe('adminSettingsLogic', () => {
   // ─── refreshAISettingsApi ──────────────────────────────
 
   describe('refreshAISettingsApi', () => {
-    let mockDeps;
+    let mockDeps: any;
 
     beforeEach(() => {
       mockDeps = {

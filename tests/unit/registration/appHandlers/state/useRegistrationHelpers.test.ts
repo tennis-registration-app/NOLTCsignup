@@ -168,7 +168,7 @@ describe('getCourtsOccupiedForClearing', () => {
 
 // ── guardAddPlayerEarly ────────────────────────────────────────
 describe('guardAddPlayerEarly', () => {
-  let findEngagementByMemberId;
+  let findEngagementByMemberId: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -276,7 +276,7 @@ describe('guardAgainstGroupDuplicate', () => {
 
 // ── validateGroupCompat ────────────────────────────────────────
 describe('validateGroupCompat', () => {
-  let domainValidateGroup;
+  let domainValidateGroup: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();

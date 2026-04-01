@@ -195,7 +195,7 @@ describe('courtPresenter', () => {
       workflow.displacement = { courtNumber: 3, group: [] };
       const computed = { computedAvailableCourts: [2, 6] };
 
-      const callOrder = [];
+      const callOrder: string[] = [];
       handlers.undoOvertimeAndClearPrevious.mockImplementation(async () => {
         callOrder.push('undo');
       });

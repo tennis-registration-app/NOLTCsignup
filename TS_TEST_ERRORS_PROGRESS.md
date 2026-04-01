@@ -82,3 +82,79 @@ TS2353: 85 -> 85 (0)
 Next target: Remaining TS7005/TS7034 (334+94 = 428 remaining)
 Top files: useCourtActions.moveMode.test.ts (68), useSystemSettingsState (42), presenter equiv tests (~18 each)
 Approach: Node scripts for array/generic typed syntax. Use any for complex mock deps.
+
+---
+
+## Iteration 3 — 2026-03-31
+Pattern fixed: TS7005/TS7034 — All remaining untyped outer let variables (deferred promises, result refs, mock objects)
+Errors before: 3159
+Errors after: 2691
+Reduction: 468 errors (-15%)
+
+### Files fixed
+- tests/unit/admin/courts/useCourtActions.moveMode.test.ts: resolveMove/movePromise/resolveClear/clearPromise/resolveWet/togglePromise/resolveDry/dryPromise/resolveActivate/activatePromise/resolveDeactivate/deactivatePromise (68 errors)
+- tests/unit/admin/adminSettingsLogic.test.ts: mockDeps/mockBackend (48 errors)
+- tests/unit/registration/appHandlers/state/useRegistrationDataLayer.test.ts: deps/result/unmount/mockUnsubscribe/getSubscriptionCallback/subscriptionCallback (49 errors)
+- tests/unit/admin/screens/system/useSystemSettingsState.characterization.test.tsx: rootRef/backend/hookRef (42 errors)
+- tests/unit/registration/successPresenter.equivalence.test.ts: app/handlers/legacy/presenter (21 errors)
+- tests/unit/registration/homePresenter.equivalence.test.ts: app/handlers/legacy/presenter (19 errors)
+- tests/unit/registration/groupPresenter.equivalence.test.ts: app/handlers/legacy/presenter (18 errors)
+- tests/unit/registration/courtPresenter.equivalence.test.ts: app/legacy/presenter (18 errors)
+- tests/unit/registration/adminPresenter.equivalence.test.ts: app/handlers/legacy/presenter (18 errors)
+- tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts: findEngagementByMemberId/domainValidateGroup (21 errors)
+- tests/unit/registration/appHandlers/useRegistrationAppState.test.ts: result (20 errors)
+- tests/unit/admin/courts/useCourtActions.contract.test.ts: hookResult (16 errors)
+- tests/unit/admin/useAdminHandlers.contract.test.ts: hookResult (7 errors)
+- tests/unit/admin/guards/adminAccessGuard.test.ts: warnSpy (5 errors)
+- tests/unit/courtboard/bridge/windowBridge.test.ts: savedCourtboardState/savedTennis (4 errors)
+- tests/unit/domain/getCourtStatuses.test.ts: overtime/free/upcomingBlocks arrays (6 errors)
+- tests/unit/shared/utils/toast.test.ts: events/handler (20 errors)
+- tests/unit/tennis/waitlist.test.ts: W (11 errors)
+- tests/unit/registration/success/useBallPurchase.test.ts: resolveFirst (2 errors)
+- tests/unit/shared/ErrorBoundary.test.tsx: consoleErrorSpy (3 errors)
+- tests/unit/lib/ctaBlockFilter.test.ts: upcomingBlocks (2 errors)
+- tests/unit/lib/deferredWaitlist.test.ts: waitlist (2 errors)
+- tests/unit/registration/appHandlers/state/useRegistrationDerived.test.ts: unmount (2 errors)
+- tests/unit/registration/courtPresenter.test.ts: callOrder (2 errors)
+- tests/unit/registration/memberIdentity/useMemberIdentity.test.ts: resolveFirst (2 errors)
+
+### Type patterns used
+- `(value: unknown) => void` for deferred promise resolve functions
+- `Promise<unknown>` for deferred promise holders
+- `any` for complex mock objects (mockDeps, mockBackend, hookResult, W, warnSpy, etc.)
+- `ReturnType<typeof createRoot>` for React root refs
+- `CustomEvent[]` and `(e: Event) => void` for event handler types
+- `number[]` for arrays filled with court numbers
+- `Record<string, unknown>[]` for generic empty arrays
+- `(() => void) | null` for nullable cleanup functions
+- `string[]` for string accumulator arrays
+
+### Notes
+- TS7005 and TS7034 completely eliminated (0 remaining)
+- TS7006 reduced from 221 to 220 (1 fixed by cascade)
+- TS18048 reduced from 125 to 85 (cascade from fixing outer let types)
+- TS2345 slightly increased from 566 to 567 (new strict checks from typed vars)
+
+---
+
+## Current Baseline: 2691 errors (after iteration 3)
+
+### Current Distribution
+TS18046: 576 (0)
+TS2345: 567 (+1)
+TS18047: 298 (0)
+TS2322: 279 (0)
+TS7006: 220 (-1)
+TS2571: 199 (0)
+TS2339: 165 (0)
+TS2353: 85 (0)
+TS18048: 85 (-40)
+TS7053: 47 (0)
+TS7031: 41 (0)
+TS2769: 19 (0)
+TS7005: 0 (-334)
+TS7034: 0 (-94)
+
+Next target: TS18046 (576) — nullability violations (possibly undefined/null values accessed without narrowing)
+Top pattern: Use non-null assertions (!) where test itself validates value existence
+Approach: Scan for `.find()`, optional chain results, and computed values accessed in tests
