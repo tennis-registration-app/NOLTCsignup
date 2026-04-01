@@ -21,7 +21,9 @@ vi.mock('../../../src/shared/utils/toast.js', () => ({
   toast: vi.fn(),
 }));
 
-function makeSuggestion(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeSuggestion(overrides: any = {}): any {
   return {
     memberNumber: '1001',
     member: {
@@ -39,7 +41,9 @@ function makeSuggestion(overrides = {}) {
   };
 }
 
-function createSuggestionClickDeps(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createSuggestionClickDeps(overrides: any = {}): any {
   return {
     currentGroup: [],
     setSearchInput: vi.fn(),
@@ -66,7 +70,9 @@ function createSuggestionClickDeps(overrides = {}) {
   };
 }
 
-function createAddPlayerDeps(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createAddPlayerDeps(overrides: any = {}): any {
   return {
     currentGroup: [{ id: 'existing-1', name: 'Bob', memberNumber: '1002' }],
     setAddPlayerSearch: vi.fn(),

@@ -277,3 +277,62 @@ TS18047: 0 (-298)
 
 Next target: TS2345 (569) -- type mismatches. Find the most common sub-pattern.
 Approach: Scan files with most TS2345 errors; look for mock shape issues and use Partial<T> or as-casts.
+
+---
+
+## Iteration 6 -- 2026-03-31
+Pattern fixed: TS2345 -- type mismatch errors (partial mocks passed to strict typed functions)
+Errors before: 1902
+Errors after: 1609
+Reduction: 293 errors (-15%)
+
+### Files fixed
+- tests/unit/admin/handlers/courtOperations.test.ts: createCtx/createCtxWithBackend typed as any
+- tests/unit/orchestration/adminOperations.test.ts: ctx as any at call sites (handleXxxOp)
+- tests/unit/registration/handlers/adminOperations.test.ts: createCtx typed as any
+- tests/unit/admin/boardSubscriptionLogic.test.ts: null/undefined/invalid inputs cast as any
+- tests/unit/admin/calendar/utils.test.ts: CalendarEvent partial objects cast as CalendarEvent with required fields; mkEvent typed; non-null assertions on layout.get()
+- tests/unit/admin/controller/buildAdminController.contract.test.ts: minimalDeps cast as unknown as Parameters<typeof buildAdminController>[0]
+- tests/unit/lib/domain/waitlistHelpers.test.ts: ENTRIES typed as any[], factory fns return any, null/undefined cast as any
+- tests/unit/orchestration/memberSelectionOrchestrator.test.ts: makeSuggestion/createDeps factories typed
+- tests/unit/orchestration/waitlistOrchestrator.test.ts: factory functions typed
+- tests/unit/admin/handlers/applyBlocksOperation.test.ts: factory functions typed
+- tests/unit/admin/handlers/wetCourtOperations.test.ts: factory functions typed
+- tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts: factory functions typed
+
+### Type patterns used
+- createCtx(overrides: any = {}): any -- typed factory functions returning any
+- as any -- for null/undefined/invalid defensive test inputs at call sites
+- CalendarEvent with required startTime/endTime fields for partial objects
+- Parameters<typeof fn>[0] -- for non-exported context types
+- ENTRIES: any[] -- for inferred partial-typed arrays
+
+### Notes
+- TS2345 reduced from 569 to 334 (-235)
+- Some factory files used different patterns (no createXxx) -- addressed in targeted fixes
+- Calendar utils also fixed TS7006 (mkEvent params) and TS18048/TS2532 (layout.get() non-null)
+
+---
+
+## Current Baseline: 1609 errors (after iteration 6)
+
+### Current Distribution
+TS2345: 569 -> 334 (-235)
+TS2322: 278 -> 262 (-16)
+TS7006: 215 -> 207 (-8)
+TS2339: 200 -> 194 (-6)
+TS2571: 161 (0)
+TS18048: 95 -> 92 (-3)
+TS2353: 87 (+1)
+TS18046: 79 (0)
+TS7053: 47 (0)
+TS7031: 41 (0)
+TS2531: 19 (0)
+TS2769: 17 (0)
+TS2740: 15 (0)
+TS7019: 13 (0)
+TS2554: 11 (0)
+
+Next target: Continue TS2345 (334 remaining) -- partial mocks passed to strict types
+Top files: courtAvailability (21), courtHelpers (20), courtStatusUtils (19), groupPresenter (16), courtPresenter (16)
+Approach: Cast partial test objects with as any at call sites or add return type any to factory fns

@@ -32,7 +32,9 @@ const COURTS = [
   { number: 3, id: 'uuid-court-3' },
 ];
 
-function createCtx(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createCtx(overrides: any = {}): any {
   return {
     courts: overrides.courts || COURTS,
     backend: {
@@ -52,7 +54,9 @@ function createCtx(overrides = {}) {
 /**
  * Build a valid block input object.
  */
-function makeBlock(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeBlock(overrides: any = {}): any {
   const now = new Date();
   const later = new Date(now.getTime() + 60 * 60 * 1000); // +1hr
   return {

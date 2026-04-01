@@ -18,7 +18,9 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
  * Create mock deps with sensible defaults.
  * Deps are flat (not grouped) for waitlist orchestrator.
  */
-function createMockDeps(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createMockDeps(overrides: any = {}): any {
   return {
     // Read values
     isJoiningWaitlist: false,

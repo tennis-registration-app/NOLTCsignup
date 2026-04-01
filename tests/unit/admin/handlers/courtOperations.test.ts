@@ -24,7 +24,9 @@ import {
 const DEVICE_ID = 'admin-device-1';
 const TENNIS_CONFIG = { DEVICES: { ADMIN_ID: DEVICE_ID } };
 
-function createCtx(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createCtx(overrides: any = {}): any {
   return {
     courts: overrides.courts || [],
     backend: {
@@ -58,7 +60,8 @@ function createCtx(overrides = {}) {
 }
 
 // Re-assemble backend when overrides need it
-function createCtxWithBackend(backendOverrides, ctxOverrides = {}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createCtxWithBackend(backendOverrides: any, ctxOverrides: any = {}): any {
   const ctx = createCtx(ctxOverrides);
   // Apply backend overrides deeply
   if (backendOverrides.admin) {

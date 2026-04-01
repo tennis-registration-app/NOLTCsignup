@@ -30,7 +30,9 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
-function createHelpers(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createHelpers(overrides: any = {}): any {
   const deps = {
     data: { courts: [], waitlist: [] },
     setIsUserTyping: vi.fn(),

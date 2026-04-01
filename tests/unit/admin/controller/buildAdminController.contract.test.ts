@@ -49,7 +49,8 @@ describe('buildAdminController contract', () => {
       AIAssistant: () => null,
       AIAssistantAdmin: () => null,
     },
-  };
+  // Type assertion: partial mock for testing
+  } as unknown as Parameters<typeof buildAdminController>[0];
 
   describe('top-level structure', () => {
     it('returns object with expected top-level keys', () => {

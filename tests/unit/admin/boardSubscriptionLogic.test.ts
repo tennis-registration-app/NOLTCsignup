@@ -10,13 +10,13 @@ describe('boardSubscriptionLogic', () => {
 
   describe('generateBlocksFingerprint', () => {
     it('returns empty string for null/undefined', () => {
-      expect(generateBlocksFingerprint(null)).toBe('');
-      expect(generateBlocksFingerprint(undefined)).toBe('');
+      expect(generateBlocksFingerprint(null as any)).toBe('');
+      expect(generateBlocksFingerprint(undefined as any)).toBe('');
     });
 
     it('returns empty string for non-array', () => {
-      expect(generateBlocksFingerprint({})).toBe('');
-      expect(generateBlocksFingerprint('not an array')).toBe('');
+      expect(generateBlocksFingerprint({} as any)).toBe('');
+      expect(generateBlocksFingerprint('not an array' as any)).toBe('');
     });
 
     it('returns empty string for empty array', () => {
@@ -58,20 +58,20 @@ describe('boardSubscriptionLogic', () => {
 
   describe('extractCourtBlocks', () => {
     it('returns empty array for null/undefined', () => {
-      expect(extractCourtBlocks(null)).toEqual([]);
-      expect(extractCourtBlocks(undefined)).toEqual([]);
+      expect(extractCourtBlocks(null as any)).toEqual([]);
+      expect(extractCourtBlocks(undefined as any)).toEqual([]);
     });
 
     it('returns empty array for non-array', () => {
-      expect(extractCourtBlocks({})).toEqual([]);
+      expect(extractCourtBlocks({} as any)).toEqual([]);
     });
 
     it('returns empty array when no courts have blocks', () => {
       const courts = [
         { id: 1, number: 1 },
         { id: 2, number: 2 },
-      ];
-      expect(extractCourtBlocks(courts)).toEqual([]);
+      ] as any;
+      expect(extractCourtBlocks(courts as any)).toEqual([]);
     });
 
     it('extracts blocks from courts with block property', () => {
@@ -89,7 +89,7 @@ describe('boardSubscriptionLogic', () => {
         },
         { id: 3, number: 3 },
       ];
-      const result = extractCourtBlocks(courts);
+      const result = extractCourtBlocks(courts as any);
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         id: 'block-1',
@@ -114,7 +114,7 @@ describe('boardSubscriptionLogic', () => {
           },
         },
       ];
-      const result = extractCourtBlocks(courts);
+      const result = extractCourtBlocks(courts as any);
       expect(result[0].startTime).toBe('2025-01-01T09:00');
       expect(result[0].endTime).toBe('2025-01-01T10:00');
     });
@@ -130,7 +130,7 @@ describe('boardSubscriptionLogic', () => {
           },
         },
       ];
-      const result = extractCourtBlocks(courts);
+      const result = extractCourtBlocks(courts as any);
       // Should be an ISO string (contains T and Z or timezone offset)
       expect(result[0].startTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
@@ -184,7 +184,7 @@ describe('boardSubscriptionLogic', () => {
         blocks: [{ id: 'b1', startsAt: '09:00', endsAt: '10:00' }],
         upcomingBlocks: [],
       };
-      const result = transformBoardUpdate(board);
+      const result = transformBoardUpdate(board as any);
 
       expect(result.courts).toHaveLength(2);
       expect(result.courtBlocks).toHaveLength(1);
@@ -194,13 +194,13 @@ describe('boardSubscriptionLogic', () => {
 
     it('handles missing waitlist (defaults to empty)', () => {
       const board = { courts: [] };
-      const result = transformBoardUpdate(board);
+      const result = transformBoardUpdate(board as any);
       expect(result.waitingGroups).toEqual([]);
     });
 
     it('handles missing blocks and upcomingBlocks', () => {
       const board = { courts: [] };
-      const result = transformBoardUpdate(board);
+      const result = transformBoardUpdate(board as any);
       expect(result.newFingerprint).toBe('');
     });
 
@@ -210,7 +210,7 @@ describe('boardSubscriptionLogic', () => {
         blocks: [{ id: '1', startsAt: '09:00', endsAt: '10:00' }],
         upcomingBlocks: [],
       };
-      const result = transformBoardUpdate(board, ''); // Empty last fingerprint
+      const result = transformBoardUpdate(board as any, ''); // Empty last fingerprint
       expect(result.shouldBumpRefreshTrigger).toBe(true);
     });
 
@@ -221,9 +221,9 @@ describe('boardSubscriptionLogic', () => {
         upcomingBlocks: [],
       };
       // First call to get the fingerprint
-      const firstResult = transformBoardUpdate(board, '');
+      const firstResult = transformBoardUpdate(board as any, '');
       // Second call with same fingerprint
-      const secondResult = transformBoardUpdate(board, firstResult.newFingerprint);
+      const secondResult = transformBoardUpdate(board as any, firstResult.newFingerprint);
       expect(secondResult.shouldBumpRefreshTrigger).toBe(false);
     });
 
@@ -236,7 +236,7 @@ describe('boardSubscriptionLogic', () => {
       });
 
       // Should not throw
-      expect(() => transformBoardUpdate(board)).not.toThrow();
+      expect(() => transformBoardUpdate(board as any)).not.toThrow();
     });
 
     it('combines blocks and upcomingBlocks for fingerprint', () => {
@@ -245,7 +245,7 @@ describe('boardSubscriptionLogic', () => {
         blocks: [{ id: '1', startsAt: '09:00', endsAt: '10:00' }],
         upcomingBlocks: [{ id: '2', startsAt: '11:00', endsAt: '12:00' }],
       };
-      const result = transformBoardUpdate(board);
+      const result = transformBoardUpdate(board as any);
       expect(result.newFingerprint).toContain('1:09:00:10:00');
       expect(result.newFingerprint).toContain('2:11:00:12:00');
     });
