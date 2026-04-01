@@ -60,7 +60,7 @@ function createHarness(depsOverrides = {}) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const ref = React.createRef();
+  const ref = React.createRef<ReturnType<typeof useWetCourts>>() as { current: ReturnType<typeof useWetCourts> };
 
   act(() => {
     root.render(<Wrapper ref={ref} />);

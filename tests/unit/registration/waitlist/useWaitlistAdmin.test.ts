@@ -38,7 +38,7 @@ function createHarness(deps = makeDeps()) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const ref = React.createRef();
+  const ref = React.createRef<ReturnType<typeof useWaitlistAdmin>>() as { current: ReturnType<typeof useWaitlistAdmin> };
   act(() => { root.render(React.createElement(Wrapper, { ref })); });
   return { ref, deps, root, container };
 }

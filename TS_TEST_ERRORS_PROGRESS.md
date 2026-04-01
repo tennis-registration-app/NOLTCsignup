@@ -158,3 +158,51 @@ TS7034: 0 (-94)
 Next target: TS18046 (576) — nullability violations (possibly undefined/null values accessed without narrowing)
 Top pattern: Use non-null assertions (!) where test itself validates value existence
 Approach: Scan for `.find()`, optional chain results, and computed values accessed in tests
+
+---
+
+## Iteration 4 — 2026-03-31
+Pattern fixed: TS18046 — `React.createRef()` without generic causes `ref.current` typed as `unknown`
+Errors before: 2691
+Errors after: 2162
+Reduction: 529 errors (-20%)
+
+### Files fixed
+- tests/unit/admin/blocks/useBlockForm.test.tsx: `React.createRef()` → `React.createRef<ReturnType<typeof useBlockForm>>() as { current: ReturnType<typeof useBlockForm> }` (165 → 0 TS18046)
+- tests/unit/admin/wetCourts/useWetCourts.test.tsx: same pattern for `useWetCourts` (127 → 0 TS18046)
+- tests/unit/registration/search/useMemberSearch.test.ts: same pattern for `useMemberSearch` (65 → 0 TS18046)
+- tests/unit/admin/hooks/useAdminSettings.test.tsx: same pattern for `useAdminSettings` (56 → 0 TS18046)
+- tests/unit/registration/memberIdentity/useMemberIdentity.test.ts: same pattern for `useMemberIdentity` (49 → 0 TS18046)
+- tests/unit/registration/waitlist/useWaitlistAdmin.test.ts: same pattern for `useWaitlistAdmin` (20 → 0 TS18046)
+- tests/unit/registration/ui/mobile/useMobileFlowController.test.ts: same pattern for `useMobileFlowController` (15 → 0 TS18046)
+- tests/unit/admin/blocks/useBlockForm.test.tsx: also fixed TS7006 (`makeValid(h)` param) and TS18047 (`originalValues!`) cascade fixes
+
+### Type patterns used
+- `React.createRef<ReturnType<typeof useHook>>() as { current: ReturnType<typeof useHook> }` — typed non-null ref cast for harness createRef calls
+- `ReturnType<typeof createHarness>` — for helper function parameter types
+- Non-null assertion `originalValues!` — for known-initialized optional values
+
+### Notes
+- First attempt: `React.createRef<ReturnType<typeof useHook>>()` alone converts TS18046 → TS18047 (unknown → null). Must cast as non-null `{ current: T }` to fully resolve.
+- TS18046 reduced from 576 → 79 (−497). Remaining 79 are in different files/patterns.
+- TS2345, TS2339 slightly increased (cascade from newly typed refs exposing pre-existing mismatches in useWetCourts).
+
+---
+
+## Current Baseline: 2162 errors (after iteration 4)
+
+### Current Distribution
+TS18046: 576 → 79 (−497)
+TS18047: 298 (unchanged)
+TS2345: 567 → 569 (+2 cascade)
+TS2322: 279 (unchanged)
+TS7006: 220 → 219 (−1)
+TS2571: 199 → 161 (−38, cascade from typed refs)
+TS2339: 165 → 171 (+6 cascade)
+TS2353: 85 → 86 (+1)
+TS18048: 85 (unchanged)
+TS7053: 47 (unchanged)
+TS7031: 41 (unchanged)
+
+Next target: TS18047 (298) — "possibly null" violations. Non-null assertions (`!`) at access sites.
+Top files: audit remaining 79 TS18046 first (smaller, may combine), then tackle TS18047 pattern.
