@@ -22,7 +22,7 @@ describe('normalizeAdminSettingsResponse', () => {
     });
     expect(result.operatingHours).toHaveLength(1);
     expect(result.upcomingOverrides).toHaveLength(1);
-    expect(result!.settings.ballPriceCents).toBe(500);
+    expect(result!.settings!.ballPriceCents).toBe(500);
   });
 
   it('handles null sub-objects', () => {

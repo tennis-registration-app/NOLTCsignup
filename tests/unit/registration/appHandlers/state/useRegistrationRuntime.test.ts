@@ -31,7 +31,7 @@ const mockNormalizeSettings = vi.fn().mockReturnValue({
 });
 
 vi.mock('../../../../../src/lib/normalize/index.js', () => ({
-  normalizeSettings: (...args) => mockNormalizeSettings(...args),
+  normalizeSettings: (...args: any[]) => mockNormalizeSettings(...args),
 }));
 
 // ---- test helpers ----

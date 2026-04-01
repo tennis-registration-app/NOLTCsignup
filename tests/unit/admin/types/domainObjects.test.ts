@@ -249,7 +249,7 @@ describe('domainObjects', () => {
         backend: {},
         dataStore: {},
         extra: 'value',
-      });
+      } as any);
       expect(services).not.toHaveProperty('dataStore');
       expect(services).not.toHaveProperty('extra');
       expect(Object.keys(services)).toEqual(['backend']);

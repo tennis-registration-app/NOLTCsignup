@@ -154,7 +154,7 @@ describe('API Contract Sentinel', () => {
     });
 
     it('normalizes participants into group.players with camelCase', () => {
-      const players = board.courts[0].session.group.players;
+      const players = board.courts[0].session!.group.players;
       expect(players).toHaveLength(2);
       expect(players[0]).toMatchObject({
         memberId: 'mem-1',
@@ -165,7 +165,7 @@ describe('API Contract Sentinel', () => {
 
     it('computes isOvertime correctly', () => {
       // serverNow === scheduledEndAt, so not strictly overtime
-      expect(board.courts[0].session.isOvertime).toBe(false);
+      expect(board.courts[0].session!.isOvertime).toBe(false);
     });
   });
 
@@ -182,7 +182,7 @@ describe('API Contract Sentinel', () => {
     });
 
     it('computes isActive for block spanning serverNow', () => {
-      expect(board.courts[1].block.isActive).toBe(true);
+      expect(board.courts[1].block!.isActive).toBe(true);
     });
 
     it('extracts active blocks into board.blocks array', () => {
@@ -348,7 +348,7 @@ describe('Admin Settings Normalization', () => {
 
   describe('normalizeSettings', () => {
     it('has frozen camelCase key set', () => {
-      expect(Object.keys(normalized.settings).sort()).toEqual([
+      expect(Object.keys(normalized.settings!).sort()).toEqual([
         'autoClearEnabled',
         'autoClearMinutes',
         'ballBucketSize',

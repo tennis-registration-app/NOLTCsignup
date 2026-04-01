@@ -80,11 +80,11 @@ describe('normalizeBlock', () => {
   });
 
   it('uses blockId fallback for id', () => {
-    expect(normalizeBlock({ blockId: 'bid-1' }, serverNow).id).toBe('bid-1');
+    expect(normalizeBlock({ blockId: 'bid-1' }, serverNow)!.id).toBe('bid-1');
   });
 
   it('defaults id to unknown', () => {
-    expect(normalizeBlock({}, serverNow).id).toBe('unknown');
+    expect(normalizeBlock({}, serverNow)!.id).toBe('unknown');
   });
 
   it('uses description as fallback for reason', () => {

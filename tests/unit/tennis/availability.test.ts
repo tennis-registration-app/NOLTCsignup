@@ -56,7 +56,7 @@ describe('availability ESM port', () => {
               scheduledEndAt: '2026-01-01T12:00:00',
               group: { players: [{ name: 'Test' }] },
             },
-          },
+          } as any,
         ],
       },
       now,
@@ -751,7 +751,7 @@ describe('getFreeCourts (branch gaps)', () => {
   });
 
   it('throws for missing courts array', () => {
-    expect(() => getFreeCourts({ data: {}, now: T, blocks: [], wetSet: new Set<number>() })).toThrow(
+    expect(() => getFreeCourts({ data: {} as any, now: T, blocks: [], wetSet: new Set<number>() })).toThrow(
       'Invalid data'
     );
   });

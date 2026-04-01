@@ -108,7 +108,7 @@ function makeHomeProps(overrides: Record<string, unknown> = {}): any {
 /**
  * Minimal app shape for HomeRoute (must satisfy both presenters and route overlay).
  */
-function makeRouteApp(overrides = {}) {
+function makeRouteApp(overrides: any = {}): any {
   return {
     search: {
       searchInput: '',
@@ -231,7 +231,7 @@ describe('HomeRoute overlay', () => {
     const app = makeRouteApp({
       mobile: { checkingLocation: true },
     });
-    render(<HomeRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<HomeRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     expect(screen.getByText('Checking your location…')).toBeInTheDocument();
   });
 
@@ -239,7 +239,7 @@ describe('HomeRoute overlay', () => {
     const app = makeRouteApp({
       mobile: { checkingLocation: false },
     });
-    render(<HomeRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<HomeRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     expect(screen.queryByText('Checking your location…')).not.toBeInTheDocument();
     // HomeScreen still renders
     expect(screen.getByText('Tennis Court Registration')).toBeInTheDocument();

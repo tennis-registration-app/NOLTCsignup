@@ -59,7 +59,7 @@ function loadAvailabilityModule() {
     );
   }
 
-  function getFreeCourtsInfo({ data, now, blocks, wetSet }) {
+  function getFreeCourtsInfo({ data, now, blocks, wetSet }: any) {
     const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || 12;
     const all = Array.from({ length: total }, (_, i) => i + 1);
 
@@ -69,7 +69,7 @@ function loadAvailabilityModule() {
 
     const free: number[] = [];
     const overtime: number[] = [];
-    const wet = Array.from(wetSet).sort((a, b) => a - b);
+    const wet = (Array.from(wetSet) as number[]).sort((a: number, b: number) => a - b);
 
     for (let i = 0; i < (data?.courts?.length || 0); i++) {
       const n = i + 1;
@@ -101,13 +101,13 @@ function loadAvailabilityModule() {
     const freeSet = new Set(free);
     const occupied = all
       .filter((n) => !freeSet.has(n) && !overtime.includes(n) && !wet.includes(n))
-      .sort((a, b) => a - b);
+      .sort((a: number, b: number) => a - b);
 
     return {
-      free: free.sort((a, b) => a - b),
+      free: free.sort((a: number, b: number) => a - b),
       occupied,
       wet,
-      overtime: overtime.sort((a, b) => a - b),
+      overtime: overtime.sort((a: number, b: number) => a - b),
       meta: { total, overtimeCount: overtime.length },
     };
   }
@@ -142,7 +142,7 @@ function loadAvailabilityModule() {
             new Date(b.startTime || b.start) > now
         );
         if (!nextBlock) return true;
-        return new Date(nextBlock.startTime || nextBlock.start) - now >= MIN_USEFUL_MS;
+        return new Date(nextBlock.startTime || nextBlock.start).getTime() - now.getTime() >= MIN_USEFUL_MS;
       });
 
     const total = (data?.courts || []).length || info.meta?.total || 0;

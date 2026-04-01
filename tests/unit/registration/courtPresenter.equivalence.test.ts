@@ -157,7 +157,7 @@ function presenterCourtScreenModelProps(app: any, workflow: any, computed: any) 
 /**
  * Minimal component to capture hook result.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const workflow = useWorkflowContext();
 
@@ -174,7 +174,7 @@ function HookCapture({ onResult }) {
  * Helper to render hook and capture result.
  */
 function captureHookResult() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
@@ -210,7 +210,7 @@ function captureHookResult() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -234,7 +234,7 @@ describe('CourtSelectionScreen presenter equivalence (model only)', () => {
 
   beforeAll(async () => {
     const result = await captureHookResult();
-    app = result.app;
+    app = (result as any).app;
     workflow = result.workflow;
     legacy = legacyCourtScreenModelProps(app, workflow, mockComputed);
     presenter = presenterCourtScreenModelProps(app, workflow, mockComputed);

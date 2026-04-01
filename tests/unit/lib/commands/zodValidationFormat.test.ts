@@ -38,7 +38,7 @@ describe('Zod validation error formatting', () => {
       buildAssignCourtCommand({ courtId: '', players: 'not-array', groupType: 'invalid' });
     } catch (e) {
       // Should contain field paths like "courtId" or "players"
-      expect(e.message).toMatch(/courtId|players|groupType/);
+      expect((e as any).message).toMatch(/courtId|players|groupType/);
       return;
     }
     // Should have thrown

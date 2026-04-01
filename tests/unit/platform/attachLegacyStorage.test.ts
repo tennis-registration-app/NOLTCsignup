@@ -69,7 +69,7 @@ describe('attachLegacyStorage', () => {
       const obj = { a: 1, b: { c: 2 } };
       const frozen = legacyStorage.deepFreeze(obj);
       expect(Object.isFrozen(frozen)).toBe(true);
-      expect(Object.isFrozen(frozen.b)).toBe(true);
+      expect(Object.isFrozen((frozen as any).b)).toBe(true);
     });
 
     test('returns primitives unchanged', () => {

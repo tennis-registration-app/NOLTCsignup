@@ -94,7 +94,7 @@ describe('normalizeAccountMember', () => {
   });
 
   it('defaults isPrimary to false when missing', () => {
-    expect(normalizeAccountMember({ id: '1' }).isPrimary).toBe(false);
+    expect(normalizeAccountMember({ id: '1' })!.isPrimary).toBe(false);
   });
 });
 
@@ -115,8 +115,8 @@ describe('normalizeAccountMembers', () => {
     ];
     const result = normalizeAccountMembers(raw);
     expect(result).toHaveLength(2);
-    expect(result[0].displayName).toBe('Alice');
-    expect(result[1].displayName).toBe('Bob');
+    expect(result[0]!.displayName).toBe('Alice');
+    expect(result[1]!.displayName).toBe('Bob');
   });
 
   it('returns empty array for empty input array', () => {

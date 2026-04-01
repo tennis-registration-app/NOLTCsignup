@@ -113,7 +113,7 @@ describe('handleSuggestionClickOrchestrated', () => {
     it('shows alert for suggestion without memberNumber', async () => {
       const deps = createSuggestionClickDeps();
       await handleSuggestionClickOrchestrated(
-        { member: { id: '1' }, memberNumber: '' },
+        { member: { id: '1' } as any, memberNumber: '' } as any,
         deps
       );
       expect(deps.showAlertMessage).toHaveBeenCalled();
@@ -281,7 +281,7 @@ describe('handleAddPlayerSuggestionClickOrchestrated', () => {
     it('shows alert for suggestion without member.id', async () => {
       const deps = createAddPlayerDeps();
       await handleAddPlayerSuggestionClickOrchestrated(
-        { memberNumber: '1001', member: { id: '', name: 'Test' } },
+        { memberNumber: '1001', member: { id: '', name: 'Test' } as any } as any,
         deps
       );
       expect(deps.showAlertMessage).toHaveBeenCalled();

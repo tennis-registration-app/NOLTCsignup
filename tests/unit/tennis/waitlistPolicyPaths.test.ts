@@ -31,7 +31,7 @@ const T = new Date('2025-06-15T14:00:00Z');
 const mins = (n: any) => new Date(T.getTime() + n * 60000);
 
 /** Build a 12-court array: all occupied far in the future, with overrides. */
-function makeCourts(overrides = {}) {
+function makeCourts(overrides: Record<number, any> = {}) {
   return Array.from({ length: 12 }, (_, i) => {
     const n = i + 1;
     if (n in overrides) return overrides[n];

@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { decideTapToRegister } from '../../../../src/courtboard/utils/tapToRegisterDecision.js';
 
 // Helper: build a courts array where court N (1-based) has given properties
-function makeCourts(overrides = {}) {
+function makeCourts(overrides: Record<number, any> = {}) {
   // 8 courts, all empty by default
   return Array.from({ length: 8 }, (_, i) => ({
     number: i + 1,
@@ -356,7 +356,7 @@ describe('decideTapToRegister', () => {
       const result = decideTapToRegister({
         courtNumber: 1,
         courts: makeCourts(),
-        waitingGroups: [{ name: 'no-id-group' }],
+        waitingGroups: [{ name: 'no-id-group' } as any],
         registeredCourt: null,
         waitlistEntryId: 'wl-123',
       });

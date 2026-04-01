@@ -100,7 +100,7 @@ describe('useCourtActions contract', () => {
       const result = useCourtActions({
         statusActions: { clearCourt: vi.fn(), moveCourt: vi.fn() },
         wetCourtsActions: { activateEmergency: vi.fn(), deactivateAll: vi.fn(), clearCourt: vi.fn(), clearAllCourts: vi.fn() },
-        services: { backend: { admin: { updateSession: vi.fn() } } },
+        services: { backend: { admin: { updateSession: vi.fn() } as any } } as any,
         courts: [],
         courtBlocks: [],
         wetCourts: new Set(),
@@ -203,9 +203,9 @@ describe('useCourtActions contract', () => {
   });
 
   it('type map matches expected shape', () => {
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(hookResult).sort()) {
-      typeMap[key] = typeof hookResult[key];
+      typeMap[key] = typeof (hookResult as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {

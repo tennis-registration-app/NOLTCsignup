@@ -42,7 +42,7 @@ describe('normalizeName', () => {
 
   it('handles object with no recognized name keys', () => {
     // Falls through to the object itself → toString → "[object Object]"
-    expect(normalizeName({ id: 1 })).toBe('[object object]');
+    expect(normalizeName({ id: 1 } as any)).toBe('[object object]');
   });
 });
 

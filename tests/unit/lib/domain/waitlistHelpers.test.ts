@@ -150,6 +150,6 @@ describe('getGroupTypeLabel', () => {
   });
 
   it('returns "Group" when group.type is missing', () => {
-    expect(getGroupTypeLabel({ group: {} })).toBe('Group');
+    expect(getGroupTypeLabel({ group: {} } as any)).toBe('Group');
   });
 });

@@ -110,7 +110,7 @@ describe('GroupScreen rendering', () => {
     const welcome = screen.getByText(/Welcome/);
     expect(welcome).toBeInTheDocument();
     // Player name rendered inside <strong> within the welcome message
-    expect(welcome.querySelector('strong').textContent).toBe('Alice');
+    expect(welcome.querySelector('strong')!.textContent).toBe('Alice');
   });
 
   it('renders player cards with remove buttons for non-first players', () => {

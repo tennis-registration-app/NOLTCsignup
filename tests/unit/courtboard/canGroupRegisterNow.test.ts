@@ -18,7 +18,7 @@ function canGroupRegisterNow({
   upcomingBlocks = [],
   waitlist,
   idx,
-}) {
+}: any): boolean {
   const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
   const group = waitlist[idx];

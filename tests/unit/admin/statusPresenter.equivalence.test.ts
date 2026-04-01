@@ -151,7 +151,7 @@ describe('StatusSection presenter equivalence', () => {
     const gridKeys = ['statusModel', 'statusActions', 'wetCourtsModel', 'wetCourtsActions', 'services'];
     for (const key of gridKeys) {
       it(`${key} is reference-equal`, () => {
-        expect(presenter.courtStatusGridProps[key]).toBe(legacy.courtStatusGridProps[key]);
+        expect((presenter.courtStatusGridProps as Record<string, any>)[key]).toBe((legacy.courtStatusGridProps as Record<string, any>)[key]);
       });
     }
   });
@@ -185,9 +185,9 @@ describe('StatusSection presenter equivalence', () => {
 
   it('type map for model matches expected shape', () => {
     const model = buildStatusModel(statusModel, wetCourtsModel, services);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(model).sort()) {
-      typeMap[key] = typeof model[key];
+      typeMap[key] = typeof (model as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {
@@ -201,9 +201,9 @@ describe('StatusSection presenter equivalence', () => {
 
   it('type map for actions matches expected shape', () => {
     const actions = buildStatusActions(statusActions, wetCourtsActions);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(actions).sort()) {
-      typeMap[key] = typeof actions[key];
+      typeMap[key] = typeof (actions as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {

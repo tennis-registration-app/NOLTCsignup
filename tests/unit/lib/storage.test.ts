@@ -44,7 +44,7 @@ import {
 } from '../../../src/lib/storage.js';
 
 // ── localStorage mock ────────────────────────────────────────
-let store = {};
+let store: Record<string, string> = {};
 const mockLocalStorage = {
   getItem: vi.fn((key) => store[key] ?? null),
   setItem: vi.fn((key, value) => { store[key] = value; }),
@@ -56,7 +56,7 @@ const mockLocalStorage = {
 Object.defineProperty(globalThis, 'localStorage', { value: mockLocalStorage, writable: true });
 
 beforeEach(() => {
-  store = {};
+  store = {} as Record<string, string>;
   vi.clearAllMocks();
 });
 
@@ -304,8 +304,8 @@ describe('searchHistoricalGames', () => {
 
   it('sorts most recent first', () => {
     const result = searchHistoricalGames();
-    expect(new Date(result[0].startTime).getTime()).toBeGreaterThan(
-      new Date(result[1].startTime).getTime()
+    expect(new Date(result[0].startTime as any).getTime()).toBeGreaterThan(
+      new Date(result[1].startTime as any).getTime()
     );
   });
 });
@@ -404,8 +404,8 @@ describe('deepFreeze', () => {
   it('freezes object and nested objects', () => {
     const obj = deepFreeze({ a: { b: 1 }, c: [2] });
     expect(Object.isFrozen(obj)).toBe(true);
-    expect(Object.isFrozen(obj.a)).toBe(true);
-    expect(Object.isFrozen(obj.c)).toBe(true);
+    expect(Object.isFrozen((obj as any).a)).toBe(true);
+    expect(Object.isFrozen((obj as any).c)).toBe(true);
   });
 
   it('returns primitives unchanged', () => {

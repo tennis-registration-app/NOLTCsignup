@@ -93,7 +93,7 @@ describe('normalizeSession scheduledEndAt hotspot', () => {
     const raw = rawSnakeCaseSession();
     const normalized = normalizeSession(raw, SERVER_NOW);
 
-    const snakeCaseKeys = Object.keys(normalized).filter((k) => k.includes('_'));
+    const snakeCaseKeys = Object.keys(normalized!).filter((k) => k.includes('_'));
     expect(snakeCaseKeys).toEqual([]);
   });
 });

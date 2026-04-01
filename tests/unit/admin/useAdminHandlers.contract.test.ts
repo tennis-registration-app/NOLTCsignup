@@ -51,9 +51,9 @@ describe('useAdminHandlers contract', () => {
 
     function Harness() {
       const result = useAdminHandlers({
-        backend: { queries: {}, commands: {}, admin: {} },
-        dataStore: { getData: () => null },
-        TENNIS_CONFIG: { STORAGE: {} },
+        backend: { queries: {} as any, commands: {} as any, admin: {} as any } as any,
+        dataStore: { getData: () => null } as any,
+        TENNIS_CONFIG: { STORAGE: {} } as any,
         courts: [],
         waitingGroups: [],
         showNotification: vi.fn(),
@@ -110,9 +110,9 @@ describe('useAdminHandlers contract', () => {
   });
 
   it('type map matches expected shape', () => {
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(hookResult).sort()) {
-      typeMap[key] = typeof hookResult[key];
+      typeMap[key] = typeof (hookResult as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {

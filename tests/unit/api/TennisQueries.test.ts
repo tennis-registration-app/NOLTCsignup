@@ -145,10 +145,10 @@ describe('TennisQueries', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('NOT_FOUND');
-        expect(e.code).toBe('COURT_NOT_FOUND');
-        expect(e.message).toBe('Court not found');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('NOT_FOUND');
+        expect((e as AppError).code).toBe('COURT_NOT_FOUND');
+        expect((e as AppError).message).toBe('Court not found');
       }
     });
 
@@ -160,8 +160,8 @@ describe('TennisQueries', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e.category).toBe('CONFLICT');
-        expect(e.code).toBe('COURT_OCCUPIED');
+        expect((e as AppError).category).toBe('CONFLICT');
+        expect((e as AppError).code).toBe('COURT_OCCUPIED');
       }
     });
 
@@ -173,9 +173,9 @@ describe('TennisQueries', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e.category).toBe('UNKNOWN');
-        expect(e.code).toBe('QUERY_FAILED');
-        expect(e.message).toBe('Something went wrong');
+        expect((e as AppError).category).toBe('UNKNOWN');
+        expect((e as AppError).code).toBe('QUERY_FAILED');
+        expect((e as AppError).message).toBe('Something went wrong');
       }
     });
 
@@ -187,9 +187,9 @@ describe('TennisQueries', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e.category).toBe('UNKNOWN');
-        expect(e.code).toBe('QUERY_FAILED');
-        expect(e.message).toBe('Failed to load board');
+        expect((e as AppError).category).toBe('UNKNOWN');
+        expect((e as AppError).code).toBe('QUERY_FAILED');
+        expect((e as AppError).message).toBe('Failed to load board');
       }
     });
 

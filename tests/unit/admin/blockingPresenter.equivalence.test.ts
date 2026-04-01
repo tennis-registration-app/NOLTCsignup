@@ -74,7 +74,7 @@ const mockServices = {
 function legacyBlockingProps(blockingView: any, wcModel: any, wcActions: any, bModel: any, bActions: any, comps: any, svc: any) {
   // The legacy section maps blockingView to defaultView:
   const viewMap = { create: 'create', future: 'calendar', list: 'timeline' };
-  const defaultView = viewMap[blockingView];
+  const defaultView = (viewMap as Record<string, string>)[blockingView];
   // Only renders when blockingView matches one of the 3 branches
   if (!defaultView) return null;
 
@@ -137,12 +137,12 @@ describe('BlockingSection presenter equivalence', () => {
     );
 
     it('produces same keys', () => {
-      expect(Object.keys(presenter).sort()).toEqual(Object.keys(legacy).sort());
+      expect(Object.keys(presenter!).sort()).toEqual(Object.keys(legacy!).sort());
     });
 
     it('all values are reference-equal', () => {
-      for (const key of Object.keys(legacy)) {
-        expect(presenter[key], `${key} reference equality`).toBe(legacy![key]);
+      for (const key of Object.keys(legacy!)) {
+        expect((presenter as Record<string, any>)[key], `${key} reference equality`).toBe((legacy as Record<string, any>)![key]);
       }
     });
   });
@@ -167,9 +167,9 @@ describe('BlockingSection presenter equivalence', () => {
     const model = buildBlockingModel(
       'create', mockWetCourtsModel, mockBlockModel, mockComponents, mockServices
     );
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(model).sort()) {
-      typeMap[key] = typeof model[key];
+      typeMap[key] = typeof (model as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {
@@ -184,9 +184,9 @@ describe('BlockingSection presenter equivalence', () => {
 
   it('type map for actions matches expected shape', () => {
     const actions = buildBlockingActions(mockWetCourtsActions, mockBlockActions);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(actions).sort()) {
-      typeMap[key] = typeof actions[key];
+      typeMap[key] = typeof (actions as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {

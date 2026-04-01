@@ -253,7 +253,7 @@ describe('useRegistrationDomainHooks', () => {
         if (k === 'showAlert' || k === 'showSuccess' || k === 'showSuggestions' ||
             k === 'showAddPlayerSuggestions' || k === 'showBlockModal' || k === 'showQRScanner' ||
             k === 'showPriceSuccess' || k === 'gpsFailedPrompt') return; // these are values, not fns
-        expect(typeof hook[k]).toBe('function');
+        expect(typeof (hook as Record<string, any>)[k]).toBe('function');
       });
       unmount();
     });

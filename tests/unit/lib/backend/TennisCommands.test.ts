@@ -706,7 +706,7 @@ describe('TennisCommands', () => {
       await commands.assignCourtWithPlayers({
         courtId: 'C1',
         players: [
-          { memberId: 'p1', displayName: 'Alice Smith', memberNumber: '1001' },
+          { memberId: 'p1', displayName: 'Alice Smith', memberNumber: '1001' } as any,
         ],
         groupType: 'singles',
       });
@@ -803,10 +803,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('VALIDATION');
-        expect(e.code).toBe('DIRECTORY_NOT_SET');
-        expect(e.message).toContain('TennisDirectory not set');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('DIRECTORY_NOT_SET');
+        expect((e as AppError).message).toContain('TennisDirectory not set');
       }
     });
 
@@ -818,10 +818,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('VALIDATION');
-        expect(e.code).toBe('MISSING_MEMBER_NUMBER');
-        expect(e.message).toContain('has no member number');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('MISSING_MEMBER_NUMBER');
+        expect((e as AppError).message).toContain('has no member number');
       }
     });
 
@@ -842,10 +842,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('NOT_FOUND');
-        expect(e.code).toBe('MEMBER_NOT_FOUND');
-        expect(e.message).toContain('Could not find member');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('NOT_FOUND');
+        expect((e as AppError).code).toBe('MEMBER_NOT_FOUND');
+        expect((e as AppError).message).toContain('Could not find member');
       }
     });
 
@@ -859,10 +859,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('VALIDATION');
-        expect(e.code).toBe('GUESTS_WITHOUT_MEMBER');
-        expect(e.message).toContain('Cannot register guests without a member');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('GUESTS_WITHOUT_MEMBER');
+        expect((e as AppError).message).toContain('Cannot register guests without a member');
       }
     });
   });

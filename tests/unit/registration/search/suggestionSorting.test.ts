@@ -44,7 +44,7 @@ describe('suggestion sorting by play frequency', () => {
     ];
 
     const result = await setup(members);
-    const suggestions = result.current.getAutocompleteSuggestions('1750');
+    const suggestions = (result as any).current.getAutocompleteSuggestions('1750');
 
     expect(suggestions.map((s: any) => s.member.name)).toEqual([
       'Bob Smith',
@@ -61,7 +61,7 @@ describe('suggestion sorting by play frequency', () => {
     ];
 
     const result = await setup(members);
-    const suggestions = result.current.getAutocompleteSuggestions('1750');
+    const suggestions = (result as any).current.getAutocompleteSuggestions('1750');
 
     // Eve (3) first, then Dana and Frank (0 each, alphabetical)
     expect(suggestions.map((s: any) => s.member.name)).toEqual([
@@ -78,7 +78,7 @@ describe('suggestion sorting by play frequency', () => {
     ];
 
     const result = await setup(members);
-    const suggestions = result.current.getAutocompleteSuggestions('Jan');
+    const suggestions = (result as any).current.getAutocompleteSuggestions('Jan');
 
     // Both match: Jan via first-name prefix, Bob via last-name "Jansen".
     // First-name prefix tier wins despite Bob having higher playCount.
@@ -94,7 +94,7 @@ describe('suggestion sorting by play frequency', () => {
     ];
 
     const result = await setup(members);
-    const suggestions = result.current.getAutocompleteSuggestions('Jan');
+    const suggestions = (result as any).current.getAutocompleteSuggestions('Jan');
 
     // All match first-name prefix "Jan", so sort by playCount desc
     expect(suggestions.map((s: any) => s.member.name)).toEqual([

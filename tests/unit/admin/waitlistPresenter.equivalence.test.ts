@@ -100,9 +100,9 @@ describe('WaitlistSection presenter equivalence', () => {
 
   it('type map for model matches expected shape', () => {
     const model = buildWaitlistModel(mockWaitlistModel);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(model).sort()) {
-      typeMap[key] = typeof model[key];
+      typeMap[key] = typeof (model as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {
@@ -113,9 +113,9 @@ describe('WaitlistSection presenter equivalence', () => {
 
   it('type map for actions matches expected shape', () => {
     const actions = buildWaitlistActions(mockWaitlistActions);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(actions).sort()) {
-      typeMap[key] = typeof actions[key];
+      typeMap[key] = typeof (actions as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {

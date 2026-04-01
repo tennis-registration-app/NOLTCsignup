@@ -79,7 +79,7 @@ describe('toAssignCourtPayload', () => {
     });
     expect(payload.court_id).toBe('uuid-1');
     expect(payload.session_type).toBe('singles');
-    expect(payload.participants[0]).toEqual({
+    expect((payload.participants as any[])[0]).toEqual({
       type: 'member',
       member_id: 'M100',
       account_id: 'A100',
@@ -92,7 +92,7 @@ describe('toAssignCourtPayload', () => {
       groupType: 'doubles',
       participants: [GUEST_PARTICIPANT],
     });
-    expect(payload.participants[0]).toEqual({
+    expect((payload.participants as any[])[0]).toEqual({
       type: 'guest',
       guest_name: 'Jane Doe',
       account_id: 'A200',
@@ -181,7 +181,7 @@ describe('toJoinWaitlistPayload', () => {
       participants: [MEMBER],
     });
     expect(payload.group_type).toBe('singles');
-    expect(payload.participants[0]).toEqual({
+    expect((payload.participants as any[])[0]).toEqual({
       type: 'member',
       member_id: 'M200',
       account_id: 'A200',

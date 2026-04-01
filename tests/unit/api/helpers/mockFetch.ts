@@ -10,7 +10,7 @@ const ORIGINAL_FETCH = globalThis.fetch;
  * @param {{ status?: number }} [options]
  * @returns {import('vitest').Mock}
  */
-export function stubFetch(envelope = { ok: true }, options: Record<string, any> = {}) {
+export function stubFetch(envelope: Record<string, unknown> = { ok: true }, options: Record<string, any> = {}) {
   const mockFn = vi.fn().mockResolvedValue({
     ok: (options.status ?? 200) < 400,
     status: options.status ?? 200,

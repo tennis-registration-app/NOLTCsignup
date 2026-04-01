@@ -8,7 +8,7 @@ import { act } from 'react-dom/test-utils';
 import ErrorBoundary from '../../../src/shared/components/ErrorBoundary.jsx';
 
 // Helper component that throws on demand
-function ThrowingChild({ shouldThrow }) {
+function ThrowingChild({ shouldThrow }: any) {
   if (shouldThrow) throw new Error('Test error');
   return <div>Child rendered</div>;
 }

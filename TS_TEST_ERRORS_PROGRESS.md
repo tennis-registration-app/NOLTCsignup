@@ -576,3 +576,81 @@ TS18048: 0 (-90)
 Next target: TS2353 (86) — object literal extra/wrong properties
 Approach: Replace literal property names with as any or add required fields to test objects
 
+
+## Iteration 11 -- 2026-03-31
+Pattern fixed: Multi-pattern sweep — TS2353, TS18046, TS7019, TS7031, TS2531, TS2790, TS2739/TS2740, TS2554, TS2769, TS2345
+Errors before: 343
+Errors after: 5
+Reduction: 338 errors (-99%)
+
+### Files fixed
+- tests/unit/api/helpers/mockFetch.ts: envelope param typed as Record<string, unknown> (eliminated ~80 TS2353)
+- tests/unit/admin/types/domainObjects.test.ts: createAdminServices({...} as any)
+- tests/unit/admin/useAdminHandlers.contract.test.ts: backend/TENNIS_CONFIG/dataStore as any casts
+- tests/unit/courtboard/utils/tapToRegisterDecision.test.ts: [{...} as any]
+- tests/unit/orchestration/adminOperations.test.ts: { name } as any
+- tests/unit/registration/utils/helpers.test.ts: normalizeName({...} as any)
+- tests/unit/tennis/availability.test.ts: court objects as any
+- 5 equivalence test files: Promise<any> generic on captureHookResults() (eliminated ~66 TS18046)
+- 5 equivalence test files + appState test: { backend: mockBackend } as any (TS2769)
+- 6 equivalence/appState files: HookCapture({ onResult }: any) (TS7031)
+- 6 handler test files: (...args: any[]) rest params (TS7019)
+- 3 smoke test files: ({ size }: any), ({ size, className }: any) (TS7031)
+- tests/unit/shared/ErrorBoundary.test.tsx: ({ shouldThrow }: any) (TS7031)
+- tests/unit/courtboard/canGroupRegisterNow.test.ts: destructuring params as any, ): boolean (TS7031/TS7023)
+- tests/unit/courtboard/getCourtStatuses.test.ts: sort comparator any casts (TS2345/TS2362)
+- tests/unit/integration/courtSelectionAgreement.test.ts: function params as any (TS7031)
+- tests/unit/courtboard/ctaBlockFilter.test.ts: function params as any (TS7031)
+- tests/unit/courtboard/waitlistEstimates.test.ts: function params as any (TS7031)
+- tests/unit/lib/normalize/normalizeBlock.test.ts: !.id non-null assertions (TS2531)
+- tests/unit/lib/normalize/normalizeSession.test.ts: !.isTournament, !.id (TS2531)
+- tests/unit/lib/normalize/normalizeAdminSettings.test.ts: !.settings! (TS2531)
+- tests/unit/lib/normalize/normalizeMember.test.ts: !.isPrimary, result[0]! (TS2531)
+- tests/unit/api/ApiAdapter.test.ts: !.session! (TS2531)
+- tests/unit/lib/apiContractSentinel.test.ts: !.group, !.isOvertime, !.isActive (TS2531)
+- tests/unit/admin/adminSettingsLogic.test.ts: !.settings! (TS2531)
+- tests/unit/registration/appHandlers/state/useRegistrationDerived.test.ts: !.firstWaitlistEntry! (TS2531)
+- tests/unit/registration/groupScreen.render.test.tsx: querySelector('strong')! (TS2531)
+- tests/unit/api/TennisDirectory.test.ts: (obj as any).uncleared_streak (TS2790)
+- tests/unit/registration/groupRoute.render.test.tsx: makeRouteApp/Handlers(): any (TS2740)
+- tests/unit/registration/homeScreen.render.test.tsx: makeRouteApp/Handlers(): any (TS2740)
+- tests/unit/admin/courts/useCourtActions.contract.test.ts: services.backend.admin as any (TS2739)
+- tests/unit/admin/courts/useCourtActions.moveMode.test.ts: renderHook rest params (...args: any[]) (TS2554)
+- tests/unit/orchestration/memberSelectionOrchestrator.test.ts: suggestion objects as any (TS2345)
+
+### Type patterns used
+- Record<string, unknown> — for loose envelope parameters accepting any shape
+- as any — for partial mock objects at call sites
+- { backend: mockBackend } as any — for WorkflowProvider props missing 'children' overload
+- Promise<any> generic — for promise-based hook capture helpers
+- (...args: any[]) rest params — eliminates TS7019 on vi.mock() callbacks
+- ({ param }: any) — eliminates TS7031 on destructured function params
+- !.prop non-null assertions — for TS2531 on nullable return values
+- (obj as any).prop — for TS2790 delete on non-optional properties
+- function makeXxx(): any — eliminates TS2740 by widening factory return types
+- ...hookArgs: any[] — eliminates TS2554 on optional destructured parameter signatures
+
+### Notes
+- 338 errors eliminated in single iteration (largest reduction yet)
+- mockFetch.ts fix alone eliminated ~80 TS2353 errors across all API test files
+- Promise<any> fix cascaded to eliminate most TS7053 errors too
+- 5 remaining errors are all in source files (src/), not test files:
+  - src/admin/hooks/useAdminAppState.ts(209): Timeout vs number (TS2345)
+  - src/admin/hooks/useNotification.ts(25): function signature mismatch (TS2322)
+  - src/admin/screens/AnalyticsDashboard.tsx(38): Timeout vs number (TS2322)
+  - src/registration/ui/timeout/useSessionTimeout.ts(58,63): Timeout vs number (TS2322)
+  - These are pre-existing source code bugs, not in scope for test file fixes
+
+---
+
+## Current Baseline: 5 errors (after iteration 11)
+
+### Current Distribution
+TS2322: 4 (all in src/ files — not in scope)
+TS2345: 1 (in src/ file — not in scope)
+All test file errors: 0
+
+### Status: TEST FILE ERRORS COMPLETE
+All fixable TypeScript errors in test files have been eliminated.
+Remaining 5 errors are source code bugs that require source file changes.
+

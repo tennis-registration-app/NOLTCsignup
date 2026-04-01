@@ -32,7 +32,7 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
 const mockVerifyAtClub = vi.fn();
 vi.mock('../../../../../src/registration/services', () => ({
   GeolocationService: {
-    verifyAtClub: (...args) => mockVerifyAtClub(...args),
+    verifyAtClub: (...args: any[]) => mockVerifyAtClub(...args),
   },
 }));
 

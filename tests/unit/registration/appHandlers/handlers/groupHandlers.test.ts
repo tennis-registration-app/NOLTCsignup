@@ -35,13 +35,13 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
 const mockIsValidPlayer = vi.fn().mockReturnValue(true);
 vi.mock('@lib', () => ({
   DataValidation: {
-    isValidPlayer: (...args) => mockIsValidPlayer(...args),
+    isValidPlayer: (...args: any[]) => mockIsValidPlayer(...args),
   },
 }));
 
 const mockToast = vi.fn();
 vi.mock('../../../../../src/shared/utils/toast.js', () => ({
-  toast: (...args) => mockToast(...args),
+  toast: (...args: any[]) => mockToast(...args),
 }));
 
 vi.mock('../../../../../src/shared/constants/toastMessages.js', () => ({

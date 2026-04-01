@@ -146,13 +146,13 @@ describe('ball purchase — idempotency key uniqueness', () => {
 
     // Payload should pass through the duplicates unchanged
     const payload = toPurchaseBallsPayload(command);
-    expect(payload.split_account_ids).toEqual(['acct-1008', 'acct-1008', 'acct-1002']);
+    expect((payload as any).split_account_ids).toEqual(['acct-1008', 'acct-1008', 'acct-1002']);
 
     // The backend RPC will generate per-index keys like:
     // ${base}-split-0, ${base}-split-1, ${base}-split-2
     // These are unique even when accountId repeats.
     const base = payload.idempotency_key;
-    const keys = payload.split_account_ids.map((_: any, i: any) => `${base}-split-${i}`);
+    const keys = (payload as any).split_account_ids.map((_: any, i: any) => `${base}-split-${i}`);
     const uniqueKeys = new Set(keys);
     expect(uniqueKeys.size).toBe(3);
   });

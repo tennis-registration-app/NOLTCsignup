@@ -54,7 +54,7 @@ vi.mock('../../../src/shared/courts/courtAvailability.js', () => ({
 // shared icons (used transitively by courtboard Icons)
 vi.mock('../../../src/shared/ui/icons/Icons.jsx', () => {
   const stub = (name: any) => {
-    const Icon = ({ size, className }) => (
+    const Icon = ({ size, className }: any) => (
       <span data-testid={`icon-${name}`} className={className}>
         {name}
       </span>

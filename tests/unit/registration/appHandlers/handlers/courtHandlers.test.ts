@@ -39,13 +39,13 @@ vi.mock('../../../../../src/lib/types/domain.js', () => ({
 const mockGetSelectableCourtsStrict = vi.fn().mockReturnValue([1, 2, 3]);
 const mockGetFreeCourtsInfo = vi.fn().mockReturnValue({ free: [1, 2] });
 vi.mock('../../../../../src/tennis/domain/availability.js', () => ({
-  getSelectableCourtsStrict: (...args) => mockGetSelectableCourtsStrict(...args),
-  getFreeCourtsInfo: (...args) => mockGetFreeCourtsInfo(...args),
+  getSelectableCourtsStrict: (...args: any[]) => mockGetSelectableCourtsStrict(...args),
+  getFreeCourtsInfo: (...args: any[]) => mockGetFreeCourtsInfo(...args),
 }));
 
 const mockToast = vi.fn();
 vi.mock('../../../../../src/shared/utils/toast.js', () => ({
-  toast: (...args) => mockToast(...args),
+  toast: (...args: any[]) => mockToast(...args),
 }));
 
 vi.mock('../../../../../src/lib/storage.js', () => ({

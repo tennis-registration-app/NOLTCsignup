@@ -12,7 +12,7 @@ import { computeRegistrationCourtSelection } from '../../../src/shared/courts/ov
  */
 
 // Helper to compute CTA state using the canonical API
-function computeCtaState({ courts, upcomingBlocks, waitlist }) {
+function computeCtaState({ courts, upcomingBlocks, waitlist }: any) {
   // Handle null/undefined upcomingBlocks conservatively
   if (upcomingBlocks === null || upcomingBlocks === undefined) {
     return {

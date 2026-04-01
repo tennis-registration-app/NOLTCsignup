@@ -97,8 +97,8 @@ describe('TennisDirectory', () => {
       expect(member.accountId).toBe('acc-456');
       expect(member.memberNumber).toBe('M999');
       // snake_case aliases should NOT exist
-      expect(member.account_id).toBeUndefined();
-      expect(member.member_number).toBeUndefined();
+      expect((member as any).account_id).toBeUndefined();
+      expect((member as any).member_number).toBeUndefined();
     });
 
     it('returns empty array when response.ok is false', async () => {
@@ -417,14 +417,14 @@ describe('TennisDirectory', () => {
   describe('normalization edge cases', () => {
     it('handles missing uncleared_streak (defaults to 0)', async () => {
       const memberWithoutStreak = { ...minimalMemberResponse() };
-      delete memberWithoutStreak.uncleared_streak;
+      delete (memberWithoutStreak as any).uncleared_streak;
       stubFetch({ ok: true, members: [memberWithoutStreak] });
 
       const result = await directory.searchMembers('test');
 
       expect(result[0].unclearedStreak).toBe(0);
       // WP4-4: snake_case alias should NOT exist
-      expect(result[0].uncleared_streak).toBeUndefined();
+      expect((result[0] as any).uncleared_streak).toBeUndefined();
     });
 
     it('normalizes all fields to camelCase only', async () => {
@@ -450,11 +450,11 @@ describe('TennisDirectory', () => {
       expect(m.unclearedStreak).toBe(3);
 
       // snake_case aliases should NOT exist
-      expect(m.account_id).toBeUndefined();
-      expect(m.member_number).toBeUndefined();
-      expect(m.display_name).toBeUndefined();
-      expect(m.is_primary).toBeUndefined();
-      expect(m.uncleared_streak).toBeUndefined();
+      expect((m as any).account_id).toBeUndefined();
+      expect((m as any).member_number).toBeUndefined();
+      expect((m as any).display_name).toBeUndefined();
+      expect((m as any).is_primary).toBeUndefined();
+      expect((m as any).uncleared_streak).toBeUndefined();
     });
 
     it('handles empty members array', async () => {

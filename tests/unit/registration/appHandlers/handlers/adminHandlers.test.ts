@@ -28,11 +28,11 @@ const mockHandleClearWaitlistOp = vi.fn().mockResolvedValue(undefined);
 const mockHandleRemoveFromWaitlistOp = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../../../../src/registration/handlers/adminOperations', () => ({
-  handleClearAllCourtsOp: (...args) => mockHandleClearAllCourtsOp(...args),
-  handleAdminClearCourtOp: (...args) => mockHandleAdminClearCourtOp(...args),
-  handleMoveCourtOp: (...args) => mockHandleMoveCourtOp(...args),
-  handleClearWaitlistOp: (...args) => mockHandleClearWaitlistOp(...args),
-  handleRemoveFromWaitlistOp: (...args) => mockHandleRemoveFromWaitlistOp(...args),
+  handleClearAllCourtsOp: (...args: any[]) => mockHandleClearAllCourtsOp(...args),
+  handleAdminClearCourtOp: (...args: any[]) => mockHandleAdminClearCourtOp(...args),
+  handleMoveCourtOp: (...args: any[]) => mockHandleMoveCourtOp(...args),
+  handleClearWaitlistOp: (...args: any[]) => mockHandleClearWaitlistOp(...args),
+  handleRemoveFromWaitlistOp: (...args: any[]) => mockHandleRemoveFromWaitlistOp(...args),
 }));
 
 // ---- shared test state ----

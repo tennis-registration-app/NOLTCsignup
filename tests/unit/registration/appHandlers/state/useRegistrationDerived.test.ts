@@ -89,7 +89,7 @@ describe("canFirstGroupPlay", () => {
 
     expect(result.current!.canFirstGroupPlay).toBe(true);
     expect(result.current!.firstWaitlistEntry).not.toBeNull();
-    expect(result.current!.firstWaitlistEntry.id).toBe(1);
+    expect(result.current!.firstWaitlistEntry!.id).toBe(1);
   });
 
   it("is false when courtSelection returns 0 selectable courts", async () => {
@@ -120,7 +120,7 @@ describe("canSecondGroupPlay", () => {
 
     expect(result.current!.canFirstGroupPlay).toBe(true);
     expect(result.current!.canSecondGroupPlay).toBe(true);
-    expect(result.current!.secondWaitlistEntry.id).toBe(2);
+    expect(result.current!.secondWaitlistEntry!.id).toBe(2);
   });
 
   it("is false when only 1 court available (first plays, second waits)", async () => {

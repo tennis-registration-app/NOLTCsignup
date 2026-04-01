@@ -31,8 +31,8 @@ describe('toAssignCourtPayload', () => {
     });
     expect(result.court_id).toBe('court-uuid');
     expect(result.session_type).toBe('doubles');
-    expect(result.participants[0].type).toBe('member');
-    expect(result.participants[0].member_id).toBe('m1');
+    expect((result.participants as any[])[0].type).toBe('member');
+    expect((result.participants as any[])[0].member_id).toBe('m1');
     expect(result.add_balls).toBe(true);
   });
 
@@ -44,9 +44,9 @@ describe('toAssignCourtPayload', () => {
         { kind: 'guest', guestName: 'Guest 1', accountId: 'a1', chargedToAccountId: 'a2' },
       ],
     });
-    expect(result.participants[0].type).toBe('guest');
-    expect(result.participants[0].guest_name).toBe('Guest 1');
-    expect(result.participants[0].charged_to_account_id).toBe('a2');
+    expect((result.participants as any[])[0].type).toBe('guest');
+    expect((result.participants as any[])[0].guest_name).toBe('Guest 1');
+    expect((result.participants as any[])[0].charged_to_account_id).toBe('a2');
   });
 
   it('uses accountId as fallback for chargedToAccountId', () => {
@@ -55,7 +55,7 @@ describe('toAssignCourtPayload', () => {
       groupType: 'singles',
       participants: [{ kind: 'guest', guestName: 'G', accountId: 'a1' }],
     });
-    expect(result.participants[0].charged_to_account_id).toBe('a1');
+    expect((result.participants as any[])[0].charged_to_account_id).toBe('a1');
   });
 
   it('includes geolocation when provided', () => {
@@ -154,7 +154,7 @@ describe('toJoinWaitlistPayload', () => {
       participants: [{ kind: 'member', memberId: 'm1', accountId: 'a1' }],
     });
     expect(result.group_type).toBe('doubles');
-    expect(result.participants[0].type).toBe('member');
+    expect((result.participants as any[])[0].type).toBe('member');
   });
 
   it('maps guest participants', () => {
@@ -162,8 +162,8 @@ describe('toJoinWaitlistPayload', () => {
       groupType: 'singles',
       participants: [{ kind: 'guest', guestName: 'Guest', accountId: 'a1' }],
     });
-    expect(result.participants[0].type).toBe('guest');
-    expect(result.participants[0].guest_name).toBe('Guest');
+    expect((result.participants as any[])[0].type).toBe('guest');
+    expect((result.participants as any[])[0].guest_name).toBe('Guest');
   });
 
   it('includes deferred flag', () => {

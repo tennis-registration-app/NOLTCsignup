@@ -35,7 +35,7 @@ function isCourtEligibleForGroup(courtNumber: any, playerCount: any) {
   return true;
 }
 
-function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinutes, closingHour }) {
+function simulateWaitlistEstimates({ courts, waitlist, blocks, now, avgGameMinutes, closingHour }: any) {
   const avg = Number.isFinite(avgGameMinutes) && avgGameMinutes > 0
     ? avgGameMinutes : 75;
   const closing = Number.isFinite(closingHour) ? closingHour : 22;

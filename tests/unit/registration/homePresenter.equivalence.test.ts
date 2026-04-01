@@ -207,7 +207,7 @@ function presenterHomeScreenProps(app: any, workflow: any, handlers: any) {
 /**
  * Minimal component to capture both hooks' results.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
   const workflow = useWorkflowContext();
@@ -225,7 +225,7 @@ function HookCapture({ onResult }) {
  * Helper to render hooks and capture results.
  */
 function captureHookResults() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
@@ -261,7 +261,7 @@ function captureHookResults() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -276,9 +276,9 @@ describe('HomeScreen presenter equivalence', () => {
 
   beforeAll(async () => {
     const result = await captureHookResults();
-    app = result.app;
-    handlers = result.handlers;
-    const workflow = result.workflow;
+    app = (result as any).app;
+    handlers = (result as any).handlers;
+    const workflow = (result as any).workflow;
     legacy = legacyHomeScreenProps(app, workflow, handlers);
     presenter = presenterHomeScreenProps(app, workflow, handlers);
   });

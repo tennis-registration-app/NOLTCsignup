@@ -144,7 +144,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleRemoveFromWaitlistOp(ctx as any, { name: 'Test Group' });
+      await handleRemoveFromWaitlistOp(ctx as any, { name: 'Test Group' } as any);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Cannot remove: group ID not found');
       expect(ctx.backend.admin.removeFromWaitlist).not.toHaveBeenCalled();

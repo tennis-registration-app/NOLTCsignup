@@ -17,7 +17,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 // Icons barrel — used by TabNavigation, CourtCard, WaitlistSection
 vi.mock('../../../src/shared/ui/icons/Icons.jsx', () => {
   const stub = (name: any) => {
-    const Icon = ({ size, className }) => (
+    const Icon = ({ size, className }: any) => (
       <span data-testid={`icon-${name}`} className={className}>
         {name}
       </span>

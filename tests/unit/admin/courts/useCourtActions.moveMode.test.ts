@@ -87,7 +87,7 @@ const WET_BLOCK_COURTS = [
 // Helpers
 // ============================================================
 
-function renderHook(moveCourt: any, courts: any, { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts }: any = {}) {
+function renderHook(...hookArgs: any[]) { const moveCourt = hookArgs[0]; const courts = hookArgs[1]; const { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts } = hookArgs[2] || {};
   // Type assertion: partial mock for testing
   let result = { current: null } as unknown as { current: ReturnType<typeof useCourtActions> };
   // Mutable props ref — allows re-rendering with updated values
@@ -111,7 +111,7 @@ function renderHook(moveCourt: any, courts: any, { clearCourt, courtBlocks, clea
         clearCourt: clearWetCourt || vi.fn().mockResolvedValue({ success: true }),
         clearAllCourts: clearAllWetCourts || vi.fn().mockResolvedValue({ success: true }),
       },
-      services: { backend: { admin: { updateSession: vi.fn() } } },
+      services: { backend: { admin: { updateSession: vi.fn() } as any } },
       courts: propsRef.courts,
       courtBlocks: courtBlocks || [],
       wetCourts: propsRef.wetCourts,

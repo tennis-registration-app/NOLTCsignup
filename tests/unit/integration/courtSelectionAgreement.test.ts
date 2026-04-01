@@ -12,7 +12,7 @@ import { computeRegistrationCourtSelection } from '../../../src/shared/courts/ov
  */
 
 // Simulate kiosk CTA logic (from useRegistrationDerived)
-function computeKioskCta({ courts, upcomingBlocks, waitlist }) {
+function computeKioskCta({ courts, upcomingBlocks, waitlist }: any) {
   const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
   const firstEntry = waitlist?.[0] || null;
@@ -32,7 +32,7 @@ function computeKioskCta({ courts, upcomingBlocks, waitlist }) {
 }
 
 // Simulate courtboard "You're Up" logic (from WaitingList.jsx canGroupRegisterNow)
-function computeCourtboardYoureUp({ courts, upcomingBlocks, waitlist, idx = 0 }) {
+function computeCourtboardYoureUp({ courts, upcomingBlocks, waitlist, idx = 0 }: any) {
   const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
   const group = waitlist?.[idx];

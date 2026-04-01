@@ -37,7 +37,7 @@ vi.mock('../../../../../src/platform/prefsStorage.js', () => ({
 
 const mockToast = vi.fn();
 vi.mock('../../../../../src/shared/utils/toast.js', () => ({
-  toast: (...args) => mockToast(...args),
+  toast: (...args: any[]) => mockToast(...args),
 }));
 
 vi.mock('../../../../../src/shared/constants/toastMessages.js', () => ({

@@ -146,8 +146,8 @@ describe('toAssignCourtPayload (command)', () => {
     expect(payload.court_id).toBe('court-1');
     expect(payload.group_type).toBe('singles');
     expect(payload.duration_minutes).toBe(60);
-    expect(payload.players[0].member_id).toBe('m1');
-    expect(payload.players[0].display_name).toBe('Alice');
-    expect(payload.players[0].is_guest).toBe(false);
+    expect((payload.players as any[])[0].member_id).toBe('m1');
+    expect((payload.players as any[])[0].display_name).toBe('Alice');
+    expect((payload.players as any[])[0].is_guest).toBe(false);
   });
 });

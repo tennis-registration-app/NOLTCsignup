@@ -87,9 +87,9 @@ describe('normalizeSession', () => {
   });
 
   it('preserves isTournament flag', () => {
-    expect(normalizeSession({ id: 's9', isTournament: true }, serverNow).isTournament).toBe(true);
-    expect(normalizeSession({ id: 's10', is_tournament: true }, serverNow).isTournament).toBe(true);
-    expect(normalizeSession({ id: 's11' }, serverNow).isTournament).toBe(false);
+    expect(normalizeSession({ id: 's9', isTournament: true }, serverNow)!.isTournament).toBe(true);
+    expect(normalizeSession({ id: 's10', is_tournament: true }, serverNow)!.isTournament).toBe(true);
+    expect(normalizeSession({ id: 's11' }, serverNow)!.isTournament).toBe(false);
   });
 
   it('uses session_id as fallback for id', () => {
@@ -98,7 +98,7 @@ describe('normalizeSession', () => {
   });
 
   it('defaults id to unknown', () => {
-    expect(normalizeSession({}, serverNow).id).toBe('unknown');
+    expect(normalizeSession({}, serverNow)!.id).toBe('unknown');
   });
 
   it('uses endTime as fallback for scheduledEndAt', () => {

@@ -102,7 +102,7 @@ import { useRegistrationAppState } from '../../../../src/registration/appHandler
  * Since renderHook isn't available, we use a component
  * that captures the hook result via callback.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const result = useRegistrationAppState({ isMobileView: false });
 
   // Capture immediately during first render
@@ -155,7 +155,7 @@ function captureHookResult() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -210,8 +210,8 @@ describe('useRegistrationAppState contract', () => {
   });
 
   it('type map is stable', () => {
-    const typeMap = {};
-    for (const [key, val] of Object.entries(result)) {
+    const typeMap: Record<string, string> = {};
+    for (const [key, val] of Object.entries(result as Record<string, unknown>)) {
       if (val === null) typeMap[key] = 'null';
       else if (Array.isArray(val)) typeMap[key] = 'array';
       else if (typeof val === 'function') typeMap[key] = 'function';
