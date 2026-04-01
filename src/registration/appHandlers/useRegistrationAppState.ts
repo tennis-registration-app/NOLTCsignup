@@ -9,11 +9,12 @@ import {
 
 // Import API config for mobile detection
 import { API_CONFIG } from '../../lib/apiConfig';
-import { logger } from '../../lib/logger';
-
 // Platform bridge for window global access
 import { toast as _toast } from '../../shared/utils/toast.js';
-import { getDataStore as _getDataStore, TennisCourtDataStore } from '../../lib/TennisCourtDataStore';
+import {
+  getDataStore as _getDataStore,
+  TennisCourtDataStore,
+} from '../../lib/TennisCourtDataStore';
 
 // TennisBackend interface layer
 import { createBackend } from '../../lib/backend/index';
@@ -67,12 +68,6 @@ import {
 const TENNIS_CONFIG = _sharedTennisConfig;
 const getCourtBlockStatus = _sharedGetCourtBlockStatus;
 
-// Debug utilities
-const DEBUG = false;
-const dbg = (...args: unknown[]) => {
-  if (DEBUG) logger.debug('RegistrationAppState', ...(args as [string, ...unknown[]]));
-};
-
 // DataStore reference
 let dataStore: TennisCourtDataStore | null = null;
 if (typeof window !== 'undefined') {
@@ -93,7 +88,10 @@ const backend: TennisBackendShape = createBackend() as TennisBackendShape;
  * @param {boolean} [options.isMobileView] - Whether the app is in mobile view mode
  * @returns {Object} - All state, setters, refs, derived values, helpers, and hook results
  */
-export function useRegistrationAppState({ isMobileView = false, resetWorkflow = () => {} }: { isMobileView?: boolean; resetWorkflow?: () => void } = {}) {
+export function useRegistrationAppState({
+  isMobileView = false,
+  resetWorkflow = () => {},
+}: { isMobileView?: boolean; resetWorkflow?: () => void } = {}) {
   // ===== CONSTANTS =====
   const CONSTANTS = {
     ADMIN_CODE: TENNIS_CONFIG.ADMIN.ACCESS_CODE,
@@ -112,6 +110,7 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
       SINGLES_MIN: TENNIS_CONFIG.TIMING.SINGLES_DURATION_MIN,
       DOUBLES_MIN: TENNIS_CONFIG.TIMING.DOUBLES_DURATION_MIN,
     },
+    // PRE-PRODUCTION: replace with real member data from database. These are dev-era stubs.
     MEMBER_COUNT: 40,
     MEMBER_ID_START: 1000,
     MAX_AUTOCOMPLETE_RESULTS: TENNIS_CONFIG.DISPLAY.MAX_AUTOCOMPLETE_RESULTS,
@@ -184,10 +183,9 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
     showSuccess,
     justAssignedCourt: workflow.courtAssignment.justAssignedCourt,
     isMobile: API_CONFIG.IS_MOBILE,
-    toast: /** @type {Function} */ (typeof window !== 'undefined' ? _toast : () => {}),
+    toast: /** @type {Function} */ typeof window !== 'undefined' ? _toast : () => {},
     markUserTyping,
     getCourtData,
-    showAlertMessage: null, // Will use internal showAlertMessage
   });
   // Sync the ref so the runtime settings-fetch effect (which runs after all hooks)
   // calls the real dispatch instead of the placeholder.
@@ -288,8 +286,6 @@ export function useRegistrationAppState({ isMobileView = false, resetWorkflow = 
     TENNIS_CONFIG,
     API_CONFIG,
     TennisBusinessLogic: TennisBusinessLogic as TennisBusinessLogicShape,
-    dbg,
-    DEBUG,
     getCourtBlockStatus,
     computeRegistrationCourtSelection,
     assignCourtToGroupOrchestrated,

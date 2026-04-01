@@ -9,6 +9,11 @@ import { toast } from '../../../shared/utils/toast.js';
 import { readJSON, readDataSafe } from '../../../lib/storage';
 import { STORAGE } from '../../../lib/constants';
 import { COURT_CLEAR_FAILED } from '../../../shared/constants/toastMessages.js';
+
+const DEBUG = false;
+const dbg = (...args: unknown[]) => {
+  if (DEBUG) logger.debug('CourtHandlers', ...(args as [string, ...unknown[]]));
+};
 import type {
   RegistrationUiState,
   RegistrationSetters,
@@ -58,7 +63,13 @@ interface CourtHandlerSetters extends RegistrationSetters {
 interface CoreHandlers {
   clearSuccessResetTimer: () => void;
   resetForm: () => void;
-  isPlayerAlreadyPlaying: (playerId: string) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
+  isPlayerAlreadyPlaying: (playerId: string) => {
+    isPlaying: boolean;
+    location?: string;
+    courtNumber?: number;
+    position?: number;
+    playerName?: string;
+  };
 }
 
 interface CourtHandlerDeps {
@@ -72,11 +83,21 @@ interface CourtHandlerDeps {
   blockAdmin: BlockAdminState;
   alert: AlertState;
   refs: RegistrationRefs;
-  assignCourtToGroupOrchestrated: (courtNumber: number | null | undefined, selectableCountAtSelection: number | null, deps: AssignCourtDeps) => Promise<void>;
+  assignCourtToGroupOrchestrated: (
+    courtNumber: number | null | undefined,
+    selectableCountAtSelection: number | null,
+    deps: AssignCourtDeps
+  ) => Promise<void>;
   changeCourtOrchestrated: (deps: CourtChangeDeps) => void;
-  sendGroupToWaitlistOrchestrated: (group: GroupPlayer[] | null, deps: WaitlistDeps, options?: { deferred?: boolean }) => Promise<boolean>;
-  validateGroupCompat: (players: GroupPlayer[], guests: number) => { ok: boolean; errors: string[] };
-  dbg: (...args: unknown[]) => void;
+  sendGroupToWaitlistOrchestrated: (
+    group: GroupPlayer[] | null,
+    deps: WaitlistDeps,
+    options?: { deferred?: boolean }
+  ) => Promise<boolean>;
+  validateGroupCompat: (
+    players: GroupPlayer[],
+    guests: number
+  ) => { ok: boolean; errors: string[] };
   CONSTANTS: RegistrationConstants;
   API_CONFIG: ApiConfig;
   core: CoreHandlers;
@@ -103,7 +124,6 @@ export function useCourtHandlers({
   changeCourtOrchestrated,
   sendGroupToWaitlistOrchestrated,
   validateGroupCompat,
-  dbg,
   CONSTANTS,
   API_CONFIG,
   // Core handlers created in parent scope
@@ -154,7 +174,7 @@ export function useCourtHandlers({
 
   // VERBATIM COPY: saveCourtData from line ~206
   // @deprecated — localStorage persistence removed; API commands handle state
-  const saveCourtData = useCallback(async (_data: RegistrationUiState["data"]) => {
+  const saveCourtData = useCallback(async (_data: RegistrationUiState['data']) => {
     // TennisDataService.saveData removed — API is source of truth
     // Callers should migrate to TennisCommands for write operations
     logger.warn('CourtHandlers', 'DEPRECATED: localStorage persistence removed. Use API commands.');
@@ -183,12 +203,30 @@ export function useCourtHandlers({
 
         if (checkWaitlistPriority) {
           // Waitlist priority mode: ONLY show truly free courts (no overtime fallback)
-          const info = getFreeCourtsInfo({ data: boardData as { courts: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean } | null }> }, now, blocks, wetSet });
+          const info = getFreeCourtsInfo({
+            data: boardData as {
+              courts: Array<{
+                session?: { scheduledEndAt?: string; isTournament?: boolean } | null;
+              }>;
+            },
+            now,
+            blocks,
+            wetSet,
+          });
           selectable = info.free || [];
           dbg('Waitlist priority mode - free courts only:', selectable);
         } else {
           // Non-waitlist mode: use standard selectable logic (free first, then overtime fallback)
-          selectable = getSelectableCourtsStrict({ data: boardData as { courts: Array<{ session?: { scheduledEndAt?: string; isTournament?: boolean } | null }> }, now, blocks, wetSet });
+          selectable = getSelectableCourtsStrict({
+            data: boardData as {
+              courts: Array<{
+                session?: { scheduledEndAt?: string; isTournament?: boolean } | null;
+              }>;
+            },
+            now,
+            blocks,
+            wetSet,
+          });
           dbg('Standard selectable courts:', selectable);
         }
 
@@ -203,7 +241,7 @@ export function useCourtHandlers({
         return [];
       }
     },
-    [getCourtData, dbg]
+    [getCourtData]
   );
 
   // VERBATIM COPY: clearViaService from line ~367 (internal helper, not exported)
@@ -239,7 +277,7 @@ export function useCourtHandlers({
 
   // VERBATIM COPY: clearCourt from line ~397
   const clearCourt = useCallback(
-    async (courtNumber: number, clearReason = "Cleared") => {
+    async (courtNumber: number, clearReason = 'Cleared') => {
       logger.debug(
         'CourtHandlers',
         `[Registration UI] clearCourt called for court ${courtNumber} with reason: ${clearReason}`
@@ -342,7 +380,6 @@ export function useCourtHandlers({
       validateGroupCompat,
       clearSuccessResetTimer,
       resetForm,
-      dbg,
       showAlertMessage,
     ]
   );
@@ -455,7 +492,10 @@ export function useCourtHandlers({
 
   // Undo overtime takeover — moved from courtPresenter.js onCourtSelect pre-step
   const undoOvertimeAndClearPrevious = useCallback(
-    async (previousCourtNumber: number, displacement: DisplacementInfo & { displacedSessionId?: string; takeoverSessionId?: string }) => {
+    async (
+      previousCourtNumber: number,
+      displacement: DisplacementInfo & { displacedSessionId?: string; takeoverSessionId?: string }
+    ) => {
       if (displacement && displacement.displacedSessionId && displacement.takeoverSessionId) {
         try {
           const undoResult = await backend.commands.undoOvertimeTakeover({
@@ -493,7 +533,9 @@ export function useCourtHandlers({
       const board = await backend.queries.getBoard();
 
       // Find first waiting entry
-      const firstWaiting = board?.waitlist?.find((e) => (e as { status?: string }).status === 'waiting');
+      const firstWaiting = board?.waitlist?.find(
+        (e) => (e as { status?: string }).status === 'waiting'
+      );
       if (!firstWaiting) {
         showAlertMessage('No entries waiting in queue');
         return;

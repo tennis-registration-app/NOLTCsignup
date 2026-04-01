@@ -14,12 +14,22 @@ import type { ParticipantInput } from '../lib/backend/types';
 // Orchestrator deps types — no circular dependency (orchestrators do not import appTypes)
 import type { AssignCourtDeps } from '../registration/orchestration/assignCourtOrchestrator.js';
 import type { WaitlistDeps } from '../registration/orchestration/waitlistOrchestrator.js';
-import type { SuggestionClickDeps, AddPlayerSuggestionClickDeps } from '../registration/orchestration/memberSelectionOrchestrator.js';
+import type {
+  SuggestionClickDeps,
+  AddPlayerSuggestionClickDeps,
+} from '../registration/orchestration/memberSelectionOrchestrator.js';
 import type { CourtChangeDeps } from '../registration/orchestration/courtChangeOrchestrator.js';
 import type { ResetFormDeps } from '../registration/orchestration/resetOrchestrator.js';
 
 // Re-export deps types for consumers
-export type { AssignCourtDeps, WaitlistDeps, SuggestionClickDeps, AddPlayerSuggestionClickDeps, CourtChangeDeps, ResetFormDeps };
+export type {
+  AssignCourtDeps,
+  WaitlistDeps,
+  SuggestionClickDeps,
+  AddPlayerSuggestionClickDeps,
+  CourtChangeDeps,
+  ResetFormDeps,
+};
 
 // ============================================
 // UTILITY TYPES
@@ -182,42 +192,133 @@ export interface TennisBackendShape {
     // Evidence: TennisQueries.js:201 — delegates to getBoard
     refresh: () => Promise<DomainBoard>;
     // Evidence: TennisQueries.js:218 — returns { ok, partners: [{member_id, display_name, ...}] }
-    getFrequentPartners: (memberId: string) => Promise<CommandResponse & { partners?: Array<{ member_id: string; display_name: string; member_number: string; play_count: number }> }>;
+    getFrequentPartners: (
+      memberId: string
+    ) => Promise<
+      CommandResponse & {
+        partners?: Array<{
+          member_id: string;
+          display_name: string;
+          member_number: string;
+          play_count: number;
+        }>;
+      }
+    >;
     // Evidence: TennisQueries.js:76 — callback receives DomainBoard, returns unsubscribe
-    subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { pollIntervalMs?: number }) => () => void;
+    subscribeToBoardChanges: (
+      callback: (board: DomainBoard) => void,
+      options?: { pollIntervalMs?: number }
+    ) => () => void;
   };
   commands: {
     // Evidence: TennisCommands.js:58 — returns CommandResponse & { session? }
-    assignCourt: (input: { courtId: string; participants: ParticipantInput[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<CommandResponse>;
+    assignCourt: (input: {
+      courtId: string;
+      participants: ParticipantInput[];
+      groupType: 'singles' | 'doubles';
+      addBalls?: boolean;
+      splitBalls?: boolean;
+      latitude?: number;
+      longitude?: number;
+    }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:69 — returns CommandResponse
-    endSession: (input: { courtId: string; reason?: string; endReason?: string; sessionId?: string }) => Promise<CommandResponse>;
+    endSession: (input: {
+      courtId: string;
+      reason?: string;
+      endReason?: string;
+      sessionId?: string;
+    }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:90 — returns CommandResponse & { entry?, position? }
-    joinWaitlist: (input: { participants: ParticipantInput[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
+    joinWaitlist: (input: {
+      participants: ParticipantInput[];
+      groupType: 'singles' | 'doubles';
+      latitude?: number;
+      longitude?: number;
+      deferred?: boolean;
+    }) => Promise<CommandResponse & { entry?: unknown; position?: number }>;
     // Evidence: TennisCommands.js:101 — returns CommandResponse
     cancelWaitlist: (input: { entryId: string; reason?: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:118 — returns CommandResponse
     deferWaitlistEntry: (input: { entryId: string; deferred: boolean }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:135 — returns CommandResponse & { session? }
     // Note: raw API may return scheduled_end_at; normalizeCommandSession() in assignCourtOrchestrator handles conversion
-    assignFromWaitlist: (input: { waitlistEntryId: string; courtId?: string; courtNumber?: number; latitude?: number; longitude?: number }) => Promise<CommandResponse & { session?: { id?: string; participantDetails?: Array<{ memberId: string; name: string; accountId: string; isGuest: boolean }>; scheduled_end_at?: string; scheduledEndAt?: string } }>;
+    assignFromWaitlist: (input: {
+      waitlistEntryId: string;
+      courtId?: string;
+      courtNumber?: number;
+      latitude?: number;
+      longitude?: number;
+    }) => Promise<
+      CommandResponse & {
+        session?: {
+          id?: string;
+          participantDetails?: Array<{
+            memberId: string;
+            name: string;
+            accountId: string;
+            isGuest: boolean;
+          }>;
+          scheduled_end_at?: string;
+          scheduledEndAt?: string;
+        };
+      }
+    >;
     // Evidence: TennisCommands.js:190 — returns CommandResponse & { endedSessionId?, restoredSessionId? }
-    undoOvertimeTakeover: (input: { takeoverSessionId: string; displacedSessionId: string }) => Promise<CommandResponse & { endedSessionId?: string; restoredSessionId?: string }>;
+    undoOvertimeTakeover: (input: {
+      takeoverSessionId: string;
+      displacedSessionId: string;
+    }) => Promise<CommandResponse & { endedSessionId?: string; restoredSessionId?: string }>;
     // Evidence: TennisCommands.js:173 — returns CommandResponse & { restoredSessionId? }
-    restoreSession: (input: { displacedSessionId: string; takeoverSessionId: string }) => Promise<CommandResponse & { restoredSessionId?: string }>;
+    restoreSession: (input: {
+      displacedSessionId: string;
+      takeoverSessionId: string;
+    }) => Promise<CommandResponse & { restoredSessionId?: string }>;
     // Evidence: TennisCommands.js:260 — returns CommandResponse & { sessionId?, fromCourtId?, toCourtId? }
     moveCourt: (input: { fromCourtId: string; toCourtId: string }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:278 — no params, returns CommandResponse & { cancelledCount? }
     clearWaitlist: () => Promise<CommandResponse & { cancelledCount?: number }>;
     // Evidence: TennisCommands.js:238 — returns CommandResponse & { transaction? }
-    purchaseBalls: (input: { sessionId: string; accountId: string; splitBalls?: boolean; splitAccountIds?: string[] | null; idempotencyKey?: string }) => Promise<CommandResponse>;
+    purchaseBalls: (input: {
+      sessionId: string;
+      accountId: string;
+      splitBalls?: boolean;
+      splitAccountIds?: string[] | null;
+      idempotencyKey?: string;
+    }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:456 — resolves players, calls assignCourt
-    assignCourtWithPlayers: (input: { courtId: string; players: GroupPlayer[]; groupType: 'singles' | 'doubles'; addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number }) => Promise<AssignCourtResponse>;
+    assignCourtWithPlayers: (input: {
+      courtId: string;
+      players: GroupPlayer[];
+      groupType: 'singles' | 'doubles';
+      addBalls?: boolean;
+      splitBalls?: boolean;
+      latitude?: number;
+      longitude?: number;
+    }) => Promise<AssignCourtResponse>;
     // Evidence: TennisCommands.js:526 — resolves players, calls joinWaitlist
-    joinWaitlistWithPlayers: (input: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) => Promise<CommandResponse & { entry?: unknown; position?: number; waitlistId?: string; data?: { waitlist?: { id?: string; position?: number } } }>;
+    joinWaitlistWithPlayers: (input: {
+      players: GroupPlayer[];
+      groupType: 'singles' | 'doubles';
+      latitude?: number;
+      longitude?: number;
+      deferred?: boolean;
+    }) => Promise<
+      CommandResponse & {
+        entry?: unknown;
+        position?: number;
+        waitlistId?: string;
+        data?: { waitlist?: { id?: string; position?: number } };
+      }
+    >;
     // Evidence: TennisCommands.js:560 — returns CommandResponse
-    updateSessionTournament: (input: { sessionId: string; isTournament: boolean }) => Promise<CommandResponse>;
+    updateSessionTournament: (input: {
+      sessionId: string;
+      isTournament: boolean;
+    }) => Promise<CommandResponse>;
     // Evidence: TennisCommands.js:576 — returns { ok, token?, expiresAt? }
-    generateLocationToken: (input?: { validityMinutes?: number }) => Promise<CommandResponse & { token?: string; expiresAt?: string }>;
+    generateLocationToken: (input?: {
+      validityMinutes?: number;
+    }) => Promise<CommandResponse & { token?: string; expiresAt?: string }>;
   };
   directory: {
     // Evidence: TennisDirectory.js:18 — returns normalized Member[]
@@ -233,35 +334,115 @@ export interface TennisBackendShape {
   };
   admin: {
     // Evidence: AdminCommands.js:25 — returns CommandResponse & { block? }
-    createBlock: (input: { courtId: string; blockType: string; title: string; startsAt: string; endsAt: string; deviceId: string; deviceType?: string }) => Promise<CommandResponse>;
+    createBlock: (input: {
+      courtId: string;
+      blockType: string;
+      title: string;
+      startsAt: string;
+      endsAt: string;
+      deviceId: string;
+      deviceType?: string;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:89 — returns CommandResponse
-    cancelBlock: (input: { blockId: string; deviceId: string; deviceType?: string }) => Promise<CommandResponse>;
+    cancelBlock: (input: {
+      blockId: string;
+      deviceId: string;
+      deviceType?: string;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:113 — returns CommandResponse & { session? }
-    adminEndSession: (input: { sessionId?: string; courtId?: string; reason?: string; deviceId: string }) => Promise<CommandResponse>;
+    adminEndSession: (input: {
+      sessionId?: string;
+      courtId?: string;
+      reason?: string;
+      deviceId: string;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:137 — returns CommandResponse & { sessionsEnded? }
     clearAllCourts: (input: { reason?: string; deviceId: string }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:160 — returns CommandResponse
-    removeFromWaitlist: (input: { waitlistEntryId: string; reason?: string; deviceId: string }) => Promise<CommandResponse>;
+    removeFromWaitlist: (input: {
+      waitlistEntryId: string;
+      reason?: string;
+      deviceId: string;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:312 — returns { ok, settings?, operating_hours?, upcoming_overrides? }
-    getSettings: () => Promise<CommandResponse & { settings?: Record<string, unknown>; operating_hours?: OperatingHoursEntry[]; upcoming_overrides?: unknown[] }>;
+    getSettings: () => Promise<
+      CommandResponse & {
+        settings?: Record<string, unknown>;
+        operating_hours?: OperatingHoursEntry[];
+        upcoming_overrides?: unknown[];
+      }
+    >;
     // Evidence: AdminCommands.js:329 — returns CommandResponse & { updated? }
-    updateSettings: (input: { settings?: Record<string, unknown>; operatingHours?: OperatingHoursEntry[]; operatingHoursOverride?: Record<string, unknown>; deleteOverride?: string }) => Promise<CommandResponse>;
+    updateSettings: (input: {
+      settings?: Record<string, unknown>;
+      operatingHours?: OperatingHoursEntry[];
+      operatingHoursOverride?: Record<string, unknown>;
+      deleteOverride?: string;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:346 — returns CommandResponse & { old_position?, new_position? }
-    reorderWaitlist: (input: { entryId: string; newPosition: number }) => Promise<CommandResponse & { old_position?: number; new_position?: number }>;
+    reorderWaitlist: (input: {
+      entryId: string;
+      newPosition: number;
+    }) => Promise<CommandResponse & { old_position?: number; new_position?: number }>;
     // Evidence: AdminCommands.js:363 — returns CommandResponse & { sessions? }
-    getSessionHistory: (input?: { courtNumber?: number; memberName?: string; dateStart?: string; dateEnd?: string; limit?: number }) => Promise<CommandResponse & { sessions?: unknown[] }>;
+    getSessionHistory: (input?: {
+      courtNumber?: number;
+      memberName?: string;
+      dateStart?: string;
+      dateEnd?: string;
+      limit?: number;
+    }) => Promise<CommandResponse & { sessions?: unknown[] }>;
     // Evidence: AdminCommands.js:390 — returns CommandResponse & { summary?, heatmap? }
-    getAnalytics: (input: { start: string; end: string }) => Promise<CommandResponse & { summary?: Record<string, unknown>; heatmap?: unknown[] }>;
+    getAnalytics: (input: {
+      start: string;
+      end: string;
+    }) => Promise<CommandResponse & { summary?: Record<string, unknown>; heatmap?: unknown[] }>;
     // Evidence: AdminCommands.js:379 — returns CommandResponse & { heatmap?, daysAnalyzed? }
-    getUsageAnalytics: (days?: number) => Promise<CommandResponse & { heatmap?: Array<{ day_of_week: number; hour: number; session_count: number }>; daysAnalyzed?: number }>;
+    getUsageAnalytics: (
+      days?: number
+    ) => Promise<
+      CommandResponse & {
+        heatmap?: Array<{ day_of_week: number; hour: number; session_count: number }>;
+        daysAnalyzed?: number;
+      }
+    >;
     // Evidence: AdminCommands.js:420 — returns CommandResponse
-    aiAssistant: (input: { prompt: string; mode?: string; actions_token?: string | null; confirm_destructive?: boolean }) => Promise<CommandResponse>;
+    aiAssistant: (input: {
+      prompt: string;
+      mode?: string;
+      actions_token?: string | null;
+      confirm_destructive?: boolean;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.js:433 — returns CommandResponse & { session? }
-    updateSession: (input: { sessionId: string; participants: Array<{ name: string; type: 'member' | 'guest'; member_id?: string }>; scheduledEndAt: string | null; deviceId: string }) => Promise<CommandResponse>;
+    updateSession: (input: {
+      sessionId: string;
+      participants: Array<{ name: string; type: 'member' | 'guest'; member_id?: string }>;
+      scheduledEndAt: string | null;
+      deviceId: string;
+    }) => Promise<CommandResponse>;
     // Evidence: AdminCommands.ts:263 — mark all courts wet
-    markWetCourts: (input: { deviceId: string; durationMinutes?: number; courtIds?: string[]; reason?: string; idempotencyKey?: string }) => Promise<CommandResponse & { courtsMarked?: number; courtNumbers?: number[]; blocksCreated?: number; blocksCancelled?: number; endsAt?: string; idempotent?: boolean }>;
+    markWetCourts: (input: {
+      deviceId: string;
+      durationMinutes?: number;
+      courtIds?: string[];
+      reason?: string;
+      idempotencyKey?: string;
+    }) => Promise<
+      CommandResponse & {
+        courtsMarked?: number;
+        courtNumbers?: number[];
+        blocksCreated?: number;
+        blocksCancelled?: number;
+        endsAt?: string;
+        idempotent?: boolean;
+      }
+    >;
     // Evidence: AdminCommands.ts:294 — clear wet court blocks
-    clearWetCourts: (input: { deviceId: string; courtIds?: string[]; idempotencyKey?: string }) => Promise<CommandResponse & { blocksCleared?: number; courtNumbers?: number[] }>;
+    clearWetCourts: (input: {
+      deviceId: string;
+      courtIds?: string[];
+      idempotencyKey?: string;
+    }) => Promise<CommandResponse & { blocksCleared?: number; courtNumbers?: number[] }>;
   };
 }
 
@@ -293,25 +474,36 @@ export interface TennisBusinessLogicShape {
     position: number,
     courts: Record<string, unknown>[],
     currentTime: Date,
-    avgGameTime?: number,
+    avgGameTime?: number
   ) => number;
   // Evidence: TennisBusinessLogic.js:114 — data.courts (DomainCourt[]), data.waitlist (DomainWaitlistEntry[])
   // currentGroup uses UI-layer GroupPlayer (accesses .id, .name)
   isPlayerAlreadyPlaying: (
     playerId: string | number,
     data: Record<string, unknown> | null | undefined,
-    currentGroup?: Array<{ id?: string | number; name?: string; displayName?: string; [key: string]: unknown }>,
-  ) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
+    currentGroup?: Array<{
+      id?: string | number;
+      name?: string;
+      displayName?: string;
+      [key: string]: unknown;
+    }>
+  ) => {
+    isPlaying: boolean;
+    location?: string;
+    courtNumber?: number;
+    position?: number;
+    playerName?: string;
+  };
   calculateGameDuration: (
     groupSize: number,
     singlesMinutes?: number,
     doublesMinutes?: number,
-    maxPlayers?: number,
+    maxPlayers?: number
   ) => number;
   // Evidence: TennisBusinessLogic.js:191 — both groups accessed via .id
   checkGroupOverlap: (
     group1: Array<Record<string, unknown>>,
-    group2: Array<Record<string, unknown>>,
+    group2: Array<Record<string, unknown>>
   ) => {
     hasOverlap: boolean;
     overlappingPlayers: Array<Record<string, unknown>>;
@@ -325,7 +517,7 @@ export interface TennisBusinessLogicShape {
   // Evidence: TennisBusinessLogic.js:223 — players compared via sameGroup, recentlyCleared has {originalEndTime, players}
   getOriginalEndTimeForGroup: (
     players: Array<Record<string, unknown>>,
-    recentlyCleared: Array<{ originalEndTime: string; players: Array<Record<string, unknown>> }>,
+    recentlyCleared: Array<{ originalEndTime: string; players: Array<Record<string, unknown>> }>
   ) => string | null;
   // Evidence: TennisBusinessLogic.js:29 — compares by .memberId, .id, .name
   sameGroup: (a?: Array<Record<string, unknown>>, b?: Array<Record<string, unknown>>) => boolean;
@@ -359,7 +551,6 @@ export interface TennisBusinessLogicShape {
  *                 assignCourtToGroupOrchestrated, sendGroupToWaitlistOrchestrated,
  *                 handleSuggestionClickOrchestrated, handleAddPlayerSuggestionClickOrchestrated,
  *                 changeCourtOrchestrated, resetFormOrchestrated
- * Debug:          dbg, DEBUG
  */
 export interface AppState {
   /** Screen state, form data, flags */
@@ -393,27 +584,43 @@ export interface AppState {
   /** Business logic service */
   TennisBusinessLogic: TennisBusinessLogicShape;
   // Evidence: overtimeEligibility.js — pure function: (DomainCourt[], UpcomingBlock[]) => CourtSelectionResult
-  computeRegistrationCourtSelection: (courts: DomainCourt[], upcomingBlocks?: UpcomingBlock[]) => CourtSelectionResult;
+  computeRegistrationCourtSelection: (
+    courts: DomainCourt[],
+    upcomingBlocks?: UpcomingBlock[]
+  ) => CourtSelectionResult;
   // Evidence: useRegistrationHelpers.js:127 — (players, guests) => { ok, errors }
-  validateGroupCompat: (players: GroupPlayer[], guests: number) => { ok: boolean; errors: string[] };
+  validateGroupCompat: (
+    players: GroupPlayer[],
+    guests: number
+  ) => { ok: boolean; errors: string[] };
   // Evidence: assignCourtOrchestrator.ts:74 — async (courtNumber, selectableCount, deps) => void
-  assignCourtToGroupOrchestrated: (courtNumber: number | null | undefined, selectableCountAtSelection: number | null, deps: AssignCourtDeps) => Promise<void>;
+  assignCourtToGroupOrchestrated: (
+    courtNumber: number | null | undefined,
+    selectableCountAtSelection: number | null,
+    deps: AssignCourtDeps
+  ) => Promise<void>;
   // Evidence: waitlistOrchestrator.ts:31 — async (group, deps, options?) => boolean
-  sendGroupToWaitlistOrchestrated: (group: GroupPlayer[] | null, deps: WaitlistDeps, options?: { deferred?: boolean }) => Promise<boolean>;
+  sendGroupToWaitlistOrchestrated: (
+    group: GroupPlayer[] | null,
+    deps: WaitlistDeps,
+    options?: { deferred?: boolean }
+  ) => Promise<boolean>;
   // Evidence: memberSelectionOrchestrator.ts:43 — async (suggestion, deps) => void
-  handleSuggestionClickOrchestrated: (suggestion: AutocompleteSuggestion, deps: SuggestionClickDeps) => Promise<void>;
+  handleSuggestionClickOrchestrated: (
+    suggestion: AutocompleteSuggestion,
+    deps: SuggestionClickDeps
+  ) => Promise<void>;
   // Evidence: memberSelectionOrchestrator.ts:235 — async (suggestion, deps) => void
-  handleAddPlayerSuggestionClickOrchestrated: (suggestion: AutocompleteSuggestion, deps: AddPlayerSuggestionClickDeps) => Promise<void>;
+  handleAddPlayerSuggestionClickOrchestrated: (
+    suggestion: AutocompleteSuggestion,
+    deps: AddPlayerSuggestionClickDeps
+  ) => Promise<void>;
   // Evidence: courtChangeOrchestrator.ts:19 — (deps) => void
   changeCourtOrchestrated: (deps: CourtChangeDeps) => void;
   // Evidence: resetOrchestrator.ts:44 — async (deps) => void
   resetFormOrchestrated: (deps: ResetFormDeps) => Promise<void>;
   /** Bumps WorkflowProvider key, remounting all workflow-owned state to initial values */
   resetWorkflow: () => void;
-  // Evidence: useRegistrationDomainHooks.js:48 — (...args) => { if (DEBUG) logger.debug(...) }
-  dbg: (...args: unknown[]) => void;
-  /** Debug mode flag */
-  DEBUG: boolean;
 }
 
 /**
@@ -437,7 +644,7 @@ export interface RegistrationUiState {
     blocks: BoardBlock[];
     /** Server timestamp */
     error?: string;
-  serverNow?: string;
+    serverNow?: string;
     /** Operating hours from board */
     operatingHours?: OperatingHoursEntry[];
     [key: string]: unknown;
@@ -537,9 +744,15 @@ export interface HelperFunctions {
   // Evidence: useRegistrationHelpers — returns sorted court numbers with active sessions
   getCourtsOccupiedForClearing: () => number[];
   // Evidence: useRegistrationHelpers — checks engagement, shows toast if blocked
-  guardAddPlayerEarly: (getBoardData: () => RegistrationUiState['data'], player: GroupPlayer | string) => boolean;
+  guardAddPlayerEarly: (
+    getBoardData: () => RegistrationUiState['data'],
+    player: GroupPlayer | string
+  ) => boolean;
   // Evidence: useRegistrationHelpers — returns true if player is NOT a duplicate
-  guardAgainstGroupDuplicate: (player: GroupPlayer | string, playersArray: (GroupPlayer | string)[]) => boolean;
+  guardAgainstGroupDuplicate: (
+    player: GroupPlayer | string,
+    playersArray: (GroupPlayer | string)[]
+  ) => boolean;
 }
 
 export interface Services {
@@ -698,7 +911,9 @@ export interface MobileState {
   // Evidence: useMobileFlowController — dismisses GPS failure prompt
   dismissGpsPrompt: () => void;
   // Evidence: useMobileFlowController — returns GPS coords, location token, or null
-  getMobileGeolocation: () => Promise<{ latitude: number; longitude: number } | { location_token: string } | null>;
+  getMobileGeolocation: () => Promise<
+    { latitude: number; longitude: number } | { location_token: string } | null
+  >;
   // Evidence: useMobileFlowController — sends resetRegistration postMessage to parent
   requestMobileReset: () => void;
 }
@@ -915,12 +1130,15 @@ export interface Handlers {
     checkWaitlistPriority?: boolean,
     includeOvertimeIfChanging?: boolean,
     excludeCourtNumber?: number | null,
-    dataOverride?: RegistrationUiState['data'],
+    dataOverride?: RegistrationUiState['data']
   ) => number[];
   // Evidence: useCallback(async (courtNumber, clearReason='Cleared') => { ... })
   clearCourt: (courtNumber: number, clearReason?: string) => Promise<void>;
   // Evidence: useCallback(async (courtNumber, selectableCountAtSelection=null) => { ... })
-  assignCourtToGroup: (courtNumber: number, selectableCountAtSelection?: number | null) => Promise<void>;
+  assignCourtToGroup: (
+    courtNumber: number,
+    selectableCountAtSelection?: number | null
+  ) => Promise<void>;
   // Evidence: useCallback(() => { changeCourtOrchestrated({...}) })
   changeCourt: () => void;
   // Evidence: useCallback(async (group, options) => { return await sendGroupToWaitlistOrchestrated(...) })
@@ -928,7 +1146,10 @@ export interface Handlers {
   // Evidence: useCallback(async (entryId) => { await backend.commands.deferWaitlistEntry(...) })
   deferWaitlistEntry: (entryId: string) => Promise<void>;
   // Evidence: useCallback(async (previousCourtNumber, displacement) => { ... })
-  undoOvertimeAndClearPrevious: (previousCourtNumber: number, displacement: DisplacementInfo) => Promise<void>;
+  undoOvertimeAndClearPrevious: (
+    previousCourtNumber: number,
+    displacement: DisplacementInfo
+  ) => Promise<void>;
   // Evidence: useCallback(async () => { ... backend.queries.getBoard() ... })
   assignNextFromWaitlist: () => Promise<void>;
   // Evidence: useCallback(async (group) => { await sendGroupToWaitlist(group, {deferred: true}) })
@@ -952,7 +1173,13 @@ export interface Handlers {
   // Evidence: useCallback(() => { resetFormOrchestrated(createResetDeps()) })
   resetForm: () => void;
   // Evidence: useCallback((playerId) => TennisBusinessLogic.isPlayerAlreadyPlaying(...))
-  isPlayerAlreadyPlaying: (playerId: string) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
+  isPlayerAlreadyPlaying: (playerId: string) => {
+    isPlaying: boolean;
+    location?: string;
+    courtNumber?: number;
+    position?: number;
+    playerName?: string;
+  };
 }
 
 // ============================================

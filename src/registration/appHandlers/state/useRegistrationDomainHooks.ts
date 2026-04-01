@@ -49,19 +49,26 @@ const dbg = (...args: unknown[]) => {
  * @param {Function} deps.toast - Toast function
  * @param {Function} deps.markUserTyping - Mark user typing function
  * @param {Function} deps.getCourtData - Get court data function
- * @param {Function|null} [deps.showAlertMessage] - External alert message function
  */
 interface UseRegistrationDomainHooksDeps {
   backend: TennisBackendShape;
-  CONSTANTS: { ALERT_DISPLAY_MS: number; ADMIN_CODE: string; MAX_AUTOCOMPLETE_RESULTS: number; [key: string]: unknown };
+  CONSTANTS: {
+    ALERT_DISPLAY_MS: number;
+    ADMIN_CODE: string;
+    MAX_AUTOCOMPLETE_RESULTS: number;
+    [key: string]: unknown;
+  };
   setCurrentScreen: (screen: string, source?: string) => void;
   showSuccess: boolean;
   justAssignedCourt: string | null;
   isMobile: boolean;
   toast: (message: string, options?: { type?: string; duration?: number }) => void;
   markUserTyping: () => void;
-  getCourtData: () => { courts: Array<{ id?: string; number?: number }>; waitlist: { id?: string; group?: { id?: string } }[]; [key: string]: unknown };
-  showAlertMessage?: ((message: string) => void) | null;
+  getCourtData: () => {
+    courts: Array<{ id?: string; number?: number }>;
+    waitlist: { id?: string; group?: { id?: string } }[];
+    [key: string]: unknown;
+  };
 }
 
 export function useRegistrationDomainHooks({
@@ -74,7 +81,6 @@ export function useRegistrationDomainHooks({
   toast,
   markUserTyping,
   getCourtData,
-  showAlertMessage: externalShowAlertMessage,
 }: UseRegistrationDomainHooksDeps) {
   // Alert display hook
   const { showAlert, alertMessage, setShowAlert, setAlertMessage, showAlertMessage } =
@@ -174,14 +180,14 @@ export function useRegistrationDomainHooks({
     onCancelBlock,
   } = useBlockAdmin({
     backend,
-    showAlertMessage: externalShowAlertMessage || showAlertMessage,
+    showAlertMessage,
     getCourtData,
   });
 
   // Waitlist admin hook
   const { waitlistMoveFrom, setWaitlistMoveFrom, onReorderWaitlist } = useWaitlistAdmin({
     getCourtData,
-    showAlertMessage: externalShowAlertMessage || showAlertMessage,
+    showAlertMessage,
     backend,
   });
 

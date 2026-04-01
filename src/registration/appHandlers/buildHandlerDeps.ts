@@ -60,14 +60,24 @@ interface WorkflowContextValue {
 interface CoreHandlerFns {
   clearSuccessResetTimer: () => void;
   resetForm: () => void;
-  isPlayerAlreadyPlaying: (playerId: string) => { isPlaying: boolean; location?: string; courtNumber?: number; position?: number; playerName?: string };
+  isPlayerAlreadyPlaying: (playerId: string) => {
+    isPlaying: boolean;
+    location?: string;
+    courtNumber?: number;
+    position?: number;
+    playerName?: string;
+  };
 }
 
 // useCourtHandlers return type is inferred — use ReturnType to avoid redeclaration
 import type { useCourtHandlers } from './handlers';
 type CourtHandlersSubset = ReturnType<typeof useCourtHandlers>;
 
-export function buildCourtHandlerDeps(app: AppState, workflow: WorkflowContextValue, core: CoreHandlerFns) {
+export function buildCourtHandlerDeps(
+  app: AppState,
+  workflow: WorkflowContextValue,
+  core: CoreHandlerFns
+) {
   return {
     state: {
       ...app.state,
@@ -106,14 +116,18 @@ export function buildCourtHandlerDeps(app: AppState, workflow: WorkflowContextVa
     changeCourtOrchestrated: app.changeCourtOrchestrated,
     sendGroupToWaitlistOrchestrated: app.sendGroupToWaitlistOrchestrated,
     validateGroupCompat: app.validateGroupCompat,
-    dbg: app.dbg,
     CONSTANTS: app.CONSTANTS,
     API_CONFIG: app.API_CONFIG,
     core,
   };
 }
 
-export function buildGroupHandlerDeps(app: AppState, workflow: WorkflowContextValue, core: CoreHandlerFns, court: CourtHandlersSubset) {
+export function buildGroupHandlerDeps(
+  app: AppState,
+  workflow: WorkflowContextValue,
+  core: CoreHandlerFns,
+  court: CourtHandlersSubset
+) {
   return {
     groupGuest: workflow.groupGuest,
     derived: app.derived,

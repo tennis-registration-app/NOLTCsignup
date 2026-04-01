@@ -38,27 +38,44 @@ import type {
  * Fields from useRegistrationUiState — shell-owned state values + setters only.
  * Workflow fields (15 useState) have moved to WorkflowProvider.
  */
-type UiModule = Pick<RegistrationUiState,
-  'data' | 'currentScreen' | 'availableCourts' | 'operatingHours' |
-  'showSuccess' | 'currentTime' | 'courtToMove' | 'ballPriceInput' | 'ballPriceCents'
-> & Pick<RegistrationSetters,
-  'setData' | 'setCurrentScreen' | 'setAvailableCourts' | 'setOperatingHours' |
-  'setShowSuccess' | 'setLastActivity' | 'setCurrentTime' | 'setCourtToMove' |
-  'setBallPriceInput' | 'setBallPriceCents' | 'setIsUserTyping'
->;
+type UiModule = Pick<
+  RegistrationUiState,
+  | 'data'
+  | 'currentScreen'
+  | 'availableCourts'
+  | 'operatingHours'
+  | 'showSuccess'
+  | 'currentTime'
+  | 'courtToMove'
+  | 'ballPriceInput'
+  | 'ballPriceCents'
+> &
+  Pick<
+    RegistrationSetters,
+    | 'setData'
+    | 'setCurrentScreen'
+    | 'setAvailableCourts'
+    | 'setOperatingHours'
+    | 'setShowSuccess'
+    | 'setLastActivity'
+    | 'setCurrentTime'
+    | 'setCourtToMove'
+    | 'setBallPriceInput'
+    | 'setBallPriceCents'
+    | 'setIsUserTyping'
+  >;
 
 /**
  * Fields from useRegistrationDomainHooks — shell-owned hooks only (8 hooks).
  * Workflow hooks (GroupGuest, Streak, CourtAssignment, MemberIdentity) moved to WorkflowProvider.
  */
-type DomainModule =
-  & Omit<AlertState, never>
-  & Omit<AdminPriceFeedback, never>
-  & Omit<GuestCounterHook, never>
-  & Omit<SearchState, never>
-  & Omit<MobileState, never>
-  & Omit<BlockAdminState, 'getCourtBlockStatus'>
-  & Omit<WaitlistAdminState, never>;
+type DomainModule = Omit<AlertState, never> &
+  Omit<AdminPriceFeedback, never> &
+  Omit<GuestCounterHook, never> &
+  Omit<SearchState, never> &
+  Omit<MobileState, never> &
+  Omit<BlockAdminState, 'getCourtBlockStatus'> &
+  Omit<WaitlistAdminState, never>;
 
 /** Fields from useRegistrationRuntime — React refs */
 type RuntimeModule = RegistrationRefs;
@@ -96,8 +113,6 @@ export interface BuildRegistrationReturnParams {
   TENNIS_CONFIG: TennisConfig;
   API_CONFIG: ApiConfig;
   TennisBusinessLogic: TennisBusinessLogicShape;
-  dbg: AppState['dbg'];
-  DEBUG: boolean;
 
   // Standalone functions
   getCourtBlockStatus: (courtNumber: number) => CourtBlockStatusResult | null;
@@ -137,8 +152,6 @@ export function buildRegistrationReturn({
   TENNIS_CONFIG,
   API_CONFIG,
   TennisBusinessLogic,
-  dbg,
-  DEBUG,
 
   // Standalone functions
   getCourtBlockStatus,
@@ -337,8 +350,6 @@ export function buildRegistrationReturn({
     TENNIS_CONFIG,
     API_CONFIG,
     TennisBusinessLogic,
-    dbg,
-    DEBUG,
 
     // Overtime eligibility helper
     computeRegistrationCourtSelection,
