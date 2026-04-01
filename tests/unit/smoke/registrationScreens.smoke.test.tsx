@@ -32,7 +32,7 @@ vi.mock('../../src/shared/utils/toast.js', () => ({
 
 // TypedIcon used by ClearCourtScreen
 vi.mock('../../src/components/icons/TypedIcon', () => ({
-  TypedIcon: (props) => <span data-testid="typed-icon">{props.icon}</span>,
+  TypedIcon: (props: any) => <span data-testid="typed-icon">{props.icon}</span>,
 }));
 
 // SuccessScreen sub-components

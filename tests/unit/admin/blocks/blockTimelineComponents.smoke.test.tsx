@@ -7,7 +7,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock shared icons
 vi.mock('../../../../src/shared/ui/icons/Icons.jsx', () => {
-  const stub = (name) => {
+  const stub = (name: any) => {
     const Icon = ({ size }) => (
       <span data-testid={`icon-${name}`}>{name}({size})</span>
     );

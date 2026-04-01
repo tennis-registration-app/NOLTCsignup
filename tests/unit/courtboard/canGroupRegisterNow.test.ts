@@ -48,7 +48,7 @@ function canGroupRegisterNow({
 
 describe('canGroupRegisterNow scenarios', () => {
   // Helper to create a waitlist group
-  const makeGroup = (playerCount, deferred = false) => ({
+  const makeGroup = (playerCount: any, deferred = false) => ({
     id: `group-${Math.random()}`,
     players: Array.from({ length: playerCount }, (_, i) => ({ id: `p${i}`, name: `Player ${i}` })),
     deferred,

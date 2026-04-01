@@ -29,7 +29,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
     Waitlist: {
       simulateWaitlistEstimates: vi.fn().mockReturnValue([15, 30, 45]),
@@ -120,7 +120,7 @@ import {
  * NOTE: Computed values (isCourtAssignment, assignedCourt, position, estimatedWait)
  * and async wrappers are handled separately since they're route-level concerns.
  */
-function legacySuccessScreenProps(app, workflow, handlers, computed) {
+function legacySuccessScreenProps(app: any, workflow: any, handlers: any, computed: any) {
   // Destructure from app (shell slices) and workflow (per-flow state)
   const { state, mobile, admin, TENNIS_CONFIG } = app;
   const { courtAssignment, streak, groupGuest } = workflow;
@@ -174,7 +174,7 @@ function legacySuccessScreenProps(app, workflow, handlers, computed) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what SuccessRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     replacedGroup: workflow.replacedGroup,
     canChangeCourt: workflow.canChangeCourt,
@@ -190,7 +190,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based prop mapping
  */
-function presenterSuccessScreenProps(app, workflow, handlers, computed) {
+function presenterSuccessScreenProps(app: any, workflow: any, handlers: any, computed: any) {
   const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildSuccessModel(app, w, computed),
@@ -223,7 +223,7 @@ function captureHookResults() {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 

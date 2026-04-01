@@ -28,7 +28,7 @@ const REGISTRATION_BUFFER_MS = 15 * 60 * 1000;
 const MIN_USEFUL_SESSION_MS = 20 * 60 * 1000;
 const SINGLES_ONLY_COURT_NUMBER = 8;
 
-function isCourtEligibleForGroup(courtNumber, playerCount) {
+function isCourtEligibleForGroup(courtNumber: any, playerCount: any) {
   if (courtNumber === SINGLES_ONLY_COURT_NUMBER && playerCount >= 4) {
     return false;
   }

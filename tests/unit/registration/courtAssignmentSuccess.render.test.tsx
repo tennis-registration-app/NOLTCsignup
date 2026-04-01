@@ -82,7 +82,7 @@ function makeProps(overrides = {}) {
   };
 }
 
-function renderCourtAssignment(props) {
+function renderCourtAssignment(props: any) {
   const { mainContent, footerContent } = CourtAssignmentSuccess(props);
   return render(
     <>

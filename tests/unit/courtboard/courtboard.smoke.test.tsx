@@ -23,12 +23,12 @@ vi.mock('@lib', () => ({
 // courtUtils (used by CourtCard)
 vi.mock('../../../src/courtboard/utils/courtUtils.js', () => ({
   classForStatus: () => 'border-green-500 bg-green-600',
-  namesFor: (cObj) => {
+  namesFor: (cObj: any) => {
     const players = cObj?.session?.group?.players;
     if (!players) return '';
-    return players.map((p) => p.name || p.displayName || '').join(', ');
+    return players.map((p: any) => p.name || p.displayName || '').join(', ');
   },
-  formatTime: (t) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+  formatTime: (t: any) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
   computeClock: () => ({ primary: 'Available', secondary: '' }),
 }));
 
@@ -39,7 +39,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   getMobileTapToRegister: () => null,
   getTennisDomain: () => ({
     Waitlist: {
-      simulateWaitlistEstimates: ({ waitlist }) => waitlist.map((_, i) => (i + 1) * 15),
+      simulateWaitlistEstimates: ({ waitlist }: any) => waitlist.map((_: any, i: any) => (i + 1) * 15),
     },
   }),
   getTennisNamespaceConfig: () => ({ Timing: { AVG_GAME: 75 } }),
@@ -53,7 +53,7 @@ vi.mock('../../../src/shared/courts/courtAvailability.js', () => ({
 
 // shared icons (used transitively by courtboard Icons)
 vi.mock('../../../src/shared/ui/icons/Icons.jsx', () => {
-  const stub = (name) => {
+  const stub = (name: any) => {
     const Icon = ({ size, className }) => (
       <span data-testid={`icon-${name}`} className={className}>
         {name}

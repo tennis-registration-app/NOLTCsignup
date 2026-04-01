@@ -51,7 +51,7 @@ function makeBackend(members: any[] = [], opts: any = {}): any {
 
 const CONSTANTS = { ADMIN_CODE: '9999', MAX_AUTOCOMPLETE_RESULTS: 5 };
 
-function createHarness(backend) {
+function createHarness(backend: any) {
   const setCurrentScreen = vi.fn();
   const markUserTyping = vi.fn();
 
@@ -128,7 +128,7 @@ describe('useMemberSearch — loadMembers effect', () => {
 // C) getAutocompleteSuggestions
 
 describe('useMemberSearch — getAutocompleteSuggestions', () => {
-  async function setupWithMembers(members) {
+  async function setupWithMembers(members: any) {
     const backend = makeBackend(members);
     const h = createHarness(backend);
     await act(async () => { await new Promise((r) => setTimeout(r, 10)); });

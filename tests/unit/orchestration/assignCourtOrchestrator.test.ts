@@ -13,7 +13,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   getTennisUI: () => ({ toast: vi.fn() }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,

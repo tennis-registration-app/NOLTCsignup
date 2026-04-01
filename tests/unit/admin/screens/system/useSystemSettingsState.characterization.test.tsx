@@ -31,7 +31,7 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
 import useSystemSettingsState from '../../../../../src/admin/screens/system/useSystemSettingsState.js';
 
 // ── Helper: render hook and capture its return value ──
-function renderHook(hookFn) {
+function renderHook(hookFn: any) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const resultRef = { current: null };

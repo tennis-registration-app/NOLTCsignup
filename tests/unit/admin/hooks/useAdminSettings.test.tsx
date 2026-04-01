@@ -200,7 +200,7 @@ describe('initial state and mount loading', () => {
   });
 
   it('onError callback calls showNotification with error type', async () => {
-    loadSettingsData.mockImplementation(async (deps) => {
+    loadSettingsData.mockImplementation(async (deps: any) => {
       deps.onError('Failed to load data');
       return { blockTemplates: null, settings: null, operatingHours: null, hoursOverrides: null };
     });

@@ -40,7 +40,7 @@ const mockWaitlistActions = {
  *
  * Returns what WaitlistSection used directly from its props.
  */
-function legacyWaitlistExtraction(waitingGroups, moveInWaitlist, removeFromWaitlist) {
+function legacyWaitlistExtraction(waitingGroups: any, moveInWaitlist: any, removeFromWaitlist: any) {
   return {
     waitingGroups,
     moveInWaitlist,
@@ -51,7 +51,7 @@ function legacyWaitlistExtraction(waitingGroups, moveInWaitlist, removeFromWaitl
 /**
  * Presenter-based extraction (now accepts domain objects)
  */
-function presenterWaitlistExtraction(waitlistModel, waitlistActions) {
+function presenterWaitlistExtraction(waitlistModel: any, waitlistActions: any) {
   const model = buildWaitlistModel(waitlistModel);
   const actions = buildWaitlistActions(waitlistActions);
   return {

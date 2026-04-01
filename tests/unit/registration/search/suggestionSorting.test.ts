@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useMemberSearch } from '../../../../src/registration/search/useMemberSearch';
 
-function makeMember(overrides) {
+function makeMember(overrides: any) {
   return {
     id: overrides.id || 'uuid-' + Math.random(),
     accountId: overrides.accountId || 'acct-1',
@@ -15,7 +15,7 @@ function makeMember(overrides) {
   };
 }
 
-function setup(members) {
+function setup(members: any) {
   const backend = {
     directory: {
       getAllMembers: vi.fn().mockResolvedValue(members),
@@ -46,7 +46,7 @@ describe('suggestion sorting by play frequency', () => {
     const result = await setup(members);
     const suggestions = result.current.getAutocompleteSuggestions('1750');
 
-    expect(suggestions.map((s) => s.member.name)).toEqual([
+    expect(suggestions.map((s: any) => s.member.name)).toEqual([
       'Bob Smith',
       'Carol Smith',
       'Alice Smith',
@@ -64,7 +64,7 @@ describe('suggestion sorting by play frequency', () => {
     const suggestions = result.current.getAutocompleteSuggestions('1750');
 
     // Eve (3) first, then Dana and Frank (0 each, alphabetical)
-    expect(suggestions.map((s) => s.member.name)).toEqual([
+    expect(suggestions.map((s: any) => s.member.name)).toEqual([
       'Eve Smith',
       'Dana Smith',
       'Frank Smith',
@@ -97,7 +97,7 @@ describe('suggestion sorting by play frequency', () => {
     const suggestions = result.current.getAutocompleteSuggestions('Jan');
 
     // All match first-name prefix "Jan", so sort by playCount desc
-    expect(suggestions.map((s) => s.member.name)).toEqual([
+    expect(suggestions.map((s: any) => s.member.name)).toEqual([
       'Janet Jones',
       'Jane Doe',
       'Jan Smith',

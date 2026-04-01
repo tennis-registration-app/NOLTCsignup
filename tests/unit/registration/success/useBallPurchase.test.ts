@@ -20,7 +20,7 @@ vi.mock('../../../../src/platform/prefsStorage.js', () => ({
   setCache: vi.fn(),
 }));
 
-const getLastFourDigits = (n) => (n ? String(n).slice(-4) : '****');
+const getLastFourDigits = (n: any) => (n ? String(n).slice(-4) : '****');
 
 function makePlayer(overrides = {}) {
   return { name: 'Alice', memberNumber: '1001', accountId: 'acct-1001', isGuest: false, ...overrides };

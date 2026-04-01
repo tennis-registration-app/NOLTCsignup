@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import {
  * Legacy HomeRoute prop mapping — VERBATIM from HomeRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyHomeScreenProps(app, workflow, handlers) {
+function legacyHomeScreenProps(app: any, workflow: any, handlers: any) {
   // Destructure from app (verbatim from HomeRoute)
   const { search, setters, derived, alert, CONSTANTS } = app;
   // Workflow fields now sourced from WorkflowContext (not app.setters/app.players)
@@ -184,7 +184,7 @@ function legacyHomeScreenProps(app, workflow, handlers) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what HomeRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
@@ -196,7 +196,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based prop mapping
  */
-function presenterHomeScreenProps(app, workflow, handlers) {
+function presenterHomeScreenProps(app: any, workflow: any, handlers: any) {
   const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildHomeModel(app),
@@ -229,7 +229,7 @@ function captureHookResults() {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 

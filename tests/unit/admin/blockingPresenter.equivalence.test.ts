@@ -71,7 +71,7 @@ const mockServices = {
  *
  * For a given blockingView, returns what CompleteBlockManagerEnhanced receives.
  */
-function legacyBlockingProps(blockingView, wcModel, wcActions, bModel, bActions, comps, svc) {
+function legacyBlockingProps(blockingView: any, wcModel: any, wcActions: any, bModel: any, bActions: any, comps: any, svc: any) {
   // The legacy section maps blockingView to defaultView:
   const viewMap = { create: 'create', future: 'calendar', list: 'timeline' };
   const defaultView = viewMap[blockingView];
@@ -92,7 +92,7 @@ function legacyBlockingProps(blockingView, wcModel, wcActions, bModel, bActions,
 /**
  * Presenter-based prop extraction
  */
-function presenterBlockingProps(blockingView, wcModel, wcActions, bModel, bActions, comps, svc) {
+function presenterBlockingProps(blockingView: any, wcModel: any, wcActions: any, bModel: any, bActions: any, comps: any, svc: any) {
   const model = buildBlockingModel(blockingView, wcModel, bModel, comps, svc);
   const actions = buildBlockingActions(wcActions, bActions);
 

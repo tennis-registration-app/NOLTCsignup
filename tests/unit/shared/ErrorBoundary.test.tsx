@@ -14,7 +14,7 @@ function ThrowingChild({ shouldThrow }) {
 }
 
 // Helper to render and get container
-function renderToContainer(element) {
+function renderToContainer(element: any) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -25,7 +25,7 @@ function renderToContainer(element) {
 }
 
 // Cleanup helper
-function cleanup(container, root) {
+function cleanup(container: any, root: any) {
   act(() => {
     root.unmount();
   });
@@ -102,7 +102,7 @@ describe('ErrorBoundary', () => {
     expect(consoleErrorSpy).toHaveBeenCalled();
     // Find the call that contains [ErrorBoundary] (may not be first due to React warnings)
     const errorBoundaryCall = consoleErrorSpy.mock.calls.find(
-      (call) => call[0] && typeof call[0] === 'string' && call[0].includes('[ErrorBoundary]')
+      (call: any) => call[0] && typeof call[0] === 'string' && call[0].includes('[ErrorBoundary]')
     );
     expect(errorBoundaryCall).toBeTruthy();
     cleanup(container, root);
@@ -110,7 +110,7 @@ describe('ErrorBoundary', () => {
 
   it('dispatches clientError event with expected fields', () => {
     let received = null;
-    const handler = (e) => {
+    const handler = (e: any) => {
       received = e.detail;
     };
     window.addEventListener('clientError', handler, { once: true });
@@ -149,7 +149,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('custom fallback render works', () => {
-    const customFallback = (state) => <div>Custom: {state.error?.message}</div>;
+    const customFallback = (state: any) => <div>Custom: {state.error?.message}</div>;
 
     const { container, root } = renderToContainer(
       <ErrorBoundary fallback={customFallback}>

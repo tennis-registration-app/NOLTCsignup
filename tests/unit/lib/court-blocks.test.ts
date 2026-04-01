@@ -14,7 +14,7 @@ import {
 
 describe('getUpcomingBlockWarningFromBlocks', () => {
   // Helper to create a Date offset from base
-  const minutesFromNow = (baseDate, minutes) =>
+  const minutesFromNow = (baseDate: any, minutes: any) =>
     new Date(baseDate.getTime() + minutes * 60 * 1000).toISOString();
 
   // Base time for all tests (fixed for determinism)
@@ -202,7 +202,7 @@ describe('getCourtBlockStatus', () => {
   });
 
   const now = new Date('2025-01-15T10:00:00Z');
-  const minutesFromNow = (minutes) =>
+  const minutesFromNow = (minutes: any) =>
     new Date(now.getTime() + minutes * 60 * 1000).toISOString();
 
   it('returns not blocked when no blocks exist', () => {

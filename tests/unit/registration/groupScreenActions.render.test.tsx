@@ -83,7 +83,7 @@ describe('GroupScreenActions court/waitlist decision', () => {
         ],
       },
       // sameGroup returns true for the first entry
-      sameGroup: (entryPlayers, cg) =>
+      sameGroup: (entryPlayers: any, cg: any) =>
         entryPlayers[0]?.memberId === 'm1' && cg === group,
     });
     render(<GroupScreenActions {...props} />);
@@ -101,7 +101,7 @@ describe('GroupScreenActions court/waitlist decision', () => {
           { players: [{ memberId: 'm3' }] },
         ],
       },
-      sameGroup: (entryPlayers, cg) =>
+      sameGroup: (entryPlayers: any, cg: any) =>
         entryPlayers[0]?.memberId === 'm3' && cg === group,
     });
     render(<GroupScreenActions {...props} />);

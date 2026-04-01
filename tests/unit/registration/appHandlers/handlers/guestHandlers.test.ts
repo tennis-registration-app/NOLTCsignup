@@ -41,7 +41,7 @@ vi.mock('../../../../../src/shared/utils/toast.js', () => ({
 }));
 
 vi.mock('../../../../../src/shared/constants/toastMessages.js', () => ({
-  ALREADY_IN_GROUP: (name) => `${name} is already in your group`,
+  ALREADY_IN_GROUP: (name: any) => `${name} is already in your group`,
 }));
 
 // ---- shared test state ----

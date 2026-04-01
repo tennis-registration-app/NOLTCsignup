@@ -45,7 +45,7 @@ function makeBackend(overrides = {}) {
   };
 }
 
-function createHarness(backend) {
+function createHarness(backend: any) {
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
     const hook = useMemberIdentity({ backend });
     useImperativeHandle(ref, () => hook);

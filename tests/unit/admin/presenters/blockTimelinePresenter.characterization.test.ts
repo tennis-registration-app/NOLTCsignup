@@ -14,7 +14,7 @@ import {
 // --- Legacy functions copied verbatim from BlockTimeline.jsx BEFORE refactor ---
 
 // Copied from BlockTimeline useMemo (lines 106-160)
-function legacyFilterBlocks(blocks, viewMode, selectedDate, filterCourt) {
+function legacyFilterBlocks(blocks: any, viewMode: any, selectedDate: any, filterCourt: any) {
   let filtered = [...blocks];
 
   filtered = filtered.filter((block) => {
@@ -58,8 +58,8 @@ function legacyFilterBlocks(blocks, viewMode, selectedDate, filterCourt) {
 }
 
 // Copied from BlockTimeline inline reduce (lines 184-197)
-function legacyGroupBlocksByDate(blocks) {
-  return blocks.reduce((groups, block) => {
+function legacyGroupBlocksByDate(blocks: any) {
+  return blocks.reduce((groups: any, block: any) => {
     const blockDate = new Date(block.startTime);
     const dateKey = blockDate.toDateString();
 
@@ -76,12 +76,12 @@ function legacyGroupBlocksByDate(blocks) {
 }
 
 // Copied from BlockTimeline inline sort (lines 199-201)
-function legacySortGroupedBlocks(grouped) {
-  return Object.values(grouped).sort((a, b) => a.date.getTime() - b.date.getTime());
+function legacySortGroupedBlocks(grouped: any) {
+  return Object.values(grouped).sort((a: any, b: any) => (a as any).date.getTime() - (b as any).date.getTime());
 }
 
 // Copied from BlockTimeline getBlockStatus (lines 162-169)
-function legacyGetBlockStatus(block, currentTime) {
+function legacyGetBlockStatus(block: any, currentTime: any) {
   const start = new Date(block.startTime);
   const end = new Date(block.endTime);
 
@@ -91,7 +91,7 @@ function legacyGetBlockStatus(block, currentTime) {
 }
 
 // Copied from BlockTimeline getStatusColor (lines 171-182)
-function legacyGetStatusColor(status) {
+function legacyGetStatusColor(status: any) {
   switch (status) {
     case 'active':
       return 'bg-red-50 border-red-300 text-red-900';

@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import {
  * Legacy AdminRoute prop mapping — VERBATIM from AdminRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyAdminScreenProps(app, handlers) {
+function legacyAdminScreenProps(app: any, handlers: any) {
   // Destructure from app (via grouped admin slice)
   const { state, setters, alert, admin, CONSTANTS } = app;
   const { blockAdmin, waitlistAdmin, adminPriceFeedback } = admin;
@@ -199,7 +199,7 @@ function legacyAdminScreenProps(app, handlers) {
 /**
  * Presenter-based prop mapping
  */
-function presenterAdminScreenProps(app, handlers) {
+function presenterAdminScreenProps(app: any, handlers: any) {
   return {
     ...buildAdminModel(app, handlers),
     ...buildAdminActions(app, handlers),
@@ -230,7 +230,7 @@ function captureHookResults() {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 

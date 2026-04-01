@@ -91,7 +91,7 @@ const services = {
  * - waitlistData: waitingGroups array
  * - waitlistActions: moveInWaitlist, removeFromWaitlist
  */
-function legacyStatusExtraction(sModel, sActions, wcModel, wcActions, svc) {
+function legacyStatusExtraction(sModel: any, sActions: any, wcModel: any, wcActions: any, svc: any) {
   // Extract values needed for local waitlist UI
   const { waitingGroups } = sModel;
   const { moveInWaitlist, removeFromWaitlist } = sActions;
@@ -115,7 +115,7 @@ function legacyStatusExtraction(sModel, sActions, wcModel, wcActions, svc) {
 /**
  * Presenter-based extraction
  */
-function presenterStatusExtraction(sModel, sActions, wcModel, wcActions, svc) {
+function presenterStatusExtraction(sModel: any, sActions: any, wcModel: any, wcActions: any, svc: any) {
   const model = buildStatusModel(sModel, wcModel, svc);
   const actions = buildStatusActions(sActions, wcActions);
 

@@ -22,20 +22,20 @@ function makeCourtSelection({
   selectableCourts = [],
 }: { selectable?: number, fullTime?: number, selectableCourts?: any[] } = {}): any {
   return {
-    countSelectableForGroup: (_count) => selectable,
-    countFullTimeForGroup: (_count) => fullTime,
+    countSelectableForGroup: (_count: any) => selectable,
+    countFullTimeForGroup: (_count: any) => fullTime,
     selectableCourts,
   };
 }
 
 // Helper: build a waitlist entry
-function makeEntry(id, players, opts = {}) {
+function makeEntry(id: any, players: any, opts: any = {}) {
   return {
     id,
     position: opts.position ?? id,
     group: {
       type: "singles",
-      players: players.map((name) => ({ displayName: name, name })),
+      players: players.map((name: any) => ({ displayName: name, name })),
     },
     joinedAt: new Date().toISOString(),
     minutesWaiting: 5,
@@ -52,7 +52,7 @@ afterEach(() => {
 });
 
 // Helper: render hook and store unmount for cleanup
-async function render(data, opts = {}) {
+async function render(data: any, opts: any = {}) {
   const out = await renderHandlerHook(() =>
     useRegistrationDerived({
       data,

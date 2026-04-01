@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import {
  * Legacy GroupRoute prop mapping — VERBATIM from GroupRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyGroupScreenProps(app, workflow, handlers) {
+function legacyGroupScreenProps(app: any, workflow: any, handlers: any) {
   // Destructure from app (via grouped session slice)
   const {
     state,
@@ -233,7 +233,7 @@ function legacyGroupScreenProps(app, workflow, handlers) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what GroupRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
@@ -246,7 +246,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based prop mapping
  */
-function presenterGroupScreenProps(app, workflow, handlers) {
+function presenterGroupScreenProps(app: any, workflow: any, handlers: any) {
   const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildGroupModel(app, w),
@@ -279,7 +279,7 @@ function captureHookResults() {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 

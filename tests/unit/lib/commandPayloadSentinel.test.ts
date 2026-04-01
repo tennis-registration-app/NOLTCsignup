@@ -40,7 +40,7 @@ import {
 // ============================================================
 // Helpers
 // ============================================================
-const sorted = (obj) => Object.keys(obj).sort();
+const sorted = (obj: any) => Object.keys(obj).sort();
 
 // ============================================================
 // wire.js — toAssignCourtPayload

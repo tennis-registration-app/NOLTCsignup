@@ -110,7 +110,7 @@ describe('applyBlocksOp', () => {
 
     expect(ctx.backend.admin.createBlock).toHaveBeenCalledTimes(3);
     // Verify each court was targeted
-    const courtIds = ctx.backend.admin.createBlock.mock.calls.map((c) => c[0].courtId);
+    const courtIds = ctx.backend.admin.createBlock.mock.calls.map((c: any) => c[0].courtId);
     expect(courtIds).toEqual(['uuid-court-1', 'uuid-court-2', 'uuid-court-3']);
     expect(ctx.showNotification).toHaveBeenCalledWith(
       expect.stringContaining('3 block(s) successfully'),

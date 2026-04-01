@@ -28,7 +28,7 @@ beforeAll(() => {
 // Helpers
 // ============================================================
 const T = new Date('2025-06-15T14:00:00Z');
-const mins = (n) => new Date(T.getTime() + n * 60000);
+const mins = (n: any) => new Date(T.getTime() + n * 60000);
 
 /** Build a 12-court array: all occupied far in the future, with overrides. */
 function makeCourts(overrides = {}) {
@@ -39,7 +39,7 @@ function makeCourts(overrides = {}) {
   });
 }
 
-const group = (playerCount, deferred = false) => ({
+const group = (playerCount: any, deferred = false) => ({
   players: Array.from({ length: playerCount }, (_, i) => ({ name: `P${i}` })),
   deferred,
 });

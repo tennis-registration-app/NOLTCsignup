@@ -30,7 +30,7 @@ function minimalMemberResponse(overrides = {}) {
 /**
  * Helper to extract query param from URL.
  */
-function getParam(url, name) {
+function getParam(url: any, name: any) {
   const match = url.match(new RegExp(`[?&]${name}=([^&]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }

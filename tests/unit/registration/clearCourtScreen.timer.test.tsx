@@ -58,7 +58,7 @@ function makeClearCourtProps(overrides = {}) {
     getCourtsOccupiedForClearing: () => [3],
     courtData: { courts: [] },
     CONSTANTS: { AUTO_RESET_CLEAR_MS: AUTO_RESET_MS },
-    TennisBusinessLogic: { formatPlayerDisplayName: (n) => n },
+    TennisBusinessLogic: { formatPlayerDisplayName: (n: any) => n },
     mobileFlow: false,
     ...overrides,
   };

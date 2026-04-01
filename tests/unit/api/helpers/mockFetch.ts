@@ -39,9 +39,9 @@ export function stubFetchReject(message = 'Network error') {
  * @param {Array<Object>} envelopes - Array of JSON bodies for sequential calls
  * @returns {import('vitest').Mock}
  */
-export function stubFetchSequence(envelopes) {
+export function stubFetchSequence(envelopes: any) {
   const mockFn = vi.fn();
-  envelopes.forEach((envelope) => {
+  envelopes.forEach((envelope: any) => {
     mockFn.mockResolvedValueOnce({
       ok: true,
       status: 200,

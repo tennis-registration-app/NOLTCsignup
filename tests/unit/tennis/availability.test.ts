@@ -228,7 +228,7 @@ describe('availability ESM port', () => {
 // Shared fixtures for extended tests
 // ============================================================
 const T = new Date('2026-06-15T14:00:00Z');
-const mins = (n) => new Date(T.getTime() + n * 60000).toISOString();
+const mins = (n: any) => new Date(T.getTime() + n * 60000).toISOString();
 
 /** Build a 3-court data fixture. Override individual courts by index (1-based). */
 function makeData(courtOverrides: Record<string, unknown> = {}): any {
@@ -240,7 +240,7 @@ function makeData(courtOverrides: Record<string, unknown> = {}): any {
   return { courts };
 }
 
-function block(courtNumber, startOffset, endOffset, extra = {}) {
+function block(courtNumber: any, startOffset: any, endOffset: any, extra: any = {}) {
   return {
     courtNumber,
     startTime: mins(startOffset),
@@ -249,7 +249,7 @@ function block(courtNumber, startOffset, endOffset, extra = {}) {
   };
 }
 
-function occupiedCourt(endOffset, extra = {}) {
+function occupiedCourt(endOffset: any, extra: any = {}) {
   return { session: { scheduledEndAt: mins(endOffset), ...extra } };
 }
 

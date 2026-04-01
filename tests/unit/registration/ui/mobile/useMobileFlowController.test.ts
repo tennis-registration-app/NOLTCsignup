@@ -36,7 +36,7 @@ function makeDeps(overrides = {}) {
   };
 }
 
-function createHarness(deps) {
+function createHarness(deps: any) {
   let currentDeps = deps;
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
     const hook = useMobileFlowController(currentDeps);
@@ -50,7 +50,7 @@ function createHarness(deps) {
   act(() => { root.render(React.createElement(Wrapper, { ref })); });
   return {
     getHook: () => ref.current,
-    rerender: (newDeps) => {
+    rerender: (newDeps: any) => {
       currentDeps = { ...currentDeps, ...newDeps };
       act(() => { root.render(React.createElement(Wrapper, { ref })); });
     },

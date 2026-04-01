@@ -35,7 +35,7 @@ vi.mock('../../../src/registration/context/WorkflowProvider', () => ({
 // Transitive deps loaded through screens barrel (HomeRoute imports all screens)
 vi.mock('@lib', () => ({
   getUpcomingBlockWarningFromBlocks: vi.fn(() => null),
-  TennisBusinessLogic: { formatPlayerDisplayName: (n) => n },
+  TennisBusinessLogic: { formatPlayerDisplayName: (n: any) => n },
 }));
 vi.mock('../../../src/lib/storage.js', () => ({
   readDataSafe: vi.fn(() => ({ courts: [] })),
@@ -44,7 +44,7 @@ vi.mock('../../../src/lib/logger.js', () => ({
   logger: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock('../../../src/components/icons/TypedIcon', () => ({
-  TypedIcon: (props) => <span data-testid="typed-icon" />,
+  TypedIcon: (props: any) => <span data-testid="typed-icon" />,
 }));
 vi.mock('../../../src/registration/screens/success/useBallPurchase.js', () => ({
   default: () => ({

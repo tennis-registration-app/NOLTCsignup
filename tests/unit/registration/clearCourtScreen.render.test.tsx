@@ -30,7 +30,7 @@ vi.mock('../../../src/lib/storage.js', () => ({
 }));
 
 vi.mock('../../../src/components/icons/TypedIcon', () => ({
-  TypedIcon: (props) => <span data-testid="typed-icon" />,
+  TypedIcon: (props: any) => <span data-testid="typed-icon" />,
 }));
 
 // ---------------------------------------------------------------------------
@@ -58,7 +58,7 @@ function makeClearCourtProps(overrides = {}) {
     getCourtsOccupiedForClearing: () => [3],
     courtData: { courts: [] },
     CONSTANTS: { AUTO_RESET_CLEAR_MS: 2000 },
-    TennisBusinessLogic: { formatPlayerDisplayName: (n) => n },
+    TennisBusinessLogic: { formatPlayerDisplayName: (n: any) => n },
     mobileFlow: false,
     ...overrides,
   };

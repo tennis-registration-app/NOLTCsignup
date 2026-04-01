@@ -54,7 +54,7 @@ const components = {
  * Legacy CalendarSection prop mapping — VERBATIM from CalendarSection.jsx
  * before the presenter refactor. This is the source of truth.
  */
-function legacyCalendarProps(calModel, calActions, svc, comps) {
+function legacyCalendarProps(calModel: any, calActions: any, svc: any, comps: any) {
   // Destructure domain objects to preserve existing local names
   const { courts, currentTime, hoursOverrides, calendarView, refreshTrigger } = calModel;
   const { onRefresh } = calActions;
@@ -89,7 +89,7 @@ function legacyCalendarProps(calModel, calActions, svc, comps) {
 /**
  * Presenter-based prop mapping
  */
-function presenterCalendarProps(calModel, calActions, svc, comps) {
+function presenterCalendarProps(calModel: any, calActions: any, svc: any, comps: any) {
   const model = buildCalendarModel(calModel, svc, comps);
   const actions = buildCalendarActions(calActions);
   // Separate EventCalendar component ref from data props (same as CalendarSection does)

@@ -56,7 +56,7 @@ function makeDeps(overrides = {}) {
 
 // ── Harness ───────────────────────────────────────────────────────────────────
 
-function createHarness(deps) {
+function createHarness(deps: any) {
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
     const hook = useRegistrationDomainHooks(deps);
     useImperativeHandle(ref, () => hook);

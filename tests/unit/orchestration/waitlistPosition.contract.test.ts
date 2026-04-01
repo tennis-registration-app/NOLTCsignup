@@ -29,7 +29,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
 
 // ── helpers ──────────────────────────────────────────────────
 
-function createMockDeps(mockResponse, overrides = {}) {
+function createMockDeps(mockResponse: any, overrides: any = {}) {
   return {
     isJoiningWaitlist: false,
     currentGroup: [

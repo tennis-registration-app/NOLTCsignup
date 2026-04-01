@@ -87,7 +87,7 @@ const WET_BLOCK_COURTS = [
 // Helpers
 // ============================================================
 
-function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts } = {}) {
+function renderHook(moveCourt: any, courts: any, { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts }: any = {}) {
   // Type assertion: partial mock for testing
   let result = { current: null } as unknown as { current: ReturnType<typeof useCourtActions> };
   // Mutable props ref — allows re-rendering with updated values
@@ -126,7 +126,7 @@ function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt,
   };
 
   // Re-render with updated props (simulates real data arriving from applyBoardResponse)
-  const rerender = async (newProps) => {
+  const rerender = async (newProps: any) => {
     if (newProps.wetCourts !== undefined) propsRef.wetCourts = newProps.wetCourts;
     if (newProps.courts !== undefined) propsRef.courts = newProps.courts;
     await act(async () => {

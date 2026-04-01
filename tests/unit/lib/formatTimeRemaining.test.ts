@@ -3,7 +3,7 @@ import { formatTimeRemaining } from '../../../src/lib/formatters.js';
 
 // Fixed reference time for deterministic tests
 const NOW = new Date('2026-06-15T14:00:00Z');
-const mins = (n) => new Date(NOW.getTime() + n * 60000);
+const mins = (n: any) => new Date(NOW.getTime() + n * 60000);
 
 // ============================================================
 // A) Guard clauses

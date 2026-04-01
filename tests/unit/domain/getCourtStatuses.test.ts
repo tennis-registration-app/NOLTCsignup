@@ -30,22 +30,22 @@ function loadAvailabilityModule() {
   // Since we can't easily load the IIFE in tests, we'll inline the key functions
   // This mirrors the exact logic from domain/availability.js
 
-  function coerceDate(d) {
+  function coerceDate(d: any) {
     if (d instanceof Date) return d;
     const parsed = new Date(d);
     return isNaN(parsed.getTime()) ? new Date() : parsed;
   }
 
-  function isOvertime(session, now) {
+  function isOvertime(session: any, now: any) {
     if (!session?.scheduledEndAt) return false;
     return coerceDate(session.scheduledEndAt) <= now;
   }
 
-  function normalizeBlocks(arr) {
+  function normalizeBlocks(arr: any) {
     return Array.isArray(arr) ? arr : [];
   }
 
-  function isActiveBlock(b, now) {
+  function isActiveBlock(b: any, now: any) {
     if (!b) return false;
     const st = new Date(b.startTime ?? b.start);
     const et = new Date(b.endTime ?? b.end);
@@ -75,7 +75,7 @@ function loadAvailabilityModule() {
       const n = i + 1;
 
       const isWet = wetSet.has(n);
-      const isBlocked = blocks.some((b) => {
+      const isBlocked = blocks.some((b: any) => {
         const courtNum = Number(b.courtNumber || b.court);
         if (!courtNum || courtNum !== n) return false;
         const start = coerceDate(b.startTime || b.start);
@@ -115,7 +115,7 @@ function loadAvailabilityModule() {
   function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] as any[] }: any) {
     const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
 
-    const S = (arr) => new Set(Array.isArray(arr) ? arr : []);
+    const S = (arr: any) => new Set(Array.isArray(arr) ? arr : []);
     const freeSet = S(info.free);
     const occSet = S(info.occupied);
     const overtimeSet = S(info.overtime);
@@ -123,9 +123,9 @@ function loadAvailabilityModule() {
 
     const activeBlocked = new Set(
       (blocks || [])
-        .filter((b) => isActiveBlock(b, now))
-        .filter((b) => !b.isWetCourt)
-        .map((b) => b.courtNumber)
+        .filter((b: any) => isActiveBlock(b, now))
+        .filter((b: any) => !b.isWetCourt)
+        .map((b: any) => b.courtNumber)
     );
 
     const hasTrueFree = freeSet.size > 0;
@@ -137,7 +137,7 @@ function loadAvailabilityModule() {
       [...freeSet].some((courtNum) => {
         if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
         const nextBlock = upcomingBlocks.find(
-          (b) =>
+          (b: any) =>
             Number(b.courtNumber || b.court) === courtNum &&
             new Date(b.startTime || b.start) > now
         );
