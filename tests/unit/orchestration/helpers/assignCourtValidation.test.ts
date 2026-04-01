@@ -180,7 +180,7 @@ describe('guardGroup (v0 mirror)', () => {
   });
 
   it('returns ok:true when group has players', () => {
-    const result = guardGroup({ currentGroup: [{ id: 1, name: 'Player 1' }] });
+    const result = guardGroup({ currentGroup: [{ id: 1, name: 'Player 1' }] } as any);
     expect(result.ok).toBe(true);
   });
 });

@@ -84,7 +84,7 @@ describe('window-bridge', () => {
     it('prefers lowercase availability over capitalized Availability', () => {
       const lower = { id: 'lower' };
       const upper = { id: 'upper' };
-      window.Tennis = { Domain: { availability: lower, Availability: upper } };
+      window.Tennis = { Domain: { availability: lower as any, Availability: upper as any } } as any;
       expect(getLegacyAvailabilityDomain()).toBe(lower);
     });
 

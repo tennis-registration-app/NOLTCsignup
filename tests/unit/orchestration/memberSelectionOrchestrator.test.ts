@@ -122,7 +122,7 @@ describe('handleSuggestionClickOrchestrated', () => {
     it('shows alert for suggestion without member object', async () => {
       const deps = createSuggestionClickDeps();
       await handleSuggestionClickOrchestrated(
-        { memberNumber: '1001', member: null },
+        { memberNumber: '1001', member: null } as any,
         deps
       );
       expect(deps.showAlertMessage).toHaveBeenCalled();

@@ -6,7 +6,7 @@ import {
 describe('groupGuestReducer', () => {
   // Initial state
   test('returns initial state for unknown action', () => {
-    const result = groupGuestReducer(initialGroupGuestState, { type: 'UNKNOWN' });
+    const result = groupGuestReducer(initialGroupGuestState, { type: 'UNKNOWN' } as any);
     expect(result).toEqual(initialGroupGuestState);
   });
 
@@ -21,7 +21,7 @@ describe('groupGuestReducer', () => {
 
   // Group actions
   test('CURRENT_GROUP_SET updates currentGroup', () => {
-    const group = [{ id: 1, name: 'John' }];
+    const group: any[] = [{ id: 1, name: 'John' }];
     const result = groupGuestReducer(initialGroupGuestState, {
       type: 'CURRENT_GROUP_SET',
       value: group,
@@ -35,7 +35,7 @@ describe('groupGuestReducer', () => {
       currentGroup: [
         { id: 1, name: 'John' },
         { id: 2, name: 'Jane' },
-      ],
+      ] as any[],
     };
     const result = groupGuestReducer(state, {
       type: 'CURRENT_GROUP_PLAYER_REMOVED',

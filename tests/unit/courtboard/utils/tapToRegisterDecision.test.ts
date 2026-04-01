@@ -46,7 +46,7 @@ describe('decideTapToRegister', () => {
 
     it('coerces courtNumber to Number', () => {
       const result = decideTapToRegister({
-        courtNumber: '5',
+        courtNumber: '5' as any,
         courts: makeCourts(),
         waitingGroups: [],
         registeredCourt: null,
@@ -239,7 +239,7 @@ describe('decideTapToRegister', () => {
 
     it('coerces courtNumber to Number for assign-from-waitlist', () => {
       const result = decideTapToRegister({
-        courtNumber: '7',
+        courtNumber: '7' as any,
         courts: makeCourts(),
         waitingGroups: [{ id: 'entry-1' }],
         registeredCourt: null,
@@ -368,7 +368,7 @@ describe('decideTapToRegister', () => {
       const result = decideTapToRegister({
         courtNumber: 1,
         courts: makeCourts(),
-        waitingGroups: [null],
+        waitingGroups: [null] as any[],
         registeredCourt: null,
         waitlistEntryId: 'wl-123',
       });

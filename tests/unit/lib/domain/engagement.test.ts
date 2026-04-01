@@ -12,25 +12,25 @@ import {
 } from '../../../../src/lib/domain/engagement.js';
 
 // ── Fixtures ────────────────────────────────────────────────
-function makeBoard({ courts = [], waitlist = [] } = {}) {
+function makeBoard({ courts = [], waitlist = [] }: { courts?: any[], waitlist?: any[] } = {}): any {
   return { courts, waitlist };
 }
 
-function makeCourt(number, players = [], groupId = 'g1') {
+function makeCourt(number: any, players: any[] = [], groupId = 'g1') {
   return {
     number,
     session: { group: { id: groupId, players } },
   };
 }
 
-function makeWaitlistEntry(position, players = [], groupId = 'wg1') {
+function makeWaitlistEntry(position: any, players: any[] = [], groupId = 'wg1') {
   return {
     position,
     group: { id: groupId, players },
   };
 }
 
-function makePlayer(memberId, displayName = 'Player') {
+function makePlayer(memberId: any, displayName = 'Player') {
   return { memberId, displayName };
 }
 
@@ -212,7 +212,7 @@ describe('getEngagementMessage', () => {
   });
 
   it('returns generic message for unknown kind', () => {
-    const msg = getEngagementMessage({ kind: 'other' });
+    const msg = getEngagementMessage({ kind: 'other' } as any);
     expect(msg).toBe('Player is already engaged');
   });
 });

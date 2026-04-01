@@ -48,7 +48,7 @@ describe('normalizeName', () => {
 
 // ── findEngagementFor ──────────────────────────────────────────
 describe('findEngagementFor', () => {
-  const makeData = ({ courts = [], waitlist = [] } = {}) => ({ courts, waitlist });
+  const makeData = ({ courts = [], waitlist = [] }: { courts?: any[], waitlist?: any[] } = {}): any => ({ courts, waitlist });
 
   it('returns null when player is not found', () => {
     const data = makeData({

@@ -70,7 +70,7 @@ import { HomeRoute } from '../../../src/registration/router/routes/HomeRoute.jsx
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeHomeProps(overrides = {}) {
+function makeHomeProps(overrides: Record<string, unknown> = {}): any {
   return {
     searchInput: '',
     setSearchInput: noop,
@@ -78,7 +78,7 @@ function makeHomeProps(overrides = {}) {
     setShowSuggestions: noop,
     isSearching: false,
     effectiveSearchInput: '',
-    getAutocompleteSuggestions: () => [],
+    getAutocompleteSuggestions: () => [] as any[],
     handleSuggestionClick: noop,
     markUserTyping: noop,
     setCurrentScreen: noop,

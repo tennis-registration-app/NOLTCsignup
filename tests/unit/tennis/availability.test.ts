@@ -79,7 +79,7 @@ describe('availability ESM port', () => {
   describe('getFreeCourts', () => {
     it('returns free courts when no sessions', () => {
       const result = availability.getFreeCourts({
-        data: { courts: [null, null, null] },
+        data: { courts: [null, null, null] } as any,
         now: new Date(),
         blocks: [],
         wetSet: new Set<number>(),
@@ -89,7 +89,7 @@ describe('availability ESM port', () => {
 
     it('excludes wet courts', () => {
       const result = availability.getFreeCourts({
-        data: { courts: [null, null, null] },
+        data: { courts: [null, null, null] } as any,
         now: new Date(),
         blocks: [],
         wetSet: new Set([2]),
@@ -101,7 +101,7 @@ describe('availability ESM port', () => {
       const result = availability.getFreeCourts({
         data: {
           courts: [null, { session: { scheduledEndAt: '2099-01-01T12:00:00' } }, null],
-        },
+        } as any,
         now: new Date(),
         blocks: [],
         wetSet: new Set<number>(),
@@ -112,7 +112,7 @@ describe('availability ESM port', () => {
     it('excludes blocked courts', () => {
       const now = new Date('2026-01-01T10:00:00');
       const result = availability.getFreeCourts({
-        data: { courts: [null, null, null] },
+        data: { courts: [null, null, null] } as any,
         now,
         blocks: [
           {
@@ -141,7 +141,7 @@ describe('availability ESM port', () => {
             { session: { scheduledEndAt: '2026-01-01T12:00:00' } }, // overtime
             { session: { scheduledEndAt: '2026-01-01T14:00:00' } }, // occupied
           ],
-        },
+        } as any,
         now,
         blocks: [],
         wetSet: new Set<number>(),
@@ -195,7 +195,7 @@ describe('availability ESM port', () => {
       window.Tennis.Config = { Courts: { TOTAL_COUNT: 3 } };
 
       const result = availability.getSelectableCourtsStrict({
-        data: { courts: [null, null, null] },
+        data: { courts: [null, null, null] } as any,
         now: new Date(),
         blocks: [],
         wetSet: new Set<number>(),
@@ -231,8 +231,9 @@ const T = new Date('2026-06-15T14:00:00Z');
 const mins = (n) => new Date(T.getTime() + n * 60000).toISOString();
 
 /** Build a 3-court data fixture. Override individual courts by index (1-based). */
-function makeData(courtOverrides = {}) {
-  const courts = [null, null, null];
+function makeData(courtOverrides: Record<string, unknown> = {}): any {
+  // Type assertion: partial mock for testing
+  const courts: any[] = [null, null, null];
   for (const [num, court] of Object.entries(courtOverrides)) {
     courts[Number(num) - 1] = court;
   }
@@ -358,13 +359,13 @@ describe('hasSoonBlockConflict (extended)', () => {
 
   it('throws for non-number courtNumber', () => {
     expect(() =>
-      hasSoonBlockConflict({ courtNumber: 'a', now: T, blocks: [], requiredMinutes: 60 })
+      hasSoonBlockConflict({ courtNumber: 'a', now: T, blocks: [], requiredMinutes: 60 } as any)
     ).toThrow('Invalid court number');
   });
 
   it('throws for null now', () => {
     expect(() =>
-      hasSoonBlockConflict({ courtNumber: 1, now: null, blocks: [], requiredMinutes: 60 })
+      hasSoonBlockConflict({ courtNumber: 1, now: null, blocks: [], requiredMinutes: 60 } as any)
     ).toThrow('Invalid current time');
   });
 
@@ -375,13 +376,13 @@ describe('hasSoonBlockConflict (extended)', () => {
         now: '2026-01-01',
         blocks: [],
         requiredMinutes: 60,
-      })
+      } as any)
     ).toThrow('Invalid current time');
   });
 
   it('throws for non-array blocks', () => {
     expect(() =>
-      hasSoonBlockConflict({ courtNumber: 1, now: T, blocks: 'bad', requiredMinutes: 60 })
+      hasSoonBlockConflict({ courtNumber: 1, now: T, blocks: 'bad', requiredMinutes: 60 } as any)
     ).toThrow('Blocks must be an array');
   });
 
@@ -399,7 +400,7 @@ describe('hasSoonBlockConflict (extended)', () => {
 
   it('throws for non-number requiredMinutes', () => {
     expect(() =>
-      hasSoonBlockConflict({ courtNumber: 1, now: T, blocks: [], requiredMinutes: 'long' })
+      hasSoonBlockConflict({ courtNumber: 1, now: T, blocks: [], requiredMinutes: 'long' } as any)
     ).toThrow('Required minutes must be a positive number');
   });
 });
@@ -744,7 +745,7 @@ describe('getSelectableCourtsForAssignment', () => {
 // ============================================================
 describe('getFreeCourts (branch gaps)', () => {
   it('throws for invalid data', () => {
-    expect(() => getFreeCourts({ data: null, now: T, blocks: [], wetSet: new Set<number>() })).toThrow(
+    expect(() => getFreeCourts({ data: null as any, now: T, blocks: [], wetSet: new Set<number>() })).toThrow(
       'Invalid data'
     );
   });
@@ -757,8 +758,8 @@ describe('getFreeCourts (branch gaps)', () => {
 
   it('coerces string now to Date', () => {
     const result = getFreeCourts({
-      data: { courts: [null] },
-      now: '2026-06-15T14:00:00Z',
+      data: { courts: [null] } as any,
+      now: '2026-06-15T14:00:00Z' as any,
       blocks: [],
       wetSet: new Set<number>(),
     });
@@ -767,9 +768,9 @@ describe('getFreeCourts (branch gaps)', () => {
 
   it('handles non-array blocks gracefully (normalizes to [])', () => {
     const result = getFreeCourts({
-      data: { courts: [null] },
+      data: { courts: [null] } as any,
       now: T,
-      blocks: null,
+      blocks: null as any,
       wetSet: new Set<number>(),
     });
     expect(result).toEqual([1]);
@@ -777,17 +778,17 @@ describe('getFreeCourts (branch gaps)', () => {
 
   it('handles non-Set wetSet gracefully', () => {
     const result = getFreeCourts({
-      data: { courts: [null, null] },
+      data: { courts: [null, null] } as any,
       now: T,
       blocks: [],
-      wetSet: 'invalid',
+      wetSet: 'invalid' as any,
     });
     expect(result).toEqual([1, 2]);
   });
 
   it('block with court field (not courtNumber) is matched', () => {
     const result = getFreeCourts({
-      data: { courts: [null, null] },
+      data: { courts: [null, null] } as any,
       now: T,
       blocks: [{ court: 1, startTime: mins(-30), endTime: mins(30) }],
       wetSet: new Set<number>(),
@@ -797,7 +798,7 @@ describe('getFreeCourts (branch gaps)', () => {
 
   it('block with start/end fields (not startTime/endTime) is matched', () => {
     const result = getFreeCourts({
-      data: { courts: [null, null] },
+      data: { courts: [null, null] } as any,
       now: T,
       blocks: [{ courtNumber: 1, start: mins(-30), end: mins(30) }],
       wetSet: new Set<number>(),
@@ -855,7 +856,7 @@ describe('getFreeCourtsInfo (branch gaps)', () => {
 
   it('handles null/undefined data.courts gracefully', () => {
     const result = getFreeCourtsInfo({
-      data: { courts: null },
+      data: { courts: null } as any,
       now: T,
       blocks: [],
       wetSet: new Set<number>(),
@@ -968,7 +969,7 @@ describe('getNextFreeTimes (extended)', () => {
     const result = getNextFreeTimes({
       data: makeData(),
       now: T,
-      blocks: null,
+      blocks: null as any,
       wetSet: new Set<number>(),
     });
     expect(result[0].getTime()).toBe(T.getTime());
@@ -979,7 +980,7 @@ describe('getNextFreeTimes (extended)', () => {
       data: makeData(),
       now: T,
       blocks: [],
-      wetSet: 'invalid',
+      wetSet: 'invalid' as any,
     });
     // wet normalization: non-Set → new Set(), so no courts wet
     expect(result[0].getTime()).toBe(T.getTime());

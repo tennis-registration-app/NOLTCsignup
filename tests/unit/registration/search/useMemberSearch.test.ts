@@ -26,7 +26,7 @@ import { useMemberSearch } from '../../../../src/registration/search/useMemberSe
 
 // Helpers
 
-function makeMember(overrides = {}) {
+function makeMember(overrides = {}): any {
   return {
     id: 'uuid-1',
     accountId: 'acct-1',
@@ -39,7 +39,7 @@ function makeMember(overrides = {}) {
   };
 }
 
-function makeBackend(members = [], opts = {}) {
+function makeBackend(members: any[] = [], opts: any = {}): any {
   return {
     directory: {
       getAllMembers: opts.throws
@@ -220,7 +220,7 @@ describe('useMemberSearch — getAutocompleteSuggestions', () => {
   });
 
   it('falls back to name field when displayName is absent', async () => {
-    const member = { id: 'id-x', accountId: 'acct-1', memberNumber: '5000', name: 'Bob Fallback', isPrimary: false, unclearedStreak: 0, playCount: 0 };
+    const member: any = { id: 'id-x', accountId: 'acct-1', memberNumber: '5000', name: 'Bob Fallback', isPrimary: false, unclearedStreak: 0, playCount: 0 };
     const backend = makeBackend([member]);
     const h = createHarness(backend);
     await act(async () => { await new Promise((r) => setTimeout(r, 10)); });

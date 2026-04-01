@@ -226,7 +226,7 @@ describe('TennisBusinessLogic.calculateEstimatedWaitTime', () => {
   });
 
   it('returns 0 for position 1 when no courts have end times', () => {
-    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, [null, null], new Date())).toBe(0);
+    expect(TennisBusinessLogic.calculateEstimatedWaitTime(1, [null, null] as any[], new Date())).toBe(0);
   });
 
   it('calculates wait time based on court session end times', () => {

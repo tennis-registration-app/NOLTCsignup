@@ -56,7 +56,7 @@ describe('guestCounterReducer', () => {
   describe('unknown action', () => {
     it('returns current state unchanged', () => {
       const state = { guestCounter: 7 };
-      const result = guestCounterReducer(state, { type: 'UNKNOWN' });
+      const result = guestCounterReducer(state, { type: 'UNKNOWN' } as any);
       expect(result).toEqual(state);
     });
   });

@@ -300,7 +300,7 @@ describe('selectReservedSafe', () => {
 
   it('skips null blocks in the input array', () => {
     const active = makeBlock({ startMinutes: -30, endMinutes: 60, courtNumber: 1, reason: 'Lesson' });
-    const result = selectReservedSafe([null, active, undefined, null], NOW);
+    const result = selectReservedSafe([null as any, active, undefined as any, null as any], NOW);
     expect(result).toHaveLength(1);
   });
 

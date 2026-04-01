@@ -125,7 +125,7 @@ describe('CourtCard', () => {
         statusByCourt={{ 5: 'occupied' }}
         selectableByCourt={{}}
         statusObjectByCourt={{ 5: {} }}
-        data={data}
+        data={data as any}
         isMobileView={false}
       />
     );

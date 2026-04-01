@@ -20,7 +20,7 @@ function makeCourtSelection({
   selectable = 0,
   fullTime = 0,
   selectableCourts = [],
-} = {}) {
+}: { selectable?: number, fullTime?: number, selectableCourts?: any[] } = {}): any {
   return {
     countSelectableForGroup: (_count) => selectable,
     countFullTimeForGroup: (_count) => fullTime,

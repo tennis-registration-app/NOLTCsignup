@@ -96,7 +96,7 @@ describe('adminPriceFeedbackReducer', () => {
   describe('unknown action', () => {
     it('returns current state unchanged', () => {
       const state = { showPriceSuccess: true, priceError: 'test' };
-      const result = adminPriceFeedbackReducer(state, { type: 'UNKNOWN' });
+      const result = adminPriceFeedbackReducer(state, { type: 'UNKNOWN' } as any);
       expect(result).toBe(state);
     });
   });

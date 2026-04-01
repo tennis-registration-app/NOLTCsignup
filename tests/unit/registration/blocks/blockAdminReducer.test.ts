@@ -6,7 +6,7 @@ import {
 describe('blockAdminReducer', () => {
   // Initial state
   test('returns initial state for unknown action', () => {
-    const result = blockAdminReducer(initialBlockAdminState, { type: 'UNKNOWN' });
+    const result = blockAdminReducer(initialBlockAdminState, { type: 'UNKNOWN' } as any);
     expect(result).toEqual(initialBlockAdminState);
   });
 

@@ -7,7 +7,7 @@ describe('courtAssignmentResultReducer', () => {
   test('returns initial state for unknown action', () => {
     const result = courtAssignmentResultReducer(initialCourtAssignmentResultState, {
       type: 'UNKNOWN',
-    });
+    } as any);
     expect(result).toEqual(initialCourtAssignmentResultState);
   });
 

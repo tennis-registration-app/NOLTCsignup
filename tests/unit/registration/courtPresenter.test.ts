@@ -192,7 +192,7 @@ describe('courtPresenter', () => {
       const handlers = makeMockHandlers();
       const workflow = makeMockWorkflow();
       workflow.isChangingCourt = true;
-      workflow.displacement = { courtNumber: 3, group: [] };
+      (workflow as any).displacement = { courtNumber: 3, group: [] };
       const computed = { computedAvailableCourts: [2, 6] };
 
       const callOrder: string[] = [];
@@ -262,7 +262,7 @@ describe('courtPresenter', () => {
     it('onJoinWaitlist with null group defaults to empty array', async () => {
       const handlers = makeMockHandlers();
       const workflow = makeMockWorkflow();
-      workflow.groupGuest.currentGroup = null;
+      workflow.groupGuest.currentGroup = null as any;
       const app = makeMockApp();
       app.mobile.mobileFlow = true;
 
@@ -293,7 +293,7 @@ describe('courtPresenter', () => {
       workflow.isChangingCourt = true;
       workflow.courtAssignment.justAssignedCourt = 3;
       const originalCourt = { number: 3, session: { id: 'old' } };
-      workflow.originalCourtData = originalCourt;
+      workflow.originalCourtData = originalCourt as any;
 
       const courtDataObj = { courts: [null, null, { number: 3, session: { id: 'new' } }] };
       const handlers = makeMockHandlers();

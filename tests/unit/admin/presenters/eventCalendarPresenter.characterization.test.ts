@@ -215,7 +215,7 @@ const fixtureBlocks = [
   },
 ];
 
-const fixtureCourts = [
+const fixtureCourts: any[] = [
   { id: 'court-1', blocked: null },
   { id: 'court-2', blocked: null },
   {

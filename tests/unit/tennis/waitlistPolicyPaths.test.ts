@@ -200,7 +200,7 @@ describe('estimateWaitForPositions', () => {
     const result = estimateWaitForPositions({
       positions: [1],
       currentFreeCount: 0,
-      nextFreeTimes: [null, new Date(now + 20 * 60000), null],
+      nextFreeTimes: [null as any, new Date(now + 20 * 60000), null as any],
       avgGameMinutes: 60,
     });
     // null entries → coerced to 'now' in the code
@@ -586,9 +586,9 @@ describe('simulateWaitlistEstimates', () => {
   describe('input normalization', () => {
     it('null courts/blocks/waitlist treated as empty arrays', () => {
       const result = simulateWaitlistEstimates({
-        courts: null,
+        courts: null as any,
         waitlist: [group(2)],
-        blocks: null,
+        blocks: null as any,
         now: T,
         avgGameMinutes: 75,
       });

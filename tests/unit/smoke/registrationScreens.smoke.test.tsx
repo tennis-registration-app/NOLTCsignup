@@ -64,7 +64,7 @@ import ClearCourtScreen from '../../../src/registration/screens/ClearCourtScreen
 const noop = () => {};
 const noopFn = vi.fn();
 
-function makeHomeProps(overrides = {}) {
+function makeHomeProps(overrides: Record<string, unknown> = {}): any {
   return {
     searchInput: '',
     setSearchInput: noop,
@@ -72,7 +72,7 @@ function makeHomeProps(overrides = {}) {
     setShowSuggestions: noop,
     isSearching: false,
     effectiveSearchInput: '',
-    getAutocompleteSuggestions: () => [],
+    getAutocompleteSuggestions: () => [] as any[],
     handleSuggestionClick: noop,
     markUserTyping: noop,
     setCurrentScreen: noop,
@@ -147,7 +147,7 @@ function makeGroupProps(overrides = {}) {
     joiningWaitlist: false,
     onGoBack: vi.fn(),
     onStartOver: noop,
-    getAutocompleteSuggestions: () => [],
+    getAutocompleteSuggestions: () => [] as any[],
     isPlayerAlreadyPlaying: () => ({ isPlaying: false }),
     sameGroup: () => false,
     CONSTANTS: { MAX_PLAYERS: 4, MAX_FREQUENT_PARTNERS: 5 },

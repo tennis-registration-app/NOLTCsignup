@@ -296,7 +296,7 @@ describe('AdminCommands', () => {
         serverNow: 'now',
       });
 
-      const participants = [{ name: 'Alice', type: 'member', member_id: 'M1' }];
+      const participants = [{ name: 'Alice', type: 'member' as const, member_id: 'M1' }];
       const result = await commands.updateSession({
         sessionId: 'sess-1',
         participants,
@@ -534,12 +534,12 @@ describe('AdminCommands', () => {
       api.get.mockResolvedValue(mockResponse);
 
       const result = await commands.getTransactions({
-        type: 'ball_purchase',
-        dateStart: '2025-01-01',
-        dateEnd: '2025-01-31',
-        memberNumber: '1001',
+        type: 'ball_purchase' as any,
+        dateStart: '2025-01-01' as any,
+        dateEnd: '2025-01-31' as any,
+        memberNumber: '1001' as any,
         limit: 50,
-      });
+      } as any);
 
       const url = api.get.mock.calls[0][0];
       expect(url).toContain('/get-transactions?');

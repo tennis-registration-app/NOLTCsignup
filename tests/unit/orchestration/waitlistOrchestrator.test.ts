@@ -60,7 +60,7 @@ function createMockDeps(overrides: any = {}): any {
 /**
  * Create a valid group array for testing.
  */
-function createGroup(players = []) {
+function createGroup(players: any[] = []): any[] {
   if (players.length === 0) {
     return [
       { id: 'member-1', name: 'Alice Smith', memberNumber: '1001' },

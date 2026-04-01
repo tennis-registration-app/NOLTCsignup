@@ -79,7 +79,7 @@ describe('alertDisplayReducer', () => {
   describe('unknown action', () => {
     it('returns current state unchanged', () => {
       const state = { showAlert: true, alertMessage: 'test' };
-      const result = alertDisplayReducer(state, { type: 'UNKNOWN' });
+      const result = alertDisplayReducer(state, { type: 'UNKNOWN' } as any);
       expect(result).toBe(state);
     });
   });

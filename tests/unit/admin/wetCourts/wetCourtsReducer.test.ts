@@ -42,7 +42,7 @@ describe('wetCourtsReducer', () => {
         const result = wetCourtsReducer(initialWetCourtsState, {
           type: 'WET_OP_STARTED',
           op,
-        });
+        } as any);
         expect(result.busyOp).toBe(op);
       }
     });
@@ -320,7 +320,7 @@ describe('wetCourtsReducer', () => {
         wetCourtNumbers: [1, 2, 3],
       };
 
-      const result = wetCourtsReducer(state, { type: 'UNKNOWN_ACTION' });
+      const result = wetCourtsReducer(state, { type: 'UNKNOWN_ACTION' } as any);
 
       expect(result).toBe(state); // Same reference
     });

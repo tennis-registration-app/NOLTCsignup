@@ -7,7 +7,7 @@ describe('clearCourtFlowReducer', () => {
   test('returns initial state for unknown action', () => {
     const result = clearCourtFlowReducer(initialClearCourtFlowState, {
       type: 'UNKNOWN',
-    });
+    } as any);
     expect(result).toEqual(initialClearCourtFlowState);
   });
 

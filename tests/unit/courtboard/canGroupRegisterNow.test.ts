@@ -34,7 +34,7 @@ function canGroupRegisterNow({
   if (idx === 0) {
     return available > 0;
   } else if (idx === 1) {
-    const firstCanPlay = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+    const firstCanPlay = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
     return available >= (firstCanPlay ? 2 : 1);
   } else {
     // Position 3+ logic: if any group ahead can play, return false
@@ -87,12 +87,12 @@ describe('canGroupRegisterNow scenarios', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [
+      const upcomingBlocks: any[] = [
         { courtNumber: 1, startTime: in30Minutes, endTime: in120Minutes },
       ];
       const waitlist = [makeGroup(4, true)]; // 4 players = doubles, deferred
 
-      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
       expect(result).toBe(false);
     });
 
@@ -105,12 +105,12 @@ describe('canGroupRegisterNow scenarios', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [
+      const upcomingBlocks: any[] = [
         { courtNumber: 1, startTime: in60Minutes, endTime: in150Minutes },
       ];
       const waitlist = [makeGroup(4, true)]; // deferred doubles
 
-      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
       expect(result).toBe(false);
     });
 
@@ -125,12 +125,12 @@ describe('canGroupRegisterNow scenarios', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [
+      const upcomingBlocks: any[] = [
         { courtNumber: 1, startTime: in5Minutes, endTime: in60Minutes },
       ];
       const waitlist = [makeGroup(4, true)]; // deferred doubles
 
-      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
       // Overtime court (no block) should be counted as full-time
       expect(result).toBe(true);
     });
@@ -207,13 +207,13 @@ describe('canGroupRegisterNow scenarios', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [
+      const upcomingBlocks: any[] = [
         { courtNumber: 1, startTime: in5Minutes, endTime: in60Minutes },
       ];
       const waitlist = [makeGroup(2)];
 
       // Court with <= 5 min is excluded from selectableCourts entirely
-      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
       expect(result).toBe(false);
     });
 
@@ -225,13 +225,13 @@ describe('canGroupRegisterNow scenarios', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [
+      const upcomingBlocks: any[] = [
         { courtNumber: 1, startTime: in25Minutes, endTime: in90Minutes },
       ];
       const waitlist = [makeGroup(2)];
 
       // Court has >= 20 min usable time
-      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
       expect(result).toBe(true);
     });
 
@@ -244,13 +244,13 @@ describe('canGroupRegisterNow scenarios', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false }, // block in 5 min
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true }, // no block
       ];
-      const upcomingBlocks = [
+      const upcomingBlocks: any[] = [
         { courtNumber: 1, startTime: in5Minutes, endTime: in60Minutes },
       ];
       const waitlist = [makeGroup(2)];
 
       // Free court not usable, overtime becomes fallback
-      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 });
+      const result = canGroupRegisterNow({ courts, upcomingBlocks, waitlist, idx: 0 } as any);
       expect(result).toBe(true);
     });
   });

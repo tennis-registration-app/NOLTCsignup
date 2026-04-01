@@ -112,7 +112,7 @@ function loadAvailabilityModule() {
     };
   }
 
-  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }) {
+  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] as any[] }: any) {
     const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
 
     const S = (arr) => new Set(Array.isArray(arr) ? arr : []);
@@ -209,7 +209,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     };
 
     // Block on court 1 starting in 5 minutes (< 20 min threshold)
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:05:00Z',
@@ -246,7 +246,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     };
 
     // Block on court 1 starting in 25 minutes (> 20 min threshold)
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:25:00Z',
@@ -343,7 +343,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     };
 
     // Block on court 3, not court 1
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 3,
         startTime: '2025-01-15T10:05:00Z',
@@ -378,7 +378,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
       ],
     };
 
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:05:00Z', // 5 min
@@ -468,7 +468,7 @@ describe('overtime selectability with upcoming blocks', () => {
       ],
     };
 
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:10:00Z', // 10 min
@@ -577,7 +577,7 @@ describe('court coloring consistency', () => {
       ],
     };
 
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:15:00Z', // 15 min - will show warning

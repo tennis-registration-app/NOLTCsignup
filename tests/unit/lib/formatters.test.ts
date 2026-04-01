@@ -393,6 +393,6 @@ describe('formatPlayerNames', () => {
   });
 
   it('filters out falsy player entries', () => {
-    expect(formatPlayerNames([null, 'Alice', undefined, 'Bob'])).toBe('Alice, Bob');
+    expect(formatPlayerNames([null, 'Alice', undefined, 'Bob'] as any[])).toBe('Alice, Bob');
   });
 });

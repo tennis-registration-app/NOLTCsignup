@@ -47,7 +47,7 @@ function createHarness(depsOverrides = {}) {
   };
 
   /** @type {{ current: ReturnType<typeof useWetCourts> | null }} */
-  const hookRef = { current: null };
+  const hookRef: { current: any } = { current: null };
 
   const Wrapper = forwardRef(function Wrapper(_props, ref) {
     const hook = useWetCourts(deps);

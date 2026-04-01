@@ -46,9 +46,9 @@ const sorted = (obj) => Object.keys(obj).sort();
 // wire.js — toAssignCourtPayload
 // ============================================================
 describe('toAssignCourtPayload', () => {
-  const MEMBER_PARTICIPANT = { kind: 'member', memberId: 'M100', accountId: 'A100' };
+  const MEMBER_PARTICIPANT = { kind: 'member' as const, memberId: 'M100', accountId: 'A100' };
   const GUEST_PARTICIPANT = {
-    kind: 'guest',
+    kind: 'guest' as const,
     guestName: 'Jane Doe',
     accountId: 'A200',
     chargedToAccountId: 'A100',
@@ -165,7 +165,7 @@ describe('toEndSessionPayload', () => {
 // wire.js — toJoinWaitlistPayload
 // ============================================================
 describe('toJoinWaitlistPayload', () => {
-  const MEMBER = { kind: 'member', memberId: 'M200', accountId: 'A200' };
+  const MEMBER = { kind: 'member' as const, memberId: 'M200', accountId: 'A200' };
 
   it('has frozen key set (base — no geo, no deferred)', () => {
     const payload = toJoinWaitlistPayload({

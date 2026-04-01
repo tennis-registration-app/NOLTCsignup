@@ -34,7 +34,7 @@ function setupSameAccountGroup() {
   const onLookupMemberAccount = vi.fn();
   const getLastFourDigits = (n) => (n ? String(n).slice(-4) : '****');
 
-  const currentGroup = [
+  const currentGroup: any[] = [
     { name: 'Alice Smith', memberNumber: '1008', accountId: 'acct-1008', isGuest: false },
     { name: 'Bob Smith', memberNumber: '1008', accountId: 'acct-1008', isGuest: false },
     { name: 'Carol Jones', memberNumber: '1002', accountId: 'acct-1002', isGuest: false },
