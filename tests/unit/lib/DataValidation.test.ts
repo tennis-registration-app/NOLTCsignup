@@ -33,8 +33,8 @@ describe('DataValidation.isValidPlayer', () => {
   });
 
   it('returns falsy for null/undefined player', () => {
-    expect(DataValidation.isValidPlayer(null)).toBeFalsy();
-    expect(DataValidation.isValidPlayer(undefined)).toBeFalsy();
+    expect(DataValidation.isValidPlayer(null as any)).toBeFalsy();
+    expect(DataValidation.isValidPlayer(undefined as any)).toBeFalsy();
   });
 
   it('returns false when id is empty string', () => {
@@ -110,7 +110,7 @@ describe('DataValidation.isValidCourtNumber', () => {
 
   it('returns false for non-integer values', () => {
     expect(DataValidation.isValidCourtNumber(1.5)).toBe(false);
-    expect(DataValidation.isValidCourtNumber('1')).toBe(false);
+    expect(DataValidation.isValidCourtNumber('1' as any)).toBe(false);
   });
 });
 

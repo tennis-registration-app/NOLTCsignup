@@ -42,7 +42,7 @@ describe('normalizeCourt', () => {
   const serverNow = '2024-06-15T12:00:00Z';
 
   it('returns default court for null', () => {
-    const result = normalizeCourt(null, serverNow);
+    const result = normalizeCourt(null as any, serverNow);
     expect(result.id).toBe('');
     expect(result.number).toBe(0);
     expect(result.isAvailable).toBe(true);
@@ -89,7 +89,7 @@ describe('normalizeCourt', () => {
       status: 'occupied',
     }, serverNow);
     expect(result.session).not.toBeNull();
-    expect(result.session.id).toBe('s2');
+    expect(result.session!.id).toBe('s2');
   });
 
   it('handles nested block format', () => {

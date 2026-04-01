@@ -18,8 +18,8 @@ describe('formatDuration', () => {
   });
 
   it('formats null/undefined as "0m"', () => {
-    expect(formatDuration(null)).toBe('0m');
-    expect(formatDuration(undefined)).toBe('0m');
+    expect(formatDuration(null as any)).toBe('0m');
+    expect(formatDuration(undefined as any)).toBe('0m');
   });
 
   it('formats negative minutes as "0m"', () => {
@@ -61,7 +61,7 @@ describe('toLocalDate', () => {
   it('parses an ISO string into a Date', () => {
     const result = toLocalDate('2024-01-15T12:00:00Z');
     expect(result).toBeInstanceOf(Date);
-    expect(result.getTime()).toBe(new Date('2024-01-15T12:00:00Z').getTime());
+    expect(result!.getTime()).toBe(new Date('2024-01-15T12:00:00Z').getTime());
   });
 
   it('returns the same Date object when given a Date', () => {

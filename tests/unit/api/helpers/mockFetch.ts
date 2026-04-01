@@ -10,7 +10,7 @@ const ORIGINAL_FETCH = globalThis.fetch;
  * @param {{ status?: number }} [options]
  * @returns {import('vitest').Mock}
  */
-export function stubFetch(envelope = { ok: true }, options = {}) {
+export function stubFetch(envelope: Record<string, unknown> = { ok: true }, options: Record<string, any> = {}) {
   const mockFn = vi.fn().mockResolvedValue({
     ok: (options.status ?? 200) < 400,
     status: options.status ?? 200,
@@ -39,9 +39,9 @@ export function stubFetchReject(message = 'Network error') {
  * @param {Array<Object>} envelopes - Array of JSON bodies for sequential calls
  * @returns {import('vitest').Mock}
  */
-export function stubFetchSequence(envelopes) {
+export function stubFetchSequence(envelopes: any) {
   const mockFn = vi.fn();
-  envelopes.forEach((envelope) => {
+  envelopes.forEach((envelope: any) => {
     mockFn.mockResolvedValueOnce({
       ok: true,
       status: 200,

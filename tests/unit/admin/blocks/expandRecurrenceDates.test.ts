@@ -15,7 +15,7 @@ describe('expandRecurrenceDates', () => {
   });
 
   it('returns single date when recurrence is undefined', () => {
-    const result = expandRecurrenceDates(baseDate, undefined);
+    const result = expandRecurrenceDates(baseDate, undefined as any);
     expect(result).toHaveLength(1);
   });
 

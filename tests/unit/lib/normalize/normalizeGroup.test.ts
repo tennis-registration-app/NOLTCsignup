@@ -11,7 +11,7 @@ vi.mock('../../../../src/lib/logger.js', () => ({
 
 describe('normalizeGroup', () => {
   it('returns defaults for null input', () => {
-    expect(normalizeGroup(null)).toEqual({
+    expect(normalizeGroup(null as any)).toEqual({
       id: 'unknown',
       players: [],
       type: 'singles',
@@ -19,7 +19,7 @@ describe('normalizeGroup', () => {
   });
 
   it('returns defaults for undefined input', () => {
-    expect(normalizeGroup(undefined)).toEqual({
+    expect(normalizeGroup(undefined as any)).toEqual({
       id: 'unknown',
       players: [],
       type: 'singles',

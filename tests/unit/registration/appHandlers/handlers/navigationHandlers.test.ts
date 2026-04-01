@@ -32,12 +32,16 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
 const mockVerifyAtClub = vi.fn();
 vi.mock('../../../../../src/registration/services', () => ({
   GeolocationService: {
-    verifyAtClub: (...args) => mockVerifyAtClub(...args),
+    verifyAtClub: (...args: any[]) => mockVerifyAtClub(...args),
   },
 }));
 
 // ---- shared test state ----
-let deps, mocks, result, unmount;
+let deps: ReturnType<typeof createNavigationHandlerDeps>["deps"];
+let mocks: ReturnType<typeof createNavigationHandlerDeps>["mocks"];
+// Type assertion: partial mock for testing
+let result: { current: any };
+let unmount: () => void;
 
 beforeEach(async () => {
   vi.clearAllMocks();

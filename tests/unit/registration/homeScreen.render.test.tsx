@@ -35,7 +35,7 @@ vi.mock('../../../src/registration/context/WorkflowProvider', () => ({
 // Transitive deps loaded through screens barrel (HomeRoute imports all screens)
 vi.mock('@lib', () => ({
   getUpcomingBlockWarningFromBlocks: vi.fn(() => null),
-  TennisBusinessLogic: { formatPlayerDisplayName: (n) => n },
+  TennisBusinessLogic: { formatPlayerDisplayName: (n: any) => n },
 }));
 vi.mock('../../../src/lib/storage.js', () => ({
   readDataSafe: vi.fn(() => ({ courts: [] })),
@@ -44,7 +44,7 @@ vi.mock('../../../src/lib/logger.js', () => ({
   logger: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock('../../../src/components/icons/TypedIcon', () => ({
-  TypedIcon: (props) => <span data-testid="typed-icon" />,
+  TypedIcon: (props: any) => <span data-testid="typed-icon" />,
 }));
 vi.mock('../../../src/registration/screens/success/useBallPurchase.js', () => ({
   default: () => ({
@@ -70,7 +70,7 @@ import { HomeRoute } from '../../../src/registration/router/routes/HomeRoute.jsx
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeHomeProps(overrides = {}) {
+function makeHomeProps(overrides: Record<string, unknown> = {}): any {
   return {
     searchInput: '',
     setSearchInput: noop,
@@ -78,7 +78,7 @@ function makeHomeProps(overrides = {}) {
     setShowSuggestions: noop,
     isSearching: false,
     effectiveSearchInput: '',
-    getAutocompleteSuggestions: () => [],
+    getAutocompleteSuggestions: () => [] as any[],
     handleSuggestionClick: noop,
     markUserTyping: noop,
     setCurrentScreen: noop,
@@ -108,7 +108,7 @@ function makeHomeProps(overrides = {}) {
 /**
  * Minimal app shape for HomeRoute (must satisfy both presenters and route overlay).
  */
-function makeRouteApp(overrides = {}) {
+function makeRouteApp(overrides: any = {}): any {
   return {
     search: {
       searchInput: '',
@@ -231,7 +231,7 @@ describe('HomeRoute overlay', () => {
     const app = makeRouteApp({
       mobile: { checkingLocation: true },
     });
-    render(<HomeRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<HomeRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     expect(screen.getByText('Checking your location…')).toBeInTheDocument();
   });
 
@@ -239,7 +239,7 @@ describe('HomeRoute overlay', () => {
     const app = makeRouteApp({
       mobile: { checkingLocation: false },
     });
-    render(<HomeRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<HomeRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     expect(screen.queryByText('Checking your location…')).not.toBeInTheDocument();
     // HomeScreen still renders
     expect(screen.getByText('Tennis Court Registration')).toBeInTheDocument();

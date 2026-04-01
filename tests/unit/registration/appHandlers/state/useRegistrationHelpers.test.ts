@@ -30,7 +30,9 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
-function createHelpers(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createHelpers(overrides: any = {}): any {
   const deps = {
     data: { courts: [], waitlist: [] },
     setIsUserTyping: vi.fn(),
@@ -168,7 +170,7 @@ describe('getCourtsOccupiedForClearing', () => {
 
 // ── guardAddPlayerEarly ────────────────────────────────────────
 describe('guardAddPlayerEarly', () => {
-  let findEngagementByMemberId;
+  let findEngagementByMemberId: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -276,7 +278,7 @@ describe('guardAgainstGroupDuplicate', () => {
 
 // ── validateGroupCompat ────────────────────────────────────────
 describe('validateGroupCompat', () => {
-  let domainValidateGroup;
+  let domainValidateGroup: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -286,33 +288,33 @@ describe('validateGroupCompat', () => {
 
   it('delegates to domain validator when available', () => {
     domainValidateGroup.mockReturnValue({ ok: true, errors: [] });
-    const result = validateGroupCompat([{ name: 'Alice' }], 0);
+    const result = validateGroupCompat([{ name: 'Alice' }] as any[], 0);
     expect(result).toEqual({ ok: true, errors: [] });
   });
 
   it('normalizes domain validator output', () => {
     domainValidateGroup.mockReturnValue({ ok: false, errors: 'single error' });
-    const result = validateGroupCompat([{ name: 'Alice' }], 0);
+    const result = validateGroupCompat([{ name: 'Alice' }] as any[], 0);
     expect(result.ok).toBe(false);
     expect(result.errors).toEqual(['single error']);
   });
 
   it('falls through to local validator when domain throws', () => {
     domainValidateGroup.mockImplementation(() => { throw new Error('bad'); });
-    const result = validateGroupCompat([{ name: 'Alice' }], 0);
+    const result = validateGroupCompat([{ name: 'Alice' }] as any[], 0);
     expect(result.ok).toBe(true);
   });
 
   it('rejects empty group with no guests', () => {
     domainValidateGroup.mockReturnValue(undefined); // force fallthrough
-    const result = validateGroupCompat([], 0);
+    const result = validateGroupCompat([] as any[], 0);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Enter at least one player.');
   });
 
   it('accepts group with 1 named player', () => {
     domainValidateGroup.mockReturnValue(undefined);
-    const result = validateGroupCompat([{ name: 'Alice' }], 0);
+    const result = validateGroupCompat([{ name: 'Alice' }] as any[], 0);
     expect(result.ok).toBe(true);
     expect(result.errors).toEqual([]);
   });
@@ -322,33 +324,33 @@ describe('validateGroupCompat', () => {
     const players = [
       { name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }, { name: 'E' },
     ];
-    const result = validateGroupCompat(players, 0);
+    const result = validateGroupCompat(players as any, 0);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Maximum group size is 4.');
   });
 
   it('accepts guests via separate guests field', () => {
     domainValidateGroup.mockReturnValue(undefined);
-    const result = validateGroupCompat([], 1);
+    const result = validateGroupCompat([] as any[], 1);
     expect(result.ok).toBe(true);
   });
 
   it('accepts guests via isGuest flag in players array', () => {
     domainValidateGroup.mockReturnValue(undefined);
-    const result = validateGroupCompat([{ name: 'Guest', isGuest: true }], 0);
+    const result = validateGroupCompat([{ name: 'Guest', isGuest: true }] as any[], 0);
     expect(result.ok).toBe(true);
   });
 
   it('rejects negative guests', () => {
     domainValidateGroup.mockReturnValue(undefined);
-    const result = validateGroupCompat([{ name: 'Alice' }], -1);
+    const result = validateGroupCompat([{ name: 'Alice' }] as any[], -1);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Guests must be 0 or more.');
   });
 
   it('handles null players array', () => {
     domainValidateGroup.mockReturnValue(undefined);
-    const result = validateGroupCompat(null, 0);
+    const result = validateGroupCompat(null as any, 0);
     expect(result.ok).toBe(false);
   });
 
@@ -356,7 +358,7 @@ describe('validateGroupCompat', () => {
     domainValidateGroup.mockReturnValue(undefined);
     // 2 named + 1 guest row + guests=1 → effectiveGuests = max(1,1) = 1, total = 3
     const result = validateGroupCompat(
-      [{ name: 'Alice' }, { name: 'Bob' }, { name: 'Guest', isGuest: true }],
+      [{ name: 'Alice' }, { name: 'Bob' }, { name: 'Guest', isGuest: true }] as any[],
       1
     );
     expect(result.ok).toBe(true);

@@ -40,7 +40,7 @@ const mockWaitlistActions = {
  *
  * Returns what WaitlistSection used directly from its props.
  */
-function legacyWaitlistExtraction(waitingGroups, moveInWaitlist, removeFromWaitlist) {
+function legacyWaitlistExtraction(waitingGroups: any, moveInWaitlist: any, removeFromWaitlist: any) {
   return {
     waitingGroups,
     moveInWaitlist,
@@ -51,7 +51,7 @@ function legacyWaitlistExtraction(waitingGroups, moveInWaitlist, removeFromWaitl
 /**
  * Presenter-based extraction (now accepts domain objects)
  */
-function presenterWaitlistExtraction(waitlistModel, waitlistActions) {
+function presenterWaitlistExtraction(waitlistModel: any, waitlistActions: any) {
   const model = buildWaitlistModel(waitlistModel);
   const actions = buildWaitlistActions(waitlistActions);
   return {
@@ -100,9 +100,9 @@ describe('WaitlistSection presenter equivalence', () => {
 
   it('type map for model matches expected shape', () => {
     const model = buildWaitlistModel(mockWaitlistModel);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(model).sort()) {
-      typeMap[key] = typeof model[key];
+      typeMap[key] = typeof (model as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {
@@ -113,9 +113,9 @@ describe('WaitlistSection presenter equivalence', () => {
 
   it('type map for actions matches expected shape', () => {
     const actions = buildWaitlistActions(mockWaitlistActions);
-    const typeMap = {};
+    const typeMap: Record<string, string> = {};
     for (const key of Object.keys(actions).sort()) {
-      typeMap[key] = typeof actions[key];
+      typeMap[key] = typeof (actions as Record<string, any>)[key];
     }
     expect(typeMap).toMatchInlineSnapshot(`
       {

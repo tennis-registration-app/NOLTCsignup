@@ -75,12 +75,12 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: true, number: 1 }],
       waitlist: [],
     };
-    expect(preflightAssignCourt(cmd, board)).toEqual({ ok: true });
+    expect(preflightAssignCourt(cmd, board as any)).toEqual({ ok: true });
   });
 
   it('errors when court not found', () => {
     const board = { courts: [{ id: 'other', isAvailable: true }], waitlist: [] };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Court not found');
   });
@@ -90,9 +90,9 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: false, isOccupied: true, number: 1 }],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('occupied');
+    expect(result.errors![0]).toContain('occupied');
   });
 
   it('errors when court is blocked', () => {
@@ -100,9 +100,9 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: false, isBlocked: true, number: 1 }],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('blocked');
+    expect(result.errors![0]).toContain('blocked');
   });
 
   it('errors when court is not available (generic)', () => {
@@ -110,9 +110,9 @@ describe('preflightAssignCourt', () => {
       courts: [{ id: 'court-1', isAvailable: false, number: 1 }],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('not available');
+    expect(result.errors![0]).toContain('not available');
   });
 
   it('errors when player already engaged on court', () => {
@@ -127,9 +127,9 @@ describe('preflightAssignCourt', () => {
       ],
       waitlist: [],
     };
-    const result = preflightAssignCourt(cmd, board);
+    const result = preflightAssignCourt(cmd, board as any);
     expect(result.ok).toBe(false);
-    expect(result.errors[0]).toContain('already playing');
+    expect(result.errors![0]).toContain('already playing');
   });
 
   it('handles null board', () => {
@@ -146,8 +146,8 @@ describe('toAssignCourtPayload (command)', () => {
     expect(payload.court_id).toBe('court-1');
     expect(payload.group_type).toBe('singles');
     expect(payload.duration_minutes).toBe(60);
-    expect(payload.players[0].member_id).toBe('m1');
-    expect(payload.players[0].display_name).toBe('Alice');
-    expect(payload.players[0].is_guest).toBe(false);
+    expect((payload.players as any[])[0].member_id).toBe('m1');
+    expect((payload.players as any[])[0].display_name).toBe('Alice');
+    expect((payload.players as any[])[0].is_guest).toBe(false);
   });
 });

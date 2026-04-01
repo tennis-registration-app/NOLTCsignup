@@ -42,7 +42,7 @@ describe('wetCourtsReducer', () => {
         const result = wetCourtsReducer(initialWetCourtsState, {
           type: 'WET_OP_STARTED',
           op,
-        });
+        } as any);
         expect(result.busyOp).toBe(op);
       }
     });
@@ -57,7 +57,7 @@ describe('wetCourtsReducer', () => {
         error: 'some error',
       };
 
-      const result = wetCourtsReducer(state, { type: 'WET_OP_SUCCEEDED' });
+      const result = wetCourtsReducer(state as any, { type: 'WET_OP_SUCCEEDED' });
 
       expect(result.isBusy).toBe(false);
       expect(result.busyOp).toBe(null);
@@ -73,7 +73,7 @@ describe('wetCourtsReducer', () => {
         busyOp: 'clearOne',
       };
 
-      const result = wetCourtsReducer(state, { type: 'WET_OP_SUCCEEDED' });
+      const result = wetCourtsReducer(state as any, { type: 'WET_OP_SUCCEEDED' });
 
       expect(result.isActive).toBe(true);
       expect(result.wetCourtNumbers).toEqual([1, 2, 3]);
@@ -88,7 +88,7 @@ describe('wetCourtsReducer', () => {
         busyOp: 'deactivate',
       };
 
-      const result = wetCourtsReducer(state, {
+      const result = wetCourtsReducer(state as any, {
         type: 'WET_OP_FAILED',
         error: 'API timeout',
       });
@@ -107,7 +107,7 @@ describe('wetCourtsReducer', () => {
         busyOp: 'activate',
       };
 
-      const result = wetCourtsReducer(state, {
+      const result = wetCourtsReducer(state as any, {
         type: 'WET_OP_FAILED',
         error: 'Network error',
       });
@@ -185,7 +185,7 @@ describe('wetCourtsReducer', () => {
         error: 'some error',
       };
 
-      const result = wetCourtsReducer(state, { type: 'WET_DEACTIVATED' });
+      const result = wetCourtsReducer(state as any, { type: 'WET_DEACTIVATED' });
 
       expect(result.isActive).toBe(false);
       expect(result.wetCourtNumbers).toEqual([]);
@@ -201,7 +201,7 @@ describe('wetCourtsReducer', () => {
         error: 'should persist',
       };
 
-      const result = wetCourtsReducer(state, { type: 'WET_DEACTIVATED' });
+      const result = wetCourtsReducer(state as any, { type: 'WET_DEACTIVATED' });
 
       expect(result.isBusy).toBe(true);
       expect(result.busyOp).toBe('deactivate');
@@ -320,7 +320,7 @@ describe('wetCourtsReducer', () => {
         wetCourtNumbers: [1, 2, 3],
       };
 
-      const result = wetCourtsReducer(state, { type: 'UNKNOWN_ACTION' });
+      const result = wetCourtsReducer(state, { type: 'UNKNOWN_ACTION' } as any);
 
       expect(result).toBe(state); // Same reference
     });

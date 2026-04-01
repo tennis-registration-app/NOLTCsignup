@@ -70,13 +70,13 @@ describe('TennisCourtDataStore', () => {
     const store = new TennisCourtDataStore();
     await store.set('tennisClubData', { courts: [] });
     expect(store.cache.get('tennisClubData')).toEqual({ courts: [] });
-    expect(JSON.parse(localStorage.getItem('tennisClubData'))).toEqual({ courts: [] });
+    expect(JSON.parse(localStorage.getItem('tennisClubData')!)).toEqual({ courts: [] });
   });
 
   it('set writes when immediate option', async () => {
     const store = new TennisCourtDataStore();
     await store.set('custom', { x: 1 }, { immediate: true });
-    expect(JSON.parse(localStorage.getItem('custom'))).toEqual({ x: 1 });
+    expect(JSON.parse(localStorage.getItem('custom')!)).toEqual({ x: 1 });
   });
 
   it('set dispatches update event', async () => {

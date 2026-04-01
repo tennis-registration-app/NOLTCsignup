@@ -11,32 +11,32 @@ describe('attachLegacyDataStore', () => {
     vi.resetModules();
   });
 
-  it('attaches window.Tennis.DataStore namespace', async () => {
+  it('attaches (window.Tennis as any).DataStore namespace', async () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
     expect(window.Tennis).toBeDefined();
-    expect(window.Tennis.DataStore).toBeDefined();
+    expect((window.Tennis as any).DataStore).toBeDefined();
   });
 
   it('DataStore has get method', async () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
-    expect(typeof window.Tennis.DataStore.get).toBe('function');
+    expect(typeof (window.Tennis as any).DataStore.get).toBe('function');
   });
 
   it('DataStore has set method', async () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
-    expect(typeof window.Tennis.DataStore.set).toBe('function');
+    expect(typeof (window.Tennis as any).DataStore.set).toBe('function');
   });
 
   it('DataStore has getMetrics method', async () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
-    expect(typeof window.Tennis.DataStore.getMetrics).toBe('function');
+    expect(typeof (window.Tennis as any).DataStore.getMetrics).toBe('function');
 
     // Verify getMetrics returns expected shape
-    const metrics = window.Tennis.DataStore.getMetrics();
+    const metrics = (window.Tennis as any).DataStore.getMetrics();
     expect(metrics).toHaveProperty('cacheHits');
     expect(metrics).toHaveProperty('cacheMisses');
     expect(metrics).toHaveProperty('totalOperations');
@@ -45,7 +45,7 @@ describe('attachLegacyDataStore', () => {
   it('DataStore has refresh method (ESM equivalent of clearCache)', async () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
-    expect(typeof window.Tennis.DataStore.refresh).toBe('function');
+    expect(typeof (window.Tennis as any).DataStore.refresh).toBe('function');
   });
 
   it('DataStore.get returns cached value', async () => {
@@ -54,16 +54,16 @@ describe('attachLegacyDataStore', () => {
 
     await import('../../../src/platform/attachLegacyDataStore.js');
 
-    const result = await window.Tennis.DataStore.get('testKey');
+    const result = await (window.Tennis as any).DataStore.get('testKey');
     expect(result).toEqual({ foo: 'bar' });
   });
 
   it('DataStore.set stores value', async () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
-    await window.Tennis.DataStore.set('testKey', { hello: 'world' }, { immediate: true });
+    await (window.Tennis as any).DataStore.set('testKey', { hello: 'world' }, { immediate: true });
 
-    const stored = JSON.parse(localStorage.getItem('testKey'));
+    const stored = JSON.parse(localStorage.getItem('testKey')!);
     expect(stored).toEqual({ hello: 'world' });
   });
 
@@ -77,7 +77,7 @@ describe('attachLegacyDataStore', () => {
     await import('../../../src/platform/attachLegacyDataStore.js');
 
     // The existing DataStore should still be there
-    expect(window.Tennis.DataStore).toBe(existingDataStore);
+    expect((window.Tennis as any).DataStore).toBe(existingDataStore);
   });
 
   it('returns same singleton instance via getDataStore export', async () => {
@@ -87,6 +87,6 @@ describe('attachLegacyDataStore', () => {
     const instance2 = getDataStore();
 
     expect(instance1).toBe(instance2);
-    expect(instance1).toBe(window.Tennis.DataStore);
+    expect(instance1).toBe((window.Tennis as any).DataStore);
   });
 });

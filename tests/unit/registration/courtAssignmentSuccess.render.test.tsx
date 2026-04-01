@@ -37,6 +37,8 @@ vi.mock('../../../src/components/icons/TypedIcon', () => ({
 
 import CourtAssignmentSuccess from '../../../src/registration/screens/success/CourtAssignmentSuccess.jsx';
 import { getUpcomingBlockWarningFromBlocks } from '@lib';
+// Type assertion: partial mock for testing
+const getUpcomingBlockWarningFromBlocksMock = getUpcomingBlockWarningFromBlocks as unknown as ReturnType<typeof vi.fn>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -82,7 +84,7 @@ function makeProps(overrides = {}) {
   };
 }
 
-function renderCourtAssignment(props) {
+function renderCourtAssignment(props: any) {
   const { mainContent, footerContent } = CourtAssignmentSuccess(props);
   return render(
     <>
@@ -158,7 +160,7 @@ describe('CourtAssignmentSuccess main content', () => {
   });
 
   it('shows block warning when upcoming block is within threshold', () => {
-    getUpcomingBlockWarningFromBlocks.mockReturnValueOnce({
+    getUpcomingBlockWarningFromBlocksMock.mockReturnValueOnce({
       minutesUntilBlock: 30,
       reason: 'Lessons',
       startTime: '2025-06-15T15:00:00Z',

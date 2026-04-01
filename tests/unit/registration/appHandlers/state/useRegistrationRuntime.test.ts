@@ -31,7 +31,7 @@ const mockNormalizeSettings = vi.fn().mockReturnValue({
 });
 
 vi.mock('../../../../../src/lib/normalize/index.js', () => ({
-  normalizeSettings: (...args) => mockNormalizeSettings(...args),
+  normalizeSettings: (...args: any[]) => mockNormalizeSettings(...args),
 }));
 
 // ---- test helpers ----
@@ -54,7 +54,11 @@ function createDeps(overrides = {}) {
 }
 
 // ---- shared test state ----
-let deps, result, unmount;
+// Type assertion: partial mock objects for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let deps: any;
+let result: { current: any };
+let unmount: () => void;
 
 beforeEach(async () => {
   vi.useFakeTimers();
@@ -197,8 +201,8 @@ describe('CSS style injection', () => {
       s.textContent.includes('.animate-pulse')
     );
     expect(injected).toBeTruthy();
-    expect(injected.textContent).toContain('will-change: opacity');
-    expect(injected.textContent).toContain('.court-transition');
+    expect(injected!.textContent).toContain('will-change: opacity');
+    expect(injected!.textContent).toContain('.court-transition');
   });
 
   it('removes the style element on unmount', () => {

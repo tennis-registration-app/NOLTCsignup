@@ -14,12 +14,12 @@ function createTestStack() {
     anonKey: 'test-anon-key',
   });
   // directory=null is safe for commands that don't do member resolution
-  const commands = new TennisCommands(adapter, null);
+  const commands = new TennisCommands(adapter, null as any);
   return { adapter, commands };
 }
 
 describe('TennisCommands', () => {
-  let commands;
+  let commands: TennisCommands;
 
   beforeEach(() => {
     const stack = createTestStack();

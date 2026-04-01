@@ -21,7 +21,9 @@ vi.mock('../../../src/shared/utils/toast.js', () => ({
   toast: vi.fn(),
 }));
 
-function makeSuggestion(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeSuggestion(overrides: any = {}): any {
   return {
     memberNumber: '1001',
     member: {
@@ -39,7 +41,9 @@ function makeSuggestion(overrides = {}) {
   };
 }
 
-function createSuggestionClickDeps(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createSuggestionClickDeps(overrides: any = {}): any {
   return {
     currentGroup: [],
     setSearchInput: vi.fn(),
@@ -66,7 +70,9 @@ function createSuggestionClickDeps(overrides = {}) {
   };
 }
 
-function createAddPlayerDeps(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createAddPlayerDeps(overrides: any = {}): any {
   return {
     currentGroup: [{ id: 'existing-1', name: 'Bob', memberNumber: '1002' }],
     setAddPlayerSearch: vi.fn(),
@@ -98,7 +104,7 @@ describe('handleSuggestionClickOrchestrated', () => {
   describe('guard: invalid suggestion', () => {
     it('shows alert for null suggestion', async () => {
       const deps = createSuggestionClickDeps();
-      await handleSuggestionClickOrchestrated(null, deps);
+      await handleSuggestionClickOrchestrated(null as any, deps);
       expect(deps.showAlertMessage).toHaveBeenCalledWith(
         'Invalid member selection. Please try again.'
       );
@@ -107,7 +113,7 @@ describe('handleSuggestionClickOrchestrated', () => {
     it('shows alert for suggestion without memberNumber', async () => {
       const deps = createSuggestionClickDeps();
       await handleSuggestionClickOrchestrated(
-        { member: { id: '1' }, memberNumber: '' },
+        { member: { id: '1' } as any, memberNumber: '' } as any,
         deps
       );
       expect(deps.showAlertMessage).toHaveBeenCalled();
@@ -116,7 +122,7 @@ describe('handleSuggestionClickOrchestrated', () => {
     it('shows alert for suggestion without member object', async () => {
       const deps = createSuggestionClickDeps();
       await handleSuggestionClickOrchestrated(
-        { memberNumber: '1001', member: null },
+        { memberNumber: '1001', member: null } as any,
         deps
       );
       expect(deps.showAlertMessage).toHaveBeenCalled();
@@ -266,7 +272,7 @@ describe('handleAddPlayerSuggestionClickOrchestrated', () => {
   describe('guard: invalid suggestion', () => {
     it('shows alert for null suggestion', async () => {
       const deps = createAddPlayerDeps();
-      await handleAddPlayerSuggestionClickOrchestrated(null, deps);
+      await handleAddPlayerSuggestionClickOrchestrated(null as any, deps);
       expect(deps.showAlertMessage).toHaveBeenCalledWith(
         'Invalid player selection. Please try again.'
       );
@@ -275,7 +281,7 @@ describe('handleAddPlayerSuggestionClickOrchestrated', () => {
     it('shows alert for suggestion without member.id', async () => {
       const deps = createAddPlayerDeps();
       await handleAddPlayerSuggestionClickOrchestrated(
-        { memberNumber: '1001', member: { id: '', name: 'Test' } },
+        { memberNumber: '1001', member: { id: '', name: 'Test' } as any } as any,
         deps
       );
       expect(deps.showAlertMessage).toHaveBeenCalled();

@@ -8,13 +8,13 @@ import { act } from 'react-dom/test-utils';
 import ErrorBoundary from '../../../src/shared/components/ErrorBoundary.jsx';
 
 // Helper component that throws on demand
-function ThrowingChild({ shouldThrow }) {
+function ThrowingChild({ shouldThrow }: any) {
   if (shouldThrow) throw new Error('Test error');
   return <div>Child rendered</div>;
 }
 
 // Helper to render and get container
-function renderToContainer(element) {
+function renderToContainer(element: any) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
@@ -25,7 +25,7 @@ function renderToContainer(element) {
 }
 
 // Cleanup helper
-function cleanup(container, root) {
+function cleanup(container: any, root: any) {
   act(() => {
     root.unmount();
   });
@@ -33,7 +33,7 @@ function cleanup(container, root) {
 }
 
 describe('ErrorBoundary', () => {
-  let consoleErrorSpy;
+  let consoleErrorSpy: any;
 
   beforeEach(() => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -102,7 +102,7 @@ describe('ErrorBoundary', () => {
     expect(consoleErrorSpy).toHaveBeenCalled();
     // Find the call that contains [ErrorBoundary] (may not be first due to React warnings)
     const errorBoundaryCall = consoleErrorSpy.mock.calls.find(
-      (call) => call[0] && typeof call[0] === 'string' && call[0].includes('[ErrorBoundary]')
+      (call: any) => call[0] && typeof call[0] === 'string' && call[0].includes('[ErrorBoundary]')
     );
     expect(errorBoundaryCall).toBeTruthy();
     cleanup(container, root);
@@ -110,7 +110,7 @@ describe('ErrorBoundary', () => {
 
   it('dispatches clientError event with expected fields', () => {
     let received = null;
-    const handler = (e) => {
+    const handler = (e: any) => {
       received = e.detail;
     };
     window.addEventListener('clientError', handler, { once: true });
@@ -122,10 +122,10 @@ describe('ErrorBoundary', () => {
     );
 
     expect(received).not.toBeNull();
-    expect(received.message).toBe('Test error');
-    expect(received.timestamp).toBeTruthy();
-    expect(received.route).toBeDefined();
-    expect(received.context).toBe('TestContext');
+    expect(received!.message).toBe('Test error');
+    expect(received!.timestamp).toBeTruthy();
+    expect(received!.route).toBeDefined();
+    expect(received!.context).toBe('TestContext');
 
     cleanup(container, root);
   });
@@ -149,7 +149,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('custom fallback render works', () => {
-    const customFallback = (state) => <div>Custom: {state.error?.message}</div>;
+    const customFallback = (state: any) => <div>Custom: {state.error?.message}</div>;
 
     const { container, root } = renderToContainer(
       <ErrorBoundary fallback={customFallback}>
@@ -185,7 +185,7 @@ describe('ErrorBoundary', () => {
     expect(copyButton).toBeTruthy();
 
     await act(async () => {
-      copyButton.click();
+      copyButton!.click();
       // Allow async clipboard rejection to resolve
       await new Promise((r) => setTimeout(r, 10));
     });
@@ -193,7 +193,7 @@ describe('ErrorBoundary', () => {
     // Check for textarea fallback
     const textarea = container.querySelector('textarea');
     expect(textarea).toBeTruthy();
-    expect(textarea.value).toContain('Test error');
+    expect(textarea!.value).toContain('Test error');
 
     cleanup(container, root);
 

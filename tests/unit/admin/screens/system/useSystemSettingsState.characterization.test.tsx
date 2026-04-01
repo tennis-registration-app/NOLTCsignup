@@ -31,11 +31,11 @@ vi.mock('../../../../../src/lib/logger.js', () => ({
 import useSystemSettingsState from '../../../../../src/admin/screens/system/useSystemSettingsState.js';
 
 // ── Helper: render hook and capture its return value ──
-function renderHook(hookFn) {
+function renderHook(hookFn: any) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const resultRef = { current: null };
-  let rootRef;
+  let rootRef: ReturnType<typeof createRoot>;
 
   function TestComponent() {
     const result = hookFn();
@@ -110,7 +110,7 @@ const EXPECTED_KEYS = [
 ].sort();
 
 describe('useSystemSettingsState', () => {
-  let backend;
+  let backend: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -120,7 +120,7 @@ describe('useSystemSettingsState', () => {
   // ── Shape ──
   describe('return shape', () => {
     it('returns exactly the expected keys', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -135,7 +135,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('functions are callable', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -174,7 +174,7 @@ describe('useSystemSettingsState', () => {
   // ── Load ──
   describe('loadSettings', () => {
     it('calls backend.admin.getSettings on mount', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -187,7 +187,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('populates pricing state from normalized settings', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -202,7 +202,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('populates auto-clear state', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -218,7 +218,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('populates operating hours', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -232,7 +232,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('populates overrides', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -246,7 +246,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('sets loading=false after load', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -262,7 +262,7 @@ describe('useSystemSettingsState', () => {
   // ── Save pricing ──
   describe('savePricing', () => {
     it('sends correct snake_case payload', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -306,7 +306,7 @@ describe('useSystemSettingsState', () => {
         }),
       });
 
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -342,7 +342,7 @@ describe('useSystemSettingsState', () => {
         }),
       });
 
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -362,7 +362,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('sends correct payload when valid', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -390,7 +390,7 @@ describe('useSystemSettingsState', () => {
   // ── Validate override form ──
   describe('validateOverrideForm', () => {
     it('rejects empty date and reason', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -410,7 +410,7 @@ describe('useSystemSettingsState', () => {
     });
 
     it('rejects opens >= closes when not closed', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -439,7 +439,7 @@ describe('useSystemSettingsState', () => {
   // ── handlePricingChange ──
   describe('handlePricingChange', () => {
     it('updates ballPrice input and sets pricingChanged', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });
@@ -460,7 +460,7 @@ describe('useSystemSettingsState', () => {
   // ── handleHoursChange ──
   describe('handleHoursChange', () => {
     it('updates a specific day and sets hoursChanged', async () => {
-      let hookRef;
+      let hookRef: any;
       await act(async () => {
         hookRef = renderHook(() => useSystemSettingsState({ backend, onSettingsChanged: vi.fn() }));
       });

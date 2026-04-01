@@ -50,12 +50,12 @@ describe('preflightCreateBlock', () => {
 
   it('returns ok when court found and times valid', () => {
     const board = { courts: [{ id: 'court-1' }] };
-    expect(preflightCreateBlock(cmd, board)).toEqual({ ok: true });
+    expect(preflightCreateBlock(cmd, board as any)).toEqual({ ok: true });
   });
 
   it('errors when court not found', () => {
     const board = { courts: [{ id: 'other' }] };
-    const result = preflightCreateBlock(cmd, board);
+    const result = preflightCreateBlock(cmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Court not found');
   });
@@ -63,7 +63,7 @@ describe('preflightCreateBlock', () => {
   it('errors for invalid start time', () => {
     const badCmd = { ...cmd, startsAt: 'not-a-date' };
     const board = { courts: [{ id: 'court-1' }] };
-    const result = preflightCreateBlock(badCmd, board);
+    const result = preflightCreateBlock(badCmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Invalid start time');
   });
@@ -71,7 +71,7 @@ describe('preflightCreateBlock', () => {
   it('errors for invalid end time', () => {
     const badCmd = { ...cmd, endsAt: 'not-a-date' };
     const board = { courts: [{ id: 'court-1' }] };
-    const result = preflightCreateBlock(badCmd, board);
+    const result = preflightCreateBlock(badCmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('Invalid end time');
   });
@@ -79,7 +79,7 @@ describe('preflightCreateBlock', () => {
   it('errors when end time equals start time', () => {
     const badCmd = { ...cmd, endsAt: cmd.startsAt };
     const board = { courts: [{ id: 'court-1' }] };
-    const result = preflightCreateBlock(badCmd, board);
+    const result = preflightCreateBlock(badCmd, board as any);
     expect(result.ok).toBe(false);
     expect(result.errors).toContain('End time must be after start time');
   });
@@ -87,7 +87,7 @@ describe('preflightCreateBlock', () => {
   it('errors when end time before start time', () => {
     const badCmd = { ...cmd, startsAt: '2025-01-15T12:00:00Z', endsAt: '2025-01-15T10:00:00Z' };
     const board = { courts: [{ id: 'court-1' }] };
-    const result = preflightCreateBlock(badCmd, board);
+    const result = preflightCreateBlock(badCmd, board as any);
     expect(result.ok).toBe(false);
   });
 

@@ -6,7 +6,7 @@ import {
 describe('memberSearchReducer', () => {
   // Initial state
   test('returns initial state for unknown action', () => {
-    const result = memberSearchReducer(initialMemberSearchState, { type: 'UNKNOWN' });
+    const result = memberSearchReducer(initialMemberSearchState, { type: 'UNKNOWN' } as any);
     expect(result).toEqual(initialMemberSearchState);
   });
 

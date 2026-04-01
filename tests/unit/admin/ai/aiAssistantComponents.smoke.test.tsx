@@ -7,8 +7,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock shared icons
 vi.mock('../../../../src/shared/ui/icons/Icons.jsx', () => {
-  const stub = (name) => {
-    const Icon = ({ size }) => (
+  const stub = (name: any) => {
+    const Icon = ({ size }: any) => (
       <span data-testid={`icon-${name}`}>{name}({size})</span>
     );
     Icon.displayName = name;
@@ -61,7 +61,7 @@ describe('AIAssistantMessages', () => {
       />
     );
     const wrapper = screen.getByText('test').closest('.max-w-\\[80\\%\\]');
-    expect(wrapper.className).toContain('bg-blue-600');
+    expect(wrapper!.className).toContain('bg-blue-600');
   });
 
   it('applies warning styling for warning messages', () => {
@@ -74,7 +74,7 @@ describe('AIAssistantMessages', () => {
       />
     );
     const wrapper = screen.getByText('careful').closest('.max-w-\\[80\\%\\]');
-    expect(wrapper.className).toContain('bg-orange-800');
+    expect(wrapper!.className).toContain('bg-orange-800');
   });
 
   it('applies error styling for error messages', () => {
@@ -87,7 +87,7 @@ describe('AIAssistantMessages', () => {
       />
     );
     const wrapper = screen.getByText('oops').closest('.max-w-\\[80\\%\\]');
-    expect(wrapper.className).toContain('bg-red-800');
+    expect(wrapper!.className).toContain('bg-red-800');
   });
 
   it('renders children between spinner and scroll ref', () => {

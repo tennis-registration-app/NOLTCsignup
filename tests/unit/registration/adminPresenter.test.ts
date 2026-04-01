@@ -87,7 +87,7 @@ function makeMockHandlers() {
 describe('adminPresenter', () => {
   describe('buildAdminModel', () => {
     it('returns all 17 expected keys', () => {
-      const model = buildAdminModel(makeMockApp(), makeMockHandlers());
+      const model = buildAdminModel(makeMockApp() as any, makeMockHandlers() as any);
       expect(Object.keys(model)).toHaveLength(17);
     });
 
@@ -96,13 +96,13 @@ describe('adminPresenter', () => {
       const courtData = { courts: [{ number: 1, session: null }], waitlist: [] };
       handlers.getCourtData.mockReturnValue(courtData);
 
-      const model = buildAdminModel(makeMockApp(), handlers);
+      const model = buildAdminModel(makeMockApp() as any, handlers as any);
       expect(handlers.getCourtData).toHaveBeenCalledOnce();
       expect(model.data).toBe(courtData);
     });
 
     it('maps state fields correctly', () => {
-      const model = buildAdminModel(makeMockApp(), makeMockHandlers());
+      const model = buildAdminModel(makeMockApp() as any, makeMockHandlers() as any);
       expect(model.currentTime).toBe(1700000000);
       expect(model.courtToMove).toBe(3);
       expect(model.ballPriceInput).toBe('5.00');
@@ -110,7 +110,7 @@ describe('adminPresenter', () => {
 
     it('maps alert, block, waitlist, and price fields correctly', () => {
       const app = makeMockApp();
-      const model = buildAdminModel(app, makeMockHandlers());
+      const model = buildAdminModel(app as any, makeMockHandlers() as any);
       expect(model.showAlert).toBe(true);
       expect(model.alertMessage).toBe('Block created');
       expect(model.showBlockModal).toBe(false);
@@ -133,13 +133,13 @@ describe('adminPresenter', () => {
 
   describe('buildAdminActions', () => {
     it('returns all 22 expected keys', () => {
-      const actions = buildAdminActions(makeMockApp(), makeMockHandlers());
+      const actions = buildAdminActions(makeMockApp() as any, makeMockHandlers() as any);
       expect(Object.keys(actions)).toHaveLength(22);
     });
 
     it('renames handler callbacks to on* convention', () => {
       const handlers = makeMockHandlers();
-      const actions = buildAdminActions(makeMockApp(), handlers);
+      const actions = buildAdminActions(makeMockApp() as any, handlers as any);
       expect(actions.onClearAllCourts).toBe(handlers.handleClearAllCourts);
       expect(actions.onClearCourt).toBe(handlers.handleAdminClearCourt);
       expect(actions.onMoveCourt).toBe(handlers.handleMoveCourt);
@@ -151,7 +151,7 @@ describe('adminPresenter', () => {
 
     it('passes admin slice actions by reference', () => {
       const app = makeMockApp();
-      const actions = buildAdminActions(app, makeMockHandlers());
+      const actions = buildAdminActions(app as any, makeMockHandlers() as any);
       expect(actions.setShowBlockModal).toBe(app.admin.blockAdmin.setShowBlockModal);
       expect(actions.onCancelBlock).toBe(app.admin.blockAdmin.onCancelBlock);
       expect(actions.onBlockCreate).toBe(app.admin.blockAdmin.onBlockCreate);

@@ -55,7 +55,7 @@ import { GroupRoute } from '../../../src/registration/router/routes/GroupRoute.j
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeRouteApp(overrides = {}) {
+function makeRouteApp(overrides: any = {}): any {
   return {
     // Minimum shape for presenters (stubbed, but destructuring still runs)
     state: {},
@@ -70,7 +70,7 @@ function makeRouteApp(overrides = {}) {
   };
 }
 
-function makeRouteHandlers(overrides = {}) {
+function makeRouteHandlers(overrides: any = {}): any {
   return {
     handleStreakAcknowledge: vi.fn(),
     ...overrides,
@@ -85,7 +85,7 @@ describe('GroupRoute streak modal', () => {
   it('does not render streak modal when showStreakModal = false', () => {
     mockWorkflow = { ...defaultWorkflow };
     const app = makeRouteApp();
-    render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<GroupRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     expect(screen.getByTestId('group-screen-stub')).toBeInTheDocument();
     expect(screen.queryByText('Clear Court Reminder')).not.toBeInTheDocument();
   });
@@ -101,7 +101,7 @@ describe('GroupRoute streak modal', () => {
       },
     };
     const app = makeRouteApp();
-    render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<GroupRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     expect(screen.getByText('Clear Court Reminder')).toBeInTheDocument();
     expect(
       screen.getByText(/Your last 5 sessions were ended without using/)
@@ -121,7 +121,7 @@ describe('GroupRoute streak modal', () => {
       },
     };
     const app = makeRouteApp();
-    render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<GroupRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     const button = screen.getByText('Return to Select Your Court');
     expect(button).toBeDisabled();
   });
@@ -137,7 +137,7 @@ describe('GroupRoute streak modal', () => {
       },
     };
     const app = makeRouteApp();
-    render(<GroupRoute app={app} handlers={makeRouteHandlers()} />);
+    render(<GroupRoute app={app as any} handlers={makeRouteHandlers() as any} />);
     const button = screen.getByText('Return to Select Your Court');
     expect(button).not.toBeDisabled();
   });

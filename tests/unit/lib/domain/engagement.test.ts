@@ -12,36 +12,36 @@ import {
 } from '../../../../src/lib/domain/engagement.js';
 
 // ── Fixtures ────────────────────────────────────────────────
-function makeBoard({ courts = [], waitlist = [] } = {}) {
+function makeBoard({ courts = [], waitlist = [] }: { courts?: any[], waitlist?: any[] } = {}): any {
   return { courts, waitlist };
 }
 
-function makeCourt(number, players = [], groupId = 'g1') {
+function makeCourt(number: any, players: any[] = [], groupId = 'g1') {
   return {
     number,
     session: { group: { id: groupId, players } },
   };
 }
 
-function makeWaitlistEntry(position, players = [], groupId = 'wg1') {
+function makeWaitlistEntry(position: any, players: any[] = [], groupId = 'wg1') {
   return {
     position,
     group: { id: groupId, players },
   };
 }
 
-function makePlayer(memberId, displayName = 'Player') {
+function makePlayer(memberId: any, displayName = 'Player') {
   return { memberId, displayName };
 }
 
 // ── findEngagementByMemberId ────────────────────────────────
 describe('findEngagementByMemberId', () => {
   it('returns null for null board', () => {
-    expect(findEngagementByMemberId(null, 'm1')).toBeNull();
+    expect(findEngagementByMemberId(null as any, 'm1')).toBeNull();
   });
 
   it('returns null for null memberId', () => {
-    expect(findEngagementByMemberId(makeBoard(), null)).toBeNull();
+    expect(findEngagementByMemberId(makeBoard() as any, null as any)).toBeNull();
   });
 
   it('returns null for empty string memberId', () => {
@@ -88,19 +88,19 @@ describe('findEngagementByMemberId', () => {
       waitlist: [makeWaitlistEntry(1, [makePlayer('m1', 'WaitPlayer')])],
     });
     const result = findEngagementByMemberId(board, 'm1');
-    expect(result.kind).toBe('court');
+    expect(result!.kind).toBe('court');
   });
 
   it('handles missing courts array', () => {
     const board = { waitlist: [makeWaitlistEntry(1, [makePlayer('m1')])] };
     const result = findEngagementByMemberId(board, 'm1');
-    expect(result.kind).toBe('waitlist');
+    expect(result!.kind).toBe('waitlist');
   });
 
   it('handles missing waitlist array', () => {
     const board = { courts: [makeCourt(1, [makePlayer('m1')])] };
     const result = findEngagementByMemberId(board, 'm1');
-    expect(result.kind).toBe('court');
+    expect(result!.kind).toBe('court');
   });
 
   it('handles court with no session', () => {
@@ -117,21 +117,21 @@ describe('findEngagementByMemberId', () => {
 // ── buildEngagementIndex ────────────────────────────────────
 describe('buildEngagementIndex', () => {
   it('returns empty map for null board', () => {
-    const index = buildEngagementIndex(null);
+    const index = buildEngagementIndex(null as any);
     expect(index).toBeInstanceOf(Map);
     expect(index.size).toBe(0);
   });
 
   it('returns empty map for board with no players', () => {
     const board = makeBoard({ courts: [{ number: 1 }], waitlist: [] });
-    expect(buildEngagementIndex(board).size).toBe(0);
+    expect(buildEngagementIndex(board as any).size).toBe(0);
   });
 
   it('indexes court players', () => {
     const board = makeBoard({
       courts: [makeCourt(2, [makePlayer('m1', 'Alice'), makePlayer('m2', 'Bob')], 'g1')],
     });
-    const index = buildEngagementIndex(board);
+    const index = buildEngagementIndex(board as any);
     expect(index.size).toBe(2);
     expect(index.get('m1')).toEqual({
       kind: 'court',
@@ -145,7 +145,7 @@ describe('buildEngagementIndex', () => {
     const board = makeBoard({
       waitlist: [makeWaitlistEntry(3, [makePlayer('m3', 'Carol')], 'wg2')],
     });
-    const index = buildEngagementIndex(board);
+    const index = buildEngagementIndex(board as any);
     expect(index.get('m3')).toEqual({
       kind: 'waitlist',
       waitlistPosition: 3,
@@ -158,12 +158,12 @@ describe('buildEngagementIndex', () => {
     const board = makeBoard({
       courts: [makeCourt(1, [{ displayName: 'Guest' }])],
     });
-    expect(buildEngagementIndex(board).size).toBe(0);
+    expect(buildEngagementIndex(board as any).size).toBe(0);
   });
 
   it('handles missing courts/waitlist arrays', () => {
     const board = {};
-    expect(buildEngagementIndex(board).size).toBe(0);
+    expect(buildEngagementIndex(board as any).size).toBe(0);
   });
 
   it('indexes across multiple courts and waitlist entries', () => {
@@ -177,18 +177,18 @@ describe('buildEngagementIndex', () => {
         makeWaitlistEntry(2, [makePlayer('m4')]),
       ],
     });
-    expect(buildEngagementIndex(board).size).toBe(4);
+    expect(buildEngagementIndex(board as any).size).toBe(4);
   });
 });
 
 // ── getEngagementMessage ────────────────────────────────────
 describe('getEngagementMessage', () => {
   it('returns empty string for null engagement', () => {
-    expect(getEngagementMessage(null)).toBe('');
+    expect(getEngagementMessage(null as any)).toBe('');
   });
 
   it('returns empty string for undefined engagement', () => {
-    expect(getEngagementMessage(undefined)).toBe('');
+    expect(getEngagementMessage(undefined as any)).toBe('');
   });
 
   it('returns court message with display name', () => {
@@ -212,7 +212,7 @@ describe('getEngagementMessage', () => {
   });
 
   it('returns generic message for unknown kind', () => {
-    const msg = getEngagementMessage({ kind: 'other' });
+    const msg = getEngagementMessage({ kind: 'other' } as any);
     expect(msg).toBe('Player is already engaged');
   });
 });

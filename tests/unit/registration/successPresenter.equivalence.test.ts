@@ -29,7 +29,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
     Waitlist: {
       simulateWaitlistEstimates: vi.fn().mockReturnValue([15, 30, 45]),
@@ -120,7 +120,7 @@ import {
  * NOTE: Computed values (isCourtAssignment, assignedCourt, position, estimatedWait)
  * and async wrappers are handled separately since they're route-level concerns.
  */
-function legacySuccessScreenProps(app, workflow, handlers, computed) {
+function legacySuccessScreenProps(app: any, workflow: any, handlers: any, computed: any) {
   // Destructure from app (shell slices) and workflow (per-flow state)
   const { state, mobile, admin, TENNIS_CONFIG } = app;
   const { courtAssignment, streak, groupGuest } = workflow;
@@ -174,7 +174,7 @@ function legacySuccessScreenProps(app, workflow, handlers, computed) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what SuccessRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     replacedGroup: workflow.replacedGroup,
     canChangeCourt: workflow.canChangeCourt,
@@ -190,7 +190,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based prop mapping
  */
-function presenterSuccessScreenProps(app, workflow, handlers, computed) {
+function presenterSuccessScreenProps(app: any, workflow: any, handlers: any, computed: any) {
   const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildSuccessModel(app, w, computed),
@@ -201,7 +201,7 @@ function presenterSuccessScreenProps(app, workflow, handlers, computed) {
 /**
  * Minimal component to capture both hooks' results.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
   const workflow = useWorkflowContext();
@@ -219,11 +219,11 @@ function HookCapture({ onResult }) {
  * Helper to render hooks and capture results.
  */
 function captureHookResults() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 
@@ -258,7 +258,7 @@ function captureHookResults() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -266,10 +266,10 @@ function captureHookResults() {
 }
 
 describe('SuccessScreen presenter equivalence', () => {
-  let app;
-  let handlers;
-  let legacy;
-  let presenter;
+  let app: any;
+  let handlers: any;
+  let legacy: any;
+  let presenter: any;
 
   // Mock computed values that would be calculated in the route
   const mockComputed = {
@@ -281,9 +281,9 @@ describe('SuccessScreen presenter equivalence', () => {
 
   beforeAll(async () => {
     const result = await captureHookResults();
-    app = result.app;
-    handlers = result.handlers;
-    const workflow = result.workflow;
+    app = (result as any).app;
+    handlers = (result as any).handlers;
+    const workflow = (result as any).workflow;
     legacy = legacySuccessScreenProps(app, workflow, handlers, mockComputed);
     presenter = presenterSuccessScreenProps(app, workflow, handlers, mockComputed);
   });

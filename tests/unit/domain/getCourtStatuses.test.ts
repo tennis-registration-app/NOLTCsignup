@@ -30,36 +30,36 @@ function loadAvailabilityModule() {
   // Since we can't easily load the IIFE in tests, we'll inline the key functions
   // This mirrors the exact logic from domain/availability.js
 
-  function coerceDate(d) {
+  function coerceDate(d: any) {
     if (d instanceof Date) return d;
     const parsed = new Date(d);
     return isNaN(parsed.getTime()) ? new Date() : parsed;
   }
 
-  function isOvertime(session, now) {
+  function isOvertime(session: any, now: any) {
     if (!session?.scheduledEndAt) return false;
     return coerceDate(session.scheduledEndAt) <= now;
   }
 
-  function normalizeBlocks(arr) {
+  function normalizeBlocks(arr: any) {
     return Array.isArray(arr) ? arr : [];
   }
 
-  function isActiveBlock(b, now) {
+  function isActiveBlock(b: any, now: any) {
     if (!b) return false;
     const st = new Date(b.startTime ?? b.start);
     const et = new Date(b.endTime ?? b.end);
     return (
       st instanceof Date &&
-      !isNaN(st) &&
+      !isNaN(st as any) &&
       et instanceof Date &&
-      !isNaN(et) &&
+      !isNaN(et as any) &&
       st <= now &&
       now < et
     );
   }
 
-  function getFreeCourtsInfo({ data, now, blocks, wetSet }) {
+  function getFreeCourtsInfo({ data, now, blocks, wetSet }: any) {
     const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT || 12;
     const all = Array.from({ length: total }, (_, i) => i + 1);
 
@@ -67,15 +67,15 @@ function loadAvailabilityModule() {
     blocks = normalizeBlocks(blocks);
     wetSet = wetSet instanceof Set ? wetSet : new Set();
 
-    const free = [];
-    const overtime = [];
-    const wet = Array.from(wetSet).sort((a, b) => a - b);
+    const free: number[] = [];
+    const overtime: number[] = [];
+    const wet = (Array.from(wetSet) as number[]).sort((a: number, b: number) => a - b);
 
     for (let i = 0; i < (data?.courts?.length || 0); i++) {
       const n = i + 1;
 
       const isWet = wetSet.has(n);
-      const isBlocked = blocks.some((b) => {
+      const isBlocked = blocks.some((b: any) => {
         const courtNum = Number(b.courtNumber || b.court);
         if (!courtNum || courtNum !== n) return false;
         const start = coerceDate(b.startTime || b.start);
@@ -101,21 +101,21 @@ function loadAvailabilityModule() {
     const freeSet = new Set(free);
     const occupied = all
       .filter((n) => !freeSet.has(n) && !overtime.includes(n) && !wet.includes(n))
-      .sort((a, b) => a - b);
+      .sort((a: number, b: number) => a - b);
 
     return {
-      free: free.sort((a, b) => a - b),
+      free: free.sort((a: number, b: number) => a - b),
       occupied,
       wet,
-      overtime: overtime.sort((a, b) => a - b),
+      overtime: overtime.sort((a: number, b: number) => a - b),
       meta: { total, overtimeCount: overtime.length },
     };
   }
 
-  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }) {
+  function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] as any[] }: any) {
     const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
 
-    const S = (arr) => new Set(Array.isArray(arr) ? arr : []);
+    const S = (arr: any) => new Set(Array.isArray(arr) ? arr : []);
     const freeSet = S(info.free);
     const occSet = S(info.occupied);
     const overtimeSet = S(info.overtime);
@@ -123,9 +123,9 @@ function loadAvailabilityModule() {
 
     const activeBlocked = new Set(
       (blocks || [])
-        .filter((b) => isActiveBlock(b, now))
-        .filter((b) => !b.isWetCourt)
-        .map((b) => b.courtNumber)
+        .filter((b: any) => isActiveBlock(b, now))
+        .filter((b: any) => !b.isWetCourt)
+        .map((b: any) => b.courtNumber)
     );
 
     const hasTrueFree = freeSet.size > 0;
@@ -137,12 +137,12 @@ function loadAvailabilityModule() {
       [...freeSet].some((courtNum) => {
         if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
         const nextBlock = upcomingBlocks.find(
-          (b) =>
+          (b: any) =>
             Number(b.courtNumber || b.court) === courtNum &&
             new Date(b.startTime || b.start) > now
         );
         if (!nextBlock) return true;
-        return new Date(nextBlock.startTime || nextBlock.start) - now >= MIN_USEFUL_MS;
+        return new Date(nextBlock.startTime || nextBlock.start).getTime() - now.getTime() >= MIN_USEFUL_MS;
       });
 
     const total = (data?.courts || []).length || info.meta?.total || 0;
@@ -209,7 +209,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     };
 
     // Block on court 1 starting in 5 minutes (< 20 min threshold)
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:05:00Z',
@@ -246,7 +246,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     };
 
     // Block on court 1 starting in 25 minutes (> 20 min threshold)
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:25:00Z',
@@ -282,7 +282,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
       ],
     };
 
-    const upcomingBlocks = []; // No blocks
+    const upcomingBlocks: Record<string, unknown>[] = []; // No blocks
 
     const statuses = getCourtStatuses({
       data,
@@ -312,7 +312,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
       ],
     };
 
-    const upcomingBlocks = [];
+    const upcomingBlocks: Record<string, unknown>[] = [];
 
     const statuses = getCourtStatuses({
       data,
@@ -343,7 +343,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
     };
 
     // Block on court 3, not court 1
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 3,
         startTime: '2025-01-15T10:05:00Z',
@@ -378,7 +378,7 @@ describe('getCourtStatuses with upcomingBlocks (20-min threshold)', () => {
       ],
     };
 
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:05:00Z', // 5 min
@@ -468,7 +468,7 @@ describe('overtime selectability with upcoming blocks', () => {
       ],
     };
 
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:10:00Z', // 10 min
@@ -577,7 +577,7 @@ describe('court coloring consistency', () => {
       ],
     };
 
-    const upcomingBlocks = [
+    const upcomingBlocks: any[] = [
       {
         courtNumber: 1,
         startTime: '2025-01-15T10:15:00Z', // 15 min - will show warning

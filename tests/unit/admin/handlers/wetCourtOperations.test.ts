@@ -11,7 +11,9 @@ import {
   clearWetCourtOp,
 } from '../../../../src/admin/handlers/wetCourtOperations.js';
 
-function createCtx(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createCtx(overrides: any = {}): any {
   return {
     backend: {
       admin: {

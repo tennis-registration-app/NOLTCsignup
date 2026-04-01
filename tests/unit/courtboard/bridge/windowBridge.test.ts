@@ -18,7 +18,7 @@ describe('window-bridge', () => {
   // ============================================================
 
   describe('writeCourtboardState', () => {
-    let savedCourtboardState;
+    let savedCourtboardState: any;
 
     beforeEach(() => {
       savedCourtboardState = window.CourtboardState;
@@ -59,7 +59,7 @@ describe('window-bridge', () => {
   // ============================================================
 
   describe('getLegacyAvailabilityDomain', () => {
-    let savedTennis;
+    let savedTennis: any;
 
     beforeEach(() => {
       savedTennis = window.Tennis;
@@ -84,7 +84,7 @@ describe('window-bridge', () => {
     it('prefers lowercase availability over capitalized Availability', () => {
       const lower = { id: 'lower' };
       const upper = { id: 'upper' };
-      window.Tennis = { Domain: { availability: lower, Availability: upper } };
+      window.Tennis = { Domain: { availability: lower as any, Availability: upper as any } } as any;
       expect(getLegacyAvailabilityDomain()).toBe(lower);
     });
 

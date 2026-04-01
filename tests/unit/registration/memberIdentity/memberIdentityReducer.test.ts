@@ -6,7 +6,7 @@ import {
 describe('memberIdentityReducer', () => {
   // Initial state
   test('returns initial state for unknown action', () => {
-    const result = memberIdentityReducer(initialMemberIdentityState, { type: 'UNKNOWN' });
+    const result = memberIdentityReducer(initialMemberIdentityState, { type: 'UNKNOWN' } as any);
     expect(result).toEqual(initialMemberIdentityState);
   });
 

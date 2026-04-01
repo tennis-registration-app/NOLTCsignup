@@ -16,8 +16,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 // Icons barrel — used by TabNavigation, CourtCard, WaitlistSection
 vi.mock('../../../src/shared/ui/icons/Icons.jsx', () => {
-  const stub = (name) => {
-    const Icon = ({ size, className }) => (
+  const stub = (name: any) => {
+    const Icon = ({ size, className }: any) => (
       <span data-testid={`icon-${name}`} className={className}>
         {name}
       </span>
@@ -44,11 +44,11 @@ vi.mock('../../../src/shared/ui/icons/Icons.jsx', () => {
 
 // courtStatusUtils — used by CourtCard (resolve from project root)
 vi.mock('../../../src/admin/courts/courtStatusUtils.js', () => ({
-  getStatusColor: (status) =>
+  getStatusColor: (status: any) =>
     status === 'available' ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50',
   formatTimeRemaining: () => '45 min left',
-  getPlayerNames: (players) =>
-    (players || []).map((p) => (typeof p === 'string' ? p : p.name)).join(', '),
+  getPlayerNames: (players: any) =>
+    (players || []).map((p: any) => (typeof p === 'string' ? p : p.name)).join(', '),
 }));
 
 // formatters — used transitively by courtStatusUtils
@@ -287,7 +287,7 @@ describe('WaitlistSection', () => {
     );
     // The Trash2 icon button is the remove action
     const removeBtn = screen.getByTestId('icon-Trash2').closest('button');
-    fireEvent.click(removeBtn);
+    fireEvent.click(removeBtn!);
     expect(removeFromWaitlist).toHaveBeenCalledWith(0);
   });
 });

@@ -75,7 +75,7 @@ describe('AppError', () => {
     }
     expect(caught).not.toBeNull();
     expect(caught).toBeInstanceOf(AppError);
-    expect(caught.category).toBe('CONFLICT');
+    expect((caught as any).category).toBe('CONFLICT');
   });
 
   it('has a stack trace when available', () => {

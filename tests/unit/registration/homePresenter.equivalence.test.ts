@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import {
  * Legacy HomeRoute prop mapping — VERBATIM from HomeRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyHomeScreenProps(app, workflow, handlers) {
+function legacyHomeScreenProps(app: any, workflow: any, handlers: any) {
   // Destructure from app (verbatim from HomeRoute)
   const { search, setters, derived, alert, CONSTANTS } = app;
   // Workflow fields now sourced from WorkflowContext (not app.setters/app.players)
@@ -184,7 +184,7 @@ function legacyHomeScreenProps(app, workflow, handlers) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what HomeRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
@@ -196,7 +196,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based prop mapping
  */
-function presenterHomeScreenProps(app, workflow, handlers) {
+function presenterHomeScreenProps(app: any, workflow: any, handlers: any) {
   const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildHomeModel(app),
@@ -207,7 +207,7 @@ function presenterHomeScreenProps(app, workflow, handlers) {
 /**
  * Minimal component to capture both hooks' results.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
   const workflow = useWorkflowContext();
@@ -225,11 +225,11 @@ function HookCapture({ onResult }) {
  * Helper to render hooks and capture results.
  */
 function captureHookResults() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 
@@ -261,7 +261,7 @@ function captureHookResults() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -269,16 +269,16 @@ function captureHookResults() {
 }
 
 describe('HomeScreen presenter equivalence', () => {
-  let app;
-  let handlers;
-  let legacy;
-  let presenter;
+  let app: any;
+  let handlers: any;
+  let legacy: any;
+  let presenter: any;
 
   beforeAll(async () => {
     const result = await captureHookResults();
-    app = result.app;
-    handlers = result.handlers;
-    const workflow = result.workflow;
+    app = (result as any).app;
+    handlers = (result as any).handlers;
+    const workflow = (result as any).workflow;
     legacy = legacyHomeScreenProps(app, workflow, handlers);
     presenter = presenterHomeScreenProps(app, workflow, handlers);
   });

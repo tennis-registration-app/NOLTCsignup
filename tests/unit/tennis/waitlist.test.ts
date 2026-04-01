@@ -5,12 +5,12 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 
 // Set Tennis Config BEFORE import so the module picks it up
 window.Tennis = window.Tennis || {};
-window.Tennis.Config = {
+(window.Tennis as any).Config = {
   Courts: { TOTAL_COUNT: 12 },
   Timing: { AVG_GAME: 75 },
 };
 
-// Import the module - it will attach to window.Tennis.Domain
+// Import the module - it will attach to (window.Tennis as any).Domain
 import {
   validateGroup,
   estimateWaitMinutes,
@@ -18,19 +18,19 @@ import {
 } from '../../../src/tennis/domain/waitlist.js';
 
 describe('tennis/domain/waitlist', () => {
-  let W;
+  let W: any;
 
   beforeAll(() => {
     W = window.Tennis?.Domain?.waitlist;
   });
 
-  it('attaches to window.Tennis.Domain.waitlist', () => {
+  it('attaches to (window.Tennis as any).Domain.waitlist', () => {
     expect(W).toBeDefined();
   });
 
-  it('attaches uppercase alias window.Tennis.Domain.Waitlist', () => {
-    expect(window.Tennis.Domain.Waitlist).toBeDefined();
-    expect(window.Tennis.Domain.Waitlist).toBe(window.Tennis.Domain.waitlist);
+  it('attaches uppercase alias (window.Tennis as any).Domain.Waitlist', () => {
+    expect((window.Tennis as any).Domain.Waitlist).toBeDefined();
+    expect((window.Tennis as any).Domain.Waitlist).toBe((window.Tennis as any).Domain.waitlist);
   });
 
   describe('estimateWaitForPositions', () => {
@@ -183,7 +183,7 @@ describe('validateGroup — branch coverage', () => {
 describe('estimateWaitMinutes — branch coverage', () => {
   it('throws for non-number position', () => {
     expect(() =>
-      estimateWaitMinutes({ position: 'a', courts: [], now: new Date(), avgGame: 60 })
+      estimateWaitMinutes({ position: 'a', courts: [], now: new Date(), avgGame: 60 } as any)
     ).toThrow('positive number');
   });
 
@@ -195,13 +195,13 @@ describe('estimateWaitMinutes — branch coverage', () => {
 
   it('throws for non-array courts', () => {
     expect(() =>
-      estimateWaitMinutes({ position: 1, courts: 'bad', now: new Date(), avgGame: 60 })
+      estimateWaitMinutes({ position: 1, courts: 'bad', now: new Date(), avgGame: 60 } as any)
     ).toThrow('array');
   });
 
   it('throws for invalid current time', () => {
     expect(() =>
-      estimateWaitMinutes({ position: 1, courts: [], now: 'bad', avgGame: 60 })
+      estimateWaitMinutes({ position: 1, courts: [], now: 'bad', avgGame: 60 } as any)
     ).toThrow('time');
   });
 
@@ -388,7 +388,7 @@ describe('simulateWaitlistEstimates', () => {
       session: { scheduledEndAt: new Date('2025-01-15T14:00:00Z').toISOString() },
     }));
     // Court 1 is free (no session) but has a block
-    courts[0] = null;
+    courts[0] = null as any;
     // All other courts occupied far in future, so only court 1 matters early
     const result = simulateWaitlistEstimates({
       courts,
@@ -416,7 +416,7 @@ describe('simulateWaitlistEstimates', () => {
     const courts = Array(12).fill(null).map(() => ({
       session: { scheduledEndAt: new Date('2025-01-15T14:00:00Z').toISOString() },
     }));
-    courts[0] = null; // Court 1 free
+    courts[0] = null as any; // Court 1 free
 
     // Block all other courts far in the future so they're not available
     const blocks = [];
@@ -449,9 +449,9 @@ describe('simulateWaitlistEstimates', () => {
 
   it('handles null courts/waitlist/blocks gracefully', () => {
     const result = simulateWaitlistEstimates({
-      courts: null,
-      waitlist: null,
-      blocks: null,
+      courts: null as any,
+      waitlist: null as any,
+      blocks: null as any,
       now,
     });
     expect(result).toEqual([]);
@@ -501,7 +501,7 @@ describe('simulateWaitlistEstimates', () => {
     const courts = Array(12).fill(null).map(() => ({
       session: { scheduledEndAt: new Date('2025-01-15T14:00:00Z').toISOString() },
     }));
-    courts[0] = null; // Court 1 free
+    courts[0] = null as any; // Court 1 free
 
     const result = simulateWaitlistEstimates({
       courts,

@@ -7,8 +7,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock shared icons — CalendarToolbar imports ChevronLeft/ChevronRight via ../components barrel
 vi.mock('../../../../src/shared/ui/icons/Icons.jsx', () => {
-  const stub = (name) => {
-    const Icon = ({ size }) => (
+  const stub = (name: any) => {
+    const Icon = ({ size }: any) => (
       <span data-testid={`icon-${name}`}>{name}({size})</span>
     );
     Icon.displayName = name;

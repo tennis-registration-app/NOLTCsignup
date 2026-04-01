@@ -12,7 +12,7 @@ import { computeRegistrationCourtSelection } from '../../../src/shared/courts/ov
  */
 
 // Simulate kiosk CTA logic (from useRegistrationDerived)
-function computeKioskCta({ courts, upcomingBlocks, waitlist }) {
+function computeKioskCta({ courts, upcomingBlocks, waitlist }: any) {
   const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
   const firstEntry = waitlist?.[0] || null;
@@ -32,7 +32,7 @@ function computeKioskCta({ courts, upcomingBlocks, waitlist }) {
 }
 
 // Simulate courtboard "You're Up" logic (from WaitingList.jsx canGroupRegisterNow)
-function computeCourtboardYoureUp({ courts, upcomingBlocks, waitlist, idx = 0 }) {
+function computeCourtboardYoureUp({ courts, upcomingBlocks, waitlist, idx = 0 }: any) {
   const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
   const group = waitlist?.[idx];
@@ -49,7 +49,7 @@ function computeCourtboardYoureUp({ courts, upcomingBlocks, waitlist, idx = 0 })
 }
 
 // Helper to create a waitlist group
-const makeGroup = (playerCount, deferred = false) => ({
+const makeGroup = (playerCount: any, deferred = false) => ({
   id: `group-${Math.random()}`,
   players: Array.from({ length: playerCount }, (_, i) => ({ id: `p${i}`, name: `Player ${i}` })),
   deferred,
@@ -61,7 +61,7 @@ describe('kiosk and courtboard agreement', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
       const waitlist = [makeGroup(2)];
 
       const kioskResult = computeKioskCta({ courts, upcomingBlocks, waitlist });
@@ -75,7 +75,7 @@ describe('kiosk and courtboard agreement', () => {
       const courts = [
         { number: 1, isAvailable: false, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
       const waitlist = [makeGroup(2)];
 
       const kioskResult = computeKioskCta({ courts, upcomingBlocks, waitlist });
@@ -132,7 +132,7 @@ describe('kiosk and courtboard agreement', () => {
       const courts = [
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
       const waitlist = [makeGroup(4)]; // doubles
 
       const kioskResult = computeKioskCta({ courts, upcomingBlocks, waitlist });
@@ -146,7 +146,7 @@ describe('kiosk and courtboard agreement', () => {
       const courts = [
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
       const waitlist = [makeGroup(2)]; // singles
 
       const kioskResult = computeKioskCta({ courts, upcomingBlocks, waitlist });
@@ -179,7 +179,7 @@ describe('kiosk and courtboard agreement', () => {
       // Overtime court should be in selectableCourts
       const overtimeCourt = selection.selectableCourts.find((sc) => sc.number === 2);
       expect(overtimeCourt).toBeDefined();
-      expect(overtimeCourt.reason).toBe('overtime_fallback');
+      expect(overtimeCourt!.reason).toBe('overtime_fallback');
     });
 
     it('overtime NOT in selectableCourts when usable free court exists', () => {
@@ -187,7 +187,7 @@ describe('kiosk and courtboard agreement', () => {
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -204,7 +204,7 @@ describe('kiosk and courtboard agreement', () => {
         { number: 1, isAvailable: false, isBlocked: false, isOvertime: false },
         { number: 2, isAvailable: false, isBlocked: false, isOvertime: true, isTournament: true },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
 
       const selection = computeRegistrationCourtSelection(courts, upcomingBlocks);
 
@@ -281,7 +281,7 @@ describe('kiosk and courtboard agreement', () => {
       const courts = [
         { number: 1, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
       const waitlist = [makeGroup(4, true)]; // deferred doubles
 
       const kioskResult = computeKioskCta({ courts, upcomingBlocks, waitlist });
@@ -296,7 +296,7 @@ describe('kiosk and courtboard agreement', () => {
       const courts = [
         { number: 8, isAvailable: true, isBlocked: false, isOvertime: false },
       ];
-      const upcomingBlocks = [];
+      const upcomingBlocks: Record<string, unknown>[] = [];
       const waitlist = [makeGroup(4, true)]; // deferred doubles
 
       const kioskResult = computeKioskCta({ courts, upcomingBlocks, waitlist });

@@ -37,15 +37,19 @@ vi.mock('../../../../../src/platform/prefsStorage.js', () => ({
 
 const mockToast = vi.fn();
 vi.mock('../../../../../src/shared/utils/toast.js', () => ({
-  toast: (...args) => mockToast(...args),
+  toast: (...args: any[]) => mockToast(...args),
 }));
 
 vi.mock('../../../../../src/shared/constants/toastMessages.js', () => ({
-  ALREADY_IN_GROUP: (name) => `${name} is already in your group`,
+  ALREADY_IN_GROUP: (name: any) => `${name} is already in your group`,
 }));
 
 // ---- shared test state ----
-let deps, mocks, result, unmount;
+let deps: ReturnType<typeof createGuestHandlerDeps>["deps"];
+let mocks: ReturnType<typeof createGuestHandlerDeps>["mocks"];
+// Type assertion: partial mock for testing
+let result: { current: any };
+let unmount: () => void;
 
 beforeEach(async () => {
   vi.clearAllMocks();

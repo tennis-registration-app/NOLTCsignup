@@ -12,12 +12,12 @@ describe('attachLegacyBlocks', () => {
     vi.resetModules();
   });
 
-  it('attaches window.Tennis.BlocksService namespace', async () => {
+  it('attaches (window.Tennis as any).BlocksService namespace', async () => {
     await import('../../../src/platform/attachLegacyBlocks.js');
 
     expect(window.Tennis).toBeDefined();
-    expect(window.Tennis.BlocksService).toBeDefined();
-    expect(typeof window.Tennis.BlocksService.saveBlocks).toBe('function');
+    expect((window.Tennis as any).BlocksService).toBeDefined();
+    expect(typeof (window.Tennis as any).BlocksService.saveBlocks).toBe('function');
   });
 
   it('saveBlocks persists blocks to localStorage', async () => {
@@ -31,7 +31,7 @@ describe('attachLegacyBlocks', () => {
     const result = await saveBlocks(blocks);
 
     expect(result).toEqual({ success: true });
-    const stored = JSON.parse(localStorage.getItem(STORAGE.BLOCKS));
+    const stored = JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string);
     expect(stored).toEqual(blocks);
   });
 
@@ -87,14 +87,14 @@ describe('attachLegacyBlocks', () => {
   it('saveBlocks normalizes non-array input to empty array', async () => {
     const { saveBlocks } = await import('../../../src/platform/attachLegacyBlocks.js');
 
-    await saveBlocks(null);
-    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS))).toEqual([]);
+    await saveBlocks(null as any);
+    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string)).toEqual([]);
 
-    await saveBlocks(undefined);
-    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS))).toEqual([]);
+    await saveBlocks(undefined as any);
+    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string)).toEqual([]);
 
-    await saveBlocks('invalid');
-    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS))).toEqual([]);
+    await saveBlocks('invalid' as any);
+    expect(JSON.parse(localStorage.getItem(STORAGE.BLOCKS) as string)).toEqual([]);
   });
 
   it('is idempotent - does not overwrite existing saveBlocks', async () => {
@@ -109,6 +109,6 @@ describe('attachLegacyBlocks', () => {
     await import('../../../src/platform/attachLegacyBlocks.js');
 
     // The existing function should still be there
-    expect(window.Tennis.BlocksService.saveBlocks).toBe(existingSaveBlocks);
+    expect((window.Tennis as any).BlocksService.saveBlocks).toBe(existingSaveBlocks);
   });
 });

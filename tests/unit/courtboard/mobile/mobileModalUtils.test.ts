@@ -52,8 +52,8 @@ describe('getTitle', () => {
   });
 
   it('returns empty string for null/undefined type', () => {
-    expect(getTitle(null)).toBe('');
-    expect(getTitle(undefined)).toBe('');
+    expect(getTitle(null as any)).toBe('');
+    expect(getTitle(undefined as any)).toBe('');
   });
 });
 
@@ -91,8 +91,8 @@ describe('getModalClass', () => {
   });
 
   it('returns empty string for null/undefined', () => {
-    expect(getModalClass(null)).toBe('');
-    expect(getModalClass(undefined)).toBe('');
+    expect(getModalClass(null as any)).toBe('');
+    expect(getModalClass(undefined as any)).toBe('');
   });
 });
 

@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import {
  * Legacy GroupRoute prop mapping — VERBATIM from GroupRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyGroupScreenProps(app, workflow, handlers) {
+function legacyGroupScreenProps(app: any, workflow: any, handlers: any) {
   // Destructure from app (via grouped session slice)
   const {
     state,
@@ -233,7 +233,7 @@ function legacyGroupScreenProps(app, workflow, handlers) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what GroupRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     groupGuest: workflow.groupGuest,
     memberIdentity: workflow.memberIdentity,
@@ -246,7 +246,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based prop mapping
  */
-function presenterGroupScreenProps(app, workflow, handlers) {
+function presenterGroupScreenProps(app: any, workflow: any, handlers: any) {
   const w = buildWorkflowForPresenter(workflow);
   return {
     ...buildGroupModel(app, w),
@@ -257,7 +257,7 @@ function presenterGroupScreenProps(app, workflow, handlers) {
 /**
  * Minimal component to capture both hooks' results.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
   const workflow = useWorkflowContext();
@@ -275,11 +275,11 @@ function HookCapture({ onResult }) {
  * Helper to render hooks and capture results.
  */
 function captureHookResults() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 
@@ -311,7 +311,7 @@ function captureHookResults() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -319,16 +319,16 @@ function captureHookResults() {
 }
 
 describe('GroupScreen presenter equivalence', () => {
-  let app;
-  let handlers;
-  let legacy;
-  let presenter;
+  let app: any;
+  let handlers: any;
+  let legacy: any;
+  let presenter: any;
 
   beforeAll(async () => {
     const result = await captureHookResults();
-    app = result.app;
-    handlers = result.handlers;
-    const workflow = result.workflow;
+    app = (result as any).app;
+    handlers = (result as any).handlers;
+    const workflow = (result as any).workflow;
     legacy = legacyGroupScreenProps(app, workflow, handlers);
     presenter = presenterGroupScreenProps(app, workflow, handlers);
   });

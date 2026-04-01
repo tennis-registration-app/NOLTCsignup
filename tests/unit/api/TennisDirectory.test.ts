@@ -30,13 +30,13 @@ function minimalMemberResponse(overrides = {}) {
 /**
  * Helper to extract query param from URL.
  */
-function getParam(url, name) {
+function getParam(url: any, name: any) {
   const match = url.match(new RegExp(`[?&]${name}=([^&]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
 
 describe('TennisDirectory', () => {
-  let directory;
+  let directory: TennisDirectory;
 
   beforeEach(() => {
     const stack = createTestStack();
@@ -97,8 +97,8 @@ describe('TennisDirectory', () => {
       expect(member.accountId).toBe('acc-456');
       expect(member.memberNumber).toBe('M999');
       // snake_case aliases should NOT exist
-      expect(member.account_id).toBeUndefined();
-      expect(member.member_number).toBeUndefined();
+      expect((member as any).account_id).toBeUndefined();
+      expect((member as any).member_number).toBeUndefined();
     });
 
     it('returns empty array when response.ok is false', async () => {
@@ -234,7 +234,7 @@ describe('TennisDirectory', () => {
 
       // Returns single member, not array
       expect(result).not.toBeInstanceOf(Array);
-      expect(result.id).toBe('m1');
+      expect(result!.id).toBe('m1');
     });
 
     it('returns partial match when exact not found', async () => {
@@ -248,7 +248,7 @@ describe('TennisDirectory', () => {
 
       const result = await directory.findMemberByName('1234', 'John Doe');
 
-      expect(result.id).toBe('m1');
+      expect(result!.id).toBe('m1');
     });
 
     it('returns null when no match found and multiple members', async () => {
@@ -276,8 +276,8 @@ describe('TennisDirectory', () => {
 
       const result = await directory.findMemberByName('1234', 'Nobody');
 
-      expect(result.id).toBe('m2');
-      expect(result.isPrimary).toBe(true);
+      expect(result!.id).toBe('m2');
+      expect(result!.isPrimary).toBe(true);
     });
 
     it('returns only member when single member on account', async () => {
@@ -288,7 +288,7 @@ describe('TennisDirectory', () => {
 
       const result = await directory.findMemberByName('1234', 'Nobody');
 
-      expect(result.id).toBe('m1');
+      expect(result!.id).toBe('m1');
     });
 
     it('returns null when no members on account', async () => {
@@ -417,14 +417,14 @@ describe('TennisDirectory', () => {
   describe('normalization edge cases', () => {
     it('handles missing uncleared_streak (defaults to 0)', async () => {
       const memberWithoutStreak = { ...minimalMemberResponse() };
-      delete memberWithoutStreak.uncleared_streak;
+      delete (memberWithoutStreak as any).uncleared_streak;
       stubFetch({ ok: true, members: [memberWithoutStreak] });
 
       const result = await directory.searchMembers('test');
 
       expect(result[0].unclearedStreak).toBe(0);
       // WP4-4: snake_case alias should NOT exist
-      expect(result[0].uncleared_streak).toBeUndefined();
+      expect((result[0] as any).uncleared_streak).toBeUndefined();
     });
 
     it('normalizes all fields to camelCase only', async () => {
@@ -450,11 +450,11 @@ describe('TennisDirectory', () => {
       expect(m.unclearedStreak).toBe(3);
 
       // snake_case aliases should NOT exist
-      expect(m.account_id).toBeUndefined();
-      expect(m.member_number).toBeUndefined();
-      expect(m.display_name).toBeUndefined();
-      expect(m.is_primary).toBeUndefined();
-      expect(m.uncleared_streak).toBeUndefined();
+      expect((m as any).account_id).toBeUndefined();
+      expect((m as any).member_number).toBeUndefined();
+      expect((m as any).display_name).toBeUndefined();
+      expect((m as any).is_primary).toBeUndefined();
+      expect((m as any).uncleared_streak).toBeUndefined();
     });
 
     it('handles empty members array', async () => {

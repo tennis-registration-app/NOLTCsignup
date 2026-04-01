@@ -18,7 +18,9 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
  * Create mock deps with sensible defaults.
  * Deps are flat (not grouped) for waitlist orchestrator.
  */
-function createMockDeps(overrides = {}) {
+// Type assertion: partial mock for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createMockDeps(overrides: any = {}): any {
   return {
     // Read values
     isJoiningWaitlist: false,
@@ -58,7 +60,7 @@ function createMockDeps(overrides = {}) {
 /**
  * Create a valid group array for testing.
  */
-function createGroup(players = []) {
+function createGroup(players: any[] = []): any[] {
   if (players.length === 0) {
     return [
       { id: 'member-1', name: 'Alice Smith', memberNumber: '1001' },
@@ -86,7 +88,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       const deps = createMockDeps({ isJoiningWaitlist: true });
       const group = createGroup();
 
-      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group as any, deps);
 
       expect(ok).toBe(false);
       expect(deps.setIsJoiningWaitlist).not.toHaveBeenCalled();
@@ -124,7 +126,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
       });
       const group = createGroup();
 
-      const ok = await sendGroupToWaitlistOrchestrated(group, deps);
+      const ok = await sendGroupToWaitlistOrchestrated(group as any, deps);
 
       expect(ok).toBe(false);
       expect(deps.showAlertMessage).toHaveBeenCalledWith('Maximum group size is 4.');
@@ -342,7 +344,7 @@ describe('sendGroupToWaitlistOrchestrated', () => {
         { id: 'guest-1', name: 'Guest Player', isGuest: true, sponsor: 'member-1' },
       ];
 
-      await sendGroupToWaitlistOrchestrated(group, deps);
+      await sendGroupToWaitlistOrchestrated(group as any, deps);
 
       expect(deps.backend.commands.joinWaitlistWithPlayers).toHaveBeenCalledWith(
         expect.objectContaining({

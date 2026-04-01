@@ -87,8 +87,9 @@ const WET_BLOCK_COURTS = [
 // Helpers
 // ============================================================
 
-function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts } = {}) {
-  let result = { current: null };
+function renderHook(...hookArgs: any[]) { const moveCourt = hookArgs[0]; const courts = hookArgs[1]; const { clearCourt, courtBlocks, clearWetCourt, clearAllWetCourts, activateEmergency, deactivateAll, wetCourts } = hookArgs[2] || {};
+  // Type assertion: partial mock for testing
+  let result = { current: null } as unknown as { current: ReturnType<typeof useCourtActions> };
   // Mutable props ref — allows re-rendering with updated values
   const propsRef = {
     courts: courts || COURTS,
@@ -110,7 +111,7 @@ function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt,
         clearCourt: clearWetCourt || vi.fn().mockResolvedValue({ success: true }),
         clearAllCourts: clearAllWetCourts || vi.fn().mockResolvedValue({ success: true }),
       },
-      services: { backend: { admin: { updateSession: vi.fn() } } },
+      services: { backend: { admin: { updateSession: vi.fn() } as any } },
       courts: propsRef.courts,
       courtBlocks: courtBlocks || [],
       wetCourts: propsRef.wetCourts,
@@ -125,7 +126,7 @@ function renderHook(moveCourt, courts, { clearCourt, courtBlocks, clearWetCourt,
   };
 
   // Re-render with updated props (simulates real data arriving from applyBoardResponse)
-  const rerender = async (newProps) => {
+  const rerender = async (newProps: any) => {
     if (newProps.wetCourts !== undefined) propsRef.wetCourts = newProps.wetCourts;
     if (newProps.courts !== undefined) propsRef.courts = newProps.courts;
     await act(async () => {
@@ -173,7 +174,7 @@ describe('useCourtActions — optimistic move', () => {
 
   it('clears movingFrom immediately when move is triggered', async () => {
     // Use a deferred promise so the API call stays pending
-    let resolveMove;
+    let resolveMove: (value: unknown) => void;
     const moveCourt = vi.fn(() => new Promise((r) => { resolveMove = r; }));
     const { result, renderSync, unmount } = renderHook(moveCourt);
     await renderSync();
@@ -185,7 +186,7 @@ describe('useCourtActions — optimistic move', () => {
     expect(result.current.movingFrom).toBe(3);
 
     // Start the move (don't await — API is still pending)
-    let movePromise;
+    let movePromise: Promise<unknown>;
     await act(async () => {
       movePromise = result.current.handleMoveCourt(3, 7);
     });
@@ -202,7 +203,7 @@ describe('useCourtActions — optimistic move', () => {
   });
 
   it('sets optimisticCourts with session swapped from source to target', async () => {
-    let resolveMove;
+    let resolveMove: (value: unknown) => void;
     const moveCourt = vi.fn(() => new Promise((r) => { resolveMove = r; }));
     const { result, renderSync, unmount } = renderHook(moveCourt);
     await renderSync();
@@ -211,7 +212,7 @@ describe('useCourtActions — optimistic move', () => {
       result.current.initiateMove(3);
     });
 
-    let movePromise;
+    let movePromise: Promise<unknown>;
     await act(async () => {
       movePromise = result.current.handleMoveCourt(3, 7);
     });
@@ -221,14 +222,14 @@ describe('useCourtActions — optimistic move', () => {
     expect(opt).not.toBeNull();
 
     // Source court (3) should have no session data
-    const fromCourt = opt.find((c) => c.number === 3);
-    expect(fromCourt.session).toBeUndefined();
-    expect(fromCourt.players).toBeUndefined();
+    const fromCourt = opt!.find((c) => c.number === 3);
+    expect(fromCourt!.session).toBeUndefined();
+    expect(fromCourt!.players).toBeUndefined();
 
     // Target court (7) should have the session data
-    const toCourt = opt.find((c) => c.number === 7);
-    expect(toCourt.session).toEqual(COURTS[0].session);
-    expect(toCourt.players).toEqual(COURTS[0].players);
+    const toCourt = opt!.find((c) => c.number === 7);
+    expect(toCourt!.session).toEqual(COURTS[0].session);
+    expect(toCourt!.players).toEqual(COURTS[0].players);
 
     await act(async () => {
       resolveMove({ success: true });
@@ -294,7 +295,7 @@ describe('useCourtActions — optimistic move', () => {
   });
 
   it('prevents double-click during in-flight move', async () => {
-    let resolveMove;
+    let resolveMove: (value: unknown) => void;
     const moveCourt = vi.fn(() => new Promise((r) => { resolveMove = r; }));
     const { result, renderSync, unmount } = renderHook(moveCourt);
     await renderSync();
@@ -303,7 +304,7 @@ describe('useCourtActions — optimistic move', () => {
       result.current.initiateMove(3);
     });
 
-    let movePromise;
+    let movePromise: Promise<unknown>;
     await act(async () => {
       movePromise = result.current.handleMoveCourt(3, 7);
     });
@@ -376,12 +377,12 @@ describe('useCourtActions — optimistic clear', () => {
   });
 
   it('sets optimisticCourts with target court emptied during in-flight', async () => {
-    let resolveClear;
+    let resolveClear: (value: unknown) => void;
     const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
     await renderSync();
 
-    let clearPromise;
+    let clearPromise: Promise<unknown>;
     await act(async () => {
       clearPromise = result.current.handleClearCourt(3);
     });
@@ -391,17 +392,17 @@ describe('useCourtActions — optimistic clear', () => {
     expect(opt).not.toBeNull();
 
     // Cleared court (3) should have no session/players/block data
-    const clearedCourt = opt.find((c) => c.number === 3);
-    expect(clearedCourt.session).toBeUndefined();
-    expect(clearedCourt.players).toBeUndefined();
-    expect(clearedCourt.block).toBeUndefined();
-    expect(clearedCourt.startTime).toBeUndefined();
+    const clearedCourt = opt!.find((c) => c.number === 3);
+    expect(clearedCourt!.session).toBeUndefined();
+    expect(clearedCourt!.players).toBeUndefined();
+    expect(clearedCourt!.block).toBeUndefined();
+    expect(clearedCourt!.startTime).toBeUndefined();
     // Should still have number and id
-    expect(clearedCourt.number).toBe(3);
-    expect(clearedCourt.id).toBe('uuid-3');
+    expect(clearedCourt!.number).toBe(3);
+    expect(clearedCourt!.id).toBe('uuid-3');
 
     // Other court (7) should be unchanged
-    const otherCourt = opt.find((c) => c.number === 7);
+    const otherCourt = opt!.find((c) => c.number === 7);
     expect(otherCourt).toEqual(COURTS[1]);
 
     await act(async () => {
@@ -456,12 +457,12 @@ describe('useCourtActions — optimistic clear', () => {
   });
 
   it('prevents double-click during in-flight clear', async () => {
-    let resolveClear;
+    let resolveClear: (value: unknown) => void;
     const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
     await renderSync();
 
-    let clearPromise;
+    let clearPromise: Promise<unknown>;
     await act(async () => {
       clearPromise = result.current.handleClearCourt(3);
     });
@@ -482,7 +483,7 @@ describe('useCourtActions — optimistic clear', () => {
   });
 
   it('clears showActions immediately', async () => {
-    let resolveClear;
+    let resolveClear: (value: unknown) => void;
     const clearCourt = vi.fn(() => new Promise((r) => { resolveClear = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, { clearCourt });
     await renderSync();
@@ -493,7 +494,7 @@ describe('useCourtActions — optimistic clear', () => {
     });
     expect(result.current.showActions).toBe(3);
 
-    let clearPromise;
+    let clearPromise: Promise<unknown>;
     await act(async () => {
       clearPromise = result.current.handleClearCourt(3);
     });
@@ -521,7 +522,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
   });
 
   it('sets optimisticWetCourts with court removed during in-flight', async () => {
-    let resolveWet;
+    let resolveWet: (value: unknown) => void;
     const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearWetCourt,
@@ -529,7 +530,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     });
     await renderSync();
 
-    let togglePromise;
+    let togglePromise: Promise<unknown>;
     await act(async () => {
       togglePromise = result.current.handleWetCourtToggle(3);
     });
@@ -537,8 +538,8 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     // Optimistic wet courts should exist with court 3 removed
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.has(3)).toBe(false);
-    expect(opt.has(7)).toBe(true);
+    expect(opt!.has(3)).toBe(false);
+    expect(opt!.has(7)).toBe(true);
 
     await act(async () => {
       resolveWet({ success: true });
@@ -605,7 +606,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
   });
 
   it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
-    let resolveWet;
+    let resolveWet: (value: unknown) => void;
     const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
     const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
       clearWetCourt,
@@ -613,7 +614,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     });
     await renderSync();
 
-    let togglePromise;
+    let togglePromise: Promise<unknown>;
     await act(async () => {
       togglePromise = result.current.handleWetCourtToggle(3);
     });
@@ -621,7 +622,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     // Wet ops only set optimisticWetCourts, not optimisticCourts
     expect(result.current.optimisticCourts).toBeNull();
     expect(result.current.optimisticWetCourts).not.toBeNull();
-    expect(result.current.optimisticWetCourts.has(3)).toBe(false);
+    expect(result.current.optimisticWetCourts!.has(3)).toBe(false);
 
     await act(async () => {
       resolveWet({ success: true });
@@ -631,7 +632,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
   });
 
   it('prevents double-click during in-flight wet toggle', async () => {
-    let resolveWet;
+    let resolveWet: (value: unknown) => void;
     const clearWetCourt = vi.fn(() => new Promise((r) => { resolveWet = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearWetCourt,
@@ -639,7 +640,7 @@ describe('useCourtActions — optimistic wet court toggle', () => {
     });
     await renderSync();
 
-    let togglePromise;
+    let togglePromise: Promise<unknown>;
     await act(async () => {
       togglePromise = result.current.handleWetCourtToggle(3);
     });
@@ -670,7 +671,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
   });
 
   it('sets optimisticWetCourts to empty set during in-flight', async () => {
-    let resolveDry;
+    let resolveDry: (value: unknown) => void;
     const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearAllWetCourts,
@@ -678,7 +679,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     });
     await renderSync();
 
-    let dryPromise;
+    let dryPromise: Promise<unknown>;
     await act(async () => {
       dryPromise = result.current.handleAllCourtsDry();
     });
@@ -686,7 +687,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     // Should be empty set (all courts dry)
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.size).toBe(0);
+    expect(opt!.size).toBe(0);
 
     await act(async () => {
       resolveDry({ success: true });
@@ -696,7 +697,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
   });
 
   it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
-    let resolveDry;
+    let resolveDry: (value: unknown) => void;
     const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
     const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
       clearAllWetCourts,
@@ -704,7 +705,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     });
     await renderSync();
 
-    let dryPromise;
+    let dryPromise: Promise<unknown>;
     await act(async () => {
       dryPromise = result.current.handleAllCourtsDry();
     });
@@ -712,7 +713,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     // Wet ops only set optimisticWetCourts, not optimisticCourts
     expect(result.current.optimisticCourts).toBeNull();
     expect(result.current.optimisticWetCourts).not.toBeNull();
-    expect(result.current.optimisticWetCourts.size).toBe(0);
+    expect(result.current.optimisticWetCourts!.size).toBe(0);
 
     await act(async () => {
       resolveDry({ success: true });
@@ -783,7 +784,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
   });
 
   it('prevents double-click during in-flight All Courts Dry', async () => {
-    let resolveDry;
+    let resolveDry: (value: unknown) => void;
     const clearAllWetCourts = vi.fn(() => new Promise((r) => { resolveDry = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       clearAllWetCourts,
@@ -791,7 +792,7 @@ describe('useCourtActions — optimistic All Courts Dry', () => {
     });
     await renderSync();
 
-    let dryPromise;
+    let dryPromise: Promise<unknown>;
     await act(async () => {
       dryPromise = result.current.handleAllCourtsDry();
     });
@@ -820,14 +821,14 @@ describe('useCourtActions — optimistic activate wet courts', () => {
   });
 
   it('sets optimisticWetCourts to all 12 courts during in-flight', async () => {
-    let resolveActivate;
+    let resolveActivate: (value: unknown) => void;
     const activateEmergency = vi.fn(() => new Promise((r) => { resolveActivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       activateEmergency,
     });
     await renderSync();
 
-    let activatePromise;
+    let activatePromise: Promise<unknown>;
     await act(async () => {
       activatePromise = result.current.handleActivateWet();
     });
@@ -835,9 +836,9 @@ describe('useCourtActions — optimistic activate wet courts', () => {
     // Should be all 12 courts wet
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.size).toBe(12);
+    expect(opt!.size).toBe(12);
     for (let i = 1; i <= 12; i++) {
-      expect(opt.has(i)).toBe(true);
+      expect(opt!.has(i)).toBe(true);
     }
 
     await act(async () => {
@@ -902,14 +903,14 @@ describe('useCourtActions — optimistic activate wet courts', () => {
   });
 
   it('prevents double-click during in-flight activate', async () => {
-    let resolveActivate;
+    let resolveActivate: (value: unknown) => void;
     const activateEmergency = vi.fn(() => new Promise((r) => { resolveActivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       activateEmergency,
     });
     await renderSync();
 
-    let activatePromise;
+    let activatePromise: Promise<unknown>;
     await act(async () => {
       activatePromise = result.current.handleActivateWet();
     });
@@ -956,7 +957,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
   });
 
   it('sets optimisticWetCourts to empty set during in-flight', async () => {
-    let resolveDeactivate;
+    let resolveDeactivate: (value: unknown) => void;
     const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       deactivateAll,
@@ -964,7 +965,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     });
     await renderSync();
 
-    let deactivatePromise;
+    let deactivatePromise: Promise<unknown>;
     await act(async () => {
       deactivatePromise = result.current.handleDeactivateWet();
     });
@@ -972,7 +973,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     // Should be empty set (all courts dry)
     const opt = result.current.optimisticWetCourts;
     expect(opt).not.toBeNull();
-    expect(opt.size).toBe(0);
+    expect(opt!.size).toBe(0);
 
     await act(async () => {
       resolveDeactivate({ success: true });
@@ -982,7 +983,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
   });
 
   it('does not set optimisticCourts (single source of truth: wetCourts Set)', async () => {
-    let resolveDeactivate;
+    let resolveDeactivate: (value: unknown) => void;
     const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, WET_BLOCK_COURTS, {
       deactivateAll,
@@ -990,7 +991,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     });
     await renderSync();
 
-    let deactivatePromise;
+    let deactivatePromise: Promise<unknown>;
     await act(async () => {
       deactivatePromise = result.current.handleDeactivateWet();
     });
@@ -998,7 +999,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     // Wet ops only use optimisticWetCourts (the Set), never optimisticCourts
     expect(result.current.optimisticCourts).toBeNull();
     expect(result.current.optimisticWetCourts).not.toBeNull();
-    expect(result.current.optimisticWetCourts.size).toBe(0);
+    expect(result.current.optimisticWetCourts!.size).toBe(0);
 
     await act(async () => {
       resolveDeactivate({ success: true });
@@ -1065,7 +1066,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
   });
 
   it('prevents double-click during in-flight deactivate', async () => {
-    let resolveDeactivate;
+    let resolveDeactivate: (value: unknown) => void;
     const deactivateAll = vi.fn(() => new Promise((r) => { resolveDeactivate = r; }));
     const { result, renderSync, unmount } = renderHook(null, COURTS, {
       deactivateAll,
@@ -1073,7 +1074,7 @@ describe('useCourtActions — optimistic deactivate wet courts', () => {
     });
     await renderSync();
 
-    let deactivatePromise;
+    let deactivatePromise: Promise<unknown>;
     await act(async () => {
       deactivatePromise = result.current.handleDeactivateWet();
     });

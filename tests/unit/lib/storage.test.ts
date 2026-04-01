@@ -44,7 +44,7 @@ import {
 } from '../../../src/lib/storage.js';
 
 // ── localStorage mock ────────────────────────────────────────
-let store = {};
+let store: Record<string, string> = {};
 const mockLocalStorage = {
   getItem: vi.fn((key) => store[key] ?? null),
   setItem: vi.fn((key, value) => { store[key] = value; }),
@@ -56,7 +56,7 @@ const mockLocalStorage = {
 Object.defineProperty(globalThis, 'localStorage', { value: mockLocalStorage, writable: true });
 
 beforeEach(() => {
-  store = {};
+  store = {} as Record<string, string>;
   vi.clearAllMocks();
 });
 
@@ -255,7 +255,7 @@ describe('addHistoricalGame', () => {
   it('adds a game record with generated fields', () => {
     const game = { courtNumber: 3, startTime: '2024-06-15T10:00:00Z' };
     const result = addHistoricalGame(game);
-    expect(result.courtNumber).toBe(3);
+    expect((result as any).courtNumber).toBe(3);
     expect(result.id).toMatch(/^3-/);
     expect(result.dateAdded).toBeTruthy();
     expect(result.date).toBe('2024-06-15');
@@ -294,7 +294,7 @@ describe('searchHistoricalGames', () => {
   it('filters by playerName (case insensitive)', () => {
     const result = searchHistoricalGames({ playerName: 'alice' });
     expect(result).toHaveLength(1);
-    expect(result[0].players[0].name).toBe('Alice');
+    expect((result[0] as any).players[0].name).toBe('Alice');
   });
 
   it('filters by clearReason', () => {
@@ -304,8 +304,8 @@ describe('searchHistoricalGames', () => {
 
   it('sorts most recent first', () => {
     const result = searchHistoricalGames();
-    expect(new Date(result[0].startTime).getTime()).toBeGreaterThan(
-      new Date(result[1].startTime).getTime()
+    expect(new Date(result[0].startTime as any).getTime()).toBeGreaterThan(
+      new Date(result[1].startTime as any).getTime()
     );
   });
 });
@@ -350,7 +350,7 @@ describe('purgeExpiredPromotions', () => {
     };
     const result = purgeExpiredPromotions(data, now);
     expect(result.waitlistPromotions).toHaveLength(1);
-    expect(result.waitlistPromotions[0].id).toBe('p2');
+    expect((result.waitlistPromotions[0] as any).id).toBe('p2');
   });
 
   it('handles null data', () => {
@@ -367,7 +367,7 @@ describe('purgeExpiredPromotions', () => {
     const data = { waitlistPromotions: [], other: 'kept' };
     const result = purgeExpiredPromotions(data);
     expect(result).not.toBe(data);
-    expect(result.other).toBe('kept');
+    expect((result as any).other).toBe('kept');
   });
 });
 
@@ -404,8 +404,8 @@ describe('deepFreeze', () => {
   it('freezes object and nested objects', () => {
     const obj = deepFreeze({ a: { b: 1 }, c: [2] });
     expect(Object.isFrozen(obj)).toBe(true);
-    expect(Object.isFrozen(obj.a)).toBe(true);
-    expect(Object.isFrozen(obj.c)).toBe(true);
+    expect(Object.isFrozen((obj as any).a)).toBe(true);
+    expect(Object.isFrozen((obj as any).c)).toBe(true);
   });
 
   it('returns primitives unchanged', () => {

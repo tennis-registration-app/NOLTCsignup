@@ -24,7 +24,7 @@ import { vi } from 'vitest';
  * @param {Function} hookFn - Zero-arg function that calls the hook, e.g. () => useCourtHandlers(deps)
  * @returns {Promise<{ result: { current: any }, unmount: () => void }>}
  */
-export async function renderHandlerHook(hookFn, { wrapper } = {}) {
+export async function renderHandlerHook(hookFn: any, { wrapper }: any = {}) {
   const result = { current: null };
   const container = document.createElement('div');
   document.body.appendChild(container);
@@ -59,7 +59,7 @@ export async function renderHandlerHook(hookFn, { wrapper } = {}) {
  * Deep merge two objects. Arrays are replaced, not concatenated.
  * Target values are overwritten by source values at each level.
  */
-function deepMerge(target, source) {
+function deepMerge(target: any, source: any) {
   const output = { ...target };
   for (const key of Object.keys(source)) {
     if (

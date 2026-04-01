@@ -7,15 +7,15 @@ import { normalizeWaitlist } from '../../../src/lib/normalizeWaitlist.js';
 
 describe('normalizeWaitlist', () => {
   it('returns empty array for null input', () => {
-    expect(normalizeWaitlist(null)).toEqual([]);
+    expect(normalizeWaitlist(null as any)).toEqual([]);
   });
 
   it('returns empty array for undefined input', () => {
-    expect(normalizeWaitlist(undefined)).toEqual([]);
+    expect(normalizeWaitlist(undefined as any)).toEqual([]);
   });
 
   it('returns empty array for non-array input', () => {
-    expect(normalizeWaitlist('not array')).toEqual([]);
+    expect(normalizeWaitlist('not array' as any)).toEqual([]);
   });
 
   it('returns empty array for empty array', () => {

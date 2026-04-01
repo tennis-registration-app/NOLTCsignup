@@ -15,7 +15,7 @@ import {
 const NOW = new Date(2025, 5, 15, 10, 0, 0);
 
 // Helper to create a block at fixed offsets from NOW
-function makeBlock(opts = {}) {
+function makeBlock(opts: Record<string, any> = {}) {
   const startOffset = opts.startMinutes ?? -30;
   const endOffset = opts.endMinutes ?? 60;
   return {
@@ -53,10 +53,10 @@ describe('normalizeBlock', () => {
     };
     const result = normalizeBlock(block);
     expect(result).not.toBeNull();
-    expect(result.courts).toEqual([3]);
-    expect(result.start).toEqual(new Date('2025-06-15T09:00:00Z'));
-    expect(result.end).toEqual(new Date('2025-06-15T11:00:00Z'));
-    expect(result.reason).toBe('Lesson');
+    expect(result!.courts).toEqual([3]);
+    expect(result!.start).toEqual(new Date('2025-06-15T09:00:00Z'));
+    expect(result!.end).toEqual(new Date('2025-06-15T11:00:00Z'));
+    expect(result!.reason).toBe('Lesson');
   });
 
   it('normalizes block with start/end fields (alternate names)', () => {
@@ -68,9 +68,9 @@ describe('normalizeBlock', () => {
     };
     const result = normalizeBlock(block);
     expect(result).not.toBeNull();
-    expect(result.start).toEqual(new Date('2025-06-15T09:00:00Z'));
-    expect(result.end).toEqual(new Date('2025-06-15T11:00:00Z'));
-    expect(result.reason).toBe('Clinic');
+    expect(result!.start).toEqual(new Date('2025-06-15T09:00:00Z'));
+    expect(result!.end).toEqual(new Date('2025-06-15T11:00:00Z'));
+    expect(result!.reason).toBe('Clinic');
   });
 
   it('prefers startTime over start when both present', () => {
@@ -81,7 +81,7 @@ describe('normalizeBlock', () => {
       courtNumber: 1,
     };
     const result = normalizeBlock(block);
-    expect(result.start).toEqual(new Date('2025-06-15T08:00:00Z'));
+    expect(result!.start).toEqual(new Date('2025-06-15T08:00:00Z'));
   });
 
   it('uses courts array when provided', () => {
@@ -92,7 +92,7 @@ describe('normalizeBlock', () => {
       courtNumber: 5,
     };
     const result = normalizeBlock(block);
-    expect(result.courts).toEqual([1, 2, 3]);
+    expect(result!.courts).toEqual([1, 2, 3]);
   });
 
   it('falls back to courtNumber as single-element array', () => {
@@ -102,7 +102,7 @@ describe('normalizeBlock', () => {
       courtNumber: 7,
     };
     const result = normalizeBlock(block);
-    expect(result.courts).toEqual([7]);
+    expect(result!.courts).toEqual([7]);
   });
 
   it('returns null when no courts and no courtNumber', () => {
@@ -132,7 +132,7 @@ describe('normalizeBlock', () => {
       templateName: 'League Play',
     };
     const result = normalizeBlock(block);
-    expect(result.reason).toBe('League Play');
+    expect(result!.reason).toBe('League Play');
   });
 
   it('defaults reason to "Reserved" when no reason or templateName', () => {
@@ -142,7 +142,7 @@ describe('normalizeBlock', () => {
       courtNumber: 1,
     };
     const result = normalizeBlock(block);
-    expect(result.reason).toBe('Reserved');
+    expect(result!.reason).toBe('Reserved');
   });
 
   it('prefers reason over templateName', () => {
@@ -154,7 +154,7 @@ describe('normalizeBlock', () => {
       templateName: 'League Play',
     };
     const result = normalizeBlock(block);
-    expect(result.reason).toBe('Maintenance');
+    expect(result!.reason).toBe('Maintenance');
   });
 });
 
@@ -300,7 +300,7 @@ describe('selectReservedSafe', () => {
 
   it('skips null blocks in the input array', () => {
     const active = makeBlock({ startMinutes: -30, endMinutes: 60, courtNumber: 1, reason: 'Lesson' });
-    const result = selectReservedSafe([null, active, undefined, null], NOW);
+    const result = selectReservedSafe([null as any, active, undefined as any, null as any], NOW);
     expect(result).toHaveLength(1);
   });
 

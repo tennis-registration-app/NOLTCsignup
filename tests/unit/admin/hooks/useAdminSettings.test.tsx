@@ -32,6 +32,12 @@ import {
   refreshAISettingsApi,
 } from '../../../../src/admin/hooks/adminSettingsLogic.js';
 
+// Type assertion: partial mock for testing — these are vi.fn() via vi.mock above
+const loadSettingsDataMock = loadSettingsData as unknown as ReturnType<typeof vi.fn>;
+const updateBallPriceApiMock = updateBallPriceApi as unknown as ReturnType<typeof vi.fn>;
+const refreshSettingsApiMock = refreshSettingsApi as unknown as ReturnType<typeof vi.fn>;
+const refreshAISettingsApiMock = refreshAISettingsApi as unknown as ReturnType<typeof vi.fn>;
+
 // ============================================================
 // Test harness
 // ============================================================
@@ -57,7 +63,7 @@ function createHarness(depsOverrides = {}) {
   const deps = createDeps(depsOverrides);
 
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
-    const hook = useAdminSettings(deps);
+    const hook = useAdminSettings(deps as any);
     useImperativeHandle(ref, () => hook);
     return null;
   });
@@ -65,7 +71,7 @@ function createHarness(depsOverrides = {}) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const ref = React.createRef();
+  const ref = React.createRef<ReturnType<typeof useAdminSettings>>() as { current: ReturnType<typeof useAdminSettings> };
 
   act(() => {
     root.render(<Wrapper ref={ref} />);
@@ -90,30 +96,30 @@ function createHarness(depsOverrides = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   // Reset singleton guard so each test gets a fresh listener
-  delete /** @type {any} */ (window).__ADMIN_SETTINGS_LISTENERS_INSTALLED;
+  delete /** @type {any} */ (window as any).__ADMIN_SETTINGS_LISTENERS_INSTALLED;
 
   // Default: loadSettingsData resolves with full data
-  loadSettingsData.mockResolvedValue({
+  loadSettingsDataMock.mockResolvedValue({
     blockTemplates: [{ id: 't1', reason: 'Lesson' }],
     settings: { tennisBallPrice: 5.0, guestFees: { weekday: 15, weekend: 20 } },
     operatingHours: [{ day: 'Mon', open: '06:00', close: '21:00' }],
     hoursOverrides: [{ date: '2025-12-25', closed: true }],
   });
 
-  updateBallPriceApi.mockResolvedValue({ ok: true });
-  refreshSettingsApi.mockResolvedValue({
+  updateBallPriceApiMock.mockResolvedValue({ ok: true });
+  refreshSettingsApiMock.mockResolvedValue({
     settings: { tennisBallPrice: 6.0 },
     operatingHours: [{ day: 'Tue', open: '07:00', close: '20:00' }],
     hoursOverrides: [],
   });
-  refreshAISettingsApi.mockResolvedValue({
+  refreshAISettingsApiMock.mockResolvedValue({
     settings: { tennisBallPrice: 7.0 },
     hoursOverrides: [{ date: '2025-01-01', note: 'AI override' }],
   });
 });
 
 afterEach(() => {
-  delete /** @type {any} */ (window).__ADMIN_SETTINGS_LISTENERS_INSTALLED;
+  delete /** @type {any} */ (window as any).__ADMIN_SETTINGS_LISTENERS_INSTALLED;
 });
 
 // ============================================================
@@ -122,7 +128,7 @@ afterEach(() => {
 
 describe('initial state and mount loading', () => {
   it('returns empty defaults before load completes', () => {
-    loadSettingsData.mockReturnValue(new Promise(() => {})); // never resolves
+    loadSettingsDataMock.mockReturnValue(new Promise(() => {})); // never resolves
     const h = createHarness();
     expect(h.hook.settings).toEqual({});
     expect(h.hook.operatingHours).toEqual([]);
@@ -183,7 +189,7 @@ describe('initial state and mount loading', () => {
   });
 
   it('skips setting state for null fields in result', async () => {
-    loadSettingsData.mockResolvedValue({
+    loadSettingsDataMock.mockResolvedValue({
       blockTemplates: null,
       settings: null,
       operatingHours: null,
@@ -200,7 +206,7 @@ describe('initial state and mount loading', () => {
   });
 
   it('onError callback calls showNotification with error type', async () => {
-    loadSettingsData.mockImplementation(async (deps) => {
+    loadSettingsDataMock.mockImplementation(async (deps: any) => {
       deps.onError('Failed to load data');
       return { blockTemplates: null, settings: null, operatingHours: null, hoursOverrides: null };
     });
@@ -236,7 +242,7 @@ describe('updateBallPrice', () => {
       await h.hook.updateBallPrice(7.5);
     });
 
-    expect(h.hook.settings.tennisBallPrice).toBe(7.5);
+    expect((h.hook.settings as any).tennisBallPrice).toBe(7.5);
     h.cleanup();
   });
 
@@ -253,7 +259,7 @@ describe('updateBallPrice', () => {
   });
 
   it('shows error notification on ok:false', async () => {
-    updateBallPriceApi.mockResolvedValue({ ok: false, message: 'Server error' });
+    updateBallPriceApiMock.mockResolvedValue({ ok: false, message: 'Server error' });
     const h = createHarness();
     await act(async () => {});
 
@@ -269,16 +275,16 @@ describe('updateBallPrice', () => {
   });
 
   it('does NOT update settings on ok:false', async () => {
-    updateBallPriceApi.mockResolvedValue({ ok: false });
+    updateBallPriceApiMock.mockResolvedValue({ ok: false });
     const h = createHarness();
     await act(async () => {});
-    const originalPrice = h.hook.settings.tennisBallPrice;
+    const originalPrice = (h.hook.settings as any).tennisBallPrice;
 
     await act(async () => {
       await h.hook.updateBallPrice(99);
     });
 
-    expect(h.hook.settings.tennisBallPrice).toBe(originalPrice);
+    expect((h.hook.settings as any).tennisBallPrice).toBe(originalPrice);
     h.cleanup();
   });
 
@@ -298,15 +304,15 @@ describe('updateBallPrice', () => {
   it('preserves other settings fields when updating price', async () => {
     const h = createHarness();
     await act(async () => {});
-    expect(h.hook.settings.guestFees).toBeDefined();
+    expect((h.hook.settings as any).guestFees).toBeDefined();
 
     await act(async () => {
       await h.hook.updateBallPrice(8.0);
     });
 
     // guestFees should still be there
-    expect(h.hook.settings.guestFees).toEqual({ weekday: 15, weekend: 20 });
-    expect(h.hook.settings.tennisBallPrice).toBe(8.0);
+    expect((h.hook.settings as any).guestFees).toEqual({ weekday: 15, weekend: 20 });
+    expect((h.hook.settings as any).tennisBallPrice).toBe(8.0);
     h.cleanup();
   });
 });
@@ -370,7 +376,7 @@ describe('handleSettingsChanged', () => {
   });
 
   it('does nothing when refreshSettingsApi returns null', async () => {
-    refreshSettingsApi.mockResolvedValue(null);
+    refreshSettingsApiMock.mockResolvedValue(null);
     const h = createHarness();
     await act(async () => {});
     const origSettings = h.hook.settings;
@@ -386,7 +392,7 @@ describe('handleSettingsChanged', () => {
   });
 
   it('skips null fields in result', async () => {
-    refreshSettingsApi.mockResolvedValue({
+    refreshSettingsApiMock.mockResolvedValue({
       settings: null,
       operatingHours: [{ day: 'Wed' }],
       hoursOverrides: null,
@@ -449,7 +455,7 @@ describe('handleAISettingsChanged', () => {
   });
 
   it('does nothing when refreshAISettingsApi returns null', async () => {
-    refreshAISettingsApi.mockResolvedValue(null);
+    refreshAISettingsApiMock.mockResolvedValue(null);
     const h = createHarness();
     await act(async () => {});
     const origSettings = h.hook.settings;
@@ -463,7 +469,7 @@ describe('handleAISettingsChanged', () => {
   });
 
   it('skips null fields in result', async () => {
-    refreshAISettingsApi.mockResolvedValue({
+    refreshAISettingsApiMock.mockResolvedValue({
       settings: null,
       hoursOverrides: [{ date: '2025-02-14' }],
     });
@@ -489,7 +495,7 @@ describe('reloadSettings', () => {
   it('calls loadSettingsData again', async () => {
     const h = createHarness();
     await act(async () => {});
-    loadSettingsData.mockClear();
+    loadSettingsDataMock.mockClear();
 
     await act(async () => {
       h.hook.reloadSettings();
@@ -510,7 +516,7 @@ describe('ADMIN_REFRESH event listener', () => {
   it('reloads data when ADMIN_REFRESH event fires', async () => {
     const h = createHarness();
     await act(async () => {});
-    loadSettingsData.mockClear();
+    loadSettingsDataMock.mockClear();
 
     await act(async () => {
       window.dispatchEvent(new Event('ADMIN_REFRESH'));

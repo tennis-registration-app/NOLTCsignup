@@ -49,7 +49,8 @@ describe('buildAdminController contract', () => {
       AIAssistant: () => null,
       AIAssistantAdmin: () => null,
     },
-  };
+  // Type assertion: partial mock for testing
+  } as unknown as Parameters<typeof buildAdminController>[0];
 
   describe('top-level structure', () => {
     it('returns object with expected top-level keys', () => {
@@ -149,7 +150,7 @@ describe('buildAdminController contract', () => {
 
     it('components has expected keys', () => {
       const controller = buildAdminController(minimalDeps);
-      const keys = Object.keys(controller.blocks.components).sort();
+      const keys = Object.keys(controller.blocks.components!).sort();
       expect(keys).toEqual(CONTROLLER_KEYS.blocks.components.sort());
     });
 
@@ -324,7 +325,7 @@ describe('buildAdminController contract', () => {
 
     it('components has expected keys', () => {
       const controller = buildAdminController(minimalDeps);
-      const keys = Object.keys(controller.ai.components).sort();
+      const keys = Object.keys(controller.ai.components!).sort();
       expect(keys).toEqual(CONTROLLER_KEYS.ai.components.sort());
     });
 

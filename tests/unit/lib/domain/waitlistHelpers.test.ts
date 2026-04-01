@@ -10,9 +10,11 @@ import {
 // Minimal inline fixtures
 // ============================================================
 
-const player = (memberId) => ({ memberId });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const player = (memberId: any) => ({ memberId });
 
-const entry = (id, type, memberIds) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const entry = (id: any, type: any, memberIds: any): any => ({
   id,
   group: {
     type,
@@ -20,7 +22,7 @@ const entry = (id, type, memberIds) => ({
   },
 });
 
-const ENTRIES = [
+const ENTRIES: any[] = [
   entry('wl-1', 'singles', ['M100']),
   entry('wl-2', 'doubles', ['M200', 'M201']),
   entry('wl-3', 'doubles', ['M300', 'M301', 'M302', 'M303']),
@@ -51,9 +53,9 @@ describe('getFirstWaitlistEntries', () => {
   });
 
   it('returns empty array when waitlist is not an array', () => {
-    expect(getFirstWaitlistEntries(null, 1)).toEqual([]);
-    expect(getFirstWaitlistEntries(undefined, 1)).toEqual([]);
-    expect(getFirstWaitlistEntries('not-array', 1)).toEqual([]);
+    expect(getFirstWaitlistEntries(null as any, 1)).toEqual([]);
+    expect(getFirstWaitlistEntries(undefined as any, 1)).toEqual([]);
+    expect(getFirstWaitlistEntries('not-array' as any, 1)).toEqual([]);
   });
 });
 
@@ -78,13 +80,13 @@ describe('isMemberOnWaitlist', () => {
   });
 
   it('returns false when waitlist is not an array', () => {
-    expect(isMemberOnWaitlist(null, 'M100')).toBe(false);
+    expect(isMemberOnWaitlist(null as any, 'M100')).toBe(false);
   });
 
   it('returns false when memberId is falsy', () => {
-    expect(isMemberOnWaitlist(ENTRIES, null)).toBe(false);
+    expect(isMemberOnWaitlist(ENTRIES, null as any)).toBe(false);
     expect(isMemberOnWaitlist(ENTRIES, '')).toBe(false);
-    expect(isMemberOnWaitlist(ENTRIES, undefined)).toBe(false);
+    expect(isMemberOnWaitlist(ENTRIES, undefined as any)).toBe(false);
   });
 });
 
@@ -109,13 +111,13 @@ describe('findWaitlistEntryByMember', () => {
   });
 
   it('returns undefined when waitlist is not an array', () => {
-    expect(findWaitlistEntryByMember(null, 'M100')).toBeUndefined();
+    expect(findWaitlistEntryByMember(null as any, 'M100')).toBeUndefined();
   });
 
   it('returns undefined when memberId is falsy', () => {
-    expect(findWaitlistEntryByMember(ENTRIES, null)).toBeUndefined();
+    expect(findWaitlistEntryByMember(ENTRIES, null as any)).toBeUndefined();
     expect(findWaitlistEntryByMember(ENTRIES, '')).toBeUndefined();
-    expect(findWaitlistEntryByMember(ENTRIES, undefined)).toBeUndefined();
+    expect(findWaitlistEntryByMember(ENTRIES, undefined as any)).toBeUndefined();
   });
 });
 
@@ -136,18 +138,18 @@ describe('getGroupTypeLabel', () => {
   });
 
   it('returns "Group" when entry is null', () => {
-    expect(getGroupTypeLabel(null)).toBe('Group');
+    expect(getGroupTypeLabel(null as any)).toBe('Group');
   });
 
   it('returns "Group" when entry is undefined', () => {
-    expect(getGroupTypeLabel(undefined)).toBe('Group');
+    expect(getGroupTypeLabel(undefined as any)).toBe('Group');
   });
 
   it('returns "Group" when group is missing', () => {
-    expect(getGroupTypeLabel({})).toBe('Group');
+    expect(getGroupTypeLabel({} as any)).toBe('Group');
   });
 
   it('returns "Group" when group.type is missing', () => {
-    expect(getGroupTypeLabel({ group: {} })).toBe('Group');
+    expect(getGroupTypeLabel({ group: {} } as any)).toBe('Group');
   });
 });

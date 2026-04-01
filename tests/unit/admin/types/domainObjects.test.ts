@@ -62,7 +62,7 @@ describe('domainObjects', () => {
     });
 
     it('preserves null values (does not convert to undefined)', () => {
-      const model = createWetCourtsModel({ wetCourts: null });
+      const model = createWetCourtsModel({ wetCourts: null } as any);
       expect(model.courts).toBeNull();
     });
 
@@ -249,7 +249,7 @@ describe('domainObjects', () => {
         backend: {},
         dataStore: {},
         extra: 'value',
-      });
+      } as any);
       expect(services).not.toHaveProperty('dataStore');
       expect(services).not.toHaveProperty('extra');
       expect(Object.keys(services)).toEqual(['backend']);
@@ -274,14 +274,14 @@ describe('domainObjects', () => {
     it('preserves provided values', () => {
       const courts = [{ id: 1 }];
       const waitingGroups = [{ id: 'g1' }];
-      const model = createStatusModel({ courts, waitingGroups, selectedDate: '2025-01-15' });
+      const model = createStatusModel({ courts, waitingGroups, selectedDate: '2025-01-15' } as any);
       expect(model.courts).toBe(courts);
       expect(model.waitingGroups).toBe(waitingGroups);
       expect(model.selectedDate).toBe('2025-01-15');
     });
 
     it('preserves null values', () => {
-      const model = createStatusModel({ courts: null });
+      const model = createStatusModel({ courts: null } as any);
       expect(model.courts).toBeNull();
     });
   });
@@ -355,7 +355,7 @@ describe('domainObjects', () => {
     });
 
     it('preserves null values', () => {
-      const model = createCalendarModel({ courts: null, hoursOverrides: null });
+      const model = createCalendarModel({ courts: null, hoursOverrides: null } as any);
       expect(model.courts).toBeNull();
       expect(model.hoursOverrides).toBeNull();
     });
@@ -423,7 +423,7 @@ describe('domainObjects', () => {
     });
 
     it('preserves null values', () => {
-      const model = createAIAssistantModel({ courts: null, settings: null });
+      const model = createAIAssistantModel({ courts: null, settings: null } as any);
       expect(model.courts).toBeNull();
       expect(model.settings).toBeNull();
     });
@@ -508,7 +508,7 @@ describe('domainObjects', () => {
     });
 
     it('preserves null values', () => {
-      const services = createAIAssistantServices({ backend: null, dataStore: null });
+      const services = createAIAssistantServices({ backend: null, dataStore: null } as any);
       expect(services.backend).toBeNull();
       expect(services.dataStore).toBeNull();
     });
@@ -537,7 +537,7 @@ describe('domainObjects', () => {
     });
 
     it('preserves null values', () => {
-      const components = createAIAssistantComponents({ AIAssistant: null, AIAssistantAdmin: null });
+      const components = createAIAssistantComponents({ AIAssistant: null, AIAssistantAdmin: null } as any);
       expect(components.AIAssistant).toBeNull();
       expect(components.AIAssistantAdmin).toBeNull();
     });

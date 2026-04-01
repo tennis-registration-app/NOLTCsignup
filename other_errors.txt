@@ -1,0 +1,286 @@
+tests/unit/admin/courts/useCourtActions.contract.test.ts(92,7): error TS7034: Variable 'hookResult' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(121,24): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(125,30): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(156,24): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(161,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(165,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(169,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(173,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(177,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(181,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(185,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(189,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(193,14): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(200,23): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(207,35): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(208,29): error TS7005: Variable 'hookResult' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(34,7): error TS7034: Variable 'adapter' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/api/ApiAdapter.errorContract.test.ts(50,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(60,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(72,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(82,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(94,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(106,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(114,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(123,13): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(137,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(149,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(157,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(169,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(181,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(189,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(205,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(215,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(227,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(237,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(250,13): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(264,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(272,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(288,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(296,28): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(313,13): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(324,13): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/ApiAdapter.errorContract.test.ts(336,13): error TS7005: Variable 'adapter' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(22,7): error TS7034: Variable 'commands' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/api/TennisCommands.test.ts(40,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(55,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(81,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(97,28): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(110,28): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(133,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(146,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(160,28): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(175,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(188,13): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(207,28): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(222,28): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisCommands.test.ts(236,28): error TS7005: Variable 'commands' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(51,7): error TS7034: Variable 'queries' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/api/TennisQueries.test.ts(68,13): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(78,27): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(91,27): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(102,27): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(111,14): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(113,13): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(115,14): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(116,14): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(123,20): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(129,20): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(135,20): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(144,15): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(159,15): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(172,15): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(186,15): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(201,27): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(213,13): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(227,28): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(236,28): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(252,14): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(258,13): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/api/TennisQueries.test.ts(260,22): error TS7005: Variable 'queries' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(64,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(67,53): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(68,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(78,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(81,53): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(82,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(135,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(138,53): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(139,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(149,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(152,53): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(153,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(190,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(192,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(207,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(209,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(284,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(287,53): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(288,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(299,13): error TS7034: Variable 'upcomingBlocks' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/integration/courtSelectionAgreement.test.ts(302,53): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(303,67): error TS7005: Variable 'upcomingBlocks' implicitly has an 'any[]' type.
+tests/unit/platform/attachLegacyEvents.test.ts(38,9): error TS7034: Variable 'handler' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/platform/attachLegacyEvents.test.ts(39,9): error TS7034: Variable 'unsubscribe' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/platform/attachLegacyEvents.test.ts(46,11): error TS7005: Variable 'unsubscribe' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(53,40): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(57,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(58,21): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(64,41): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(68,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(75,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(82,44): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(86,21): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(109,9): error TS7034: Variable 'handler' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/platform/attachLegacyEvents.test.ts(110,9): error TS7034: Variable 'unsubscribe' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/platform/attachLegacyEvents.test.ts(117,11): error TS7005: Variable 'unsubscribe' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(124,31): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(133,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(134,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(138,31): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(141,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(147,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(151,31): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(159,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(167,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(171,31): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/platform/attachLegacyEvents.test.ts(176,14): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(273,7): error TS7034: Variable 'app' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/adminPresenter.equivalence.test.ts(274,7): error TS7034: Variable 'handlers' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/adminPresenter.equivalence.test.ts(275,7): error TS7034: Variable 'legacy' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/adminPresenter.equivalence.test.ts(276,7): error TS7034: Variable 'presenter' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/adminPresenter.equivalence.test.ts(287,12): error TS7005: Variable 'app' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(288,12): error TS7005: Variable 'handlers' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(292,36): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(293,39): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(298,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(298,60): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(302,35): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(303,18): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(305,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(305,37): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(308,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(308,40): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(364,14): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(366,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(171,7): error TS7034: Variable 'findEngagementByMemberId' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(180,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(187,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(194,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(204,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(214,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(224,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(234,5): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(238,12): error TS7005: Variable 'findEngagementByMemberId' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(279,7): error TS7034: Variable 'domainValidateGroup' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(288,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(294,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(301,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(307,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(314,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(321,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(331,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(337,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(343,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(350,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(356,5): error TS7005: Variable 'domainValidateGroup' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(166,7): error TS7034: Variable 'result' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(174,12): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(175,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(179,30): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(214,45): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(251,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(252,12): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(253,24): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(255,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(256,12): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(257,24): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(259,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(260,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(261,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(265,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(266,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(267,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(268,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(269,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(270,19): error TS7005: Variable 'result' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(221,7): error TS7034: Variable 'app' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/courtPresenter.equivalence.test.ts(223,7): error TS7034: Variable 'legacy' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/courtPresenter.equivalence.test.ts(224,7): error TS7034: Variable 'presenter' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/courtPresenter.equivalence.test.ts(244,12): error TS7005: Variable 'app' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(248,36): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(249,39): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(254,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(254,60): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(258,35): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(259,14): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(259,38): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(264,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(265,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(266,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(267,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(268,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(287,14): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(289,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.test.ts(198,13): error TS7034: Variable 'callOrder' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/unit/registration/courtPresenter.test.ts(209,14): error TS7005: Variable 'callOrder' implicitly has an 'any[]' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(322,7): error TS7034: Variable 'app' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/groupPresenter.equivalence.test.ts(323,7): error TS7034: Variable 'handlers' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/groupPresenter.equivalence.test.ts(324,7): error TS7034: Variable 'legacy' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/groupPresenter.equivalence.test.ts(325,7): error TS7034: Variable 'presenter' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/groupPresenter.equivalence.test.ts(337,12): error TS7005: Variable 'app' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(338,12): error TS7005: Variable 'handlers' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(342,36): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(343,39): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(348,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(348,60): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(352,35): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(353,18): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(355,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(355,37): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(358,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(358,40): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(425,14): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(427,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(272,7): error TS7034: Variable 'app' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/homePresenter.equivalence.test.ts(273,7): error TS7034: Variable 'handlers' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/homePresenter.equivalence.test.ts(274,7): error TS7034: Variable 'legacy' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/homePresenter.equivalence.test.ts(275,7): error TS7034: Variable 'presenter' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/homePresenter.equivalence.test.ts(287,12): error TS7005: Variable 'app' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(288,12): error TS7005: Variable 'handlers' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(292,36): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(293,39): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(298,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(298,60): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(303,39): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(306,18): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(308,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(308,37): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(311,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(311,40): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(317,19): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(359,14): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(361,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(269,7): error TS7034: Variable 'app' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/successPresenter.equivalence.test.ts(270,7): error TS7034: Variable 'handlers' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/successPresenter.equivalence.test.ts(271,7): error TS7034: Variable 'legacy' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/successPresenter.equivalence.test.ts(272,7): error TS7034: Variable 'presenter' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/registration/successPresenter.equivalence.test.ts(292,12): error TS7005: Variable 'app' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(293,12): error TS7005: Variable 'handlers' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(298,36): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(301,45): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(308,36): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(313,18): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(315,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(315,37): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(318,16): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(318,40): error TS7005: Variable 'legacy' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(324,19): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(325,19): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(326,19): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(330,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(331,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(332,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(333,12): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(371,14): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(373,24): error TS7005: Variable 'presenter' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(7,7): error TS7034: Variable 'events' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/shared/utils/toast.test.ts(8,7): error TS7034: Variable 'handler' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/unit/shared/utils/toast.test.ts(17,44): error TS7005: Variable 'handler' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(23,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(24,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(29,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(34,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(39,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(44,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(45,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(46,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(51,15): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(61,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(62,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(63,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(64,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(69,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(74,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(79,12): error TS7005: Variable 'events' implicitly has an 'any' type.
+tests/unit/shared/utils/toast.test.ts(80,12): error TS7005: Variable 'events' implicitly has an 'any' type.

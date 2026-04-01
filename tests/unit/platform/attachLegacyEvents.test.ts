@@ -30,13 +30,13 @@ describe('attachLegacyEvents', () => {
     expect(typeof legacyEvents.debug.isEnabled).toBe('function');
   });
 
-  test('window.Tennis.Events is set correctly', () => {
-    expect(window.Tennis.Events).toBe(legacyEvents);
+  test('(window.Tennis as any).Events is set correctly', () => {
+    expect((window.Tennis as any).Events).toBe(legacyEvents);
   });
 
   describe('emitDom/onDom round-trip', () => {
-    let handler;
-    let unsubscribe;
+    let handler: ReturnType<typeof vi.fn>;
+    let unsubscribe: (() => void) | null;
 
     beforeEach(() => {
       handler = vi.fn();
@@ -50,7 +50,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('onDom receives CustomEvent with detail', () => {
-      unsubscribe = onDom('testEvent', handler);
+      unsubscribe = onDom('testEvent', handler as any);
 
       emitDom('testEvent', { foo: 'bar' });
 
@@ -61,7 +61,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('unsubscribe removes listener', () => {
-      unsubscribe = onDom('testEvent2', handler);
+      unsubscribe = onDom('testEvent2', handler as any);
 
       // Emit before unsubscribe
       emitDom('testEvent2', { count: 1 });
@@ -79,7 +79,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('handler receives full Event object (not just detail)', () => {
-      unsubscribe = onDom('fullEventTest', handler);
+      unsubscribe = onDom('fullEventTest', handler as any);
 
       emitDom('fullEventTest', { data: 123 });
 
@@ -106,8 +106,8 @@ describe('attachLegacyEvents', () => {
 
   // ── onMessage / emitMessage ─────────────────────────────────
   describe('onMessage/emitMessage', () => {
-    let handler;
-    let unsubscribe;
+    let handler: ReturnType<typeof vi.fn>;
+    let unsubscribe: (() => void) | null;
 
     beforeEach(() => {
       handler = vi.fn();
@@ -121,7 +121,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('onMessage receives postMessage events', () => {
-      unsubscribe = onMessage(handler);
+      unsubscribe = onMessage(handler as any);
 
       // Dispatch a message event
       const event = new MessageEvent('message', {
@@ -135,7 +135,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('onMessage unsubscribe removes listener', () => {
-      unsubscribe = onMessage(handler);
+      unsubscribe = onMessage(handler as any);
 
       window.dispatchEvent(new MessageEvent('message', { data: { type: 'a' } }));
       expect(handler).toHaveBeenCalledTimes(1);
@@ -148,7 +148,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('onMessage filters by targetOrigin when specified', () => {
-      unsubscribe = onMessage(handler, 'http://allowed.com');
+      unsubscribe = onMessage(handler as any, 'http://allowed.com');
 
       // Wrong origin — should be filtered
       const wrongOrigin = new MessageEvent('message', {
@@ -168,7 +168,7 @@ describe('attachLegacyEvents', () => {
     });
 
     test('onMessage with wildcard origin accepts all', () => {
-      unsubscribe = onMessage(handler, '*');
+      unsubscribe = onMessage(handler as any, '*');
 
       window.dispatchEvent(
         new MessageEvent('message', { data: { type: 'any' }, origin: 'http://anything.com' })
@@ -178,7 +178,7 @@ describe('attachLegacyEvents', () => {
 
     test('emitMessage sends postMessage to target', () => {
       const target = { postMessage: vi.fn() };
-      emitMessage(target, { type: 'hello', data: 123 }, 'http://target.com');
+      emitMessage(target as any, { type: 'hello', data: 123 }, 'http://target.com');
       expect(target.postMessage).toHaveBeenCalledWith(
         { type: 'hello', data: 123 },
         'http://target.com'
@@ -187,17 +187,17 @@ describe('attachLegacyEvents', () => {
 
     test('emitMessage defaults to wildcard origin', () => {
       const target = { postMessage: vi.fn() };
-      emitMessage(target, { type: 'test' });
+      emitMessage(target as any, { type: 'test' });
       expect(target.postMessage).toHaveBeenCalledWith({ type: 'test' }, '*');
     });
 
     test('emitMessage handles null target gracefully', () => {
       // Should not throw
-      expect(() => emitMessage(null, { type: 'test' })).not.toThrow();
+      expect(() => emitMessage(null as any, { type: 'test' })).not.toThrow();
     });
 
     test('emitMessage handles target without postMessage', () => {
-      expect(() => emitMessage({}, { type: 'test' })).not.toThrow();
+      expect(() => emitMessage({} as any, { type: 'test' })).not.toThrow();
     });
   });
 

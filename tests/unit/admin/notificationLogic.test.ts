@@ -111,7 +111,7 @@ describe('notificationLogic', () => {
       // addTimer should be called with a timeout ID and 'timeout'
       // Note: with fake timers, setTimeout returns an object, not a number
       expect(mockAddTimer).toHaveBeenCalledTimes(1);
-      expect(mockAddTimer.mock.calls[0][1]).toBe('timeout');
+      expect((mockAddTimer.mock.calls[0] as any)[1]).toBe('timeout');
     });
 
     it('respects custom timeoutMs', () => {

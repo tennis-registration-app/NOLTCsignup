@@ -79,7 +79,7 @@ describe('normalizeSession scheduledEndAt hotspot', () => {
     const raw = rawSnakeCaseSession();
     const normalized = normalizeSession(raw, SERVER_NOW);
 
-    expect(normalized.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
+    expect(normalized!.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
   });
 
   it('scheduled_end_at is absent from normalized output', () => {
@@ -93,7 +93,7 @@ describe('normalizeSession scheduledEndAt hotspot', () => {
     const raw = rawSnakeCaseSession();
     const normalized = normalizeSession(raw, SERVER_NOW);
 
-    const snakeCaseKeys = Object.keys(normalized).filter((k) => k.includes('_'));
+    const snakeCaseKeys = Object.keys(normalized!).filter((k) => k.includes('_'));
     expect(snakeCaseKeys).toEqual([]);
   });
 });
@@ -111,7 +111,7 @@ describe('normalizeSession wire-format variations', () => {
     };
     const normalized = normalizeSession(raw, SERVER_NOW);
 
-    expect(normalized.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
+    expect(normalized!.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
     expect(SessionSchema.safeParse(normalized).success).toBe(true);
   });
 
@@ -123,7 +123,7 @@ describe('normalizeSession wire-format variations', () => {
     };
     const normalized = normalizeSession(raw, SERVER_NOW);
 
-    expect(normalized.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
+    expect(normalized!.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
     expect(SessionSchema.safeParse(normalized).success).toBe(true);
   });
 
@@ -135,7 +135,7 @@ describe('normalizeSession wire-format variations', () => {
     };
     const normalized = normalizeSession(raw, SERVER_NOW);
 
-    expect(normalized.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
+    expect(normalized!.scheduledEndAt).toBe('2025-06-15T10:00:00.000Z');
     expect(SessionSchema.safeParse(normalized).success).toBe(true);
   });
 });
@@ -149,7 +149,7 @@ describe('normalizeSession overtime contract', () => {
     const raw = rawSnakeCaseSession();
     const normalized = normalizeSession(raw, '2025-06-15T09:30:00.000Z');
 
-    expect(normalized.isOvertime).toBe(false);
+    expect(normalized!.isOvertime).toBe(false);
     expect(SessionSchema.safeParse(normalized).success).toBe(true);
   });
 
@@ -157,7 +157,7 @@ describe('normalizeSession overtime contract', () => {
     const raw = rawSnakeCaseSession();
     const normalized = normalizeSession(raw, '2025-06-15T10:30:00.000Z');
 
-    expect(normalized.isOvertime).toBe(true);
+    expect(normalized!.isOvertime).toBe(true);
     expect(SessionSchema.safeParse(normalized).success).toBe(true);
   });
 
@@ -169,7 +169,7 @@ describe('normalizeSession overtime contract', () => {
     };
     const normalized = normalizeSession(raw, '2025-06-15T10:30:00.000Z');
 
-    expect(normalized.isOvertime).toBe(false);
+    expect(normalized!.isOvertime).toBe(false);
     expect(SessionSchema.safeParse(normalized).success).toBe(true);
   });
 });

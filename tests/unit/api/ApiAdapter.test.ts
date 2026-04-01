@@ -20,7 +20,7 @@ function createTestAdapter() {
 }
 
 describe('ApiAdapter', () => {
-  let adapter;
+  let adapter: ApiAdapter;
 
   beforeEach(() => {
     adapter = createTestAdapter();
@@ -53,9 +53,9 @@ describe('ApiAdapter', () => {
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
         expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('NETWORK');
-        expect(e.code).toBe('API_ERROR');
-        expect(e.message).toBe('Court not found');
+        expect((e as AppError).category).toBe('NETWORK');
+        expect((e as AppError).code).toBe('API_ERROR');
+        expect((e as AppError).message).toBe('Court not found');
       }
     });
 
@@ -67,7 +67,7 @@ describe('ApiAdapter', () => {
         expect.fail('Should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e.message).toBe('API request failed');
+        expect((e as AppError).message).toBe('API request failed');
       }
     });
 
@@ -79,9 +79,9 @@ describe('ApiAdapter', () => {
         expect.fail('Should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e.category).toBe('NETWORK');
-        expect(e.code).toBe('FETCH_FAILED');
-        expect(e.message).toBe('Failed to fetch');
+        expect((e as AppError).category).toBe('NETWORK');
+        expect((e as AppError).code).toBe('FETCH_FAILED');
+        expect((e as AppError).message).toBe('Failed to fetch');
       }
     });
 
@@ -100,8 +100,8 @@ describe('ApiAdapter', () => {
         expect.fail('Should have thrown');
       } catch (e) {
         expect(e).toBe(original); // Same reference
-        expect(e.category).toBe('AUTH');
-        expect(e.code).toBe('UNAUTHORIZED');
+        expect((e as AppError).category).toBe('AUTH');
+        expect((e as AppError).code).toBe('UNAUTHORIZED');
       }
     });
 
@@ -729,20 +729,20 @@ describe('ApiAdapter', () => {
       const data = await adapter.read('tennisData');
 
       // Verify court transformation
-      expect(data.courts).toHaveLength(1);
-      expect(data.courts[0].number).toBe(1);
-      expect(data.courts[0].id).toBe('C1');
-      expect(data.courts[0].session.id).toBe('S1');
-      expect(data.courts[0].session.timeRemaining).toBe(30 * 60 * 1000);
+      expect(data!.courts).toHaveLength(1);
+      expect(data!.courts[0].number).toBe(1);
+      expect(data!.courts[0].id).toBe('C1');
+      expect(data!.courts[0].session!.id).toBe('S1');
+      expect(data!.courts[0].session!.timeRemaining).toBe(30 * 60 * 1000);
 
       // Verify waitlist transformation
-      expect(data.waitlist).toHaveLength(1);
-      expect(data.waitlist[0].type).toBe('singles');
-      expect(data.waitlist[0].waitTime).toBe(15 * 60 * 1000);
+      expect(data!.waitlist).toHaveLength(1);
+      expect(data!.waitlist[0].type).toBe('singles');
+      expect(data!.waitlist[0].waitTime).toBe(15 * 60 * 1000);
 
       // Verify settings passthrough
-      expect(data.settings).toEqual({ courtCount: 12 });
-      expect(data.operatingHours).toEqual([{ day: 1, open: '07:00' }]);
+      expect(data!.settings).toEqual({ courtCount: 12 });
+      expect(data!.operatingHours).toEqual([{ day: 1, open: '07:00' }]);
     });
 
     it('read("TENNIS_DATA") — also delegates to legacy format', async () => {
@@ -754,8 +754,8 @@ describe('ApiAdapter', () => {
 
       const data = await adapter.read('TENNIS_DATA');
 
-      expect(data.courts).toEqual([]);
-      expect(data.waitlist).toEqual([]);
+      expect(data!.courts).toEqual([]);
+      expect(data!.waitlist).toEqual([]);
     });
 
     it('read(unknownKey) — returns null', async () => {

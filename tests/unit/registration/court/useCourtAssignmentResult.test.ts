@@ -19,7 +19,7 @@ function createHarness() {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const ref = React.createRef();
+  const ref = React.createRef<ReturnType<typeof useCourtAssignmentResult>>() as { current: ReturnType<typeof useCourtAssignmentResult> };
   act(() => { root.render(React.createElement(Wrapper, { ref })); });
   return {
     getHook: () => ref.current,

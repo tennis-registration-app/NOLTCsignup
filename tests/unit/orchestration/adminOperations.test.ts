@@ -48,7 +48,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleAdminClearCourtOp(ctx, 3);
+      await handleAdminClearCourtOp(ctx as any, 3);
 
       expect(ctx.clearCourt).toHaveBeenCalledWith(3);
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Court 3 cleared');
@@ -60,7 +60,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleAdminClearCourtOp(ctx, 7);
+      await handleAdminClearCourtOp(ctx as any, 7);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Court 7 cleared');
     });
@@ -78,7 +78,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearAllCourtsOp(ctx);
+      await handleClearAllCourtsOp(ctx as any);
 
       expect(mockConfirm).toHaveBeenCalledWith(
         'Clear all courts? This will make all courts immediately available.'
@@ -97,7 +97,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearAllCourtsOp(ctx);
+      await handleClearAllCourtsOp(ctx as any);
 
       expect(ctx.backend.admin.clearAllCourts).not.toHaveBeenCalled();
     });
@@ -113,7 +113,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearAllCourtsOp(ctx);
+      await handleClearAllCourtsOp(ctx as any);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith(
         'All courts cleared successfully (3 sessions ended)'
@@ -131,7 +131,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearAllCourtsOp(ctx);
+      await handleClearAllCourtsOp(ctx as any);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Server error');
     });
@@ -144,7 +144,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleRemoveFromWaitlistOp(ctx, { name: 'Test Group' });
+      await handleRemoveFromWaitlistOp(ctx as any, { name: 'Test Group' } as any);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Cannot remove: group ID not found');
       expect(ctx.backend.admin.removeFromWaitlist).not.toHaveBeenCalled();
@@ -160,7 +160,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleRemoveFromWaitlistOp(ctx, { id: 'entry-123' });
+      await handleRemoveFromWaitlistOp(ctx as any, { id: 'entry-123' });
 
       expect(ctx.backend.admin.removeFromWaitlist).toHaveBeenCalledWith({
         waitlistEntryId: 'entry-123',
@@ -179,7 +179,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleRemoveFromWaitlistOp(ctx, { id: 'entry-123' });
+      await handleRemoveFromWaitlistOp(ctx as any, { id: 'entry-123' });
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Group removed from waitlist');
     });
@@ -194,7 +194,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleRemoveFromWaitlistOp(ctx, { id: 'entry-123' });
+      await handleRemoveFromWaitlistOp(ctx as any, { id: 'entry-123' });
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Entry not found');
     });
@@ -209,7 +209,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearWaitlistOp(ctx);
+      await handleClearWaitlistOp(ctx as any);
 
       expect(mockConfirm).toHaveBeenCalledWith(
         'Clear the waitlist? This will remove all waiting groups.'
@@ -230,7 +230,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearWaitlistOp(ctx);
+      await handleClearWaitlistOp(ctx as any);
 
       expect(ctx.backend.admin.removeFromWaitlist).toHaveBeenCalledTimes(3);
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Waitlist cleared (3 groups removed)');
@@ -254,7 +254,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearWaitlistOp(ctx);
+      await handleClearWaitlistOp(ctx as any);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Removed 2 groups, 1 failed');
     });
@@ -273,7 +273,7 @@ describe('adminOperations', () => {
         confirm: mockConfirm,
       };
 
-      await handleClearWaitlistOp(ctx);
+      await handleClearWaitlistOp(ctx as any);
 
       expect(ctx.backend.admin.removeFromWaitlist).toHaveBeenCalledTimes(2);
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Removed 2 groups, 1 failed');
@@ -291,7 +291,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleCancelBlockOp(ctx, 'block-456', 5);
+      await handleCancelBlockOp(ctx as any, 'block-456', 5);
 
       expect(ctx.backend.admin.cancelBlock).toHaveBeenCalledWith({
         blockId: 'block-456',
@@ -309,7 +309,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleCancelBlockOp(ctx, 'block-456', 5);
+      await handleCancelBlockOp(ctx as any, 'block-456', 5);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Court 5 unblocked');
     });
@@ -324,7 +324,7 @@ describe('adminOperations', () => {
         showAlertMessage: vi.fn(),
       };
 
-      await handleCancelBlockOp(ctx, 'block-456', 5);
+      await handleCancelBlockOp(ctx as any, 'block-456', 5);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Block not found');
     });
@@ -351,7 +351,7 @@ describe('adminOperations', () => {
         setCourtToMove: vi.fn(),
       };
 
-      await handleMoveCourtOp(ctx, 1, 2);
+      await handleMoveCourtOp(ctx as any, 1, 2);
 
       expect(ctx.backend.commands.moveCourt).toHaveBeenCalledWith({
         fromCourtId: 'court-1',
@@ -371,7 +371,7 @@ describe('adminOperations', () => {
         setCourtToMove: vi.fn(),
       };
 
-      await handleMoveCourtOp(ctx, 1, 2);
+      await handleMoveCourtOp(ctx as any, 1, 2);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Source court not found');
       expect(ctx.setCourtToMove).toHaveBeenCalledWith(null);
@@ -396,7 +396,7 @@ describe('adminOperations', () => {
         setCourtToMove: vi.fn(),
       };
 
-      await handleMoveCourtOp(ctx, 1, 2);
+      await handleMoveCourtOp(ctx as any, 1, 2);
 
       expect(ctx.backend.queries.getBoard).toHaveBeenCalled();
       expect(ctx.backend.commands.moveCourt).toHaveBeenCalledWith({
@@ -420,7 +420,7 @@ describe('adminOperations', () => {
         setCourtToMove: vi.fn(),
       };
 
-      await handleMoveCourtOp(ctx, 1, 2);
+      await handleMoveCourtOp(ctx as any, 1, 2);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Destination court not found');
     });
@@ -444,7 +444,7 @@ describe('adminOperations', () => {
         backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
-      await handleReorderWaitlistOp(ctx, 0, 2);
+      await handleReorderWaitlistOp(ctx as any, 0, 2);
 
       expect(mockReorderWaitlist).toHaveBeenCalledWith({
         entryId: 'entry-1',
@@ -463,7 +463,7 @@ describe('adminOperations', () => {
         backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
-      await handleReorderWaitlistOp(ctx, 0, 1);
+      await handleReorderWaitlistOp(ctx as any, 0, 1);
 
       expect(ctx.setWaitlistMoveFrom).toHaveBeenCalledWith(null);
     });
@@ -480,7 +480,7 @@ describe('adminOperations', () => {
         backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
-      await handleReorderWaitlistOp(ctx, 0, 1);
+      await handleReorderWaitlistOp(ctx as any, 0, 1);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith('Network error');
     });
@@ -495,7 +495,7 @@ describe('adminOperations', () => {
         backend: null,
       };
 
-      await handleReorderWaitlistOp(ctx, 0, 1);
+      await handleReorderWaitlistOp(ctx as any, 0, 1);
 
       expect(ctx.showAlertMessage).toHaveBeenCalledWith(
         'Waitlist reorder requires API — feature temporarily unavailable'
@@ -512,7 +512,7 @@ describe('adminOperations', () => {
         backend: { admin: { reorderWaitlist: mockReorderWaitlist } },
       };
 
-      await handleReorderWaitlistOp(ctx, 0, 1);
+      await handleReorderWaitlistOp(ctx as any, 0, 1);
 
       expect(mockReorderWaitlist).toHaveBeenCalledWith({
         entryId: 'nested-entry-1',

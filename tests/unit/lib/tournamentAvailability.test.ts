@@ -9,7 +9,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 3, isAvailable: false, isBlocked: false, isOvertime: true, isTournament: true },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     // Only non-tournament overtime court should be selectable
     const selectableNumbers = result.selectableCourts.map((sc) => sc.number);
@@ -22,7 +22,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 1, isAvailable: false, isBlocked: false, isOvertime: true, isTournament: false },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     expect(result.selectableCourts.map((sc) => sc.number)).toContain(1);
   });
@@ -32,7 +32,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 1, isAvailable: false, isBlocked: true, isOvertime: true, isTournament: false },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     expect(result.selectableCourts).toHaveLength(0);
   });
@@ -43,7 +43,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 2, isAvailable: false, isBlocked: false, isOvertime: false, isTournament: false },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     // No free courts, so overtime becomes selectable
     expect(result.selectableCourts).toHaveLength(1);
@@ -58,7 +58,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 2, isAvailable: false, isBlocked: false, isOvertime: true, isTournament: false },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     // Only free court is selectable
     expect(result.selectableCourts).toHaveLength(1);
@@ -73,7 +73,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 2, isAvailable: true, isBlocked: false, isOvertime: false, isTournament: false },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     const selectableNumbers = result.selectableCourts.map((sc) => sc.number);
     expect(selectableNumbers).not.toContain(1);
@@ -88,7 +88,7 @@ describe('Tournament — overtimeEligibility', () => {
       { number: 4, isAvailable: false, isBlocked: false, isOvertime: true, isTournament: false },
     ];
 
-    const result = computeRegistrationCourtSelection(courts);
+    const result = computeRegistrationCourtSelection(courts as any);
 
     // Free court is selectable, overtime is not (because free court exists)
     expect(result.selectableCourts).toHaveLength(1);
@@ -103,7 +103,7 @@ describe('Tournament — overtimeEligibility', () => {
   });
 
   it('returns empty arrays when courts is null', () => {
-    const result = computeRegistrationCourtSelection(null);
+    const result = computeRegistrationCourtSelection(null as any);
 
     expect(result.selectableCourts).toHaveLength(0);
   });

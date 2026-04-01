@@ -4,12 +4,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { toast } from '../../../../src/shared/utils/toast';
 
 describe('toast', () => {
-  let events;
-  let handler;
+  let events: CustomEvent[];
+  let handler: (e: Event) => void;
 
   beforeEach(() => {
     events = [];
-    handler = (e) => events.push(e);
+    handler = (e) => events.push(e as CustomEvent<any>);
     window.addEventListener('UI_TOAST', handler);
   });
 

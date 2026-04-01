@@ -6,6 +6,9 @@ vi.mock('../../../src/lib/storage.js', () => ({
 }));
 
 import { readJSON } from '../../../src/lib/storage.js';
+
+// Type assertion: partial mock for testing — readJSON is vi.fn() via vi.mock above
+const readJSONMock = readJSON as unknown as ReturnType<typeof vi.fn>;
 import {
   getCourtBlockStatus,
   getUpcomingBlockWarningFromBlocks,
@@ -14,7 +17,7 @@ import {
 
 describe('getUpcomingBlockWarningFromBlocks', () => {
   // Helper to create a Date offset from base
-  const minutesFromNow = (baseDate, minutes) =>
+  const minutesFromNow = (baseDate: any, minutes: any) =>
     new Date(baseDate.getTime() + minutes * 60 * 1000).toISOString();
 
   // Base time for all tests (fixed for determinism)
@@ -75,9 +78,9 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
 
     expect(result).not.toBeNull();
-    expect(result.type).toBe('blocked');
-    expect(result.minutesUntilBlock).toBe(3); // Exact assertion (deterministic)
-    expect(typeof result.startTime).toBe('string');
+    expect(result!.type).toBe('blocked');
+    expect(result!.minutesUntilBlock).toBe(3); // Exact assertion (deterministic)
+    expect(typeof result!.startTime).toBe('string');
   });
 
   it('returns type:limited when block starts before session ends but after 5 minutes', () => {
@@ -90,11 +93,11 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
 
     expect(result).not.toBeNull();
-    expect(result.type).toBe('limited');
-    expect(result.limitedDuration).toBeGreaterThan(0);
-    expect(result.limitedDuration).toBeLessThanOrEqual(60);
-    expect(result.minutesUntilBlock).toBeGreaterThan(5);
-    expect(typeof result.startTime).toBe('string');
+    expect(result!.type).toBe('limited');
+    expect(result!.limitedDuration).toBeGreaterThan(0);
+    expect(result!.limitedDuration).toBeLessThanOrEqual(60);
+    expect(result!.minutesUntilBlock).toBeGreaterThan(5);
+    expect(typeof result!.startTime).toBe('string');
   });
 
   it('returns null when block starts after session would end', () => {
@@ -125,9 +128,9 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
 
     expect(result).not.toBeNull();
-    expect(result.type).toBe('limited');
+    expect(result!.type).toBe('limited');
     // Should return the earlier block (20 min), not the later one (45 min)
-    expect(result.startTime).toBe(earlierBlock.startTime);
+    expect(result!.startTime).toBe(earlierBlock.startTime);
   });
 
   it('returns limited with duration=0 for any upcoming block', () => {
@@ -139,8 +142,8 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 0, blocks, now);
     expect(result).not.toBeNull();
-    expect(result.type).toBe('limited');
-    expect(result.originalDuration).toBe(0);
+    expect(result!.type).toBe('limited');
+    expect(result!.originalDuration).toBe(0);
   });
 
   it('uses title as reason when available', () => {
@@ -153,7 +156,7 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
       }),
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
-    expect(result.reason).toBe('Lesson Block');
+    expect(result!.reason).toBe('Lesson Block');
   });
 
   it('falls back to reason when no title', () => {
@@ -166,7 +169,7 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
       }),
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
-    expect(result.reason).toBe('Maintenance');
+    expect(result!.reason).toBe('Maintenance');
   });
 
   it('falls back to Reserved when no title or reason', () => {
@@ -179,7 +182,7 @@ describe('getUpcomingBlockWarningFromBlocks', () => {
       }),
     ];
     const result = getUpcomingBlockWarningFromBlocks(1, 60, blocks, now);
-    expect(result.reason).toBe('Reserved');
+    expect(result!.reason).toBe('Reserved');
   });
 
   it('returns null when block already ended', () => {
@@ -202,11 +205,11 @@ describe('getCourtBlockStatus', () => {
   });
 
   const now = new Date('2025-01-15T10:00:00Z');
-  const minutesFromNow = (minutes) =>
+  const minutesFromNow = (minutes: any) =>
     new Date(now.getTime() + minutes * 60 * 1000).toISOString();
 
   it('returns not blocked when no blocks exist', () => {
-    readJSON.mockReturnValue([]);
+    readJSONMock.mockReturnValue([]);
     // We can't control `new Date()` inside the function, but we test the shape
     const result = getCourtBlockStatus(1);
     expect(result.isBlocked).toBe(false);
@@ -215,7 +218,7 @@ describe('getCourtBlockStatus', () => {
   });
 
   it('returns not blocked when blocks are for other courts', () => {
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 5,
         startTime: new Date(Date.now() - 60000).toISOString(),
@@ -230,7 +233,7 @@ describe('getCourtBlockStatus', () => {
 
   it('detects active wet court block with priority', () => {
     const nowMs = Date.now();
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 1,
         isWetCourt: true,
@@ -248,7 +251,7 @@ describe('getCourtBlockStatus', () => {
 
   it('detects active non-wet block', () => {
     const nowMs = Date.now();
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 2,
         isWetCourt: false,
@@ -269,13 +272,13 @@ describe('getCourtBlockStatus', () => {
   });
 
   it('handles readJSON returning null', () => {
-    readJSON.mockReturnValue(null);
+    readJSONMock.mockReturnValue(null);
     const result = getCourtBlockStatus(1);
     expect(result.isBlocked).toBe(false);
   });
 
   it('handles readJSON throwing', () => {
-    readJSON.mockImplementation(() => {
+    readJSONMock.mockImplementation(() => {
       throw new Error('corrupted');
     });
     const result = getCourtBlockStatus(1);
@@ -291,7 +294,7 @@ describe('getUpcomingBlockWarning', () => {
 
   it('delegates to getUpcomingBlockWarningFromBlocks with readJSON data', () => {
     const nowMs = Date.now();
-    readJSON.mockReturnValue([
+    readJSONMock.mockReturnValue([
       {
         courtNumber: 1,
         startTime: new Date(nowMs + 3 * 60000).toISOString(),
@@ -302,11 +305,11 @@ describe('getUpcomingBlockWarning', () => {
     ]);
     const result = getUpcomingBlockWarning(1, 60);
     expect(result).not.toBeNull();
-    expect(result.type).toBe('blocked');
+    expect(result!.type).toBe('blocked');
   });
 
   it('returns null when readJSON throws', () => {
-    readJSON.mockImplementation(() => {
+    readJSONMock.mockImplementation(() => {
       throw new Error('fail');
     });
     const result = getUpcomingBlockWarning(1, 60);
@@ -314,7 +317,7 @@ describe('getUpcomingBlockWarning', () => {
   });
 
   it('returns null when no blocks', () => {
-    readJSON.mockReturnValue([]);
+    readJSONMock.mockReturnValue([]);
     const result = getUpcomingBlockWarning(1, 60);
     expect(result).toBeNull();
   });

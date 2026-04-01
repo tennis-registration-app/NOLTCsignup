@@ -14,7 +14,7 @@ import {
 // --- Legacy functions copied verbatim from BlockTimeline.jsx BEFORE refactor ---
 
 // Copied from BlockTimeline useMemo (lines 106-160)
-function legacyFilterBlocks(blocks, viewMode, selectedDate, filterCourt) {
+function legacyFilterBlocks(blocks: any, viewMode: any, selectedDate: any, filterCourt: any) {
   let filtered = [...blocks];
 
   filtered = filtered.filter((block) => {
@@ -58,8 +58,8 @@ function legacyFilterBlocks(blocks, viewMode, selectedDate, filterCourt) {
 }
 
 // Copied from BlockTimeline inline reduce (lines 184-197)
-function legacyGroupBlocksByDate(blocks) {
-  return blocks.reduce((groups, block) => {
+function legacyGroupBlocksByDate(blocks: any) {
+  return blocks.reduce((groups: any, block: any) => {
     const blockDate = new Date(block.startTime);
     const dateKey = blockDate.toDateString();
 
@@ -76,12 +76,12 @@ function legacyGroupBlocksByDate(blocks) {
 }
 
 // Copied from BlockTimeline inline sort (lines 199-201)
-function legacySortGroupedBlocks(grouped) {
-  return Object.values(grouped).sort((a, b) => a.date.getTime() - b.date.getTime());
+function legacySortGroupedBlocks(grouped: any) {
+  return Object.values(grouped).sort((a: any, b: any) => (a as any).date.getTime() - (b as any).date.getTime());
 }
 
 // Copied from BlockTimeline getBlockStatus (lines 162-169)
-function legacyGetBlockStatus(block, currentTime) {
+function legacyGetBlockStatus(block: any, currentTime: any) {
   const start = new Date(block.startTime);
   const end = new Date(block.endTime);
 
@@ -91,7 +91,7 @@ function legacyGetBlockStatus(block, currentTime) {
 }
 
 // Copied from BlockTimeline getStatusColor (lines 171-182)
-function legacyGetStatusColor(status) {
+function legacyGetStatusColor(status: any) {
   switch (status) {
     case 'active':
       return 'bg-red-50 border-red-300 text-red-900';
@@ -298,30 +298,30 @@ describe('blockTimelinePresenter equivalence', () => {
 
     it('matches legacy: active', () => {
       const during = new Date('2025-06-18T11:00:00');
-      expect(getBlockStatus(block, during)).toBe(legacyGetBlockStatus(block, during));
-      expect(getBlockStatus(block, during)).toBe('active');
+      expect(getBlockStatus(block as any, during)).toBe(legacyGetBlockStatus(block, during));
+      expect(getBlockStatus(block as any, during)).toBe('active');
     });
 
     it('matches legacy: past', () => {
       const after = new Date('2025-06-18T13:00:00');
-      expect(getBlockStatus(block, after)).toBe(legacyGetBlockStatus(block, after));
-      expect(getBlockStatus(block, after)).toBe('past');
+      expect(getBlockStatus(block as any, after)).toBe(legacyGetBlockStatus(block, after));
+      expect(getBlockStatus(block as any, after)).toBe('past');
     });
 
     it('matches legacy: future', () => {
       const before = new Date('2025-06-18T09:00:00');
-      expect(getBlockStatus(block, before)).toBe(legacyGetBlockStatus(block, before));
-      expect(getBlockStatus(block, before)).toBe('future');
+      expect(getBlockStatus(block as any, before)).toBe(legacyGetBlockStatus(block, before));
+      expect(getBlockStatus(block as any, before)).toBe('future');
     });
 
     it('matches legacy: exactly at start time (active)', () => {
       const atStart = new Date('2025-06-18T10:00:00');
-      expect(getBlockStatus(block, atStart)).toBe(legacyGetBlockStatus(block, atStart));
+      expect(getBlockStatus(block as any, atStart)).toBe(legacyGetBlockStatus(block, atStart));
     });
 
     it('matches legacy: exactly at end time (past)', () => {
       const atEnd = new Date('2025-06-18T12:00:00');
-      expect(getBlockStatus(block, atEnd)).toBe(legacyGetBlockStatus(block, atEnd));
+      expect(getBlockStatus(block as any, atEnd)).toBe(legacyGetBlockStatus(block, atEnd));
     });
   });
 

@@ -26,9 +26,9 @@ function createMockDirectory(overrides = {}) {
  * Build a TennisCommands instance with mocked deps.
  * Returns { commands, api, directory } for assertions.
  */
-function setup(opts = {}) {
-  const api = createMockApi(opts.api);
-  const directory = createMockDirectory(opts.directory);
+function setup(opts: Record<string, any> = {}) {
+  const api = createMockApi(opts.api) as any;
+  const directory = createMockDirectory(opts.directory) as any;
   const commands = new TennisCommands(api, directory);
   return { commands, api, directory };
 }
@@ -63,7 +63,7 @@ describe('TennisCommands', () => {
         addBalls: true,
       };
 
-      const result = await commands.assignCourt(input);
+      const result = await commands.assignCourt(input as any);
 
       expect(result.ok).toBe(true);
       expect(api.post).toHaveBeenCalledOnce();
@@ -82,7 +82,7 @@ describe('TennisCommands', () => {
         groupType: 'doubles',
       };
 
-      await commands.joinWaitlist(input);
+      await commands.joinWaitlist(input as any);
 
       expect(api.post).toHaveBeenCalledOnce();
       const [endpoint, payload] = api.post.mock.calls[0];
@@ -398,7 +398,7 @@ describe('TennisCommands', () => {
   describe('resolvePlayersToParticipants', () => {
     it('throws when directory is not set', async () => {
       const api = createMockApi();
-      const commands = new TennisCommands(api, null);
+      const commands = new TennisCommands(api as any, null as any);
 
       await expect(
         commands.resolvePlayersToParticipants([{ name: 'Alice', memberNumber: '1001' }])
@@ -465,7 +465,7 @@ describe('TennisCommands', () => {
       ]);
 
       // "Alex" is contained in "Alexander Hamilton" → partial match
-      expect(result[0].memberId).toBe('M1');
+      expect((result[0] as any).memberId).toBe('M1');
     });
 
     it('matches by last name when exact and partial fail', async () => {
@@ -482,7 +482,7 @@ describe('TennisCommands', () => {
       ]);
 
       // Last name "Hamilton" matches → last-name fallback
-      expect(result[0].memberId).toBe('M1');
+      expect((result[0] as any).memberId).toBe('M1');
     });
 
     it('uses single member on account as fallback', async () => {
@@ -499,7 +499,7 @@ describe('TennisCommands', () => {
         { name: 'Totally Unrelated', memberNumber: '1001' },
       ]);
 
-      expect(result[0].memberId).toBe('M1');
+      expect((result[0] as any).memberId).toBe('M1');
     });
 
     it('throws when member not found and multiple on account', async () => {
@@ -560,7 +560,7 @@ describe('TennisCommands', () => {
         { guest_name: 'Wire Format Guest', isGuest: true },
       ]);
 
-      expect(result[1].guestName).toBe('Wire Format Guest');
+      expect((result[1] as any).guestName).toBe('Wire Format Guest');
     });
 
     it('guest defaults to "Guest" when no name provided', async () => {
@@ -575,7 +575,7 @@ describe('TennisCommands', () => {
         { isGuest: true },
       ]);
 
-      expect(result[1].guestName).toBe('Guest');
+      expect((result[1] as any).guestName).toBe('Guest');
     });
 
     it('throws when all guests and no members', async () => {
@@ -602,7 +602,7 @@ describe('TennisCommands', () => {
       ]);
 
       expect(result[1].kind).toBe('guest');
-      expect(result[1].guestName).toBe('Guest Via Type');
+      expect((result[1] as any).guestName).toBe('Guest Via Type');
     });
 
     it('uses clubNumber as fallback for memberNumber', async () => {
@@ -706,7 +706,7 @@ describe('TennisCommands', () => {
       await commands.assignCourtWithPlayers({
         courtId: 'C1',
         players: [
-          { memberId: 'p1', displayName: 'Alice Smith', memberNumber: '1001' },
+          { memberId: 'p1', displayName: 'Alice Smith', memberNumber: '1001' } as any,
         ],
         groupType: 'singles',
       });
@@ -796,17 +796,17 @@ describe('TennisCommands', () => {
   describe('AppError metadata', () => {
     it('DIRECTORY_NOT_SET — throws AppError with VALIDATION category', async () => {
       const api = createMockApi();
-      const commands = new TennisCommands(api, null);
+      const commands = new TennisCommands(api as any, null as any);
 
       try {
         await commands.resolvePlayersToParticipants([{ name: 'A', memberNumber: '1' }]);
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('VALIDATION');
-        expect(e.code).toBe('DIRECTORY_NOT_SET');
-        expect(e.message).toContain('TennisDirectory not set');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('DIRECTORY_NOT_SET');
+        expect((e as AppError).message).toContain('TennisDirectory not set');
       }
     });
 
@@ -818,10 +818,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('VALIDATION');
-        expect(e.code).toBe('MISSING_MEMBER_NUMBER');
-        expect(e.message).toContain('has no member number');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('MISSING_MEMBER_NUMBER');
+        expect((e as AppError).message).toContain('has no member number');
       }
     });
 
@@ -842,10 +842,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('NOT_FOUND');
-        expect(e.code).toBe('MEMBER_NOT_FOUND');
-        expect(e.message).toContain('Could not find member');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('NOT_FOUND');
+        expect((e as AppError).code).toBe('MEMBER_NOT_FOUND');
+        expect((e as AppError).message).toContain('Could not find member');
       }
     });
 
@@ -859,10 +859,10 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect(e).toBeInstanceOf(Error);
-        expect(e.category).toBe('VALIDATION');
-        expect(e.code).toBe('GUESTS_WITHOUT_MEMBER');
-        expect(e.message).toContain('Cannot register guests without a member');
+        expect((e as AppError)).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('GUESTS_WITHOUT_MEMBER');
+        expect((e as AppError).message).toContain('Cannot register guests without a member');
       }
     });
   });
@@ -874,7 +874,7 @@ describe('TennisCommands', () => {
   describe('setDirectory', () => {
     it('allows setting directory after construction', async () => {
       const api = createMockApi();
-      const commands = new TennisCommands(api, null);
+      const commands = new TennisCommands(api as any, null as any);
 
       // Should throw without directory
       await expect(
@@ -885,7 +885,7 @@ describe('TennisCommands', () => {
       const directory = createMockDirectory({
         getMembersByAccount: vi.fn().mockResolvedValue([ALICE]),
       });
-      commands.setDirectory(directory);
+      commands.setDirectory(directory as any);
 
       // Should now work
       const result = await commands.resolvePlayersToParticipants([

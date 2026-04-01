@@ -22,9 +22,9 @@ describe('attachLegacyStorage', () => {
     });
   });
 
-  describe('window.Tennis.Storage', () => {
-    test('window.Tennis.Storage is set correctly', () => {
-      expect(window.Tennis.Storage).toBe(legacyStorage);
+  describe('(window.Tennis as any).Storage', () => {
+    test('(window.Tennis as any).Storage is set correctly', () => {
+      expect((window.Tennis as any).Storage).toBe(legacyStorage);
     });
   });
 
@@ -69,7 +69,7 @@ describe('attachLegacyStorage', () => {
       const obj = { a: 1, b: { c: 2 } };
       const frozen = legacyStorage.deepFreeze(obj);
       expect(Object.isFrozen(frozen)).toBe(true);
-      expect(Object.isFrozen(frozen.b)).toBe(true);
+      expect(Object.isFrozen((frozen as any).b)).toBe(true);
     });
 
     test('returns primitives unchanged', () => {
@@ -134,8 +134,8 @@ describe('attachLegacyStorage', () => {
       };
       localStorage.setItem(KEYS.DATA, JSON.stringify(stored));
       const data = legacyStorage.readDataSafe();
-      expect(data.courts[0].current.players[0]).toBe('Alice');
-      expect(data.waitingGroups[0].id).toBe(1);
+      expect((data as any).courts[0].current.players[0]).toBe('Alice');
+      expect((data as any).waitingGroups[0].id).toBe(1);
     });
   });
 

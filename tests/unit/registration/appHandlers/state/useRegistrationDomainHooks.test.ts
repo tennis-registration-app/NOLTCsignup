@@ -56,7 +56,7 @@ function makeDeps(overrides = {}) {
 
 // ── Harness ───────────────────────────────────────────────────────────────────
 
-function createHarness(deps) {
+function createHarness(deps: any) {
   const Wrapper = forwardRef(function Wrapper(_p, ref) {
     const hook = useRegistrationDomainHooks(deps);
     useImperativeHandle(ref, () => hook);
@@ -65,7 +65,7 @@ function createHarness(deps) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const ref = React.createRef();
+  const ref = React.createRef<ReturnType<typeof useRegistrationDomainHooks>>() as { current: ReturnType<typeof useRegistrationDomainHooks> };
   act(() => { root.render(React.createElement(Wrapper, { ref })); });
   return {
     getHook: () => ref.current,
@@ -253,7 +253,7 @@ describe('useRegistrationDomainHooks', () => {
         if (k === 'showAlert' || k === 'showSuccess' || k === 'showSuggestions' ||
             k === 'showAddPlayerSuggestions' || k === 'showBlockModal' || k === 'showQRScanner' ||
             k === 'showPriceSuccess' || k === 'gpsFailedPrompt') return; // these are values, not fns
-        expect(typeof hook[k]).toBe('function');
+        expect(typeof (hook as Record<string, any>)[k]).toBe('function');
       });
       unmount();
     });

@@ -13,7 +13,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   getTennisUI: () => ({ toast: vi.fn() }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
  * Create mock deps with sensible defaults.
  * Override specific values as needed per test.
  */
-function createMockDeps(overrides = {}) {
+function createMockDeps(overrides: Record<string, any> = {}) {
   const state = {
     isAssigning: false,
     mobileFlow: false,

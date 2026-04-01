@@ -23,7 +23,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import {
  * Legacy AdminRoute prop mapping — VERBATIM from AdminRoute.jsx
  * This is the source of truth we're testing against.
  */
-function legacyAdminScreenProps(app, handlers) {
+function legacyAdminScreenProps(app: any, handlers: any) {
   // Destructure from app (via grouped admin slice)
   const { state, setters, alert, admin, CONSTANTS } = app;
   const { blockAdmin, waitlistAdmin, adminPriceFeedback } = admin;
@@ -199,7 +199,7 @@ function legacyAdminScreenProps(app, handlers) {
 /**
  * Presenter-based prop mapping
  */
-function presenterAdminScreenProps(app, handlers) {
+function presenterAdminScreenProps(app: any, handlers: any) {
   return {
     ...buildAdminModel(app, handlers),
     ...buildAdminActions(app, handlers),
@@ -209,7 +209,7 @@ function presenterAdminScreenProps(app, handlers) {
 /**
  * Minimal component to capture both hooks' results.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const handlers = useRegistrationHandlers({ app });
 
@@ -226,11 +226,11 @@ function HookCapture({ onResult }) {
  * Helper to render hooks and capture results.
  */
 function captureHookResults() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 
@@ -262,7 +262,7 @@ function captureHookResults() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -270,15 +270,15 @@ function captureHookResults() {
 }
 
 describe('AdminScreen presenter equivalence', () => {
-  let app;
-  let handlers;
-  let legacy;
-  let presenter;
+  let app: any;
+  let handlers: any;
+  let legacy: any;
+  let presenter: any;
 
   beforeAll(async () => {
     const result = await captureHookResults();
-    app = result.app;
-    handlers = result.handlers;
+    app = (result as any).app;
+    handlers = (result as any).handlers;
     legacy = legacyAdminScreenProps(app, handlers);
     presenter = presenterAdminScreenProps(app, handlers);
   });

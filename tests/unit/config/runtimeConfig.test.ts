@@ -20,7 +20,7 @@ import { getRuntimeConfig } from '../../../src/config/runtimeConfig.js';
 describe('getRuntimeConfig', () => {
   describe('dev/test mode (PROD falsy)', () => {
     it('returns config with dev defaults when no env vars set', () => {
-      const config = getRuntimeConfig({ PROD: false });
+      const config = getRuntimeConfig({ PROD: false } as any);
 
       expect(config.SUPABASE_URL).toBeTruthy();
       expect(config.SUPABASE_ANON_KEY).toBeTruthy();
@@ -28,7 +28,7 @@ describe('getRuntimeConfig', () => {
     });
 
     it('returns a frozen object', () => {
-      const config = getRuntimeConfig({ PROD: false });
+      const config = getRuntimeConfig({ PROD: false } as any);
 
       expect(Object.isFrozen(config)).toBe(true);
     });
@@ -39,7 +39,7 @@ describe('getRuntimeConfig', () => {
         VITE_SUPABASE_URL: 'https://test-project.supabase.co',
         VITE_SUPABASE_ANON_KEY: 'test-anon-key-123',
         VITE_BASE_URL: 'https://test-base.example.com',
-      });
+      } as any);
 
       expect(config.SUPABASE_URL).toBe('https://test-project.supabase.co');
       expect(config.SUPABASE_ANON_KEY).toBe('test-anon-key-123');
@@ -47,11 +47,11 @@ describe('getRuntimeConfig', () => {
     });
 
     it('does not throw when env vars are missing', () => {
-      expect(() => getRuntimeConfig({ PROD: false })).not.toThrow();
+      expect(() => getRuntimeConfig({ PROD: false } as any)).not.toThrow();
     });
 
     it('does not throw when PROD is undefined', () => {
-      expect(() => getRuntimeConfig({})).not.toThrow();
+      expect(() => getRuntimeConfig({} as any)).not.toThrow();
     });
   });
 
@@ -60,7 +60,7 @@ describe('getRuntimeConfig', () => {
       // DEV_DEFAULTS contain the real production Supabase credentials for this club.
       // Falling back to them in production is acceptable — the build-time gate in
       // check-env.js (scripts/check-env.js) enforces explicit vars in Vercel builds.
-      expect(() => getRuntimeConfig({ PROD: true })).not.toThrow();
+      expect(() => getRuntimeConfig({ PROD: true } as any)).not.toThrow();
     });
 
     it('does not throw when valid production env vars are set', () => {
@@ -70,7 +70,7 @@ describe('getRuntimeConfig', () => {
           VITE_SUPABASE_URL: 'https://prod-project.supabase.co',
           VITE_SUPABASE_ANON_KEY: 'prod-real-anon-key-xyz',
           VITE_BASE_URL: 'https://prod-base.example.com',
-        })
+        } as any)
       ).not.toThrow();
     });
 
@@ -84,7 +84,7 @@ describe('getRuntimeConfig', () => {
           VITE_SUPABASE_URL: '',
           VITE_SUPABASE_ANON_KEY: '',
           VITE_BASE_URL: '',
-        })
+        } as any)
       ).not.toThrow();
     });
 
@@ -94,7 +94,7 @@ describe('getRuntimeConfig', () => {
         VITE_SUPABASE_URL: 'https://prod.supabase.co',
         VITE_SUPABASE_ANON_KEY: 'prod-key-abc',
         VITE_BASE_URL: 'https://prod-api.example.com',
-      });
+      } as any);
 
       expect(config.SUPABASE_URL).toBe('https://prod.supabase.co');
       expect(config.SUPABASE_ANON_KEY).toBe('prod-key-abc');
@@ -109,7 +109,7 @@ describe('getRuntimeConfig', () => {
         VITE_SUPABASE_URL: 'https://my-project.supabase.co',
         VITE_SUPABASE_ANON_KEY: 'my-key',
         // No VITE_BASE_URL
-      });
+      } as any);
 
       expect(config.BASE_URL).toBe('https://my-project.supabase.co/functions/v1');
     });
@@ -120,7 +120,7 @@ describe('getRuntimeConfig', () => {
         VITE_SUPABASE_URL: 'https://my-project.supabase.co',
         VITE_SUPABASE_ANON_KEY: 'my-key',
         VITE_BASE_URL: 'https://custom-api.example.com',
-      });
+      } as any);
 
       expect(config.BASE_URL).toBe('https://custom-api.example.com');
     });
@@ -128,7 +128,7 @@ describe('getRuntimeConfig', () => {
 
   describe('config shape', () => {
     it('returns exactly three keys', () => {
-      const config = getRuntimeConfig({ PROD: false });
+      const config = getRuntimeConfig({ PROD: false } as any);
 
       expect(Object.keys(config)).toHaveLength(3);
       expect(Object.keys(config).sort()).toEqual(['BASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_URL']);

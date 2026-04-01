@@ -37,18 +37,18 @@ describe('normalizeName', () => {
   });
 
   it('handles numeric input via toString', () => {
-    expect(normalizeName(42)).toBe('42');
+    expect(normalizeName(42 as any)).toBe('42');
   });
 
   it('handles object with no recognized name keys', () => {
     // Falls through to the object itself → toString → "[object Object]"
-    expect(normalizeName({ id: 1 })).toBe('[object object]');
+    expect(normalizeName({ id: 1 } as any)).toBe('[object object]');
   });
 });
 
 // ── findEngagementFor ──────────────────────────────────────────
 describe('findEngagementFor', () => {
-  const makeData = ({ courts = [], waitlist = [] } = {}) => ({ courts, waitlist });
+  const makeData = ({ courts = [], waitlist = [] }: { courts?: any[], waitlist?: any[] } = {}): any => ({ courts, waitlist });
 
   it('returns null when player is not found', () => {
     const data = makeData({

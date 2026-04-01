@@ -10,7 +10,7 @@ import {
 
 // --- Legacy functions copied verbatim from EventCalendarEnhanced.jsx BEFORE refactor ---
 
-function getEventTypeFromReason(reason) {
+function getEventTypeFromReason(reason: any) {
   const reasonUpper = reason.toUpperCase();
   if (reasonUpper.includes('TOURNAMENT')) return 'tournament';
   if (reasonUpper.includes('LEAGUE')) return 'league';
@@ -22,11 +22,11 @@ function getEventTypeFromReason(reason) {
 }
 
 // Copied verbatim from EventCalendarEnhanced.jsx useMemo (lines 142-199)
-function legacyBuildCalendarEvents(blocks, courts) {
+function legacyBuildCalendarEvents(blocks: any, courts: any) {
   const processedEvents = new Map();
 
   // Process API-sourced blocks
-  blocks.forEach((block) => {
+  blocks.forEach((block: any) => {
     if (block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -41,7 +41,7 @@ function legacyBuildCalendarEvents(blocks, courts) {
   });
 
   // Process non-event blocks
-  blocks.forEach((block) => {
+  blocks.forEach((block: any) => {
     if (!block.isEvent) {
       const eventKey = `${block.title || block.reason}-${block.courtNumber}-${block.startTime}`;
 
@@ -63,7 +63,7 @@ function legacyBuildCalendarEvents(blocks, courts) {
   });
 
   // Also check courts data for backward compatibility with active blocks
-  courts.forEach((court, idx) => {
+  courts.forEach((court: any, idx: any) => {
     if (court && court.blocked && court.blocked.isEvent) {
       const eventKey = `${court.blocked.eventDetails?.title || court.blocked.title}-${court.blocked.startTime}`;
 
@@ -81,7 +81,7 @@ function legacyBuildCalendarEvents(blocks, courts) {
 }
 
 // Copied verbatim from EventCalendarEnhanced.jsx useMemo (lines 202-239)
-function legacyFilterCalendarEvents(events, viewMode, selectedDate) {
+function legacyFilterCalendarEvents(events: any, viewMode: any, selectedDate: any) {
   let startDate, endDate;
 
   if (viewMode === 'month') {
@@ -109,7 +109,7 @@ function legacyFilterCalendarEvents(events, viewMode, selectedDate) {
     endDate.setHours(23, 59, 59, 999);
   }
 
-  return events.filter((event) => {
+  return events.filter((event: any) => {
     const eventStart = new Date(event.startTime);
     const eventEnd = new Date(event.endTime);
     return (
@@ -121,7 +121,7 @@ function legacyFilterCalendarEvents(events, viewMode, selectedDate) {
 }
 
 // Copied verbatim from EventCalendarEnhanced.jsx useMemo (lines 382-399)
-function legacyFormatCalendarHeader(viewMode, selectedDate) {
+function legacyFormatCalendarHeader(viewMode: any, selectedDate: any) {
   if (viewMode === 'month') {
     return selectedDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   } else if (viewMode === 'week') {
@@ -215,7 +215,7 @@ const fixtureBlocks = [
   },
 ];
 
-const fixtureCourts = [
+const fixtureCourts: any[] = [
   { id: 'court-1', blocked: null },
   { id: 'court-2', blocked: null },
   {

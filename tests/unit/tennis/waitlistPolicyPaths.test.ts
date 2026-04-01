@@ -14,11 +14,11 @@ import {
 } from '../../../src/tennis/domain/waitlist.js';
 
 // ============================================================
-// Setup: window.Tennis.Config used by estimateWaitForPositions
+// Setup: (window.Tennis as any).Config used by estimateWaitForPositions
 // ============================================================
 beforeAll(() => {
   window.Tennis = window.Tennis || {};
-  window.Tennis.Config = {
+  (window.Tennis as any).Config = {
     Courts: { TOTAL_COUNT: 12 },
     Timing: { AVG_GAME: 75 },
   };
@@ -28,10 +28,10 @@ beforeAll(() => {
 // Helpers
 // ============================================================
 const T = new Date('2025-06-15T14:00:00Z');
-const mins = (n) => new Date(T.getTime() + n * 60000);
+const mins = (n: any) => new Date(T.getTime() + n * 60000);
 
 /** Build a 12-court array: all occupied far in the future, with overrides. */
-function makeCourts(overrides = {}) {
+function makeCourts(overrides: Record<number, any> = {}) {
   return Array.from({ length: 12 }, (_, i) => {
     const n = i + 1;
     if (n in overrides) return overrides[n];
@@ -39,7 +39,7 @@ function makeCourts(overrides = {}) {
   });
 }
 
-const group = (playerCount, deferred = false) => ({
+const group = (playerCount: any, deferred = false) => ({
   players: Array.from({ length: playerCount }, (_, i) => ({ name: `P${i}` })),
   deferred,
 });
@@ -152,8 +152,8 @@ describe('estimateWaitForPositions', () => {
 
   it('positions beyond court count wrap around with avg game time', () => {
     // Temporarily set TOTAL_COUNT to 2 so only 2 courts exist
-    const original = window.Tennis.Config.Courts.TOTAL_COUNT;
-    window.Tennis.Config.Courts.TOTAL_COUNT = 2;
+    const original = (window.Tennis as any).Config.Courts.TOTAL_COUNT;
+    (window.Tennis as any).Config.Courts.TOTAL_COUNT = 2;
     try {
       const result = estimateWaitForPositions({
         positions: [1, 2, 3],
@@ -166,7 +166,7 @@ describe('estimateWaitForPositions', () => {
       // Position 3 waits for one of the 2 free courts to finish a 60-min game
       expect(result[2]).toBe(60);
     } finally {
-      window.Tennis.Config.Courts.TOTAL_COUNT = original;
+      (window.Tennis as any).Config.Courts.TOTAL_COUNT = original;
     }
   });
 
@@ -175,7 +175,7 @@ describe('estimateWaitForPositions', () => {
       positions: [1, 2],
       currentFreeCount: 1,
       nextFreeTimes: [],
-      // avgGameMinutes omitted — defaults to window.Tennis.Config.Timing.AVG_GAME (75)
+      // avgGameMinutes omitted — defaults to (window.Tennis as any).Config.Timing.AVG_GAME (75)
     });
     expect(result[0]).toBe(0);
     // Position 2 wraps around with default 75 min
@@ -200,7 +200,7 @@ describe('estimateWaitForPositions', () => {
     const result = estimateWaitForPositions({
       positions: [1],
       currentFreeCount: 0,
-      nextFreeTimes: [null, new Date(now + 20 * 60000), null],
+      nextFreeTimes: [null as any, new Date(now + 20 * 60000), null as any],
       avgGameMinutes: 60,
     });
     // null entries → coerced to 'now' in the code
@@ -586,9 +586,9 @@ describe('simulateWaitlistEstimates', () => {
   describe('input normalization', () => {
     it('null courts/blocks/waitlist treated as empty arrays', () => {
       const result = simulateWaitlistEstimates({
-        courts: null,
+        courts: null as any,
         waitlist: [group(2)],
-        blocks: null,
+        blocks: null as any,
         now: T,
         avgGameMinutes: 75,
       });

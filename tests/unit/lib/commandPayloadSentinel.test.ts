@@ -40,15 +40,15 @@ import {
 // ============================================================
 // Helpers
 // ============================================================
-const sorted = (obj) => Object.keys(obj).sort();
+const sorted = (obj: any) => Object.keys(obj).sort();
 
 // ============================================================
 // wire.js — toAssignCourtPayload
 // ============================================================
 describe('toAssignCourtPayload', () => {
-  const MEMBER_PARTICIPANT = { kind: 'member', memberId: 'M100', accountId: 'A100' };
+  const MEMBER_PARTICIPANT = { kind: 'member' as const, memberId: 'M100', accountId: 'A100' };
   const GUEST_PARTICIPANT = {
-    kind: 'guest',
+    kind: 'guest' as const,
     guestName: 'Jane Doe',
     accountId: 'A200',
     chargedToAccountId: 'A100',
@@ -79,7 +79,7 @@ describe('toAssignCourtPayload', () => {
     });
     expect(payload.court_id).toBe('uuid-1');
     expect(payload.session_type).toBe('singles');
-    expect(payload.participants[0]).toEqual({
+    expect((payload.participants as any[])[0]).toEqual({
       type: 'member',
       member_id: 'M100',
       account_id: 'A100',
@@ -92,7 +92,7 @@ describe('toAssignCourtPayload', () => {
       groupType: 'doubles',
       participants: [GUEST_PARTICIPANT],
     });
-    expect(payload.participants[0]).toEqual({
+    expect((payload.participants as any[])[0]).toEqual({
       type: 'guest',
       guest_name: 'Jane Doe',
       account_id: 'A200',
@@ -165,7 +165,7 @@ describe('toEndSessionPayload', () => {
 // wire.js — toJoinWaitlistPayload
 // ============================================================
 describe('toJoinWaitlistPayload', () => {
-  const MEMBER = { kind: 'member', memberId: 'M200', accountId: 'A200' };
+  const MEMBER = { kind: 'member' as const, memberId: 'M200', accountId: 'A200' };
 
   it('has frozen key set (base — no geo, no deferred)', () => {
     const payload = toJoinWaitlistPayload({
@@ -181,7 +181,7 @@ describe('toJoinWaitlistPayload', () => {
       participants: [MEMBER],
     });
     expect(payload.group_type).toBe('singles');
-    expect(payload.participants[0]).toEqual({
+    expect((payload.participants as any[])[0]).toEqual({
       type: 'member',
       member_id: 'M200',
       account_id: 'A200',
@@ -361,7 +361,7 @@ describe('toMoveCourtPayload (commands)', () => {
     const payload = toMoveCourtPayload({
       fromCourtId: 'uuid-from',
       toCourtId: 'uuid-to',
-    });
+    } as any);
     expect(sorted(payload)).toEqual(['from_court_id', 'to_court_id']);
   });
 
@@ -369,7 +369,7 @@ describe('toMoveCourtPayload (commands)', () => {
     const payload = toMoveCourtPayload({
       fromCourtId: 'uuid-from',
       toCourtId: 'uuid-to',
-    });
+    } as any);
     expect(payload.from_court_id).toBe('uuid-from');
     expect(payload.to_court_id).toBe('uuid-to');
   });
@@ -380,7 +380,7 @@ describe('toMoveCourtPayload (commands)', () => {
 // ============================================================
 describe('toClearWaitlistPayload (commands)', () => {
   it('has frozen key set (empty payload)', () => {
-    const payload = toClearWaitlistPayload({});
+    const payload = toClearWaitlistPayload({} as any);
     expect(sorted(payload)).toEqual([]);
     expect(payload).toEqual({});
   });
@@ -397,7 +397,7 @@ describe('toPurchaseBallsPayload (commands)', () => {
       splitBalls: false,
       splitAccountIds: null,
       idempotencyKey: 'pb-sess-uuid-1-1234',
-    });
+    } as any);
     expect(sorted(payload)).toEqual([
       'account_id',
       'idempotency_key',
@@ -414,7 +414,7 @@ describe('toPurchaseBallsPayload (commands)', () => {
       splitBalls: true,
       splitAccountIds: ['acct-uuid-2', 'acct-uuid-3'],
       idempotencyKey: 'pb-key-1',
-    });
+    } as any);
     expect(payload.session_id).toBe('sess-uuid-1');
     expect(payload.account_id).toBe('acct-uuid-1');
     expect(payload.split_balls).toBe(true);

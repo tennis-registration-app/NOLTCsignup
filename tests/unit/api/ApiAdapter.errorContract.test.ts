@@ -31,7 +31,7 @@ function stubFetchJsonFailure(message = 'Unexpected token < in JSON') {
 }
 
 describe('ApiAdapter public error contract', () => {
-  let adapter;
+  let adapter: ApiAdapter;
 
   beforeEach(() => {
     adapter = createTestAdapter();

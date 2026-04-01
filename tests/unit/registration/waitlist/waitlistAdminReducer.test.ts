@@ -5,7 +5,7 @@ import {
 
 describe('waitlistAdminReducer', () => {
   test('returns initial state for unknown action', () => {
-    const result = waitlistAdminReducer(initialWaitlistAdminState, { type: 'UNKNOWN' });
+    const result = waitlistAdminReducer(initialWaitlistAdminState, { type: 'UNKNOWN' } as any);
     expect(result).toEqual(initialWaitlistAdminState);
   });
 

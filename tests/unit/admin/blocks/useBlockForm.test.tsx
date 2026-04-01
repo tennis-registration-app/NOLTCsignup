@@ -37,7 +37,7 @@ function createHarness(props = {}) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
-  const ref = React.createRef();
+  const ref = React.createRef<ReturnType<typeof useBlockForm>>() as { current: ReturnType<typeof useBlockForm> };
 
   act(() => {
     root.render(<Wrapper ref={ref} />);
@@ -55,7 +55,7 @@ function createHarness(props = {}) {
 }
 
 /** Helper: set fields to make a valid form (courts + reason + valid times) */
-function makeValid(h) {
+function makeValid(h: ReturnType<typeof createHarness>) {
   act(() => {
     h.hook.setSelectedCourts([1, 2]);
     h.hook.setBlockReason('Maintenance');
@@ -206,8 +206,8 @@ describe('edit mode initialization via initialEditingBlock', () => {
   it('stores originalValues for change detection', () => {
     const h = createHarness({ initialEditingBlock: BLOCK });
     expect(h.hook.originalValues).not.toBeNull();
-    expect(h.hook.originalValues.courts).toEqual([5]);
-    expect(h.hook.originalValues.reason).toBe('Lesson');
+    expect(h.hook.originalValues!.courts).toEqual([5]);
+    expect(h.hook.originalValues!.reason).toBe('Lesson');
     h.cleanup();
   });
 
@@ -298,7 +298,7 @@ describe('field updates', () => {
   it('setRecurrence updates recurrence', () => {
     const h = createHarness();
     const rec = { frequency: 'weekly', count: 4 };
-    act(() => h.hook.setRecurrence(rec));
+    act(() => h.hook.setRecurrence(rec as any));
     expect(h.hook.recurrence).toEqual(rec);
     h.cleanup();
   });
@@ -467,7 +467,7 @@ describe('resetForm', () => {
     makeValid(h);
     // Also set some optional fields
     act(() => {
-      h.hook.setRecurrence({ freq: 'weekly' });
+      h.hook.setRecurrence({ freq: 'weekly' } as any);
       h.hook.setEditingBlock({ id: 'block-1' });
       h.hook.setEventTitle('My Event');
       h.hook.setIsEvent(true);
@@ -563,10 +563,10 @@ describe('populateFromBlock (edit)', () => {
     const h = createHarness();
     act(() => h.hook.populateFromBlock(BLOCK));
     expect(h.hook.originalValues).not.toBeNull();
-    expect(h.hook.originalValues.courts).toEqual([3]);
-    expect(h.hook.originalValues.reason).toBe('Tournament');
-    expect(h.hook.originalValues.title).toBe('Club Open');
-    expect(h.hook.originalValues.eventType).toBe('tournament');
+    expect(h.hook.originalValues!.courts).toEqual([3]);
+    expect(h.hook.originalValues!.reason).toBe('Tournament');
+    expect(h.hook.originalValues!.title).toBe('Club Open');
+    expect(h.hook.originalValues!.eventType).toBe('tournament');
     h.cleanup();
   });
 });

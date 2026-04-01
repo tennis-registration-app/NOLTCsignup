@@ -39,8 +39,8 @@ describe('roster', () => {
     });
 
     it('handles null/undefined', () => {
-      expect(normalizeName(null)).toBe('');
-      expect(normalizeName(undefined)).toBe('');
+      expect(normalizeName(null as any)).toBe('');
+      expect(normalizeName(undefined as any)).toBe('');
     });
 
     it('handles accented characters', () => {
@@ -227,9 +227,9 @@ describe('roster', () => {
 
       expect(result.assigned).toBe(2);
       expect(result.total).toBe(2);
-      expect(roster[0].memberId).toBeDefined();
-      expect(roster[1].memberId).toBeDefined();
-      expect(roster[0].memberId).toMatch(/^m_/);
+      expect((roster[0] as any).memberId).toBeDefined();
+      expect((roster[1] as any).memberId).toBeDefined();
+      expect((roster[0] as any).memberId).toMatch(/^m_/);
     });
 
     it('is idempotent - does not reassign existing memberIds', () => {
@@ -238,7 +238,7 @@ describe('roster', () => {
       const result = ensureMemberIds(roster);
 
       expect(result.assigned).toBe(0);
-      expect(roster[0].memberId).toBe('existing_id');
+      expect((roster[0] as any).memberId).toBe('existing_id');
     });
 
     it('persists ID map to localStorage', () => {
@@ -246,7 +246,7 @@ describe('roster', () => {
 
       ensureMemberIds(roster);
 
-      const stored = JSON.parse(localStorage.getItem('tennisMemberIdMap'));
+      const stored = JSON.parse(localStorage.getItem('tennisMemberIdMap')!);
       expect(stored).toBeDefined();
       expect(Object.keys(stored).length).toBe(1);
     });
@@ -260,7 +260,7 @@ describe('roster', () => {
       ensureMemberIds(roster2);
 
       // Same name should produce same deterministic hash
-      expect(roster1[0].memberId).toBe(roster2[0].memberId);
+      expect((roster1[0] as any).memberId).toBe((roster2[0] as any).memberId);
     });
   });
 
@@ -379,7 +379,7 @@ describe('roster', () => {
   });
 
   describe('window attachment', () => {
-    it('attaches to window.Tennis.Domain.roster', async () => {
+    it('attaches to (window.Tennis as any).Domain.roster', async () => {
       // Clear and reimport
       delete window.Tennis;
       vi.resetModules();
@@ -387,13 +387,13 @@ describe('roster', () => {
       await import('../../../src/tennis/domain/roster.js');
 
       expect(window.Tennis).toBeDefined();
-      expect(window.Tennis.Domain).toBeDefined();
-      expect(window.Tennis.Domain.roster).toBeDefined();
-      expect(typeof window.Tennis.Domain.roster.checkGroupConflicts).toBe('function');
-      expect(typeof window.Tennis.Domain.roster.normalizeName).toBe('function');
-      expect(typeof window.Tennis.Domain.roster.findEngagementFor).toBe('function');
-      expect(window.Tennis.Domain.roster._internals).toBeDefined();
-      expect(typeof window.Tennis.Domain.roster._internals.normName).toBe('function');
+      expect((window.Tennis as any).Domain).toBeDefined();
+      expect((window.Tennis as any).Domain.roster).toBeDefined();
+      expect(typeof (window.Tennis as any).Domain.roster.checkGroupConflicts).toBe('function');
+      expect(typeof (window.Tennis as any).Domain.roster.normalizeName).toBe('function');
+      expect(typeof (window.Tennis as any).Domain.roster.findEngagementFor).toBe('function');
+      expect((window.Tennis as any).Domain.roster._internals).toBeDefined();
+      expect(typeof (window.Tennis as any).Domain.roster._internals.normName).toBe('function');
     });
   });
 });

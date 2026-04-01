@@ -20,22 +20,22 @@ function makeCourtSelection({
   selectable = 0,
   fullTime = 0,
   selectableCourts = [],
-} = {}) {
+}: { selectable?: number, fullTime?: number, selectableCourts?: any[] } = {}): any {
   return {
-    countSelectableForGroup: (_count) => selectable,
-    countFullTimeForGroup: (_count) => fullTime,
+    countSelectableForGroup: (_count: any) => selectable,
+    countFullTimeForGroup: (_count: any) => fullTime,
     selectableCourts,
   };
 }
 
 // Helper: build a waitlist entry
-function makeEntry(id, players, opts = {}) {
+function makeEntry(id: any, players: any, opts: any = {}) {
   return {
     id,
     position: opts.position ?? id,
     group: {
       type: "singles",
-      players: players.map((name) => ({ displayName: name, name })),
+      players: players.map((name: any) => ({ displayName: name, name })),
     },
     joinedAt: new Date().toISOString(),
     minutesWaiting: 5,
@@ -43,7 +43,7 @@ function makeEntry(id, players, opts = {}) {
   };
 }
 
-let unmount;
+let unmount: (() => void) | null;
 afterEach(() => {
   if (unmount) {
     unmount();
@@ -52,7 +52,7 @@ afterEach(() => {
 });
 
 // Helper: render hook and store unmount for cleanup
-async function render(data, opts = {}) {
+async function render(data: any, opts: any = {}) {
   const out = await renderHandlerHook(() =>
     useRegistrationDerived({
       data,
@@ -61,7 +61,7 @@ async function render(data, opts = {}) {
     })
   );
   unmount = out.unmount;
-  return out.result;
+  return out.result as unknown as { current: ReturnType<typeof useRegistrationDerived> };
 }
 
 describe("empty waitlist", () => {
@@ -71,12 +71,12 @@ describe("empty waitlist", () => {
       courtSelection: makeCourtSelection({ selectable: 2, selectableCourts: [1, 2] }),
     });
 
-    expect(result.current.firstWaitlistEntry).toBeNull();
-    expect(result.current.secondWaitlistEntry).toBeNull();
-    expect(result.current.canFirstGroupPlay).toBe(false);
-    expect(result.current.canSecondGroupPlay).toBe(false);
-    expect(result.current.canPassThroughGroupPlay).toBe(false);
-    expect(result.current.passThroughEntry).toBeNull();
+    expect(result.current!.firstWaitlistEntry).toBeNull();
+    expect(result.current!.secondWaitlistEntry).toBeNull();
+    expect(result.current!.canFirstGroupPlay).toBe(false);
+    expect(result.current!.canSecondGroupPlay).toBe(false);
+    expect(result.current!.canPassThroughGroupPlay).toBe(false);
+    expect(result.current!.passThroughEntry).toBeNull();
   });
 });
 
@@ -87,9 +87,9 @@ describe("canFirstGroupPlay", () => {
       courtSelection: makeCourtSelection({ selectable: 1, selectableCourts: [1] }),
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(true);
-    expect(result.current.firstWaitlistEntry).not.toBeNull();
-    expect(result.current.firstWaitlistEntry.id).toBe(1);
+    expect(result.current!.canFirstGroupPlay).toBe(true);
+    expect(result.current!.firstWaitlistEntry).not.toBeNull();
+    expect(result.current!.firstWaitlistEntry!.id).toBe(1);
   });
 
   it("is false when courtSelection returns 0 selectable courts", async () => {
@@ -98,7 +98,7 @@ describe("canFirstGroupPlay", () => {
       courtSelection: makeCourtSelection({ selectable: 0, selectableCourts: [] }),
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(false);
+    expect(result.current!.canFirstGroupPlay).toBe(false);
   });
 
   it("is false when courtSelection is null", async () => {
@@ -107,7 +107,7 @@ describe("canFirstGroupPlay", () => {
       courtSelection: null,
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(false);
+    expect(result.current!.canFirstGroupPlay).toBe(false);
   });
 });
 
@@ -118,9 +118,9 @@ describe("canSecondGroupPlay", () => {
       courtSelection: makeCourtSelection({ selectable: 2, selectableCourts: [1, 2] }),
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(true);
-    expect(result.current.canSecondGroupPlay).toBe(true);
-    expect(result.current.secondWaitlistEntry.id).toBe(2);
+    expect(result.current!.canFirstGroupPlay).toBe(true);
+    expect(result.current!.canSecondGroupPlay).toBe(true);
+    expect(result.current!.secondWaitlistEntry!.id).toBe(2);
   });
 
   it("is false when only 1 court available (first plays, second waits)", async () => {
@@ -129,8 +129,8 @@ describe("canSecondGroupPlay", () => {
       courtSelection: makeCourtSelection({ selectable: 1, selectableCourts: [1] }),
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(true);
-    expect(result.current.canSecondGroupPlay).toBe(false);
+    expect(result.current!.canFirstGroupPlay).toBe(true);
+    expect(result.current!.canSecondGroupPlay).toBe(false);
   });
 
   it("returns null secondWaitlistEntry when there is only one waiting group", async () => {
@@ -139,8 +139,8 @@ describe("canSecondGroupPlay", () => {
       courtSelection: makeCourtSelection({ selectable: 2, selectableCourts: [1, 2] }),
     });
 
-    expect(result.current.secondWaitlistEntry).toBeNull();
-    expect(result.current.canSecondGroupPlay).toBe(false);
+    expect(result.current!.secondWaitlistEntry).toBeNull();
+    expect(result.current!.canSecondGroupPlay).toBe(false);
   });
 });
 
@@ -156,7 +156,7 @@ describe("deferred groups", () => {
       }),
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(true);
+    expect(result.current!.canFirstGroupPlay).toBe(true);
   });
 
   it("uses countSelectableForGroup for non-deferred first group", async () => {
@@ -169,7 +169,7 @@ describe("deferred groups", () => {
       }),
     });
 
-    expect(result.current.canFirstGroupPlay).toBe(false);
+    expect(result.current!.canFirstGroupPlay).toBe(false);
   });
 });
 
@@ -180,8 +180,8 @@ describe("passThroughEntry", () => {
       courtSelection: makeCourtSelection({ selectable: 0, selectableCourts: [] }),
     });
 
-    expect(result.current.canPassThroughGroupPlay).toBe(false);
-    expect(result.current.passThroughEntry).toBeNull();
+    expect(result.current!.canPassThroughGroupPlay).toBe(false);
+    expect(result.current!.passThroughEntry).toBeNull();
   });
 
   it("is null when selectableCourts list is empty even if count>0", async () => {
@@ -191,19 +191,19 @@ describe("passThroughEntry", () => {
       courtSelection: makeCourtSelection({ selectable: 0, selectableCourts: [] }),
     });
 
-    expect(result.current.passThroughEntry).toBeNull();
+    expect(result.current!.passThroughEntry).toBeNull();
   });
 });
 
 describe("isMobileView pass-through", () => {
   it("returns isMobileView true when passed true", async () => {
     const result = await render({ waitlist: [], courtSelection: null }, { isMobileView: true });
-    expect(result.current.isMobileView).toBe(true);
+    expect(result.current!.isMobileView).toBe(true);
   });
 
   it("returns isMobileView false when passed false", async () => {
     const result = await render({ waitlist: [], courtSelection: null }, { isMobileView: false });
-    expect(result.current.isMobileView).toBe(false);
+    expect(result.current!.isMobileView).toBe(false);
   });
 });
 
@@ -213,7 +213,7 @@ describe("firstWaitlistEntryData alias", () => {
       waitlist: [makeEntry(5, ["Eve"])],
       courtSelection: makeCourtSelection({ selectable: 1, selectableCourts: [1] }),
     });
-    expect(result.current.firstWaitlistEntryData).toEqual(result.current.firstWaitlistEntry);
+    expect(result.current!.firstWaitlistEntryData).toEqual(result.current!.firstWaitlistEntry);
   });
 
   it("secondWaitlistEntryData equals secondWaitlistEntry", async () => {
@@ -221,6 +221,6 @@ describe("firstWaitlistEntryData alias", () => {
       waitlist: [makeEntry(1, ["A"]), makeEntry(2, ["B"])],
       courtSelection: makeCourtSelection({ selectable: 2, selectableCourts: [1, 2] }),
     });
-    expect(result.current.secondWaitlistEntryData).toEqual(result.current.secondWaitlistEntry);
+    expect(result.current!.secondWaitlistEntryData).toEqual(result.current!.secondWaitlistEntry);
   });
 });

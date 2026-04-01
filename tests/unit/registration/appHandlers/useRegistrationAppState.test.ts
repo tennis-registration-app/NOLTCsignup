@@ -24,7 +24,7 @@ vi.mock('../../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -102,7 +102,7 @@ import { useRegistrationAppState } from '../../../../src/registration/appHandler
  * Since renderHook isn't available, we use a component
  * that captures the hook result via callback.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const result = useRegistrationAppState({ isMobileView: false });
 
   // Capture immediately during first render
@@ -123,7 +123,7 @@ function captureHookResult() {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 
@@ -155,7 +155,7 @@ function captureHookResult() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -163,7 +163,7 @@ function captureHookResult() {
 }
 
 describe('useRegistrationAppState contract', () => {
-  let result;
+  let result: any;
 
   beforeAll(async () => {
     // Capture the hook result once for all tests
@@ -210,8 +210,8 @@ describe('useRegistrationAppState contract', () => {
   });
 
   it('type map is stable', () => {
-    const typeMap = {};
-    for (const [key, val] of Object.entries(result)) {
+    const typeMap: Record<string, string> = {};
+    for (const [key, val] of Object.entries(result as Record<string, unknown>)) {
       if (val === null) typeMap[key] = 'null';
       else if (Array.isArray(val)) typeMap[key] = 'array';
       else if (typeof val === 'function') typeMap[key] = 'function';

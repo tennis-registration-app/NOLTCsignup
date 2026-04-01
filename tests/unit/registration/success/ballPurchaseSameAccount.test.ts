@@ -32,9 +32,9 @@ vi.mock('../../../../src/platform/prefsStorage.js', () => ({
 function setupSameAccountGroup() {
   const onPurchaseBalls = vi.fn().mockResolvedValue({ ok: true });
   const onLookupMemberAccount = vi.fn();
-  const getLastFourDigits = (n) => (n ? String(n).slice(-4) : '****');
+  const getLastFourDigits = (n: any) => (n ? String(n).slice(-4) : '****');
 
-  const currentGroup = [
+  const currentGroup: any[] = [
     { name: 'Alice Smith', memberNumber: '1008', accountId: 'acct-1008', isGuest: false },
     { name: 'Bob Smith', memberNumber: '1008', accountId: 'acct-1008', isGuest: false },
     { name: 'Carol Jones', memberNumber: '1002', accountId: 'acct-1002', isGuest: false },
@@ -146,13 +146,13 @@ describe('ball purchase — idempotency key uniqueness', () => {
 
     // Payload should pass through the duplicates unchanged
     const payload = toPurchaseBallsPayload(command);
-    expect(payload.split_account_ids).toEqual(['acct-1008', 'acct-1008', 'acct-1002']);
+    expect((payload as any).split_account_ids).toEqual(['acct-1008', 'acct-1008', 'acct-1002']);
 
     // The backend RPC will generate per-index keys like:
     // ${base}-split-0, ${base}-split-1, ${base}-split-2
     // These are unique even when accountId repeats.
     const base = payload.idempotency_key;
-    const keys = payload.split_account_ids.map((_, i) => `${base}-split-${i}`);
+    const keys = (payload as any).split_account_ids.map((_: any, i: any) => `${base}-split-${i}`);
     const uniqueKeys = new Set(keys);
     expect(uniqueKeys.size).toBe(3);
   });

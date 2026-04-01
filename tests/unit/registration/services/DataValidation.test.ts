@@ -44,7 +44,7 @@ describe('DataValidation (services).isValidCourtNumber', () => {
   });
 
   it('returns false for string', () => {
-    expect(DataValidation.isValidCourtNumber('5')).toBe(false);
+    expect(DataValidation.isValidCourtNumber('5' as any)).toBe(false);
   });
 });
 
@@ -76,7 +76,7 @@ describe('DataValidation (services).isValidPlayer', () => {
 
   it('invalid: null player throws (no optional chaining)', () => {
     // services version accesses player.id directly — null throws
-    expect(() => DataValidation.isValidPlayer(null)).toThrow();
+    expect(() => DataValidation.isValidPlayer(null as any)).toThrow();
   });
 });
 

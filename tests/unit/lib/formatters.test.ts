@@ -194,8 +194,8 @@ describe('formatTimeRemaining', () => {
 // ── formatDuration ─────────────────────────────────────────────
 describe('formatDuration (formatters.js)', () => {
   it('returns empty string for non-number', () => {
-    expect(formatDuration('abc')).toBe('');
-    expect(formatDuration(null)).toBe('');
+    expect(formatDuration('abc' as any)).toBe('');
+    expect(formatDuration(null as any)).toBe('');
     expect(formatDuration(NaN)).toBe('');
   });
 
@@ -253,8 +253,8 @@ describe('formatPhone', () => {
 describe('formatName', () => {
   it('returns empty string for falsy/non-string', () => {
     expect(formatName('')).toBe('');
-    expect(formatName(null)).toBe('');
-    expect(formatName(123)).toBe('');
+    expect(formatName(null as any)).toBe('');
+    expect(formatName(123 as any)).toBe('');
   });
 
   it('capitalizes first letter of each word', () => {
@@ -296,7 +296,7 @@ describe('truncate', () => {
 // ── formatCurrency ─────────────────────────────────────────────
 describe('formatCurrency', () => {
   it('returns empty string for non-number', () => {
-    expect(formatCurrency('abc')).toBe('');
+    expect(formatCurrency('abc' as any)).toBe('');
     expect(formatCurrency(NaN)).toBe('');
   });
 
@@ -316,7 +316,7 @@ describe('formatCurrency', () => {
 // ── formatNumber ───────────────────────────────────────────────
 describe('formatNumber', () => {
   it('returns empty string for non-number', () => {
-    expect(formatNumber('abc')).toBe('');
+    expect(formatNumber('abc' as any)).toBe('');
     expect(formatNumber(NaN)).toBe('');
   });
 
@@ -332,7 +332,7 @@ describe('formatNumber', () => {
 // ── formatCourt ────────────────────────────────────────────────
 describe('formatCourt', () => {
   it('returns empty string for non-number', () => {
-    expect(formatCourt('a')).toBe('');
+    expect(formatCourt('a' as any)).toBe('');
   });
 
   it('returns empty string for court < 1', () => {
@@ -348,7 +348,7 @@ describe('formatCourt', () => {
 // ── formatCourts ───────────────────────────────────────────────
 describe('formatCourts', () => {
   it('returns empty string for non-array', () => {
-    expect(formatCourts(null)).toBe('');
+    expect(formatCourts(null as any)).toBe('');
   });
 
   it('returns empty string for empty array', () => {
@@ -367,7 +367,7 @@ describe('formatCourts', () => {
 // ── formatPlayerNames ──────────────────────────────────────────
 describe('formatPlayerNames', () => {
   it('returns empty string for non-array', () => {
-    expect(formatPlayerNames(null)).toBe('');
+    expect(formatPlayerNames(null as any)).toBe('');
   });
 
   it('returns empty string for empty array', () => {
@@ -393,6 +393,6 @@ describe('formatPlayerNames', () => {
   });
 
   it('filters out falsy player entries', () => {
-    expect(formatPlayerNames([null, 'Alice', undefined, 'Bob'])).toBe('Alice, Bob');
+    expect(formatPlayerNames([null, 'Alice', undefined, 'Bob'] as any[])).toBe('Alice, Bob');
   });
 });

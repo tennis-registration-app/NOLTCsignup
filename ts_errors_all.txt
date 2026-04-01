@@ -1,0 +1,831 @@
+tests/unit/admin/adminSettingsLogic.test.ts(92,14): error TS2531: Object is possibly 'null'.
+tests/unit/admin/adminSettingsLogic.test.ts(223,14): error TS2531: Object is possibly 'null'.
+tests/unit/admin/adminSettingsLogic.test.ts(270,14): error TS2531: Object is possibly 'null'.
+tests/unit/admin/ai/aiAssistantComponents.smoke.test.tsx(11,21): error TS7031: Binding element 'size' implicitly has an 'any' type.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(77,23): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ create: string; future: string; list: string; }'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(140,65): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ wetCourtsModel: any; wetCourtsActions: any; blockModel: any; blockActions: any; components: any; services: any; defaultView: any; } | null' is not assignable to parameter of type '{}'.
+      Type 'null' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ wetCourtsModel: any; wetCourtsActions: any; blockModel: any; blockActions: any; components: any; services: any; defaultView: any; } | null' is not assignable to parameter of type 'object'.
+      Type 'null' is not assignable to type 'object'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(144,37): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ wetCourtsModel: any; wetCourtsActions: any; blockModel: any; blockActions: any; components: any; services: any; defaultView: any; } | null' is not assignable to parameter of type '{}'.
+      Type 'null' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ wetCourtsModel: any; wetCourtsActions: any; blockModel: any; blockActions: any; components: any; services: any; defaultView: any; } | null' is not assignable to parameter of type 'object'.
+      Type 'null' is not assignable to type 'object'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(145,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ wetCourtsModel: unknown; wetCourtsActions: unknown; blockModel: unknown; blockActions: unknown; components: unknown; services: unknown; defaultView: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ wetCourtsModel: unknown; wetCourtsActions: unknown; blockModel: unknown; blockActions: unknown; components: unknown; services: unknown; defaultView: string; }'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(145,66): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ wetCourtsModel: any; wetCourtsActions: any; blockModel: any; blockActions: any; components: any; services: any; defaultView: any; }'.
+  No index signature with a parameter of type 'string' was found on type '{ wetCourtsModel: any; wetCourtsActions: any; blockModel: any; blockActions: any; components: any; services: any; defaultView: any; }'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(172,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(172,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ wetCourtsModel: unknown; blockModel: unknown; components: unknown; services: unknown; defaultView: string; }'.
+  No index signature with a parameter of type 'string' was found on type '{ wetCourtsModel: unknown; blockModel: unknown; components: unknown; services: unknown; defaultView: string; }'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(189,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/blockingPresenter.equivalence.test.ts(189,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ wetCourtsActions: unknown; blockActions: unknown; }'.
+  No index signature with a parameter of type 'string' was found on type '{ wetCourtsActions: unknown; blockActions: unknown; }'.
+tests/unit/admin/blocks/blockTimelineComponents.smoke.test.tsx(11,21): error TS7031: Binding element 'size' implicitly has an 'any' type.
+tests/unit/admin/blocks/expandRecurrenceDates.test.ts(18,52): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'RecurrenceConfig | null'.
+tests/unit/admin/blocks/useBlockForm.test.tsx(301,36): error TS2345: Argument of type '{ frequency: string; count: number; }' is not assignable to parameter of type 'SetStateAction<{ pattern: string; frequency: number; endType: string; occurrences?: number | undefined; endDate?: string | undefined; daysOfWeek?: number[] | undefined; } | null>'.
+  Type '{ frequency: string; count: number; }' is missing the following properties from type '{ pattern: string; frequency: number; endType: string; occurrences?: number | undefined; endDate?: string | undefined; daysOfWeek?: number[] | undefined; }': pattern, endType
+tests/unit/admin/blocks/useBlockForm.test.tsx(470,30): error TS2353: Object literal may only specify known properties, and 'freq' does not exist in type '{ pattern: string; frequency: number; endType: string; occurrences?: number | undefined; endDate?: string | undefined; daysOfWeek?: number[] | undefined; } | ((prevState: { pattern: string; frequency: number; endType: string; occurrences?: number | undefined; endDate?: string | undefined; daysOfWeek?: number[] | und...'.
+tests/unit/admin/blocks/wetCourtsDedup.test.ts(14,16): error TS2307: Cannot find module 'fs' or its corresponding type declarations.
+tests/unit/admin/blocks/wetCourtsDedup.test.ts(15,18): error TS2307: Cannot find module 'path' or its corresponding type declarations.
+tests/unit/admin/blocks/wetCourtsDedup.test.ts(24,7): error TS2304: Cannot find name '__dirname'.
+tests/unit/admin/blocks/wetCourtsDedup.test.ts(121,7): error TS2304: Cannot find name '__dirname'.
+tests/unit/admin/blocks/wetCourtsDedup.test.ts(131,7): error TS2304: Cannot find name '__dirname'.
+tests/unit/admin/calendar/calendarToolbar.smoke.test.tsx(11,21): error TS7031: Binding element 'size' implicitly has an 'any' type.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(114,18): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ courts: any; currentTime: any; refreshTrigger: any; onRefresh: any; defaultView: any; backend: any; hoursOverrides: any; MonthView: any; EventSummary: any; HoverCard: any; QuickActionsMenu: any; _component: any; }'.
+  No index signature with a parameter of type 'string' was found on type '{ courts: any; currentTime: any; refreshTrigger: any; onRefresh: any; defaultView: any; backend: any; hoursOverrides: any; MonthView: any; EventSummary: any; HoverCard: any; QuickActionsMenu: any; _component: any; }'.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(116,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ _component: unknown; onRefresh: unknown; courts: unknown; currentTime: unknown; refreshTrigger: unknown; defaultView: unknown; backend: unknown; hoursOverrides: unknown; MonthView: unknown; EventSummary: unknown; HoverCard: unknown; QuickActionsMenu: unknown; }'.
+  No index signature with a parameter of type 'string' was found on type '{ _component: unknown; onRefresh: unknown; courts: unknown; currentTime: unknown; refreshTrigger: unknown; defaultView: unknown; backend: unknown; hoursOverrides: unknown; MonthView: unknown; EventSummary: unknown; HoverCard: unknown; QuickActionsMenu: unknown; }'.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(116,66): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ courts: any; currentTime: any; refreshTrigger: any; onRefresh: any; defaultView: any; backend: any; hoursOverrides: any; MonthView: any; EventSummary: any; HoverCard: any; QuickActionsMenu: any; _component: any; }'.
+  No index signature with a parameter of type 'string' was found on type '{ courts: any; currentTime: any; refreshTrigger: any; onRefresh: any; defaultView: any; backend: any; hoursOverrides: any; MonthView: any; EventSummary: any; HoverCard: any; QuickActionsMenu: any; _component: any; }'.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(119,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ _component: unknown; onRefresh: unknown; courts: unknown; currentTime: unknown; refreshTrigger: unknown; defaultView: unknown; backend: unknown; hoursOverrides: unknown; MonthView: unknown; EventSummary: unknown; HoverCard: unknown; QuickActionsMenu: unknown; }'.
+  No index signature with a parameter of type 'string' was found on type '{ _component: unknown; onRefresh: unknown; courts: unknown; currentTime: unknown; refreshTrigger: unknown; defaultView: unknown; backend: unknown; hoursOverrides: unknown; MonthView: unknown; EventSummary: unknown; HoverCard: unknown; QuickActionsMenu: unknown; }'.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(119,64): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ courts: any; currentTime: any; refreshTrigger: any; onRefresh: any; defaultView: any; backend: any; hoursOverrides: any; MonthView: any; EventSummary: any; HoverCard: any; QuickActionsMenu: any; _component: any; }'.
+  No index signature with a parameter of type 'string' was found on type '{ courts: any; currentTime: any; refreshTrigger: any; onRefresh: any; defaultView: any; backend: any; hoursOverrides: any; MonthView: any; EventSummary: any; HoverCard: any; QuickActionsMenu: any; _component: any; }'.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(159,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/calendarPresenter.equivalence.test.ts(159,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ _component: unknown; onRefresh: unknown; courts: unknown; currentTime: unknown; refreshTrigger: unknown; defaultView: unknown; backend: unknown; hoursOverrides: unknown; MonthView: unknown; EventSummary: unknown; HoverCard: unknown; QuickActionsMenu: unknown; }'.
+  No index signature with a parameter of type 'string' was found on type '{ _component: unknown; onRefresh: unknown; courts: unknown; currentTime: unknown; refreshTrigger: unknown; defaultView: unknown; backend: unknown; hoursOverrides: unknown; MonthView: unknown; EventSummary: unknown; HoverCard: unknown; QuickActionsMenu: unknown; }'.
+tests/unit/admin/controller/buildAdminController.contract.test.ts(153,32): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ VisualTimeEntry: ComponentType<unknown> | undefined; MiniCalendar: ComponentType<unknown> | undefined; EventCalendar: ComponentType<unknown> | undefined; MonthView: ComponentType<...> | undefined; EventSummary: ComponentType<...> | undefined; HoverCard: ComponentType<...> | undefined; QuickActionsMenu: ComponentTy...' is not assignable to parameter of type '{}'.
+      Type 'undefined' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ VisualTimeEntry: ComponentType<unknown> | undefined; MiniCalendar: ComponentType<unknown> | undefined; EventCalendar: ComponentType<unknown> | undefined; MonthView: ComponentType<...> | undefined; EventSummary: ComponentType<...> | undefined; HoverCard: ComponentType<...> | undefined; QuickActionsMenu: ComponentTy...' is not assignable to parameter of type 'object'.
+      Type 'undefined' is not assignable to type 'object'.
+tests/unit/admin/controller/buildAdminController.contract.test.ts(328,32): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ AIAssistant: ComponentType<unknown> | undefined; AIAssistantAdmin: ComponentType<unknown> | undefined; } | undefined' is not assignable to parameter of type '{}'.
+      Type 'undefined' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ AIAssistant: ComponentType<unknown> | undefined; AIAssistantAdmin: ComponentType<unknown> | undefined; } | undefined' is not assignable to parameter of type 'object'.
+      Type 'undefined' is not assignable to type 'object'.
+tests/unit/admin/courts/useCourtActions.contract.test.ts(103,32): error TS2739: Type '{ updateSession: Mock<Procedure>; }' is missing the following properties from type '{ updateBlock?: ((params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string | undefined; }>) | undefined; createBlock?: ((params: Record<string, unknown>) => Promise<...>) | undefined; cancelBlock: (params: Record<...>) => Promise<...>; updateSession?: ((params: Record<...>) => Promise<...>) | unde...': cancelBlock, cancelBlockGroup
+tests/unit/admin/courts/useCourtActions.contract.test.ts(208,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(114,30): error TS2739: Type '{ updateSession: Mock<Procedure>; }' is missing the following properties from type '{ updateBlock?: ((params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string | undefined; }>) | undefined; createBlock?: ((params: Record<string, unknown>) => Promise<...>) | undefined; cancelBlock: (params: Record<...>) => Promise<...>; updateSession?: ((params: Record<...>) => Promise<...>) | unde...': cancelBlock, cancelBlockGroup
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(155,45): error TS2554: Expected 2-3 arguments, but got 0.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(164,45): error TS2554: Expected 2-3 arguments, but got 0.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(179,45): error TS2554: Expected 2-3 arguments, but got 1.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(208,45): error TS2554: Expected 2-3 arguments, but got 1.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(226,12): error TS18048: 'fromCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(227,12): error TS18048: 'fromCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(231,12): error TS18048: 'toCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(232,12): error TS18048: 'toCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(243,45): error TS2554: Expected 2-3 arguments, but got 1.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(261,45): error TS2554: Expected 2-3 arguments, but got 1.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(281,45): error TS2554: Expected 2-3 arguments, but got 1.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(300,45): error TS2554: Expected 2-3 arguments, but got 1.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(328,45): error TS2554: Expected 2-3 arguments, but got 0.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(345,45): error TS2554: Expected 2-3 arguments, but got 0.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(372,45): error TS2554: Expected 2-3 arguments, but got 0.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(396,12): error TS18048: 'clearedCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(397,12): error TS18048: 'clearedCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(398,12): error TS18048: 'clearedCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(399,12): error TS18048: 'clearedCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(401,12): error TS18048: 'clearedCourt' is possibly 'undefined'.
+tests/unit/admin/courts/useCourtActions.moveMode.test.ts(402,12): error TS18048: 'clearedCourt' is possibly 'undefined'.
+tests/unit/admin/handlers/applyBlocksOperation.test.ts(179,30): error TS2345: Argument of type 'null' is not assignable to parameter of type 'BlockInput[]'.
+tests/unit/admin/handlers/applyBlocksOperation.test.ts(188,30): error TS2345: Argument of type 'string' is not assignable to parameter of type 'BlockInput[]'.
+tests/unit/admin/handlers/waitlistOperations.test.ts(248,42): error TS2345: Argument of type '{ commands: { clearWaitlist: Mock<Procedure>; }; }' is not assignable to parameter of type 'TennisBackendShape'.
+  Type '{ commands: { clearWaitlist: Mock<Procedure>; }; }' is missing the following properties from type 'TennisBackendShape': queries, directory, admin
+tests/unit/admin/handlers/waitlistOperations.test.ts(261,42): error TS2345: Argument of type '{ commands: { clearWaitlist: Mock<Procedure>; }; }' is not assignable to parameter of type 'TennisBackendShape'.
+  Type '{ commands: { clearWaitlist: Mock<Procedure>; }; }' is missing the following properties from type 'TennisBackendShape': queries, directory, admin
+tests/unit/admin/handlers/waitlistOperations.test.ts(273,34): error TS2345: Argument of type '{ commands: { clearWaitlist: Mock<Procedure>; }; }' is not assignable to parameter of type 'TennisBackendShape'.
+  Type '{ commands: { clearWaitlist: Mock<Procedure>; }; }' is missing the following properties from type 'TennisBackendShape': queries, directory, admin
+tests/unit/admin/hooks/useAdminSettings.test.tsx(66,35): error TS2345: Argument of type '{ backend: { admin: {}; }; showNotification: Mock<Procedure>; dataStore: { get: Mock<Procedure>; set: Mock<Procedure>; cache: { delete: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; clearAllTimers: Mock<...>; }' is not assignable to parameter of type 'UseAdminSettingsDeps'.
+  Types of property 'backend' are incompatible.
+    Type '{ admin: {}; }' is missing the following properties from type 'TennisBackendShape': queries, commands, directory
+tests/unit/admin/notificationLogic.test.ts(114,41): error TS2493: Tuple type '[id: any]' of length '1' has no element at index '1'.
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(301,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(302,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(307,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(308,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(313,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(314,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(319,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/presenters/blockTimelinePresenter.characterization.test.ts(324,29): error TS2345: Argument of type '{ startTime: string; endTime: string; }' is not assignable to parameter of type 'TimelineBlock'.
+  Type '{ startTime: string; endTime: string; }' is missing the following properties from type 'TimelineBlock': id, courtNumber
+tests/unit/admin/statusPresenter.equivalence.test.ts(154,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ statusModel: { courts: object[] | undefined; courtBlocks: object[] | undefined; selectedDate: Date | undefined; currentTime: Date | undefined; waitingGroups: object[] | undefined; }; statusActions: { ...; }; wetCourtsModel: { ...; }; wetCourtsActions: { ...; }; services: { ...; }; }'.
+  No index signature with a parameter of type 'string' was found on type '{ statusModel: { courts: object[] | undefined; courtBlocks: object[] | undefined; selectedDate: Date | undefined; currentTime: Date | undefined; waitingGroups: object[] | undefined; }; statusActions: { ...; }; wetCourtsModel: { ...; }; wetCourtsActions: { ...; }; services: { ...; }; }'.
+tests/unit/admin/statusPresenter.equivalence.test.ts(154,58): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ statusModel: any; statusActions: any; wetCourtsModel: any; wetCourtsActions: any; services: any; }'.
+  No index signature with a parameter of type 'string' was found on type '{ statusModel: any; statusActions: any; wetCourtsModel: any; wetCourtsActions: any; services: any; }'.
+tests/unit/admin/statusPresenter.equivalence.test.ts(190,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/statusPresenter.equivalence.test.ts(190,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ statusModel: { courts: object[] | undefined; courtBlocks: object[] | undefined; selectedDate: Date | undefined; currentTime: Date | undefined; waitingGroups: object[] | undefined; }; wetCourtsModel: { ...; }; services: { ...; }; waitingGroups: object[] | undefined; }'.
+  No index signature with a parameter of type 'string' was found on type '{ statusModel: { courts: object[] | undefined; courtBlocks: object[] | undefined; selectedDate: Date | undefined; currentTime: Date | undefined; waitingGroups: object[] | undefined; }; wetCourtsModel: { ...; }; services: { ...; }; waitingGroups: object[] | undefined; }'.
+tests/unit/admin/statusPresenter.equivalence.test.ts(206,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/statusPresenter.equivalence.test.ts(206,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ statusActions: { clearCourt: ((...args: unknown[]) => void) | undefined; moveCourt: ((...args: unknown[]) => void) | undefined; clearAllCourts: ((...args: unknown[]) => void) | undefined; editBlock: ((...args: unknown[]) => void) | undefined; moveInWaitlist: ((...args: unknown[]) => void) | undefined; removeFromWa...'.
+  No index signature with a parameter of type 'string' was found on type '{ statusActions: { clearCourt: ((...args: unknown[]) => void) | undefined; moveCourt: ((...args: unknown[]) => void) | undefined; clearAllCourts: ((...args: unknown[]) => void) | undefined; editBlock: ((...args: unknown[]) => void) | undefined; moveInWaitlist: ((...args: unknown[]) => void) | undefined; removeFromWa...'.
+tests/unit/admin/types/domainObjects.test.ts(250,9): error TS2353: Object literal may only specify known properties, and 'dataStore' does not exist in type 'AdminServicesParams'.
+tests/unit/admin/useAdminHandlers.contract.test.ts(54,20): error TS2739: Type '{}' is missing the following properties from type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }': getBoard, refresh, getFrequentPartners, subscribeToBoardChanges
+tests/unit/admin/useAdminHandlers.contract.test.ts(54,33): error TS2740: Type '{}' is missing the following properties from type '{ assignCourt: (input: { courtId: string; participants: ParticipantInput[]; groupType: "singles" | "doubles"; addBalls?: boolean | undefined; splitBalls?: boolean | undefined; latitude?: number | undefined; longitude?: number | undefined; }) => Promise<...>; ... 13 more ...; generateLocationToken: (input?: { ...; } ...': assignCourt, endSession, joinWaitlist, cancelWaitlist, and 11 more.
+tests/unit/admin/useAdminHandlers.contract.test.ts(54,47): error TS2740: Type '{}' is missing the following properties from type '{ createBlock: (input: { courtId: string; blockType: string; title: string; startsAt: string; endsAt: string; deviceId: string; deviceType?: string | undefined; }) => Promise<CommandResponse>; ... 13 more ...; clearWetCourts: (input: { ...; }) => Promise<...>; }': createBlock, cancelBlock, adminEndSession, clearAllCourts, and 11 more.
+tests/unit/admin/useAdminHandlers.contract.test.ts(55,22): error TS2353: Object literal may only specify known properties, and 'getData' does not exist in type 'DataStoreShape'.
+tests/unit/admin/useAdminHandlers.contract.test.ts(56,26): error TS2740: Type '{}' is missing the following properties from type '{ KEY: string; UPDATE_EVENT: string; SETTINGS_KEY: string; BLOCK_TEMPLATES_KEY: string; RECURRING_BLOCKS_KEY: string; BALL_SALES_KEY: string; ANALYTICS_KEY: string; GUEST_CHARGES_KEY: string; }': KEY, UPDATE_EVENT, SETTINGS_KEY, BLOCK_TEMPLATES_KEY, and 4 more.
+tests/unit/admin/useAdminHandlers.contract.test.ts(115,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/waitlistPresenter.equivalence.test.ts(105,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/waitlistPresenter.equivalence.test.ts(105,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ waitingGroups: object[] | undefined; }'.
+  No index signature with a parameter of type 'string' was found on type '{ waitingGroups: object[] | undefined; }'.
+tests/unit/admin/waitlistPresenter.equivalence.test.ts(118,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/admin/waitlistPresenter.equivalence.test.ts(118,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ moveInWaitlist: ((...args: unknown[]) => void) | undefined; removeFromWaitlist: ((...args: unknown[]) => void) | undefined; }'.
+  No index signature with a parameter of type 'string' was found on type '{ moveInWaitlist: ((...args: unknown[]) => void) | undefined; removeFromWaitlist: ((...args: unknown[]) => void) | undefined; }'.
+tests/unit/admin/wetCourts/useWetCourts.test.tsx(58,31): error TS2345: Argument of type '{ backend: { admin: {}; }; getDeviceId: Mock<() => string>; courts: { number: number; id: string; }[]; Events: { emitDom: Mock<Procedure>; }; onRefresh: Mock<Procedure>; }' is not assignable to parameter of type 'WetCourtsDeps'.
+  Types of property 'backend' are incompatible.
+    Type '{ admin: {}; }' is missing the following properties from type 'TennisBackendShape': queries, commands, directory
+tests/unit/admin/wetCourts/useWetCourts.test.tsx(429,34): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+tests/unit/admin/wetCourts/wetCourtsReducer.test.ts(60,39): error TS2345: Argument of type '{ isBusy: boolean; busyOp: string; error: string; isActive: boolean; wetCourtNumbers: number[]; suspendedBlocks: unknown[]; }' is not assignable to parameter of type 'WetCourtsState'.
+  Types of property 'busyOp' are incompatible.
+    Type 'string' is not assignable to type 'BusyOp | null'.
+tests/unit/admin/wetCourts/wetCourtsReducer.test.ts(76,39): error TS2345: Argument of type '{ isActive: boolean; wetCourtNumbers: number[]; isBusy: boolean; busyOp: string; suspendedBlocks: unknown[]; error: string | null; }' is not assignable to parameter of type 'WetCourtsState'.
+  Types of property 'busyOp' are incompatible.
+    Type 'string' is not assignable to type 'BusyOp | null'.
+tests/unit/admin/wetCourts/wetCourtsReducer.test.ts(91,39): error TS2345: Argument of type '{ isBusy: boolean; busyOp: string; isActive: boolean; wetCourtNumbers: number[]; suspendedBlocks: unknown[]; error: string | null; }' is not assignable to parameter of type 'WetCourtsState'.
+  Types of property 'busyOp' are incompatible.
+    Type 'string' is not assignable to type 'BusyOp | null'.
+tests/unit/admin/wetCourts/wetCourtsReducer.test.ts(110,39): error TS2345: Argument of type '{ isActive: boolean; wetCourtNumbers: number[]; isBusy: boolean; busyOp: string; suspendedBlocks: unknown[]; error: string | null; }' is not assignable to parameter of type 'WetCourtsState'.
+  Types of property 'busyOp' are incompatible.
+    Type 'string' is not assignable to type 'BusyOp | null'.
+tests/unit/admin/wetCourts/wetCourtsReducer.test.ts(204,39): error TS2345: Argument of type '{ isActive: boolean; isBusy: boolean; busyOp: string; error: string; wetCourtNumbers: number[]; suspendedBlocks: unknown[]; }' is not assignable to parameter of type 'WetCourtsState'.
+  Types of property 'busyOp' are incompatible.
+    Type 'string' is not assignable to type 'BusyOp | null'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(48,29): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(58,29): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(70,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(80,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(92,30): error TS2353: Object literal may only specify known properties, and 'message' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(104,30): error TS2353: Object literal may only specify known properties, and 'error' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(121,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(135,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(203,29): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(213,29): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(225,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(235,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(248,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(311,29): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.errorContract.test.ts(334,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(48,30): error TS2353: Object literal may only specify known properties, and 'error' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(56,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(57,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(58,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(70,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(82,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(83,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(84,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(103,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(104,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/ApiAdapter.test.ts(109,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(162,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(180,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(192,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(327,44): error TS2353: Object literal may only specify known properties, and 'session' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(385,44): error TS2353: Object literal may only specify known properties, and 'transaction' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(400,44): error TS2353: Object literal may only specify known properties, and 'entry' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(420,44): error TS2353: Object literal may only specify known properties, and 'session' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(440,44): error TS2353: Object literal may only specify known properties, and 'block' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(478,44): error TS2353: Object literal may only specify known properties, and 'waitlist' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(487,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(497,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(506,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(515,44): error TS2353: Object literal may only specify known properties, and 'sessions' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(525,44): error TS2353: Object literal may only specify known properties, and 'sessions' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(544,44): error TS2353: Object literal may only specify known properties, and 'transactions' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(554,44): error TS2353: Object literal may only specify known properties, and 'transactions' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(577,44): error TS2353: Object literal may only specify known properties, and 'settings' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(644,44): error TS2353: Object literal may only specify known properties, and 'csv' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(658,44): error TS2353: Object literal may only specify known properties, and 'response' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(671,44): error TS2353: Object literal may only specify known properties, and 'response' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/ApiAdapter.test.ts(735,14): error TS2531: Object is possibly 'null'.
+tests/unit/api/ApiAdapter.test.ts(736,14): error TS2531: Object is possibly 'null'.
+tests/unit/api/TennisCommands.test.ts(17,48): error TS2345: Argument of type 'null' is not assignable to parameter of type 'TennisDirectory | undefined'.
+tests/unit/api/TennisCommands.test.ts(38,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisCommands.test.ts(53,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisCommands.test.ts(79,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisCommands.test.ts(131,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisCommands.test.ts(144,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisCommands.test.ts(173,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisCommands.test.ts(186,44): error TS2353: Object literal may only specify known properties, and 'data' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(54,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(65,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(76,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(90,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(100,21): error TS2551: Property 'account_id' does not exist on type 'BackendMember'. Did you mean 'accountId'?
+tests/unit/api/TennisDirectory.test.ts(101,21): error TS2551: Property 'member_number' does not exist on type 'BackendMember'. Did you mean 'memberNumber'?
+tests/unit/api/TennisDirectory.test.ts(105,30): error TS2353: Object literal may only specify known properties, and 'error' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(113,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(135,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(148,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(162,30): error TS2353: Object literal may only specify known properties, and 'error' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(174,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(188,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(214,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(227,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(243,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(257,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(271,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(286,9): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(295,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(315,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(325,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(335,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(344,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(355,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(360,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(369,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(385,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(395,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(405,44): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(420,14): error TS2790: The operand of a 'delete' operator must be optional.
+tests/unit/api/TennisDirectory.test.ts(421,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(427,24): error TS2551: Property 'uncleared_streak' does not exist on type 'BackendMember'. Did you mean 'unclearedStreak'?
+tests/unit/api/TennisDirectory.test.ts(439,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisDirectory.test.ts(453,16): error TS2551: Property 'account_id' does not exist on type 'BackendMember'. Did you mean 'accountId'?
+tests/unit/api/TennisDirectory.test.ts(454,16): error TS2551: Property 'member_number' does not exist on type 'BackendMember'. Did you mean 'memberNumber'?
+tests/unit/api/TennisDirectory.test.ts(455,16): error TS2551: Property 'display_name' does not exist on type 'BackendMember'. Did you mean 'displayName'?
+tests/unit/api/TennisDirectory.test.ts(456,16): error TS2551: Property 'is_primary' does not exist on type 'BackendMember'. Did you mean 'isPrimary'?
+tests/unit/api/TennisDirectory.test.ts(457,16): error TS2551: Property 'uncleared_streak' does not exist on type 'BackendMember'. Did you mean 'unclearedStreak'?
+tests/unit/api/TennisDirectory.test.ts(461,29): error TS2353: Object literal may only specify known properties, and 'members' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisQueries.test.ts(96,14): error TS18048: 'court' is possibly 'undefined'.
+tests/unit/api/TennisQueries.test.ts(121,30): error TS2353: Object literal may only specify known properties, and 'message' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisQueries.test.ts(141,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisQueries.test.ts(149,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(150,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(151,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(156,30): error TS2353: Object literal may only specify known properties, and 'code' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisQueries.test.ts(163,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(164,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(169,30): error TS2353: Object literal may only specify known properties, and 'message' does not exist in type '{ ok: boolean; }'.
+tests/unit/api/TennisQueries.test.ts(176,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(177,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(178,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(190,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(191,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(192,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/api/TennisQueries.test.ts(211,44): error TS2353: Object literal may only specify known properties, and 'partners' does not exist in type '{ ok: boolean; }'.
+tests/unit/courtboard/canGroupRegisterNow.test.ts(16,10): error TS7023: 'canGroupRegisterNow' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+tests/unit/courtboard/canGroupRegisterNow.test.ts(17,3): error TS7031: Binding element 'courts' implicitly has an 'any' type.
+tests/unit/courtboard/canGroupRegisterNow.test.ts(19,3): error TS7031: Binding element 'waitlist' implicitly has an 'any' type.
+tests/unit/courtboard/canGroupRegisterNow.test.ts(20,3): error TS7031: Binding element 'idx' implicitly has an 'any' type.
+tests/unit/courtboard/canGroupRegisterNow.test.ts(37,11): error TS7022: 'firstCanPlay' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+tests/unit/courtboard/courtboard.smoke.test.tsx(57,21): error TS7031: Binding element 'size' implicitly has an 'any' type.
+tests/unit/courtboard/courtboard.smoke.test.tsx(57,27): error TS7031: Binding element 'className' implicitly has an 'any' type.
+tests/unit/courtboard/mobile/mobileModalUtils.test.ts(55,21): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string'.
+tests/unit/courtboard/mobile/mobileModalUtils.test.ts(56,21): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'string'.
+tests/unit/courtboard/mobile/mobileModalUtils.test.ts(94,26): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string'.
+tests/unit/courtboard/mobile/mobileModalUtils.test.ts(95,26): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'string'.
+tests/unit/courtboard/utils/courtUtils.test.ts(145,21): error TS2345: Argument of type '{ session: { group: { players: ({ name: string; } | { name: null; } | { name?: undefined; })[]; }; }; }' is not assignable to parameter of type 'CourtObjLike'.
+  The types of 'session.group.players' are incompatible between these types.
+    Type '({ name: string; } | { name: null; } | { name?: undefined; })[]' is not assignable to type 'PlayerLike[]'.
+      Type '{ name: string; } | { name: null; } | { name?: undefined; }' is not assignable to type 'PlayerLike'.
+        Type '{ name: null; }' is not assignable to type 'PlayerLike'.
+          Types of property 'name' are incompatible.
+            Type 'null' is not assignable to type 'string | undefined'.
+tests/unit/courtboard/utils/courtUtils.test.ts(156,21): error TS2345: Argument of type '{ session: { group: { players: { id: number; }[]; }; }; }' is not assignable to parameter of type 'CourtObjLike'.
+  The types of 'session.group.players' are incompatible between these types.
+    Type '{ id: number; }[]' is not assignable to type 'PlayerLike[]'.
+      Type '{ id: number; }' has no properties in common with type 'PlayerLike'.
+tests/unit/courtboard/utils/courtUtils.test.ts(236,23): error TS2345: Argument of type '0' is not assignable to parameter of type 'string | Date | null | undefined'.
+tests/unit/courtboard/utils/courtUtils.test.ts(466,33): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string'.
+tests/unit/courtboard/utils/tapToRegisterDecision.test.ts(18,8): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{}'.
+  No index signature with a parameter of type 'number' was found on type '{}'.
+tests/unit/courtboard/utils/tapToRegisterDecision.test.ts(359,27): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type '{ id?: string | undefined; }'.
+tests/unit/domain/getCourtStatuses.test.ts(54,14): error TS2345: Argument of type 'Date' is not assignable to parameter of type 'number'.
+tests/unit/domain/getCourtStatuses.test.ts(56,14): error TS2345: Argument of type 'Date' is not assignable to parameter of type 'number'.
+tests/unit/domain/getCourtStatuses.test.ts(62,32): error TS7031: Binding element 'data' implicitly has an 'any' type.
+tests/unit/domain/getCourtStatuses.test.ts(62,38): error TS7031: Binding element 'now' implicitly has an 'any' type.
+tests/unit/domain/getCourtStatuses.test.ts(62,43): error TS7031: Binding element 'blocks' implicitly has an 'any' type.
+tests/unit/domain/getCourtStatuses.test.ts(62,51): error TS7031: Binding element 'wetSet' implicitly has an 'any' type.
+tests/unit/domain/getCourtStatuses.test.ts(72,51): error TS18046: 'a' is of type 'unknown'.
+tests/unit/domain/getCourtStatuses.test.ts(72,55): error TS18046: 'b' is of type 'unknown'.
+tests/unit/domain/getCourtStatuses.test.ts(145,16): error TS2362: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+tests/unit/integration/courtSelectionAgreement.test.ts(15,28): error TS7031: Binding element 'courts' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(15,36): error TS7031: Binding element 'upcomingBlocks' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(15,52): error TS7031: Binding element 'waitlist' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(35,37): error TS7031: Binding element 'courts' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(35,45): error TS7031: Binding element 'upcomingBlocks' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(35,61): error TS7031: Binding element 'waitlist' implicitly has an 'any' type.
+tests/unit/integration/courtSelectionAgreement.test.ts(182,14): error TS18048: 'overtimeCourt' is possibly 'undefined'.
+tests/unit/lib/apiContractSentinel.test.ts(157,23): error TS2531: Object is possibly 'null'.
+tests/unit/lib/apiContractSentinel.test.ts(168,14): error TS2531: Object is possibly 'null'.
+tests/unit/lib/apiContractSentinel.test.ts(185,14): error TS2531: Object is possibly 'null'.
+tests/unit/lib/apiContractSentinel.test.ts(190,14): error TS18048: 'board.blocks' is possibly 'undefined'.
+tests/unit/lib/apiContractSentinel.test.ts(223,14): error TS18048: 'board.upcomingBlocks' is possibly 'undefined'.
+tests/unit/lib/apiContractSentinel.test.ts(264,12): error TS18048: 'result.data' is possibly 'undefined'.
+tests/unit/lib/apiContractSentinel.test.ts(273,12): error TS18048: 'result.data' is possibly 'undefined'.
+tests/unit/lib/apiContractSentinel.test.ts(310,12): error TS18048: 'result.data' is possibly 'undefined'.
+tests/unit/lib/apiContractSentinel.test.ts(351,26): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ ballPriceCents: number | null; ballBucketSize: number | null; guestFeeWeekdayCents: number | null; guestFeeWeekendCents: number | null; courtCount: number | null; checkStatusMinutes: unknown; blockWarningMinutes: unknown; autoClearEnabled: unknown; autoClearMinutes: unknown; } | null' is not assignable to parameter of type '{}'.
+      Type 'null' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ ballPriceCents: number | null; ballBucketSize: number | null; guestFeeWeekdayCents: number | null; guestFeeWeekendCents: number | null; courtCount: number | null; checkStatusMinutes: unknown; blockWarningMinutes: unknown; autoClearEnabled: unknown; autoClearMinutes: unknown; } | null' is not assignable to parameter of type 'object'.
+      Type 'null' is not assignable to type 'object'.
+tests/unit/lib/backend/TennisCommands.test.ts(32,39): error TS2345: Argument of type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is not assignable to parameter of type 'ApiAdapter'.
+  Type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is missing the following properties from type 'ApiAdapter': baseUrl, anonKey, deviceId, deviceType, and 35 more.
+tests/unit/lib/backend/TennisCommands.test.ts(66,49): error TS2345: Argument of type '{ courtId: string; participants: { kind: string; memberId: string; accountId: string; }[]; groupType: string; addBalls: boolean; }' is not assignable to parameter of type 'AssignCourtInput'.
+  Types of property 'participants' are incompatible.
+    Type '{ kind: string; memberId: string; accountId: string; }[]' is not assignable to type 'ParticipantInput[]'.
+      Type '{ kind: string; memberId: string; accountId: string; }' is not assignable to type 'ParticipantInput'.
+        Type '{ kind: string; memberId: string; accountId: string; }' is not assignable to type 'MemberParticipant'.
+          Types of property 'kind' are incompatible.
+            Type 'string' is not assignable to type '"member"'.
+tests/unit/lib/backend/TennisCommands.test.ts(85,35): error TS2345: Argument of type '{ participants: { kind: string; memberId: string; accountId: string; }[]; groupType: string; }' is not assignable to parameter of type 'JoinWaitlistInput'.
+  Types of property 'participants' are incompatible.
+    Type '{ kind: string; memberId: string; accountId: string; }[]' is not assignable to type 'ParticipantInput[]'.
+      Type '{ kind: string; memberId: string; accountId: string; }' is not assignable to type 'ParticipantInput'.
+        Type '{ kind: string; memberId: string; accountId: string; }' is not assignable to type 'MemberParticipant'.
+          Types of property 'kind' are incompatible.
+            Type 'string' is not assignable to type '"member"'.
+tests/unit/lib/backend/TennisCommands.test.ts(401,43): error TS2345: Argument of type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is not assignable to parameter of type 'ApiAdapter'.
+  Type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is missing the following properties from type 'ApiAdapter': baseUrl, anonKey, deviceId, deviceType, and 35 more.
+tests/unit/lib/backend/TennisCommands.test.ts(709,11): error TS2739: Type '{ memberId: string; displayName: string; memberNumber: string; }' is missing the following properties from type 'GroupPlayer': id, name
+tests/unit/lib/backend/TennisCommands.test.ts(799,43): error TS2345: Argument of type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is not assignable to parameter of type 'ApiAdapter'.
+  Type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is missing the following properties from type 'ApiAdapter': baseUrl, anonKey, deviceId, deviceType, and 35 more.
+tests/unit/lib/backend/TennisCommands.test.ts(807,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(808,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(809,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(822,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(823,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(824,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(846,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(847,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(848,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(863,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(864,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(865,16): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/backend/TennisCommands.test.ts(877,43): error TS2345: Argument of type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is not assignable to parameter of type 'ApiAdapter'.
+  Type '{ post: Mock<Procedure>; get: Mock<Procedure>; }' is missing the following properties from type 'ApiAdapter': baseUrl, anonKey, deviceId, deviceType, and 35 more.
+tests/unit/lib/backend/TennisCommands.test.ts(888,29): error TS2345: Argument of type '{ getMembersByAccount: Mock<Procedure>; searchMembers: Mock<Procedure>; }' is not assignable to parameter of type 'TennisDirectory'.
+  Type '{ getMembersByAccount: Mock<Procedure>; searchMembers: Mock<Procedure>; }' is missing the following properties from type 'TennisDirectory': api, _cache, _cacheTimeout, getAllMembers, and 5 more.
+tests/unit/lib/backend/wire.test.ts(34,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(35,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(47,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(48,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(49,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(58,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(157,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(165,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/backend/wire.test.ts(166,12): error TS18046: 'result.participants' is of type 'unknown'.
+tests/unit/lib/commandPayloadSentinel.test.ts(82,12): error TS18046: 'payload.participants' is of type 'unknown'.
+tests/unit/lib/commandPayloadSentinel.test.ts(95,12): error TS18046: 'payload.participants' is of type 'unknown'.
+tests/unit/lib/commandPayloadSentinel.test.ts(184,12): error TS18046: 'payload.participants' is of type 'unknown'.
+tests/unit/lib/commandPayloadSentinel.test.ts(361,40): error TS2345: Argument of type '{ fromCourtId: string; toCourtId: string; }' is not assignable to parameter of type '{ commandVersion: string; fromCourtId: string; toCourtId: string; }'.
+  Property 'commandVersion' is missing in type '{ fromCourtId: string; toCourtId: string; }' but required in type '{ commandVersion: string; fromCourtId: string; toCourtId: string; }'.
+tests/unit/lib/commandPayloadSentinel.test.ts(369,40): error TS2345: Argument of type '{ fromCourtId: string; toCourtId: string; }' is not assignable to parameter of type '{ commandVersion: string; fromCourtId: string; toCourtId: string; }'.
+  Property 'commandVersion' is missing in type '{ fromCourtId: string; toCourtId: string; }' but required in type '{ commandVersion: string; fromCourtId: string; toCourtId: string; }'.
+tests/unit/lib/commandPayloadSentinel.test.ts(383,44): error TS2345: Argument of type '{}' is not assignable to parameter of type '{ commandVersion: string; }'.
+  Property 'commandVersion' is missing in type '{}' but required in type '{ commandVersion: string; }'.
+tests/unit/lib/commandPayloadSentinel.test.ts(394,44): error TS2345: Argument of type '{ sessionId: string; accountId: string; splitBalls: false; splitAccountIds: null; idempotencyKey: string; }' is not assignable to parameter of type '{ commandVersion: string; sessionId: string; accountId: string; splitBalls: boolean; idempotencyKey: string; splitAccountIds?: string[] | null | undefined; }'.
+  Property 'commandVersion' is missing in type '{ sessionId: string; accountId: string; splitBalls: false; splitAccountIds: null; idempotencyKey: string; }' but required in type '{ commandVersion: string; sessionId: string; accountId: string; splitBalls: boolean; idempotencyKey: string; splitAccountIds?: string[] | null | undefined; }'.
+tests/unit/lib/commandPayloadSentinel.test.ts(411,44): error TS2345: Argument of type '{ sessionId: string; accountId: string; splitBalls: true; splitAccountIds: string[]; idempotencyKey: string; }' is not assignable to parameter of type '{ commandVersion: string; sessionId: string; accountId: string; splitBalls: boolean; idempotencyKey: string; splitAccountIds?: string[] | null | undefined; }'.
+  Property 'commandVersion' is missing in type '{ sessionId: string; accountId: string; splitBalls: true; splitAccountIds: string[]; idempotencyKey: string; }' but required in type '{ commandVersion: string; sessionId: string; accountId: string; splitBalls: boolean; idempotencyKey: string; splitAccountIds?: string[] | null | undefined; }'.
+tests/unit/lib/commands/assignCourt.test.ts(95,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignCourt.test.ts(105,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignCourt.test.ts(115,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignCourt.test.ts(132,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignCourt.test.ts(149,12): error TS18046: 'payload.players' is of type 'unknown'.
+tests/unit/lib/commands/assignCourt.test.ts(150,12): error TS18046: 'payload.players' is of type 'unknown'.
+tests/unit/lib/commands/assignCourt.test.ts(151,12): error TS18046: 'payload.players' is of type 'unknown'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(33,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(35,7): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(49,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(51,7): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(65,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(67,7): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(81,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(82,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(97,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(98,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/assignFromWaitlist.test.ts(99,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/moveCourt.test.ts(92,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/moveCourt.test.ts(104,12): error TS18048: 'result.errors' is possibly 'undefined'.
+tests/unit/lib/commands/zodValidationFormat.test.ts(41,14): error TS18046: 'e' is of type 'unknown'.
+tests/unit/lib/courtHelpers.test.ts(22,55): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string'.
+tests/unit/lib/courtHelpers.test.ts(55,46): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string'.
+tests/unit/lib/ctaBlockFilter.test.ts(15,28): error TS7031: Binding element 'courts' implicitly has an 'any' type.
+tests/unit/lib/ctaBlockFilter.test.ts(15,36): error TS7031: Binding element 'upcomingBlocks' implicitly has an 'any' type.
+tests/unit/lib/ctaBlockFilter.test.ts(15,52): error TS7031: Binding element 'waitlist' implicitly has an 'any' type.
+tests/unit/lib/DataValidation.test.ts(36,41): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ id?: unknown; name?: unknown; }'.
+tests/unit/lib/DataValidation.test.ts(37,41): error TS2345: Argument of type 'undefined' is not assignable to parameter of type '{ id?: unknown; name?: unknown; }'.
+tests/unit/lib/DataValidation.test.ts(113,46): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+tests/unit/lib/dateUtils.test.ts(21,27): error TS2345: Argument of type 'null' is not assignable to parameter of type 'number'.
+tests/unit/lib/dateUtils.test.ts(22,27): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'number'.
+tests/unit/lib/domain/waitlistHelpers.test.ts(153,32): error TS2739: Type '{}' is missing the following properties from type 'Group': id, players, type
+tests/unit/lib/normalize/normalizeAdminSettings.test.ts(25,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeAdminSettings.test.ts(81,36): error TS2345: Argument of type 'string' is not assignable to parameter of type 'unknown[]'.
+tests/unit/lib/normalize/normalizeAdminSettings.test.ts(112,31): error TS2345: Argument of type '{}' is not assignable to parameter of type 'unknown[]'.
+  Type '{}' is missing the following properties from type 'unknown[]': length, pop, push, concat, and 29 more.
+tests/unit/lib/normalize/normalizeBlock.test.ts(12,27): error TS2345: Argument of type 'null' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeBlock.test.ts(16,27): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeBlock.test.ts(83,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeBlock.test.ts(87,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeBoard.test.ts(44,35): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'Record<string, unknown> | null'.
+tests/unit/lib/normalize/normalizeBoard.test.ts(94,12): error TS18048: 'result.blocks' is possibly 'undefined'.
+tests/unit/lib/normalize/normalizeBoard.test.ts(106,12): error TS18048: 'result.upcomingBlocks' is possibly 'undefined'.
+tests/unit/lib/normalize/normalizeBoard.test.ts(107,12): error TS18048: 'result.upcomingBlocks' is possibly 'undefined'.
+tests/unit/lib/normalize/normalizeCourt.test.ts(45,35): error TS2345: Argument of type 'null' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeGroup.test.ts(14,27): error TS2345: Argument of type 'null' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeGroup.test.ts(22,27): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeMember.test.ts(19,28): error TS2345: Argument of type 'null' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeMember.test.ts(27,28): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeMember.test.ts(97,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeMember.test.ts(108,36): error TS2345: Argument of type 'string' is not assignable to parameter of type 'unknown[]'.
+tests/unit/lib/normalize/normalizeMember.test.ts(118,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeMember.test.ts(119,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeSession.test.ts(20,29): error TS2345: Argument of type 'null' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeSession.test.ts(24,29): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalize/normalizeSession.test.ts(90,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeSession.test.ts(91,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeSession.test.ts(92,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeSession.test.ts(101,12): error TS2531: Object is possibly 'null'.
+tests/unit/lib/normalize/normalizeWaitlistEntry.test.ts(20,43): error TS2345: Argument of type 'null' is not assignable to parameter of type 'Record<string, unknown>'.
+tests/unit/lib/normalizeWaitlist.test.ts(18,30): error TS2345: Argument of type 'string' is not assignable to parameter of type 'unknown[]'.
+tests/unit/lib/storage.test.ts(49,27): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+tests/unit/lib/storage.test.ts(50,36): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+tests/unit/lib/storage.test.ts(51,39): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{}'.
+tests/unit/lib/storage.test.ts(66,5): error TS7053: Element implicitly has an 'any' type because expression of type '"myKey"' can't be used to index type '{}'.
+  Property 'myKey' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(75,5): error TS7053: Element implicitly has an 'any' type because expression of type '"bad"' can't be used to index type '{}'.
+  Property 'bad' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(80,5): error TS7053: Element implicitly has an 'any' type because expression of type '"empty"' can't be used to index type '{}'.
+  Property 'empty' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(90,12): error TS7053: Element implicitly has an 'any' type because expression of type '"key1"' can't be used to index type '{}'.
+  Property 'key1' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(208,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisClubData"' can't be used to index type '{}'.
+  Property 'tennisClubData' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(220,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisClubData"' can't be used to index type '{}'.
+  Property 'tennisClubData' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(232,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisClubData"' can't be used to index type '{}'.
+  Property 'tennisClubData' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(248,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisHistoricalGames"' can't be used to index type '{}'.
+  Property 'tennisHistoricalGames' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(268,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisHistoricalGames"' can't be used to index type '{}'.
+  Property 'tennisHistoricalGames' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(307,21): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | number'.
+tests/unit/lib/storage.test.ts(308,16): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'string | number'.
+tests/unit/lib/storage.test.ts(407,28): error TS18046: 'obj' is of type 'unknown'.
+tests/unit/lib/storage.test.ts(408,28): error TS18046: 'obj' is of type 'unknown'.
+tests/unit/lib/storage.test.ts(450,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisClubData"' can't be used to index type '{}'.
+  Property 'tennisClubData' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(470,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisClubData"' can't be used to index type '{}'.
+  Property 'tennisClubData' does not exist on type '{}'.
+tests/unit/lib/storage.test.ts(479,5): error TS7053: Element implicitly has an 'any' type because expression of type '"tennisClubData"' can't be used to index type '{}'.
+  Property 'tennisClubData' does not exist on type '{}'.
+tests/unit/lib/TennisBusinessLogic.test.ts(223,62): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Record<string, unknown>[]'.
+tests/unit/lib/TennisBusinessLogic.test.ts(277,70): error TS2345: Argument of type 'null[]' is not assignable to parameter of type 'Record<string, unknown>[]'.
+  Type 'null' is not assignable to type 'Record<string, unknown>'.
+tests/unit/lib/TennisBusinessLogic.test.ts(289,70): error TS2345: Argument of type '({ session: { scheduledEndAt: string; }; } | null)[]' is not assignable to parameter of type 'Record<string, unknown>[]'.
+  Type '{ session: { scheduledEndAt: string; }; } | null' is not assignable to type 'Record<string, unknown>'.
+    Type 'null' is not assignable to type 'Record<string, unknown>'.
+tests/unit/lib/TennisCourtDataStore.test.ts(73,23): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+tests/unit/lib/TennisCourtDataStore.test.ts(79,23): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+tests/unit/lib/tournamentAvailability.test.ts(91,54): error TS2345: Argument of type '({ number: number; isAvailable: boolean; isBlocked: boolean; isOvertime: boolean; isTournament: boolean; } | null)[]' is not assignable to parameter of type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }[]'.
+  Type '{ number: number; isAvailable: boolean; isBlocked: boolean; isOvertime: boolean; isTournament: boolean; } | null' is not assignable to type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }'.
+    Type 'null' is not assignable to type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }'.
+tests/unit/lib/tournamentAvailability.test.ts(106,54): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }[]'.
+tests/unit/lib/waitlistEstimates.test.ts(13,3): error TS2304: Cannot find name 'global'.
+tests/unit/lib/waitlistEstimates.test.ts(13,19): error TS2304: Cannot find name 'global'.
+tests/unit/lib/waitlistEstimates.test.ts(38,38): error TS7031: Binding element 'courts' implicitly has an 'any' type.
+tests/unit/lib/waitlistEstimates.test.ts(38,46): error TS7031: Binding element 'waitlist' implicitly has an 'any' type.
+tests/unit/lib/waitlistEstimates.test.ts(38,56): error TS7031: Binding element 'blocks' implicitly has an 'any' type.
+tests/unit/lib/waitlistEstimates.test.ts(38,64): error TS7031: Binding element 'now' implicitly has an 'any' type.
+tests/unit/lib/waitlistEstimates.test.ts(38,69): error TS7031: Binding element 'avgGameMinutes' implicitly has an 'any' type.
+tests/unit/lib/waitlistEstimates.test.ts(38,85): error TS7031: Binding element 'closingHour' implicitly has an 'any' type.
+tests/unit/normalize/normalizeSession.contract.test.ts(96,39): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(o: {}): string[]', gave the following error.
+    Argument of type '{ id: string; courtNumber: number; group: { id: string; players: { memberId: string; displayName: string; isGuest: boolean; }[]; type: "singles" | "doubles"; }; startedAt: string; scheduledEndAt: string; actualEndAt: string | null; endReason: "completed" | ... 2 more ... | null; isOvertime: boolean; isTournament: bo...' is not assignable to parameter of type '{}'.
+      Type 'null' is not assignable to type '{}'.
+  Overload 2 of 2, '(o: object): string[]', gave the following error.
+    Argument of type '{ id: string; courtNumber: number; group: { id: string; players: { memberId: string; displayName: string; isGuest: boolean; }[]; type: "singles" | "doubles"; }; startedAt: string; scheduledEndAt: string; actualEndAt: string | null; endReason: "completed" | ... 2 more ... | null; isOvertime: boolean; isTournament: bo...' is not assignable to parameter of type 'object'.
+      Type 'null' is not assignable to type 'object'.
+tests/unit/orchestration/adminOperations.test.ts(147,54): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'WaitlistGroup'.
+tests/unit/orchestration/memberSelectionOrchestrator.test.ts(107,47): error TS2345: Argument of type 'null' is not assignable to parameter of type 'AutocompleteSuggestion'.
+tests/unit/orchestration/memberSelectionOrchestrator.test.ts(116,11): error TS2739: Type '{ id: string; }' is missing the following properties from type '{ id: string; name: string; displayName?: string | undefined; accountId: string; isPrimary: boolean; unclearedStreak: number; phone?: string | undefined; ranking?: number | null | undefined; winRate?: number | undefined; }': name, accountId, isPrimary, unclearedStreak
+tests/unit/orchestration/memberSelectionOrchestrator.test.ts(275,56): error TS2345: Argument of type 'null' is not assignable to parameter of type 'AutocompleteSuggestion'.
+tests/unit/orchestration/memberSelectionOrchestrator.test.ts(284,33): error TS2739: Type '{ id: string; name: string; }' is missing the following properties from type '{ id: string; name: string; displayName?: string | undefined; accountId: string; isPrimary: boolean; unclearedStreak: number; phone?: string | undefined; ranking?: number | null | undefined; winRate?: number | undefined; }': accountId, isPrimary, unclearedStreak
+tests/unit/orchestration/waitlistOrchestrator.test.ts(347,45): error TS2345: Argument of type '({ id: string; name: string; memberNumber: string; isGuest?: undefined; sponsor?: undefined; } | { id: string; name: string; isGuest: boolean; sponsor: string; memberNumber?: undefined; })[]' is not assignable to parameter of type 'GroupPlayer[]'.
+  Type '{ id: string; name: string; memberNumber: string; isGuest?: undefined; sponsor?: undefined; } | { id: string; name: string; isGuest: boolean; sponsor: string; memberNumber?: undefined; }' is not assignable to type 'GroupPlayer'.
+    Type '{ id: string; name: string; isGuest: boolean; sponsor: string; memberNumber?: undefined; }' is not assignable to type 'GroupPlayer'.
+      Types of property 'memberNumber' are incompatible.
+        Type 'undefined' is not assignable to type 'string'.
+tests/unit/platform/attachLegacyBlocks.test.ts(19,12): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyBlocks.test.ts(20,19): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(18,12): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(24,19): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(24,19): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(30,19): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(30,19): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(36,19): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(36,19): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(39,21): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(39,21): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(48,19): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(48,19): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(57,26): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(57,26): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(57,26): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(57,26): error TS18048: 'window.Tennis.DataStore.get' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(64,11): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(64,11): error TS18048: 'window.Tennis.DataStore' is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(64,11): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+tests/unit/platform/attachLegacyDataStore.test.ts(66,31): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+tests/unit/platform/attachLegacyDataStore.test.ts(90,28): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyEvents.test.ts(34,12): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyStorage.test.ts(27,14): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/platform/attachLegacyStorage.test.ts(72,30): error TS18046: 'frozen' is of type 'unknown'.
+tests/unit/registration/adminPresenter.equivalence.test.ts(212,24): error TS7031: Binding element 'onResult' implicitly has an 'any' type.
+tests/unit/registration/adminPresenter.equivalence.test.ts(265,11): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ queries: { subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }; commands: { assignCourtWithPlayers: Mock<...>; assignFromWaitlist: Mock<...>; joinWaitlistWithPlayers: Mock<...>; }; directory: { ...; }; admin: { ...; }; }' is not assignable to type 'TennisBackendShape'.
+      Types of property 'queries' are incompatible.
+        Property 'getFrequentPartners' is missing in type '{ subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }' but required in type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }'.
+tests/unit/registration/adminPresenter.equivalence.test.ts(280,11): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/adminPresenter.equivalence.test.ts(281,16): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/adminPresenter.test.ts(90,59): error TS2345: Argument of type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is missing the following properties from type 'Handlers': validateGuestName, handleToggleGuestForm, handleGuestNameChange, handleAddGuest, and 26 more.
+tests/unit/registration/adminPresenter.test.ts(99,59): error TS2345: Argument of type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is missing the following properties from type 'Handlers': validateGuestName, handleToggleGuestForm, handleGuestNameChange, handleAddGuest, and 26 more.
+tests/unit/registration/adminPresenter.test.ts(105,59): error TS2345: Argument of type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is missing the following properties from type 'Handlers': validateGuestName, handleToggleGuestForm, handleGuestNameChange, handleAddGuest, and 26 more.
+tests/unit/registration/adminPresenter.test.ts(136,63): error TS2345: Argument of type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is missing the following properties from type 'Handlers': validateGuestName, handleToggleGuestForm, handleGuestNameChange, handleAddGuest, and 26 more.
+tests/unit/registration/adminPresenter.test.ts(142,63): error TS2345: Argument of type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ getCourtData: Mock<Procedure>; handleClearAllCourts: Mock<Procedure>; handleAdminClearCourt: Mock<Procedure>; handleMoveCourt: Mock<...>; handleClearWaitlist: Mock<...>; handleRemoveFromWaitlist: Mock<...>; handlePriceUpdate: Mock<...>; handleExitAdmin: Mock<...>; }' is missing the following properties from type 'Handlers': validateGuestName, handleToggleGuestForm, handleGuestNameChange, handleAddGuest, and 26 more.
+tests/unit/registration/appHandlers/buildHandlerDeps.contract.test.ts(78,40): error TS2345: Argument of type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is missing the following properties from type 'AppState': TennisBusinessLogic, computeRegistrationCourtSelection, resetWorkflow, DEBUG
+tests/unit/registration/appHandlers/buildHandlerDeps.contract.test.ts(146,40): error TS2345: Argument of type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is missing the following properties from type 'AppState': TennisBusinessLogic, computeRegistrationCourtSelection, resetWorkflow, DEBUG
+tests/unit/registration/appHandlers/buildHandlerDeps.contract.test.ts(191,40): error TS2345: Argument of type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is missing the following properties from type 'AppState': TennisBusinessLogic, computeRegistrationCourtSelection, resetWorkflow, DEBUG
+tests/unit/registration/appHandlers/buildHandlerDeps.contract.test.ts(220,40): error TS2345: Argument of type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is missing the following properties from type 'AppState': TennisBusinessLogic, computeRegistrationCourtSelection, resetWorkflow, DEBUG
+tests/unit/registration/appHandlers/buildHandlerDeps.contract.test.ts(245,45): error TS2345: Argument of type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { screen: string; }; setters: { setScreen: () => void; }; mobile: { isMobile: boolean; }; services: { backend: { queries: { refresh: () => void; }; }; }; helpers: { getCourtData: () => never[]; markUserTyping: () => void; }; ... 16 more ...; API_CONFIG: {}; }' is missing the following properties from type 'AppState': TennisBusinessLogic, computeRegistrationCourtSelection, resetWorkflow, DEBUG
+tests/unit/registration/appHandlers/handlers/adminHandlers.test.ts(31,28): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/adminHandlers.test.ts(32,29): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/adminHandlers.test.ts(33,23): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/adminHandlers.test.ts(34,27): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/adminHandlers.test.ts(35,32): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/courtHandlers.test.ts(42,31): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/courtHandlers.test.ts(43,23): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/courtHandlers.test.ts(48,11): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/groupHandlers.test.ts(38,21): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/groupHandlers.test.ts(44,11): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/guestHandlers.test.ts(40,11): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/handlers/navigationHandlers.test.ts(35,20): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/state/useRegistrationDerived.test.ts(92,12): error TS2531: Object is possibly 'null'.
+tests/unit/registration/appHandlers/state/useRegistrationDerived.test.ts(123,12): error TS2531: Object is possibly 'null'.
+tests/unit/registration/appHandlers/state/useRegistrationDomainHooks.test.ts(256,23): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ showAlert: boolean; alertMessage: string; setShowAlert: (visible: boolean) => void; setAlertMessage: (message: string) => void; showAlertMessage: (message: string) => void; showPriceSuccess: boolean; ... 62 more ...; onReorderWaitlist: (fromIndex: number, toIndex: number) => Promise<...>; }'.
+  No index signature with a parameter of type 'string' was found on type '{ showAlert: boolean; alertMessage: string; setShowAlert: (visible: boolean) => void; setAlertMessage: (message: string) => void; showAlertMessage: (message: string) => void; showPriceSuccess: boolean; ... 62 more ...; onReorderWaitlist: (fromIndex: number, toIndex: number) => Promise<...>; }'.
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(327,40): error TS2345: Argument of type '{ name: string; }[]' is not assignable to parameter of type '(string | GroupPlayer | null)[]'.
+  Type '{ name: string; }' is not assignable to type 'string | GroupPlayer | null'.
+    Type '{ name: string; }' is missing the following properties from type 'GroupPlayer': id, memberNumber
+tests/unit/registration/appHandlers/state/useRegistrationHelpers.test.ts(353,40): error TS2345: Argument of type 'null' is not assignable to parameter of type '(string | GroupPlayer | null)[]'.
+tests/unit/registration/appHandlers/state/useRegistrationRuntime.test.ts(34,23): error TS7019: Rest parameter 'args' implicitly has an 'any[]' type.
+tests/unit/registration/appHandlers/state/useRegistrationRuntime.test.ts(204,12): error TS18048: 'injected' is possibly 'undefined'.
+tests/unit/registration/appHandlers/state/useRegistrationRuntime.test.ts(205,12): error TS18048: 'injected' is possibly 'undefined'.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(105,24): error TS7031: Binding element 'onResult' implicitly has an 'any' type.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(158,11): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ queries: { subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }; commands: { assignCourtWithPlayers: Mock<...>; assignFromWaitlist: Mock<...>; joinWaitlistWithPlayers: Mock<...>; }; directory: { ...; }; admin: { ...; }; }' is not assignable to type 'TennisBackendShape'.
+      Types of property 'queries' are incompatible.
+        Property 'getFrequentPartners' is missing in type '{ subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }' but required in type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }'.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(215,25): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(216,36): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(217,43): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/registration/appHandlers/useRegistrationAppState.test.ts(218,12): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/unit/registration/court/courtAssignmentResultReducer.test.ts(77,49): error TS2345: Argument of type '{ justAssignedCourt: number; assignedSessionId: string; hasAssignedCourt: boolean; }' is not assignable to parameter of type 'CourtAssignmentResultState'.
+  Property 'assignedEndTime' is missing in type '{ justAssignedCourt: number; assignedSessionId: string; hasAssignedCourt: boolean; }' but required in type 'CourtAssignmentResultState'.
+tests/unit/registration/courtPresenter.equivalence.test.ts(160,24): error TS7031: Binding element 'onResult' implicitly has an 'any' type.
+tests/unit/registration/courtPresenter.equivalence.test.ts(213,11): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ queries: { subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }; commands: { assignCourtWithPlayers: Mock<...>; assignFromWaitlist: Mock<...>; joinWaitlistWithPlayers: Mock<...>; }; directory: { ...; }; admin: { ...; }; }' is not assignable to type 'TennisBackendShape'.
+      Types of property 'queries' are incompatible.
+        Property 'getFrequentPartners' is missing in type '{ subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }' but required in type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }'.
+tests/unit/registration/courtPresenter.equivalence.test.ts(237,11): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/courtPresenter.equivalence.test.ts(238,16): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/courtPresenter.test.ts(87,59): error TS2345: Argument of type '{ groupGuest: { currentGroup: { displayName: string; }[]; }; courtAssignment: { justAssignedCourt: number; }; hasWaitlistPriority: boolean; currentWaitlistEntryId: string; isChangingCourt: boolean; ... 5 more ...; setOriginalCourtData: Mock<...>; }' is not assignable to parameter of type 'CourtWorkflow'.
+  The types of 'groupGuest.currentGroup' are incompatible between these types.
+    Type '{ displayName: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Type '{ displayName: string; }' is missing the following properties from type 'GroupPlayer': id, name, memberNumber
+tests/unit/registration/courtPresenter.test.ts(103,59): error TS2345: Argument of type '{ groupGuest: { currentGroup: { displayName: string; }[]; }; courtAssignment: { justAssignedCourt: number; }; hasWaitlistPriority: boolean; currentWaitlistEntryId: string; isChangingCourt: boolean; ... 5 more ...; setOriginalCourtData: Mock<...>; }' is not assignable to parameter of type 'CourtWorkflow'.
+  The types of 'groupGuest.currentGroup' are incompatible between these types.
+    Type '{ displayName: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Type '{ displayName: string; }' is missing the following properties from type 'GroupPlayer': id, name, memberNumber
+tests/unit/registration/courtPresenter.test.ts(113,59): error TS2345: Argument of type '{ groupGuest: { currentGroup: { displayName: string; }[]; }; courtAssignment: { justAssignedCourt: number; }; hasWaitlistPriority: boolean; currentWaitlistEntryId: string; isChangingCourt: boolean; ... 5 more ...; setOriginalCourtData: Mock<...>; }' is not assignable to parameter of type 'CourtWorkflow'.
+  The types of 'groupGuest.currentGroup' are incompatible between these types.
+    Type '{ displayName: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Type '{ displayName: string; }' is missing the following properties from type 'GroupPlayer': id, name, memberNumber
+tests/unit/registration/courtPresenter.test.ts(133,9): error TS2345: Argument of type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': state, helpers, services, alert, and 17 more.
+tests/unit/registration/courtPresenter.test.ts(149,9): error TS2345: Argument of type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': state, helpers, services, alert, and 17 more.
+tests/unit/registration/courtPresenter.test.ts(158,9): error TS2345: Argument of type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': state, helpers, services, alert, and 17 more.
+tests/unit/registration/courtPresenter.test.ts(166,9): error TS2345: Argument of type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ derived: { isMobileView: boolean; }; mobile: { mobileFlow: boolean; }; refs: { successResetTimerRef: { current: null; }; }; setters: { setShowSuccess: Mock<Procedure>; setCurrentScreen: Mock<...>; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': state, helpers, services, alert, and 17 more.
+tests/unit/registration/courtPresenter.test.ts(180,63): error TS2345: Argument of type '{ groupGuest: { currentGroup: { displayName: string; }[]; }; courtAssignment: { justAssignedCourt: number; }; hasWaitlistPriority: boolean; currentWaitlistEntryId: string; isChangingCourt: boolean; ... 5 more ...; setOriginalCourtData: Mock<...>; }' is not assignable to parameter of type 'CourtWorkflow'.
+  The types of 'groupGuest.currentGroup' are incompatible between these types.
+    Type '{ displayName: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Type '{ displayName: string; }' is missing the following properties from type 'GroupPlayer': id, name, memberNumber
+tests/unit/registration/courtPresenter.test.ts(206,63): error TS2345: Argument of type '{ groupGuest: { currentGroup: { displayName: string; }[]; }; courtAssignment: { justAssignedCourt: number; }; hasWaitlistPriority: boolean; currentWaitlistEntryId: string; isChangingCourt: boolean; ... 5 more ...; setOriginalCourtData: Mock<...>; }' is not assignable to parameter of type 'CourtWorkflow'.
+  The types of 'groupGuest.currentGroup' are incompatible between these types.
+    Type '{ displayName: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Type '{ displayName: string; }' is missing the following properties from type 'GroupPlayer': id, name, memberNumber
+tests/unit/registration/courtPresenter.test.ts(318,63): error TS2345: Argument of type '{ groupGuest: { currentGroup: { displayName: string; }[]; }; courtAssignment: { justAssignedCourt: number; }; hasWaitlistPriority: boolean; currentWaitlistEntryId: string; isChangingCourt: boolean; ... 5 more ...; setOriginalCourtData: Mock<...>; }' is not assignable to parameter of type 'CourtWorkflow'.
+  The types of 'groupGuest.currentGroup' are incompatible between these types.
+    Type '{ displayName: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Type '{ displayName: string; }' is missing the following properties from type 'GroupPlayer': id, name, memberNumber
+tests/unit/registration/group/groupGuestReducer.test.ts(56,38): error TS2345: Argument of type '{ currentGroup: { id: number; name: string; }[]; guestName: string; guestSponsor: string; showGuestForm: boolean; showGuestNameError: boolean; showSponsorError: boolean; }' is not assignable to parameter of type 'GroupGuestState'.
+  Types of property 'currentGroup' are incompatible.
+    Type '{ id: number; name: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Property 'memberNumber' is missing in type '{ id: number; name: string; }' but required in type 'GroupPlayer'.
+tests/unit/registration/group/groupGuestReducer.test.ts(118,38): error TS2345: Argument of type '{ currentGroup: { id: number; name: string; }[]; guestName: string; guestSponsor: string; showGuestForm: boolean; showGuestNameError: boolean; showSponsorError: boolean; }' is not assignable to parameter of type 'GroupGuestState'.
+  Types of property 'currentGroup' are incompatible.
+    Type '{ id: number; name: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Property 'memberNumber' is missing in type '{ id: number; name: string; }' but required in type 'GroupPlayer'.
+tests/unit/registration/group/groupGuestReducer.test.ts(139,38): error TS2345: Argument of type '{ currentGroup: { id: number; name: string; }[]; guestName: string; guestSponsor: string; showGuestForm: boolean; showGuestNameError: boolean; showSponsorError: boolean; }' is not assignable to parameter of type 'GroupGuestState'.
+  Types of property 'currentGroup' are incompatible.
+    Type '{ id: number; name: string; }[]' is not assignable to type 'GroupPlayer[]'.
+      Property 'memberNumber' is missing in type '{ id: number; name: string; }' but required in type 'GroupPlayer'.
+tests/unit/registration/groupPresenter.equivalence.test.ts(260,24): error TS7031: Binding element 'onResult' implicitly has an 'any' type.
+tests/unit/registration/groupPresenter.equivalence.test.ts(314,11): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ queries: { subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }; commands: { assignCourtWithPlayers: Mock<...>; assignFromWaitlist: Mock<...>; joinWaitlistWithPlayers: Mock<...>; }; directory: { ...; }; admin: { ...; }; }' is not assignable to type 'TennisBackendShape'.
+      Types of property 'queries' are incompatible.
+        Property 'getFrequentPartners' is missing in type '{ subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }' but required in type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }'.
+tests/unit/registration/groupPresenter.equivalence.test.ts(329,11): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/groupPresenter.equivalence.test.ts(330,16): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/groupPresenter.equivalence.test.ts(331,22): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/groupPresenter.test.ts(168,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupPresenter.test.ts(174,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupPresenter.test.ts(188,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupPresenter.test.ts(204,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupPresenter.test.ts(213,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupPresenter.test.ts(220,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupPresenter.test.ts(226,41): error TS2345: Argument of type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { data: { courts: never[]; waitlist: never[]; courtSelection: { selected: number; }; }; availableCourts: number[]; }; derived: { isMobileView: boolean; }; alert: { showAlert: boolean; alertMessage: string; }; session: { ...; }; mobile: { ...; }; search: { ...; }; CONSTANTS: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupRoute.render.test.tsx(88,24): error TS2740: Type '{ state: {}; players: { groupGuest: {}; memberIdentity: {}; }; derived: {}; alert: {}; session: { timeout: {}; }; mobile: {}; search: {}; CONSTANTS: {}; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupRoute.render.test.tsx(88,34): error TS2740: Type '{ handleStreakAcknowledge: Mock<Procedure>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 33 more.
+tests/unit/registration/groupRoute.render.test.tsx(104,24): error TS2740: Type '{ state: {}; players: { groupGuest: {}; memberIdentity: {}; }; derived: {}; alert: {}; session: { timeout: {}; }; mobile: {}; search: {}; CONSTANTS: {}; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupRoute.render.test.tsx(104,34): error TS2740: Type '{ handleStreakAcknowledge: Mock<Procedure>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 33 more.
+tests/unit/registration/groupRoute.render.test.tsx(124,24): error TS2740: Type '{ state: {}; players: { groupGuest: {}; memberIdentity: {}; }; derived: {}; alert: {}; session: { timeout: {}; }; mobile: {}; search: {}; CONSTANTS: {}; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupRoute.render.test.tsx(124,34): error TS2740: Type '{ handleStreakAcknowledge: Mock<Procedure>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 33 more.
+tests/unit/registration/groupRoute.render.test.tsx(140,24): error TS2740: Type '{ state: {}; players: { groupGuest: {}; memberIdentity: {}; }; derived: {}; alert: {}; session: { timeout: {}; }; mobile: {}; search: {}; CONSTANTS: {}; }' is missing the following properties from type 'AppState': setters, refs, helpers, services, and 15 more.
+tests/unit/registration/groupRoute.render.test.tsx(140,34): error TS2740: Type '{ handleStreakAcknowledge: Mock<Procedure>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 33 more.
+tests/unit/registration/groupScreen.render.test.tsx(113,12): error TS2531: Object is possibly 'null'.
+tests/unit/registration/homePresenter.equivalence.test.ts(210,24): error TS7031: Binding element 'onResult' implicitly has an 'any' type.
+tests/unit/registration/homePresenter.equivalence.test.ts(264,11): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ queries: { subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }; commands: { assignCourtWithPlayers: Mock<...>; assignFromWaitlist: Mock<...>; joinWaitlistWithPlayers: Mock<...>; }; directory: { ...; }; admin: { ...; }; }' is not assignable to type 'TennisBackendShape'.
+      Types of property 'queries' are incompatible.
+        Property 'getFrequentPartners' is missing in type '{ subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }' but required in type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }'.
+tests/unit/registration/homePresenter.equivalence.test.ts(279,11): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/homePresenter.equivalence.test.ts(280,16): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/homePresenter.equivalence.test.ts(281,22): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/homePresenter.test.ts(162,79): error TS2345: Argument of type '{ handleSuggestionClick: Mock<Procedure>; markUserTyping: Mock<Procedure>; findMemberNumber: Mock<Procedure>; checkLocationAndProceed: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ handleSuggestionClick: Mock<Procedure>; markUserTyping: Mock<Procedure>; findMemberNumber: Mock<Procedure>; checkLocationAndProceed: Mock<...>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 30 more.
+tests/unit/registration/homePresenter.test.ts(180,72): error TS2345: Argument of type '{ handleSuggestionClick: Mock<Procedure>; markUserTyping: Mock<Procedure>; findMemberNumber: Mock<Procedure>; checkLocationAndProceed: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ handleSuggestionClick: Mock<Procedure>; markUserTyping: Mock<Procedure>; findMemberNumber: Mock<Procedure>; checkLocationAndProceed: Mock<...>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 30 more.
+tests/unit/registration/homePresenter.test.ts(189,82): error TS2345: Argument of type '{ handleSuggestionClick: Mock<Procedure>; markUserTyping: Mock<Procedure>; findMemberNumber: Mock<Procedure>; checkLocationAndProceed: Mock<...>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ handleSuggestionClick: Mock<Procedure>; markUserTyping: Mock<Procedure>; findMemberNumber: Mock<Procedure>; checkLocationAndProceed: Mock<...>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 30 more.
+tests/unit/registration/homeScreen.render.test.tsx(234,23): error TS2740: Type '{ search: { searchInput: string; showSuggestions: boolean; isSearching: boolean; effectiveSearchInput: string; getAutocompleteSuggestions: () => never[]; setSearchInput: () => void; setShowSuggestions: () => void; }; ... 6 more ...; TENNIS_CONFIG: { ...; }; }' is missing the following properties from type 'AppState': state, refs, helpers, services, and 15 more.
+tests/unit/registration/homeScreen.render.test.tsx(234,33): error TS2740: Type '{ handleSuggestionClick: () => void; markUserTyping: () => void; findMemberNumber: () => string; checkLocationAndProceed: () => void; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 30 more.
+tests/unit/registration/homeScreen.render.test.tsx(242,23): error TS2740: Type '{ search: { searchInput: string; showSuggestions: boolean; isSearching: boolean; effectiveSearchInput: string; getAutocompleteSuggestions: () => never[]; setSearchInput: () => void; setShowSuggestions: () => void; }; ... 6 more ...; TENNIS_CONFIG: { ...; }; }' is missing the following properties from type 'AppState': state, refs, helpers, services, and 15 more.
+tests/unit/registration/homeScreen.render.test.tsx(242,33): error TS2740: Type '{ handleSuggestionClick: () => void; markUserTyping: () => void; findMemberNumber: () => string; checkLocationAndProceed: () => void; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 30 more.
+tests/unit/registration/search/suggestionSorting.test.ts(47,25): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/search/suggestionSorting.test.ts(64,25): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/search/suggestionSorting.test.ts(81,25): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/search/suggestionSorting.test.ts(97,25): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/services/DataValidation.test.ts(47,46): error TS2345: Argument of type 'string' is not assignable to parameter of type 'number'.
+tests/unit/registration/services/DataValidation.test.ts(79,47): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ id?: unknown; name?: unknown; }'.
+tests/unit/registration/success/ballPurchaseSameAccount.test.ts(155,18): error TS18046: 'payload.split_account_ids' is of type 'unknown'.
+tests/unit/registration/successPresenter.equivalence.test.ts(204,24): error TS7031: Binding element 'onResult' implicitly has an 'any' type.
+tests/unit/registration/successPresenter.equivalence.test.ts(261,11): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '{ queries: { subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }; commands: { assignCourtWithPlayers: Mock<...>; assignFromWaitlist: Mock<...>; joinWaitlistWithPlayers: Mock<...>; purchaseBalls: Mock<...>; updateSessionTournament: Mock<...>; }; directory: { ...; };...' is not assignable to type 'TennisBackendShape'.
+      Types of property 'queries' are incompatible.
+        Property 'getFrequentPartners' is missing in type '{ subscribeToBoardChanges: Mock<() => () => void>; refresh: Mock<Procedure>; getBoard: Mock<Procedure>; }' but required in type '{ getBoard: () => Promise<DomainBoard>; refresh: () => Promise<DomainBoard>; getFrequentPartners: (memberId: string) => Promise<CommandResponse & { ...; }>; subscribeToBoardChanges: (callback: (board: DomainBoard) => void, options?: { ...; } | undefined) => () => void; }'.
+tests/unit/registration/successPresenter.equivalence.test.ts(284,11): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/successPresenter.equivalence.test.ts(285,16): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/successPresenter.equivalence.test.ts(286,22): error TS18046: 'result' is of type 'unknown'.
+tests/unit/registration/successPresenter.test.ts(97,61): error TS2345: Argument of type '{ replacedGroup: { players: { displayName: string; }[]; }; canChangeCourt: boolean; changeTimeRemaining: number; isTimeLimited: boolean; timeLimitReason: string; courtAssignment: { justAssignedCourt: number; assignedSessionId: string; assignedEndTime: string; }; streak: { ...; }; groupGuest: { ...; }; }' is not assignable to parameter of type 'SuccessWorkflow'.
+  Types of property 'replacedGroup' are incompatible.
+    Property 'endTime' is missing in type '{ players: { displayName: string; }[]; }' but required in type 'ReplacedGroup'.
+tests/unit/registration/successPresenter.test.ts(103,61): error TS2345: Argument of type '{ replacedGroup: { players: { displayName: string; }[]; }; canChangeCourt: boolean; changeTimeRemaining: number; isTimeLimited: boolean; timeLimitReason: string; courtAssignment: { justAssignedCourt: number; assignedSessionId: string; assignedEndTime: string; }; streak: { ...; }; groupGuest: { ...; }; }' is not assignable to parameter of type 'SuccessWorkflow'.
+  Types of property 'replacedGroup' are incompatible.
+    Property 'endTime' is missing in type '{ players: { displayName: string; }[]; }' but required in type 'ReplacedGroup'.
+tests/unit/registration/successPresenter.test.ts(112,61): error TS2345: Argument of type '{ replacedGroup: { players: { displayName: string; }[]; }; canChangeCourt: boolean; changeTimeRemaining: number; isTimeLimited: boolean; timeLimitReason: string; courtAssignment: { justAssignedCourt: number; assignedSessionId: string; assignedEndTime: string; }; streak: { ...; }; groupGuest: { ...; }; }' is not assignable to parameter of type 'SuccessWorkflow'.
+  Types of property 'replacedGroup' are incompatible.
+    Property 'endTime' is missing in type '{ players: { displayName: string; }[]; }' but required in type 'ReplacedGroup'.
+tests/unit/registration/successPresenter.test.ts(124,61): error TS2345: Argument of type '{ replacedGroup: { players: { displayName: string; }[]; }; canChangeCourt: boolean; changeTimeRemaining: number; isTimeLimited: boolean; timeLimitReason: string; courtAssignment: { justAssignedCourt: number; assignedSessionId: string; assignedEndTime: string; }; streak: { ...; }; groupGuest: { ...; }; }' is not assignable to parameter of type 'SuccessWorkflow'.
+  Types of property 'replacedGroup' are incompatible.
+    Property 'endTime' is missing in type '{ players: { displayName: string; }[]; }' but required in type 'ReplacedGroup'.
+tests/unit/registration/successPresenter.test.ts(129,39): error TS2345: Argument of type '{ state: { ballPriceCents: number; data: { upcomingBlocks: { courtNumber: number; startTime: string; }[]; }; }; mobile: { mobileFlow: boolean; mobileCountdown: number; }; admin: { blockAdmin: { blockWarningMinutes: number; getCourtBlockStatus: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; services: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { ballPriceCents: number; data: { upcomingBlocks: { courtNumber: number; startTime: string; }[]; }; }; mobile: { mobileFlow: boolean; mobileCountdown: number; }; admin: { blockAdmin: { blockWarningMinutes: number; getCourtBlockStatus: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; services: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, derived, helpers, and 17 more.
+tests/unit/registration/successPresenter.test.ts(135,9): error TS2345: Argument of type '{ state: { ballPriceCents: number; data: { upcomingBlocks: { courtNumber: number; startTime: string; }[]; }; }; mobile: { mobileFlow: boolean; mobileCountdown: number; }; admin: { blockAdmin: { blockWarningMinutes: number; getCourtBlockStatus: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; services: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { ballPriceCents: number; data: { upcomingBlocks: { courtNumber: number; startTime: string; }[]; }; }; mobile: { mobileFlow: boolean; mobileCountdown: number; }; admin: { blockAdmin: { blockWarningMinutes: number; getCourtBlockStatus: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; services: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, derived, helpers, and 17 more.
+tests/unit/registration/successPresenter.test.ts(144,9): error TS2345: Argument of type '{ state: { ballPriceCents: number; data: { upcomingBlocks: { courtNumber: number; startTime: string; }[]; }; }; mobile: { mobileFlow: boolean; mobileCountdown: number; }; admin: { blockAdmin: { blockWarningMinutes: number; getCourtBlockStatus: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; services: { ...; }; }' is not assignable to parameter of type 'AppState'.
+  Type '{ state: { ballPriceCents: number; data: { upcomingBlocks: { courtNumber: number; startTime: string; }[]; }; }; mobile: { mobileFlow: boolean; mobileCountdown: number; }; admin: { blockAdmin: { blockWarningMinutes: number; getCourtBlockStatus: Mock<...>; }; }; TENNIS_CONFIG: { ...; }; services: { ...; }; }' is missing the following properties from type 'AppState': setters, refs, derived, helpers, and 17 more.
+tests/unit/registration/successPresenter.test.ts(168,65): error TS2345: Argument of type '{ changeCourt: Mock<Procedure>; resetForm: Mock<Procedure>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ changeCourt: Mock<Procedure>; resetForm: Mock<Procedure>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 32 more.
+tests/unit/registration/successPresenter.test.ts(180,65): error TS2345: Argument of type '{ changeCourt: Mock<Procedure>; resetForm: Mock<Procedure>; }' is not assignable to parameter of type 'Handlers'.
+  Type '{ changeCourt: Mock<Procedure>; resetForm: Mock<Procedure>; }' is missing the following properties from type 'Handlers': handleClearAllCourts, handleAdminClearCourt, handleMoveCourt, handleClearWaitlist, and 32 more.
+tests/unit/registration/utils/helpers.test.ts(40,26): error TS2345: Argument of type '42' is not assignable to parameter of type 'NameLike'.
+tests/unit/registration/utils/helpers.test.ts(45,28): error TS2353: Object literal may only specify known properties, and 'id' does not exist in type '{ name?: string | undefined; fullName?: string | undefined; playerName?: string | undefined; displayName?: string | undefined; }'.
+tests/unit/registration/waitlist/useWaitlistAdmin.test.ts(36,35): error TS2345: Argument of type '{ backend: { admin: { reorderWaitlist: Mock<Procedure>; }; }; showAlertMessage: Mock<Procedure>; getCourtData: Mock<() => { waitlist: { id: string; }[]; }>; }' is not assignable to parameter of type '{ getCourtData: () => { waitlist: { id?: string | undefined; group?: { id?: string | undefined; } | undefined; }[]; }; showAlertMessage: (msg: string) => void; backend: TennisBackendShape; }'.
+  Types of property 'backend' are incompatible.
+    Type '{ admin: { reorderWaitlist: Mock<Procedure>; }; }' is missing the following properties from type 'TennisBackendShape': queries, commands, directory
+tests/unit/shared/ErrorBoundary.test.tsx(11,26): error TS7031: Binding element 'shouldThrow' implicitly has an 'any' type.
+tests/unit/shared/ErrorBoundary.test.tsx(188,7): error TS18048: 'copyButton' is possibly 'undefined'.
+tests/unit/shared/overtimeEligibility.test.ts(21,54): error TS2345: Argument of type 'null' is not assignable to parameter of type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }[]'.
+tests/unit/shared/overtimeEligibility.test.ts(91,54): error TS2345: Argument of type '({ number: number; isAvailable: boolean; isBlocked: boolean; } | null)[]' is not assignable to parameter of type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }[]'.
+  Type '{ number: number; isAvailable: boolean; isBlocked: boolean; } | null' is not assignable to type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }'.
+    Type 'null' is not assignable to type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }'.
+tests/unit/shared/overtimeEligibility.test.ts(102,54): error TS2345: Argument of type '({ number: number; isAvailable: boolean; isBlocked: boolean; isOvertime: boolean; } | null | undefined)[]' is not assignable to parameter of type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }[]'.
+  Type '{ number: number; isAvailable: boolean; isBlocked: boolean; isOvertime: boolean; } | null | undefined' is not assignable to type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }'.
+    Type 'undefined' is not assignable to type '{ number?: number | undefined; isAvailable?: boolean | undefined; isBlocked?: boolean | undefined; isOvertime?: boolean | undefined; isTournament?: boolean | undefined; }'.
+tests/unit/shared/overtimeEligibility.test.ts(358,14): error TS18048: 'overtimeCourt' is possibly 'undefined'.
+tests/unit/shared/overtimeEligibility.test.ts(359,14): error TS18048: 'overtimeCourt' is possibly 'undefined'.
+tests/unit/shared/overtimeEligibility.test.ts(360,14): error TS18048: 'overtimeCourt' is possibly 'undefined'.
+tests/unit/shared/overtimeEligibility.test.ts(711,42): error TS2345: Argument of type 'null' is not assignable to parameter of type '({ number?: number | undefined; courtNumber?: number | undefined; session?: unknown; isOvertime?: boolean | undefined; isBlocked?: boolean | undefined; } | null | undefined)[]'.
+tests/unit/shared/utils/toast.test.ts(12,34): error TS2345: Argument of type 'Event' is not assignable to parameter of type 'CustomEvent<any>'.
+  Type 'Event' is missing the following properties from type 'CustomEvent<any>': detail, initCustomEvent
+tests/unit/smoke/adminScreens.smoke.test.tsx(20,21): error TS7031: Binding element 'size' implicitly has an 'any' type.
+tests/unit/smoke/adminScreens.smoke.test.tsx(20,27): error TS7031: Binding element 'className' implicitly has an 'any' type.
+tests/unit/smoke/adminScreens.smoke.test.tsx(290,21): error TS2345: Argument of type 'HTMLButtonElement | null' is not assignable to parameter of type 'Element | Node | Window | Document'.
+  Type 'null' is not assignable to type 'Element | Node | Window | Document'.
+tests/unit/tennis/availability.test.ts(29,12): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/availability.test.ts(29,12): error TS18048: 'window.Tennis.Domain' is possibly 'undefined'.
+tests/unit/tennis/availability.test.ts(29,52): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/availability.test.ts(29,52): error TS18048: 'window.Tennis.Domain' is possibly 'undefined'.
+tests/unit/tennis/availability.test.ts(57,15): error TS2353: Object literal may only specify known properties, and 'group' does not exist in type '{ scheduledEndAt?: string | undefined; isTournament?: boolean | undefined; }'.
+tests/unit/tennis/availability.test.ts(754,34): error TS2741: Property 'courts' is missing in type '{}' but required in type 'CourtData'.
+tests/unit/tennis/roster.test.ts(42,28): error TS2345: Argument of type 'null' is not assignable to parameter of type 'string'.
+tests/unit/tennis/roster.test.ts(43,28): error TS2345: Argument of type 'undefined' is not assignable to parameter of type 'string'.
+tests/unit/tennis/roster.test.ts(249,33): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+tests/unit/tennis/roster.test.ts(390,14): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/roster.test.ts(391,14): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/roster.test.ts(392,21): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/roster.test.ts(393,21): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/roster.test.ts(394,21): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/roster.test.ts(395,14): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/roster.test.ts(396,21): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlist.test.ts(32,12): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlist.test.ts(32,12): error TS18048: 'window.Tennis.Domain' is possibly 'undefined'.
+tests/unit/tennis/waitlist.test.ts(33,12): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlist.test.ts(33,12): error TS18048: 'window.Tennis.Domain' is possibly 'undefined'.
+tests/unit/tennis/waitlist.test.ts(33,48): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlist.test.ts(33,48): error TS18048: 'window.Tennis.Domain' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(37,32): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{}'.
+  No index signature with a parameter of type 'number' was found on type '{}'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(155,22): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(155,22): error TS18048: 'window.Tennis.Config' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(155,22): error TS18048: 'window.Tennis.Config.Courts' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(156,5): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(156,5): error TS18048: 'window.Tennis.Config' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(156,5): error TS18048: 'window.Tennis.Config.Courts' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(169,7): error TS18048: 'window.Tennis' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(169,7): error TS18048: 'window.Tennis.Config' is possibly 'undefined'.
+tests/unit/tennis/waitlistPolicyPaths.test.ts(169,7): error TS18048: 'window.Tennis.Config.Courts' is possibly 'undefined'.

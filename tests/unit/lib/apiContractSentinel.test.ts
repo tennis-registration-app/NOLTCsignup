@@ -147,14 +147,14 @@ describe('API Contract Sentinel', () => {
     it('builds session from flattened session_id/started_at/scheduled_end_at', () => {
       const session = board.courts[0].session;
       expect(session).not.toBeNull();
-      expect(session.id).toBe('uuid-session-1');
-      expect(session.courtNumber).toBe(1);
-      expect(session.startedAt).toBe('2025-06-15T13:30:00.000Z');
-      expect(session.scheduledEndAt).toBe('2025-06-15T14:30:00.000Z');
+      expect(session!.id).toBe('uuid-session-1');
+      expect(session!.courtNumber).toBe(1);
+      expect(session!.startedAt).toBe('2025-06-15T13:30:00.000Z');
+      expect(session!.scheduledEndAt).toBe('2025-06-15T14:30:00.000Z');
     });
 
     it('normalizes participants into group.players with camelCase', () => {
-      const players = board.courts[0].session.group.players;
+      const players = board.courts[0].session!.group.players;
       expect(players).toHaveLength(2);
       expect(players[0]).toMatchObject({
         memberId: 'mem-1',
@@ -165,7 +165,7 @@ describe('API Contract Sentinel', () => {
 
     it('computes isOvertime correctly', () => {
       // serverNow === scheduledEndAt, so not strictly overtime
-      expect(board.courts[0].session.isOvertime).toBe(false);
+      expect(board.courts[0].session!.isOvertime).toBe(false);
     });
   });
 
@@ -174,20 +174,20 @@ describe('API Contract Sentinel', () => {
     it('builds block from flattened block_id/block_title/block_starts_at', () => {
       const block = board.courts[1].block;
       expect(block).not.toBeNull();
-      expect(block.id).toBe('uuid-block-1');
-      expect(block.courtNumber).toBe(2);
-      expect(block.startsAt).toBe('2025-06-15T12:00:00.000Z');
-      expect(block.endsAt).toBe('2025-06-15T16:00:00.000Z');
-      expect(block.reason).toBe('Court resurfacing');
+      expect(block!.id).toBe('uuid-block-1');
+      expect(block!.courtNumber).toBe(2);
+      expect(block!.startsAt).toBe('2025-06-15T12:00:00.000Z');
+      expect(block!.endsAt).toBe('2025-06-15T16:00:00.000Z');
+      expect(block!.reason).toBe('Court resurfacing');
     });
 
     it('computes isActive for block spanning serverNow', () => {
-      expect(board.courts[1].block.isActive).toBe(true);
+      expect(board.courts[1].block!.isActive).toBe(true);
     });
 
     it('extracts active blocks into board.blocks array', () => {
-      expect(board.blocks).toHaveLength(1);
-      expect(board.blocks[0]).toMatchObject({
+      expect(board.blocks!).toHaveLength(1);
+      expect(board.blocks![0]).toMatchObject({
         courtNumber: 2,
         title: 'Court resurfacing',
         isActive: true,
@@ -219,8 +219,8 @@ describe('API Contract Sentinel', () => {
   // ---- G) Upcoming blocks normalization ----
   describe('upcoming blocks normalization', () => {
     it('maps startsAt → startTime, endsAt → endTime for upcoming blocks', () => {
-      expect(board.upcomingBlocks).toHaveLength(1);
-      expect(board.upcomingBlocks[0]).toMatchObject({
+      expect(board.upcomingBlocks!).toHaveLength(1);
+      expect(board.upcomingBlocks![0]).toMatchObject({
         id: 'uuid-upcoming-1',
         courtNumber: 5,
         startTime: '2025-06-15T16:00:00.000Z',
@@ -261,7 +261,7 @@ describe('Board API Envelope Validation', () => {
       courts: [],
     });
     expect(result.success).toBe(true);
-    expect(result.data.ok).toBe(true);
+    expect(result.data!.ok).toBe(true);
   });
 
   it('defaults waitlist to empty array when omitted', () => {
@@ -270,7 +270,7 @@ describe('Board API Envelope Validation', () => {
       courts: [],
     });
     expect(result.success).toBe(true);
-    expect(result.data.waitlist).toEqual([]);
+    expect(result.data!.waitlist).toEqual([]);
   });
 
   it('rejects envelope missing serverNow', () => {
@@ -307,7 +307,7 @@ describe('Board API Envelope Validation', () => {
       operatingHours: [],
     });
     expect(result.success).toBe(true);
-    expect(result.data.upcomingBlocks).toHaveLength(1);
+    expect(result.data!.upcomingBlocks).toHaveLength(1);
   });
 });
 
@@ -348,7 +348,7 @@ describe('Admin Settings Normalization', () => {
 
   describe('normalizeSettings', () => {
     it('has frozen camelCase key set', () => {
-      expect(Object.keys(normalized.settings).sort()).toEqual([
+      expect(Object.keys(normalized.settings!).sort()).toEqual([
         'autoClearEnabled',
         'autoClearMinutes',
         'ballBucketSize',
@@ -362,10 +362,10 @@ describe('Admin Settings Normalization', () => {
     });
 
     it('maps values correctly', () => {
-      expect(normalized.settings.ballPriceCents).toBe(800);
-      expect(normalized.settings.courtCount).toBe(12);
-      expect(normalized.settings.autoClearEnabled).toBe(true);
-      expect(normalized.settings.autoClearMinutes).toBe(90);
+      expect(normalized.settings!.ballPriceCents).toBe(800);
+      expect(normalized.settings!.courtCount).toBe(12);
+      expect(normalized.settings!.autoClearEnabled).toBe(true);
+      expect(normalized.settings!.autoClearMinutes).toBe(90);
     });
 
     it('returns null for null/undefined input', () => {
@@ -376,7 +376,7 @@ describe('Admin Settings Normalization', () => {
 
   describe('normalizeOperatingHours', () => {
     it('has frozen camelCase key set per entry', () => {
-      expect(Object.keys(normalized.operatingHours[0]).sort()).toEqual([
+      expect(Object.keys(normalized.operatingHours![0]).sort()).toEqual([
         'closesAt',
         'dayName',
         'dayOfWeek',
@@ -386,7 +386,7 @@ describe('Admin Settings Normalization', () => {
     });
 
     it('maps values correctly', () => {
-      const monday = normalized.operatingHours[0];
+      const monday = normalized.operatingHours![0];
       expect(monday.dayOfWeek).toBe(1);
       expect(monday.dayName).toBe('Monday');
       expect(monday.opensAt).toBe('07:00');
@@ -395,7 +395,7 @@ describe('Admin Settings Normalization', () => {
     });
 
     it('derives dayName from dayOfWeek when day_name is absent', () => {
-      const sunday = normalized.operatingHours[1];
+      const sunday = normalized.operatingHours![1];
       expect(sunday.dayOfWeek).toBe(0);
       expect(sunday.dayName).toBe('Sunday');
     });
@@ -408,7 +408,7 @@ describe('Admin Settings Normalization', () => {
 
   describe('normalizeOverrides', () => {
     it('has frozen camelCase key set per entry', () => {
-      expect(Object.keys(normalized.upcomingOverrides[0]).sort()).toEqual([
+      expect(Object.keys(normalized.upcomingOverrides![0]).sort()).toEqual([
         'closesAt',
         'date',
         'isClosed',
@@ -418,7 +418,7 @@ describe('Admin Settings Normalization', () => {
     });
 
     it('maps values correctly', () => {
-      const override = normalized.upcomingOverrides[0];
+      const override = normalized.upcomingOverrides![0];
       expect(override.date).toBe('2025-07-04');
       expect(override.isClosed).toBe(true);
       expect(override.reason).toBe('Holiday');

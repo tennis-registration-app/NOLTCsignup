@@ -6,7 +6,7 @@ import {
 describe('streakReducer', () => {
   // Initial state
   test('returns initial state for unknown action', () => {
-    const result = streakReducer(initialStreakState, { type: 'UNKNOWN' });
+    const result = streakReducer(initialStreakState, { type: 'UNKNOWN' } as any);
     expect(result).toEqual(initialStreakState);
   });
 

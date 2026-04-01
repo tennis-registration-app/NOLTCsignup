@@ -26,7 +26,7 @@ vi.mock('../../../src/platform/windowBridge.js', () => ({
   }),
   getTennisDomain: () => ({
     time: {
-      durationForGroupSize: (size) => (size <= 2 ? 60 : 90),
+      durationForGroupSize: (size: any) => (size <= 2 ? 60 : 90),
     },
   }),
   getUI: () => null,
@@ -105,7 +105,7 @@ import { buildCourtModel } from '../../../src/registration/router/presenters/cou
  * which sources workflow fields from WorkflowContext (not app.state).
  * (Handlers excluded - only model props)
  */
-function legacyCourtScreenModelProps(app, workflow, computed) {
+function legacyCourtScreenModelProps(app: any, workflow: any, computed: any) {
   const { derived } = app;
   const { isMobileView } = derived;
   const { currentGroup } = workflow.groupGuest;
@@ -130,7 +130,7 @@ function legacyCourtScreenModelProps(app, workflow, computed) {
  * Build workflow object from captured WorkflowContext value —
  * mirrors what CourtRoute reads from useWorkflowContext().
  */
-function buildWorkflowForPresenter(workflow) {
+function buildWorkflowForPresenter(workflow: any) {
   return {
     groupGuest: workflow.groupGuest,
     courtAssignment: workflow.courtAssignment,
@@ -149,7 +149,7 @@ function buildWorkflowForPresenter(workflow) {
 /**
  * Presenter-based model prop mapping
  */
-function presenterCourtScreenModelProps(app, workflow, computed) {
+function presenterCourtScreenModelProps(app: any, workflow: any, computed: any) {
   const w = buildWorkflowForPresenter(workflow);
   return buildCourtModel(app, w, computed);
 }
@@ -157,7 +157,7 @@ function presenterCourtScreenModelProps(app, workflow, computed) {
 /**
  * Minimal component to capture hook result.
  */
-function HookCapture({ onResult }) {
+function HookCapture({ onResult }: any) {
   const app = useRegistrationAppState({ isMobileView: false });
   const workflow = useWorkflowContext();
 
@@ -174,11 +174,11 @@ function HookCapture({ onResult }) {
  * Helper to render hook and capture result.
  */
 function captureHookResult() {
-  return new Promise((resolve) => {
+  return new Promise<any>((resolve) => {
     const container = document.createElement('div');
     document.body.appendChild(container);
 
-    const callback = (result) => {
+    const callback = (result: any) => {
       resolve(result);
     };
 
@@ -210,7 +210,7 @@ function captureHookResult() {
     root.render(
       React.createElement(
         WorkflowProvider,
-        { backend: mockBackend },
+        { backend: mockBackend } as any,
         React.createElement(HookCapture, { onResult: callback })
       )
     );
@@ -218,10 +218,10 @@ function captureHookResult() {
 }
 
 describe('CourtSelectionScreen presenter equivalence (model only)', () => {
-  let app;
+  let app: any;
   let workflow;
-  let legacy;
-  let presenter;
+  let legacy: any;
+  let presenter: any;
 
   // Mock computed values that would be calculated in the route
   const mockComputed = {
@@ -234,7 +234,7 @@ describe('CourtSelectionScreen presenter equivalence (model only)', () => {
 
   beforeAll(async () => {
     const result = await captureHookResult();
-    app = result.app;
+    app = (result as any).app;
     workflow = result.workflow;
     legacy = legacyCourtScreenModelProps(app, workflow, mockComputed);
     presenter = presenterCourtScreenModelProps(app, workflow, mockComputed);
