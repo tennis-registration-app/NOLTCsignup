@@ -634,23 +634,44 @@ Reduction: 338 errors (-99%)
 - 338 errors eliminated in single iteration (largest reduction yet)
 - mockFetch.ts fix alone eliminated ~80 TS2353 errors across all API test files
 - Promise<any> fix cascaded to eliminate most TS7053 errors too
-- 5 remaining errors are all in source files (src/), not test files:
-  - src/admin/hooks/useAdminAppState.ts(209): Timeout vs number (TS2345)
-  - src/admin/hooks/useNotification.ts(25): function signature mismatch (TS2322)
-  - src/admin/screens/AnalyticsDashboard.tsx(38): Timeout vs number (TS2322)
-  - src/registration/ui/timeout/useSessionTimeout.ts(58,63): Timeout vs number (TS2322)
-  - These are pre-existing source code bugs, not in scope for test file fixes
+- After this iteration 5 errors appeared in source files (src/) due to reference type
+  directives in test files leaking NodeJS.Timeout into the shared tsconfig.test.json compilation.
 
 ---
 
-## Current Baseline: 5 errors (after iteration 11)
+## Iteration 11b -- 2026-03-31
+Pattern fixed: TS2322/TS2345 -- Node.js Timeout type leak from reference directives
+Errors before: 5 (in src/ files due to type leak)
+Errors after: 0
+Reduction: 5 errors (-100%)
+
+### Files fixed
+- tests/unit/admin/blocks/wetCourtsDedup.test.ts:
+  - Removed reference directive
+  - Replaced imports with declare const require + typed casts
+  - Replaced __dirname with new URL implicitly
+- tests/unit/lib/waitlistEstimates.test.ts:
+  - Removed reference directive
+  - Replaced global.window with (globalThis as any).window
+
+### Type patterns used
+- declare const require: (mod: string) => any -- scoped require declaration (avoids @types/node)
+- const fs = require("fs") as { existsSync, readFileSync } -- typed require cast
+- new URL(".", import.meta.url).pathname -- ESM-compatible dirname replacement
+- (globalThis as any).window -- avoids needing Node.js global type
+
+### Notes
+- Root cause: tsconfig.test.json compiles src/ + tests/ in same program; reference directives
+  in any test file pollute setTimeout return type globally, causing Timeout vs number errors in src/
+- Fix: Remove reference directives and use targeted local casts instead of global type imports
+
+---
+
+## Current Baseline: 0 errors (after iteration 11b)
 
 ### Current Distribution
-TS2322: 4 (all in src/ files — not in scope)
-TS2345: 1 (in src/ file — not in scope)
-All test file errors: 0
+All errors: 0
 
-### Status: TEST FILE ERRORS COMPLETE
-All fixable TypeScript errors in test files have been eliminated.
-Remaining 5 errors are source code bugs that require source file changes.
+### Status: COMPLETE
+All TypeScript errors in both test files AND source files (as seen by tsconfig.test.json) eliminated.
 

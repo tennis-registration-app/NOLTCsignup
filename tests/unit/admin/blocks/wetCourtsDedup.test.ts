@@ -11,8 +11,11 @@
 import { describe, it, expect } from 'vitest';
 import { CONTROLLER_KEYS } from '../../../../src/admin/controller/buildAdminController.js';
 import { createWetCourtsActions, createBlockActions } from '../../../../src/admin/types/domainObjects.js';
-import fs from 'fs';
-import path from 'path';
+// Locally declare require/dirname to avoid pulling in full @types/node (which leaks Timeout types)
+declare const require: (mod: string) => any;
+const fs = require('fs') as { existsSync: (p: string) => boolean; readFileSync: (p: string, enc: string) => string };
+const path = require('path') as { resolve: (...args: string[]) => string };
+const __dirname = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
 
 describe('wetCourts dedup (bug #12 fix)', () => {
   // ============================================================

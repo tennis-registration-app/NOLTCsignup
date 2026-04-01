@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // Mock the window.Tennis namespace before loading the module
 beforeEach(() => {
   // Reset window.Tennis
-  global.window = global.window || {};
+  (globalThis as any).window = (globalThis as any).window || {};
   window.Tennis = {
     Config: {
       Courts: { TOTAL_COUNT: 12 },
