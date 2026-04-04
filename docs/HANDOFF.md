@@ -23,6 +23,14 @@ npm run verify
 
 Single command. Runs lint ratchet, TypeScript type checking, unit tests with coverage ratchets, fixture validation, production build, and E2E tests. Required before every merge.
 
+**Contractor onboarding:** See [INSTALL_CHECKLIST.md](../INSTALL_CHECKLIST.md) for the full install and verification sequence. To seed realistic demo data:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=<key> npm run seed
+```
+
+Idempotent. Creates 10 sessions (7 active, 2 overtime, 1 recent), 2 blocks (lesson + maintenance), and 1 waitlist entry using deterministic `d0000000-*` UUIDs. Requires backend `_001` and `_002` migrations to have run. See `scripts/seed.ts`.
+
 ## System Guarantees
 
 - **No inline scripts** in any production HTML — all extracted to ES modules

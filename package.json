@@ -26,6 +26,7 @@
     "type:ratchet:test": "node scripts/type-ratchet-test.mjs",
     "check:env": "node scripts/check-env.js",
     "coverage:ratchet": "node scripts/coverage-ratchet.mjs",
+    "seed": "tsx scripts/seed.ts",
     "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s type:ratchet:test && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
@@ -66,6 +67,7 @@
     "postcss": "^8.4.32",
     "prettier": "^3.7.4",
     "tailwindcss": "^3.4.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite": "^5.0.10",
     "vitest": "^4.0.18"

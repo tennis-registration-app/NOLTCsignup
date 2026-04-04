@@ -39,6 +39,14 @@ npm run verify
 
 `npm run verify` runs all quality gates: lint ratchet, type checking, unit tests with coverage ratchets, fixture validation, production build, and E2E tests. This is the single required command before any merge. See [docs/TESTING.md](TESTING.md) for test locations and how to add tests.
 
+**New contractor?** Follow [INSTALL_CHECKLIST.md](../INSTALL_CHECKLIST.md) for the full step-by-step install and verification sequence. To populate realistic demo data once the app is running:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=<key> npm run seed
+```
+
+Idempotent — safe to run repeatedly. Creates 10 sessions, 2 blocks, and 1 waitlist entry using the `noltc-backend` dev members. Requires backend `_001` and `_002` migrations. See `scripts/seed.ts`.
+
 ## Where Things Live
 
 | I need to... | Start here |
@@ -80,6 +88,7 @@ Full details: [docs/TESTING.md](TESTING.md), [docs/API_TESTING.md](API_TESTING.m
 
 | Topic | Doc |
 |-------|-----|
+| Contractor install + verify sequence | [INSTALL_CHECKLIST.md](../INSTALL_CHECKLIST.md) |
 | Production operations | [docs/OPERATIONS.md](OPERATIONS.md) |
 | Deployment | [docs/DEPLOYMENT.md](DEPLOYMENT.md) |
 | Environment config | [docs/ENVIRONMENT.md](ENVIRONMENT.md) |
