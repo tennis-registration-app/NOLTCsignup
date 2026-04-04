@@ -26,7 +26,7 @@ The frontend is a multi-page Vite application with four entry points:
 
 ### Shared Code
 
-- `src/lib/` — API client, realtime subscriptions, utilities
+- `src/lib/` — API client, polling-based board updates, utilities
 - `src/shared/` — Shared React components
 - `shared/` — Cross-app utilities (legacy IIFE modules)
 - `domain/` — Domain logic and constants (IIFE modules)
@@ -36,7 +36,7 @@ The frontend is a multi-page Vite application with four entry points:
 ### 1. Backend-Authoritative
 
 All domain state lives in the database. The frontend is a view layer that:
-- Reads state via API calls or realtime subscriptions
+- Reads state via API calls (polling for live board updates)
 - Mutates state **only** through Edge Function calls
 - Never stores domain state in localStorage (localStorage is for UI preferences only)
 
@@ -47,13 +47,16 @@ All data mutations go through Supabase Edge Functions. The frontend never writes
 - Audit logging at the mutation boundary
 - Atomic operations for complex workflows
 
-### 3. Realtime State Propagation
+### 3. State Propagation via Polling
 
-Court status updates propagate via:
-1. **Primary:** Supabase Realtime subscriptions (signals table)
-2. **Fallback:** Polling (for environments where websockets are unreliable)
+Court status updates propagate via polling — Supabase Realtime WebSocket subscriptions are not implemented:
 
-When a mutation occurs, the Edge Function writes to the signals table, which triggers realtime updates to all connected clients.
+- **Block expiry poll:** every 30 seconds (catches expired blocks)
+- **Backup poll:** every 60 seconds (guaranteed periodic refresh)
+- **Visibility trigger:** immediate refresh when a hidden tab becomes visible
+- **Admin app:** 3-second poll interval for tighter operator feedback
+
+All polling is visibility-aware (`document.hidden` check) and runs through `TennisQueries.subscribeToBoardChanges()`. The `board_change_signals` table exists in the database for a future Realtime implementation but is not subscribed to by the frontend.
 
 ### 4. Event-Sourced Sessions
 
@@ -71,8 +74,8 @@ Court sessions maintain history:
 └─────────────┘                    └────────┬────────┘
        ▲                                    │
        │                                    ▼
-       │ Realtime              ┌─────────────────────┐
-       │ Subscription          │     PostgreSQL      │
+       │ Polling               ┌─────────────────────┐
+       │ (30s / 60s)           │     PostgreSQL      │
        │                       │  (Supabase)         │
        └───────────────────────┴─────────────────────┘
 ```

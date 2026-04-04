@@ -108,9 +108,9 @@ Pure-function unit tests for commands, orchestrators, and presenters. Hook-level
 
 This is the single most consequential file in the application — every court assignment flows through it. The file has a roadmap comment near the top identifying known extraction candidates; read it before making structural changes. The main test suite is `tests/unit/orchestration/assignCourtOrchestrator.test.ts` (386 lines); a second file covers the guard helpers (`tests/unit/orchestration/helpers/assignCourtValidation.test.ts`, 211 lines). Safe modification protocol: write a failing test first, run the full orchestrator test file to confirm nothing else breaks, then implement. Do not reorder the guard stages — they are sequenced intentionally (optimistic checks before expensive ones), and reordering will break the guard tests in non-obvious ways.
 
-### Realtime subscription testing gap
+### Polling testing gap
 
-E2E tests run with `?e2e=1`, which disables Supabase Realtime and mocks all API calls. This means the WebSocket path — board updates arriving via subscription, subscription reconnection after a network drop, duplicate-event deduplication — is covered only by unit tests and manual QA, not by the automated E2E suite. Any change to `useRegistrationDataLayer.ts` (subscription setup), the board normalization pipeline, or the polling fallback in `useBoardSubscription.ts` should be manually tested against the live Supabase project before merging, not just against the verify pipeline.
+E2E tests run with `?e2e=1`, which disables all polling and mocks all API calls (single initial fetch only). This means live polling behaviour — board updates arriving on interval, visibility-triggered refreshes, the 30s/60s fallback timers — is covered only by unit tests and manual QA, not by the automated E2E suite. Any change to `useRegistrationDataLayer.ts` (polling setup), the board normalization pipeline, or `useBoardSubscription.ts` should be manually tested against the live Supabase project before merging. Note: Supabase Realtime WebSocket subscriptions are not implemented; `board_change_signals` exists in the DB for a future implementation.
 
 ## Known Issues
 

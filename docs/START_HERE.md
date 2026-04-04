@@ -17,7 +17,7 @@ Court registration system for the New Orleans Lawn Tennis Club — 12 courts, ~2
 
 **Identity model:** Honor-system — no authentication. Admin access via URL path. Supabase RLS provides backend access control. See [docs/SECURITY_WP.md](SECURITY_WP.md) for threat model.
 
-**Design principles:** Backend-authoritative (frontend is a view layer), all mutations through Edge Functions, realtime state via Supabase subscriptions. See [ARCHITECTURE.md](../ARCHITECTURE.md) for full details.
+**Design principles:** Backend-authoritative (frontend is a view layer), all mutations through Edge Functions, state updates via polling (not Supabase Realtime WebSockets). See [ARCHITECTURE.md](../ARCHITECTURE.md) for full details.
 
 ## Quick Start
 

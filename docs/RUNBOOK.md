@@ -12,7 +12,7 @@ This document covers deployment, kiosk hardware setup, and troubleshooting for t
 - **Courtboard Display** — Read-only court status display
 
 ### Backend
-- **Supabase** — PostgreSQL database + Realtime subscriptions
+- **Supabase** — PostgreSQL database + Edge Functions (frontend uses polling, not Realtime WebSockets)
 - **Edge Functions** — Server-side business logic (court assignment, waitlist)
 - **Row-Level Security (RLS)** — Access control on all tables
 
@@ -41,7 +41,7 @@ npm run verify
 
 4. **Verify deployment**
    - Check kiosk loads correctly
-   - Verify realtime subscription connects
+   - Verify board data loads and polls for updates (watch for periodic refreshes in the network tab)
    - Test a registration flow
 
 ### Environment Variables
@@ -76,22 +76,22 @@ If kiosk becomes unresponsive:
 
 ## Troubleshooting
 
-### Realtime Subscription Issues
+### Polling Issues
 
 **Symptom**: Court data not updating, stale information displayed
 
 **Diagnosis**:
 ```javascript
-// Check browser console for:
-'[TennisBackend] Board subscription active'
-'[TennisBackend] Board update received'
+// Check browser console for periodic poll messages:
+'[poll] Checking for expired blocks...'
+'[backup-poll] Periodic refresh...'
 ```
 
 **Solutions**:
-1. Refresh the page to re-establish subscription
-2. Check Supabase Realtime status in dashboard
+1. Check if the tab is in the background — polling pauses when `document.hidden === true`; bring the tab to the foreground or refresh
+2. Check Supabase Edge Function status in the dashboard (polls hit `/get-board` via HTTP)
 3. Verify network connectivity
-4. Check for WebSocket blocking (firewalls, proxies)
+4. Confirm the page was not loaded with `?e2e=1`, which disables all polling
 
 ### Mobile Bridge Issues
 
@@ -193,19 +193,19 @@ If kiosk becomes unresponsive:
 ## Monitoring
 
 ### Key Metrics to Watch
-- Realtime subscription connection status
+- Polling health (periodic GET /get-board calls visible in network tab)
 - Edge Function error rates
 - Court assignment success rate
 - Average registration time
 
 ### Health Checks
-1. **Subscription active**: Look for periodic board updates in console
+1. **Polling active**: Look for periodic `[poll]` or `[backup-poll]` messages in console
 2. **Data fresh**: Compare displayed data with Supabase dashboard
 3. **No console errors**: Check for JavaScript errors
 
 ### Logs
 - **Browser console**: Client-side errors and debug logs
-- **Supabase Dashboard**: Edge Function logs, Realtime status
+- **Supabase Dashboard**: Edge Function logs and error rates
 - **Network tab**: API call responses
 
 ## Emergency Procedures
