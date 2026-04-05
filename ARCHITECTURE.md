@@ -476,9 +476,13 @@ The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfi
 | `src/tennis/domain/availability.ts` | 610 | Court availability logic |
 | `src/lib/ApiAdapter.ts` | 546 | API client |
 | `src/tennis/domain/waitlist.ts` | 538 | Waitlist domain logic |
-| `src/registration/orchestration/assignCourtOrchestrator.ts` | 545 | Court assignment orchestration |
+| `src/registration/orchestration/assignCourtOrchestrator.ts` | 265 | Guard gauntlet + branch dispatch (thin orchestrator) |
+| `src/registration/orchestration/helpers/blockConflictCheck.ts` | 43 | Upcoming-block conflict prompt |
+| `src/registration/orchestration/helpers/successState.ts` | 78 | Shared post-assignment state helpers |
+| `src/registration/orchestration/branches/waitlistAssignment.ts` | 143 | Waitlist assignment path |
+| `src/registration/orchestration/branches/directAssignment.ts` | 188 | Direct assignment path |
 
-The remaining five files (excluding `appTypes.ts`) are candidates for extraction when next modified for functional changes.
+The remaining four files (excluding `appTypes.ts`) are candidates for extraction when next modified for functional changes.
 
 ## Entry Points & Module System
 
@@ -489,7 +493,7 @@ The remaining five files (excluding `appTypes.ts`) are candidates for extraction
 | Admin | `src/admin/index.html` | `src/admin/main.tsx` |
 | Mobile Shell | `Mobile.html` | `src/mobile-shell/main.ts` |
 
-All domain logic lives in ES modules under `src/`. Legacy `window.Tennis.*` globals are populated by adapter modules in `src/platform/attachLegacy*.ts`, imported at the top of each entry point.
+All domain logic lives in ES modules under `src/`. Legacy `window.Tennis.*` globals are populated by adapter modules in `src/platform/` (e.g. `attachLegacyConfig.ts`, `attachLegacyEvents.ts`), imported at the top of each entry point.
 
 ### Mobile Shell
 

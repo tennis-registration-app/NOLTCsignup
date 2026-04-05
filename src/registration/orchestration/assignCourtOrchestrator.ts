@@ -1,10 +1,38 @@
 /**
  * Assign Court Orchestrator
+ *
+ * Thin dispatcher: runs the guard gauntlet and block-conflict check,
+ * then delegates to the appropriate assignment branch.
+ *
+ * Conceptual stages (in execution order):
+ *
+ *   1. GUARD GAUNTLET — five sequential early-exit guards:
+ *        double-submit prevention → operating hours → court number validity
+ *        → group has players → group compatibility (domain rules)
+ *
+ *   2. PLAYER NORMALIZATION — splits currentGroup into two arrays
+ *        (members-only for domain validation, all players for assignment),
+ *        derives session duration from player count.
+ *
+ *   3. BLOCK-CONFLICT CHECK — async: fetches upcoming block on selected court;
+ *        if the block starts before the session would end, prompts to confirm.
+ *        See helpers/blockConflictCheck.ts.
+ *
+ *   4. WAITLIST BRANCH (early-exit) — when currentWaitlistEntryId is set,
+ *        calls assignFromWaitlist, clears waitlist state, shows success, returns.
+ *        See branches/waitlistAssignment.ts.
+ *
+ *   5. DIRECT ASSIGNMENT — calls assignCourtWithPlayers; handles denial codes
+ *        (COURT_OCCUPIED → refresh, GPS failure → fallback prompt).
+ *        See branches/directAssignment.ts.
+ *
+ * Safe modification protocol:
+ *   - Run the test suite first: tests/unit/orchestration/assignCourtOrchestrator.test.ts
+ *   - Add a failing test before changing behaviour (guards, denial codes, success state)
+ *   - Do not reorder stages — guards must run before normalization, normalization
+ *     before the branch split, branch split before direct assignment
  */
 
-import { logger } from '../../lib/logger';
-import { DenialCodes } from '../../lib/backend/types';
-import { normalizeError } from '../../lib/errors/normalizeError';
 import { createOrchestrationDeps } from './deps/index.js';
 import { durationForGroupSize } from '../../lib/dateUtils';
 import {
@@ -14,6 +42,9 @@ import {
   guardGroup,
   guardGroupCompat,
 } from './helpers/index.js';
+import { runBlockConflictCheck } from './helpers/blockConflictCheck.js';
+import { executeWaitlistAssignment } from './branches/waitlistAssignment.js';
+import { executeDirectAssignment } from './branches/directAssignment.js';
 import { toast } from '../../shared/utils/toast.js';
 import type {
   RegistrationConstants,
@@ -27,7 +58,6 @@ import type {
   DisplacementInfo,
   OriginalCourtData,
   CourtBlockStatusResult,
-  AssignCourtResponse,
 } from '../../types/appTypes.js';
 
 export interface AssignCourtState {
@@ -93,131 +123,30 @@ export interface AssignCourtDeps {
   ui: AssignCourtUI;
 }
 
-// ---- File-local helpers (not exported) ----
-
-/** Normalize a command-response session so downstream code uses only camelCase scheduledEndAt. */
-function normalizeCommandSession(raw?: {
-  id?: string;
-  scheduled_end_at?: string;
-  scheduledEndAt?: string;
-  participantDetails?: Array<{
-    memberId: string;
-    name: string;
-    accountId: string;
-    isGuest: boolean;
-  }>;
-}): {
-  id: string | null;
-  scheduledEndAt: string | null;
-  participantDetails?: Array<{
-    memberId: string;
-    name: string;
-    accountId: string;
-    isGuest: boolean;
-  }>;
-} {
-  if (!raw) return { id: null, scheduledEndAt: null };
-  return {
-    id: raw.id || null,
-    scheduledEndAt: raw.scheduled_end_at || raw.scheduledEndAt || null,
-    participantDetails: raw.participantDetails,
-  };
-}
-
-interface SuccessStateParams {
-  courtNumber: number;
-  sessionId: string | null;
-  scheduledEndAt: string | null;
-  replacedGroup: ReplacedGroup | null;
-  displacement: DisplacementInfo | null;
-  canChangeCourt: boolean;
-}
-
-/** Sets the shared success-screen state used by both waitlist and direct-assign branches. */
-function applySuccessState(actions: AssignCourtActions, params: SuccessStateParams): void {
-  actions.setJustAssignedCourt(params.courtNumber);
-  actions.setAssignedSessionId(params.sessionId);
-  actions.setAssignedEndTime(params.scheduledEndAt);
-  actions.setReplacedGroup(params.replacedGroup);
-  actions.setDisplacement(params.displacement);
-  actions.setOriginalCourtData(null);
-  actions.setIsChangingCourt(false);
-  actions.setWasOvertimeCourt(false);
-  actions.setHasAssignedCourt(true);
-  actions.setCanChangeCourt(params.canChangeCourt);
-  actions.setShowSuccess(true);
-}
-
-/** Starts the auto-reset timer that fires resetForm after delayMs (desktop only). */
-function startAutoResetTimer(
-  state: AssignCourtState,
-  services: Pick<AssignCourtServices, 'clearSuccessResetTimer' | 'resetForm'>
-): void {
-  if (state.mobileFlow) return;
-  services.clearSuccessResetTimer();
-  state.successResetTimerRef.current = setTimeout(() => {
-    state.successResetTimerRef.current = null;
-    services.resetForm();
-  }, state.CONSTANTS.AUTO_RESET_SUCCESS_MS);
-}
-
-// =============================================================================
-// ARCHITECTURAL ROADMAP — read before modifying this file
-//
-// This is the most critical path in the system. Every court assignment —
-// direct and waitlist — flows through assignCourtToGroupOrchestrated.
-//
-// Conceptual stages (in execution order):
-//
-//   1. GUARD GAUNTLET — five sequential early-exit guards:
-//        double-submit prevention → operating hours → court number validity
-//        → group has players → group compatibility (domain rules)
-//        Each guard returns early with the appropriate feedback channel
-//        (silent / toast / alert) documented inline.
-//
-//   2. PLAYER NORMALIZATION — splits currentGroup into two arrays
-//        (members-only for domain validation, all players for assignment),
-//        derives session duration and group type from player count.
-//
-//   3. BLOCK-CONFLICT CHECK — async: fetches upcoming block on selected court;
-//        if the block starts before the session would end, prompts to confirm.
-//
-//   4. WAITLIST BRANCH (early-exit) — when currentWaitlistEntryId is set,
-//        calls assignFromWaitlist, clears waitlist state, shows success, returns.
-//        Stage 5 is skipped entirely.
-//
-//   5. DIRECT ASSIGNMENT — calls assignCourtWithPlayers; handles denial codes
-//        (COURT_OCCUPIED → refresh, GPS failure → fallback prompt);
-//        applies success state and starts the court-change countdown timer.
-//
-// Safe modification protocol:
-//   - Run the test suite first: tests/unit/orchestration/assignCourtOrchestrator.test.ts
-//   - Add a failing test before changing behaviour (guards, denial codes, success state)
-//   - Each stage above is a natural extraction boundary if decomposition is needed
-//   - Do not reorder stages — guards must run before normalization, normalization
-//     before the branch split, branch split before direct assignment
 // =============================================================================
 export async function assignCourtToGroupOrchestrated(
   courtNumber: number | null | undefined,
   selectableCountAtSelection: number | null,
   deps: AssignCourtDeps
 ): Promise<void> {
-  // Grouped deps structure — { state, actions, services, ui }
-  const { state, actions, services, ui } = deps;
+  const { state, services, ui } = deps;
+
+  // Lazy runtime deps — initialised on first use, after fast-fail guards
+  let _runtimeDeps: ReturnType<typeof createOrchestrationDeps> | undefined;
+  const getRuntimeDeps = () => (_runtimeDeps ??= createOrchestrationDeps());
 
   // ===== GUARD SECTION =====
 
   // Guard 1: Prevent double-submit (silent)
   const assigningCheck = guardNotAssigning(state.isAssigning);
   if (!assigningCheck.ok) {
-    logger.debug('AssignCourt', 'Assignment already in progress, ignoring duplicate request');
+    getRuntimeDeps().logger.debug(
+      'AssignCourt',
+      'Assignment already in progress, ignoring duplicate request'
+    );
     // SILENT-GUARD: double-submit prevention — no user feedback needed
     return;
   }
-
-  // Lazy runtime deps - created only when needed (preserves fast-fail)
-  let _runtimeDeps: ReturnType<typeof createOrchestrationDeps> | undefined;
-  const getRuntimeDeps = () => (_runtimeDeps ??= createOrchestrationDeps());
 
   // Mobile: Use preselected court if in mobile flow
   if (state.mobileFlow && state.preselectedCourt && !courtNumber) {
@@ -313,27 +242,9 @@ export async function assignCourtToGroupOrchestrated(
   // Canonical group object (use allPlayers so guests appear on court)
   const group = { players: allPlayers, guests };
 
-  // Check for upcoming block on selected court using new system
-  const blockStatus = await services.getCourtBlockStatus(courtNumber);
-  if (blockStatus && !blockStatus.isCurrent && blockStatus.startTime) {
-    const nowBlock = new Date();
-    const blockStart = new Date(blockStatus.startTime);
-    const sessionEnd = new Date(nowBlock.getTime() + duration * 60000);
-
-    // Check if block will start before session ends
-    if (blockStart < sessionEnd) {
-      const minutesUntilBlock = Math.ceil((blockStart.getTime() - nowBlock.getTime()) / 60000);
-      const confirmMsg = `⚠️ This court has a block starting in ${minutesUntilBlock} minutes (${blockStatus.reason}). You may not get your full ${duration} minutes.\n\nDo you want to take this court anyway?`;
-
-      if (!ui.confirm) throw new Error('AssignCourtUI.confirm not injected — wiring bug');
-      const proceed = ui.confirm(confirmMsg);
-      if (!proceed) {
-        ui.showAlertMessage('Please select a different court or join the waitlist.');
-        // FEEDBACK: alert provides user feedback above
-        return; // Exit without assigning
-      }
-    }
-  }
+  // ===== BLOCK-CONFLICT CHECK =====
+  const shouldProceed = await runBlockConflictCheck(courtNumber, duration, deps);
+  if (!shouldProceed) return;
 
   getRuntimeDeps().logger.debug('AssignCourt', 'UI preparing to assignCourt with', {
     courtNumber,
@@ -341,274 +252,17 @@ export async function assignCourtToGroupOrchestrated(
     duration,
   });
 
-  // If this is a waitlist group (CTA flow), use assignFromWaitlist instead
+  // ===== BRANCH DISPATCH =====
+
   if (state.currentWaitlistEntryId) {
-    actions.setIsAssigning(true); // Guard against double-submit in waitlist path
-    // Get court UUID for the waitlist assignment
-    const waitlistCourt = state.courts.find((c) => c.number === courtNumber);
-    if (!waitlistCourt) {
-      getRuntimeDeps().logger.error(
-        'AssignCourt',
-        'Court not found for waitlist assignment',
-        courtNumber
-      );
-      toast('Court not found. Please refresh and try again.', { type: 'error' });
-      // FEEDBACK: toast provides user feedback above
-      actions.setIsAssigning(false);
-      return;
-    }
-
-    // Get geolocation for mobile (required by backend for geofence validation)
-    const waitlistMobileLocation = await services.getMobileGeolocation();
-
-    try {
-      const result = await services.backend.commands.assignFromWaitlist({
-        waitlistEntryId: state.currentWaitlistEntryId,
-        courtId: waitlistCourt.id,
-        ...(waitlistMobileLocation || {}),
-      });
-      getRuntimeDeps().logger.debug('AssignCourt', 'Waitlist group assigned result', result);
-
-      if (!result.ok) {
-        // Handle "Court occupied" race condition
-        if (result.code === DenialCodes.COURT_OCCUPIED) {
-          toast('This court was just taken. Refreshing...', { type: 'warning' });
-          actions.setCurrentWaitlistEntryId(null);
-          await services.backend.queries.refresh();
-          // FEEDBACK: toast provides user feedback above
-          actions.setIsAssigning(false);
-          return;
-        }
-        // Handle mobile location errors - offer QR fallback
-        if (state.API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
-          actions.setGpsFailedPrompt(true);
-          // FEEDBACK: GPS prompt modal provides user feedback
-          actions.setIsAssigning(false);
-          return;
-        }
-        toast(result.message || 'Failed to assign court from waitlist', {
-          type: 'error',
-        });
-        actions.setCurrentWaitlistEntryId(null);
-        // FEEDBACK: toast provides user feedback above
-        actions.setIsAssigning(false);
-        return;
-      }
-
-      // Clear the waitlist entry ID after successful assignment
-      actions.setCurrentWaitlistEntryId(null);
-      actions.setHasWaitlistPriority(false);
-      // Also clear mobile sessionStorage waitlist entry
-      sessionStorage.removeItem('mobile-waitlist-entry-id');
-
-      // Board subscription will auto-refresh
-      getRuntimeDeps().logger.debug(
-        'AssignCourt',
-        'Waitlist assignment successful, waiting for board refresh signal'
-      );
-
-      // Normalize command session to camelCase (backend may return scheduled_end_at)
-      const session = normalizeCommandSession(result.session);
-
-      // Update currentGroup with participant details for ball purchases
-      if (session.participantDetails) {
-        const groupFromWaitlist = session.participantDetails.map((p) => ({
-          id: p.memberId,
-          memberNumber: p.memberId,
-          name: p.name,
-          accountId: p.accountId,
-          isGuest: p.isGuest,
-        }));
-        actions.setCurrentGroup(groupFromWaitlist);
-      }
-
-      // Update UI state
-      applySuccessState(actions, {
-        courtNumber,
-        sessionId: session.id,
-        scheduledEndAt: session.scheduledEndAt,
-        replacedGroup: null,
-        displacement: null,
-        canChangeCourt: false, // Waitlist groups typically don't get court change option
-      });
-
-      startAutoResetTimer(state, services);
-
-      // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
-      await services.backend.queries.refresh();
-
-      // EARLY-EXIT: waitlist flow complete — success screen shown
-      actions.setIsAssigning(false);
-      return;
-    } catch (error: unknown) {
-      const meta = normalizeError(error);
-      getRuntimeDeps().logger.error('AssignCourt', 'assignFromWaitlist failed', {
-        category: meta.category,
-        code: meta.code,
-        message: meta.message,
-      });
-      actions.setCurrentWaitlistEntryId(null);
-      toast(error instanceof Error ? error.message : 'Failed to assign court from waitlist', {
-        type: 'error',
-      });
-      // FEEDBACK: toast provides user feedback above
-      actions.setIsAssigning(false);
-      return;
-    }
-  }
-
-  // Get court UUID from court number
-  const court = state.courts.find((c) => c.number === courtNumber);
-  if (!court) {
-    getRuntimeDeps().logger.error('AssignCourt', 'Court not found for number', courtNumber);
-    toast('Court not found. Please refresh and try again.', { type: 'error' });
-    // FEEDBACK: toast provides user feedback above
+    await executeWaitlistAssignment(courtNumber, deps);
     return;
   }
 
-  // Determine group type from player count
-  const groupType = allPlayers.length <= 3 ? 'singles' : 'doubles';
-
-  actions.setIsAssigning(true); // Set before async work to close the double-submit window
-  // Get geolocation for mobile (required by backend for geofence validation)
-  const mobileLocation = await services.getMobileGeolocation();
-
-  const assignStartTime = performance.now();
-  getRuntimeDeps().logger.debug(
-    'AssignCourt',
-    '[T+0ms] Calling backend.commands.assignCourtWithPlayers',
-    {
-      courtId: court.id,
-      courtNumber: court.number,
-      groupType,
-      playerCount: allPlayers.length,
-      mobileLocation: mobileLocation ? 'provided' : 'not-mobile',
-    }
-  );
-  let result: AssignCourtResponse;
-  try {
-    result = await services.backend.commands.assignCourtWithPlayers({
-      courtId: court.id,
-      players: allPlayers as GroupPlayer[],
-      groupType,
-      ...(mobileLocation || {}), // Spread latitude/longitude if available
-    });
-    const apiDuration = Math.round(performance.now() - assignStartTime);
-    getRuntimeDeps().logger.debug(
-      'AssignCourt',
-      `[T+${apiDuration}ms] Court assigned result`,
-      result
-    );
-  } catch (error: unknown) {
-    const meta = normalizeError(error);
-    const apiDuration = Math.round(performance.now() - assignStartTime);
-    getRuntimeDeps().logger.error(
-      'AssignCourt',
-      `[T+${apiDuration}ms] assignCourtWithPlayers threw error`,
-      { category: meta.category, code: meta.code, message: meta.message }
-    );
-    toast(error instanceof Error ? error.message : 'Failed to assign court. Please try again.', {
-      type: 'error',
-    });
-    actions.setIsAssigning(false);
-    // FEEDBACK: toast provides user feedback above
-    return;
-  }
-
-  if (!result.ok) {
-    getRuntimeDeps().logger.debug('AssignCourt', 'assignCourtWithPlayers returned ok:false', {
-      code: result.code,
-      message: result.message,
-    });
-    // Handle "Court occupied" race condition
-    if (result.code === DenialCodes.COURT_OCCUPIED) {
-      toast('This court was just taken. Refreshing...', { type: 'warning' });
-      // Board subscription will auto-refresh, but force immediate refresh
-      await services.backend.queries.refresh();
-      actions.setIsAssigning(false);
-      // FEEDBACK: toast provides user feedback above
-      return;
-    }
-    // Handle mobile location errors - offer QR fallback
-    if (state.API_CONFIG.IS_MOBILE && result.message?.includes('Location required')) {
-      actions.setGpsFailedPrompt(true);
-      actions.setIsAssigning(false);
-      // FEEDBACK: GPS prompt modal provides user feedback
-      return;
-    }
-    toast(result.message || 'Failed to assign court', { type: 'error' });
-    actions.setIsAssigning(false);
-    // FEEDBACK: toast provides user feedback above
-    return;
-  }
-
-  // Success - clear the assigning flag
-  actions.setIsAssigning(false);
-
-  // Success! Update UI state, then refresh board for fresh data
-  const successTime = Math.round(performance.now() - assignStartTime);
-  getRuntimeDeps().logger.debug(
-    'AssignCourt',
-    `[T+${successTime}ms] Court assignment successful, updating UI state...`
-  );
-
-  // Determine if court change should be allowed
-  // If only one court was selectable when user chose, no change option
-  const allowCourtChange =
-    selectableCountAtSelection !== null ? selectableCountAtSelection > 1 : false;
-
-  // Construct replacedGroup from displacement.participants for SuccessScreen messaging
-  const replacedGroupFromDisplacement =
-    (result.displacement?.participants?.length ?? 0) > 0
-      ? {
-          players: result.displacement!.participants.map((name: string) => ({ name })),
-          endTime: result.displacement!.restoreUntil,
-        }
-      : null;
-
-  // Normalize command session to camelCase (backend may return scheduled_end_at)
-  const session = normalizeCommandSession(result.session);
-
-  // Update UI state based on result
-  applySuccessState(actions, {
+  await executeDirectAssignment(
     courtNumber,
-    sessionId: session.id,
-    scheduledEndAt: session.scheduledEndAt,
-    replacedGroup: replacedGroupFromDisplacement,
-    displacement: result.displacement ?? null, // Will be null if no overtime was displaced
-    canChangeCourt: allowCourtChange, // Only true if alternatives exist
-  });
-  // Direct-assign-only state
-  actions.setChangeTimeRemaining(state.CONSTANTS.CHANGE_COURT_TIMEOUT_SEC);
-  actions.setIsTimeLimited(result.isTimeLimited || result.isInheritedEndTime || false);
-  actions.setTimeLimitReason(result.timeLimitReason || (result.isTimeLimited ? 'block' : null));
-
-  const uiUpdateTime = Math.round(performance.now() - assignStartTime);
-  getRuntimeDeps().logger.debug(
-    'AssignCourt',
-    `[T+${uiUpdateTime}ms] UI state updated, showSuccess=true`
+    selectableCountAtSelection,
+    allPlayers as GroupPlayer[],
+    deps
   );
-
-  startAutoResetTimer(state, services);
-
-  if (allowCourtChange) {
-    const timer = setInterval(() => {
-      actions.setChangeTimeRemaining((prev: number) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          actions.setCanChangeCourt(false);
-          // Don't call resetForm() - let user decide when to leave
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  }
-
-  // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
-  try {
-    await services.backend.queries.refresh();
-  } catch {
-    // Refresh is best-effort; board subscription will catch up
-  }
 }

@@ -104,9 +104,19 @@ Pure-function unit tests for commands, orchestrators, and presenters. Hook-level
 
 `useRegistrationAppState` owns 26 shell-state keys that persist for the lifetime of the app session (screen routing, operating hours, ball price, admin flags). `WorkflowProvider` owns ~15 per-flow keys (current group, court assignment, member identity) that reset between registrations via a `workflowKey` counter increment in `TennisRegistration` — no explicit setter calls, just a key bump that remounts the subtree. When adding new state, decide which bucket it belongs in: if the value should survive a successful registration and reset-to-home, it is shell state; if it is scoped to one registration flow, it belongs in `WorkflowProvider`. Adding it to the wrong bucket will produce hard-to-diagnose stale-state bugs.
 
-### Modifying `assignCourtOrchestrator.ts`
+### Modifying the assign-court orchestration layer
 
-This is the single most consequential file in the application — every court assignment flows through it. The file has a roadmap comment near the top identifying known extraction candidates; read it before making structural changes. The main test suite is `tests/unit/orchestration/assignCourtOrchestrator.test.ts` (386 lines); a second file covers the guard helpers (`tests/unit/orchestration/helpers/assignCourtValidation.test.ts`, 211 lines). Safe modification protocol: write a failing test first, run the full orchestrator test file to confirm nothing else breaks, then implement. Do not reorder the guard stages — they are sequenced intentionally (optimistic checks before expensive ones), and reordering will break the guard tests in non-obvious ways.
+Every court assignment flows through `assignCourtOrchestrator.ts`, which is now a thin dispatcher (265 lines). The logic has been decomposed into four focused modules under `src/registration/orchestration/`:
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `assignCourtOrchestrator.ts` | 265 | Guard gauntlet + branch dispatch |
+| `helpers/blockConflictCheck.ts` | 43 | Upcoming-block conflict prompt |
+| `helpers/successState.ts` | 78 | `normalizeCommandSession`, `applySuccessState`, `startAutoResetTimer` |
+| `branches/waitlistAssignment.ts` | 143 | Full waitlist assignment path |
+| `branches/directAssignment.ts` | 188 | Full direct assignment path |
+
+The main test suites are `tests/unit/orchestration/assignCourtOrchestrator.test.ts` (386 lines, 17 tests) and `tests/unit/orchestration/helpers/assignCourtValidation.test.ts` (211 lines, 22 tests). Safe modification protocol: write a failing test first, run the full orchestrator test file to confirm nothing else breaks, then implement. Do not reorder the guard stages in `assignCourtOrchestrator.ts` — they are sequenced intentionally (optimistic checks before expensive ones), and reordering will break the guard tests in non-obvious ways.
 
 ### Polling testing gap
 
