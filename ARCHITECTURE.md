@@ -476,13 +476,8 @@ The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfi
 | `src/tennis/domain/availability.ts` | 610 | Court availability logic |
 | `src/lib/ApiAdapter.ts` | 546 | API client |
 | `src/tennis/domain/waitlist.ts` | 538 | Waitlist domain logic |
-| `src/registration/orchestration/assignCourtOrchestrator.ts` | 265 | Guard gauntlet + branch dispatch (thin orchestrator) |
-| `src/registration/orchestration/helpers/blockConflictCheck.ts` | 43 | Upcoming-block conflict prompt |
-| `src/registration/orchestration/helpers/successState.ts` | 78 | Shared post-assignment state helpers |
-| `src/registration/orchestration/branches/waitlistAssignment.ts` | 143 | Waitlist assignment path |
-| `src/registration/orchestration/branches/directAssignment.ts` | 188 | Direct assignment path |
 
-The remaining four files (excluding `appTypes.ts`) are candidates for extraction when next modified for functional changes.
+`assignCourtOrchestrator.ts` was decomposed (614 → 265 lines) into four focused modules under `src/registration/orchestration/` — see the Orchestrator Dependency Conventions section. The remaining four files above are candidates for extraction when next modified for functional changes.
 
 ## Entry Points & Module System
 
@@ -513,14 +508,10 @@ Adapters (in import order):
 | # | Adapter | Global |
 |---|---------|--------|
 | 1 | `attachLegacyConfig.ts` | `window.Tennis.Config` |
-| 2 | `attachLegacyTime.ts` | `window.Tennis.Domain.Time` |
-| 3 | `attachLegacyStorage.ts` | `window.Tennis.Storage` |
-| 4 | `attachLegacyEvents.ts` | `window.Tennis.Events` |
-| 5 | `attachLegacyDataStore.ts` | `window.Tennis.DataStore` |
-| 6 | `attachLegacyBlocks.ts` | `window.Tennis.Domain.Blocks` |
-| 7 | `attachLegacyAvailability.ts` | `window.Tennis.Domain.Availability` |
-| 8 | `attachLegacyRoster.ts` | `window.Tennis.Domain.Roster` |
-| 9 | `attachLegacyWaitlist.ts` | `window.Tennis.Domain.Waitlist` |
+| 2 | `attachLegacyStorage.ts` | `window.Tennis.Storage` |
+| 3 | `attachLegacyEvents.ts` | `window.Tennis.Events` |
+| 4 | `attachLegacyAvailability.ts` | `window.Tennis.Domain.Availability` |
+| 5 | `attachLegacyWaitlist.ts` | `window.Tennis.Domain.Waitlist` |
 
 ### ESM → Legacy Global Mapping
 
@@ -649,10 +640,6 @@ See [docs/adr/006-courtboard-legacy-containment.md](./docs/adr/006-courtboard-le
 | `Tennis.Storage` | `attachLegacyStorage.ts` | `courtboard/main.tsx` |
 | `Tennis.Domain.Availability` | `attachLegacyAvailability.ts` | `courtboard/main.tsx` |
 | `Tennis.Domain.Waitlist` | `attachLegacyWaitlist.ts` | `courtboard/main.tsx` |
-| `Tennis.Domain.Time` | `attachLegacyTime.ts` | **not imported — dead code** |
-| `Tennis.DataStore` | `attachLegacyDataStore.ts` | **not imported — dead code** |
-| `Tennis.BlocksService` | `attachLegacyBlocks.ts` | **not imported — dead code** |
-| `Tennis.Domain.Roster` | `attachLegacyRoster.ts` | **not imported — dead code** |
 
 **`window.CourtboardState`** — written exclusively by `courtboard/bridge/window-bridge.ts` (see § Courtboard State Bridge above).
 
@@ -682,7 +669,7 @@ The reverse also exists for admin callbacks: `registerGlobals.ts` exposes React 
 
 ### Phase-out status
 
-ADR-006 defines a three-phase migration. Phases 1 (ESLint fencing) and 2 (IIFE consolidation) are complete. Phase 3 — converting `courtboard-bootstrap.js` to an ES module — is future work. The four dead-code `attachLegacy*` files (Time, DataStore, Blocks, Roster) can be deleted once confirmed no longer needed.
+ADR-006 defines a three-phase migration. Phases 1 (ESLint fencing) and 2 (IIFE consolidation) are complete. Phase 3 — converting `courtboard-bootstrap.js` to an ES module — is future work. The four dead-code `attachLegacy*` files (Time, DataStore, Blocks, Roster) have been deleted.
 
 **New code must not add consumers of `window.Tennis.*`.** New features should use React state and the `TennisBackend` service façade. See [docs/WINDOW_GLOBALS.md](./docs/WINDOW_GLOBALS.md) for the full access policy and allowed exceptions.
 
