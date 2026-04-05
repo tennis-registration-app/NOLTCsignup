@@ -49,11 +49,18 @@ src/registration/
 │   └── effects/
 │       └── useRegistrationEffects.ts
 ├── orchestration/                  # Pure workflow orchestrators (no React)
-│   ├── assignCourtOrchestrator.ts  # ⚠️ HIGH COUPLING — see Do-Not-Touch Zones
+│   ├── assignCourtOrchestrator.ts  # Thin dispatcher (265 lines): guard gauntlet → branch dispatch
 │   ├── courtChangeOrchestrator.ts
 │   ├── waitlistOrchestrator.ts
 │   ├── memberSelectionOrchestrator.ts
-│   └── resetOrchestrator.ts
+│   ├── resetOrchestrator.ts
+│   ├── helpers/
+│   │   ├── assignCourtValidation.ts  # Guard pure functions (5 guards)
+│   │   ├── blockConflictCheck.ts     # Block-conflict prompt (43 lines)
+│   │   └── successState.ts           # normalizeCommandSession, applySuccessState, startAutoResetTimer
+│   └── branches/
+│       ├── waitlistAssignment.ts     # Full waitlist assignment path (143 lines)
+│       └── directAssignment.ts       # Full direct assignment path (188 lines)
 ├── router/                         # Routing + presenter pattern
 │   ├── RegistrationRouter.tsx
 │   ├── routes/
@@ -123,15 +130,17 @@ src/registration/
 
 ---
 
-## Do-Not-Touch Zones 🚫
+## High-Care Zones ⚠️
 
 | Zone | Reason | Required Before Change |
 |------|--------|----------------------|
-| `assignCourtToGroup` | 545-line orchestrator | Approval + decomposition plan |
+| `assignCourtOrchestrator.ts` + branches/ | Highest-traffic path — every court assignment flows through here | Write a failing test first; do not reorder guard stages |
 | `sendGroupToWaitlist` | GPS + validation coupling | Approval |
 | `handleSuggestionClick` | Crosses 5+ clusters | Approval |
 | `src/tennis/domain/*` | Shared business logic | Unit test coverage |
 | Backend adapters | API contract | Integration tests |
+
+> **Note:** `assignCourtOrchestrator.ts` was decomposed from a 545-line monolith into a 265-line thin dispatcher in April 2026. The orchestration layer is now split across `orchestration/helpers/` and `orchestration/branches/` — see HANDOFF.md for the file map. It is the right place to make changes, with the test suite as your safety net.
 
 ---
 
@@ -188,7 +197,7 @@ Architectural boundaries and enforcement mechanisms prevent common drift pattern
 ### 3. Orchestrator Deps Grouping
 - **Pattern:** Large dependency objects grouped into `{ state, actions, services, ui }`
 - **resetOrchestrator:** Shell-level cleanup only (6 setters + 1 service). Workflow state resets via WorkflowProvider key-based remount — no explicit setter calls needed
-- **assignCourtOrchestrator:** Grouped deps (`{ state, actions, services, ui }`) sourced from `app` + workflow context via `buildHandlerDeps`
+- **assignCourtOrchestrator:** Grouped deps (`{ state, actions, services, ui }`) sourced from `app` + workflow context via `buildHandlerDeps`. Decomposed into `helpers/blockConflictCheck.ts`, `helpers/successState.ts`, `branches/waitlistAssignment.ts`, `branches/directAssignment.ts`
 
 ### 4. Boundary Normalization Rule
 - **Rule:** snake_case allowed only at boundaries; internal UI/services use camelCase

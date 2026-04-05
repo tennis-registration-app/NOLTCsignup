@@ -25,9 +25,13 @@ import {
 
 interface CalendarAdminBackend {
   admin: {
-    getBlocks: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string; blocks?: Record<string, unknown>[] }>;
+    getBlocks: (
+      params: Record<string, unknown>
+    ) => Promise<{ ok: boolean; message?: string; blocks?: Record<string, unknown>[] }>;
     cancelBlock: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
-    cancelBlockGroup: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
+    cancelBlockGroup: (
+      params: Record<string, unknown>
+    ) => Promise<{ ok: boolean; message?: string }>;
     updateBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
     createBlock?: (params: Record<string, unknown>) => Promise<{ ok: boolean; message?: string }>;
   };
@@ -79,9 +83,15 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [hoveredEvent, setHoveredEvent] = useState<CalendarEvent | null>(null);
-  const [hoverPosition, setHoverPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [hoverPosition, setHoverPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
   const [quickActionEvent, setQuickActionEvent] = useState<CalendarEvent | null>(null);
-  const [quickActionPosition, setQuickActionPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [quickActionPosition, setQuickActionPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
 
   // API-sourced block state
   const [blocks, setBlocks] = useState<CalendarEvent[]>([]);
@@ -139,32 +149,38 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
         if (result.ok) {
           // Transform API response to calendar event format
           // Normalize at ingestion, then use camelCase
-          const transformedBlocks: CalendarEvent[] = (result.blocks ?? []).map((b): CalendarEvent => {
-            const normalized = normalizeCalendarBlock(b);
+          const transformedBlocks: CalendarEvent[] = (result.blocks ?? []).map(
+            (b): CalendarEvent => {
+              const normalized = normalizeCalendarBlock(b);
 
-            return {
-              id: normalized.id,
-              courtId: normalized.courtId,
-              courtNumber: normalized.courtNumber,
-              courtNumbers: ([normalized.courtNumber]).filter((x: unknown): x is number => x != null).map(Number), // Calendar expects array
-              title: normalized.title,
-              startTime: normalized.startsAt || "",
-              endTime: normalized.endsAt || "",
-              reason: normalized.blockType,
-              blockType: normalized.blockType,
-              eventType: normalized.blockType ? getEventTypeFromReason(normalized.blockType) : null,
-              isRecurring: normalized.isRecurring,
-              recurrenceRule: normalized.recurrenceRule,
-              recurrenceGroupId: normalized.recurrenceGroupId,
-              isBlock: true,
-              isEvent:
-                normalized.blockType === 'event' ||
-                normalized.blockType === 'clinic' ||
-                normalized.blockType === 'lesson',
-              isWetCourt:
-                normalized.blockType === 'wet' || normalized.title?.toLowerCase().includes('wet'),
-            };
-          });
+              return {
+                id: normalized.id,
+                courtId: normalized.courtId,
+                courtNumber: normalized.courtNumber,
+                courtNumbers: [normalized.courtNumber]
+                  .filter((x: unknown): x is number => x != null)
+                  .map(Number), // Calendar expects array
+                title: normalized.title,
+                startTime: normalized.startsAt || '',
+                endTime: normalized.endsAt || '',
+                reason: normalized.blockType,
+                blockType: normalized.blockType,
+                eventType: normalized.blockType
+                  ? getEventTypeFromReason(normalized.blockType)
+                  : null,
+                isRecurring: normalized.isRecurring,
+                recurrenceRule: normalized.recurrenceRule,
+                recurrenceGroupId: normalized.recurrenceGroupId,
+                isBlock: true,
+                isEvent:
+                  normalized.blockType === 'event' ||
+                  normalized.blockType === 'clinic' ||
+                  normalized.blockType === 'lesson',
+                isWetCourt:
+                  normalized.blockType === 'wet' || normalized.title?.toLowerCase().includes('wet'),
+              };
+            }
+          );
           setBlocks(transformedBlocks);
         } else {
           logger.error('AdminCalendar', 'API error', result.message);
@@ -245,11 +261,14 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
     setHoveredEvent(null);
   }, []);
 
-  const handleQuickAction = useCallback((event: CalendarEvent, position: { top: number; left: number }) => {
-    setQuickActionEvent(event);
-    setQuickActionPosition(position);
-    setHoveredEvent(null);
-  }, []);
+  const handleQuickAction = useCallback(
+    (event: CalendarEvent, position: { top: number; left: number }) => {
+      setQuickActionEvent(event);
+      setQuickActionPosition(position);
+      setHoveredEvent(null);
+    },
+    []
+  );
 
   const handleEdit = useCallback(
     (event: CalendarEvent) => {
@@ -333,7 +352,7 @@ const EventCalendarEnhanced: React.FC<EventCalendarEnhancedProps> = ({
         showNotification('Error deleting block. Please try again.', 'error');
       }
     },
-    [backend, onRefresh]
+    [backend, onRefresh, confirmDialog, showNotification]
   );
 
   const handleDuplicate = useCallback(
