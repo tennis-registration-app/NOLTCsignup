@@ -630,6 +630,58 @@ API (get-board) → React State (main.tsx) → window.CourtboardState
 
 See [docs/adr/006-courtboard-legacy-containment.md](./docs/adr/006-courtboard-legacy-containment.md) for the full containment strategy.
 
+## Platform Legacy Layer (`src/platform/`)
+
+`src/platform/` is a bridge layer that exposes domain state and services to non-React (IIFE) consumers via `window.Tennis.*`. It exists because the courtboard originally ran as a set of standalone IIFE scripts before the React migration. Rather than rewriting all IIFE scripts at once, the platform layer lets new React code and old IIFE code coexist, with a planned phase-out tracked in ADR-006.
+
+### What attaches where
+
+**`window.Tennis.*`** — populated by `src/platform/attachLegacy*.ts` files on import:
+
+| Namespace | Attached by | Active callers |
+|-----------|-------------|----------------|
+| `Tennis.Config` | `attachLegacyConfig.ts` | `courtboard/main.tsx` |
+| `Tennis.Events` | `attachLegacyEvents.ts` | courtboard, admin, mobile-shell |
+| `Tennis.Storage` | `attachLegacyStorage.ts` | `courtboard/main.tsx` |
+| `Tennis.Domain.Availability` | `attachLegacyAvailability.ts` | `courtboard/main.tsx` |
+| `Tennis.Domain.Waitlist` | `attachLegacyWaitlist.ts` | `courtboard/main.tsx` |
+| `Tennis.Domain.Time` | `attachLegacyTime.ts` | **not imported — dead code** |
+| `Tennis.DataStore` | `attachLegacyDataStore.ts` | **not imported — dead code** |
+| `Tennis.BlocksService` | `attachLegacyBlocks.ts` | **not imported — dead code** |
+| `Tennis.Domain.Roster` | `attachLegacyRoster.ts` | **not imported — dead code** |
+
+**`window.CourtboardState`** — written exclusively by `courtboard/bridge/window-bridge.ts` (see § Courtboard State Bridge above).
+
+**Other globals** — set via `src/platform/registerGlobals.ts`: `window.GeolocationService`, `window.loadData`, `window.refreshAdminView`, `window.scheduleAdminRefresh`, and several dev-only flags (`__adminRefreshPending`, `__adminCoalesceHits`).
+
+### Data flow direction
+
+```
+React state (main.tsx)
+    │  import triggers side-effect
+    ▼
+attachLegacy*.ts → window.Tennis.*
+                         │
+                         ▼
+              courtboard-bootstrap.js (IIFE)
+              debug-panel.js (IIFE, ?debug=1 only)
+```
+
+The reverse also exists for admin callbacks: `registerGlobals.ts` exposes React functions (e.g. `loadData`, `refreshAdminView`) to `window.*` so that IIFE event listeners can trigger React re-renders.
+
+### Which apps consume it
+
+- **Courtboard** (primary consumer): imports 5 `attachLegacy*` modules; all React component reads go through `src/platform/windowBridge.ts` getters, never directly from `window.Tennis`.
+- **Admin**: imports `attachLegacyEvents` for the DOM event bus; uses `registerGlobals` for the admin refresh scheduler.
+- **Registration**: calls `ensureTennisGlobal()` and `migrateOldKeys()` at boot; exposes `loadData` for test/debug tooling.
+- **Mobile shell**: imports `attachLegacyEvents` only (needed for the health-check handshake).
+
+### Phase-out status
+
+ADR-006 defines a three-phase migration. Phases 1 (ESLint fencing) and 2 (IIFE consolidation) are complete. Phase 3 — converting `courtboard-bootstrap.js` to an ES module — is future work. The four dead-code `attachLegacy*` files (Time, DataStore, Blocks, Roster) can be deleted once confirmed no longer needed.
+
+**New code must not add consumers of `window.Tennis.*`.** New features should use React state and the `TennisBackend` service façade. See [docs/WINDOW_GLOBALS.md](./docs/WINDOW_GLOBALS.md) for the full access policy and allowed exceptions.
+
 ## Courtboard Icon Contract
 
 Courtboard icons use emoji in `<span>` elements sized via `fontSize` — this is intentional. SVG icons (lucide-react) break courtboard layout because `<svg>` elements have a different sizing model than inline text spans. Courtboard must never import from `src/shared/ui/icons/Icons.tsx`.
