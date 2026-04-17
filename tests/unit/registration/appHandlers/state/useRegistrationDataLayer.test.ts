@@ -90,18 +90,20 @@ describe('loadData', () => {
     expect(deps.backend.directory.getAllMembers).toHaveBeenCalledTimes(1);
   });
 
-  it('calls setData with merged board data preserving recentlyCleared', async () => {
+  it('calls setData with merged board data preserving prev state', async () => {
     await result.current.loadData();
 
-    // setData called with updater function (first call for board data)
+    // setData called with updater function (first call for board data).
+    // recentlyCleared must come from prev state via functional spread,
+    // not from a closure-captured snapshot.
     expect(deps.setData).toHaveBeenCalled();
     const firstUpdater = deps.setData.mock.calls[0][0];
-    const merged = firstUpdater({ existing: true });
+    const merged = firstUpdater({ existing: true, recentlyCleared: ['court-9'] });
     expect(merged).toMatchObject({
       existing: true,
       courts: [{ number: 1, isAvailable: true }],
       waitlist: [{ id: 'w1' }],
-      recentlyCleared: ['court-5'],
+      recentlyCleared: ['court-9'],
     });
   });
 

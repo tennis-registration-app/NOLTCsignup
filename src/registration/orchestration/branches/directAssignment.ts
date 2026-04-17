@@ -166,10 +166,15 @@ export async function executeDirectAssignment(
   startAutoResetTimer(state, services);
 
   if (allowCourtChange) {
+    // Any prior countdown is stale — clear before starting a new one
+    if (state.changeCourtTimerRef.current) {
+      clearInterval(state.changeCourtTimerRef.current);
+    }
     const timer = setInterval(() => {
       actions.setChangeTimeRemaining((prev: number) => {
         if (prev <= 1) {
           clearInterval(timer);
+          state.changeCourtTimerRef.current = null;
           actions.setCanChangeCourt(false);
           // Don't call resetForm() - let user decide when to leave
           return 0;
@@ -177,6 +182,7 @@ export async function executeDirectAssignment(
         return prev - 1;
       });
     }, 1000);
+    state.changeCourtTimerRef.current = timer;
   }
 
   // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
