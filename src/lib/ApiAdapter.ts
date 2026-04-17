@@ -18,6 +18,14 @@ import { API_CONFIG, ENDPOINTS, getDeviceContext } from './apiConfig';
 import { AppError, ErrorCategories, mapResponseToCategory } from './errors/index';
 import { logger } from './logger';
 
+interface ApiEnvelope {
+  ok: boolean;
+  code?: string;
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
 export class ApiAdapter {
   baseUrl: string;
   anonKey: string;
@@ -34,13 +42,15 @@ export class ApiAdapter {
     [key: string]: unknown;
   };
 
-  constructor(options: {
-    baseUrl?: string;
-    anonKey?: string;
-    deviceId?: string;
-    deviceType?: string;
-    cacheTTL?: number;
-  } = {}) {
+  constructor(
+    options: {
+      baseUrl?: string;
+      anonKey?: string;
+      deviceId?: string;
+      deviceType?: string;
+      cacheTTL?: number;
+    } = {}
+  ) {
     this.baseUrl = options.baseUrl || API_CONFIG.BASE_URL;
     this.anonKey = options.anonKey || API_CONFIG.ANON_KEY;
     this.deviceId = options.deviceId || API_CONFIG.DEVICE_ID;
@@ -79,13 +89,26 @@ export class ApiAdapter {
         headers,
       });
 
-      const data = await response.json();
+      let data: ApiEnvelope;
+      try {
+        data = (await response.json()) as ApiEnvelope;
+      } catch {
+        // Non-JSON body (e.g. HTML error page from gateway) — surface real HTTP status
+        const statusText =
+          `${response.status}${response.statusText ? ' ' + response.statusText : ''}`.trim();
+        throw new AppError({
+          category: ErrorCategories.NETWORK,
+          code: 'FETCH_FAILED',
+          message: response.ok ? 'Invalid JSON in response body' : `HTTP ${statusText}`,
+          details: { status: response.status, statusText: response.statusText },
+        });
+      }
 
       if (!data.ok) {
         throw new AppError({
-          category: ErrorCategories.NETWORK,
-          code: 'API_ERROR',
-          message: data.error || 'API request failed',
+          category: mapResponseToCategory(data.code),
+          code: data.code || 'API_ERROR',
+          message: data.message || data.error || 'API request failed',
           details: data,
         });
       }
@@ -106,7 +129,9 @@ export class ApiAdapter {
   }
 
   async _get(endpoint: string, params: Record<string, string | number> = {}) {
-    const strParams: Record<string, string> = Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)]));
+    const strParams: Record<string, string> = Object.fromEntries(
+      Object.entries(params).map(([k, v]) => [k, String(v)])
+    );
     const queryString = new URLSearchParams(strParams).toString();
     const url = queryString ? `${endpoint}?${queryString}` : endpoint;
     return this._fetch(url, { method: 'GET' });
@@ -287,7 +312,15 @@ export class ApiAdapter {
     return result;
   }
 
-  async getSessionHistory(options: { dateStart?: string; dateEnd?: string; courtNumber?: number; memberName?: string; limit?: number } = {}) {
+  async getSessionHistory(
+    options: {
+      dateStart?: string;
+      dateEnd?: string;
+      courtNumber?: number;
+      memberName?: string;
+      limit?: number;
+    } = {}
+  ) {
     const params: Record<string, string | number> = {};
     if (options.dateStart) params.date_start = options.dateStart;
     if (options.dateEnd) params.date_end = options.dateEnd;
@@ -298,7 +331,15 @@ export class ApiAdapter {
     return this._get(ENDPOINTS.GET_SESSION_HISTORY, params);
   }
 
-  async getTransactions(options: { dateStart?: string; dateEnd?: string; type?: string; memberNumber?: string; limit?: number } = {}) {
+  async getTransactions(
+    options: {
+      dateStart?: string;
+      dateEnd?: string;
+      type?: string;
+      memberNumber?: string;
+      limit?: number;
+    } = {}
+  ) {
     const params: Record<string, string | number> = {};
     if (options.dateStart) params.date_start = options.dateStart;
     if (options.dateEnd) params.date_end = options.dateEnd;
@@ -313,7 +354,17 @@ export class ApiAdapter {
   // Court Operations
   // ===========================================
 
-  async assignCourt(courtId: string, sessionType: string, participants: unknown, options: { addBalls?: boolean; splitBalls?: boolean; latitude?: number; longitude?: number } = {}) {
+  async assignCourt(
+    courtId: string,
+    sessionType: string,
+    participants: unknown,
+    options: {
+      addBalls?: boolean;
+      splitBalls?: boolean;
+      latitude?: number;
+      longitude?: number;
+    } = {}
+  ) {
     const body: Record<string, unknown> = {
       court_id: courtId,
       session_type: sessionType,
@@ -351,7 +402,11 @@ export class ApiAdapter {
     return result;
   }
 
-  async purchaseBalls(sessionId: string, accountId: string, options: { splitBalls?: boolean; splitAccountIds?: string[] | null } = {}) {
+  async purchaseBalls(
+    sessionId: string,
+    accountId: string,
+    options: { splitBalls?: boolean; splitAccountIds?: string[] | null } = {}
+  ) {
     return this._post(ENDPOINTS.PURCHASE_BALLS, {
       session_id: sessionId,
       account_id: accountId,
@@ -364,7 +419,11 @@ export class ApiAdapter {
   // Waitlist Operations
   // ===========================================
 
-  async joinWaitlist(groupType: string, participants: unknown, options: { latitude?: number; longitude?: number } = {}) {
+  async joinWaitlist(
+    groupType: string,
+    participants: unknown,
+    options: { latitude?: number; longitude?: number } = {}
+  ) {
     const body: Record<string, unknown> = {
       group_type: groupType,
       participants: participants,
@@ -385,7 +444,11 @@ export class ApiAdapter {
     });
   }
 
-  async assignFromWaitlist(waitlistId: string, courtId: string, options: { addBalls?: boolean; splitBalls?: boolean } = {}) {
+  async assignFromWaitlist(
+    waitlistId: string,
+    courtId: string,
+    options: { addBalls?: boolean; splitBalls?: boolean } = {}
+  ) {
     const result = await this._post(ENDPOINTS.ASSIGN_FROM_WAITLIST, {
       waitlist_id: waitlistId,
       court_id: courtId,
@@ -400,7 +463,14 @@ export class ApiAdapter {
   // Block Operations
   // ===========================================
 
-  async createBlock(courtId: string, blockType: string, title: string, startsAt: string, endsAt: string, options: { isRecurring?: boolean; recurrenceRule?: string | null } = {}) {
+  async createBlock(
+    courtId: string,
+    blockType: string,
+    title: string,
+    startsAt: string,
+    endsAt: string,
+    options: { isRecurring?: boolean; recurrenceRule?: string | null } = {}
+  ) {
     const result = await this._post(ENDPOINTS.CREATE_BLOCK, {
       court_id: courtId,
       block_type: blockType,
@@ -462,7 +532,11 @@ export class ApiAdapter {
     return result;
   }
 
-  async exportTransactions(dateStart: string, dateEnd: string, options: { includeAlreadyExported?: boolean } = {}) {
+  async exportTransactions(
+    dateStart: string,
+    dateEnd: string,
+    options: { includeAlreadyExported?: boolean } = {}
+  ) {
     return this._post(ENDPOINTS.EXPORT_TRANSACTIONS, {
       date_range_start: dateStart,
       date_range_end: dateEnd,
@@ -470,7 +544,17 @@ export class ApiAdapter {
     });
   }
 
-  async aiAssistant({ prompt, mode = 'draft', actions_token = null, confirm_destructive = false }: { prompt: string; mode?: string; actions_token?: string | null; confirm_destructive?: boolean }) {
+  async aiAssistant({
+    prompt,
+    mode = 'draft',
+    actions_token = null,
+    confirm_destructive = false,
+  }: {
+    prompt: string;
+    mode?: string;
+    actions_token?: string | null;
+    confirm_destructive?: boolean;
+  }) {
     const body: Record<string, unknown> = {
       prompt,
       mode,
@@ -529,7 +613,9 @@ export class ApiAdapter {
 
     // Transform to match legacy tennisData structure
     const courts =
-      ((courtStatus as Record<string, unknown>).courts as Record<string, unknown>[] | undefined)?.map((court) => (({
+      (
+        (courtStatus as Record<string, unknown>).courts as Record<string, unknown>[] | undefined
+      )?.map((court) => ({
         number: court.court_number,
         id: court.court_id,
         status: court.status,
@@ -540,21 +626,29 @@ export class ApiAdapter {
               players: (court.session as Record<string, unknown>).participants,
               startTime: (court.session as Record<string, unknown>).started_at,
               endTime: (court.session as Record<string, unknown>).scheduled_end_at,
-              timeRemaining: ((court.session as Record<string, unknown>).minutes_remaining as number) * 60 * 1000,
+              timeRemaining:
+                (((court.session as Record<string, unknown>).minutes_remaining as
+                  | number
+                  | null
+                  | undefined) ?? 0) *
+                60 *
+                1000,
             }
           : null,
         block: court.block,
-      }))) || [];
+      })) || [];
 
     const waitlistEntries =
-      ((waitlist as Record<string, unknown>).waitlist as Record<string, unknown>[] | undefined)?.map((entry) => (({
+      (
+        (waitlist as Record<string, unknown>).waitlist as Record<string, unknown>[] | undefined
+      )?.map((entry) => ({
         id: entry.id,
         position: entry.position,
         type: entry.group_type,
         players: entry.participants,
         joinedAt: entry.joined_at,
-        waitTime: (entry.minutes_waiting as number) * 60 * 1000,
-      }))) || [];
+        waitTime: ((entry.minutes_waiting as number | null | undefined) ?? 0) * 60 * 1000,
+      })) || [];
 
     return {
       courts,
