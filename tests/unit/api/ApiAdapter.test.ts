@@ -44,7 +44,7 @@ describe('ApiAdapter', () => {
       expect(result.data).toEqual({ courts: [1, 2, 3] });
     });
 
-    it('throws AppError(NETWORK/API_ERROR) when envelope ok is false', async () => {
+    it('throws AppError with API_ERROR code when envelope has no code field', async () => {
       stubFetch({ ok: false, error: 'Court not found' });
 
       try {
@@ -53,9 +53,33 @@ describe('ApiAdapter', () => {
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
         expect(e).toBeInstanceOf(Error);
-        expect((e as AppError).category).toBe('NETWORK');
         expect((e as AppError).code).toBe('API_ERROR');
         expect((e as AppError).message).toBe('Court not found');
+      }
+    });
+
+    it('promotes server code to AppError.code with mapped category', async () => {
+      stubFetch({ ok: false, code: 'COURT_OCCUPIED', message: 'Court is occupied' });
+
+      try {
+        await adapter._fetch('/assign-court');
+        expect.fail('Should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect((e as AppError).code).toBe('COURT_OCCUPIED');
+        expect((e as AppError).category).toBe('CONFLICT');
+        expect((e as AppError).message).toBe('Court is occupied');
+      }
+    });
+
+    it('prefers data.message over data.error when both are present', async () => {
+      stubFetch({ ok: false, message: 'Preferred message', error: 'Legacy error' });
+
+      try {
+        await adapter._fetch('/test');
+        expect.fail('Should have thrown');
+      } catch (e) {
+        expect((e as AppError).message).toBe('Preferred message');
       }
     });
 
@@ -68,6 +92,24 @@ describe('ApiAdapter', () => {
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
         expect((e as AppError).message).toBe('API request failed');
+      }
+    });
+
+    it('throws HTTP status AppError when response body is not JSON', async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: 'Bad Gateway',
+        json: async () => { throw new SyntaxError('Unexpected token < in JSON'); },
+      });
+
+      try {
+        await adapter._fetch('/get-board');
+        expect.fail('Should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect((e as AppError).code).toBe('FETCH_FAILED');
+        expect((e as AppError).message).toContain('502');
       }
     });
 
