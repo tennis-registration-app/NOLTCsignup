@@ -192,9 +192,7 @@ export interface TennisBackendShape {
     // Evidence: TennisQueries.js:201 — delegates to getBoard
     refresh: () => Promise<DomainBoard>;
     // Evidence: TennisQueries.js:218 — returns { ok, partners: [{member_id, display_name, ...}] }
-    getFrequentPartners: (
-      memberId: string
-    ) => Promise<
+    getFrequentPartners: (memberId: string) => Promise<
       CommandResponse & {
         partners?: Array<{
           member_id: string;
@@ -398,9 +396,7 @@ export interface TennisBackendShape {
       end: string;
     }) => Promise<CommandResponse & { summary?: Record<string, unknown>; heatmap?: unknown[] }>;
     // Evidence: AdminCommands.js:379 — returns CommandResponse & { heatmap?, daysAnalyzed? }
-    getUsageAnalytics: (
-      days?: number
-    ) => Promise<
+    getUsageAnalytics: (days?: number) => Promise<
       CommandResponse & {
         heatmap?: Array<{ day_of_week: number; hour: number; session_count: number }>;
         daysAnalyzed?: number;
@@ -703,6 +699,8 @@ export interface RegistrationRefs {
   successResetTimerRef: { current: ReturnType<typeof setTimeout> | null };
   /** Timer ref for typing debounce */
   typingTimeoutRef: { current: ReturnType<typeof setTimeout> | null };
+  /** Interval ref for change-court countdown (started by directAssignment branch) */
+  changeCourtTimerRef: { current: ReturnType<typeof setInterval> | null };
 }
 
 export interface DerivedState {

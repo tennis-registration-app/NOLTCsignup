@@ -206,6 +206,7 @@ export function buildRegistrationReturn({
     refs: {
       successResetTimerRef: runtime.successResetTimerRef,
       typingTimeoutRef: runtime.typingTimeoutRef,
+      changeCourtTimerRef: runtime.changeCourtTimerRef,
     },
 
     // Derived/computed values

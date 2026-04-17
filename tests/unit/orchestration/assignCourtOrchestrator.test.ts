@@ -53,6 +53,7 @@ function createMockDeps(overrides: Record<string, any> = {}) {
       IS_MOBILE: false,
     },
     successResetTimerRef: { current: null },
+    changeCourtTimerRef: { current: null },
     ...overrides.state,
   };
 

@@ -169,7 +169,7 @@ export function useCourtHandlers({
   const { getCourtData } = helpers;
   const { getCourtBlockStatus } = blockAdmin;
   const { showAlertMessage } = alert;
-  const { successResetTimerRef } = refs;
+  const { successResetTimerRef, changeCourtTimerRef } = refs;
   const { clearSuccessResetTimer, resetForm, isPlayerAlreadyPlaying } = core;
 
   // VERBATIM COPY: saveCourtData from line ~206
@@ -308,6 +308,7 @@ export function useCourtHandlers({
         currentWaitlistEntryId,
         CONSTANTS,
         successResetTimerRef,
+        changeCourtTimerRef,
         API_CONFIG,
       },
       actions: {
@@ -354,6 +355,7 @@ export function useCourtHandlers({
       currentWaitlistEntryId,
       CONSTANTS,
       successResetTimerRef,
+      changeCourtTimerRef,
       API_CONFIG,
       setIsAssigning,
       setCurrentWaitlistEntryId,

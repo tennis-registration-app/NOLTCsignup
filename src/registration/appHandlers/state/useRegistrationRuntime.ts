@@ -31,6 +31,7 @@ export function useRegistrationRuntime({
   // ===== REFS =====
   const successResetTimerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const changeCourtTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ===== EFFECTS =====
 
@@ -138,9 +139,22 @@ export function useRegistrationRuntime({
 
   // Cleanup typing timeout on unmount
   useEffect(() => {
-    const timeoutId = typingTimeoutRef.current;
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Cleanup change-court countdown interval on unmount
+  // (fire-and-forget timer started by directAssignment branch; kiosk may run for weeks)
+  useEffect(() => {
+    return () => {
+      if (changeCourtTimerRef.current) {
+        clearInterval(changeCourtTimerRef.current);
+        changeCourtTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -148,5 +162,6 @@ export function useRegistrationRuntime({
     // Refs (needed by handlers)
     successResetTimerRef,
     typingTimeoutRef,
+    changeCourtTimerRef,
   };
 }

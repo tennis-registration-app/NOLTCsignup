@@ -71,6 +71,7 @@ export interface AssignCourtState {
   CONSTANTS: RegistrationConstants;
   API_CONFIG: ApiConfig;
   successResetTimerRef: { current: ReturnType<typeof setTimeout> | null };
+  changeCourtTimerRef: { current: ReturnType<typeof setInterval> | null };
 }
 
 export interface AssignCourtActions {
