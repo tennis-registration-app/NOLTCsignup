@@ -204,9 +204,7 @@ describe('TennisCommands', () => {
     it('createBlock — throws on missing courtId', async () => {
       const { commands } = setup();
 
-      await expect(
-        commands.createBlock({ courtId: '', reason: 'test' })
-      ).rejects.toThrow();
+      await expect(commands.createBlock({ courtId: '', reason: 'test' })).rejects.toThrow();
     });
 
     it('cancelBlock — validates then posts to /cancel-block', async () => {
@@ -435,10 +433,16 @@ describe('TennisCommands', () => {
     });
 
     it('fetches unique member numbers only (deduplication)', async () => {
-      const getMembersByAccount = vi.fn().mockResolvedValue([
-        { ...ALICE },
-        { id: 'member-uuid-alice-jr', accountId: 'account-uuid-1001', displayName: 'Alice Smith Jr' },
-      ]);
+      const getMembersByAccount = vi
+        .fn()
+        .mockResolvedValue([
+          { ...ALICE },
+          {
+            id: 'member-uuid-alice-jr',
+            accountId: 'account-uuid-1001',
+            displayName: 'Alice Smith Jr',
+          },
+        ]);
       const { commands } = setup({ directory: { getMembersByAccount } });
 
       await commands.resolvePlayersToParticipants([
@@ -454,9 +458,9 @@ describe('TennisCommands', () => {
     it('matches by partial name when exact fails', async () => {
       const { commands } = setup({
         directory: {
-          getMembersByAccount: vi.fn().mockResolvedValue([
-            { id: 'M1', accountId: 'A1', displayName: 'Alexander Hamilton' },
-          ]),
+          getMembersByAccount: vi
+            .fn()
+            .mockResolvedValue([{ id: 'M1', accountId: 'A1', displayName: 'Alexander Hamilton' }]),
         },
       });
 
@@ -471,9 +475,9 @@ describe('TennisCommands', () => {
     it('matches by last name when exact and partial fail', async () => {
       const { commands } = setup({
         directory: {
-          getMembersByAccount: vi.fn().mockResolvedValue([
-            { id: 'M1', accountId: 'A1', displayName: 'Robert Hamilton' },
-          ]),
+          getMembersByAccount: vi
+            .fn()
+            .mockResolvedValue([{ id: 'M1', accountId: 'A1', displayName: 'Robert Hamilton' }]),
         },
       });
 
@@ -488,9 +492,11 @@ describe('TennisCommands', () => {
     it('uses single member on account as fallback', async () => {
       const { commands } = setup({
         directory: {
-          getMembersByAccount: vi.fn().mockResolvedValue([
-            { id: 'M1', accountId: 'A1', displayName: 'Completely Different Name' },
-          ]),
+          getMembersByAccount: vi
+            .fn()
+            .mockResolvedValue([
+              { id: 'M1', accountId: 'A1', displayName: 'Completely Different Name' },
+            ]),
         },
       });
 
@@ -513,18 +519,16 @@ describe('TennisCommands', () => {
       });
 
       await expect(
-        commands.resolvePlayersToParticipants([
-          { name: 'Nobody Matching', memberNumber: '1001' },
-        ])
+        commands.resolvePlayersToParticipants([{ name: 'Nobody Matching', memberNumber: '1001' }])
       ).rejects.toThrow('Could not find member: Nobody Matching');
     });
 
     it('throws when member has no member number', async () => {
       const { commands } = setup();
 
-      await expect(
-        commands.resolvePlayersToParticipants([{ name: 'No Number' }])
-      ).rejects.toThrow('has no member number');
+      await expect(commands.resolvePlayersToParticipants([{ name: 'No Number' }])).rejects.toThrow(
+        'has no member number'
+      );
     });
 
     it('resolves guest players with __NEEDS_ACCOUNT__ then assigns first member account', async () => {
@@ -612,9 +616,7 @@ describe('TennisCommands', () => {
         },
       });
 
-      await commands.resolvePlayersToParticipants([
-        { name: 'Alice Smith', clubNumber: '1001' },
-      ]);
+      await commands.resolvePlayersToParticipants([{ name: 'Alice Smith', clubNumber: '1001' }]);
 
       expect(directory.getMembersByAccount).toHaveBeenCalledWith('1001');
     });
@@ -705,9 +707,7 @@ describe('TennisCommands', () => {
       // Uses displayName instead of name, memberId instead of id
       await commands.assignCourtWithPlayers({
         courtId: 'C1',
-        players: [
-          { memberId: 'p1', displayName: 'Alice Smith', memberNumber: '1001' } as any,
-        ],
+        players: [{ memberId: 'p1', displayName: 'Alice Smith', memberNumber: '1001' } as any],
         groupType: 'singles',
       });
 
@@ -803,7 +803,7 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect((e as AppError)).toBeInstanceOf(Error);
+        expect(e as AppError).toBeInstanceOf(Error);
         expect((e as AppError).category).toBe('VALIDATION');
         expect((e as AppError).code).toBe('DIRECTORY_NOT_SET');
         expect((e as AppError).message).toContain('TennisDirectory not set');
@@ -818,7 +818,7 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect((e as AppError)).toBeInstanceOf(Error);
+        expect(e as AppError).toBeInstanceOf(Error);
         expect((e as AppError).category).toBe('VALIDATION');
         expect((e as AppError).code).toBe('MISSING_MEMBER_NUMBER');
         expect((e as AppError).message).toContain('has no member number');
@@ -842,7 +842,7 @@ describe('TennisCommands', () => {
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect((e as AppError)).toBeInstanceOf(Error);
+        expect(e as AppError).toBeInstanceOf(Error);
         expect((e as AppError).category).toBe('NOT_FOUND');
         expect((e as AppError).code).toBe('MEMBER_NOT_FOUND');
         expect((e as AppError).message).toContain('Could not find member');
@@ -853,16 +853,57 @@ describe('TennisCommands', () => {
       const { commands } = setup();
 
       try {
+        await commands.resolvePlayersToParticipants([{ name: 'Guest 1', isGuest: true }]);
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect(e as AppError).toBeInstanceOf(Error);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('GUESTS_WITHOUT_MEMBER');
+        expect((e as AppError).message).toContain('Cannot register guests without a member');
+      }
+    });
+
+    it('AMBIGUOUS_MEMBER — throws when partial match picks multiple family members', async () => {
+      const { commands } = setup({
+        directory: {
+          getMembersByAccount: vi.fn().mockResolvedValue([
+            { id: 'M1', accountId: 'A1', displayName: 'Bob Smith' },
+            { id: 'M2', accountId: 'A1', displayName: 'Bobby Smith' },
+          ]),
+        },
+      });
+
+      try {
+        await commands.resolvePlayersToParticipants([{ name: 'Bob', memberNumber: '1001' }]);
+        expect.unreachable('should have thrown');
+      } catch (e) {
+        expect(e).toBeInstanceOf(AppError);
+        expect((e as AppError).category).toBe('VALIDATION');
+        expect((e as AppError).code).toBe('AMBIGUOUS_MEMBER');
+        expect((e as AppError).message).toContain('Bob');
+      }
+    });
+
+    it('AMBIGUOUS_MEMBER — throws when last-name match picks multiple family members', async () => {
+      const { commands } = setup({
+        directory: {
+          getMembersByAccount: vi.fn().mockResolvedValue([
+            { id: 'M1', accountId: 'A1', displayName: 'Jon Anderson' },
+            { id: 'M2', accountId: 'A1', displayName: 'Sally Anderson' },
+          ]),
+        },
+      });
+
+      try {
         await commands.resolvePlayersToParticipants([
-          { name: 'Guest 1', isGuest: true },
+          { name: 'Pat Anderson', memberNumber: '1001' },
         ]);
         expect.unreachable('should have thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(AppError);
-        expect((e as AppError)).toBeInstanceOf(Error);
         expect((e as AppError).category).toBe('VALIDATION');
-        expect((e as AppError).code).toBe('GUESTS_WITHOUT_MEMBER');
-        expect((e as AppError).message).toContain('Cannot register guests without a member');
+        expect((e as AppError).code).toBe('AMBIGUOUS_MEMBER');
       }
     });
   });

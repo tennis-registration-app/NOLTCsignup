@@ -119,8 +119,18 @@ export async function executeWaitlistAssignment(
 
     startAutoResetTimer(state, services);
 
-    // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime)
-    await services.backend.queries.refresh();
+    // Explicit refresh to ensure fresh state (belt-and-suspenders with Realtime).
+    // Best-effort only: the assignment already succeeded above; a refresh
+    // failure must not surface as "Failed to assign court from waitlist".
+    try {
+      await services.backend.queries.refresh();
+    } catch (refreshError) {
+      getRuntimeDeps().logger.warn(
+        'AssignCourt',
+        'Post-waitlist-assignment refresh failed (assignment still succeeded)',
+        refreshError
+      );
+    }
 
     // EARLY-EXIT: waitlist flow complete — success screen shown
     actions.setIsAssigning(false);

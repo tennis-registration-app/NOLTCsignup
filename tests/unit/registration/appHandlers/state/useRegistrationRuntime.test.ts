@@ -129,19 +129,19 @@ describe('settings fetch', () => {
   });
 
   it('does not crash when getSettings rejects', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { logger } = await import('../../../../../src/lib/logger.js');
     deps = createDeps();
     deps.backend.admin.getSettings.mockRejectedValue(new Error('network'));
     unmount();
     ({ result, unmount } = await renderHandlerHook(() => useRegistrationRuntime(deps)));
     await vi.advanceTimersByTimeAsync(0);
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Failed to load ball price from API:',
+    expect(logger.error).toHaveBeenCalledWith(
+      'RegistrationRuntime',
+      'Failed to load settings from API',
       expect.any(Error)
     );
     expect(deps.setBallPriceCents).not.toHaveBeenCalled();
-    consoleSpy.mockRestore();
   });
 });
 
@@ -197,9 +197,7 @@ describe('ref returns', () => {
 describe('CSS style injection', () => {
   it('injects a style element into document.head on mount', () => {
     const styles = document.head.querySelectorAll('style');
-    const injected = Array.from(styles).find((s) =>
-      s.textContent.includes('.animate-pulse')
-    );
+    const injected = Array.from(styles).find((s) => s.textContent.includes('.animate-pulse'));
     expect(injected).toBeTruthy();
     expect(injected!.textContent).toContain('will-change: opacity');
     expect(injected!.textContent).toContain('.court-transition');

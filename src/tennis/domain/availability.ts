@@ -5,6 +5,8 @@
  * Ported from domain/availability.js IIFE.
  */
 
+import { logger } from '../../lib/logger';
+
 // Registration buffer: treat blocks as starting this many minutes earlier
 const REGISTRATION_BUFFER_MINUTES = 15;
 const REGISTRATION_BUFFER_MS = REGISTRATION_BUFFER_MINUTES * 60 * 1000;
@@ -38,18 +40,41 @@ type CourtData = {
   }>;
 };
 
-
-
 /**
- * Helper for robust date handling
- * @param {Date|string} d - Date or string to coerce
- * @returns {Date} Valid Date object
+ * Sanitize a trusted `now` input. If caller passed a non-Date or invalid
+ * Date, fall back to the current wall-clock. Used only for the `now`
+ * parameter — never for block data (use `parseDate` for that).
  */
 function coerceDate(d: Date | string): Date {
-  // Accept Date or string; never NaN
-  if (d instanceof Date) return d;
+  if (d instanceof Date && !isNaN(d.getTime())) return d;
   const parsed = new Date(d);
   return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+/**
+ * Parse a possibly-invalid block timestamp. Returns null on invalid input
+ * so callers can skip malformed blocks explicitly instead of treating them
+ * as "just ended" (which silently removes them from availability checks).
+ */
+function parseDate(d: Date | string | null | undefined): Date | null {
+  if (d == null || d === '') return null;
+  if (d instanceof Date) return isNaN(d.getTime()) ? null : d;
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function blockInterval(b: CourtBlock): { start: Date; end: Date } | null {
+  const start = parseDate((b.startTime ?? b.start) as Date | string | null | undefined);
+  const end = parseDate((b.endTime ?? b.end) as Date | string | null | undefined);
+  if (!start || !end) {
+    logger.warn('Availability', 'Skipping block with invalid start/end', {
+      courtNumber: b.courtNumber ?? b.court,
+      startTime: b.startTime ?? b.start,
+      endTime: b.endTime ?? b.end,
+    });
+    return null;
+  }
+  return { start, end };
 }
 
 /**
@@ -58,10 +83,15 @@ function coerceDate(d: Date | string): Date {
  * @param {Date} now - Current time
  * @returns {boolean} True if session is overtime
  */
-function isOvertime(session: { scheduledEndAt?: string | Date } | null | undefined, now: Date): boolean {
+function isOvertime(
+  session: { scheduledEndAt?: string | Date } | null | undefined,
+  now: Date
+): boolean {
   // Domain format: session.scheduledEndAt
   if (!session?.scheduledEndAt) return false;
-  return coerceDate(session.scheduledEndAt) <= now; // strict "ended before or at now"
+  const end = parseDate(session.scheduledEndAt);
+  if (!end) return false;
+  return end <= now; // strict "ended before or at now"
 }
 
 /**
@@ -126,7 +156,17 @@ function isActiveBlock(b: CourtBlock | null | undefined, now: Date): boolean {
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {number[]} Array of free court numbers
  */
-function getFreeCourts({ data, now, blocks = [], wetSet = new Set() }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function getFreeCourts({
+  data,
+  now,
+  blocks = [],
+  wetSet = new Set(),
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   if (!data || !data.courts || !Array.isArray(data.courts)) {
     throw new Error('Invalid data or courts array provided');
   }
@@ -167,10 +207,10 @@ function getFreeCourts({ data, now, blocks = [], wetSet = new Set() }: { data: C
       const courtNum = Number(block.courtNumber || block.court);
       if (!courtNum || courtNum !== courtNumber) return false;
 
-      const blockStart = coerceDate((block.startTime || block.start) ?? '');
-      const blockEnd = coerceDate((block.endTime || block.end) ?? '');
+      const interval = blockInterval(block);
+      if (!interval) return false;
 
-      return blockStart <= now && now < blockEnd;
+      return interval.start <= now && now < interval.end;
     });
 
     if (isBlocked) {
@@ -193,7 +233,17 @@ function getFreeCourts({ data, now, blocks = [], wetSet = new Set() }: { data: C
  * @param {number} params.requiredMinutes - Required minutes
  * @returns {boolean} True if conflict exists
  */
-function hasSoonBlockConflict({ courtNumber, now, blocks = [], requiredMinutes = 60 }: { courtNumber: number; now: Date; blocks?: CourtBlock[]; requiredMinutes?: number }) {
+function hasSoonBlockConflict({
+  courtNumber,
+  now,
+  blocks = [],
+  requiredMinutes = 60,
+}: {
+  courtNumber: number;
+  now: Date;
+  blocks?: CourtBlock[];
+  requiredMinutes?: number;
+}) {
   if (typeof courtNumber !== 'number' || courtNumber < 1) {
     throw new Error('Invalid court number provided');
   }
@@ -212,13 +262,13 @@ function hasSoonBlockConflict({ courtNumber, now, blocks = [], requiredMinutes =
   return blocks.some((block) => {
     if (block.courtNumber !== courtNumber) return false;
 
-    const blockStart = coerceDate(block.startTime as string | Date);
-    const blockEnd = coerceDate(block.endTime as string | Date);
+    const interval = blockInterval(block);
+    if (!interval) return false;
 
     // Check if block overlaps with our required time window
     // Block conflicts if:
     // 1. Block starts before our session ends AND block ends after our session starts
-    return blockStart < requiredEndTime && blockEnd > now;
+    return interval.start < requiredEndTime && interval.end > now;
   });
 }
 
@@ -241,14 +291,30 @@ function hasSoonBlockConflict({ courtNumber, now, blocks = [], requiredMinutes =
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {Date[]} Array of next free times per court
  */
-function getNextFreeTimes({ data, now, blocks, wetSet }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function getNextFreeTimes({
+  data,
+  now,
+  blocks,
+  wetSet,
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT ?? 12;
   const out: Date[] = new Array(total);
-  const byCourt = (blocks || []).map((b) => ({
-    courtNumber: Number(b.courtNumber),
-    start: coerceDate(b.startTime as string | Date),
-    end: coerceDate(b.endTime as string | Date),
-  }));
+  const byCourt = (blocks || []).flatMap((b) => {
+    const interval = blockInterval(b);
+    if (!interval) return [];
+    return [
+      {
+        courtNumber: Number(b.courtNumber),
+        start: interval.start,
+        end: interval.end,
+      },
+    ];
+  });
   // Normalize wetSet
   const wet = wetSet instanceof Set ? wetSet : new Set();
 
@@ -298,7 +364,17 @@ function getNextFreeTimes({ data, now, blocks, wetSet }: { data: CourtData; now:
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {Object} Free courts info
  */
-function getFreeCourtsInfo({ data, now, blocks, wetSet }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function getFreeCourtsInfo({
+  data,
+  now,
+  blocks,
+  wetSet,
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   const total = window.Tennis?.Config?.Courts?.TOTAL_COUNT ?? 12;
   const all = Array.from({ length: total }, (_, i) => i + 1);
 
@@ -320,9 +396,9 @@ function getFreeCourtsInfo({ data, now, blocks, wetSet }: { data: CourtData; now
     const isBlocked = blocks.some((b) => {
       const courtNum = Number(b.courtNumber || b.court);
       if (!courtNum || courtNum !== n) return false;
-      const start = coerceDate((b.startTime || b.start) ?? '');
-      const end = coerceDate((b.endTime || b.end) ?? '');
-      return start <= now && now < end;
+      const interval = blockInterval(b);
+      if (!interval) return false;
+      return interval.start <= now && now < interval.end;
     });
 
     if (isWet || isBlocked) continue;
@@ -365,7 +441,17 @@ function getFreeCourtsInfo({ data, now, blocks, wetSet }: { data: CourtData; now
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {number[]} Array of selectable court numbers
  */
-function getSelectableCourts({ data, now, blocks, wetSet }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function getSelectableCourts({
+  data,
+  now,
+  blocks,
+  wetSet,
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
 
   // Active, non-wet blocks set (by courtNumber)
@@ -399,7 +485,19 @@ function getSelectableCourts({ data, now, blocks, wetSet }: { data: CourtData; n
  * @param {Array} [params.upcomingBlocks] - Upcoming blocks for usability check
  * @returns {Object[]} Array of court status objects
  */
-function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number>; upcomingBlocks?: CourtBlock[] }) {
+function getCourtStatuses({
+  data,
+  now,
+  blocks,
+  wetSet,
+  upcomingBlocks = [],
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+  upcomingBlocks?: CourtBlock[];
+}) {
   const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
 
   // sets for quick lookup
@@ -426,14 +524,13 @@ function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }: { 
     hasTrueFree &&
     [...freeSet].some((courtNum) => {
       if (!upcomingBlocks || upcomingBlocks.length === 0) return true;
-      const nextBlock = upcomingBlocks.find(
-        (b) =>
-          Number(b.courtNumber || b.court) === courtNum && coerceDate((b.startTime || b.start) as string | Date) > now
-      );
-      if (!nextBlock) return true;
-      return (
-        coerceDate((nextBlock.startTime || nextBlock.start) as string | Date).getTime() - now.getTime() >= MIN_USEFUL_MS
-      );
+      const nextBlockStart = upcomingBlocks
+        .filter((b) => Number(b.courtNumber || b.court) === courtNum)
+        .map((b) => parseDate((b.startTime || b.start) as Date | string | null | undefined))
+        .filter((d): d is Date => d !== null && d > now)
+        .sort((a, b) => a.getTime() - b.getTime())[0];
+      if (!nextBlockStart) return true;
+      return nextBlockStart.getTime() - now.getTime() >= MIN_USEFUL_MS;
     });
 
   const total = (data?.courts || []).length || info.meta?.total || 0;
@@ -502,7 +599,7 @@ function getCourtStatuses({ data, now, blocks, wetSet, upcomingBlocks = [] }: { 
     // selectable reason for styling
     const selectableReason = selectable ? (status === 'free' ? 'free' : 'overtime_fallback') : null;
 
-const courtStatus: CourtStatus = {
+    const courtStatus: CourtStatus = {
       courtNumber: n,
       status,
       selectable,
@@ -534,7 +631,17 @@ const courtStatus: CourtStatus = {
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {number[]} Array of assignable court numbers
  */
-function getSelectableCourtsForAssignment({ data, now, blocks, wetSet }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function getSelectableCourtsForAssignment({
+  data,
+  now,
+  blocks,
+  wetSet,
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   // Use existing selectable logic but enforce stricter rules for assignment
   const selectable = getSelectableCourts({ data, now, blocks, wetSet });
 
@@ -556,7 +663,15 @@ function getSelectableCourtsForAssignment({ data, now, blocks, wetSet }: { data:
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {boolean} True if court can be assigned
  */
-function canAssignToCourt(courtNumber: number, { data, now, blocks, wetSet }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function canAssignToCourt(
+  courtNumber: number,
+  {
+    data,
+    now,
+    blocks,
+    wetSet,
+  }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }
+) {
   const assignable = getSelectableCourtsForAssignment({ data, now, blocks, wetSet });
   return assignable.includes(courtNumber);
 }
@@ -570,7 +685,17 @@ function canAssignToCourt(courtNumber: number, { data, now, blocks, wetSet }: { 
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {number[]} Array of strictly selectable court numbers
  */
-function getSelectableCourtsStrict({ data, now, blocks = [], wetSet = new Set() }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function getSelectableCourtsStrict({
+  data,
+  now,
+  blocks = [],
+  wetSet = new Set(),
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   const info = getFreeCourtsInfo({ data, now, blocks, wetSet });
   const free = info.free || [];
   const overtime = info.overtime || [];
@@ -589,11 +714,19 @@ function getSelectableCourtsStrict({ data, now, blocks = [], wetSet = new Set() 
  * @param {Set} params.wetSet - Set of wet court numbers
  * @returns {boolean} True if waitlist join should be allowed
  */
-function shouldAllowWaitlistJoin({ data, now, blocks = [], wetSet = new Set() }: { data: CourtData; now: Date; blocks?: CourtBlock[]; wetSet?: Set<number> }) {
+function shouldAllowWaitlistJoin({
+  data,
+  now,
+  blocks = [],
+  wetSet = new Set(),
+}: {
+  data: CourtData;
+  now: Date;
+  blocks?: CourtBlock[];
+  wetSet?: Set<number>;
+}) {
   const strict = getSelectableCourtsStrict({ data, now, blocks, wetSet });
-  return (
-strict.length === 0
-  );
+  return strict.length === 0;
 }
 
 // ============================================================
