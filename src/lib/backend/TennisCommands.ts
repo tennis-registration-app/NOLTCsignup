@@ -43,7 +43,10 @@ export class TennisCommands {
   api: import('../ApiAdapter').ApiAdapter;
   directory: import('./TennisDirectory').TennisDirectory | undefined;
 
-  constructor(apiAdapter: import('../ApiAdapter').ApiAdapter, directory?: import('./TennisDirectory').TennisDirectory) {
+  constructor(
+    apiAdapter: import('../ApiAdapter').ApiAdapter,
+    directory?: import('./TennisDirectory').TennisDirectory
+  ) {
     this.api = apiAdapter;
     this.directory = directory;
   }
@@ -160,7 +163,17 @@ export class TennisCommands {
    * @param {number} [params.longitude] - For mobile geofence validation
    * @returns {Promise<import('./types').CommandResponse & { session?: Object }>}
    */
-  async assignFromWaitlistWithLocation({ waitlistEntryId, courtId, latitude, longitude }: { waitlistEntryId: string; courtId: string; latitude?: number; longitude?: number }) {
+  async assignFromWaitlistWithLocation({
+    waitlistEntryId,
+    courtId,
+    latitude,
+    longitude,
+  }: {
+    waitlistEntryId: string;
+    courtId: string;
+    latitude?: number;
+    longitude?: number;
+  }) {
     return this.assignFromWaitlist({
       waitlistEntryId,
       courtId,
@@ -176,7 +189,13 @@ export class TennisCommands {
    * @param {string} params.takeoverSessionId - UUID of the session that caused displacement
    * @returns {Promise<import('./types').CommandResponse & { restoredSessionId?: string }>}
    */
-  async restoreSession({ displacedSessionId, takeoverSessionId }: { displacedSessionId: string; takeoverSessionId: string }) {
+  async restoreSession({
+    displacedSessionId,
+    takeoverSessionId,
+  }: {
+    displacedSessionId: string;
+    takeoverSessionId: string;
+  }) {
     const response = await this.api.post('/restore-session', {
       displaced_session_id: displacedSessionId,
       takeover_session_id: takeoverSessionId,
@@ -193,7 +212,13 @@ export class TennisCommands {
    * @param {string} params.displacedSessionId - UUID of the session that was displaced
    * @returns {Promise<import('./types').CommandResponse & { endedSessionId?: string, restoredSessionId?: string }>}
    */
-  async undoOvertimeTakeover({ takeoverSessionId, displacedSessionId }: { takeoverSessionId: string; displacedSessionId: string }) {
+  async undoOvertimeTakeover({
+    takeoverSessionId,
+    displacedSessionId,
+  }: {
+    takeoverSessionId: string;
+    displacedSessionId: string;
+  }) {
     const response = await this.api.post('/undo-overtime-takeover', {
       takeover_session_id: takeoverSessionId,
       displaced_session_id: displacedSessionId,
@@ -312,7 +337,9 @@ export class TennisCommands {
    *   { kind: 'member', memberId: uuid, accountId: uuid }
    *   { kind: 'guest', guestName: string, accountId: uuid }
    */
-  async resolvePlayersToParticipants(players: Array<Record<string, unknown>>): Promise<import('./types').ParticipantInput[]> {
+  async resolvePlayersToParticipants(
+    players: Array<Record<string, unknown>>
+  ): Promise<import('./types').ParticipantInput[]> {
     if (!this.directory) {
       throw new AppError({
         category: ErrorCategories.VALIDATION,
@@ -378,28 +405,60 @@ export class TennisCommands {
     let firstMemberAccount: string | null = null;
 
     for (const player of memberPlayers) {
-      const members = (membersByAccount.get(player.memberNumber as string) || []) as Array<Record<string, unknown>>;
+      const members = (membersByAccount.get(player.memberNumber as string) || []) as Array<
+        Record<string, unknown>
+      >;
       const nameLower = ((player.name as string) || '').toLowerCase().trim();
 
-      // Find matching member (exact match, then partial, then last name)
-      // Members are already normalized by TennisDirectory - use camelCase only
-      let member = members.find((m) => ((m.displayName as string | undefined) || '').toLowerCase().trim() === nameLower);
+      const displayOf = (m: Record<string, unknown>) =>
+        ((m.displayName as string | undefined) || '').toLowerCase().trim();
 
+      // Tier 1: exact displayName match (preferred — unambiguous)
+      let member = members.find((m) => displayOf(m) === nameLower);
+
+      // Tier 2: partial match (displayName contains name or vice-versa).
+      // Only accept if it picks out a single member — otherwise we'd silently
+      // sign up the wrong person when multiple family members share a substring.
       if (!member) {
-        // Partial match
-        member = members.find((m) => {
-          const display = ((m.displayName as string | undefined) || '').toLowerCase().trim();
+        const partialMatches = members.filter((m) => {
+          const display = displayOf(m);
           return display.includes(nameLower) || nameLower.includes(display);
         });
+        if (partialMatches.length === 1) {
+          member = partialMatches[0];
+        } else if (partialMatches.length > 1) {
+          throw new AppError({
+            category: ErrorCategories.VALIDATION,
+            code: 'AMBIGUOUS_MEMBER',
+            message: `Multiple members on account ${player.memberNumber} match "${player.name}". Please be more specific.`,
+            details: {
+              searched: player.name,
+              candidates: partialMatches.map((m) => m.displayName as string),
+            },
+          });
+        }
       }
 
+      // Tier 3: last-name match. Same ambiguity guard.
       if (!member) {
-        // Last name match
-        member = members.find((m) => {
-          const displayLast = ((m.displayName as string | undefined) || '').toLowerCase().split(' ').pop();
-          const nameLast = nameLower.split(' ').pop();
+        const nameLast = nameLower.split(' ').pop();
+        const lastNameMatches = members.filter((m) => {
+          const displayLast = displayOf(m).split(' ').pop();
           return displayLast === nameLast;
         });
+        if (lastNameMatches.length === 1) {
+          member = lastNameMatches[0];
+        } else if (lastNameMatches.length > 1) {
+          throw new AppError({
+            category: ErrorCategories.VALIDATION,
+            code: 'AMBIGUOUS_MEMBER',
+            message: `Multiple members on account ${player.memberNumber} share the last name in "${player.name}". Please be more specific.`,
+            details: {
+              searched: player.name,
+              candidates: lastNameMatches.map((m) => m.displayName as string),
+            },
+          });
+        }
       }
 
       if (!member && members.length === 1) {
@@ -520,7 +579,9 @@ export class TennisCommands {
 
     // 2. Resolve players to participants (member lookup)
     // Type assertion: GroupPlayer[] lacks the index signature required by Array<Record<string,unknown>>; resolvePlayersToParticipants accesses legacy fields (type, clubNumber) not in GroupPlayer
-    const participants = await this.resolvePlayersToParticipants(players as unknown as Array<Record<string, unknown>>);
+    const participants = await this.resolvePlayersToParticipants(
+      players as unknown as Array<Record<string, unknown>>
+    );
     logger.debug('TennisCommands', 'Resolved participants', {
       durationMs: (performance.now() - tStart).toFixed(0),
     });
@@ -558,7 +619,19 @@ export class TennisCommands {
    * @param {boolean} [params.deferred] - Wait for Full Time flow
    * @returns {Promise<import('./types').CommandResponse & { entry?: Object, position?: number }>}
    */
-  async joinWaitlistWithPlayers({ players, groupType, latitude, longitude, deferred }: { players: GroupPlayer[]; groupType: 'singles' | 'doubles'; latitude?: number; longitude?: number; deferred?: boolean }) {
+  async joinWaitlistWithPlayers({
+    players,
+    groupType,
+    latitude,
+    longitude,
+    deferred,
+  }: {
+    players: GroupPlayer[];
+    groupType: 'singles' | 'doubles';
+    latitude?: number;
+    longitude?: number;
+    deferred?: boolean;
+  }) {
     // 1. Validate command structure (fail-fast)
     // INPUT-NORMALIZE: Accept either format from UI, normalize to camelCase for validation
     const validPlayers = players.map((p) => ({
@@ -574,7 +647,9 @@ export class TennisCommands {
 
     // 2. Resolve players to participants (member lookup)
     // Type assertion: GroupPlayer[] lacks the index signature required by Array<Record<string,unknown>>; resolvePlayersToParticipants accesses legacy fields (type, clubNumber) not in GroupPlayer
-    const participants = await this.resolvePlayersToParticipants(players as unknown as Array<Record<string, unknown>>);
+    const participants = await this.resolvePlayersToParticipants(
+      players as unknown as Array<Record<string, unknown>>
+    );
 
     // 3. Send to API
     return this.joinWaitlist({
@@ -593,7 +668,13 @@ export class TennisCommands {
    * @param {boolean} input.isTournament - Whether this is a tournament match
    * @returns {Promise<import('./types').CommandResponse>}
    */
-  async updateSessionTournament({ sessionId, isTournament }: { sessionId: string; isTournament: boolean }) {
+  async updateSessionTournament({
+    sessionId,
+    isTournament,
+  }: {
+    sessionId: string;
+    isTournament: boolean;
+  }) {
     const response = await this.api.post('/update-session-tournament', {
       session_id: sessionId,
       is_tournament: isTournament,

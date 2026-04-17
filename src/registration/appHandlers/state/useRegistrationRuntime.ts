@@ -50,30 +50,35 @@ export function useRegistrationRuntime({
     };
   }, []);
 
-  // VERBATIM COPY: Fetch ball price from API on mount (line 678)
-  // Normalize settings at boundary
+  // Fetch ball price + block-warning minutes from API on mount.
+  // Normalize settings at boundary.
   useEffect(() => {
-    const fetchBallPrice = async () => {
+    const fetchSettings = async () => {
       try {
         const result = await backend.admin.getSettings();
-        if (result.ok) {
-          const settings = normalizeSettings(result.settings);
-          if (settings?.ballPriceCents) {
-            setBallPriceCents(settings.ballPriceCents as number);
-          }
-          if (settings?.blockWarningMinutes) {
-            const blockWarnMin = parseInt(settings.blockWarningMinutes as string, 10);
-            if (blockWarnMin > 0) {
-              setBlockWarningMinutes(blockWarnMin);
-            }
+        if (!result.ok) {
+          logger.warn('RegistrationRuntime', 'getSettings returned ok:false', {
+            code: (result as { code?: string }).code,
+            message: (result as { message?: string }).message,
+          });
+          return;
+        }
+        const settings = normalizeSettings(result.settings);
+        if (settings?.ballPriceCents) {
+          setBallPriceCents(settings.ballPriceCents as number);
+        }
+        if (settings?.blockWarningMinutes) {
+          const blockWarnMin = parseInt(settings.blockWarningMinutes as string, 10);
+          if (blockWarnMin > 0) {
+            setBlockWarningMinutes(blockWarnMin);
           }
         }
       } catch (error) {
-        console.error('Failed to load ball price from API:', error);
+        logger.error('RegistrationRuntime', 'Failed to load settings from API', error);
       }
     };
-    fetchBallPrice();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: fetch ball price once on init
+    fetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only: fetch settings once on init
   }, []);
 
   // VERBATIM COPY: CSS Performance Optimizations (line 750)
