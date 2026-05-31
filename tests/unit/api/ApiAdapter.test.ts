@@ -639,7 +639,7 @@ describe('ApiAdapter', () => {
 
       // Prime settings cache
       const first = await adapter.getSettings();
-      expect(first.settings.courtCount).toBe(12);
+      expect((first as { settings: { courtCount: number } }).settings.courtCount).toBe(12);
 
       // Mutate — should fully invalidate cache (data AND timestamp)
       await adapter.updateSettings({ courtCount: 10 });
@@ -647,7 +647,7 @@ describe('ApiAdapter', () => {
       // Next call must re-fetch from API (not return stale null from cache)
       const refreshed = await adapter.getSettings();
       expect(refreshed).not.toBeNull();
-      expect(refreshed.settings.courtCount).toBe(10);
+      expect((refreshed as { settings: { courtCount: number } }).settings.courtCount).toBe(10);
 
       // 3 fetches: initial getSettings + updateSettings + re-fetched getSettings
       expect(mockFn).toHaveBeenCalledTimes(3);
