@@ -40,6 +40,11 @@ export default [
       'react-hooks/exhaustive-deps': 'warn',
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      // WP4-4: camelCase enforcement (boundary files exempted below)
+      camelcase: [
+        'warn',
+        { properties: 'never', ignoreDestructuring: true, ignoreImports: true },
+      ],
     },
   },
   // TypeScript files — use TS parser, no React rules (pure logic files)
@@ -64,6 +69,11 @@ export default [
       'no-undef': 'off', // TypeScript handles this
       'no-redeclare': 'off', // TypeScript handles this (interfaces merge)
       'react-hooks/exhaustive-deps': 'warn',
+      // WP4-4: camelCase enforcement (boundary files exempted below)
+      camelcase: [
+        'warn',
+        { properties: 'never', ignoreDestructuring: true, ignoreImports: true },
+      ],
     },
   },
   {
@@ -132,18 +142,18 @@ export default [
   // WP4-4: Boundary files exempt from camelcase rule (snake_case allowed)
   {
     files: [
-      'src/lib/normalize/**/*.js',
-      'src/lib/ApiAdapter.js',
-      'src/lib/backend/**/*.js',
+      'src/lib/normalize/**/*.{js,ts}',
+      'src/lib/ApiAdapter.{js,ts}',
+      'src/lib/backend/**/*.{js,ts}',
     ],
     rules: {
       camelcase: 'off',
     },
   },
   // Architecture boundary: UI components should use @lib/api, not raw ApiAdapter
-  // Only applies to .jsx files (React components), not .js services
+  // Applies to React components (.jsx/.tsx), not .js/.ts services
   {
-    files: ['**/*.jsx'],
+    files: ['**/*.jsx', '**/*.tsx'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -314,6 +324,15 @@ export default [
               message:
                 'Admin/Courtboard must not import from registration. Use src/lib/ for shared code.',
             },
+            // NOTE: flat config does not merge no-restricted-imports across blocks
+            // (last match wins), so the ApiAdapter guard below is repeated here to
+            // keep it enforced for admin/courtboard. Backend access must go through
+            // the TennisBackend façade (src/lib/backend), not raw ApiAdapter.
+            {
+              group: ['**/ApiAdapter*'],
+              message:
+                'Use the TennisBackend façade (@lib/backend) instead of ApiAdapter directly.',
+            },
           ],
         },
       ],
@@ -375,27 +394,25 @@ export default [
   {
     files: [
       // Entry points — check window.Tennis readiness before rendering
-      'src/registration/main.jsx',
       'src/registration/main.tsx',
-      'src/admin/main.jsx',
+      'src/admin/main.tsx',
       // Bootstrap scripts extracted from inline HTML for CSP compliance
       'src/registration/bootstrap/**/*.js',
       'src/registration/bootstrap/**/*.ts',
       // Legacy interop — use window.Tennis directly (migrate to windowBridge over time)
-      'src/registration/utils/helpers.js',
       'src/registration/utils/helpers.ts',
-      'src/admin/handlers/courtOperations.js',
-      'src/admin/ai/AIAssistantAdmin.jsx',
+      'src/admin/handlers/courtOperations.ts',
+      'src/admin/ai/AIAssistantAdmin.tsx',
       // Singleton guard uses window[key] assignment pattern
-      'src/admin/hooks/useAdminSettings.js',
+      'src/admin/hooks/useAdminSettings.ts',
       // Courtboard entry point — polls window.Tennis readiness before rendering
-      'src/courtboard/main.jsx',
+      'src/courtboard/main.tsx',
       // Courtboard IIFE/plain scripts — direct window access required (ADR-006)
       'src/courtboard/bootstrap/**/*.js',
       'src/courtboard/debug-panel.js',
       // Courtboard bridges — single writer for window.CourtboardState / CourtAvailability
+      // (window-bridge.ts manages no-restricted-properties via precise inline disables)
       'src/courtboard/bridge/**/*.js',
-      'src/courtboard/browser-bridge.js',
     ],
     rules: {
       'no-restricted-globals': 'off',
@@ -409,9 +426,9 @@ export default [
   // IIFE/plain scripts are exempted above; this block re-enables the rule for ESM only.
   {
     files: [
-      'src/courtboard/components/**/*.{js,jsx}',
-      'src/courtboard/hooks/**/*.{js,jsx}',
-      'src/courtboard/mobile/**/*.{js,jsx}',
+      'src/courtboard/components/**/*.{js,jsx,ts,tsx}',
+      'src/courtboard/hooks/**/*.{js,jsx,ts,tsx}',
+      'src/courtboard/mobile/**/*.{js,jsx,ts,tsx}',
     ],
     rules: {
       'no-restricted-properties': [
