@@ -10,10 +10,13 @@ import { createShowNotification } from './notificationLogic';
 /**
  * Hook for managing notification state and display.
  *
- * @returns {{ notification: Object|null, showNotification: Function }}
+ * @returns {{ notification: Object|null, showNotification: (message: string, type?: string) => void }}
  */
 export function useNotification() {
-  interface NotificationState { message: string; type: string; }
+  interface NotificationState {
+    message: string;
+    type: string;
+  }
   const [notification, setNotification] = useState<NotificationState | null>(null);
 
   // Create stable showNotification function

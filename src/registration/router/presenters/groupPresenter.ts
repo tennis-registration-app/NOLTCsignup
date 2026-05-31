@@ -11,7 +11,17 @@
  * Shell/global fields continue to come from `app`.
  */
 
-import type { AppState, CourtSelectionResult, FrequentPartner, GroupPlayer, Handlers, RegistrationConstants, RegistrationUiState } from '../../../types/appTypes.js';
+import type {
+  AppState,
+  CourtSelectionResult,
+  FrequentPartner,
+  GroupGuestState,
+  GroupPlayer,
+  Handlers,
+  RegistrationConstants,
+  RegistrationUiState,
+  SearchState,
+} from '../../../types/appTypes.js';
 
 /** Workflow-owned fields that buildGroupModel and buildGroupActions read. */
 export interface GroupWorkflow {
@@ -22,9 +32,9 @@ export interface GroupWorkflow {
     guestSponsor: string;
     showGuestNameError: boolean;
     showSponsorError: boolean;
-    handleRemovePlayer: Function;
-    handleSelectSponsor: Function;
-    handleCancelGuest: Function;
+    handleRemovePlayer: GroupGuestState['handleRemovePlayer'];
+    handleSelectSponsor: GroupGuestState['handleSelectSponsor'];
+    handleCancelGuest: GroupGuestState['handleCancelGuest'];
   };
   memberIdentity: {
     memberNumber: string;
@@ -69,35 +79,35 @@ export interface GroupModel {
   showGuestNameError: boolean;
   showSponsorError: boolean;
   // Utilities (data)
-  getAutocompleteSuggestions: Function;
+  getAutocompleteSuggestions: SearchState['getAutocompleteSuggestions'];
   CONSTANTS: RegistrationConstants;
 }
 
 export interface GroupActions {
   // Callbacks (renamed to on* convention)
-  onSearchChange: Function;
-  onSearchFocus: Function;
-  onSuggestionClick: Function;
-  onAddPlayerSearchChange: Function;
-  onAddPlayerSearchFocus: Function;
-  onAddPlayerSuggestionClick: Function;
-  onToggleAddPlayer: Function;
-  onToggleGuestForm: Function;
-  onRemovePlayer: Function;
-  onSelectSponsor: Function;
-  onGuestNameChange: Function;
-  onAddGuest: Function;
-  onCancelGuest: Function;
-  onAddFrequentPartner: Function;
-  onSelectCourt: Function;
+  onSearchChange: SearchState['handleGroupSearchChange'];
+  onSearchFocus: SearchState['handleGroupSearchFocus'];
+  onSuggestionClick: Handlers['handleGroupSuggestionClick'];
+  onAddPlayerSearchChange: SearchState['handleAddPlayerSearchChange'];
+  onAddPlayerSearchFocus: SearchState['handleAddPlayerSearchFocus'];
+  onAddPlayerSuggestionClick: Handlers['handleAddPlayerSuggestionClick'];
+  onToggleAddPlayer: Handlers['handleToggleAddPlayer'];
+  onToggleGuestForm: Handlers['handleToggleGuestForm'];
+  onRemovePlayer: GroupGuestState['handleRemovePlayer'];
+  onSelectSponsor: GroupGuestState['handleSelectSponsor'];
+  onGuestNameChange: Handlers['handleGuestNameChange'];
+  onAddGuest: Handlers['handleAddGuest'];
+  onCancelGuest: GroupGuestState['handleCancelGuest'];
+  onAddFrequentPartner: Handlers['addFrequentPartner'];
+  onSelectCourt: Handlers['handleGroupSelectCourt'];
   isAssigning: boolean;
-  onJoinWaitlist: Function;
+  onJoinWaitlist: Handlers['handleGroupJoinWaitlist'];
   joiningWaitlist: boolean;
-  onGoBack: Function;
-  onStartOver: Function;
+  onGoBack: Handlers['handleGroupGoBack'];
+  onStartOver: Handlers['resetForm'];
   // Utilities (functions)
-  isPlayerAlreadyPlaying: Function;
-  sameGroup: Function;
+  isPlayerAlreadyPlaying: Handlers['isPlayerAlreadyPlaying'];
+  sameGroup: Handlers['sameGroup'];
 }
 
 /**
@@ -184,7 +194,11 @@ export function buildGroupModel(app: AppState, workflow: GroupWorkflow): GroupMo
  * Workflow-owned reads/pass-throughs come from the `workflow` parameter.
  * Shell/handler fields come from `app` and `handlers`.
  */
-export function buildGroupActions(app: AppState, workflow: GroupWorkflow, handlers: Handlers): GroupActions {
+export function buildGroupActions(
+  app: AppState,
+  workflow: GroupWorkflow,
+  handlers: Handlers
+): GroupActions {
   // Workflow fields from context
   const { isAssigning, isJoiningWaitlist } = workflow;
   const { handleRemovePlayer, handleSelectSponsor, handleCancelGuest } = workflow.groupGuest;

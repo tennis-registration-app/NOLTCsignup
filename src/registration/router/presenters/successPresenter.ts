@@ -15,7 +15,18 @@
  * Shell/global fields continue to come from `app`.
  */
 
-import type { AppState, CommandResponse, DirectoryMember, DomainCourt, GroupPlayer, Handlers, ReplacedGroup, TennisConfig, UpcomingBlock } from '../../../types/appTypes.js';
+import type {
+  AppState,
+  BlockAdminState,
+  CommandResponse,
+  DirectoryMember,
+  DomainCourt,
+  GroupPlayer,
+  Handlers,
+  ReplacedGroup,
+  TennisConfig,
+  UpcomingBlock,
+} from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger';
 
 type PurchaseBallsOptions = { splitBalls?: boolean; splitAccountIds?: string[] | null };
@@ -69,17 +80,24 @@ export interface SuccessModel {
   ballPriceCents: number | null;
   // Utilities
   TENNIS_CONFIG: TennisConfig;
-  getCourtBlockStatus: Function;
+  getCourtBlockStatus: BlockAdminState['getCourtBlockStatus'];
   upcomingBlocks?: UpcomingBlock[];
   blockWarningMinutes: number | null;
 }
 
 export interface SuccessActions {
-  onChangeCourt: Function;
-  onHome: Function;
-  onPurchaseBalls: (sessionId: string, accountId: string, options?: PurchaseBallsOptions) => Promise<CommandResponse>;
+  onChangeCourt: Handlers['changeCourt'];
+  onHome: Handlers['resetForm'];
+  onPurchaseBalls: (
+    sessionId: string,
+    accountId: string,
+    options?: PurchaseBallsOptions
+  ) => Promise<CommandResponse>;
   onLookupMemberAccount: (memberNumber: string) => Promise<DirectoryMember[]>;
-  onUpdateSessionTournament: (sessionId: string, isTournamentFlag: boolean) => Promise<CommandResponse>;
+  onUpdateSessionTournament: (
+    sessionId: string,
+    isTournamentFlag: boolean
+  ) => Promise<CommandResponse>;
 }
 
 /**
@@ -88,7 +106,11 @@ export interface SuccessActions {
  * Workflow-owned fields come from the `workflow` parameter (WorkflowContext).
  * Shell/global fields come from `app`.
  */
-export function buildSuccessModel(app: AppState, workflow: SuccessWorkflow, computed: SuccessModelComputed): SuccessModel {
+export function buildSuccessModel(
+  app: AppState,
+  workflow: SuccessWorkflow,
+  computed: SuccessModelComputed
+): SuccessModel {
   // Shell fields from app
   const { state, mobile, admin, TENNIS_CONFIG } = app;
   const { blockAdmin } = admin;
@@ -97,7 +119,8 @@ export function buildSuccessModel(app: AppState, workflow: SuccessWorkflow, comp
   const { mobileFlow, mobileCountdown } = mobile;
 
   // Workflow fields from context
-  const { replacedGroup, canChangeCourt, changeTimeRemaining, isTimeLimited, timeLimitReason } = workflow;
+  const { replacedGroup, canChangeCourt, changeTimeRemaining, isTimeLimited, timeLimitReason } =
+    workflow;
   const { justAssignedCourt, assignedSessionId, assignedEndTime } = workflow.courtAssignment;
   const { registrantStreak } = workflow.streak;
   const { currentGroup } = workflow.groupGuest;
@@ -145,7 +168,11 @@ export function buildSuccessActions(app: AppState, handlers: Handlers): SuccessA
   return {
     onChangeCourt: changeCourt,
     onHome: resetForm,
-    onPurchaseBalls: async (sessionId: string, accountId: string, options?: PurchaseBallsOptions) => {
+    onPurchaseBalls: async (
+      sessionId: string,
+      accountId: string,
+      options?: PurchaseBallsOptions
+    ) => {
       logger.debug('SuccessRoute', 'Ball purchase handler called', {
         sessionId,
         accountId,
