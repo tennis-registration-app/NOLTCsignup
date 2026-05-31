@@ -1,0 +1,16 @@
+{
+  "limit": 500,
+  "files": {
+    "src/types/appTypes.ts": 1437,
+    "src/tennis/domain/availability.ts": 781,
+    "src/lib/backend/TennisCommands.ts": 701,
+    "src/lib/ApiAdapter.ts": 664,
+    "src/admin/types/domainObjects.ts": 655,
+    "src/courtboard/bootstrap/courtboard-bootstrap.js": 628,
+    "src/registration/appHandlers/handlers/courtHandlers.ts": 611,
+    "src/tennis/domain/waitlist.ts": 545,
+    "src/admin/ai/AIAssistantAdmin.tsx": 541,
+    "src/admin/calendar/EventCalendarEnhanced.tsx": 534,
+    "src/lib/backend/admin/AdminCommands.ts": 530
+  }
+}

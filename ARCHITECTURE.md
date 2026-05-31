@@ -383,7 +383,7 @@ Coverage ratchet enforced via CI (current baseline: 53.4% statements, 47.92% bra
 All gating CI via:
 
 ```bash
-npm run verify  # lint:ratchet + type:ratchet + coverage:ratchet + test:fixtures + docs:check + build + test:e2e
+npm run verify  # lint:ratchet + type:ratchet + coverage:ratchet + lines:ratchet + test:fixtures + docs:check + build + test:e2e
 ```
 
 ## Code Standards
@@ -391,6 +391,8 @@ npm run verify  # lint:ratchet + type:ratchet + coverage:ratchet + test:fixtures
 ### File Size Limit
 
 All source files should be under 500 lines. This encourages modular design and makes code easier to understand.
+
+Enforced as a one-way ratchet by `scripts/max-lines-ratchet.mjs` (run via `npm run lines:ratchet` in `verify`). The current over-limit files are frozen at their line counts in `config/ratchets/max-lines-baseline.json`: no new file may cross 500 lines, and a baselined file may not grow past its recorded ceiling. When a file shrinks, run `npm run lines:ratchet -- --update` to lower the ceiling.
 
 ### Import Aliases
 
