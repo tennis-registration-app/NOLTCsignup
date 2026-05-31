@@ -7,7 +7,15 @@
  * Extracted from CourtRoute.jsx — maintains exact prop mapping.
  */
 
-import type { AppState, CourtDataMutable, DisplacementInfo, GroupPlayer, Handlers, OriginalCourtData, UpcomingBlock } from '../../../types/appTypes.js';
+import type {
+  AppState,
+  CourtDataMutable,
+  DisplacementInfo,
+  GroupPlayer,
+  Handlers,
+  OriginalCourtData,
+  UpcomingBlock,
+} from '../../../types/appTypes.js';
 import { logger } from '../../../lib/logger';
 
 /** Workflow-owned fields that buildCourtModel and buildCourtActions read. */
@@ -61,7 +69,7 @@ export interface CourtActions {
   onJoinWaitlist: () => Promise<void>;
   onAssignNext: () => void;
   onGoBack: () => void;
-  onStartOver: Function;
+  onStartOver: Handlers['resetForm'];
   onJoinWaitlistDeferred: () => void;
 }
 
@@ -71,7 +79,11 @@ export interface CourtActions {
  * Workflow-owned fields come from the `workflow` parameter (WorkflowContext).
  * Shell/global fields come from `app`.
  */
-export function buildCourtModel(app: AppState, workflow: CourtWorkflow, computed: CourtModelComputed): CourtModel {
+export function buildCourtModel(
+  app: AppState,
+  workflow: CourtWorkflow,
+  computed: CourtModelComputed
+): CourtModel {
   // Shell fields from app
   const { derived } = app;
   const { isMobileView } = derived;
@@ -112,21 +124,14 @@ export function buildCourtActions(
   const { isChangingCourt, displacement, originalCourtData } = workflow;
   const { justAssignedCourt } = workflow.courtAssignment;
   const { currentGroup } = workflow.groupGuest;
-  const {
-    setDisplacement,
-    setIsChangingCourt,
-    setWasOvertimeCourt,
-    setOriginalCourtData,
-  } = workflow;
+  const { setDisplacement, setIsChangingCourt, setWasOvertimeCourt, setOriginalCourtData } =
+    workflow;
 
   // Shell fields from app
   const { mobile, refs, setters, CONSTANTS } = app;
   const { mobileFlow } = mobile;
   const { successResetTimerRef } = refs;
-  const {
-    setShowSuccess,
-    setCurrentScreen,
-  } = setters;
+  const { setShowSuccess, setCurrentScreen } = setters;
 
   // Destructure from handlers
   const {
