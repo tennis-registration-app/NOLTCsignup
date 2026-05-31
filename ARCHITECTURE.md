@@ -352,9 +352,19 @@ function GroupRoute({ app, handlers }) {
 
 ## Testing Strategy
 
+### Test Inventory
+
+The file counts below are generated and verified by `scripts/docs-ratchet.mjs`
+(run via `npm run docs:check` in `verify`). Do not edit them by hand — run
+`npm run docs:update` to regenerate.
+
+<!-- docs:test-inventory:start -->
+- Unit tests (Vitest): **176 test files** under `tests/unit/`
+- E2E tests (Playwright): **15 spec files** under `e2e/`
+<!-- docs:test-inventory:end -->
+
 ### Unit Tests (Vitest)
 
-- **3,128 unit tests** across 161 test files
 - Cover: reducers, services, transforms, error handling, contract fences,
   orchestrators, presenters (including behavioral presenter tests)
 - Mock external dependencies (API, storage)
@@ -363,7 +373,7 @@ Coverage ratchet enforced via CI (current baseline: 53.4% statements, 47.92% bra
 
 ### E2E Tests (Playwright)
 
-- **22 tests** across 15 spec files covering critical user flows
+- Cover critical user flows
 - Golden flows: registration, court assignment, waitlist, blocks
 - Failure-path tests: assign-court failure, court-occupied race, assign-from-waitlist failure, clear-court failure
 - Run against preview server with mock API
@@ -373,7 +383,7 @@ Coverage ratchet enforced via CI (current baseline: 53.4% statements, 47.92% bra
 All gating CI via:
 
 ```bash
-npm run verify  # lint:ratchet + type:ratchet + coverage:ratchet + test:fixtures + build + test:e2e
+npm run verify  # lint:ratchet + type:ratchet + coverage:ratchet + test:fixtures + docs:check + build + test:e2e
 ```
 
 ## Code Standards
@@ -469,15 +479,27 @@ The frontend contains hardcoded Supabase credentials in `src/config/runtimeConfi
 
 ### Files Over 500 Lines
 
+The table below is generated and verified by `scripts/docs-ratchet.mjs` (run via
+`npm run docs:check` in `verify`). Do not edit it by hand — run `npm run docs:update`
+to regenerate, and add a Notes entry in the script's `FILE_NOTES` map for any new file.
+
+<!-- docs:files-over-500:start -->
 | File | Lines | Notes |
 |------|-------|-------|
-| `src/types/appTypes.ts` | 1,237 | Type definitions only — acceptable exception (no logic) |
-| `src/lib/backend/TennisCommands.ts` | 611 | Command methods |
-| `src/tennis/domain/availability.ts` | 610 | Court availability logic |
-| `src/lib/ApiAdapter.ts` | 546 | API client |
-| `src/tennis/domain/waitlist.ts` | 538 | Waitlist domain logic |
+| `src/types/appTypes.ts` | 1,437 | Type definitions only — acceptable exception (no logic) |
+| `src/tennis/domain/availability.ts` | 781 | Court availability logic |
+| `src/lib/backend/TennisCommands.ts` | 701 | Command methods |
+| `src/lib/ApiAdapter.ts` | 664 | API client |
+| `src/admin/types/domainObjects.ts` | 655 | Type definitions only — acceptable exception (no logic) |
+| `src/courtboard/bootstrap/courtboard-bootstrap.js` | 628 | Legacy courtboard bootstrap (ADR-006 containment) |
+| `src/registration/appHandlers/handlers/courtHandlers.ts` | 611 | Court action handlers |
+| `src/tennis/domain/waitlist.ts` | 545 | Waitlist domain logic |
+| `src/admin/ai/AIAssistantAdmin.tsx` | 541 | Admin AI assistant UI |
+| `src/admin/calendar/EventCalendarEnhanced.tsx` | 534 | Admin calendar UI |
+| `src/lib/backend/admin/AdminCommands.ts` | 530 | Admin command methods |
+<!-- docs:files-over-500:end -->
 
-`assignCourtOrchestrator.ts` was decomposed (614 → 265 lines) into four focused modules under `src/registration/orchestration/` — see the Orchestrator Dependency Conventions section. The remaining four files above are candidates for extraction when next modified for functional changes.
+`assignCourtOrchestrator.ts` was decomposed (614 → 265 lines) into four focused modules under `src/registration/orchestration/` — see the Orchestrator Dependency Conventions section. Files above without a "type definitions only" or legacy-containment note are candidates for extraction when next modified for functional changes.
 
 ## Entry Points & Module System
 

@@ -26,8 +26,10 @@
     "type:ratchet:test": "node scripts/type-ratchet-test.mjs",
     "check:env": "node scripts/check-env.js",
     "coverage:ratchet": "node scripts/coverage-ratchet.mjs",
+    "docs:check": "node scripts/docs-ratchet.mjs",
+    "docs:update": "node scripts/docs-ratchet.mjs --write",
     "seed": "tsx scripts/seed.ts",
-    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s type:ratchet:test && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s build && npm run -s test:e2e"
+    "verify": "npm run -s lint:ratchet && npm run -s type:ratchet && npm run -s type:ratchet:test && npm run -s coverage:ratchet && npm run -s test:fixtures && npm run -s docs:check && npm run -s build && npm run -s test:e2e"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [
